@@ -158,3 +158,79 @@ export interface Proposal {
   acceptedAt: string | null;
   createdAt: string;
 }
+
+export type InspectionType =
+  | "implantacao"
+  | "entrada"
+  | "saida"
+  | "periodica"
+  | "manutencao"
+  | "inventario";
+
+export interface Inspection {
+  id: EntityId;
+  type: InspectionType;
+  propertyId: EntityId;
+  propertyName: string | null;
+  /** Preenchido quando a vistoria nasce de uma implantação. */
+  implementationId: EntityId | null;
+  /** Preenchido quando a vistoria é de entrada/saída de uma reserva. */
+  reservationId: EntityId | null;
+  scheduledFor: string | null;
+  responsibleUserId: EntityId | null;
+  status: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Pendência operacional do dia a dia (limpeza, manutenção, check-in etc.). */
+export interface OperationTask {
+  id: EntityId;
+  title: string;
+  kind: string;
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  reservationId: EntityId | null;
+  dueDate: string | null;
+  responsibleUserId: EntityId | null;
+  status: string;
+  priority: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Conversa da Central de Mensagens do STAYO.APP.
+ * Placeholder: este módulo passará a ler do Core no futuro.
+ */
+export interface Conversation {
+  id: EntityId;
+  channel: string | null;
+  subject: string | null;
+  participantName: string | null;
+  propertyId: EntityId | null;
+  reservationId: EntityId | null;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Contract {
+  id: EntityId;
+  code: string;
+  ownerId: EntityId;
+  ownerName: string | null;
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  type: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  signedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
