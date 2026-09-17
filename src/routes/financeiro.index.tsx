@@ -18,6 +18,7 @@ import {
   serviceInvoicesListQuery,
   settlementsListQuery,
 } from "../lib/api/queries";
+import { formatMoney as formatMoneyOrNull } from "../lib/format";
 import type { Expense, Settlement, ServiceInvoice, ServiceInvoiceStage } from "../types/core";
 
 /**
@@ -43,8 +44,7 @@ export const Route = createFileRoute("/financeiro/")({
 });
 
 function formatMoney(value: number | null) {
-  if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  return formatMoneyOrNull(value) ?? "—";
 }
 
 const tabLabels = {

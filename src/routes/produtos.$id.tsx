@@ -11,8 +11,8 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import { coreApi, productQuery } from "../lib/api/queries";
+import { formatMoney } from "../lib/format";
 import type { UpsellProduct } from "../types/core";
-import { formatMoney } from "./produtos.index";
 
 export const Route = createFileRoute("/produtos/$id")({
   head: () => ({
