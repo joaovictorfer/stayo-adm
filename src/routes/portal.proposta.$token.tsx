@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { proposalsStore } from "../lib/api/local-store";
 import {
   adminApi,
   implementationQuery,
+  proposalByIdQuery,
   proposalShareLinkByTokenQuery,
-  proposalsByImplementationQuery,
 } from "../lib/api/queries";
 
 export const Route = createFileRoute("/portal/proposta/$token")({
@@ -80,24 +81,42 @@ function ProposalPortalPage() {
     );
   }
 
-  return <ProposalView implementationId={linkQuery.data.implementationId} />;
+  return (
+    <ProposalView
+      implementationId={linkQuery.data.implementationId}
+      proposalId={linkQuery.data.proposalId}
+    />
+  );
 }
 
-function ProposalView({ implementationId }: { implementationId: string }) {
+function ProposalView({
+  implementationId,
+  proposalId,
+}: {
+  implementationId: string;
+  proposalId: string;
+}) {
   const queryClient = useQueryClient();
   const implementationQ = useQuery(implementationQuery(implementationId));
-  const proposalsQ = useQuery(proposalsByImplementationQuery(implementationId));
-  const latest = proposalsQ.data?.[0];
+  // Sempre ESTA versão específica — nunca "a mais recente da implantação".
+  const proposalQ = useQuery(proposalByIdQuery(proposalId));
+  const proposal = proposalQ.data;
+  const [acceptedName, setAcceptedName] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
   const accept = useMutation({
     mutationFn: async () => {
-      const accepted = await proposalsStore.accept(latest!.id);
+      const accepted = await proposalsStore.accept(proposalId, acceptedName.trim());
       await adminApi.audit.log({
         actorId: null,
         event: "proposal.accepted",
         entityType: "proposal",
-        entityId: latest!.id,
-        metadata: { implementationId, version: latest!.version },
+        entityId: proposalId,
+        metadata: {
+          implementationId,
+          version: proposal?.version,
+          acceptedName: acceptedName.trim(),
+        },
       });
       return accepted;
     },
@@ -106,7 +125,7 @@ function ProposalView({ implementationId }: { implementationId: string }) {
     },
   });
 
-  if (proposalsQ.isPending || implementationQ.isPending) {
+  if (proposalQ.isPending || implementationQ.isPending) {
     return (
       <Shell>
         <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -116,7 +135,7 @@ function ProposalView({ implementationId }: { implementationId: string }) {
     );
   }
 
-  if (!latest) {
+  if (!proposal) {
     return (
       <Shell>
         <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
@@ -129,10 +148,12 @@ function ProposalView({ implementationId }: { implementationId: string }) {
     );
   }
 
+  const canAccept = acceptedName.trim() !== "" && agreed;
+
   return (
     <Shell>
       <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        {implementationQ.data?.code} · Versão {latest.version}
+        {implementationQ.data?.code} · Versão {proposal.version}
       </p>
       <h1 className="mt-1 text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
         Proposta comercial
@@ -142,7 +163,7 @@ function ProposalView({ implementationId }: { implementationId: string }) {
         className="mt-4 divide-y rounded-[var(--radius-card)] border"
         style={{ borderColor: "var(--stayo-border)" }}
       >
-        {latest.items.map((item, i) => (
+        {proposal.items.map((item, i) => (
           <li key={i} className="flex items-center justify-between px-3 py-2 text-sm">
             <span>
               {item.description}{" "}
@@ -159,25 +180,53 @@ function ProposalView({ implementationId }: { implementationId: string }) {
           className="text-xl"
           style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
         >
-          {currency.format(latest.total)}
+          {currency.format(proposal.total)}
         </span>
       </div>
 
       <div className="mt-6">
-        {latest.acceptedAt ? (
+        {proposal.acceptedAt ? (
           <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
-            Proposta aceita em {new Date(latest.acceptedAt).toLocaleString("pt-BR")}.
+            Proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
+            {new Date(proposal.acceptedAt).toLocaleString("pt-BR")}.
           </p>
         ) : (
-          <button
-            type="button"
-            onClick={() => accept.mutate()}
-            disabled={accept.isPending}
-            className="w-full rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            {accept.isPending ? "Enviando..." : "Aceitar proposta"}
-          </button>
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              Seu nome completo
+              <input
+                value={acceptedName}
+                onChange={(e) => setAcceptedName(e.target.value)}
+                className="rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              />
+            </label>
+            <label
+              className="flex items-start gap-2 text-xs"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5"
+              />
+              Li e concordo com a proposta apresentada.
+            </label>
+            <button
+              type="button"
+              onClick={() => accept.mutate()}
+              disabled={accept.isPending || !canAccept}
+              className="w-full rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
+              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+            >
+              {accept.isPending ? "Enviando..." : "Aceitar proposta"}
+            </button>
+            <p className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+              Este aceite registra sua concordância comercial com esta proposta — não substitui a
+              assinatura do contrato de prestação de serviço.
+            </p>
+          </div>
         )}
       </div>
     </Shell>

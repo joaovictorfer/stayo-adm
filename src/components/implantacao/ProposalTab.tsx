@@ -91,7 +91,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             color: "var(--stayo-success)",
           }}
         >
-          Proposta (versão {latest.version}) aceita pelo proprietário em{" "}
+          Proposta (versão {latest.version}) aceita
+          {latest.acceptedName ? ` por ${latest.acceptedName}` : " pelo proprietário"} em{" "}
           {new Date(latest.acceptedAt).toLocaleString("pt-BR")}.
         </div>
       )}
@@ -251,7 +252,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </p>
       </div>
 
-      {latest && <ShareLinkPanel implementationId={implementationId} />}
+      {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
 
       <div className="rounded-[var(--radius-card)] border" style={surface}>
         <h2
@@ -297,7 +298,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                         color: "var(--stayo-success)",
                       }}
                     >
-                      Aceita em {new Date(p.acceptedAt).toLocaleDateString("pt-BR")}
+                      Aceita{p.acceptedName ? ` por ${p.acceptedName}` : ""} em{" "}
+                      {new Date(p.acceptedAt).toLocaleDateString("pt-BR")}
                     </span>
                   )}
                   <span className="ml-auto text-sm" style={{ color: "var(--stayo-ink)" }}>
@@ -320,16 +322,27 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   );
 }
 
-/** Link público (sem autenticação) pro proprietário ver e aceitar a proposta atual. */
-function ShareLinkPanel({ implementationId }: { implementationId: EntityId }) {
+/**
+ * Link público (sem autenticação) pro proprietário ver e aceitar ESTA
+ * versão da proposta — nunca a mais recente por implantação. Se uma nova
+ * versão for criada depois, este link continua mostrando a mesma versão;
+ * um novo link precisa ser gerado para compartilhar a versão nova.
+ */
+function ShareLinkPanel({
+  implementationId,
+  proposalId,
+}: {
+  implementationId: EntityId;
+  proposalId: EntityId;
+}) {
   const queryClient = useQueryClient();
-  const linkQuery = useQuery(proposalShareLinkQuery(implementationId));
+  const linkQuery = useQuery(proposalShareLinkQuery(proposalId));
   const [copied, setCopied] = useState(false);
 
   const createLink = useMutation({
-    mutationFn: () => proposalShareStore.createLink(implementationId),
+    mutationFn: () => proposalShareStore.createLinkForProposal(proposalId, implementationId),
     onSuccess: (link) => {
-      queryClient.setQueryData(proposalShareLinkQuery(implementationId).queryKey, link);
+      queryClient.setQueryData(proposalShareLinkQuery(proposalId).queryKey, link);
     },
   });
 
@@ -386,7 +399,8 @@ function ShareLinkPanel({ implementationId }: { implementationId: EntityId }) {
         </button>
       )}
       <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        O link sempre mostra a versão mais recente da proposta salva.
+        Este link é fixo para esta versão da proposta — se uma nova versão for criada, gere um novo
+        link para ela.
       </p>
     </div>
   );

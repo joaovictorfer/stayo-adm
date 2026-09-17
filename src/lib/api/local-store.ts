@@ -93,6 +93,10 @@ export const proposalsStore = {
       .filter((p) => p.implementationId === implementationId)
       .sort((a, b) => b.version - a.version),
 
+  /** Busca uma versão específica pelo próprio id — nunca "a mais recente". */
+  get: async (proposalId: EntityId): Promise<Proposal | null> =>
+    read<Proposal>(PROPOSALS_KEY).find((p) => p.id === proposalId) ?? null,
+
   /** Cada salvamento cria uma NOVA versão — nunca sobrescreve a anterior. */
   createVersion: async (implementationId: EntityId, items: ProposalItem[]): Promise<Proposal> => {
     const all = read<Proposal>(PROPOSALS_KEY);
@@ -104,6 +108,7 @@ export const proposalsStore = {
       items,
       total: items.reduce((sum, i) => sum + i.total, 0),
       acceptedAt: null,
+      acceptedName: null,
       createdAt: new Date().toISOString(),
     };
     write(PROPOSALS_KEY, [...all, proposal]);
@@ -111,11 +116,15 @@ export const proposalsStore = {
   },
 
   /** Marca a versão como aceita — não cria versão nova, só registra a aceitação. */
-  accept: async (proposalId: EntityId): Promise<Proposal | null> => {
+  accept: async (proposalId: EntityId, acceptedName: string): Promise<Proposal | null> => {
     const all = read<Proposal>(PROPOSALS_KEY);
     const target = all.find((p) => p.id === proposalId);
     if (!target) return null;
-    const accepted: Proposal = { ...target, acceptedAt: new Date().toISOString() };
+    const accepted: Proposal = {
+      ...target,
+      acceptedAt: new Date().toISOString(),
+      acceptedName,
+    };
     write(
       PROPOSALS_KEY,
       all.map((p) => (p.id === proposalId ? accepted : p)),
@@ -125,16 +134,20 @@ export const proposalsStore = {
 };
 
 export const proposalShareStore = {
-  getLink: async (implementationId: EntityId): Promise<ProposalShareLink | null> =>
-    read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find(
-      (l) => l.implementationId === implementationId,
-    ) ?? null,
+  getLinkForProposal: async (proposalId: EntityId): Promise<ProposalShareLink | null> =>
+    read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find((l) => l.proposalId === proposalId) ??
+    null,
 
-  createLink: async (implementationId: EntityId): Promise<ProposalShareLink> => {
+  /** Idempotente por versão — reaproveita o link já gerado para ESTA versão. */
+  createLinkForProposal: async (
+    proposalId: EntityId,
+    implementationId: EntityId,
+  ): Promise<ProposalShareLink> => {
     const all = read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY);
-    const existing = all.find((l) => l.implementationId === implementationId);
+    const existing = all.find((l) => l.proposalId === proposalId);
     if (existing) return existing;
     const link: ProposalShareLink = {
+      proposalId,
       implementationId,
       token: newId(),
       createdAt: new Date().toISOString(),

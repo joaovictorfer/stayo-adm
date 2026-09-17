@@ -131,6 +131,12 @@ export const proposalsByImplementationQuery = (id: EntityId) =>
     queryFn: () => proposalsStore.list(id),
   });
 
+export const proposalByIdQuery = (proposalId: EntityId) =>
+  queryOptions({
+    queryKey: ["proposals", "detail", proposalId],
+    queryFn: () => proposalsStore.get(proposalId),
+  });
+
 export const ownerOnboardingLinkQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["owner-onboarding", "link", implementationId],
@@ -149,10 +155,10 @@ export const ownerOnboardingLinkByTokenQuery = (token: string) =>
     queryFn: () => ownerOnboardingStore.findByToken(token),
   });
 
-export const proposalShareLinkQuery = (implementationId: EntityId) =>
+export const proposalShareLinkQuery = (proposalId: EntityId) =>
   queryOptions({
-    queryKey: ["proposal-share", "link", implementationId],
-    queryFn: () => proposalShareStore.getLink(implementationId),
+    queryKey: ["proposal-share", "link", proposalId],
+    queryFn: () => proposalShareStore.getLinkForProposal(proposalId),
   });
 
 export const ownerNoteQuery = (ownerId: EntityId) =>

@@ -182,6 +182,8 @@ export interface Proposal {
   items: ProposalItem[];
   total: number;
   acceptedAt: string | null;
+  /** Nome digitado pelo proprietário ao marcar "li e concordo" — não é assinatura jurídica. */
+  acceptedName: string | null;
   createdAt: string;
 }
 
