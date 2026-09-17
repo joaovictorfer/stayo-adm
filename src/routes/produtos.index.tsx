@@ -12,6 +12,7 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import { coreApi, productsListQuery } from "../lib/api/queries";
+import { formatMoney } from "../lib/format";
 import type { UpsellProduct } from "../types/core";
 
 export const Route = createFileRoute("/produtos/")({
@@ -30,14 +31,6 @@ export const Route = createFileRoute("/produtos/")({
 });
 
 const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
-
-export function formatMoney(value: number | null, currency: string | null) {
-  if (value === null || value === undefined) return null;
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: currency ?? "BRL",
-  }).format(value);
-}
 
 function ProductsPage() {
   const [q, setQ] = useState("");
