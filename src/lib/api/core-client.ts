@@ -42,6 +42,7 @@ import type {
   CoreScope,
   CoreWebhook,
 } from "../../types/core-admin";
+import { newId, read, write } from "./local-store";
 
 export interface Page<T> {
   data: T[];
@@ -117,11 +118,23 @@ export interface CoreApiClient {
   guide: {
     list(params?: { cursor?: string }): Promise<Page<GuideEntry>>;
     get(id: EntityId): Promise<GuideEntry | null>;
+    create(input: Omit<GuideEntry, "id" | "createdAt" | "updatedAt">): Promise<GuideEntry>;
+    update(
+      id: EntityId,
+      input: Omit<GuideEntry, "id" | "createdAt" | "updatedAt">,
+    ): Promise<GuideEntry>;
+    remove(id: EntityId): Promise<void>;
   };
 
   products: {
     list(params?: { cursor?: string }): Promise<Page<UpsellProduct>>;
     get(id: EntityId): Promise<UpsellProduct | null>;
+    create(input: Omit<UpsellProduct, "id" | "createdAt" | "updatedAt">): Promise<UpsellProduct>;
+    update(
+      id: EntityId,
+      input: Omit<UpsellProduct, "id" | "createdAt" | "updatedAt">,
+    ): Promise<UpsellProduct>;
+    remove(id: EntityId): Promise<void>;
   };
 
   /** Repasses — requer scope financial.read; nunca expõe dado de hóspede. */
@@ -244,10 +257,28 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
     guide: {
       list: (params) => request(`/api/core/v1/guide/entries${queryString(params)}`),
       get: (id) => request(`/api/core/v1/guide/entries/${id}`),
+      create: async () => {
+        throw new Error("create() ainda não implementado no cliente real");
+      },
+      update: async () => {
+        throw new Error("update() ainda não implementado no cliente real");
+      },
+      remove: async () => {
+        throw new Error("remove() ainda não implementado no cliente real");
+      },
     },
     products: {
       list: (params) => request(`/api/core/v1/products${queryString(params)}`),
       get: (id) => request(`/api/core/v1/products/${id}`),
+      create: async () => {
+        throw new Error("create() ainda não implementado no cliente real");
+      },
+      update: async () => {
+        throw new Error("update() ainda não implementado no cliente real");
+      },
+      remove: async () => {
+        throw new Error("remove() ainda não implementado no cliente real");
+      },
     },
     payouts: {
       list: (params) => request(`/api/core/v1/financial/payouts${queryString(params)}`),
@@ -293,6 +324,9 @@ function queryString(params?: Record<string, unknown>): string {
  * Implementação mock — usada nesta fase (shell/arquitetura), antes de o
  * Stayo Core v1 existir. Dados fixos, sem chamadas de rede, sem PII real.
  */
+const GUIDE_KEY = "stayo-admin:guide-entries";
+const PRODUCTS_KEY = "stayo-admin:products";
+
 export function createMockCoreApiClient(): CoreApiClient {
   const empty = <T>(): Promise<Page<T>> => Promise.resolve({ data: [], nextCursor: null });
 
@@ -341,8 +375,79 @@ export function createMockCoreApiClient(): CoreApiClient {
       items: () => Promise.resolve([]),
     },
     proposals: { list: () => Promise.resolve([]) },
-    guide: { list: () => empty(), get: () => Promise.resolve(null) },
-    products: { list: () => empty(), get: () => Promise.resolve(null) },
+    guide: {
+      list: () => Promise.resolve({ data: read<GuideEntry>(GUIDE_KEY), nextCursor: null }),
+      get: (id) => Promise.resolve(read<GuideEntry>(GUIDE_KEY).find((g) => g.id === id) ?? null),
+      create: (input) => {
+        const entry: GuideEntry = {
+          ...input,
+          id: newId(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        write(GUIDE_KEY, [...read<GuideEntry>(GUIDE_KEY), entry]);
+        return Promise.resolve(entry);
+      },
+      update: (id, input) => {
+        const updated: GuideEntry = {
+          ...input,
+          id,
+          createdAt:
+            read<GuideEntry>(GUIDE_KEY).find((g) => g.id === id)?.createdAt ??
+            new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        write(
+          GUIDE_KEY,
+          read<GuideEntry>(GUIDE_KEY).map((g) => (g.id === id ? updated : g)),
+        );
+        return Promise.resolve(updated);
+      },
+      remove: (id) => {
+        write(
+          GUIDE_KEY,
+          read<GuideEntry>(GUIDE_KEY).filter((g) => g.id !== id),
+        );
+        return Promise.resolve();
+      },
+    },
+    products: {
+      list: () => Promise.resolve({ data: read<UpsellProduct>(PRODUCTS_KEY), nextCursor: null }),
+      get: (id) =>
+        Promise.resolve(read<UpsellProduct>(PRODUCTS_KEY).find((p) => p.id === id) ?? null),
+      create: (input) => {
+        const product: UpsellProduct = {
+          ...input,
+          id: newId(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        write(PRODUCTS_KEY, [...read<UpsellProduct>(PRODUCTS_KEY), product]);
+        return Promise.resolve(product);
+      },
+      update: (id, input) => {
+        const updated: UpsellProduct = {
+          ...input,
+          id,
+          createdAt:
+            read<UpsellProduct>(PRODUCTS_KEY).find((p) => p.id === id)?.createdAt ??
+            new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        write(
+          PRODUCTS_KEY,
+          read<UpsellProduct>(PRODUCTS_KEY).map((p) => (p.id === id ? updated : p)),
+        );
+        return Promise.resolve(updated);
+      },
+      remove: (id) => {
+        write(
+          PRODUCTS_KEY,
+          read<UpsellProduct>(PRODUCTS_KEY).filter((p) => p.id !== id),
+        );
+        return Promise.resolve();
+      },
+    },
     payouts: { list: () => empty(), get: () => Promise.resolve(null) },
     serviceInvoices: { list: () => empty(), get: () => Promise.resolve(null) },
     serviceProviders: { list: () => empty(), get: () => Promise.resolve(null) },

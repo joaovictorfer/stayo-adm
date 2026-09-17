@@ -27,7 +27,8 @@ const OWNER_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 const OWNER_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 const PROPOSAL_SHARE_LINKS_KEY = "stayo-admin:proposal-share-links";
 
-function read<T>(key: string): T[] {
+/** Exportadas para o mock de core-client.ts reaproveitar a mesma persistência para entidades que já existem no contrato do Core (guia, produtos) mas ainda não têm escrita real. */
+export function read<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(key);
@@ -37,12 +38,12 @@ function read<T>(key: string): T[] {
   }
 }
 
-function write<T>(key: string, value: T[]): void {
+export function write<T>(key: string, value: T[]): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(key, JSON.stringify(value));
 }
 
-function newId(): EntityId {
+export function newId(): EntityId {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : String(Date.now() + Math.random());
