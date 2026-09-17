@@ -90,9 +90,7 @@ function currentSection(pathname: string): NavItem | null {
 function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(
-      navigation
-        .filter((i) => i.children)
-        .map((i) => [i.id, isActive(pathname, i.path)] as const),
+      navigation.filter((i) => i.children).map((i) => [i.id, isActive(pathname, i.path)] as const),
     ),
   );
 
@@ -102,7 +100,10 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
   });
 
   return (
-    <nav className="flex flex-col gap-0.5 p-3 text-sm" style={{ fontFamily: "var(--stayo-font-ui)" }}>
+    <nav
+      className="flex flex-col gap-0.5 p-3 text-sm"
+      style={{ fontFamily: "var(--stayo-font-ui)" }}
+    >
       {navigation.map((item) => {
         const active = isActive(pathname, item.path);
         if (!item.children) {
