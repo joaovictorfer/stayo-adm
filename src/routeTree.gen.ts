@@ -19,6 +19,7 @@ import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuraco
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as GuiaIndexRouteImport } from './routes/guia.index'
+import { Route as GuiaIdRouteImport } from './routes/guia.$id'
 import { Route as HospedesIndexRouteImport } from './routes/hospedes.index'
 import { Route as HospedesIdRouteImport } from './routes/hospedes.$id'
 import { Route as ImoveisIndexRouteImport } from './routes/imoveis.index'
@@ -87,6 +88,11 @@ const ContratosIdRoute = ContratosIdRouteImport.update({
 const GuiaIndexRoute = GuiaIndexRouteImport.update({
   id: '/guia/',
   path: '/guia/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuiaIdRoute = GuiaIdRouteImport.update({
+  id: '/guia/$id',
+  path: '/guia/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospedesIndexRoute = HospedesIndexRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
+  '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
+  '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
+  '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
+    | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
+    | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
+    | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ContratosIdRoute: typeof ContratosIdRoute
+  GuiaIdRoute: typeof GuiaIdRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
   ImplantacaoIdRoute: typeof ImplantacaoIdRoute
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       path: '/guia'
       fullPath: '/guia/'
       preLoaderRoute: typeof GuiaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guia/$id': {
+      id: '/guia/$id'
+      path: '/guia/$id'
+      fullPath: '/guia/$id'
+      preLoaderRoute: typeof GuiaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospedes/': {
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ContratosIdRoute: ContratosIdRoute,
+  GuiaIdRoute: GuiaIdRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
   ImplantacaoIdRoute: ImplantacaoIdRoute,
