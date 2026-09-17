@@ -277,8 +277,8 @@ function AppsSection() {
         className="mb-3 rounded-[var(--radius-control)] px-3 py-2 text-xs"
         style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}
       >
-        Cada aplicativo tem credencial própria. Nunca existe uma chave mestra compartilhada
-        entre aplicativos — e o segredo nunca aparece nesta tela.
+        Cada aplicativo tem credencial própria. Nunca existe uma chave mestra compartilhada entre
+        aplicativos — e o segredo nunca aparece nesta tela.
       </p>
 
       {query.isPending ? (

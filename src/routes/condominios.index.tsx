@@ -50,7 +50,9 @@ function CondominiumsPage() {
         ) : rows.length === 0 ? (
           <EmptyRows
             message={
-              q ? "Nenhum condomínio encontrado para esta busca" : "Nenhum condomínio cadastrado ainda"
+              q
+                ? "Nenhum condomínio encontrado para esta busca"
+                : "Nenhum condomínio cadastrado ainda"
             }
           />
         ) : (

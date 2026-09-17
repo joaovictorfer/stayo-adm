@@ -14,11 +14,7 @@ export const mainStatusFlow: ImplementationStatus[] = [
 ];
 
 /** Estados alternativos — saem da linha principal, não são etapas dela. */
-export const alternateStatuses: ImplementationStatus[] = [
-  "pausado",
-  "nao_convertido",
-  "cancelado",
-];
+export const alternateStatuses: ImplementationStatus[] = ["pausado", "nao_convertido", "cancelado"];
 
 export const statusLabels: Record<ImplementationStatus, string> = {
   prospect: "Prospect",
@@ -57,9 +53,11 @@ export const itemStatusColor: Record<ImplementationItemStatus, string> = {
 const countsForProgress = (status: ImplementationItemStatus) =>
   status !== "nao_aplicavel" && status !== "pulado";
 
-export function computeProgress(
-  items: { status: ImplementationItemStatus }[],
-): { done: number; total: number; percent: number } {
+export function computeProgress(items: { status: ImplementationItemStatus }[]): {
+  done: number;
+  total: number;
+  percent: number;
+} {
   const relevant = items.filter((i) => countsForProgress(i.status));
   const done = relevant.filter((i) => i.status === "concluido").length;
   const total = relevant.length;
@@ -74,9 +72,7 @@ export function computeProgress(
 export function computeReadiness(
   items: { status: ImplementationItemStatus; mandatory: boolean; blocker: boolean }[],
 ): { ready: boolean; pendingBlockers: number; pendingMandatory: number } {
-  const open = items.filter(
-    (i) => countsForProgress(i.status) && i.status !== "concluido",
-  );
+  const open = items.filter((i) => countsForProgress(i.status) && i.status !== "concluido");
   const pendingBlockers = open.filter((i) => i.blocker).length;
   const pendingMandatory = open.filter((i) => i.mandatory).length;
   return {

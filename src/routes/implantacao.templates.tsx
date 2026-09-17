@@ -50,8 +50,7 @@ function ImplementationTemplatesPage() {
   const [form, setForm] = useState<ChecklistTemplateItemInput>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["checklist-templates"] });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["checklist-templates"] });
 
   const save = useMutation({
     mutationFn: async (input: ChecklistTemplateItemInput) =>
@@ -109,8 +108,8 @@ function ImplementationTemplatesPage() {
       <PageHeader title="Templates de checklist" count={items.length} />
 
       <p className="mb-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Categoria → fase → item. Tudo editável aqui: as exigências mudam com o tempo, então
-        nada fica fixo no código.
+        Categoria → fase → item. Tudo editável aqui: as exigências mudam com o tempo, então nada
+        fica fixo no código.
       </p>
 
       <div className="grid gap-4 lg:grid-cols-[22rem_1fr] lg:items-start">
@@ -160,7 +159,10 @@ function ImplementationTemplatesPage() {
               onChange={(v) => setForm({ ...form, title: v })}
             />
 
-            <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            <label
+              className="flex flex-col gap-1 text-xs"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
               Descrição
               <textarea
                 rows={3}
@@ -173,7 +175,10 @@ function ImplementationTemplatesPage() {
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            <label
+              className="flex flex-col gap-1 text-xs"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
               Ordem
               <input
                 type="number"
@@ -285,9 +290,7 @@ function ImplementationTemplatesPage() {
                           </span>
                           {item.mandatory && <Tag label="Obrigatório" />}
                           {item.blocker && <Tag label="Bloqueador" tone="danger" />}
-                          {item.ownerVisible && (
-                            <Tag label="Visível ao proprietário" tone="gold" />
-                          )}
+                          {item.ownerVisible && <Tag label="Visível ao proprietário" tone="gold" />}
                           <span className="ml-auto flex gap-2">
                             <button
                               type="button"

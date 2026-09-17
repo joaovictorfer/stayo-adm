@@ -33,8 +33,7 @@ function PropertiesPage() {
     const term = q.trim().toLowerCase();
     if (!term) return data;
     return data.filter(
-      (p) =>
-        p.name.toLowerCase().includes(term) || p.externalCode.toLowerCase().includes(term),
+      (p) => p.name.toLowerCase().includes(term) || p.externalCode.toLowerCase().includes(term),
     );
   }, [query.data, q]);
 
@@ -50,7 +49,9 @@ function PropertiesPage() {
           <ErrorRows onRetry={() => void query.refetch()} />
         ) : rows.length === 0 ? (
           <EmptyRows
-            message={q ? "Nenhum imóvel encontrado para esta busca" : "Nenhum imóvel cadastrado ainda"}
+            message={
+              q ? "Nenhum imóvel encontrado para esta busca" : "Nenhum imóvel cadastrado ainda"
+            }
           />
         ) : (
           <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
