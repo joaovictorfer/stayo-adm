@@ -26,6 +26,9 @@ import type {
   ImplementationItem,
   Proposal,
   EntityId,
+  GuideEntry,
+  UpsellProduct,
+  Payout,
 } from "../../types/core";
 import type {
   ConsumerApp,
@@ -103,6 +106,22 @@ export interface CoreApiClient {
 
   proposals: {
     list(implementationId: EntityId): Promise<Proposal[]>;
+  };
+
+  guide: {
+    list(params?: { cursor?: string }): Promise<Page<GuideEntry>>;
+    get(id: EntityId): Promise<GuideEntry | null>;
+  };
+
+  products: {
+    list(params?: { cursor?: string }): Promise<Page<UpsellProduct>>;
+    get(id: EntityId): Promise<UpsellProduct | null>;
+  };
+
+  /** Repasses — requer scope financial.read; nunca expõe dado de hóspede. */
+  payouts: {
+    list(params?: { cursor?: string }): Promise<Page<Payout>>;
+    get(id: EntityId): Promise<Payout | null>;
   };
 
   /** Área técnica de Configurações → Stayo Core. */
@@ -190,6 +209,18 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       list: (implementationId) =>
         request(`/api/core/v1/implementations/${implementationId}/proposals`),
     },
+    guide: {
+      list: (params) => request(`/api/core/v1/guide/entries${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/guide/entries/${id}`),
+    },
+    products: {
+      list: (params) => request(`/api/core/v1/products${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/products/${id}`),
+    },
+    payouts: {
+      list: (params) => request(`/api/core/v1/financial/payouts${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/financial/payouts/${id}`),
+    },
     admin: {
       overview: () => request("/api/core/v1/admin/overview"),
       apps: () => request("/api/core/v1/admin/apps"),
@@ -258,6 +289,9 @@ export function createMockCoreApiClient(): CoreApiClient {
       items: () => Promise.resolve([]),
     },
     proposals: { list: () => Promise.resolve([]) },
+    guide: { list: () => empty(), get: () => Promise.resolve(null) },
+    products: { list: () => empty(), get: () => Promise.resolve(null) },
+    payouts: { list: () => empty(), get: () => Promise.resolve(null) },
     admin: {
       overview: () =>
         Promise.resolve({

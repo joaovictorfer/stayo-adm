@@ -178,3 +178,21 @@ export const coreWebhooksQuery = () =>
 
 export const coreLogsQuery = () =>
   queryOptions({ queryKey: ["core-admin", "logs"], queryFn: () => coreApi.admin.logs() });
+
+export const guideEntriesListQuery = () =>
+  queryOptions({ queryKey: ["guide", "list"], queryFn: () => coreApi.guide.list() });
+
+export const guideEntryQuery = (id: EntityId) =>
+  queryOptions({ queryKey: ["guide", "detail", id], queryFn: () => coreApi.guide.get(id) });
+
+export const productsListQuery = () =>
+  queryOptions({ queryKey: ["products", "list"], queryFn: () => coreApi.products.list() });
+
+export const productQuery = (id: EntityId) =>
+  queryOptions({ queryKey: ["products", "detail", id], queryFn: () => coreApi.products.get(id) });
+
+export const payoutsListQuery = () =>
+  queryOptions({ queryKey: ["payouts", "list"], queryFn: () => coreApi.payouts.list() });
+
+export const payoutQuery = (id: EntityId) =>
+  queryOptions({ queryKey: ["payouts", "detail", id], queryFn: () => coreApi.payouts.get(id) });
