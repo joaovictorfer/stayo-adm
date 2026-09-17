@@ -1,0 +1,63 @@
+/**
+ * Tokens visuais do Stayo Admin.
+ *
+ * Direção: hospitalidade premium operacional — não é um site de marketing
+ * (sem hero, sem gradiente), é uma ferramenta que a equipe usa o dia
+ * inteiro no computador e, em campo (vistoria/implantação), no celular.
+ * A paleta parte do "verde institucional Stayo" citado no handoff
+ * (seção 44), lido como um verde-floresta abafado — não um verde-SaaS
+ * saturado — combinado com um dourado latão discreto para as ações que
+ * dependem de alguém fora da equipe (proprietário) responder.
+ */
+
+:root {
+  /* Base */
+  --stayo-ink: #1b231d;          /* texto primário, títulos */
+  --stayo-ink-muted: #5c665f;    /* texto secundário */
+  --stayo-bg: #f1f3ee;           /* fundo de página — verde-acinzentado suave */
+  --stayo-surface: #fdfdfb;      /* cards */
+  --stayo-border: #e0ded2;       /* divisores, bordas de card */
+
+  /* Marca / ações primárias */
+  --stayo-forest: #21402e;
+  --stayo-forest-strong: #163020;
+  --stayo-forest-soft: #e4ebe4;  /* fundo de badge/estado "ativo" */
+
+  /* Ação pendente de terceiro (proprietário) — "precisamos de você" */
+  --stayo-gold: #b98f46;
+  --stayo-gold-soft: #f4ecd9;
+
+  /* Estados semânticos */
+  --stayo-success: #3b6d11;
+  --stayo-warning: #97661e;
+  --stayo-danger: #8c3a2e;
+
+  /* Tipografia */
+  --stayo-font-display: "Fraunces", Georgia, serif; /* números de dashboard, títulos de fase/etapa */
+  --stayo-font-ui: "IBM Plex Sans", system-ui, sans-serif; /* nav, tabelas, formulários */
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --stayo-ink: #ecefe9;
+    --stayo-ink-muted: #a3ac9f;
+    --stayo-bg: #141713;
+    --stayo-surface: #1c1f1a;
+    --stayo-border: #2b2e27;
+    --stayo-forest-soft: #1f2c22;
+    --stayo-gold-soft: #2c2517;
+  }
+}
+
+:root[data-theme="dark"] {
+  --stayo-ink: #ecefe9;
+  --stayo-ink-muted: #a3ac9f;
+  --stayo-bg: #141713;
+  --stayo-surface: #1c1f1a;
+  --stayo-border: #2b2e27;
+  --stayo-forest-soft: #1f2c22;
+  --stayo-gold-soft: #2c2517;
+}
