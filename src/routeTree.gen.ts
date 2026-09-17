@@ -17,6 +17,7 @@ import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.i
 import { Route as ConfiguracoesAuditoriaRouteImport } from './routes/configuracoes.auditoria'
 import { Route as ConfiguracoesComercialRouteImport } from './routes/configuracoes.comercial'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
+import { Route as ConfiguracoesMigracaoRouteImport } from './routes/configuracoes.migracao'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
@@ -90,6 +91,11 @@ const ConfiguracoesIntegracoesRoute =
     path: '/configuracoes/integracoes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ConfiguracoesMigracaoRoute = ConfiguracoesMigracaoRouteImport.update({
+  id: '/configuracoes/migracao',
+  path: '/configuracoes/migracao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracoesStayoCoreRoute = ConfiguracoesStayoCoreRouteImport.update({
   id: '/configuracoes/stayo-core',
   path: '/configuracoes/stayo-core',
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
+  '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
+  '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
+  '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
+    | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
+    | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
+    | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
@@ -503,6 +515,7 @@ export interface RootRouteChildren {
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
   ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
+  ConfiguracoesMigracaoRoute: typeof ConfiguracoesMigracaoRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
@@ -594,6 +607,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes/integracoes'
       fullPath: '/configuracoes/integracoes'
       preLoaderRoute: typeof ConfiguracoesIntegracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/migracao': {
+      id: '/configuracoes/migracao'
+      path: '/configuracoes/migracao'
+      fullPath: '/configuracoes/migracao'
+      preLoaderRoute: typeof ConfiguracoesMigracaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/stayo-core': {
@@ -823,6 +843,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
   ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
+  ConfiguracoesMigracaoRoute: ConfiguracoesMigracaoRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,

@@ -83,12 +83,14 @@ export interface AdminApiClient {
   };
 }
 
-const AUDIT_LOGS_KEY = "stayo-admin:audit-logs";
-const OWNER_RECORDS_KEY = "stayo-admin:owner-records";
-const COMMERCIAL_TERM_DEFAULTS_KEY = "stayo-admin:commercial-term-defaults";
-const COMMERCIAL_TERMS_KEY = "stayo-admin:commercial-terms";
-const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
-const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
+// Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
+// reusar a mesma chave em vez de duplicar a string em outro arquivo.
+export const AUDIT_LOGS_KEY = "stayo-admin:audit-logs";
+export const OWNER_RECORDS_KEY = "stayo-admin:owner-records";
+export const COMMERCIAL_TERM_DEFAULTS_KEY = "stayo-admin:commercial-term-defaults";
+export const COMMERCIAL_TERMS_KEY = "stayo-admin:commercial-terms";
+export const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
+export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 
 /** Adapter local — usado enquanto não há credencial Supabase configurada. */
 export function createLocalAdminApiClient(): AdminApiClient {

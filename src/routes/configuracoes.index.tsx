@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ClipboardList, HandCoins, Plug, Server } from "lucide-react";
+import { ClipboardList, DatabaseZap, HandCoins, Plug, Server } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
 import { PageHeader } from "../components/data/ListStates";
@@ -59,6 +59,12 @@ const links: SettingsLink[] = [
     title: "Condições comerciais",
     description:
       "Taxas e valores padrão (administração, limpeza, implantação) para novas propostas.",
+  },
+  {
+    icon: DatabaseZap,
+    to: "/configuracoes/migracao",
+    title: "Migração de dados",
+    description: "Mapa de todo dado hoje em localStorage e o status da migração para o Supabase.",
   },
 ];
 
