@@ -112,6 +112,10 @@ export interface CoreApiClient {
     list(params?: { cursor?: string; status?: string }): Promise<Page<ImplementationProject>>;
     get(id: EntityId): Promise<ImplementationProject | null>;
     create(input: Partial<ImplementationProject>): Promise<ImplementationProject>;
+    update(
+      id: EntityId,
+      patch: Partial<Omit<ImplementationProject, "id" | "code" | "createdAt">>,
+    ): Promise<ImplementationProject>;
     items(implementationId: EntityId): Promise<ImplementationItem[]>;
     /** Clona o template de checklist vigente para esta implantação. Idempotente: se já existem itens, apenas os retorna. */
     generateChecklist(implementationId: EntityId): Promise<ImplementationItem[]>;
@@ -262,6 +266,9 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       get: (id) => request(`/api/core/v1/implementations/${id}`),
       create: async () => {
         throw new Error("create() ainda não implementado no cliente real");
+      },
+      update: async () => {
+        throw new Error("update() ainda não implementado no cliente real");
       },
       items: (implementationId) =>
         request(`/api/core/v1/implementations/${implementationId}/items`),
@@ -437,6 +444,21 @@ export function createMockCoreApiClient(): CoreApiClient {
         };
         write(IMPLEMENTATIONS_KEY, [...read<ImplementationProject>(IMPLEMENTATIONS_KEY), project]);
         return Promise.resolve(project);
+      },
+      update: (id, patch) => {
+        const all = read<ImplementationProject>(IMPLEMENTATIONS_KEY);
+        const target = all.find((i) => i.id === id);
+        if (!target) return Promise.reject(new Error("Implantação não encontrada"));
+        const updated: ImplementationProject = {
+          ...target,
+          ...patch,
+          updatedAt: new Date().toISOString(),
+        };
+        write(
+          IMPLEMENTATIONS_KEY,
+          all.map((i) => (i.id === id ? updated : i)),
+        );
+        return Promise.resolve(updated);
       },
       items: (implementationId) =>
         Promise.resolve(

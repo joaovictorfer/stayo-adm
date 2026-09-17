@@ -54,10 +54,18 @@ const surface = {
 
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<"resumo" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
+
+  const changeStatus = useMutation({
+    mutationFn: (status: ImplementationStatus) => coreApi.implementations.update(id, { status }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["implementations"] });
+    },
+  });
 
   return (
     <>
@@ -79,7 +87,11 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="flex flex-col gap-4">
-          <StatusStepper status={implementation.status} />
+          <StatusStepper
+            status={implementation.status}
+            onChange={(status) => changeStatus.mutate(status)}
+            pending={changeStatus.isPending}
+          />
 
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
@@ -263,12 +275,38 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
   );
 }
 
-function StatusStepper({ status }: { status: ImplementationStatus }) {
+function StatusStepper({
+  status,
+  onChange,
+  pending,
+}: {
+  status: ImplementationStatus;
+  onChange: (status: ImplementationStatus) => void;
+  pending: boolean;
+}) {
   const currentIndex = mainStatusFlow.indexOf(status);
   const isAlternate = alternateStatuses.includes(status);
 
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+          Status da implantação
+        </p>
+        <select
+          value={status}
+          onChange={(e) => onChange(e.target.value as ImplementationStatus)}
+          disabled={pending}
+          className="rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none disabled:opacity-60"
+          style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+        >
+          {[...mainStatusFlow, ...alternateStatuses].map((s) => (
+            <option key={s} value={s}>
+              {statusLabels[s]}
+            </option>
+          ))}
+        </select>
+      </div>
       <ol className="flex gap-2 overflow-x-auto pb-1">
         {mainStatusFlow.map((s, index) => {
           const done = currentIndex > index;
