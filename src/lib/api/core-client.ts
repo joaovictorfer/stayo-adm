@@ -541,6 +541,9 @@ export function createMockCoreApiClient(): CoreApiClient {
           ownerVisible: t.ownerVisible,
           completedAt: null,
           completedBy: null,
+          readinessOverrideReason: null,
+          readinessOverrideBy: null,
+          readinessOverrideAt: null,
         }));
         write(IMPLEMENTATION_ITEMS_KEY, [
           ...read<ImplementationItem>(IMPLEMENTATION_ITEMS_KEY),

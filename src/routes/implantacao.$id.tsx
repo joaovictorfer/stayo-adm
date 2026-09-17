@@ -584,7 +584,43 @@ function Checklist({
         status,
         completedAt: status === "concluido" ? new Date().toISOString() : null,
         completedBy: null,
+        // Trocar de status sempre limpa um override anterior — prontidão
+        // nunca deve herdar a justificativa de um estado diferente.
+        readinessOverrideReason: null,
+        readinessOverrideBy: null,
+        readinessOverrideAt: null,
       }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["implementations", "items", implementationId],
+      });
+    },
+  });
+
+  const override = useMutation({
+    mutationFn: async ({
+      itemId,
+      reason,
+      by,
+    }: {
+      itemId: EntityId;
+      reason: string;
+      by: string;
+    }) => {
+      const updated = await coreApi.implementations.updateChecklistItem(itemId, {
+        readinessOverrideReason: reason,
+        readinessOverrideBy: by,
+        readinessOverrideAt: new Date().toISOString(),
+      });
+      await adminApi.audit.log({
+        actorId: null,
+        event: "timeline.item_updated",
+        entityType: "implementation-item",
+        entityId: itemId,
+        metadata: { readinessOverride: true, reason, by },
+      });
+      return updated;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["implementations", "items", implementationId],
@@ -676,34 +712,39 @@ function Checklist({
               </p>
               <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
                 {list.map((item) => (
-                  <li key={item.id} className="flex flex-wrap items-center gap-2 px-4 py-3">
-                    <span className="text-sm" style={{ color: "var(--stayo-ink)" }}>
-                      {item.title}
-                    </span>
-                    {item.mandatory && <Tag label="Obrigatório" />}
-                    {item.blocker && <Tag label="Bloqueador" tone="danger" />}
-                    {item.ownerVisible && <Tag label="Visível ao proprietário" tone="gold" />}
-                    <select
-                      value={item.status}
-                      onChange={(e) =>
-                        updateStatus.mutate({
-                          itemId: item.id,
-                          status: e.target.value as ImplementationItem["status"],
-                        })
-                      }
-                      disabled={updateStatus.isPending}
-                      className="ml-auto rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none disabled:opacity-60"
-                      style={{
-                        borderColor: "var(--stayo-border)",
-                        color: itemStatusColor[item.status],
-                      }}
-                    >
-                      {Object.entries(itemStatusLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                  <li key={item.id} className="flex flex-col gap-2 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm" style={{ color: "var(--stayo-ink)" }}>
+                        {item.title}
+                      </span>
+                      {item.mandatory && <Tag label="Obrigatório" />}
+                      {item.blocker && <Tag label="Bloqueador" tone="danger" />}
+                      {item.ownerVisible && <Tag label="Visível ao proprietário" tone="gold" />}
+                      <select
+                        value={item.status}
+                        onChange={(e) =>
+                          updateStatus.mutate({
+                            itemId: item.id,
+                            status: e.target.value as ImplementationItem["status"],
+                          })
+                        }
+                        disabled={updateStatus.isPending}
+                        className="ml-auto rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none disabled:opacity-60"
+                        style={{
+                          borderColor: "var(--stayo-border)",
+                          color: itemStatusColor[item.status],
+                        }}
+                      >
+                        {Object.entries(itemStatusLabels).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {item.status === "pulado" && (item.mandatory || item.blocker) && (
+                      <ReadinessOverrideRow item={item} onConfirm={override.mutate} />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -711,6 +752,93 @@ function Checklist({
           ))}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Item pulado que é obrigatório/bloqueador continua contando como pendência
+ * de prontidão (ver `computeReadiness`) até um override formal e
+ * justificado — nunca vira "resolvido" só por trocar o status.
+ */
+function ReadinessOverrideRow({
+  item,
+  onConfirm,
+}: {
+  item: ImplementationItem;
+  onConfirm: (input: { itemId: EntityId; reason: string; by: string }) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [reason, setReason] = useState("");
+  const [by, setBy] = useState("");
+
+  if (item.readinessOverrideAt) {
+    return (
+      <p
+        className="rounded-[var(--radius-control)] px-3 py-2 text-xs"
+        style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}
+      >
+        Override de prontidão registrado por {item.readinessOverrideBy} em{" "}
+        {new Date(item.readinessOverrideAt).toLocaleString("pt-BR")}: {item.readinessOverrideReason}
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-[var(--radius-control)] border px-3 py-2 text-xs"
+      style={{ borderColor: "var(--stayo-danger)", color: "var(--stayo-danger)" }}
+    >
+      <p>
+        Item pulado, mas {item.mandatory ? "obrigatório" : "bloqueador"} — continua impedindo a
+        prontidão desta implantação, salvo override.
+      </p>
+      {expanded ? (
+        <div className="mt-2 flex flex-col gap-2">
+          <input
+            value={by}
+            onChange={(e) => setBy(e.target.value)}
+            placeholder="Autorizado por"
+            className="rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+          />
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Justificativa do override"
+            className="rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={reason.trim() === "" || by.trim() === ""}
+              onClick={() => onConfirm({ itemId: item.id, reason, by })}
+              className="rounded-[var(--radius-control)] px-2 py-1 text-xs disabled:opacity-50"
+              style={{ backgroundColor: "var(--stayo-danger)", color: "#fdfdfb" }}
+            >
+              Confirmar override
+            </button>
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="text-xs underline"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="mt-1 text-xs underline"
+          style={{ color: "var(--stayo-danger)" }}
+        >
+          Registrar override
+        </button>
+      )}
     </div>
   );
 }

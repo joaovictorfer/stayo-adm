@@ -156,6 +156,15 @@ export interface ImplementationItem {
   ownerVisible: boolean;
   completedAt: string | null;
   completedBy: EntityId | null;
+
+  /**
+   * Override formal de prontidão (seção 12 do plano): sem isto, um item
+   * "pulado" com `blocker`/`mandatory` continua contando como pendência de
+   * prontidão — "pulado" nunca significa "resolvido" automaticamente.
+   */
+  readinessOverrideReason: string | null;
+  readinessOverrideBy: string | null;
+  readinessOverrideAt: string | null;
 }
 
 export interface ProposalItem {
