@@ -18,6 +18,10 @@ import type {
   Reservation,
   Guest,
   Owner,
+  Inspection,
+  OperationTask,
+  Conversation,
+  Contract,
   ImplementationProject,
   ImplementationItem,
   Proposal,
@@ -53,7 +57,30 @@ export interface CoreApiClient {
   };
 
   owners: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<Owner>>;
+    get(id: EntityId): Promise<Owner | null>;
     search(q: string): Promise<Owner[]>;
+  };
+
+  inspections: {
+    list(params?: { cursor?: string; type?: string }): Promise<Page<Inspection>>;
+    get(id: EntityId): Promise<Inspection | null>;
+  };
+
+  operations: {
+    list(params?: { cursor?: string; status?: string }): Promise<Page<OperationTask>>;
+    get(id: EntityId): Promise<OperationTask | null>;
+  };
+
+  /** Lê da Central de Mensagens do STAYO.APP quando o Core expuser. */
+  conversations: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<Conversation>>;
+    get(id: EntityId): Promise<Conversation | null>;
+  };
+
+  contracts: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<Contract>>;
+    get(id: EntityId): Promise<Contract | null>;
   };
 
   // Estes três recursos abaixo, por ora, não existem no Core (ele ainda
@@ -112,7 +139,25 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       get: (id) => request(`/api/core/v1/guests/${id}`),
     },
     owners: {
+      list: (params) => request(`/api/core/v1/owners${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/owners/${id}`),
       search: (q) => request(`/api/core/v1/owners${queryString({ q })}`),
+    },
+    inspections: {
+      list: (params) => request(`/api/core/v1/inspections${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/inspections/${id}`),
+    },
+    operations: {
+      list: (params) => request(`/api/core/v1/operations/tasks${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/operations/tasks/${id}`),
+    },
+    conversations: {
+      list: (params) => request(`/api/core/v1/conversations${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/conversations/${id}`),
+    },
+    contracts: {
+      list: (params) => request(`/api/core/v1/contracts${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/contracts/${id}`),
     },
     implementations: {
       list: (params) => request(`/api/core/v1/implementations${queryString(params)}`),
@@ -150,7 +195,15 @@ export function createMockCoreApiClient(): CoreApiClient {
     condominiums: { list: () => empty(), get: () => Promise.resolve(null) },
     reservations: { list: () => empty(), get: () => Promise.resolve(null) },
     guests: { list: () => empty(), get: () => Promise.resolve(null) },
-    owners: { search: () => Promise.resolve([]) },
+    owners: {
+      list: () => empty(),
+      get: () => Promise.resolve(null),
+      search: () => Promise.resolve([]),
+    },
+    inspections: { list: () => empty(), get: () => Promise.resolve(null) },
+    operations: { list: () => empty(), get: () => Promise.resolve(null) },
+    conversations: { list: () => empty(), get: () => Promise.resolve(null) },
+    contracts: { list: () => empty(), get: () => Promise.resolve(null) },
     implementations: {
       list: () => empty(),
       get: () => Promise.resolve(null),

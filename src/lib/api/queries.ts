@@ -102,3 +102,63 @@ export const proposalsByImplementationQuery = (id: EntityId) =>
     queryKey: ["proposals", "implementation", id],
     queryFn: () => proposalsStore.list(id),
   });
+
+export const ownersListQuery = () =>
+  queryOptions({
+    queryKey: ["owners", "list"],
+    queryFn: () => coreApi.owners.list(),
+  });
+
+export const ownerQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["owners", "detail", id],
+    queryFn: () => coreApi.owners.get(id),
+  });
+
+export const inspectionsListQuery = () =>
+  queryOptions({
+    queryKey: ["inspections", "list"],
+    queryFn: () => coreApi.inspections.list(),
+  });
+
+export const inspectionQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["inspections", "detail", id],
+    queryFn: () => coreApi.inspections.get(id),
+  });
+
+export const operationTasksListQuery = () =>
+  queryOptions({
+    queryKey: ["operations", "list"],
+    queryFn: () => coreApi.operations.list(),
+  });
+
+export const operationTaskQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["operations", "detail", id],
+    queryFn: () => coreApi.operations.get(id),
+  });
+
+export const conversationsListQuery = () =>
+  queryOptions({
+    queryKey: ["conversations", "list"],
+    queryFn: () => coreApi.conversations.list(),
+  });
+
+export const conversationQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["conversations", "detail", id],
+    queryFn: () => coreApi.conversations.get(id),
+  });
+
+export const contractsListQuery = () =>
+  queryOptions({
+    queryKey: ["contracts", "list"],
+    queryFn: () => coreApi.contracts.list(),
+  });
+
+export const contractQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["contracts", "detail", id],
+    queryFn: () => coreApi.contracts.get(id),
+  });
