@@ -32,8 +32,18 @@ const periodOptions: { value: PeriodValue; label: string }[] = [
   { value: "30", label: "30d" },
 ];
 
+type ViewMode = "lista" | "agenda";
+const viewOptions: { value: ViewMode; label: string }[] = [
+  { value: "lista", label: "Lista" },
+  { value: "agenda", label: "Agenda" },
+];
+
+const dayLabel = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long" }).format(new Date(iso));
+
 function OperationPage() {
   const [period, setPeriod] = useState<PeriodValue>("7");
+  const [view, setView] = useState<ViewMode>("lista");
   const query = useQuery(operationTasksListQuery());
 
   const rows = useMemo(() => {
@@ -45,11 +55,24 @@ function OperationPage() {
     });
   }, [query.data, period]);
 
+  const byDay = useMemo(() => {
+    const map = new Map<string, typeof rows>();
+    for (const t of rows) {
+      const key = t.dueDate ?? "Sem data prevista";
+      map.set(key, [...(map.get(key) ?? []), t]);
+    }
+    for (const [, tasks] of map) {
+      tasks.sort((a, b) => (a.scheduledTime ?? "99:99").localeCompare(b.scheduledTime ?? "99:99"));
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [rows]);
+
   const unassigned = rows.filter((t) => !t.responsibleUserId).length;
 
   return (
     <>
       <PageHeader title="Operação">
+        <PeriodFilter value={view} onChange={setView} options={viewOptions} />
         <PeriodFilter value={period} onChange={setPeriod} options={periodOptions} />
       </PageHeader>
       <p className="mb-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -66,14 +89,20 @@ function OperationPage() {
         />
       </div>
 
-      <Panel>
-        {query.isPending ? (
+      {query.isPending ? (
+        <Panel>
           <ListSkeleton />
-        ) : query.isError ? (
+        </Panel>
+      ) : query.isError ? (
+        <Panel>
           <ErrorRows onRetry={() => void query.refetch()} />
-        ) : rows.length === 0 ? (
+        </Panel>
+      ) : rows.length === 0 ? (
+        <Panel>
           <EmptyRows message="Nenhuma pendência operacional no período selecionado" />
-        ) : (
+        </Panel>
+      ) : view === "lista" ? (
+        <Panel>
           <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
             {rows.map((t) => (
               <li key={t.id}>
@@ -94,8 +123,55 @@ function OperationPage() {
               </li>
             ))}
           </ul>
-        )}
-      </Panel>
+        </Panel>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {byDay.map(([day, tasks]) => (
+            <div
+              key={day}
+              className="rounded-[var(--radius-card)] border"
+              style={{
+                borderColor: "var(--stayo-border)",
+                backgroundColor: "var(--stayo-surface)",
+              }}
+            >
+              <h2
+                className="border-b px-4 py-2 text-sm capitalize"
+                style={{
+                  borderColor: "var(--stayo-border)",
+                  fontFamily: "var(--stayo-font-display)",
+                  color: "var(--stayo-ink)",
+                }}
+              >
+                {day === "Sem data prevista" ? day : dayLabel(day)}
+              </h2>
+              <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                {tasks.map((t) => (
+                  <li key={t.id}>
+                    <Link
+                      to="/operacao/$id"
+                      params={{ id: t.id }}
+                      className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
+                      style={{ color: "var(--stayo-ink)" }}
+                    >
+                      <span className="w-12 shrink-0" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {t.scheduledTime ?? "—"}
+                      </span>
+                      <span className="font-medium">{t.title}</span>
+                      <span style={{ color: "var(--stayo-ink-muted)" }}>
+                        {t.propertyName ?? t.propertyId ?? "—"}
+                      </span>
+                      <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {t.status}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }

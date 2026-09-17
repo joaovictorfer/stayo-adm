@@ -209,6 +209,18 @@ export const serviceProviderQuery = (id: EntityId) =>
     queryFn: () => coreApi.serviceProviders.get(id),
   });
 
+export const settlementsListQuery = () =>
+  queryOptions({
+    queryKey: ["settlements", "list"],
+    queryFn: () => coreApi.settlements.list(),
+  });
+
+export const settlementQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["settlements", "detail", id],
+    queryFn: () => coreApi.settlements.get(id),
+  });
+
 export const serviceInvoicesListQuery = () =>
   queryOptions({
     queryKey: ["service-invoices", "list"],
