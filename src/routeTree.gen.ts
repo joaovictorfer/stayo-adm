@@ -15,6 +15,7 @@ import { Route as CondominiosIndexRouteImport } from './routes/condominios.index
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
 import { Route as ConfiguracoesAuditoriaRouteImport } from './routes/configuracoes.auditoria'
+import { Route as ConfiguracoesComercialRouteImport } from './routes/configuracoes.comercial'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
@@ -76,6 +77,11 @@ const ConfiguracoesIndexRoute = ConfiguracoesIndexRouteImport.update({
 const ConfiguracoesAuditoriaRoute = ConfiguracoesAuditoriaRouteImport.update({
   id: '/configuracoes/auditoria',
   path: '/configuracoes/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesComercialRoute = ConfiguracoesComercialRouteImport.update({
+  id: '/configuracoes/comercial',
+  path: '/configuracoes/comercial',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesIntegracoesRoute =
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/bi': typeof BiRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -285,6 +292,7 @@ export interface FileRoutesByTo {
   '/bi': typeof BiRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -326,6 +334,7 @@ export interface FileRoutesById {
   '/bi': typeof BiRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
+    | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
+    | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
+    | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
@@ -489,6 +501,7 @@ export interface RootRouteChildren {
   BiRoute: typeof BiRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
+  ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ContratosIdRoute: typeof ContratosIdRoute
@@ -567,6 +580,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes/auditoria'
       fullPath: '/configuracoes/auditoria'
       preLoaderRoute: typeof ConfiguracoesAuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/comercial': {
+      id: '/configuracoes/comercial'
+      path: '/configuracoes/comercial'
+      fullPath: '/configuracoes/comercial'
+      preLoaderRoute: typeof ConfiguracoesComercialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/integracoes': {
@@ -801,6 +821,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiRoute: BiRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
+  ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ContratosIdRoute: ContratosIdRoute,

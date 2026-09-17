@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ClipboardList, Plug, Server } from "lucide-react";
+import { ClipboardList, HandCoins, Plug, Server } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
 import { PageHeader } from "../components/data/ListStates";
@@ -52,6 +52,13 @@ const links: SettingsLink[] = [
     to: "/configuracoes/auditoria",
     title: "Auditoria",
     description: "Histórico de ações sensíveis: implantações, propostas, convites, cobranças.",
+  },
+  {
+    icon: HandCoins,
+    to: "/configuracoes/comercial",
+    title: "Condições comerciais",
+    description:
+      "Taxas e valores padrão (administração, limpeza, implantação) para novas propostas.",
   },
 ];
 

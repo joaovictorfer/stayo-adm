@@ -16,6 +16,7 @@ import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
   adminApi,
+  commercialTermsQuery,
   coreApi,
   implementationItemsQuery,
   implementationQuery,
@@ -32,6 +33,7 @@ import {
   mainStatusFlow,
   statusLabels,
 } from "../lib/implementation-status";
+import type { ChargeType } from "../types/admin";
 import type { EntityId, ImplementationItem, ImplementationStatus } from "../types/core";
 
 export const Route = createFileRoute("/implantacao/$id")({
@@ -170,6 +172,8 @@ function ImplementationDetailPage() {
                 <Field label="Atualizada em" value={implementation.updatedAt} />
               </div>
 
+              <CommercialTermsPanel implementationId={implementation.id} />
+
               <OwnerPortalPanel implementationId={implementation.id} />
 
               <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
@@ -212,6 +216,115 @@ function recentActivity(items: ImplementationItem[]): TimelineEntry[] {
       timestamp: item.completedAt,
       actor: item.completedBy,
     }));
+}
+
+const chargeTypeLabels: Record<ChargeType, string> = {
+  percentage: "Percentual",
+  fixed_once: "Valor fixo (uma vez)",
+  per_reservation: "Por reserva",
+  monthly: "Mensal",
+  optional: "Opcional",
+  informational: "Informativo",
+};
+
+/** Snapshot das condições comerciais desta implantação — copiado dos defaults na criação. */
+function CommercialTermsPanel({ implementationId }: { implementationId: EntityId }) {
+  const queryClient = useQueryClient();
+  const query = useQuery(commercialTermsQuery(implementationId));
+  const terms = query.data ?? [];
+
+  const clone = useMutation({
+    mutationFn: () => adminApi.commercialTerms.cloneDefaults(implementationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["commercial-terms", implementationId] });
+    },
+  });
+
+  const updateValue = useMutation({
+    mutationFn: (input: { id: string; value: number }) =>
+      adminApi.commercialTerms.update(input.id, { value: input.value }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["commercial-terms", implementationId] });
+    },
+  });
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2
+          className="text-sm"
+          style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+        >
+          Condições comerciais
+        </h2>
+        {terms.length === 0 && !query.isPending && (
+          <button
+            type="button"
+            onClick={() => clone.mutate()}
+            disabled={clone.isPending}
+            className="text-xs underline disabled:opacity-60"
+            style={{ color: "var(--stayo-forest)" }}
+          >
+            {clone.isPending ? "Copiando..." : "Copiar dos padrões"}
+          </button>
+        )}
+      </div>
+
+      {query.isPending ? (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Carregando...
+        </p>
+      ) : terms.length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Nenhuma condição comercial nesta implantação ainda. Cadastre os padrões em Configurações →
+          Condições comerciais e copie aqui.
+        </p>
+      ) : (
+        <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          {terms.map((term) => (
+            <li key={term.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+              <span style={{ color: "var(--stayo-ink)" }}>{term.label}</span>
+              <span
+                className="rounded-full px-2 py-0.5 text-[11px]"
+                style={{
+                  backgroundColor: "var(--stayo-forest-soft)",
+                  color: "var(--stayo-forest)",
+                }}
+              >
+                {chargeTypeLabels[term.chargeType]}
+              </span>
+              {term.optional && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px]"
+                  style={{
+                    backgroundColor: "var(--stayo-gold-soft)",
+                    color: "var(--stayo-warning)",
+                  }}
+                >
+                  Opcional
+                </span>
+              )}
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                defaultValue={term.value}
+                onBlur={(e) => {
+                  const value = Number(e.target.value) || 0;
+                  if (value !== term.value) updateValue.mutate({ id: term.id, value });
+                }}
+                className="ml-auto w-28 rounded-[var(--radius-control)] border px-2 py-1 text-right text-sm outline-none"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              />
+              <span className="w-6 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                {term.chargeType === "percentage" ? "%" : "R$"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 /**

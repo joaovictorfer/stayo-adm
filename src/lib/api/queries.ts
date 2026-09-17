@@ -31,6 +31,18 @@ export const auditLogQuery = (params?: { entityType?: string; entityId?: string 
     queryFn: () => adminApi.audit.list(params),
   });
 
+export const commercialTermDefaultsQuery = () =>
+  queryOptions({
+    queryKey: ["commercial-term-defaults"],
+    queryFn: () => adminApi.commercialTermDefaults.list(),
+  });
+
+export const commercialTermsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["commercial-terms", implementationId],
+    queryFn: () => adminApi.commercialTerms.listByImplementation(implementationId),
+  });
+
 export const propertiesListQuery = () =>
   queryOptions({
     queryKey: ["properties", "list"],

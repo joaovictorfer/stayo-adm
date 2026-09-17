@@ -164,12 +164,13 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
         notes: input.notes || null,
       });
     },
-    onSuccess: (created) => {
+    onSuccess: async (created) => {
       queryClient.setQueryData(implementationsListQuery().queryKey, (prev) => ({
         data: [created, ...(prev?.data ?? [])],
         nextCursor: prev?.nextCursor ?? null,
       }));
       queryClient.setQueryData(["implementations", "detail", created.id], created);
+      await adminApi.commercialTerms.cloneDefaults(created.id);
       setForm(emptyForm);
       onClose();
     },

@@ -3,7 +3,11 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
-import { proposalShareLinkQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
+import {
+  commercialTermsQuery,
+  proposalShareLinkQuery,
+  proposalsByImplementationQuery,
+} from "../../lib/api/queries";
 import { proposalItemTotal, proposalShareStore, proposalsStore } from "../../lib/api/local-store";
 import type { EntityId, ProposalItem } from "../../types/core";
 
@@ -26,8 +30,11 @@ const emptyDraftItem: DraftItem = { description: "", quantity: 1, unitValue: 0, 
 export function ProposalTab({ implementationId }: { implementationId: EntityId }) {
   const queryClient = useQueryClient();
   const query = useQuery(proposalsByImplementationQuery(implementationId));
+  const commercialTermsQ = useQuery(commercialTermsQuery(implementationId));
   const versions = query.data ?? [];
   const latest = versions[0];
+
+  const recurringTerms = (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once");
 
   const [draft, setDraft] = useState<DraftItem[]>([{ ...emptyDraftItem }]);
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
@@ -164,14 +171,40 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setDraft([...draft, { ...emptyDraftItem }])}
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-            style={{ ...surface, color: "var(--stayo-forest)" }}
-          >
-            Adicionar item
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setDraft([...draft, { ...emptyDraftItem }])}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              Adicionar item
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const fixedTerms = (commercialTermsQ.data ?? []).filter(
+                  (t) => t.chargeType === "fixed_once",
+                );
+                const existingLabels = new Set(draft.map((i) => i.description));
+                const newItems: DraftItem[] = fixedTerms
+                  .filter((t) => !existingLabels.has(t.label))
+                  .map((t) => ({
+                    description: t.label,
+                    quantity: 1,
+                    unitValue: t.value,
+                    discount: 0,
+                  }));
+                if (newItems.length === 0) return;
+                setDraft([...draft.filter((i) => i.description.trim() !== ""), ...newItems]);
+              }}
+              disabled={commercialTermsQ.isPending}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              Adicionar das condições comerciais
+            </button>
+          </div>
           <p style={{ color: "var(--stayo-ink-muted)" }} className="text-xs">
             Total geral
             <span
@@ -182,6 +215,23 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </span>
           </p>
         </div>
+
+        {recurringTerms.length > 0 && (
+          <div
+            className="mt-3 rounded-[var(--radius-control)] border px-3 py-2 text-xs"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+          >
+            <span className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+              Condições recorrentes (não entram no total acima):
+            </span>{" "}
+            {recurringTerms
+              .map(
+                (t) =>
+                  `${t.label} — ${t.chargeType === "percentage" ? `${t.value}%` : currency.format(t.value)}`,
+              )
+              .join(" · ")}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button

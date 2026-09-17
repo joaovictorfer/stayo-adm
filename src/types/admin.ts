@@ -33,3 +33,37 @@ export interface OwnerRecordInput {
   email: string | null;
   document?: string | null;
 }
+
+/**
+ * Tipo de cobrança de uma condição comercial — nunca hardcodar um valor
+ * (taxa, preço) no código; isso vive em `commercial_term_defaults`,
+ * configurável em Configurações → Comercial.
+ */
+export type ChargeType =
+  "percentage" | "fixed_once" | "per_reservation" | "monthly" | "optional" | "informational";
+
+/** Default configurável — copiado (snapshot) para cada implantação nova. */
+export interface CommercialTermDefault {
+  id: EntityId;
+  label: string;
+  chargeType: ChargeType;
+  /** Percentual (ex: 20 = 20%) ou valor em reais, conforme `chargeType`. */
+  value: number;
+  optional: boolean;
+  displayOrder: number;
+  notes: string | null;
+}
+
+export type CommercialTermDefaultInput = Omit<CommercialTermDefault, "id">;
+
+/** Condição comercial de uma implantação específica — snapshot editável. */
+export interface CommercialTerm {
+  id: EntityId;
+  implementationId: EntityId;
+  label: string;
+  chargeType: ChargeType;
+  value: number;
+  optional: boolean;
+  displayOrder: number;
+  notes: string | null;
+}

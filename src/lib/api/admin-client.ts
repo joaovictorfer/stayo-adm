@@ -15,7 +15,13 @@
  */
 
 import type { AuditEvent, AuditLogEntry, AuditLogInput } from "../../types/audit";
-import type { OwnerRecord, OwnerRecordInput } from "../../types/admin";
+import type {
+  CommercialTerm,
+  CommercialTermDefault,
+  CommercialTermDefaultInput,
+  OwnerRecord,
+  OwnerRecordInput,
+} from "../../types/admin";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -32,10 +38,27 @@ export interface AdminApiClient {
     /** Dedupe simples por telefone — usado pelo cadastro rápido da Nova Implantação. */
     findOrCreateByPhone(input: OwnerRecordInput): Promise<OwnerRecord>;
   };
+  commercialTermDefaults: {
+    list(): Promise<CommercialTermDefault[]>;
+    create(input: CommercialTermDefaultInput): Promise<CommercialTermDefault>;
+    update(id: string, input: CommercialTermDefaultInput): Promise<CommercialTermDefault>;
+    remove(id: string): Promise<void>;
+  };
+  commercialTerms: {
+    listByImplementation(implementationId: string): Promise<CommercialTerm[]>;
+    /** Clona os defaults vigentes para a implantação — idempotente. */
+    cloneDefaults(implementationId: string): Promise<CommercialTerm[]>;
+    update(
+      id: string,
+      patch: Partial<Omit<CommercialTerm, "id" | "implementationId">>,
+    ): Promise<CommercialTerm>;
+  };
 }
 
 const AUDIT_LOGS_KEY = "stayo-admin:audit-logs";
 const OWNER_RECORDS_KEY = "stayo-admin:owner-records";
+const COMMERCIAL_TERM_DEFAULTS_KEY = "stayo-admin:commercial-term-defaults";
+const COMMERCIAL_TERMS_KEY = "stayo-admin:commercial-terms";
 
 /** Adapter local — usado enquanto não há credencial Supabase configurada. */
 export function createLocalAdminApiClient(): AdminApiClient {
@@ -122,7 +145,80 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners };
+  const commercialTermDefaults: AdminApiClient["commercialTermDefaults"] = {
+    list: () =>
+      Promise.resolve(
+        [...read<CommercialTermDefault>(COMMERCIAL_TERM_DEFAULTS_KEY)].sort(
+          (a, b) => a.displayOrder - b.displayOrder,
+        ),
+      ),
+    create: (input) => {
+      const item: CommercialTermDefault = { ...input, id: newId() };
+      write(COMMERCIAL_TERM_DEFAULTS_KEY, [
+        ...read<CommercialTermDefault>(COMMERCIAL_TERM_DEFAULTS_KEY),
+        item,
+      ]);
+      return Promise.resolve(item);
+    },
+    update: (id, input) => {
+      const updated: CommercialTermDefault = { ...input, id };
+      write(
+        COMMERCIAL_TERM_DEFAULTS_KEY,
+        read<CommercialTermDefault>(COMMERCIAL_TERM_DEFAULTS_KEY).map((i) =>
+          i.id === id ? updated : i,
+        ),
+      );
+      return Promise.resolve(updated);
+    },
+    remove: (id) => {
+      write(
+        COMMERCIAL_TERM_DEFAULTS_KEY,
+        read<CommercialTermDefault>(COMMERCIAL_TERM_DEFAULTS_KEY).filter((i) => i.id !== id),
+      );
+      return Promise.resolve();
+    },
+  };
+
+  const commercialTerms: AdminApiClient["commercialTerms"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<CommercialTerm>(COMMERCIAL_TERMS_KEY)
+          .filter((t) => t.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    cloneDefaults: async (implementationId) => {
+      const existing = read<CommercialTerm>(COMMERCIAL_TERMS_KEY).filter(
+        (t) => t.implementationId === implementationId,
+      );
+      if (existing.length > 0) return existing;
+      const defaults = await commercialTermDefaults.list();
+      const cloned: CommercialTerm[] = defaults.map((d) => ({
+        id: newId(),
+        implementationId,
+        label: d.label,
+        chargeType: d.chargeType,
+        value: d.value,
+        optional: d.optional,
+        displayOrder: d.displayOrder,
+        notes: d.notes,
+      }));
+      write(COMMERCIAL_TERMS_KEY, [...read<CommercialTerm>(COMMERCIAL_TERMS_KEY), ...cloned]);
+      return cloned;
+    },
+    update: async (id, patch) => {
+      const all = read<CommercialTerm>(COMMERCIAL_TERMS_KEY);
+      const target = all.find((t) => t.id === id);
+      if (!target) throw new Error("Condição comercial não encontrada");
+      const updated: CommercialTerm = { ...target, ...patch };
+      write(
+        COMMERCIAL_TERMS_KEY,
+        all.map((t) => (t.id === id ? updated : t)),
+      );
+      return Promise.resolve(updated);
+    },
+  };
+
+  return { audit, owners, commercialTermDefaults, commercialTerms };
 }
 
 interface AuditLogRow {
@@ -170,6 +266,52 @@ function ownerFromRow(row: OwnerRecordRow): OwnerRecord {
     coreOwnerId: row.core_owner_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+interface CommercialTermDefaultRow {
+  id: string;
+  label: string;
+  charge_type: CommercialTermDefault["chargeType"];
+  value: number;
+  optional: boolean;
+  display_order: number;
+  notes: string | null;
+}
+
+function defaultFromRow(row: CommercialTermDefaultRow): CommercialTermDefault {
+  return {
+    id: row.id,
+    label: row.label,
+    chargeType: row.charge_type,
+    value: row.value,
+    optional: row.optional,
+    displayOrder: row.display_order,
+    notes: row.notes,
+  };
+}
+
+interface CommercialTermRow {
+  id: string;
+  implementation_id: string;
+  label: string;
+  charge_type: CommercialTerm["chargeType"];
+  value: number;
+  optional: boolean;
+  display_order: number;
+  notes: string | null;
+}
+
+function termFromRow(row: CommercialTermRow): CommercialTerm {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    label: row.label,
+    chargeType: row.charge_type,
+    value: row.value,
+    optional: row.optional,
+    displayOrder: row.display_order,
+    notes: row.notes,
   };
 }
 
@@ -273,7 +415,109 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners };
+  const commercialTermDefaults: AdminApiClient["commercialTermDefaults"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("commercial_term_defaults")
+        .select()
+        .order("display_order")
+        .returns<CommercialTermDefaultRow[]>();
+      if (error) throw error;
+      return data.map(defaultFromRow);
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("commercial_term_defaults")
+        .insert({
+          label: input.label,
+          charge_type: input.chargeType,
+          value: input.value,
+          optional: input.optional,
+          display_order: input.displayOrder,
+          notes: input.notes,
+        })
+        .select()
+        .single<CommercialTermDefaultRow>();
+      if (error) throw error;
+      return defaultFromRow(data);
+    },
+    update: async (id, input) => {
+      const { data, error } = await client()
+        .from("commercial_term_defaults")
+        .update({
+          label: input.label,
+          charge_type: input.chargeType,
+          value: input.value,
+          optional: input.optional,
+          display_order: input.displayOrder,
+          notes: input.notes,
+        })
+        .eq("id", id)
+        .select()
+        .single<CommercialTermDefaultRow>();
+      if (error) throw error;
+      return defaultFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("commercial_term_defaults").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const commercialTerms: AdminApiClient["commercialTerms"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("commercial_terms")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order")
+        .returns<CommercialTermRow[]>();
+      if (error) throw error;
+      return data.map(termFromRow);
+    },
+    cloneDefaults: async (implementationId) => {
+      const existing = await commercialTerms.listByImplementation(implementationId);
+      if (existing.length > 0) return existing;
+      const defaults = await commercialTermDefaults.list();
+      if (defaults.length === 0) return [];
+      const { data, error } = await client()
+        .from("commercial_terms")
+        .insert(
+          defaults.map((d) => ({
+            implementation_id: implementationId,
+            label: d.label,
+            charge_type: d.chargeType,
+            value: d.value,
+            optional: d.optional,
+            display_order: d.displayOrder,
+            notes: d.notes,
+          })),
+        )
+        .select()
+        .returns<CommercialTermRow[]>();
+      if (error) throw error;
+      return data.map(termFromRow);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("commercial_terms")
+        .update({
+          label: patch.label,
+          charge_type: patch.chargeType,
+          value: patch.value,
+          optional: patch.optional,
+          display_order: patch.displayOrder,
+          notes: patch.notes,
+        })
+        .eq("id", id)
+        .select()
+        .single<CommercialTermRow>();
+      if (error) throw error;
+      return termFromRow(data);
+    },
+  };
+
+  return { audit, owners, commercialTermDefaults, commercialTerms };
 }
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
