@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { AlertTriangle, SquareCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -10,6 +11,7 @@ import {
   Panel,
   SelectFilter,
 } from "../components/data/ListStates";
+import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import { inspectionsListQuery } from "../lib/api/queries";
 import { inspectionTypeLabels } from "../lib/inspection-types";
 
@@ -37,6 +39,8 @@ function InspectionsPage() {
     return type === "todos" ? data : data.filter((i) => i.type === type);
   }, [query.data, type]);
 
+  const unassigned = rows.filter((i) => !i.responsibleUserId).length;
+
   return (
     <>
       <PageHeader title="Vistorias" count={query.isSuccess ? rows.length : undefined}>
@@ -50,6 +54,17 @@ function InspectionsPage() {
           ]}
         />
       </PageHeader>
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <IndicatorCard icon={SquareCheck} label="Vistorias no filtro" value={rows.length} />
+        <IndicatorCard
+          icon={AlertTriangle}
+          label="Sem responsável"
+          value={unassigned}
+          tone={unassigned > 0 ? "warning" : "neutral"}
+        />
+      </div>
+
       <Panel>
         {query.isPending ? (
           <ListSkeleton />
