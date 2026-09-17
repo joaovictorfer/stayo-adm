@@ -21,6 +21,7 @@ import type {
   Inspection,
   OperationTask,
   Conversation,
+  ConversationMessage,
   Contract,
   ImplementationProject,
   ImplementationItem,
@@ -90,6 +91,7 @@ export interface CoreApiClient {
   conversations: {
     list(params?: { cursor?: string; q?: string }): Promise<Page<Conversation>>;
     get(id: EntityId): Promise<Conversation | null>;
+    messages(conversationId: EntityId): Promise<ConversationMessage[]>;
   };
 
   contracts: {
@@ -219,6 +221,8 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
     conversations: {
       list: (params) => request(`/api/core/v1/conversations${queryString(params)}`),
       get: (id) => request(`/api/core/v1/conversations/${id}`),
+      messages: (conversationId) =>
+        request(`/api/core/v1/conversations/${conversationId}/messages`),
     },
     contracts: {
       list: (params) => request(`/api/core/v1/contracts${queryString(params)}`),
@@ -305,7 +309,11 @@ export function createMockCoreApiClient(): CoreApiClient {
     },
     inspections: { list: () => empty(), get: () => Promise.resolve(null) },
     operations: { list: () => empty(), get: () => Promise.resolve(null) },
-    conversations: { list: () => empty(), get: () => Promise.resolve(null) },
+    conversations: {
+      list: () => empty(),
+      get: () => Promise.resolve(null),
+      messages: () => Promise.resolve([]),
+    },
     contracts: { list: () => empty(), get: () => Promise.resolve(null) },
     implementations: {
       list: () => empty(),
