@@ -39,6 +39,7 @@ export interface CoreApiClient {
 
   condominiums: {
     list(params?: { cursor?: string; q?: string }): Promise<Page<Condominium>>;
+    get(id: EntityId): Promise<Condominium | null>;
   };
 
   reservations: {
@@ -47,6 +48,7 @@ export interface CoreApiClient {
   };
 
   guests: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<Guest>>;
     get(id: EntityId): Promise<Guest | null>;
   };
 
@@ -99,12 +101,14 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
     },
     condominiums: {
       list: (params) => request(`/api/core/v1/condominiums${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/condominiums/${id}`),
     },
     reservations: {
       list: (params) => request(`/api/core/v1/reservations${queryString(params)}`),
       get: (id) => request(`/api/core/v1/reservations/${id}`),
     },
     guests: {
+      list: (params) => request(`/api/core/v1/guests${queryString(params)}`),
       get: (id) => request(`/api/core/v1/guests/${id}`),
     },
     owners: {
@@ -143,9 +147,9 @@ export function createMockCoreApiClient(): CoreApiClient {
   return {
     health: () => Promise.resolve({ status: "ok", version: "mock" }),
     properties: { list: () => empty(), get: () => Promise.resolve(null) },
-    condominiums: { list: () => empty() },
+    condominiums: { list: () => empty(), get: () => Promise.resolve(null) },
     reservations: { list: () => empty(), get: () => Promise.resolve(null) },
-    guests: { get: () => Promise.resolve(null) },
+    guests: { list: () => empty(), get: () => Promise.resolve(null) },
     owners: { search: () => Promise.resolve([]) },
     implementations: {
       list: () => empty(),
