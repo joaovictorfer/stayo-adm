@@ -9,6 +9,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { operationTasksListQuery, reservationQuery } from "../lib/api/queries";
 import type { OperationTask, ReservationWebCheckinStatus } from "../types/core";
 
@@ -74,8 +75,28 @@ function ReservationDetailPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="ID" value={reservation.id} />
           <Field label="ID externo" value={reservation.externalId} />
-          <Field label="Imóvel" value={reservation.propertyId} />
-          <Field label="Hóspede" value={reservation.guestId} />
+          <Field
+            label="Imóvel"
+            value={
+              <LinkedField
+                to="/imoveis/$id"
+                id={reservation.propertyId}
+                label={reservation.propertyName}
+              />
+            }
+          />
+          <Field
+            label="Hóspede"
+            value={
+              reservation.guestId ? (
+                <LinkedField
+                  to="/hospedes/$id"
+                  id={reservation.guestId}
+                  label={reservation.guestName}
+                />
+              ) : null
+            }
+          />
           <Field label="Origem" value={reservation.source} />
           <Field label="Canal" value={reservation.channel} />
           <Field label="Check-in" value={reservation.checkin} />

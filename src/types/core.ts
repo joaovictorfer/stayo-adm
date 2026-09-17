@@ -68,7 +68,9 @@ export interface Reservation {
   id: EntityId;
   externalId: string | null;
   propertyId: EntityId;
+  propertyName: string | null;
   guestId: EntityId | null;
+  guestName: string | null;
   source: string | null;
   channel: string | null;
   checkin: string;

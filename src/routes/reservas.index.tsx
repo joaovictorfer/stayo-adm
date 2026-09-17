@@ -84,6 +84,9 @@ function ReservationsPage() {
                   style={{ color: "var(--stayo-ink)" }}
                 >
                   <span className="font-medium">{r.externalId ?? r.id}</span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                    {r.propertyName ?? r.propertyId}
+                  </span>
                   {r.channel && (
                     <span style={{ color: "var(--stayo-ink-muted)" }}>{r.channel}</span>
                   )}
