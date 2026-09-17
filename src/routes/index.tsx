@@ -6,6 +6,7 @@ import {
   Building2,
   Calendar,
   ClipboardList,
+  FileWarning,
   SquareCheck,
   Users,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import {
   condominiumsListQuery,
+  contractsListQuery,
   guestsListQuery,
   implementationsListQuery,
   inspectionsListQuery,
@@ -20,6 +22,7 @@ import {
   propertiesListQuery,
   reservationsListQuery,
 } from "../lib/api/queries";
+import { contractsExpiringWithin } from "../lib/contract-status";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,9 +51,14 @@ function DashboardPage() {
   const implementations = useQuery(implementationsListQuery());
   const inspections = useQuery(inspectionsListQuery());
   const operationTasks = useQuery(operationTasksListQuery());
+  const contracts = useQuery(contractsListQuery());
 
   const count = (q: { data?: { data: unknown[] } | undefined; isPending: boolean }) =>
     q.isPending ? "—" : (q.data?.data.length ?? 0);
+
+  const expiringContracts = contracts.isPending
+    ? []
+    : contractsExpiringWithin(contracts.data?.data ?? [], 60);
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,6 +95,12 @@ function DashboardPage() {
           icon={Briefcase}
           label="Pendências operacionais"
           value={count(operationTasks)}
+        />
+        <IndicatorCard
+          icon={FileWarning}
+          label="Contratos vencendo em 60d"
+          value={contracts.isPending ? "—" : expiringContracts.length}
+          tone={expiringContracts.length > 0 ? "warning" : "neutral"}
         />
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { FileText, FileWarning } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -10,7 +11,9 @@ import {
   Panel,
   SearchInput,
 } from "../components/data/ListStates";
+import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import { contractsListQuery } from "../lib/api/queries";
+import { contractsExpiringWithin } from "../lib/contract-status";
 
 export const Route = createFileRoute("/contratos/")({
   head: () => ({
@@ -43,6 +46,8 @@ function ContractsPage() {
     );
   }, [query.data, q]);
 
+  const expiring = useMemo(() => contractsExpiringWithin(query.data?.data ?? [], 60), [query.data]);
+
   return (
     <>
       <PageHeader title="Contratos" count={query.isSuccess ? rows.length : undefined}>
@@ -52,6 +57,17 @@ function ContractsPage() {
           placeholder="Buscar por código, proprietário ou imóvel"
         />
       </PageHeader>
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <IndicatorCard icon={FileText} label="Contratos no filtro" value={rows.length} />
+        <IndicatorCard
+          icon={FileWarning}
+          label="Vencendo em 60 dias"
+          value={expiring.length}
+          tone={expiring.length > 0 ? "warning" : "neutral"}
+        />
+      </div>
+
       <Panel>
         {query.isPending ? (
           <ListSkeleton />
