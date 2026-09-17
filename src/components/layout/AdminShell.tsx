@@ -56,8 +56,8 @@ const icons: Record<string, ComponentType<{ size?: number; className?: string }>
 const NavLink = Link as unknown as ComponentType<{
   to: string;
   className?: string;
-  style?: React.CSSProperties;
-  onClick?: () => void;
+  style?: React.CSSProperties | undefined;
+  onClick?: (() => void) | undefined;
   children?: ReactNode;
 }>;
 

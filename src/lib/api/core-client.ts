@@ -178,8 +178,8 @@ export function createMockCoreApiClient(): CoreApiClient {
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
 export function createDefaultCoreApiClient(): CoreApiClient {
-  const baseUrl = import.meta.env.VITE_CORE_API_URL as string | undefined;
-  const appToken = import.meta.env.VITE_CORE_APP_TOKEN as string | undefined;
+  const baseUrl = import.meta.env['VITE_CORE_API_URL'] as string | undefined;
+  const appToken = import.meta.env['VITE_CORE_APP_TOKEN'] as string | undefined;
 
   if (!baseUrl || !appToken) {
     return createMockCoreApiClient();
