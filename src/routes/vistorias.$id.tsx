@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import type { ComponentType } from "react";
 
 import {
   DetailSkeleton,
@@ -9,6 +8,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { inspectionQuery } from "../lib/api/queries";
 import { inspectionTypeLabels } from "../lib/inspection-types";
 
@@ -86,27 +86,5 @@ function InspectionDetailPage() {
         </div>
       )}
     </>
-  );
-}
-
-/** `to` vem de dados de configuração/relacionamento, então usamos o Link com tipagem solta. */
-const DynamicLink = Link as unknown as ComponentType<{
-  to: string;
-  params: Record<string, string>;
-  className?: string;
-  style?: React.CSSProperties;
-  children?: React.ReactNode;
-}>;
-
-function LinkedField({ to, id, label }: { to: string; id: string; label?: string | null }) {
-  return (
-    <DynamicLink
-      to={to}
-      params={{ id }}
-      className="underline"
-      style={{ color: "var(--stayo-forest)" }}
-    >
-      {label ?? id}
-    </DynamicLink>
   );
 }
