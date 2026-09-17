@@ -29,6 +29,7 @@ import { Route as HospedesIdRouteImport } from './routes/hospedes.$id'
 import { Route as ImoveisIndexRouteImport } from './routes/imoveis.index'
 import { Route as ImoveisIdRouteImport } from './routes/imoveis.$id'
 import { Route as ImplantacaoIndexRouteImport } from './routes/implantacao.index'
+import { Route as ImplantacaoIdRouteImport } from './routes/implantacao.$id'
 import { Route as ImplantacaoPropostasRouteImport } from './routes/implantacao.propostas'
 import { Route as ImplantacaoTemplatesRouteImport } from './routes/implantacao.templates'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
@@ -135,6 +136,11 @@ const ImplantacaoIndexRoute = ImplantacaoIndexRouteImport.update({
   path: '/implantacao/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImplantacaoIdRoute = ImplantacaoIdRouteImport.update({
+  id: '/implantacao/$id',
+  path: '/implantacao/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImplantacaoPropostasRoute = ImplantacaoPropostasRouteImport.update({
   id: '/implantacao/propostas',
   path: '/implantacao/propostas',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
+  '/implantacao/$id': typeof ImplantacaoIdRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/reservas/$id': typeof ReservasIdRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
+  '/implantacao/$id': typeof ImplantacaoIdRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/reservas/$id': typeof ReservasIdRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
+  '/implantacao/$id': typeof ImplantacaoIdRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/reservas/$id': typeof ReservasIdRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/configuracoes/stayo-core'
     | '/hospedes/$id'
     | '/imoveis/$id'
+    | '/implantacao/$id'
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/reservas/$id'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/configuracoes/stayo-core'
     | '/hospedes/$id'
     | '/imoveis/$id'
+    | '/implantacao/$id'
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/reservas/$id'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/configuracoes/stayo-core'
     | '/hospedes/$id'
     | '/imoveis/$id'
+    | '/implantacao/$id'
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/reservas/$id'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
+  ImplantacaoIdRoute: typeof ImplantacaoIdRoute
   ImplantacaoPropostasRoute: typeof ImplantacaoPropostasRoute
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   ReservasIdRoute: typeof ReservasIdRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImplantacaoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/implantacao/$id': {
+      id: '/implantacao/$id'
+      path: '/implantacao/$id'
+      fullPath: '/implantacao/$id'
+      preLoaderRoute: typeof ImplantacaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/implantacao/propostas': {
       id: '/implantacao/propostas'
       path: '/implantacao/propostas'
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
+  ImplantacaoIdRoute: ImplantacaoIdRoute,
   ImplantacaoPropostasRoute: ImplantacaoPropostasRoute,
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   ReservasIdRoute: ReservasIdRoute,
