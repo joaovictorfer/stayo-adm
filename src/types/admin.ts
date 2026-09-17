@@ -95,3 +95,31 @@ export type OutboundMessageInput = Omit<
   OutboundMessage,
   "id" | "status" | "providerMessageId" | "error" | "createdAt" | "sentAt" | "failedAt"
 >;
+
+export type InitialChargeStatus = "draft" | "issued" | "pending" | "paid" | "cancelled" | "overdue";
+
+export interface InitialChargeItem {
+  label: string;
+  amount: number;
+}
+
+/**
+ * Cobrança inicial (seção 25 do plano) — nasce dos itens `fixed_once` das
+ * condições comerciais no momento em que a proposta é aceita. Não é nota
+ * fiscal (seção 26): representa só o valor devido, uma vez.
+ */
+export interface InitialCharge {
+  id: EntityId;
+  code: string; // ex: COB-00001
+  implementationId: EntityId;
+  ownerId: EntityId | null;
+  proposalId: EntityId;
+  items: InitialChargeItem[];
+  amount: number;
+  status: InitialChargeStatus;
+  dueAt: string | null;
+  paymentReference: string | null;
+  paidAt: string | null;
+  notes: string | null;
+  createdAt: string;
+}

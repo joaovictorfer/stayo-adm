@@ -1,3 +1,4 @@
+import { nextSequentialCode } from "./sequential-code";
 import type { ImplementationItemStatus, ImplementationStatus } from "../types/core";
 
 /** Ciclo principal do funil de implantação, na ordem em que acontece. */
@@ -103,9 +104,5 @@ export function computeReadiness(
 }
 
 export function nextImplementationCode(existingCodes: string[]): string {
-  const numbers = existingCodes
-    .map((c) => Number.parseInt(c.replace(/\D/g, ""), 10))
-    .filter((n) => Number.isFinite(n));
-  const next = (numbers.length > 0 ? Math.max(...numbers) : 0) + 1;
-  return `IMP-${String(next).padStart(5, "0")}`;
+  return nextSequentialCode("IMP", existingCodes);
 }

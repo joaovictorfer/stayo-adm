@@ -19,11 +19,15 @@ import type {
   CommercialTerm,
   CommercialTermDefault,
   CommercialTermDefaultInput,
+  InitialCharge,
+  InitialChargeItem,
+  InitialChargeStatus,
   OutboundMessage,
   OutboundMessageInput,
   OwnerRecord,
   OwnerRecordInput,
 } from "../../types/admin";
+import { nextSequentialCode } from "../sequential-code";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -62,12 +66,28 @@ export interface AdminApiClient {
     markSent(id: string, providerMessageId: string | null): Promise<OutboundMessage>;
     markFailed(id: string, error: string): Promise<OutboundMessage>;
   };
+  initialCharges: {
+    listByImplementation(implementationId: string): Promise<InitialCharge[]>;
+    /** Idempotente por proposalId — aceitar a mesma versão duas vezes não duplica cobrança. */
+    createFromProposal(input: {
+      implementationId: string;
+      ownerId: string | null;
+      proposalId: string;
+      items: InitialChargeItem[];
+    }): Promise<InitialCharge>;
+    updateStatus(
+      id: string,
+      status: InitialChargeStatus,
+      patch?: { paymentReference?: string | null; paidAt?: string | null },
+    ): Promise<InitialCharge>;
+  };
 }
 
 const AUDIT_LOGS_KEY = "stayo-admin:audit-logs";
 const OWNER_RECORDS_KEY = "stayo-admin:owner-records";
 const COMMERCIAL_TERM_DEFAULTS_KEY = "stayo-admin:commercial-term-defaults";
 const COMMERCIAL_TERMS_KEY = "stayo-admin:commercial-terms";
+const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
 const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 
 /** Adapter local — usado enquanto não há credencial Supabase configurada. */
@@ -283,7 +303,71 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners, commercialTermDefaults, commercialTerms, outbox };
+  const initialCharges: AdminApiClient["initialCharges"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        [...read<InitialCharge>(INITIAL_CHARGES_KEY)]
+          .filter((c) => c.implementationId === implementationId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      ),
+    createFromProposal: async (input) => {
+      const all = read<InitialCharge>(INITIAL_CHARGES_KEY);
+      const existing = all.find((c) => c.proposalId === input.proposalId);
+      if (existing) return existing;
+      const charge: InitialCharge = {
+        id: newId(),
+        code: nextSequentialCode(
+          "COB",
+          all.map((c) => c.code),
+        ),
+        implementationId: input.implementationId,
+        ownerId: input.ownerId,
+        proposalId: input.proposalId,
+        items: input.items,
+        amount: input.items.reduce((sum, i) => sum + i.amount, 0),
+        status: "pending",
+        dueAt: null,
+        paymentReference: null,
+        paidAt: null,
+        notes: null,
+        createdAt: new Date().toISOString(),
+      };
+      write(INITIAL_CHARGES_KEY, [...all, charge]);
+      await audit.log({
+        actorId: null,
+        event: "charge.created",
+        entityType: "initial_charge",
+        entityId: charge.id,
+        metadata: { implementationId: input.implementationId, amount: charge.amount },
+      });
+      return charge;
+    },
+    updateStatus: async (id, status, patch) => {
+      const all = read<InitialCharge>(INITIAL_CHARGES_KEY);
+      const target = all.find((c) => c.id === id);
+      if (!target) throw new Error("Cobrança não encontrada");
+      const updated: InitialCharge = {
+        ...target,
+        status,
+        paymentReference: patch?.paymentReference ?? target.paymentReference,
+        paidAt: status === "paid" ? (patch?.paidAt ?? new Date().toISOString()) : target.paidAt,
+      };
+      write(
+        INITIAL_CHARGES_KEY,
+        all.map((c) => (c.id === id ? updated : c)),
+      );
+      await audit.log({
+        actorId: null,
+        event: "charge.status_changed",
+        entityType: "initial_charge",
+        entityId: id,
+        metadata: { from: target.status, to: status },
+      });
+      return updated;
+    },
+  };
+
+  return { audit, owners, commercialTermDefaults, commercialTerms, outbox, initialCharges };
 }
 
 interface AuditLogRow {
@@ -409,6 +493,40 @@ function outboundMessageFromRow(row: OutboundMessageRow): OutboundMessage {
     createdAt: row.created_at,
     sentAt: row.sent_at,
     failedAt: row.failed_at,
+  };
+}
+
+interface InitialChargeRow {
+  id: string;
+  code: string;
+  implementation_id: string;
+  owner_id: string | null;
+  proposal_id: string;
+  items: InitialChargeItem[];
+  amount: number;
+  status: InitialChargeStatus;
+  due_at: string | null;
+  payment_reference: string | null;
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+function initialChargeFromRow(row: InitialChargeRow): InitialCharge {
+  return {
+    id: row.id,
+    code: row.code,
+    implementationId: row.implementation_id,
+    ownerId: row.owner_id,
+    proposalId: row.proposal_id,
+    items: row.items,
+    amount: row.amount,
+    status: row.status,
+    dueAt: row.due_at,
+    paymentReference: row.payment_reference,
+    paidAt: row.paid_at,
+    notes: row.notes,
+    createdAt: row.created_at,
   };
 }
 
@@ -667,7 +785,71 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners, commercialTermDefaults, commercialTerms, outbox };
+  const initialCharges: AdminApiClient["initialCharges"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("initial_charges")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("created_at", { ascending: false })
+        .returns<InitialChargeRow[]>();
+      if (error) throw error;
+      return data.map(initialChargeFromRow);
+    },
+    createFromProposal: async (input) => {
+      const supabase = client();
+      const { data: existing, error: existingError } = await supabase
+        .from("initial_charges")
+        .select()
+        .eq("proposal_id", input.proposalId)
+        .maybeSingle<InitialChargeRow>();
+      if (existingError) throw existingError;
+      if (existing) return initialChargeFromRow(existing);
+
+      const { data: currentRows, error: listError } = await supabase
+        .from("initial_charges")
+        .select("code")
+        .returns<{ code: string }[]>();
+      if (listError) throw listError;
+      const code = nextSequentialCode(
+        "COB",
+        currentRows.map((r) => r.code),
+      );
+      const amount = input.items.reduce((sum, i) => sum + i.amount, 0);
+
+      const { data, error } = await supabase
+        .from("initial_charges")
+        .insert({
+          code,
+          implementation_id: input.implementationId,
+          owner_id: input.ownerId,
+          proposal_id: input.proposalId,
+          items: input.items,
+          amount,
+          status: "pending",
+        })
+        .select()
+        .single<InitialChargeRow>();
+      if (error) throw error;
+      return initialChargeFromRow(data);
+    },
+    updateStatus: async (id, status, patch) => {
+      const { data, error } = await client()
+        .from("initial_charges")
+        .update({
+          status,
+          payment_reference: patch?.paymentReference,
+          paid_at: status === "paid" ? (patch?.paidAt ?? new Date().toISOString()) : undefined,
+        })
+        .eq("id", id)
+        .select()
+        .single<InitialChargeRow>();
+      if (error) throw error;
+      return initialChargeFromRow(data);
+    },
+  };
+
+  return { audit, owners, commercialTermDefaults, commercialTerms, outbox, initialCharges };
 }
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */

@@ -49,6 +49,12 @@ export const outboxQuery = (implementationId: EntityId) =>
     queryFn: () => adminApi.outbox.listByImplementation(implementationId),
   });
 
+export const initialChargesQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["initial-charges", implementationId],
+    queryFn: () => adminApi.initialCharges.listByImplementation(implementationId),
+  });
+
 export const propertiesListQuery = () =>
   queryOptions({
     queryKey: ["properties", "list"],

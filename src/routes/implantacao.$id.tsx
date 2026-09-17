@@ -20,10 +20,12 @@ import {
   coreApi,
   implementationItemsQuery,
   implementationQuery,
+  initialChargesQuery,
   ownerOnboardingLinkQuery,
   ownerOnboardingSubmissionQuery,
 } from "../lib/api/queries";
 import { ownerOnboardingStore } from "../lib/api/local-store";
+import { formatMoney } from "../lib/format";
 import {
   alternateStatuses,
   computeProgress,
@@ -33,7 +35,8 @@ import {
   mainStatusFlow,
   statusLabels,
 } from "../lib/implementation-status";
-import type { ChargeType } from "../types/admin";
+import { initialChargeStatusLabels } from "../lib/initial-charge-status";
+import type { ChargeType, InitialChargeStatus } from "../types/admin";
 import type { EntityId, ImplementationItem, ImplementationStatus } from "../types/core";
 import {
   type OwnerOnboardingLinkStatus,
@@ -179,6 +182,8 @@ function ImplementationDetailPage() {
               <CommercialTermsPanel implementationId={implementation.id} />
 
               <OwnerPortalPanel implementationId={implementation.id} />
+
+              <InitialChargesPanel implementationId={implementation.id} />
 
               <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
                 <h2
@@ -487,6 +492,89 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
           )}
         </>
       )}
+    </div>
+  );
+}
+
+const initialChargeStatusOptions: InitialChargeStatus[] = [
+  "pending",
+  "issued",
+  "paid",
+  "overdue",
+  "cancelled",
+];
+
+/**
+ * Cobrança inicial (seção 25) — nasce automaticamente quando o proprietário
+ * aceita a proposta (itens `fixed_once`). Aqui o time só acompanha e marca
+ * como paga; nunca cria ou edita o valor manualmente.
+ */
+function InitialChargesPanel({ implementationId }: { implementationId: EntityId }) {
+  const queryClient = useQueryClient();
+  const query = useQuery(initialChargesQuery(implementationId));
+  const charges = query.data ?? [];
+
+  const updateStatus = useMutation({
+    mutationFn: (input: { id: string; status: InitialChargeStatus }) =>
+      adminApi.initialCharges.updateStatus(input.id, input.status),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["initial-charges", implementationId] });
+    },
+  });
+
+  if (query.isPending) return null;
+  if (charges.length === 0) return null;
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Cobrança inicial
+      </h2>
+      <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+        {charges.map((charge) => (
+          <li key={charge.id} className="flex flex-col gap-2 py-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span style={{ color: "var(--stayo-ink-muted)" }}>{charge.code}</span>
+              <span className="font-medium">{formatMoney(charge.amount)}</span>
+            </div>
+            <ul className="pl-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              {charge.items.map((item, i) => (
+                <li key={i}>
+                  {item.label} — {formatMoney(item.amount)}
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={charge.status}
+                onChange={(e) =>
+                  updateStatus.mutate({
+                    id: charge.id,
+                    status: e.target.value as InitialChargeStatus,
+                  })
+                }
+                disabled={updateStatus.isPending}
+                className="rounded-[var(--radius-control)] border px-2 py-1 text-xs"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              >
+                {initialChargeStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {initialChargeStatusLabels[status]}
+                  </option>
+                ))}
+              </select>
+              {charge.paidAt && (
+                <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                  Pago em {new Date(charge.paidAt).toLocaleString("pt-BR")}
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

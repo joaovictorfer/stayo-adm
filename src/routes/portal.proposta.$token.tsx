@@ -7,9 +7,11 @@ import {
   adminApi,
   commercialTermsQuery,
   implementationQuery,
+  initialChargesQuery,
   proposalByIdQuery,
   proposalShareLinkByTokenQuery,
 } from "../lib/api/queries";
+import { initialChargeStatusLabels } from "../lib/initial-charge-status";
 import { generateProposalPdf } from "../lib/pdf/proposal-pdf";
 
 export const Route = createFileRoute("/portal/proposta/$token")({
@@ -103,7 +105,9 @@ function ProposalView({
   // Sempre ESTA versão específica — nunca "a mais recente da implantação".
   const proposalQ = useQuery(proposalByIdQuery(proposalId));
   const commercialTermsQ = useQuery(commercialTermsQuery(implementationId));
+  const initialChargesQ = useQuery(initialChargesQuery(implementationId));
   const proposal = proposalQ.data;
+  const charge = initialChargesQ.data?.find((c) => c.proposalId === proposalId);
   const [acceptedName, setAcceptedName] = useState("");
   const [agreed, setAgreed] = useState(false);
 
@@ -140,10 +144,22 @@ function ProposalView({
           acceptedName: acceptedName.trim(),
         },
       });
+      const fixedOnceTerms = (commercialTermsQ.data ?? []).filter(
+        (t) => t.chargeType === "fixed_once",
+      );
+      if (fixedOnceTerms.length > 0) {
+        await adminApi.initialCharges.createFromProposal({
+          implementationId,
+          ownerId: implementationQ.data?.ownerId ?? null,
+          proposalId,
+          items: fixedOnceTerms.map((t) => ({ label: t.label, amount: t.value })),
+        });
+      }
       return accepted;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["proposals"] });
+      await queryClient.invalidateQueries({ queryKey: ["initial-charges", implementationId] });
     },
   });
 
@@ -218,10 +234,36 @@ function ProposalView({
 
       <div className="mt-6">
         {proposal.acceptedAt ? (
-          <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
-            Proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
-            {new Date(proposal.acceptedAt).toLocaleString("pt-BR")}.
-          </p>
+          <div className="flex flex-col gap-3">
+            <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
+              Proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
+              {new Date(proposal.acceptedAt).toLocaleString("pt-BR")}.
+            </p>
+            {charge ? (
+              <div className="rounded-[var(--radius-card)] border p-3 text-sm" style={surface}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Cobrança inicial</span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                    {initialChargeStatusLabels[charge.status]}
+                  </span>
+                </div>
+                <ul className="mt-2 divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                  {charge.items.map((item, i) => (
+                    <li key={i} className="flex items-center justify-between py-1 text-xs">
+                      <span>{item.label}</span>
+                      <span>{currency.format(item.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {charge.code}
+                  </span>
+                  <span className="text-base font-medium">{currency.format(charge.amount)}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm">
