@@ -20,12 +20,14 @@ import type {
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
 import type { ProposalShareLink } from "../../types/proposal-share";
+import type { OwnerNote } from "../../types/owner-note";
 
 const TEMPLATES_KEY = "stayo-admin:checklist-templates";
 const PROPOSALS_KEY = "stayo-admin:proposals";
 const OWNER_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 const OWNER_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 const PROPOSAL_SHARE_LINKS_KEY = "stayo-admin:proposal-share-links";
+const OWNER_NOTES_KEY = "stayo-admin:owner-notes";
 
 /** Exportadas para o mock de core-client.ts reaproveitar a mesma persistência para entidades que já existem no contrato do Core (guia, produtos) mas ainda não têm escrita real. */
 export function read<T>(key: string): T[] {
@@ -192,6 +194,18 @@ export const ownerOnboardingStore = {
     );
     write(OWNER_SUBMISSIONS_KEY, [...others, submission]);
     return submission;
+  },
+};
+
+export const ownerNotesStore = {
+  get: async (ownerId: EntityId): Promise<OwnerNote | null> =>
+    read<OwnerNote>(OWNER_NOTES_KEY).find((n) => n.ownerId === ownerId) ?? null,
+
+  save: async (ownerId: EntityId, content: string): Promise<OwnerNote> => {
+    const note: OwnerNote = { ownerId, content, updatedAt: new Date().toISOString() };
+    const others = read<OwnerNote>(OWNER_NOTES_KEY).filter((n) => n.ownerId !== ownerId);
+    write(OWNER_NOTES_KEY, [...others, note]);
+    return note;
   },
 };
 
