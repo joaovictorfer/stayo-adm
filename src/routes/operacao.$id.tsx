@@ -86,7 +86,13 @@ function OperationTaskDetailPage() {
           <Field
             label="Reserva"
             value={
-              task.reservationId ? <LinkedField to="/reservas/$id" id={task.reservationId} /> : null
+              task.reservationId ? (
+                <LinkedField
+                  to="/reservas/$id"
+                  id={task.reservationId}
+                  label={task.reservationCode}
+                />
+              ) : null
             }
           />
           <Field label="Prazo" value={task.dueDate} />

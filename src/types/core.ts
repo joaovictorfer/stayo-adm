@@ -182,6 +182,7 @@ export interface Inspection {
   implementationId: EntityId | null;
   /** Preenchido quando a vistoria é de entrada/saída de uma reserva. */
   reservationId: EntityId | null;
+  reservationCode: string | null;
   scheduledFor: string | null;
   responsibleUserId: EntityId | null;
   status: string;
@@ -229,6 +230,7 @@ export interface OperationTask {
   propertyId: EntityId | null;
   propertyName: string | null;
   reservationId: EntityId | null;
+  reservationCode: string | null;
   dueDate: string | null;
   /** Horário previsto de execução no dia, ex: "11:00". */
   scheduledTime: string | null;
@@ -252,7 +254,9 @@ export interface Conversation {
   subject: string | null;
   participantName: string | null;
   propertyId: EntityId | null;
+  propertyName: string | null;
   reservationId: EntityId | null;
+  reservationCode: string | null;
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
   unreadCount: number;

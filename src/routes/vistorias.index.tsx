@@ -144,6 +144,7 @@ function NewInspectionDrawer({ open, onClose }: { open: boolean; onClose: () => 
         propertyName: property.name,
         implementationId: null,
         reservationId: null,
+        reservationCode: null,
         scheduledFor: form.scheduledFor || null,
         responsibleUserId: null,
         status: "pendente",

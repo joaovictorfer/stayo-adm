@@ -8,6 +8,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { conversationMessagesQuery, conversationQuery } from "../lib/api/queries";
 import type { ConversationMessage } from "../types/core";
 
@@ -62,8 +63,30 @@ function ConversationDetailPage() {
             <Field label="Canal" value={conversation.channel} />
             <Field label="Assunto" value={conversation.subject} />
             <Field label="Participante" value={conversation.participantName} />
-            <Field label="Imóvel" value={conversation.propertyId} />
-            <Field label="Reserva" value={conversation.reservationId} />
+            <Field
+              label="Imóvel"
+              value={
+                conversation.propertyId ? (
+                  <LinkedField
+                    to="/imoveis/$id"
+                    id={conversation.propertyId}
+                    label={conversation.propertyName}
+                  />
+                ) : null
+              }
+            />
+            <Field
+              label="Reserva"
+              value={
+                conversation.reservationId ? (
+                  <LinkedField
+                    to="/reservas/$id"
+                    id={conversation.reservationId}
+                    label={conversation.reservationCode}
+                  />
+                ) : null
+              }
+            />
             <Field label="Não lidas" value={conversation.unreadCount} />
             <Field label="Status" value={conversation.status} />
             <Field label="Criada em" value={conversation.createdAt} />
