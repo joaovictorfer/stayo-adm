@@ -14,9 +14,16 @@ import type {
   ChecklistTemplateItem,
   ChecklistTemplateItemInput,
 } from "../../types/checklist-template";
+import type {
+  OwnerOnboardingLink,
+  OwnerOnboardingSubmission,
+  OwnerOnboardingSubmissionInput,
+} from "../../types/owner-onboarding";
 
 const TEMPLATES_KEY = "stayo-admin:checklist-templates";
 const PROPOSALS_KEY = "stayo-admin:proposals";
+const OWNER_LINKS_KEY = "stayo-admin:owner-onboarding-links";
+const OWNER_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 
 function read<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
@@ -43,9 +50,7 @@ export const checklistTemplatesStore = {
   list: async (): Promise<ChecklistTemplateItem[]> =>
     read<ChecklistTemplateItem>(TEMPLATES_KEY).sort(
       (a, b) =>
-        a.category.localeCompare(b.category) ||
-        a.phase.localeCompare(b.phase) ||
-        a.order - b.order,
+        a.category.localeCompare(b.category) || a.phase.localeCompare(b.phase) || a.order - b.order,
     ),
 
   create: async (input: ChecklistTemplateItemInput): Promise<ChecklistTemplateItem> => {
@@ -84,10 +89,7 @@ export const proposalsStore = {
       .sort((a, b) => b.version - a.version),
 
   /** Cada salvamento cria uma NOVA versão — nunca sobrescreve a anterior. */
-  createVersion: async (
-    implementationId: EntityId,
-    items: ProposalItem[],
-  ): Promise<Proposal> => {
+  createVersion: async (implementationId: EntityId, items: ProposalItem[]): Promise<Proposal> => {
     const all = read<Proposal>(PROPOSALS_KEY);
     const versions = all.filter((p) => p.implementationId === implementationId);
     const proposal: Proposal = {
@@ -101,6 +103,56 @@ export const proposalsStore = {
     };
     write(PROPOSALS_KEY, [...all, proposal]);
     return proposal;
+  },
+};
+
+/**
+ * Auto-cadastro do proprietário via link — não é autenticado (não existe
+ * login ainda no Admin nem no Core). O token só evita adivinhação trivial
+ * da implantação; não é controle de acesso de verdade.
+ */
+export const ownerOnboardingStore = {
+  getLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink | null> =>
+    read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find(
+      (l) => l.implementationId === implementationId,
+    ) ?? null,
+
+  /** Idempotente: reaproveita o link existente em vez de invalidar o anterior. */
+  createLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink> => {
+    const all = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
+    const existing = all.find((l) => l.implementationId === implementationId);
+    if (existing) return existing;
+    const link: OwnerOnboardingLink = {
+      implementationId,
+      token: newId(),
+      createdAt: new Date().toISOString(),
+    };
+    write(OWNER_LINKS_KEY, [...all, link]);
+    return link;
+  },
+
+  findByToken: async (token: string): Promise<OwnerOnboardingLink | null> =>
+    read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find((l) => l.token === token) ?? null,
+
+  getSubmission: async (implementationId: EntityId): Promise<OwnerOnboardingSubmission | null> =>
+    read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).find(
+      (s) => s.implementationId === implementationId,
+    ) ?? null,
+
+  submit: async (
+    implementationId: EntityId,
+    input: OwnerOnboardingSubmissionInput,
+  ): Promise<OwnerOnboardingSubmission> => {
+    const submission: OwnerOnboardingSubmission = {
+      implementationId,
+      ...input,
+      submittedAt: new Date().toISOString(),
+    };
+    const others = read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).filter(
+      (s) => s.implementationId !== implementationId,
+    );
+    write(OWNER_SUBMISSIONS_KEY, [...others, submission]);
+    return submission;
   },
 };
 

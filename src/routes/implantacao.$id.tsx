@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Check, Copy } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -12,7 +13,13 @@ import {
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
-import { implementationItemsQuery, implementationQuery } from "../lib/api/queries";
+import {
+  implementationItemsQuery,
+  implementationQuery,
+  ownerOnboardingLinkQuery,
+  ownerOnboardingSubmissionQuery,
+} from "../lib/api/queries";
+import { ownerOnboardingStore } from "../lib/api/local-store";
 import {
   alternateStatuses,
   computeProgress,
@@ -22,7 +29,7 @@ import {
   mainStatusFlow,
   statusLabels,
 } from "../lib/implementation-status";
-import type { ImplementationItem, ImplementationStatus } from "../types/core";
+import type { EntityId, ImplementationItem, ImplementationStatus } from "../types/core";
 
 export const Route = createFileRoute("/implantacao/$id")({
   head: () => ({
@@ -119,6 +126,8 @@ function ImplementationDetailPage() {
                 <Field label="Atualizada em" value={implementation.updatedAt} />
               </div>
 
+              <OwnerPortalPanel implementationId={implementation.id} />
+
               <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
                 <h2
                   className="mb-3 text-sm"
@@ -158,6 +167,98 @@ function recentActivity(items: ImplementationItem[]): TimelineEntry[] {
       timestamp: item.completedAt,
       actor: item.completedBy,
     }));
+}
+
+/**
+ * Link público (sem autenticação — não existe login ainda) pro proprietário
+ * preencher os próprios dados durante a implantação, pra depois vincular ao
+ * cadastro oficial do imóvel/proprietário no Core.
+ */
+function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) {
+  const queryClient = useQueryClient();
+  const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
+  const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(implementationId));
+  const [copied, setCopied] = useState(false);
+
+  const createLink = useMutation({
+    mutationFn: () => ownerOnboardingStore.createLink(implementationId),
+    onSuccess: (link) => {
+      queryClient.setQueryData(ownerOnboardingLinkQuery(implementationId).queryKey, link);
+    },
+  });
+
+  const url = linkQuery.data
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/implantacao/${linkQuery.data.token}`
+    : null;
+
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard indisponível (ex: contexto não seguro) — link já está visível pra copiar manualmente.
+    }
+  };
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Cadastro do proprietário
+      </h2>
+
+      {submissionQuery.data ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Nome completo" value={submissionQuery.data.fullName} />
+          <Field label="Documento" value={submissionQuery.data.document} />
+          <Field label="E-mail" value={submissionQuery.data.email} />
+          <Field label="Telefone" value={submissionQuery.data.phone} />
+          <Field label="Chave Pix" value={submissionQuery.data.pixKey} />
+          <Field label="Recebido em" value={submissionQuery.data.submittedAt} />
+        </div>
+      ) : (
+        <>
+          <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+            Gere um link para o proprietário preencher os próprios dados — eles ficam aqui assim que
+            ele enviar.
+          </p>
+          {url ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <code
+                className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              >
+                {url}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copy()}
+                className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
+                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? "Copiado" : "Copiar"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => createLink.mutate()}
+              disabled={createLink.isPending}
+              className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+            >
+              {createLink.isPending ? "Gerando..." : "Gerar link para o proprietário"}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 function StatusStepper({ status }: { status: ImplementationStatus }) {
