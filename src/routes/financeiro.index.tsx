@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ClipboardList, DollarSign, FileText, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -12,6 +13,7 @@ import {
   SearchInput,
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
+import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import {
   expensesListQuery,
   payoutsListQuery,
@@ -54,12 +56,67 @@ const tabLabels = {
   despesas: "Despesas",
 } as const;
 
+function FinanceSummary() {
+  const payoutsQuery = useQuery(payoutsListQuery());
+  const invoicesQuery = useQuery(serviceInvoicesListQuery());
+  const settlementsQuery = useQuery(settlementsListQuery());
+  const expensesQuery = useQuery(expensesListQuery());
+
+  const totalPayouts = (payoutsQuery.data?.data ?? []).reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  const pendingInvoices = (invoicesQuery.data?.data ?? []).filter((i) => !i.paidAt);
+  const openSettlements = (settlementsQuery.data?.data ?? []).filter((s) => s.status === "aberto");
+  const openExpenses = (expensesQuery.data?.data ?? []).filter((e) => e.status === "aberto");
+
+  const pending = "…";
+
+  return (
+    <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <IndicatorCard
+        icon={Wallet}
+        label="Total repassado"
+        value={payoutsQuery.isPending ? pending : (formatMoney(totalPayouts) ?? "—")}
+      />
+      <IndicatorCard
+        icon={FileText}
+        label="Faturas pendentes"
+        value={
+          invoicesQuery.isPending
+            ? pending
+            : `${pendingInvoices.length} · ${formatMoney(pendingInvoices.reduce((s, i) => s + i.total, 0))}`
+        }
+        tone={pendingInvoices.length > 0 ? "warning" : "neutral"}
+      />
+      <IndicatorCard
+        icon={ClipboardList}
+        label="Fechamentos em aberto"
+        value={
+          settlementsQuery.isPending
+            ? pending
+            : `${openSettlements.length} · ${formatMoney(openSettlements.reduce((s, x) => s + x.total, 0))}`
+        }
+        tone={openSettlements.length > 0 ? "warning" : "neutral"}
+      />
+      <IndicatorCard
+        icon={DollarSign}
+        label="Despesas em aberto"
+        value={
+          expensesQuery.isPending
+            ? pending
+            : `${openExpenses.length} · ${formatMoney(openExpenses.reduce((s, x) => s + x.amount, 0))}`
+        }
+        tone={openExpenses.length > 0 ? "warning" : "neutral"}
+      />
+    </div>
+  );
+}
+
 function FinancePage() {
   const [tab, setTab] = useState<keyof typeof tabLabels>("visao-geral");
 
   return (
     <>
       <PageHeader title="Financeiro" />
+      <FinanceSummary />
       <div className="mb-4 flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
         {(Object.keys(tabLabels) as (keyof typeof tabLabels)[]).map((t) => (
           <button
