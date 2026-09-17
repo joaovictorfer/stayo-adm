@@ -5,6 +5,7 @@ import {
   createRootRouteWithContext,
   useRouter,
   useRouterState,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AdminShell } from "../components/layout/AdminShell";
+import { useAuthSession } from "../lib/auth/session";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -125,17 +127,53 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   /** Rotas /portal/* são páginas públicas (link do proprietário) — sem o shell administrativo. */
   const isPublicPortal = pathname.startsWith("/portal/");
+  const isLoginRoute = pathname === "/login";
+  const isPublicRoute = isPublicPortal || isLoginRoute;
+
+  const auth = useAuthSession();
+  const navigate = useNavigate();
+
+  /**
+   * Gate de autenticação (Fase 17) — só ativo quando VITE_SUPABASE_* está
+   * configurado (`useAuthSession` resolve para "not_required" sem isso, e
+   * o app continua funcionando sem login, como sempre). Nunca é a
+   * verdadeira barreira de segurança — isso é sempre RLS no banco; este
+   * gate só evita que a UI monte telas internas sem sessão.
+   */
+  useEffect(() => {
+    if (isPublicRoute) return;
+    if (auth.status === "unauthenticated") {
+      void navigate({ to: "/login" });
+    }
+  }, [auth.status, isPublicRoute, navigate]);
+
+  if (isPublicRoute) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    );
+  }
+
+  if (auth.status === "loading" || auth.status === "unauthenticated") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div
+          className="flex min-h-screen items-center justify-center text-sm"
+          style={{ color: "var(--stayo-ink-muted)" }}
+        >
+          Carregando...
+        </div>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isPublicPortal ? (
+      <AdminShell>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
-      ) : (
-        <AdminShell>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </AdminShell>
-      )}
+      </AdminShell>
     </QueryClientProvider>
   );
 }

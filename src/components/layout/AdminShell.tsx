@@ -27,9 +27,12 @@ import {
   Users,
   X,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 
 import { navigation, type NavItem } from "../../config/navigation";
+import { isSupabaseConfigured } from "../../lib/api/supabase-client";
+import { signOut, useAuthSession } from "../../lib/auth/session";
 
 const icons: Record<string, ComponentType<{ size?: number; className?: string }>> = {
   "layout-dashboard": LayoutDashboard,
@@ -276,10 +279,48 @@ export function AdminShell({ children }: { children: ReactNode }) {
             >
               <Bell size={16} />
             </button>
+            <AccountMenu />
           </div>
         </header>
         <main className="min-w-0 flex-1 p-4 lg:p-6">{children}</main>
       </div>
+    </div>
+  );
+}
+
+const adminRoleLabels: Record<string, string> = {
+  super_admin: "Super admin",
+  admin: "Admin",
+  commercial: "Comercial",
+  operations: "Operações",
+  finance: "Financeiro",
+  viewer: "Leitura",
+};
+
+/** Só aparece quando o Supabase (auth real) está configurado — sem isso, não há sessão para encerrar. */
+function AccountMenu() {
+  const auth = useAuthSession();
+
+  if (!isSupabaseConfigured() || auth.status !== "authenticated") return null;
+
+  const label = auth.profile
+    ? `${auth.profile.fullName} · ${adminRoleLabels[auth.profile.role] ?? auth.profile.role}`
+    : auth.session?.user.email;
+
+  return (
+    <div className="hidden items-center gap-2 sm:flex">
+      <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        {label}
+      </span>
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        aria-label="Sair"
+        className="rounded-[var(--radius-control)] border p-2"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+      >
+        <LogOut size={16} />
+      </button>
     </div>
   );
 }

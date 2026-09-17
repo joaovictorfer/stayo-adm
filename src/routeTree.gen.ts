@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
@@ -58,6 +59,11 @@ const IndexRoute = IndexRouteImport.update({
 const BiRoute = BiRouteImport.update({
   id: '/bi',
   path: '/bi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
@@ -255,6 +261,7 @@ const PortalPropostaTokenRoute = PortalPropostaTokenRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -340,6 +348,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -384,6 +393,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bi'
+    | '/login'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -426,6 +436,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bi'
+    | '/login'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bi'
+    | '/login'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -511,6 +523,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
+  LoginRoute: typeof LoginRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
   ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
@@ -565,6 +578,13 @@ declare module '@tanstack/react-router' {
       path: '/bi'
       fullPath: '/bi'
       preLoaderRoute: typeof BiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/condominios/': {
@@ -839,6 +859,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
+  LoginRoute: LoginRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
   ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,

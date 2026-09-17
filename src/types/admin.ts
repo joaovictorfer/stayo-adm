@@ -7,6 +7,22 @@
 
 import type { EntityId } from "./core";
 
+/**
+ * Papéis do time interno (`admin_role` no banco — migration
+ * 0001_admin_foundation.sql). Autorização real é sempre via RLS
+ * (`has_admin_role(...)`) — este tipo só espelha o enum para o
+ * frontend, nunca é a fonte da verdade de permissão.
+ */
+export type AdminRole =
+  "super_admin" | "admin" | "commercial" | "operations" | "finance" | "viewer";
+
+export interface AdminProfile {
+  id: EntityId;
+  fullName: string;
+  role: AdminRole;
+  active: boolean;
+}
+
 export type OwnerLifecycleStatus = "prospect" | "ativo" | "inativo";
 
 /**
