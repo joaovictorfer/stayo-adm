@@ -33,6 +33,7 @@ import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
 import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
+import { Route as ProdutosIdRouteImport } from './routes/produtos.$id'
 import { Route as ProprietariosIndexRouteImport } from './routes/proprietarios.index'
 import { Route as ProprietariosIdRouteImport } from './routes/proprietarios.$id'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
@@ -161,6 +162,11 @@ const ProdutosIndexRoute = ProdutosIndexRouteImport.update({
   path: '/produtos/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProdutosIdRoute = ProdutosIdRouteImport.update({
+  id: '/produtos/$id',
+  path: '/produtos/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProprietariosIndexRoute = ProprietariosIndexRouteImport.update({
   id: '/proprietarios/',
   path: '/proprietarios/',
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
@@ -306,6 +315,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/produtos/$id'
     | '/proprietarios/$id'
     | '/reservas/$id'
     | '/vistorias/$id'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/produtos/$id'
     | '/proprietarios/$id'
     | '/reservas/$id'
     | '/vistorias/$id'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/produtos/$id'
     | '/proprietarios/$id'
     | '/reservas/$id'
     | '/vistorias/$id'
@@ -403,6 +415,7 @@ export interface RootRouteChildren {
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
+  ProdutosIdRoute: typeof ProdutosIdRoute
   ProprietariosIdRoute: typeof ProprietariosIdRoute
   ReservasIdRoute: typeof ReservasIdRoute
   VistoriasIdRoute: typeof VistoriasIdRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdutosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/produtos/$id': {
+      id: '/produtos/$id'
+      path: '/produtos/$id'
+      fullPath: '/produtos/$id'
+      preLoaderRoute: typeof ProdutosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proprietarios/': {
       id: '/proprietarios/'
       path: '/proprietarios'
@@ -651,6 +671,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
   OperacaoIdRoute: OperacaoIdRoute,
+  ProdutosIdRoute: ProdutosIdRoute,
   ProprietariosIdRoute: ProprietariosIdRoute,
   ReservasIdRoute: ReservasIdRoute,
   VistoriasIdRoute: VistoriasIdRoute,
