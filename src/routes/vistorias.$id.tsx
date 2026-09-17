@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import type { ComponentType } from "react";
 
 import {
   DetailSkeleton,
@@ -50,9 +51,32 @@ function InspectionDetailPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="ID" value={inspection.id} />
           <Field label="Tipo" value={inspectionTypeLabels[inspection.type]} />
-          <Field label="Imóvel" value={inspection.propertyName ?? inspection.propertyId} />
-          <Field label="Implantação vinculada" value={inspection.implementationId} />
-          <Field label="Reserva vinculada" value={inspection.reservationId} />
+          <Field
+            label="Imóvel"
+            value={
+              <LinkedField
+                to="/imoveis/$id"
+                id={inspection.propertyId}
+                label={inspection.propertyName}
+              />
+            }
+          />
+          <Field
+            label="Implantação vinculada"
+            value={
+              inspection.implementationId ? (
+                <LinkedField to="/implantacao/$id" id={inspection.implementationId} />
+              ) : null
+            }
+          />
+          <Field
+            label="Reserva vinculada"
+            value={
+              inspection.reservationId ? (
+                <LinkedField to="/reservas/$id" id={inspection.reservationId} />
+              ) : null
+            }
+          />
           <Field label="Agendada para" value={inspection.scheduledFor} />
           <Field label="Responsável" value={inspection.responsibleUserId} />
           <Field label="Status" value={inspection.status} />
@@ -62,5 +86,27 @@ function InspectionDetailPage() {
         </div>
       )}
     </>
+  );
+}
+
+/** `to` vem de dados de configuração/relacionamento, então usamos o Link com tipagem solta. */
+const DynamicLink = Link as unknown as ComponentType<{
+  to: string;
+  params: Record<string, string>;
+  className?: string;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+}>;
+
+function LinkedField({ to, id, label }: { to: string; id: string; label?: string | null }) {
+  return (
+    <DynamicLink
+      to={to}
+      params={{ id }}
+      className="underline"
+      style={{ color: "var(--stayo-forest)" }}
+    >
+      {label ?? id}
+    </DynamicLink>
   );
 }
