@@ -1,4 +1,4 @@
-# Migração do localStorage (Fase 13)
+# Migração do localStorage (Fase 13, estendida na Fase 16)
 
 Mapa de toda chave `stayo-admin:*` usada hoje como armazenamento de
 protótipo, o que ela guarda, e o que precisa acontecer para que o dado
@@ -9,24 +9,40 @@ toca `localStorage` diretamente (ver `src/lib/api/local-store.ts` §topo).
 
 ## Já migradas (adapter Supabase existe e é escolhido automaticamente)
 
-Estas seis chaves pertencem a verticais do `AdminApiClient`
+Estas sete chaves pertencem a verticais do `AdminApiClient`
 (`src/lib/api/admin-client.ts`) que já têm `createLocalAdminApiClient()`
 _e_ `createSupabaseAdminApiClient()` implementados lado a lado —
 `createDefaultAdminApiClient()` troca de um para o outro sozinho quando
 `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` existem. Nenhuma tela muda.
 
-| Chave localStorage                     | Tipo (`src/types/*.ts`) | Tabela Supabase            | Migration                    |
-| -------------------------------------- | ----------------------- | -------------------------- | ---------------------------- |
-| `stayo-admin:owner-records`            | `OwnerRecord`           | `owner_records`            | `0002_owner_records.sql`     |
-| `stayo-admin:commercial-term-defaults` | `CommercialTermDefault` | `commercial_term_defaults` | `0003_commercial_terms.sql`  |
-| `stayo-admin:commercial-terms`         | `CommercialTerm`        | `commercial_terms`         | `0003_commercial_terms.sql`  |
-| `stayo-admin:outbound-messages`        | `OutboundMessage`       | `outbound_messages`        | `0005_outbound_messages.sql` |
-| `stayo-admin:initial-charges`          | `InitialCharge`         | `initial_charges`          | `0006_initial_charges.sql`   |
-| `stayo-admin:audit-logs`               | `AuditLogEntry`         | `audit_logs`               | `0001_admin_foundation.sql`  |
+| Chave localStorage                         | Tipo (`src/types/*.ts`)     | Tabela Supabase                | Migration                               |
+| ------------------------------------------ | --------------------------- | ------------------------------ | --------------------------------------- |
+| `stayo-admin:owner-records`                | `OwnerRecord`               | `owner_records`                | `0002_owner_records.sql`                |
+| `stayo-admin:commercial-term-defaults`     | `CommercialTermDefault`     | `commercial_term_defaults`     | `0003_commercial_terms.sql`             |
+| `stayo-admin:commercial-terms`             | `CommercialTerm`            | `commercial_terms`             | `0003_commercial_terms.sql`             |
+| `stayo-admin:outbound-messages`            | `OutboundMessage`           | `outbound_messages`            | `0005_outbound_messages.sql`            |
+| `stayo-admin:initial-charges`              | `InitialCharge`             | `initial_charges`              | `0006_initial_charges.sql`              |
+| `stayo-admin:owner-onboarding-links`       | `OwnerOnboardingLink`       | `owner_portal_invitations`     | `0004_owner_portal_invitations.sql`     |
+| `stayo-admin:owner-onboarding-submissions` | `OwnerOnboardingSubmission` | `owner_onboarding_submissions` | `0007_owner_onboarding_submissions.sql` |
+| `stayo-admin:audit-logs`                   | `AuditLogEntry`             | `audit_logs`                   | `0001_admin_foundation.sql`             |
 
 O importador (`src/lib/migration/local-to-supabase.ts`) migra as
-**cinco primeiras** para dentro do Supabase quando ele existir. `audit-logs`
+**sete primeiras** para dentro do Supabase quando ele existir. `audit-logs`
 fica de fora do importador de propósito — ver nota abaixo.
+
+**Fase 16 — `ownerOnboardingStore` promovido.** Até a Fase 15,
+`owner-onboarding-links`/`owner-onboarding-submissions` tinham schema pronto
+mas o código (`ownerOnboardingStore` em `local-store.ts`) nunca ganhou um
+branch Supabase — travado porque o portal público (convite/auto-cadastro)
+é acessado por um visitante **anônimo**, sem sessão, e as RLS das duas
+tabelas exigem papel do time interno. A Fase 16 resolveu isso: o caminho
+público (`findByToken`/`submit`) agora passa por duas funções
+`security definer` (`owner_onboarding_resolve_token`/`owner_onboarding_submit`,
+migration `0007`) que revalidam tudo server-side (hash do token,
+expiração/revogação/uso) sem nunca abrir a tabela para `anon` diretamente —
+o caminho interno (`getLink`/`createLink`/`revoke`/`getSubmission`) continua
+acesso direto sob RLS normal, como o resto do `AdminApiClient`. Ver
+`docs/OWNER_ONBOARDING_ARCHITECTURE.md`.
 
 **Nota sobre `audit-logs`:** a policy de `insert` de `audit_logs` exige
 `actor_id = auth.uid()` (ver `0001_admin_foundation.sql`), e todo evento
@@ -40,19 +56,6 @@ que fica fora do escopo desta fase. O histórico de auditoria do protótipo
 é tratado como descartável quando o Supabase entrar no ar; a auditoria real
 recomeça do zero, o que é aceitável para um log de eventos (não é dado de
 negócio).
-
-## Schema pronto, adapter ainda local (gap real, documentado)
-
-| Chave localStorage                         | Tipo                        | Tabela Supabase                                                  | Situação                                                                                                                                                                                          |
-| ------------------------------------------ | --------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stayo-admin:owner-onboarding-links`       | `OwnerOnboardingLink`       | `owner_portal_invitations` (`0004_owner_portal_invitations.sql`) | Schema existe desde a Fase 8, mas `ownerOnboardingStore` (`src/lib/api/local-store.ts`) nunca ganhou um branch Supabase — continua sempre local, mesmo quando `VITE_SUPABASE_*` está configurado. |
-| `stayo-admin:owner-onboarding-submissions` | `OwnerOnboardingSubmission` | Nenhuma tabela própria ainda                                     | Os dados que o proprietário envia no auto-cadastro (nome, documento, Pix) não têm uma tabela Supabase dedicada — precisa nascer junto quando `ownerOnboardingStore` for promovido.                |
-
-Importar estas duas chaves antes de promover `ownerOnboardingStore` ao
-padrão `AdminApiClient` (local + Supabase lado a lado) não teria efeito
-prático: a tela continuaria lendo do localStorage de qualquer forma. Este é
-o próximo item preparatório real antes de estender o importador — deixado
-como próxima fase, não como parte do importador atual.
 
 ## Sem schema Supabase ainda (dado de negócio real — precisa de migração futura)
 
@@ -76,20 +79,45 @@ como próxima fase, não como parte do importador atual.
 
 ## O importador (`src/lib/migration/local-to-supabase.ts`)
 
-- `collectLocalAdminSnapshot()` — função pura, lê as cinco chaves "já
+- `collectLocalAdminSnapshot()` — função pura, lê as sete chaves "já
   migradas" (exceto `audit-logs`) via o mesmo `read()` de
   `local-store.ts`. Roda em qualquer ambiente (retorna listas vazias no
   servidor, onde não há `window`) e não depende do Supabase — por isso é
   testável com Vitest (`local-to-supabase.test.ts`).
 - `importLocalAdminDataToSupabase()` — só executa se
   `isSupabaseConfigured()` for verdadeiro (nunca tenta conectar sem
-  credencial). Faz `upsert` (nunca `insert` simples) com `onConflict:
-"id"`, preservando o UUID já gerado no protótipo — rodar duas vezes
-  nunca duplica linha. Ordem: `owner_records` → `commercial_term_defaults`
-  → `commercial_terms` → `outbound_messages` → `initial_charges` (nenhuma
-  tem FK de banco entre si hoje — ver nota em `0003_commercial_terms.sql`
-  — mas a ordem segue a dependência lógica).
-- Bloqueado por credencial externa que não existe neste ambiente (nenhum
-  projeto Supabase real): não há como testar o `upsert` de ponta a ponta
-  aqui. O gap fica documentado, não bloqueia o resto do projeto — exatamente
-  a regra da Fase 0 do plano mestre.
+  credencial). Faz `upsert` (nunca `insert` simples) com `onConflict: "id"`
+  (ou `"implementation_id"` para `owner_onboarding_submissions`, que não
+  tem `id` próprio no tipo local), preservando o UUID já gerado no
+  protótipo — rodar duas vezes nunca duplica linha. Ordem: `owner_records`
+  → `commercial_term_defaults` → `commercial_terms` → `outbound_messages`
+  → `initial_charges` → `owner_portal_invitations` →
+  `owner_onboarding_submissions` (nenhuma tem FK de banco entre si hoje —
+  ver nota em `0003_commercial_terms.sql` — mas a ordem segue a
+  dependência lógica).
+
+## Validação contra um projeto Supabase real (Fase 16)
+
+Todas as sete migrations (`0001`–`0007`) foram aplicadas e validadas
+diretamente contra um projeto Supabase real (Lovable Cloud, conectado a
+este repositório) — não é só leitura estática do SQL. Cobriu:
+
+- Toda a matriz de RLS por papel: `anon` não lê nenhuma tabela de negócio;
+  `viewer` lê mas não escreve `owner_records`; `commercial` escreve
+  `owner_records` mas não `initial_charges`; `finance` escreve
+  `initial_charges` mas não `commercial_term_defaults`; `operations` não
+  gerencia condições comerciais.
+- O fluxo público completo do convite/auto-cadastro via as funções
+  `security definer`: `anon` não lê `owner_portal_invitations`
+  diretamente, mas resolve um token e envia um cadastro via RPC; um
+  segundo envio no mesmo token é rejeitado (`convite já usado`); convite
+  revogado e convite expirado são rejeitados com a mensagem certa.
+
+Um bug real de sintaxe foi encontrado e corrigido neste processo:
+`pgcrypto` é instalado por padrão no schema `extensions` do Supabase, não
+em `public` — as duas funções da migration `0007` precisavam de
+`set search_path = public, extensions`, não só `public`, para `digest()`
+resolver. Corrigido diretamente no arquivo da migration.
+
+Todos os dados de teste usados nessa validação foram removidos depois —
+o banco fica com o schema aplicado e vazio, pronto para dado real.

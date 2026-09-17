@@ -31,12 +31,12 @@ const migratedTables = [
   { key: "stayo-admin:commercial-terms", table: "commercial_terms" },
   { key: "stayo-admin:outbound-messages", table: "outbound_messages" },
   { key: "stayo-admin:initial-charges", table: "initial_charges" },
+  { key: "stayo-admin:owner-onboarding-links", table: "owner_portal_invitations" },
+  { key: "stayo-admin:owner-onboarding-submissions", table: "owner_onboarding_submissions" },
 ];
 
 const pendingKeys = [
   "stayo-admin:audit-logs",
-  "stayo-admin:owner-onboarding-links",
-  "stayo-admin:owner-onboarding-submissions",
   "stayo-admin:proposals",
   "stayo-admin:proposal-share-links",
   "stayo-admin:owner-notes",
@@ -66,6 +66,11 @@ function MigrationPage() {
         { table: "commercial_terms", count: snapshot.commercialTerms.length },
         { table: "outbound_messages", count: snapshot.outboundMessages.length },
         { table: "initial_charges", count: snapshot.initialCharges.length },
+        { table: "owner_portal_invitations", count: snapshot.ownerOnboardingLinks.length },
+        {
+          table: "owner_onboarding_submissions",
+          count: snapshot.ownerOnboardingSubmissions.length,
+        },
       ]
     : [];
 

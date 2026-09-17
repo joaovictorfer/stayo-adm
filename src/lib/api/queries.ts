@@ -13,7 +13,6 @@ import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
 import {
   checklistTemplatesStore,
   ownerNotesStore,
-  ownerOnboardingStore,
   proposalShareStore,
   proposalsStore,
 } from "./local-store";
@@ -152,19 +151,19 @@ export const proposalByIdQuery = (proposalId: EntityId) =>
 export const ownerOnboardingLinkQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["owner-onboarding", "link", implementationId],
-    queryFn: () => ownerOnboardingStore.getLink(implementationId),
+    queryFn: () => adminApi.ownerOnboarding.getLink(implementationId),
   });
 
 export const ownerOnboardingSubmissionQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["owner-onboarding", "submission", implementationId],
-    queryFn: () => ownerOnboardingStore.getSubmission(implementationId),
+    queryFn: () => adminApi.ownerOnboarding.getSubmission(implementationId),
   });
 
 export const ownerOnboardingLinkByTokenQuery = (token: string) =>
   queryOptions({
     queryKey: ["owner-onboarding", "by-token", token],
-    queryFn: () => ownerOnboardingStore.findByToken(token),
+    queryFn: () => adminApi.ownerOnboarding.findByToken(token),
   });
 
 export const proposalShareLinkQuery = (proposalId: EntityId) =>

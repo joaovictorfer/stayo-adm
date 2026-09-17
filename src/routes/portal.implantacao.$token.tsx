@@ -3,8 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
-import { ownerOnboardingStore } from "../lib/api/local-store";
 import {
+  adminApi,
   implementationQuery,
   ownerOnboardingLinkByTokenQuery,
   ownerOnboardingSubmissionQuery,
@@ -97,10 +97,16 @@ function OwnerOnboardingPortalPage() {
     );
   }
 
-  return <OwnerOnboardingForm implementationId={link.implementationId} />;
+  return <OwnerOnboardingForm implementationId={link.implementationId} token={token} />;
 }
 
-function OwnerOnboardingForm({ implementationId }: { implementationId: string }) {
+function OwnerOnboardingForm({
+  implementationId,
+  token,
+}: {
+  implementationId: string;
+  token: string;
+}) {
   const queryClient = useQueryClient();
   const implementationQ = useQuery(implementationQuery(implementationId));
   const submissionQ = useQuery(ownerOnboardingSubmissionQuery(implementationId));
@@ -127,7 +133,7 @@ function OwnerOnboardingForm({ implementationId }: { implementationId: string })
   }, [ownerQ.data, submissionQ.data]);
 
   const submit = useMutation({
-    mutationFn: () => ownerOnboardingStore.submit(implementationId, form),
+    mutationFn: () => adminApi.ownerOnboarding.submit(implementationId, token, form),
     onSuccess: (submission) => {
       queryClient.setQueryData(
         ownerOnboardingSubmissionQuery(implementationId).queryKey,

@@ -1,4 +1,4 @@
-# Onboarding do Proprietário — arquitetura do convite (Fase 8)
+# Onboarding do Proprietário — arquitetura do convite (Fase 8, promovido na Fase 16)
 
 Cobre o **auto-cadastro do proprietário**: o formulário público que ele
 preenche (nome, documento, e-mail, telefone, chave Pix) a partir de um link
@@ -7,21 +7,23 @@ gerado pelo time interno. Não confundir com o **portal de acompanhamento**
 
 ## Onde vive
 
-`ownerOnboardingStore` em `src/lib/api/local-store.ts` — hoje sempre local
-(localStorage), nunca teve branch Supabase (ver
-`docs/LOCALSTORAGE_MIGRATION.md`, seção "Schema pronto, adapter ainda
-local"). O schema-alvo já existe em
-`supabase/migrations/0004_owner_portal_invitations.sql`.
+`adminApi.ownerOnboarding` em `src/lib/api/admin-client.ts` — mesmo padrão
+local+Supabase do resto do `AdminApiClient`
+(`createDefaultAdminApiClient()` escolhe sozinho). Até a Fase 15 vivia em
+`ownerOnboardingStore` (`local-store.ts`), sempre local, porque o caminho
+público exigia RLS incompatível com um visitante anônimo — ver a seção
+"O caminho público" abaixo para como isso foi resolvido.
 
 ## O convite (`OwnerOnboardingLink`)
 
-Tipo em `src/types/owner-onboarding.ts`. Regras, todas em
-`ownerOnboardingStore`:
+Tipo em `src/types/owner-onboarding.ts`. Regras, implementadas nos dois
+adapters de `adminApi.ownerOnboarding`:
 
 - **Token nunca em texto puro.** Só o hash SHA-256 (`src/lib/api/token-hash.ts`,
   `hashToken()`, via Web Crypto `crypto.subtle.digest`) é persistido. O valor
   bruto só existe transiente, no componente React, logo após a criação —
-  nunca é lido de volta depois.
+  nunca é lido de volta depois. No banco (migration `0004`), a coluna
+  `token_hash` guarda exatamente esse hash.
 - **Expira em 7 dias** por padrão (`expiresAt`).
 - **Gerar um novo convite revoga automaticamente qualquer um ainda ativo**
   da mesma implantação — nunca existem dois links válidos ao mesmo tempo.
@@ -33,9 +35,44 @@ Tipo em `src/types/owner-onboarding.ts`. Regras, todas em
 
 ## O envio do formulário (`OwnerOnboardingSubmission`)
 
-Sem tabela Supabase própria ainda (ver `docs/LOCALSTORAGE_MIGRATION.md`).
-Ao enviar, `ownerOnboardingStore.submit()` marca o convite como `usedAt` —
+Tabela `owner_onboarding_submissions` (migration
+`0007_owner_onboarding_submissions.sql`), `implementation_id unique` — um
+envio por implantação. Ao enviar, marca o convite como `usedAt` —
 um convite usado nunca aceita um segundo envio.
+
+## O caminho público — por que precisou de funções `security definer`
+
+`getLink`/`createLink`/`revoke`/`getSubmission` são chamados só pela tela
+autenticada do time interno — leitura/escrita direta sob RLS, igual a
+qualquer outra vertical de `AdminApiClient`.
+
+`findByToken`/`submit`, porém, são chamados por `portal.implantacao.$token.tsx`
+— uma rota **pública, sem sessão autenticada**. As RLS de
+`owner_portal_invitations`/`owner_onboarding_submissions` exigem papel do
+time interno (`has_admin_role(...)`), então um visitante anônimo nunca
+conseguiria ler ou escrever essas tabelas diretamente — é exatamente esse
+descompasso que travou a promoção deste vertical até a Fase 15.
+
+A solução (migration `0007`): duas funções Postgres `security definer`
+(rodam com privilégio elevado, mas só fazem exatamente o que a validação
+client-side já fazia):
+
+- `owner_onboarding_resolve_token(token)` — hash do token (mesmo SHA-256
+  hex minúsculo do cliente) e devolve só os campos públicos do convite
+  (`implementation_id`, `expires_at`, `used_at`, `revoked_at`) — nunca o
+  `token_hash` nem qualquer outra coluna.
+- `owner_onboarding_submit(token, ...)` — revalida tudo server-side
+  (convite existe, não revogado, não usado, não expirado) antes de gravar
+  o envio e marcar o convite como usado, atomicamente (`for update` trava
+  a linha, então duas tentativas simultâneas com o mesmo token nunca
+  conseguem duplicar o envio).
+
+Ambas com `grant execute ... to anon, authenticated` — só a função é
+exposta ao público, nunca a tabela. Testado de ponta a ponta contra um
+projeto Supabase real (ver `docs/LOCALSTORAGE_MIGRATION.md` §"Validação
+contra um projeto Supabase real"): token válido, token já usado, convite
+revogado e convite expirado — os quatro casos rejeitam/aceitam
+corretamente.
 
 ## UI
 
@@ -49,9 +86,8 @@ um convite usado nunca aceita um segundo envio.
 
 ## O que falta para produção real
 
-Promover `ownerOnboardingStore` ao padrão `AdminApiClient` (local + adapter
-Supabase lado a lado, como `owners`/`commercialTerms`/etc. em
-`src/lib/api/admin-client.ts`) contra a tabela
-`owner_portal_invitations` já pronta, e criar uma tabela própria para
-`OwnerOnboardingSubmission`. Sem isso, mesmo com Supabase configurado para
-o resto do app, este convite continua sendo local-only.
+Owner Auth de verdade (§23 do plano de produção): depois do envio do
+formulário, o proprietário ainda não cria uma conta com senha vinculada a
+`auth.users` — hoje o acesso continua sendo só pelo link/token. Ver
+`docs/AUTH_AND_ROLES.md` para o estado da autenticação do time interno
+(que existe) e o que falta para a do proprietário (que não existe ainda).

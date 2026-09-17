@@ -14,19 +14,11 @@ import type {
   ChecklistTemplateItem,
   ChecklistTemplateItemInput,
 } from "../../types/checklist-template";
-import type {
-  OwnerOnboardingLink,
-  OwnerOnboardingSubmission,
-  OwnerOnboardingSubmissionInput,
-} from "../../types/owner-onboarding";
 import type { ProposalShareLink } from "../../types/proposal-share";
 import type { OwnerNote } from "../../types/owner-note";
-import { hashToken } from "./token-hash";
 
 const TEMPLATES_KEY = "stayo-admin:checklist-templates";
 const PROPOSALS_KEY = "stayo-admin:proposals";
-const OWNER_LINKS_KEY = "stayo-admin:owner-onboarding-links";
-const OWNER_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 const PROPOSAL_SHARE_LINKS_KEY = "stayo-admin:proposal-share-links";
 const OWNER_NOTES_KEY = "stayo-admin:owner-notes";
 
@@ -161,111 +153,9 @@ export const proposalShareStore = {
     read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find((l) => l.token === token) ?? null,
 };
 
-const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
-
-/**
- * Convite de auto-cadastro do proprietário — ainda não é autenticado (não
- * existe conta/login real no portal, isso depende de Supabase configurado
- * — ver docs/OWNER_IMPLEMENTATION_ARCHITECTURE.md). O que já é real: o
- * token nunca é guardado em texto puro (só o hash), expira (padrão 7
- * dias) e pode ser revogado — nenhum convite fica válido para sempre.
- */
-export const ownerOnboardingStore = {
-  /** Convite mais recente desta implantação, qualquer que seja o status. */
-  getLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink | null> => {
-    const links = read<OwnerOnboardingLink>(OWNER_LINKS_KEY)
-      .filter((l) => l.implementationId === implementationId)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    return links[0] ?? null;
-  },
-
-  /**
-   * Sempre cria um convite novo — "Gerar novo link" depois de
-   * expirado/revogado. Revoga automaticamente qualquer convite ainda
-   * ativo desta implantação, para nunca deixar dois links válidos ao
-   * mesmo tempo (um antigo esquecido continuaria funcionando senão).
-   */
-  createLink: async (
-    implementationId: EntityId,
-    validityDays: number = DEFAULT_INVITATION_VALIDITY_DAYS,
-  ): Promise<{ link: OwnerOnboardingLink; token: string }> => {
-    const now = new Date();
-    const existing = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
-    const stillActive = existing.filter(
-      (l) => l.implementationId === implementationId && !l.revokedAt && !l.usedAt,
-    );
-
-    const token = newId();
-    const tokenHash = await hashToken(token);
-    const link: OwnerOnboardingLink = {
-      id: newId(),
-      implementationId,
-      tokenHash,
-      createdAt: now.toISOString(),
-      createdBy: null,
-      expiresAt: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
-      usedAt: null,
-      revokedAt: null,
-      lastAccessAt: null,
-    };
-
-    const revokedIds = new Set(stillActive.map((l) => l.id));
-    write(OWNER_LINKS_KEY, [
-      ...existing.map((l) => (revokedIds.has(l.id) ? { ...l, revokedAt: now.toISOString() } : l)),
-      link,
-    ]);
-    return { link, token };
-  },
-
-  revoke: async (id: EntityId): Promise<OwnerOnboardingLink> => {
-    const all = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
-    const target = all.find((l) => l.id === id);
-    if (!target) throw new Error("Convite não encontrado");
-    const updated: OwnerOnboardingLink = { ...target, revokedAt: new Date().toISOString() };
-    write(
-      OWNER_LINKS_KEY,
-      all.map((l) => (l.id === id ? updated : l)),
-    );
-    return updated;
-  },
-
-  /** Nunca compara token em texto puro — só o hash. */
-  findByToken: async (token: string): Promise<OwnerOnboardingLink | null> => {
-    const tokenHash = await hashToken(token);
-    return (
-      read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find((l) => l.tokenHash === tokenHash) ?? null
-    );
-  },
-
-  getSubmission: async (implementationId: EntityId): Promise<OwnerOnboardingSubmission | null> =>
-    read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).find(
-      (s) => s.implementationId === implementationId,
-    ) ?? null,
-
-  submit: async (
-    implementationId: EntityId,
-    input: OwnerOnboardingSubmissionInput,
-  ): Promise<OwnerOnboardingSubmission> => {
-    const activeLink = await ownerOnboardingStore.getLink(implementationId);
-    if (activeLink && !activeLink.usedAt) {
-      const links = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
-      write(
-        OWNER_LINKS_KEY,
-        links.map((l) => (l.id === activeLink.id ? { ...l, usedAt: new Date().toISOString() } : l)),
-      );
-    }
-    const submission: OwnerOnboardingSubmission = {
-      implementationId,
-      ...input,
-      submittedAt: new Date().toISOString(),
-    };
-    const others = read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).filter(
-      (s) => s.implementationId !== implementationId,
-    );
-    write(OWNER_SUBMISSIONS_KEY, [...others, submission]);
-    return submission;
-  },
-};
+// O convite/envio de auto-cadastro do proprietário (antes `ownerOnboardingStore`
+// aqui) foi promovido a `adminApi.ownerOnboarding` (Fase 16) — ver
+// src/lib/api/admin-client.ts e docs/OWNER_ONBOARDING_ARCHITECTURE.md.
 
 export const ownerNotesStore = {
   get: async (ownerId: EntityId): Promise<OwnerNote | null> =>

@@ -24,7 +24,6 @@ import {
   ownerOnboardingLinkQuery,
   ownerOnboardingSubmissionQuery,
 } from "../lib/api/queries";
-import { ownerOnboardingStore } from "../lib/api/local-store";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
 import {
@@ -375,7 +374,7 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
     queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
 
   const createLink = useMutation({
-    mutationFn: () => ownerOnboardingStore.createLink(implementationId),
+    mutationFn: () => adminApi.ownerOnboarding.createLink(implementationId),
     onSuccess: async ({ token }) => {
       setFreshToken(token);
       await invalidateLink();
@@ -383,7 +382,7 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
   });
 
   const revokeLink = useMutation({
-    mutationFn: (id: EntityId) => ownerOnboardingStore.revoke(id),
+    mutationFn: (id: EntityId) => adminApi.ownerOnboarding.revoke(id),
     onSuccess: async () => {
       setFreshToken(null);
       await invalidateLink();

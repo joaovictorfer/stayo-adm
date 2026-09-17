@@ -12,6 +12,8 @@ describe("collectLocalAdminSnapshot", () => {
       commercialTerms: [],
       outboundMessages: [],
       initialCharges: [],
+      ownerOnboardingLinks: [],
+      ownerOnboardingSubmissions: [],
     });
   });
 });

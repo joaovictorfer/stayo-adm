@@ -1,7 +1,7 @@
 /**
- * Migração do localStorage → Supabase (Fase 13 — ver
+ * Migração do localStorage → Supabase (Fase 13, estendida na Fase 16 — ver
  * docs/LOCALSTORAGE_MIGRATION.md para o mapa completo de toda chave
- * `stayo-admin:*` e por que só estas cinco entram aqui).
+ * `stayo-admin:*` e por que só estas sete entram aqui).
  *
  * `collectLocalAdminSnapshot()` é pura e roda em qualquer ambiente —
  * usada tanto pelo importador quanto por testes. `importLocalAdminDataToSupabase()`
@@ -20,6 +20,8 @@ import {
   COMMERCIAL_TERM_DEFAULTS_KEY,
   INITIAL_CHARGES_KEY,
   OUTBOUND_MESSAGES_KEY,
+  OWNER_ONBOARDING_LINKS_KEY,
+  OWNER_ONBOARDING_SUBMISSIONS_KEY,
   OWNER_RECORDS_KEY,
 } from "../api/admin-client";
 import { read } from "../api/local-store";
@@ -31,6 +33,7 @@ import type {
   OutboundMessage,
   OwnerRecord,
 } from "../../types/admin";
+import type { OwnerOnboardingLink, OwnerOnboardingSubmission } from "../../types/owner-onboarding";
 
 export interface LocalAdminSnapshot {
   ownerRecords: OwnerRecord[];
@@ -38,9 +41,11 @@ export interface LocalAdminSnapshot {
   commercialTerms: CommercialTerm[];
   outboundMessages: OutboundMessage[];
   initialCharges: InitialCharge[];
+  ownerOnboardingLinks: OwnerOnboardingLink[];
+  ownerOnboardingSubmissions: OwnerOnboardingSubmission[];
 }
 
-/** Lê as cinco chaves já migráveis do localStorage — nunca toca o Supabase. */
+/** Lê as sete chaves já migráveis do localStorage — nunca toca o Supabase. */
 export function collectLocalAdminSnapshot(): LocalAdminSnapshot {
   return {
     ownerRecords: read<OwnerRecord>(OWNER_RECORDS_KEY),
@@ -48,6 +53,8 @@ export function collectLocalAdminSnapshot(): LocalAdminSnapshot {
     commercialTerms: read<CommercialTerm>(COMMERCIAL_TERMS_KEY),
     outboundMessages: read<OutboundMessage>(OUTBOUND_MESSAGES_KEY),
     initialCharges: read<InitialCharge>(INITIAL_CHARGES_KEY),
+    ownerOnboardingLinks: read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY),
+    ownerOnboardingSubmissions: read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY),
   };
 }
 
@@ -78,12 +85,16 @@ export async function importLocalAdminDataToSupabase(
 
   const results: ImportResult[] = [];
 
-  const upsertAll = async (table: string, rows: Record<string, unknown>[]): Promise<void> => {
+  const upsertAll = async (
+    table: string,
+    rows: Record<string, unknown>[],
+    onConflict: string = "id",
+  ): Promise<void> => {
     if (rows.length === 0) {
       results.push({ table, imported: 0 });
       return;
     }
-    const { error } = await client.from(table).upsert(rows, { onConflict: "id" });
+    const { error } = await client.from(table).upsert(rows, { onConflict });
     if (error) throw error;
     results.push({ table, imported: rows.length });
   };
@@ -165,6 +176,35 @@ export async function importLocalAdminDataToSupabase(
       notes: c.notes,
       created_at: c.createdAt,
     })),
+  );
+
+  await upsertAll(
+    "owner_portal_invitations",
+    snapshot.ownerOnboardingLinks.map((l) => ({
+      id: l.id,
+      implementation_id: l.implementationId,
+      token_hash: l.tokenHash,
+      created_at: l.createdAt,
+      created_by: l.createdBy,
+      expires_at: l.expiresAt,
+      used_at: l.usedAt,
+      revoked_at: l.revokedAt,
+      last_access_at: l.lastAccessAt,
+    })),
+  );
+
+  await upsertAll(
+    "owner_onboarding_submissions",
+    snapshot.ownerOnboardingSubmissions.map((s) => ({
+      implementation_id: s.implementationId,
+      full_name: s.fullName,
+      document: s.document,
+      email: s.email,
+      phone: s.phone,
+      pix_key: s.pixKey,
+      submitted_at: s.submittedAt,
+    })),
+    "implementation_id",
   );
 
   return results;

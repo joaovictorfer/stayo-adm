@@ -27,7 +27,13 @@ import type {
   OwnerRecord,
   OwnerRecordInput,
 } from "../../types/admin";
+import type {
+  OwnerOnboardingLink,
+  OwnerOnboardingSubmission,
+  OwnerOnboardingSubmissionInput,
+} from "../../types/owner-onboarding";
 import { nextSequentialCode } from "../sequential-code";
+import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -81,6 +87,29 @@ export interface AdminApiClient {
       patch?: { paymentReference?: string | null; paidAt?: string | null },
     ): Promise<InitialCharge>;
   };
+  ownerOnboarding: {
+    /** Convite mais recente desta implantação, qualquer que seja o status. */
+    getLink(implementationId: string): Promise<OwnerOnboardingLink | null>;
+    /** Sempre cria um convite novo, revogando qualquer um ainda ativo da mesma implantação. */
+    createLink(
+      implementationId: string,
+      validityDays?: number,
+    ): Promise<{ link: OwnerOnboardingLink; token: string }>;
+    revoke(id: string): Promise<OwnerOnboardingLink>;
+    /**
+     * Chamado pelo portal público (sem autenticação) — nunca lê a tabela
+     * diretamente sob RLS; no adapter Supabase, resolve via função
+     * security-definer (ver migration 0007).
+     */
+    findByToken(token: string): Promise<OwnerOnboardingLink | null>;
+    getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
+    /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
+    submit(
+      implementationId: string,
+      token: string,
+      input: OwnerOnboardingSubmissionInput,
+    ): Promise<OwnerOnboardingSubmission>;
+  };
 }
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
@@ -91,6 +120,10 @@ export const COMMERCIAL_TERM_DEFAULTS_KEY = "stayo-admin:commercial-term-default
 export const COMMERCIAL_TERMS_KEY = "stayo-admin:commercial-terms";
 export const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
 export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
+export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
+export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
+
+const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
 /** Adapter local — usado enquanto não há credencial Supabase configurada. */
 export function createLocalAdminApiClient(): AdminApiClient {
@@ -369,7 +402,118 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners, commercialTermDefaults, commercialTerms, outbox, initialCharges };
+  const ownerOnboarding: AdminApiClient["ownerOnboarding"] = {
+    getLink: async (implementationId) => {
+      const links = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY)
+        .filter((l) => l.implementationId === implementationId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      return links[0] ?? null;
+    },
+    createLink: async (implementationId, validityDays = DEFAULT_INVITATION_VALIDITY_DAYS) => {
+      const now = new Date();
+      const existing = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
+      const stillActive = existing.filter(
+        (l) => l.implementationId === implementationId && !l.revokedAt && !l.usedAt,
+      );
+
+      const token = newId();
+      const tokenHash = await hashToken(token);
+      const link: OwnerOnboardingLink = {
+        id: newId(),
+        implementationId,
+        tokenHash,
+        createdAt: now.toISOString(),
+        createdBy: null,
+        expiresAt: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
+        usedAt: null,
+        revokedAt: null,
+        lastAccessAt: null,
+      };
+
+      const revokedIds = new Set(stillActive.map((l) => l.id));
+      write(OWNER_ONBOARDING_LINKS_KEY, [
+        ...existing.map((l) => (revokedIds.has(l.id) ? { ...l, revokedAt: now.toISOString() } : l)),
+        link,
+      ]);
+      await audit.log({
+        actorId: null,
+        event: "portal.invitation_created",
+        entityType: "implementation",
+        entityId: implementationId,
+        metadata: {},
+      });
+      return { link, token };
+    },
+    revoke: async (id) => {
+      const all = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
+      const target = all.find((l) => l.id === id);
+      if (!target) throw new Error("Convite não encontrado");
+      const updated: OwnerOnboardingLink = { ...target, revokedAt: new Date().toISOString() };
+      write(
+        OWNER_ONBOARDING_LINKS_KEY,
+        all.map((l) => (l.id === id ? updated : l)),
+      );
+      await audit.log({
+        actorId: null,
+        event: "portal.invitation_revoked",
+        entityType: "implementation",
+        entityId: target.implementationId,
+        metadata: {},
+      });
+      return updated;
+    },
+    findByToken: async (token) => {
+      const tokenHash = await hashToken(token);
+      return (
+        read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY).find(
+          (l) => l.tokenHash === tokenHash,
+        ) ?? null
+      );
+    },
+    getSubmission: async (implementationId) =>
+      read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
+        (s) => s.implementationId === implementationId,
+      ) ?? null,
+    submit: async (implementationId, _token, input) => {
+      const activeLink = await ownerOnboarding.getLink(implementationId);
+      if (activeLink && !activeLink.usedAt) {
+        const links = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
+        write(
+          OWNER_ONBOARDING_LINKS_KEY,
+          links.map((l) =>
+            l.id === activeLink.id ? { ...l, usedAt: new Date().toISOString() } : l,
+          ),
+        );
+      }
+      const submission: OwnerOnboardingSubmission = {
+        implementationId,
+        ...input,
+        submittedAt: new Date().toISOString(),
+      };
+      const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter(
+        (s) => s.implementationId !== implementationId,
+      );
+      write(OWNER_ONBOARDING_SUBMISSIONS_KEY, [...others, submission]);
+      await audit.log({
+        actorId: null,
+        event: "owner.data_submitted",
+        entityType: "implementation",
+        entityId: implementationId,
+        metadata: {},
+      });
+      return submission;
+    },
+  };
+
+  return {
+    audit,
+    owners,
+    commercialTermDefaults,
+    commercialTerms,
+    outbox,
+    initialCharges,
+    ownerOnboarding,
+  };
 }
 
 interface AuditLogRow {
@@ -529,6 +673,56 @@ function initialChargeFromRow(row: InitialChargeRow): InitialCharge {
     paidAt: row.paid_at,
     notes: row.notes,
     createdAt: row.created_at,
+  };
+}
+
+interface OwnerOnboardingLinkRow {
+  id: string;
+  implementation_id: string;
+  token_hash: string;
+  created_at: string;
+  created_by: string | null;
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+  last_access_at: string | null;
+}
+
+function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardingLink {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    tokenHash: row.token_hash,
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+    expiresAt: row.expires_at,
+    usedAt: row.used_at,
+    revokedAt: row.revoked_at,
+    lastAccessAt: row.last_access_at,
+  };
+}
+
+interface OwnerOnboardingSubmissionRow {
+  implementation_id: string;
+  full_name: string;
+  document: string | null;
+  email: string;
+  phone: string;
+  pix_key: string | null;
+  submitted_at: string;
+}
+
+function ownerOnboardingSubmissionFromRow(
+  row: OwnerOnboardingSubmissionRow,
+): OwnerOnboardingSubmission {
+  return {
+    implementationId: row.implementation_id,
+    fullName: row.full_name,
+    document: row.document,
+    email: row.email,
+    phone: row.phone,
+    pixKey: row.pix_key,
+    submittedAt: row.submitted_at,
   };
 }
 
@@ -851,7 +1045,137 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners, commercialTermDefaults, commercialTerms, outbox, initialCharges };
+  const ownerOnboarding: AdminApiClient["ownerOnboarding"] = {
+    // getLink/createLink/revoke/getSubmission são chamados só pela tela
+    // autenticada do time interno — leitura/escrita direta sob RLS, mesmo
+    // padrão do resto deste adapter.
+    getLink: async (implementationId) => {
+      const { data, error } = await client()
+        .from("owner_portal_invitations")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<OwnerOnboardingLinkRow>();
+      if (error) throw error;
+      return data ? ownerOnboardingLinkFromRow(data) : null;
+    },
+    createLink: async (implementationId, validityDays = DEFAULT_INVITATION_VALIDITY_DAYS) => {
+      const supabase = client();
+      const now = new Date();
+      const token = newId();
+      const tokenHash = await hashToken(token);
+
+      const { error: revokeError } = await supabase
+        .from("owner_portal_invitations")
+        .update({ revoked_at: now.toISOString() })
+        .eq("implementation_id", implementationId)
+        .is("revoked_at", null)
+        .is("used_at", null);
+      if (revokeError) throw revokeError;
+
+      const { data, error } = await supabase
+        .from("owner_portal_invitations")
+        .insert({
+          implementation_id: implementationId,
+          token_hash: tokenHash,
+          expires_at: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select()
+        .single<OwnerOnboardingLinkRow>();
+      if (error) throw error;
+      await audit.log({
+        actorId: null,
+        event: "portal.invitation_created",
+        entityType: "implementation",
+        entityId: implementationId,
+        metadata: {},
+      });
+      return { link: ownerOnboardingLinkFromRow(data), token };
+    },
+    revoke: async (id) => {
+      const { data, error } = await client()
+        .from("owner_portal_invitations")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single<OwnerOnboardingLinkRow>();
+      if (error) throw error;
+      const link = ownerOnboardingLinkFromRow(data);
+      await audit.log({
+        actorId: null,
+        event: "portal.invitation_revoked",
+        entityType: "implementation",
+        entityId: link.implementationId,
+        metadata: {},
+      });
+      return link;
+    },
+    getSubmission: async (implementationId) => {
+      const { data, error } = await client()
+        .from("owner_onboarding_submissions")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle<OwnerOnboardingSubmissionRow>();
+      if (error) throw error;
+      return data ? ownerOnboardingSubmissionFromRow(data) : null;
+    },
+    // findByToken/submit são chamados pelo portal público, sem sessão
+    // autenticada — nunca tocam a tabela direto sob RLS (que exige papel
+    // do time interno). Passam pelas funções security-definer da migration
+    // 0007, que revalidam tudo (hash do token, expiração/revogação/uso)
+    // dentro do próprio banco antes de gravar. Sem sessão autenticada,
+    // `audit.log()` seria rejeitado pela RLS de audit_logs (exige
+    // actor_id = auth.uid()) — o registro do envio em si já é o rastro
+    // desse evento.
+    findByToken: async (token) => {
+      const { data, error } = await client()
+        .rpc("owner_onboarding_resolve_token", { p_token: token })
+        .maybeSingle<{
+          implementation_id: string;
+          expires_at: string;
+          used_at: string | null;
+          revoked_at: string | null;
+        }>();
+      if (error) throw error;
+      if (!data) return null;
+      return {
+        id: "",
+        implementationId: data.implementation_id,
+        tokenHash: "",
+        createdAt: "",
+        createdBy: null,
+        expiresAt: data.expires_at,
+        usedAt: data.used_at,
+        revokedAt: data.revoked_at,
+        lastAccessAt: null,
+      };
+    },
+    submit: async (_implementationId, token, input) => {
+      const { data, error } = await client()
+        .rpc("owner_onboarding_submit", {
+          p_token: token,
+          p_full_name: input.fullName,
+          p_document: input.document,
+          p_email: input.email,
+          p_phone: input.phone,
+          p_pix_key: input.pixKey,
+        })
+        .single<OwnerOnboardingSubmissionRow>();
+      if (error) throw error;
+      return ownerOnboardingSubmissionFromRow(data);
+    },
+  };
+
+  return {
+    audit,
+    owners,
+    commercialTermDefaults,
+    commercialTerms,
+    outbox,
+    initialCharges,
+    ownerOnboarding,
+  };
 }
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
