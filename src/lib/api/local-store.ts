@@ -19,11 +19,13 @@ import type {
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
+import type { ProposalShareLink } from "../../types/proposal-share";
 
 const TEMPLATES_KEY = "stayo-admin:checklist-templates";
 const PROPOSALS_KEY = "stayo-admin:proposals";
 const OWNER_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 const OWNER_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
+const PROPOSAL_SHARE_LINKS_KEY = "stayo-admin:proposal-share-links";
 
 function read<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
@@ -104,6 +106,42 @@ export const proposalsStore = {
     write(PROPOSALS_KEY, [...all, proposal]);
     return proposal;
   },
+
+  /** Marca a versão como aceita — não cria versão nova, só registra a aceitação. */
+  accept: async (proposalId: EntityId): Promise<Proposal | null> => {
+    const all = read<Proposal>(PROPOSALS_KEY);
+    const target = all.find((p) => p.id === proposalId);
+    if (!target) return null;
+    const accepted: Proposal = { ...target, acceptedAt: new Date().toISOString() };
+    write(
+      PROPOSALS_KEY,
+      all.map((p) => (p.id === proposalId ? accepted : p)),
+    );
+    return accepted;
+  },
+};
+
+export const proposalShareStore = {
+  getLink: async (implementationId: EntityId): Promise<ProposalShareLink | null> =>
+    read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find(
+      (l) => l.implementationId === implementationId,
+    ) ?? null,
+
+  createLink: async (implementationId: EntityId): Promise<ProposalShareLink> => {
+    const all = read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY);
+    const existing = all.find((l) => l.implementationId === implementationId);
+    if (existing) return existing;
+    const link: ProposalShareLink = {
+      implementationId,
+      token: newId(),
+      createdAt: new Date().toISOString(),
+    };
+    write(PROPOSAL_SHARE_LINKS_KEY, [...all, link]);
+    return link;
+  },
+
+  findByToken: async (token: string): Promise<ProposalShareLink | null> =>
+    read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find((l) => l.token === token) ?? null,
 };
 
 /**
