@@ -256,6 +256,17 @@ export interface Conversation {
   updatedAt: string;
 }
 
+export type ConversationMessageSender = "hospede" | "equipe" | "sistema";
+
+/** Mensagem individual de uma conversa — o formato aqui é provisório até o STAYO.APP expor a Central de Mensagens de verdade. */
+export interface ConversationMessage {
+  id: EntityId;
+  conversationId: EntityId;
+  sender: ConversationMessageSender;
+  body: string;
+  sentAt: string;
+}
+
 export interface Contract {
   id: EntityId;
   code: string;

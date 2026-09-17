@@ -186,6 +186,12 @@ export const conversationQuery = (id: EntityId) =>
     queryFn: () => coreApi.conversations.get(id),
   });
 
+export const conversationMessagesQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["conversations", "messages", id],
+    queryFn: () => coreApi.conversations.messages(id),
+  });
+
 export const contractsListQuery = () =>
   queryOptions({
     queryKey: ["contracts", "list"],
