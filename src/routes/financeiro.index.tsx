@@ -13,11 +13,12 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import {
+  expensesListQuery,
   payoutsListQuery,
   serviceInvoicesListQuery,
   settlementsListQuery,
 } from "../lib/api/queries";
-import type { Settlement, ServiceInvoice, ServiceInvoiceStage } from "../types/core";
+import type { Expense, Settlement, ServiceInvoice, ServiceInvoiceStage } from "../types/core";
 
 /**
  * Financeiro — repasses por imóvel/proprietário e faturas de serviço.
@@ -50,6 +51,7 @@ const tabLabels = {
   "visao-geral": "Visão geral",
   faturas: "Faturas de serviço",
   fechamentos: "Fechamentos",
+  despesas: "Despesas",
 } as const;
 
 function FinancePage() {
@@ -79,8 +81,10 @@ function FinancePage() {
         <PayoutsTab />
       ) : tab === "faturas" ? (
         <ServiceInvoicesTab />
-      ) : (
+      ) : tab === "fechamentos" ? (
         <SettlementsTab />
+      ) : (
+        <ExpensesTab />
       )}
     </>
   );
@@ -456,6 +460,107 @@ function SettlementDetail({ settlement }: { settlement: Settlement }) {
         <DisabledAction label="Baixar recibo" />
       </div>
     </div>
+  );
+}
+
+const expenseStatusLabels: Record<Expense["status"], string> = {
+  aberto: "Aberto",
+  pago: "Pago",
+};
+
+function ExpensesTab() {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Expense | null>(null);
+  const query = useQuery(expensesListQuery());
+
+  const rows = useMemo(() => {
+    const data = query.data?.data ?? [];
+    const term = q.trim().toLowerCase();
+    if (!term) return data;
+    return data.filter(
+      (e) =>
+        e.description.toLowerCase().includes(term) ||
+        e.category.toLowerCase().includes(term) ||
+        (e.propertyName ?? "").toLowerCase().includes(term),
+    );
+  }, [query.data, q]);
+
+  const total = rows.reduce((sum, e) => sum + e.amount, 0);
+
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Total no filtro: <span style={{ color: "var(--stayo-ink)" }}>{formatMoney(total)}</span>
+        </p>
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Buscar por descrição, categoria ou imóvel"
+        />
+      </div>
+      <Panel>
+        {query.isPending ? (
+          <ListSkeleton />
+        ) : query.isError ? (
+          <ErrorRows onRetry={() => void query.refetch()} />
+        ) : rows.length === 0 ? (
+          <EmptyRows
+            message={
+              q ? "Nenhuma despesa encontrada para esta busca" : "Nenhuma despesa lançada ainda"
+            }
+          />
+        ) : (
+          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+            {rows.map((e) => (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelected(e)}
+                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left text-sm"
+                  style={{ color: "var(--stayo-ink)" }}
+                >
+                  <span className="font-medium">{e.description}</span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>{e.category}</span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>{e.propertyName ?? "—"}</span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[11px]"
+                    style={{
+                      backgroundColor:
+                        e.status === "pago" ? "var(--stayo-forest-soft)" : "var(--stayo-gold-soft)",
+                      color: e.status === "pago" ? "var(--stayo-forest)" : "var(--stayo-warning)",
+                    }}
+                  >
+                    {expenseStatusLabels[e.status]}
+                  </span>
+                  <span className="ml-auto" style={{ color: "var(--stayo-ink)" }}>
+                    {formatMoney(e.amount)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      <Drawer
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        eyebrow="Despesa"
+        title={selected?.description ?? ""}
+      >
+        {selected && (
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Categoria" value={selected.category} />
+            <Field label="Imóvel" value={selected.propertyName} />
+            <Field label="Status" value={expenseStatusLabels[selected.status]} />
+            <Field label="Valor" value={formatMoney(selected.amount)} />
+            <Field label="Vencimento" value={selected.dueDate} />
+            <Field label="Pago em" value={selected.paidAt} />
+          </div>
+        )}
+      </Drawer>
+    </>
   );
 }
 

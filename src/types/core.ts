@@ -394,3 +394,20 @@ export interface Payout {
   ownerId: EntityId | null;
   ownerName: string | null;
 }
+
+export type ExpenseStatus = "aberto" | "pago";
+
+/** Despesa operacional (manutenção, compra, serviço) lançada contra um imóvel. */
+export interface Expense {
+  id: EntityId;
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  category: string;
+  description: string;
+  amount: number;
+  dueDate: string | null;
+  paidAt: string | null;
+  status: ExpenseStatus;
+  createdAt: string;
+  updatedAt: string;
+}

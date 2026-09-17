@@ -28,6 +28,7 @@ import type {
   EntityId,
   GuideEntry,
   UpsellProduct,
+  Expense,
   Payout,
   ServiceInvoice,
   ServiceProvider,
@@ -145,6 +146,12 @@ export interface CoreApiClient {
     get(id: EntityId): Promise<Settlement | null>;
   };
 
+  /** Despesas operacionais lançadas contra um imóvel. */
+  expenses: {
+    list(params?: { cursor?: string; propertyId?: EntityId }): Promise<Page<Expense>>;
+    get(id: EntityId): Promise<Expense | null>;
+  };
+
   /** Área técnica de Configurações → Stayo Core. */
   admin: {
     overview(): Promise<CoreOverview>;
@@ -254,6 +261,10 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       list: (params) => request(`/api/core/v1/financial/settlements${queryString(params)}`),
       get: (id) => request(`/api/core/v1/financial/settlements/${id}`),
     },
+    expenses: {
+      list: (params) => request(`/api/core/v1/financial/expenses${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/financial/expenses/${id}`),
+    },
     admin: {
       overview: () => request("/api/core/v1/admin/overview"),
       apps: () => request("/api/core/v1/admin/apps"),
@@ -328,6 +339,7 @@ export function createMockCoreApiClient(): CoreApiClient {
     serviceInvoices: { list: () => empty(), get: () => Promise.resolve(null) },
     serviceProviders: { list: () => empty(), get: () => Promise.resolve(null) },
     settlements: { list: () => empty(), get: () => Promise.resolve(null) },
+    expenses: { list: () => empty(), get: () => Promise.resolve(null) },
     admin: {
       overview: () =>
         Promise.resolve({
