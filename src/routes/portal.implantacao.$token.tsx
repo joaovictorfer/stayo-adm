@@ -10,6 +10,7 @@ import {
   ownerOnboardingSubmissionQuery,
   ownerQuery,
 } from "../lib/api/queries";
+import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
 import type { OwnerOnboardingSubmissionInput } from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/portal/implantacao/$token")({
@@ -76,8 +77,21 @@ function OwnerOnboardingPortalPage() {
           Link inválido
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Este link de cadastro não existe ou expirou. Fale com quem enviou o link para receber um
-          novo.
+          Este link de cadastro não existe. Fale com quem enviou o link para receber um novo.
+        </p>
+      </Shell>
+    );
+  }
+
+  const status = ownerOnboardingLinkStatus(link);
+  if (status === "expirado" || status === "revogado") {
+    return (
+      <Shell>
+        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
+          {status === "expirado" ? "Link expirado" : "Link revogado"}
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Fale com quem enviou o link para receber um novo.
         </p>
       </Shell>
     );

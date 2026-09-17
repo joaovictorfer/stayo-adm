@@ -21,6 +21,7 @@ import type {
 } from "../../types/owner-onboarding";
 import type { ProposalShareLink } from "../../types/proposal-share";
 import type { OwnerNote } from "../../types/owner-note";
+import { hashToken } from "./token-hash";
 
 const TEMPLATES_KEY = "stayo-admin:checklist-templates";
 const PROPOSALS_KEY = "stayo-admin:proposals";
@@ -160,33 +161,81 @@ export const proposalShareStore = {
     read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find((l) => l.token === token) ?? null,
 };
 
+const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
+
 /**
- * Auto-cadastro do proprietário via link — não é autenticado (não existe
- * login ainda no Admin nem no Core). O token só evita adivinhação trivial
- * da implantação; não é controle de acesso de verdade.
+ * Convite de auto-cadastro do proprietário — ainda não é autenticado (não
+ * existe conta/login real no portal, isso depende de Supabase configurado
+ * — ver docs/OWNER_IMPLEMENTATION_ARCHITECTURE.md). O que já é real: o
+ * token nunca é guardado em texto puro (só o hash), expira (padrão 7
+ * dias) e pode ser revogado — nenhum convite fica válido para sempre.
  */
 export const ownerOnboardingStore = {
-  getLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink | null> =>
-    read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find(
-      (l) => l.implementationId === implementationId,
-    ) ?? null,
-
-  /** Idempotente: reaproveita o link existente em vez de invalidar o anterior. */
-  createLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink> => {
-    const all = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
-    const existing = all.find((l) => l.implementationId === implementationId);
-    if (existing) return existing;
-    const link: OwnerOnboardingLink = {
-      implementationId,
-      token: newId(),
-      createdAt: new Date().toISOString(),
-    };
-    write(OWNER_LINKS_KEY, [...all, link]);
-    return link;
+  /** Convite mais recente desta implantação, qualquer que seja o status. */
+  getLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink | null> => {
+    const links = read<OwnerOnboardingLink>(OWNER_LINKS_KEY)
+      .filter((l) => l.implementationId === implementationId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return links[0] ?? null;
   },
 
-  findByToken: async (token: string): Promise<OwnerOnboardingLink | null> =>
-    read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find((l) => l.token === token) ?? null,
+  /**
+   * Sempre cria um convite novo — "Gerar novo link" depois de
+   * expirado/revogado. Revoga automaticamente qualquer convite ainda
+   * ativo desta implantação, para nunca deixar dois links válidos ao
+   * mesmo tempo (um antigo esquecido continuaria funcionando senão).
+   */
+  createLink: async (
+    implementationId: EntityId,
+    validityDays: number = DEFAULT_INVITATION_VALIDITY_DAYS,
+  ): Promise<{ link: OwnerOnboardingLink; token: string }> => {
+    const now = new Date();
+    const existing = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
+    const stillActive = existing.filter(
+      (l) => l.implementationId === implementationId && !l.revokedAt && !l.usedAt,
+    );
+
+    const token = newId();
+    const tokenHash = await hashToken(token);
+    const link: OwnerOnboardingLink = {
+      id: newId(),
+      implementationId,
+      tokenHash,
+      createdAt: now.toISOString(),
+      createdBy: null,
+      expiresAt: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
+      usedAt: null,
+      revokedAt: null,
+      lastAccessAt: null,
+    };
+
+    const revokedIds = new Set(stillActive.map((l) => l.id));
+    write(OWNER_LINKS_KEY, [
+      ...existing.map((l) => (revokedIds.has(l.id) ? { ...l, revokedAt: now.toISOString() } : l)),
+      link,
+    ]);
+    return { link, token };
+  },
+
+  revoke: async (id: EntityId): Promise<OwnerOnboardingLink> => {
+    const all = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
+    const target = all.find((l) => l.id === id);
+    if (!target) throw new Error("Convite não encontrado");
+    const updated: OwnerOnboardingLink = { ...target, revokedAt: new Date().toISOString() };
+    write(
+      OWNER_LINKS_KEY,
+      all.map((l) => (l.id === id ? updated : l)),
+    );
+    return updated;
+  },
+
+  /** Nunca compara token em texto puro — só o hash. */
+  findByToken: async (token: string): Promise<OwnerOnboardingLink | null> => {
+    const tokenHash = await hashToken(token);
+    return (
+      read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find((l) => l.tokenHash === tokenHash) ?? null
+    );
+  },
 
   getSubmission: async (implementationId: EntityId): Promise<OwnerOnboardingSubmission | null> =>
     read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).find(
@@ -197,6 +246,14 @@ export const ownerOnboardingStore = {
     implementationId: EntityId,
     input: OwnerOnboardingSubmissionInput,
   ): Promise<OwnerOnboardingSubmission> => {
+    const activeLink = await ownerOnboardingStore.getLink(implementationId);
+    if (activeLink && !activeLink.usedAt) {
+      const links = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
+      write(
+        OWNER_LINKS_KEY,
+        links.map((l) => (l.id === activeLink.id ? { ...l, usedAt: new Date().toISOString() } : l)),
+      );
+    }
     const submission: OwnerOnboardingSubmission = {
       implementationId,
       ...input,

@@ -35,6 +35,10 @@ import {
 } from "../lib/implementation-status";
 import type { ChargeType } from "../types/admin";
 import type { EntityId, ImplementationItem, ImplementationStatus } from "../types/core";
+import {
+  type OwnerOnboardingLinkStatus,
+  ownerOnboardingLinkStatus,
+} from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/implantacao/$id")({
   head: () => ({
@@ -327,26 +331,56 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
   );
 }
 
+const invitationStatusLabels: Record<OwnerOnboardingLinkStatus, string> = {
+  ativo: "Ativo",
+  expirado: "Expirado",
+  revogado: "Revogado",
+  usado: "Usado",
+};
+
+const invitationStatusTone: Record<OwnerOnboardingLinkStatus, "neutral" | "danger" | "gold"> = {
+  ativo: "neutral",
+  expirado: "gold",
+  revogado: "danger",
+  usado: "neutral",
+};
+
 /**
- * Link público (sem autenticação — não existe login ainda) pro proprietário
- * preencher os próprios dados durante a implantação, pra depois vincular ao
- * cadastro oficial do imóvel/proprietário no Core.
+ * Convite público (ainda sem conta/login real — depende de Supabase
+ * configurado) pro proprietário preencher os próprios dados durante a
+ * implantação. O token só é visível uma vez, no momento em que é gerado —
+ * depois disso só existe o hash, nunca o valor puro.
  */
 function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) {
   const queryClient = useQueryClient();
   const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
   const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(implementationId));
   const [copied, setCopied] = useState(false);
+  const [freshToken, setFreshToken] = useState<string | null>(null);
+
+  const invalidateLink = () =>
+    queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
 
   const createLink = useMutation({
     mutationFn: () => ownerOnboardingStore.createLink(implementationId),
-    onSuccess: (link) => {
-      queryClient.setQueryData(ownerOnboardingLinkQuery(implementationId).queryKey, link);
+    onSuccess: async ({ token }) => {
+      setFreshToken(token);
+      await invalidateLink();
     },
   });
 
-  const url = linkQuery.data
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/implantacao/${linkQuery.data.token}`
+  const revokeLink = useMutation({
+    mutationFn: (id: EntityId) => ownerOnboardingStore.revoke(id),
+    onSuccess: async () => {
+      setFreshToken(null);
+      await invalidateLink();
+    },
+  });
+
+  const link = linkQuery.data;
+  const status = link ? ownerOnboardingLinkStatus(link) : null;
+  const url = freshToken
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/implantacao/${freshToken}`
     : null;
 
   const copy = async () => {
@@ -381,11 +415,28 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
       ) : (
         <>
           <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Gere um link para o proprietário preencher os próprios dados — eles ficam aqui assim que
-            ele enviar.
+            Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim
+            que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser
+            gerado.
           </p>
-          {url ? (
-            <div className="flex flex-wrap items-center gap-2">
+
+          {link && status && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+              <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
+              <span style={{ color: "var(--stayo-ink-muted)" }}>
+                {status === "ativo"
+                  ? `Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
+                  : status === "revogado"
+                    ? `Revogado em ${new Date(link.revokedAt!).toLocaleString("pt-BR")}`
+                    : status === "expirado"
+                      ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
+                      : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
+              </span>
+            </div>
+          )}
+
+          {url && (
+            <div className="mb-2 flex flex-wrap items-center gap-2">
               <code
                 className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
                 style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
@@ -402,16 +453,37 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
                 {copied ? "Copiado" : "Copiar"}
               </button>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => createLink.mutate()}
-              disabled={createLink.isPending}
-              className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-            >
-              {createLink.isPending ? "Gerando..." : "Gerar link para o proprietário"}
-            </button>
+          )}
+
+          {(!url || status !== "ativo") && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => createLink.mutate()}
+                disabled={createLink.isPending}
+                className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              >
+                {createLink.isPending
+                  ? "Gerando..."
+                  : link
+                    ? "Gerar novo convite"
+                    : "Gerar convite para o proprietário"}
+              </button>
+            </div>
+          )}
+          {status === "ativo" && link && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => revokeLink.mutate(link.id)}
+                disabled={revokeLink.isPending}
+                className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+                style={{ ...surface, color: "var(--stayo-danger)" }}
+              >
+                {revokeLink.isPending ? "Revogando..." : "Revogar"}
+              </button>
+            </div>
           )}
         </>
       )}
