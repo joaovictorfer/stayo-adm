@@ -43,6 +43,12 @@ export const commercialTermsQuery = (implementationId: EntityId) =>
     queryFn: () => adminApi.commercialTerms.listByImplementation(implementationId),
   });
 
+export const outboxQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["outbox", implementationId],
+    queryFn: () => adminApi.outbox.listByImplementation(implementationId),
+  });
+
 export const propertiesListQuery = () =>
   queryOptions({
     queryKey: ["properties", "list"],

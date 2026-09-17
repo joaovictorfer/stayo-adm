@@ -67,3 +67,31 @@ export interface CommercialTerm {
   displayOrder: number;
   notes: string | null;
 }
+
+export type OutboundMessageStatus = "draft" | "queued" | "sent" | "failed" | "cancelled";
+
+/**
+ * Mensagem para o proprietário via WhatsApp — sempre passa por um outbox
+ * auditável, nunca é disparada direto de uma tela. Enquanto não houver
+ * provider real configurado, o envio é sempre manual (o time abre o
+ * WhatsApp com o texto pronto) — ver `src/lib/whatsapp/gateway.ts`.
+ */
+export interface OutboundMessage {
+  id: EntityId;
+  implementationId: EntityId;
+  ownerId: EntityId | null;
+  destination: string;
+  template: string;
+  body: string;
+  status: OutboundMessageStatus;
+  providerMessageId: string | null;
+  error: string | null;
+  createdAt: string;
+  sentAt: string | null;
+  failedAt: string | null;
+}
+
+export type OutboundMessageInput = Omit<
+  OutboundMessage,
+  "id" | "status" | "providerMessageId" | "error" | "createdAt" | "sentAt" | "failedAt"
+>;

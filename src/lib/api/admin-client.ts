@@ -19,6 +19,8 @@ import type {
   CommercialTerm,
   CommercialTermDefault,
   CommercialTermDefaultInput,
+  OutboundMessage,
+  OutboundMessageInput,
   OwnerRecord,
   OwnerRecordInput,
 } from "../../types/admin";
@@ -53,12 +55,20 @@ export interface AdminApiClient {
       patch: Partial<Omit<CommercialTerm, "id" | "implementationId">>,
     ): Promise<CommercialTerm>;
   };
+  outbox: {
+    listByImplementation(implementationId: string): Promise<OutboundMessage[]>;
+    /** Sempre nasce "queued" — o envio de verdade depende do gateway (mock hoje). */
+    enqueue(input: OutboundMessageInput): Promise<OutboundMessage>;
+    markSent(id: string, providerMessageId: string | null): Promise<OutboundMessage>;
+    markFailed(id: string, error: string): Promise<OutboundMessage>;
+  };
 }
 
 const AUDIT_LOGS_KEY = "stayo-admin:audit-logs";
 const OWNER_RECORDS_KEY = "stayo-admin:owner-records";
 const COMMERCIAL_TERM_DEFAULTS_KEY = "stayo-admin:commercial-term-defaults";
 const COMMERCIAL_TERMS_KEY = "stayo-admin:commercial-terms";
+const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 
 /** Adapter local — usado enquanto não há credencial Supabase configurada. */
 export function createLocalAdminApiClient(): AdminApiClient {
@@ -218,7 +228,62 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners, commercialTermDefaults, commercialTerms };
+  const outbox: AdminApiClient["outbox"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        [...read<OutboundMessage>(OUTBOUND_MESSAGES_KEY)]
+          .filter((m) => m.implementationId === implementationId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      ),
+    enqueue: (input) => {
+      const message: OutboundMessage = {
+        ...input,
+        id: newId(),
+        status: "queued",
+        providerMessageId: null,
+        error: null,
+        createdAt: new Date().toISOString(),
+        sentAt: null,
+        failedAt: null,
+      };
+      write(OUTBOUND_MESSAGES_KEY, [...read<OutboundMessage>(OUTBOUND_MESSAGES_KEY), message]);
+      return Promise.resolve(message);
+    },
+    markSent: (id, providerMessageId) => {
+      const all = read<OutboundMessage>(OUTBOUND_MESSAGES_KEY);
+      const target = all.find((m) => m.id === id);
+      if (!target) return Promise.reject(new Error("Mensagem não encontrada"));
+      const updated: OutboundMessage = {
+        ...target,
+        status: "sent",
+        providerMessageId,
+        sentAt: new Date().toISOString(),
+      };
+      write(
+        OUTBOUND_MESSAGES_KEY,
+        all.map((m) => (m.id === id ? updated : m)),
+      );
+      return Promise.resolve(updated);
+    },
+    markFailed: (id, error) => {
+      const all = read<OutboundMessage>(OUTBOUND_MESSAGES_KEY);
+      const target = all.find((m) => m.id === id);
+      if (!target) return Promise.reject(new Error("Mensagem não encontrada"));
+      const updated: OutboundMessage = {
+        ...target,
+        status: "failed",
+        error,
+        failedAt: new Date().toISOString(),
+      };
+      write(
+        OUTBOUND_MESSAGES_KEY,
+        all.map((m) => (m.id === id ? updated : m)),
+      );
+      return Promise.resolve(updated);
+    },
+  };
+
+  return { audit, owners, commercialTermDefaults, commercialTerms, outbox };
 }
 
 interface AuditLogRow {
@@ -312,6 +377,38 @@ function termFromRow(row: CommercialTermRow): CommercialTerm {
     optional: row.optional,
     displayOrder: row.display_order,
     notes: row.notes,
+  };
+}
+
+interface OutboundMessageRow {
+  id: string;
+  implementation_id: string;
+  owner_id: string | null;
+  destination: string;
+  template: string;
+  body: string;
+  status: OutboundMessage["status"];
+  provider_message_id: string | null;
+  error: string | null;
+  created_at: string;
+  sent_at: string | null;
+  failed_at: string | null;
+}
+
+function outboundMessageFromRow(row: OutboundMessageRow): OutboundMessage {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    ownerId: row.owner_id,
+    destination: row.destination,
+    template: row.template,
+    body: row.body,
+    status: row.status,
+    providerMessageId: row.provider_message_id,
+    error: row.error,
+    createdAt: row.created_at,
+    sentAt: row.sent_at,
+    failedAt: row.failed_at,
   };
 }
 
@@ -517,7 +614,60 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
-  return { audit, owners, commercialTermDefaults, commercialTerms };
+  const outbox: AdminApiClient["outbox"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("outbound_messages")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("created_at", { ascending: false })
+        .returns<OutboundMessageRow[]>();
+      if (error) throw error;
+      return data.map(outboundMessageFromRow);
+    },
+    enqueue: async (input) => {
+      const { data, error } = await client()
+        .from("outbound_messages")
+        .insert({
+          implementation_id: input.implementationId,
+          owner_id: input.ownerId,
+          destination: input.destination,
+          template: input.template,
+          body: input.body,
+          status: "queued",
+        })
+        .select()
+        .single<OutboundMessageRow>();
+      if (error) throw error;
+      return outboundMessageFromRow(data);
+    },
+    markSent: async (id, providerMessageId) => {
+      const { data, error } = await client()
+        .from("outbound_messages")
+        .update({
+          status: "sent",
+          provider_message_id: providerMessageId,
+          sent_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single<OutboundMessageRow>();
+      if (error) throw error;
+      return outboundMessageFromRow(data);
+    },
+    markFailed: async (id, errorMessage) => {
+      const { data, error } = await client()
+        .from("outbound_messages")
+        .update({ status: "failed", error: errorMessage, failed_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single<OutboundMessageRow>();
+      if (error) throw error;
+      return outboundMessageFromRow(data);
+    },
+  };
+
+  return { audit, owners, commercialTermDefaults, commercialTerms, outbox };
 }
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */

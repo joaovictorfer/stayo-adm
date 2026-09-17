@@ -4,13 +4,18 @@ import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
 import {
+  adminApi,
   commercialTermsQuery,
   implementationQuery,
+  outboxQuery,
   proposalShareLinkQuery,
   proposalsByImplementationQuery,
 } from "../../lib/api/queries";
 import { proposalItemTotal, proposalShareStore, proposalsStore } from "../../lib/api/local-store";
 import { generateProposalPdf } from "../../lib/pdf/proposal-pdf";
+import { buildWhatsappDeepLink } from "../../lib/whatsapp/gateway";
+import { proposalReadyMessage } from "../../lib/whatsapp/templates";
+import type { OutboundMessage } from "../../types/admin";
 import type { EntityId, ProposalItem } from "../../types/core";
 
 const surface = {
@@ -39,6 +44,45 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const shareLinkQ = useQuery({
     ...proposalShareLinkQuery(latest?.id ?? ""),
     enabled: Boolean(latest),
+  });
+  const outboxQ = useQuery(outboxQuery(implementationId));
+  const lastMessage = (outboxQ.data ?? [])[0];
+
+  const prepareWhatsapp = useMutation({
+    mutationFn: async () => {
+      if (!implementationQ.data) throw new Error("Implantação ausente");
+      const owner = implementationQ.data;
+      let portalUrl: string | null = shareLinkQ.data
+        ? `${window.location.origin}/portal/proposta/${shareLinkQ.data.token}`
+        : null;
+      if (!portalUrl && latest) {
+        const link = await proposalShareStore.createLinkForProposal(latest.id, implementationId);
+        portalUrl = `${window.location.origin}/portal/proposta/${link.token}`;
+        await queryClient.invalidateQueries({ queryKey: ["proposal-share", "link", latest.id] });
+      }
+      const body = proposalReadyMessage({
+        ownerFirstName: owner.ownerName ?? "proprietário",
+        portalUrl,
+      });
+      const message = await adminApi.outbox.enqueue({
+        implementationId,
+        ownerId: owner.ownerId,
+        destination: owner.ownerPhone ?? "",
+        template: "proposal_ready",
+        body,
+      });
+      await adminApi.audit.log({
+        actorId: null,
+        event: "proposal.sent",
+        entityType: "proposal",
+        entityId: latest?.id ?? null,
+        metadata: { implementationId, channel: "whatsapp" },
+      });
+      return message;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["outbox", implementationId] });
+    },
   });
 
   const downloadPdf = useMutation({
@@ -284,12 +328,25 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               {downloadPdf.isPending ? "Gerando..." : `Gerar PDF (v${latest.version})`}
             </button>
           )}
-          <DisabledAction label="Enviar por WhatsApp" />
+          {latest && (
+            <button
+              type="button"
+              onClick={() => prepareWhatsapp.mutate()}
+              disabled={prepareWhatsapp.isPending}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              {prepareWhatsapp.isPending ? "Preparando..." : "Finalizar e enviar por WhatsApp"}
+            </button>
+          )}
         </div>
-        <p className="mt-2 text-xs" style={{ color: "var(--stayo-warning)" }}>
-          Enviar por WhatsApp fica disponível quando a integração estiver conectada.
+        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          Sem provider de WhatsApp conectado, o envio é manual: a mensagem fica pronta para você
+          copiar ou abrir direto no WhatsApp.
         </p>
       </div>
+
+      {lastMessage && <WhatsappSendPanel message={lastMessage} />}
 
       {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
 
@@ -459,16 +516,60 @@ function NumberCell({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function DisabledAction({ label }: { label: string }) {
+/**
+ * Mensagem pronta no outbox — sem provider real, o envio é sempre manual:
+ * a pessoa copia o texto ou abre o WhatsApp já preenchido e aperta enviar
+ * ela mesma. Nunca contata nenhum servidor de WhatsApp.
+ */
+function WhatsappSendPanel({ message }: { message: OutboundMessage }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.body);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard indisponível — texto já está visível pra copiar manualmente.
+    }
+  };
+
   return (
-    <button
-      type="button"
-      disabled
-      title="disponível quando o Stayo Core estiver conectado"
-      className="cursor-not-allowed rounded-[var(--radius-control)] border px-3 py-2 text-sm opacity-60"
-      style={{ ...surface, color: "var(--stayo-ink-muted)" }}
-    >
-      {label}
-    </button>
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Mensagem para o proprietário
+      </h2>
+      <pre
+        className="mb-3 whitespace-pre-wrap rounded-[var(--radius-control)] border p-3 text-xs"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+      >
+        {message.body}
+      </pre>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          style={{ ...surface, color: "var(--stayo-forest)" }}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          {copied ? "Copiado" : "Copiar mensagem"}
+        </button>
+        {message.destination && (
+          <a
+            href={buildWhatsappDeepLink(message.destination, message.body)}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
+            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          >
+            Abrir WhatsApp
+          </a>
+        )}
+      </div>
+    </div>
   );
 }
