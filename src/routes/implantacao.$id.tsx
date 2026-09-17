@@ -11,6 +11,7 @@ import {
   Panel,
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
+import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import { implementationItemsQuery, implementationQuery } from "../lib/api/queries";
 import {
   alternateStatuses,
@@ -83,7 +84,8 @@ function ImplementationDetailPage() {
                 className="px-3 py-2 text-sm"
                 style={{
                   color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  borderBottom: tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
+                  borderBottom:
+                    tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
                 }}
               >
                 {t === "resumo" ? "Resumo" : t === "checklist" ? "Checklist" : "Proposta"}
@@ -92,25 +94,40 @@ function ImplementationDetailPage() {
           </div>
 
           {tab === "resumo" ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="ID" value={implementation.id} />
-              <Field label="Código" value={implementation.code} />
-              <Field label="Status" value={statusLabels[implementation.status]} />
-              <Field label="Proprietário (prospect)" value={implementation.ownerProspect.name} />
-              <Field label="Telefone" value={implementation.ownerProspect.phone} />
-              <Field label="E-mail" value={implementation.ownerProspect.email} />
-              <Field label="Condomínio" value={implementation.condominiumName} />
-              <Field label="Unidade" value={implementation.unit} />
-              <Field label="Cidade" value={implementation.city} />
-              <Field label="Responsável" value={implementation.responsibleUserId} />
-              <Field label="Previsão de início" value={implementation.startDateEstimate} />
-              <Field label="Previsão de conclusão" value={implementation.completionDateEstimate} />
-              <Field label="Origem" value={implementation.origin} />
-              <Field label="Observação" value={implementation.notes} />
-              <Field label="Imóvel no Core" value={implementation.corePropertyId} />
-              <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
-              <Field label="Criada em" value={implementation.createdAt} />
-              <Field label="Atualizada em" value={implementation.updatedAt} />
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="ID" value={implementation.id} />
+                <Field label="Código" value={implementation.code} />
+                <Field label="Status" value={statusLabels[implementation.status]} />
+                <Field label="Proprietário (prospect)" value={implementation.ownerProspect.name} />
+                <Field label="Telefone" value={implementation.ownerProspect.phone} />
+                <Field label="E-mail" value={implementation.ownerProspect.email} />
+                <Field label="Condomínio" value={implementation.condominiumName} />
+                <Field label="Unidade" value={implementation.unit} />
+                <Field label="Cidade" value={implementation.city} />
+                <Field label="Responsável" value={implementation.responsibleUserId} />
+                <Field label="Previsão de início" value={implementation.startDateEstimate} />
+                <Field
+                  label="Previsão de conclusão"
+                  value={implementation.completionDateEstimate}
+                />
+                <Field label="Origem" value={implementation.origin} />
+                <Field label="Observação" value={implementation.notes} />
+                <Field label="Imóvel no Core" value={implementation.corePropertyId} />
+                <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
+                <Field label="Criada em" value={implementation.createdAt} />
+                <Field label="Atualizada em" value={implementation.updatedAt} />
+              </div>
+
+              <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+                <h2
+                  className="mb-3 text-sm"
+                  style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+                >
+                  Atividade recente
+                </h2>
+                <Timeline entries={recentActivity(itemsQuery.data ?? [])} />
+              </div>
             </div>
           ) : tab === "checklist" ? (
             <Checklist
@@ -128,6 +145,21 @@ function ImplementationDetailPage() {
   );
 }
 
+/** Deriva a linha do tempo só de itens de checklist já concluídos — nenhum dado inventado. */
+function recentActivity(items: ImplementationItem[]): TimelineEntry[] {
+  return items
+    .filter(
+      (item): item is ImplementationItem & { completedAt: string } => item.completedAt !== null,
+    )
+    .sort((a, b) => Date.parse(b.completedAt) - Date.parse(a.completedAt))
+    .map((item) => ({
+      id: item.id,
+      label: `Concluído: ${item.title}`,
+      timestamp: item.completedAt,
+      actor: item.completedBy,
+    }));
+}
+
 function StatusStepper({ status }: { status: ImplementationStatus }) {
   const currentIndex = mainStatusFlow.indexOf(status);
   const isAlternate = alternateStatuses.includes(status);
@@ -143,8 +175,7 @@ function StatusStepper({ status }: { status: ImplementationStatus }) {
               <span
                 className="h-1.5 w-full rounded-full"
                 style={{
-                  backgroundColor:
-                    done || current ? "var(--stayo-forest)" : "var(--stayo-border)",
+                  backgroundColor: done || current ? "var(--stayo-forest)" : "var(--stayo-border)",
                   opacity: done ? 0.55 : 1,
                 }}
               />
@@ -173,13 +204,7 @@ function StatusStepper({ status }: { status: ImplementationStatus }) {
   );
 }
 
-function IndicatorCards({
-  items,
-  loading,
-}: {
-  items: ImplementationItem[];
-  loading: boolean;
-}) {
+function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loading: boolean }) {
   const progress = computeProgress(items);
   const readiness = computeReadiness(items);
 
@@ -233,8 +258,8 @@ function IndicatorCards({
           {loading ? "—" : readiness.ready ? "Apta" : "Não apta"}
         </p>
         <p className="mt-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          {readiness.pendingBlockers} bloqueador(es) em aberto ·{" "}
-          {readiness.pendingMandatory} obrigatório(s) em aberto
+          {readiness.pendingBlockers} bloqueador(es) em aberto · {readiness.pendingMandatory}{" "}
+          obrigatório(s) em aberto
         </p>
         <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           Não é a mesma coisa que progresso: um único bloqueador pendente impede a operação.
