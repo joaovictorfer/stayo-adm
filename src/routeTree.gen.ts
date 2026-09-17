@@ -11,9 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
-import { Route as FinanceiroRouteImport } from './routes/financeiro'
-import { Route as GuiaRouteImport } from './routes/guia'
-import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
@@ -48,21 +45,6 @@ const IndexRoute = IndexRouteImport.update({
 const BiRoute = BiRouteImport.update({
   id: '/bi',
   path: '/bi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FinanceiroRoute = FinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuiaRoute = GuiaRouteImport.update({
-  id: '/guia',
-  path: '/guia',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProdutosRoute = ProdutosRouteImport.update({
-  id: '/produtos',
-  path: '/produtos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
@@ -195,9 +177,6 @@ const VistoriasIdRoute = VistoriasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
-  '/financeiro': typeof FinanceiroRoute
-  '/guia': typeof GuiaRoute
-  '/produtos': typeof ProdutosRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
@@ -227,9 +206,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
-  '/financeiro': typeof FinanceiroRoute
-  '/guia': typeof GuiaRoute
-  '/produtos': typeof ProdutosRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
@@ -260,9 +236,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
-  '/financeiro': typeof FinanceiroRoute
-  '/guia': typeof GuiaRoute
-  '/produtos': typeof ProdutosRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
@@ -294,9 +267,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bi'
-    | '/financeiro'
-    | '/guia'
-    | '/produtos'
     | '/condominios/$id'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
@@ -326,9 +296,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bi'
-    | '/financeiro'
-    | '/guia'
-    | '/produtos'
     | '/condominios/$id'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
@@ -358,9 +325,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bi'
-    | '/financeiro'
-    | '/guia'
-    | '/produtos'
     | '/condominios/$id'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
@@ -391,9 +355,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
-  FinanceiroRoute: typeof FinanceiroRoute
-  GuiaRoute: typeof GuiaRoute
-  ProdutosRoute: typeof ProdutosRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
@@ -435,27 +396,6 @@ declare module '@tanstack/react-router' {
       path: '/bi'
       fullPath: '/bi'
       preLoaderRoute: typeof BiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/financeiro': {
-      id: '/financeiro'
-      path: '/financeiro'
-      fullPath: '/financeiro'
-      preLoaderRoute: typeof FinanceiroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guia': {
-      id: '/guia'
-      path: '/guia'
-      fullPath: '/guia'
-      preLoaderRoute: typeof GuiaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/produtos': {
-      id: '/produtos'
-      path: '/produtos'
-      fullPath: '/produtos'
-      preLoaderRoute: typeof ProdutosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/condominios/': {
@@ -639,9 +579,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
-  FinanceiroRoute: FinanceiroRoute,
-  GuiaRoute: GuiaRoute,
-  ProdutosRoute: ProdutosRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
