@@ -99,6 +99,13 @@ export const navigation: NavItem[] = [
     roles: ["super_admin", "admin", "operations"],
   },
   {
+    id: "providers",
+    label: "Prestadores",
+    path: "/prestadores",
+    icon: "user-check",
+    roles: ["super_admin", "admin", "operations", "finance"],
+  },
+  {
     id: "messages",
     label: "Mensagens",
     path: "/mensagens",

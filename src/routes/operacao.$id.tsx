@@ -8,6 +8,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { operationTaskQuery } from "../lib/api/queries";
 import type { OperationTaskAssignment } from "../types/core";
 
@@ -115,7 +116,11 @@ function PlanningPanel({
               key={a.providerId}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm"
             >
-              <span style={{ color: "var(--stayo-ink)" }}>{a.providerName ?? a.providerId}</span>
+              <LinkedField
+                to="/prestadores/$id"
+                id={a.providerId}
+                label={a.providerName ?? a.providerId}
+              />
               {a.lead && (
                 <span
                   className="rounded-full px-2 py-0.5 text-[11px]"
