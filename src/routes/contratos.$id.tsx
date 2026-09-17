@@ -8,6 +8,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { contractQuery } from "../lib/api/queries";
 
 export const Route = createFileRoute("/contratos/$id")({
@@ -49,8 +50,28 @@ function ContractDetailPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="ID" value={contract.id} />
           <Field label="Código" value={contract.code} />
-          <Field label="Proprietário" value={contract.ownerName ?? contract.ownerId} />
-          <Field label="Imóvel" value={contract.propertyName ?? contract.propertyId} />
+          <Field
+            label="Proprietário"
+            value={
+              <LinkedField
+                to="/proprietarios/$id"
+                id={contract.ownerId}
+                label={contract.ownerName}
+              />
+            }
+          />
+          <Field
+            label="Imóvel"
+            value={
+              contract.propertyId ? (
+                <LinkedField
+                  to="/imoveis/$id"
+                  id={contract.propertyId}
+                  label={contract.propertyName}
+                />
+              ) : null
+            }
+          />
           <Field label="Tipo" value={contract.type} />
           <Field label="Status" value={contract.status} />
           <Field label="Início" value={contract.startDate} />

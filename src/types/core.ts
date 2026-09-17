@@ -43,6 +43,9 @@ export interface Property {
   capacity: number | null;
   checkinTime: string | null;
   checkoutTime: string | null;
+  /** Preenchido quando o proprietário já foi vinculado ao imóvel oficial. */
+  ownerId: EntityId | null;
+  ownerName: string | null;
   createdAt: string;
   updatedAt: string;
 }

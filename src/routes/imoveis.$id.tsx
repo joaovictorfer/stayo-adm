@@ -9,6 +9,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
   implementationsListQuery,
@@ -83,6 +84,18 @@ function PropertyDetailPage() {
             <Field label="Código externo" value={property.externalCode} />
             <Field label="Nome" value={property.name} />
             <Field label="Status" value={property.status} />
+            <Field
+              label="Proprietário"
+              value={
+                property.ownerId ? (
+                  <LinkedField
+                    to="/proprietarios/$id"
+                    id={property.ownerId}
+                    label={property.ownerName}
+                  />
+                ) : null
+              }
+            />
             <Field label="Condomínio" value={property.condominiumName} />
             <Field label="ID do condomínio" value={property.condominiumId} />
             <Field label="Unidade" value={property.unit} />
