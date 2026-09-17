@@ -9,6 +9,19 @@ import {
   PageHeader,
 } from "../components/data/ListStates";
 import { reservationQuery } from "../lib/api/queries";
+import type { ReservationWebCheckinStatus } from "../types/core";
+
+const webCheckinLabels: Record<ReservationWebCheckinStatus, string> = {
+  pendente: "Ação necessária",
+  concluido: "Web check-in ok",
+  nao_aplicavel: "Não aplicável",
+};
+
+const webCheckinTone: Record<ReservationWebCheckinStatus, string> = {
+  pendente: "var(--stayo-warning)",
+  concluido: "var(--stayo-success)",
+  nao_aplicavel: "var(--stayo-ink-muted)",
+};
 
 export const Route = createFileRoute("/reservas/$id")({
   head: () => ({
@@ -55,7 +68,18 @@ function ReservationDetailPage() {
           <Field label="Canal" value={reservation.channel} />
           <Field label="Check-in" value={reservation.checkin} />
           <Field label="Check-out" value={reservation.checkout} />
-          <Field label="Nº de hóspedes" value={reservation.guestsCount} />
+          <Field label="Chegada prevista" value={reservation.expectedArrivalTime} />
+          <Field label="Adultos" value={reservation.adultsCount} />
+          <Field label="Crianças" value={reservation.childrenCount} />
+          <Field label="Pets" value={reservation.petsCount} />
+          <Field
+            label="Web check-in"
+            value={
+              <span style={{ color: webCheckinTone[reservation.webCheckin] }}>
+                {webCheckinLabels[reservation.webCheckin]}
+              </span>
+            }
+          />
           <Field label="Status" value={reservation.status} />
           <Field label="Valor" value={reservation.amount} />
           <Field label="Criada em" value={reservation.createdAt} />

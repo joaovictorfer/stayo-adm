@@ -55,6 +55,12 @@ export interface Condominium {
   updatedAt: string;
 }
 
+/**
+ * Status do web check-in feito pelo hóspede antes da chegada — não é
+ * controle de acesso, só indica se falta ação do hóspede antes do check-in.
+ */
+export type ReservationWebCheckinStatus = "pendente" | "concluido" | "nao_aplicavel";
+
 export interface Reservation {
   id: EntityId;
   externalId: string | null;
@@ -64,7 +70,12 @@ export interface Reservation {
   channel: string | null;
   checkin: string;
   checkout: string;
-  guestsCount: number | null;
+  adultsCount: number | null;
+  childrenCount: number | null;
+  petsCount: number | null;
+  /** Horário previsto de chegada informado pelo hóspede, ex: "15:00". */
+  expectedArrivalTime: string | null;
+  webCheckin: ReservationWebCheckinStatus;
   status: string;
   amount: number | null; // presente apenas quando o scope financial.read for concedido
   createdAt: string;
