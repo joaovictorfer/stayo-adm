@@ -25,6 +25,7 @@ import {
   ownerOnboardingSubmissionQuery,
 } from "../lib/api/queries";
 import { ownerOnboardingStore } from "../lib/api/local-store";
+import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
 import {
   alternateStatuses,
@@ -37,7 +38,12 @@ import {
 } from "../lib/implementation-status";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
 import type { ChargeType, InitialChargeStatus } from "../types/admin";
-import type { EntityId, ImplementationItem, ImplementationStatus } from "../types/core";
+import type {
+  EntityId,
+  ImplementationItem,
+  ImplementationProject,
+  ImplementationStatus,
+} from "../types/core";
 import {
   type OwnerOnboardingLinkStatus,
   ownerOnboardingLinkStatus,
@@ -184,6 +190,8 @@ function ImplementationDetailPage() {
               <OwnerPortalPanel implementationId={implementation.id} />
 
               <InitialChargesPanel implementationId={implementation.id} />
+
+              <CoreConversionPanel implementation={implementation} />
 
               <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
                 <h2
@@ -575,6 +583,62 @@ function InitialChargesPanel({ implementationId }: { implementationId: EntityId 
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/**
+ * Fase 11 — preparação para converter esta implantação em Property/Owner
+ * oficiais do Core. Sempre lê `corePropertyId`/`coreOwnerId` como fonte da
+ * verdade (nunca fabrica um resultado): enquanto não há endpoint de escrita
+ * real do Core, o botão só mostra por que a conversão ainda não é possível.
+ */
+function CoreConversionPanel({ implementation }: { implementation: ImplementationProject }) {
+  const [error, setError] = useState<string | null>(null);
+  const alreadyConverted = Boolean(implementation.corePropertyId && implementation.coreOwnerId);
+
+  const convert = useMutation({
+    mutationFn: () => coreConversionService.convertImplementation(implementation),
+    onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+    onSuccess: () => setError(null),
+  });
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Conversão para o Core
+      </h2>
+      {alreadyConverted ? (
+        <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
+          Convertida — imóvel {implementation.corePropertyId} · proprietário{" "}
+          {implementation.coreOwnerId}.
+        </p>
+      ) : (
+        <>
+          <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+            {isCoreConversionEnabled()
+              ? "A flag de conversão está ligada, mas o Core ainda não expõe um endpoint de escrita — a implantação não pode virar Property/Owner oficiais ainda."
+              : "Conversão desligada por padrão (VITE_ENABLE_CORE_CONVERSION) — o Core ainda não expõe um endpoint de escrita para properties/owners."}
+          </p>
+          <button
+            type="button"
+            onClick={() => convert.mutate()}
+            disabled={convert.isPending}
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+            style={{ ...surface, color: "var(--stayo-ink-muted)" }}
+          >
+            {convert.isPending ? "Verificando..." : "Converter para o Core"}
+          </button>
+          {error && (
+            <p className="mt-2 text-xs" style={{ color: "var(--stayo-danger)" }} role="alert">
+              {error}
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }
