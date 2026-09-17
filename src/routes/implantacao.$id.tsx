@@ -10,6 +10,7 @@ import {
   PageHeader,
   Panel,
 } from "../components/data/ListStates";
+import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { implementationItemsQuery, implementationQuery } from "../lib/api/queries";
 import {
   alternateStatuses,
@@ -44,7 +45,7 @@ const surface = {
 
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
-  const [tab, setTab] = useState<"resumo" | "checklist">("resumo");
+  const [tab, setTab] = useState<"resumo" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -74,7 +75,7 @@ function ImplementationDetailPage() {
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
           <div className="flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "checklist"] as const).map((t) => (
+            {(["resumo", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -85,7 +86,7 @@ function ImplementationDetailPage() {
                   borderBottom: tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
                 }}
               >
-                {t === "resumo" ? "Resumo" : "Checklist"}
+                {t === "resumo" ? "Resumo" : t === "checklist" ? "Checklist" : "Proposta"}
               </button>
             ))}
           </div>
@@ -111,13 +112,15 @@ function ImplementationDetailPage() {
               <Field label="Criada em" value={implementation.createdAt} />
               <Field label="Atualizada em" value={implementation.updatedAt} />
             </div>
-          ) : (
+          ) : tab === "checklist" ? (
             <Checklist
               items={itemsQuery.data ?? []}
               loading={itemsQuery.isPending}
               error={itemsQuery.isError}
               onRetry={() => void itemsQuery.refetch()}
             />
+          ) : (
+            <ProposalTab implementationId={implementation.id} />
           )}
         </div>
       )}

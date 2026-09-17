@@ -9,6 +9,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
+import { checklistTemplatesStore, proposalsStore } from "./local-store";
 import type { EntityId } from "../../types/core";
 
 /** Fonte única de dados desta fase. */
@@ -78,4 +79,26 @@ export const implementationItemsQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["implementations", "items", id],
     queryFn: () => coreApi.implementations.items(id),
+  });
+
+/**
+ * Templates de checklist e versões de proposta ainda não existem no Core;
+ * vêm do repositório local temporário (`local-store.ts`).
+ */
+export const checklistTemplatesQuery = () =>
+  queryOptions({
+    queryKey: ["checklist-templates", "list"],
+    queryFn: () => checklistTemplatesStore.list(),
+  });
+
+export const proposalsAllQuery = () =>
+  queryOptions({
+    queryKey: ["proposals", "all"],
+    queryFn: () => proposalsStore.listAll(),
+  });
+
+export const proposalsByImplementationQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["proposals", "implementation", id],
+    queryFn: () => proposalsStore.list(id),
   });
