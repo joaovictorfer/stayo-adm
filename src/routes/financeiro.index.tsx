@@ -5,44 +5,72 @@ import { useMemo, useState } from "react";
 import {
   EmptyRows,
   ErrorRows,
+  Field,
   ListSkeleton,
   PageHeader,
   Panel,
   SearchInput,
 } from "../components/data/ListStates";
-import { payoutsListQuery } from "../lib/api/queries";
+import { Drawer } from "../components/patterns/Drawer";
+import { payoutsListQuery, serviceInvoicesListQuery } from "../lib/api/queries";
+import type { ServiceInvoice, ServiceInvoiceStage } from "../types/core";
 
 /**
- * Financeiro — repasses por imóvel/proprietário.
+ * Financeiro — repasses por imóvel/proprietário e faturas de serviço.
  *
- * Menor privilégio: esta tela mostra apenas imóvel, reserva, canal, valor e
- * proprietário. Nenhum dado de hóspede é lido aqui, e documento/selfie não
+ * Menor privilégio: estas telas mostram apenas imóvel, reserva, canal, valor
+ * e proprietário. Nenhum dado de hóspede é lido aqui, e documento/selfie não
  * existem no contrato de dados deste módulo.
  */
 export const Route = createFileRoute("/financeiro/")({
   head: () => ({
     meta: [
       { title: "Financeiro — Stayo Admin" },
-      { name: "description", content: "Repasses por imóvel e proprietário da operação Stayo." },
+      { name: "description", content: "Repasses e faturas de serviço da operação Stayo." },
       { property: "og:title", content: "Financeiro — Stayo Admin" },
       {
         property: "og:description",
-        content: "Repasses por imóvel e proprietário da operação Stayo.",
+        content: "Repasses e faturas de serviço da operação Stayo.",
       },
     ],
   }),
   component: FinancePage,
 });
 
-function formatMoney(value: number | null, currency: string | null) {
+function formatMoney(value: number | null) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: currency ?? "BRL",
-  }).format(value);
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
 function FinancePage() {
+  const [tab, setTab] = useState<"visao-geral" | "faturas">("visao-geral");
+
+  return (
+    <>
+      <PageHeader title="Financeiro" />
+      <div className="mb-4 flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
+        {(["visao-geral", "faturas"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className="px-3 py-2 text-sm"
+            style={{
+              color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+              borderBottom: tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
+            }}
+          >
+            {t === "visao-geral" ? "Visão geral" : "Faturas de serviço"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "visao-geral" ? <PayoutsTab /> : <ServiceInvoicesTab />}
+    </>
+  );
+}
+
+function PayoutsTab() {
   const [q, setQ] = useState("");
   const query = useQuery(payoutsListQuery());
 
@@ -60,13 +88,13 @@ function FinancePage() {
 
   return (
     <>
-      <PageHeader title="Financeiro" count={query.isSuccess ? rows.length : undefined}>
+      <div className="mb-4 flex justify-end">
         <SearchInput
           value={q}
           onChange={setQ}
           placeholder="Buscar por imóvel, proprietário ou reserva"
         />
-      </PageHeader>
+      </div>
       <Panel>
         {query.isPending ? (
           <ListSkeleton />
@@ -97,7 +125,7 @@ function FinancePage() {
                     {p.ownerName ?? p.ownerId ?? "—"}
                   </span>
                   <span className="ml-auto" style={{ color: "var(--stayo-ink)" }}>
-                    {formatMoney(p.amount, p.currency)}
+                    {formatMoney(p.amount)}
                   </span>
                 </Link>
               </li>
@@ -106,5 +134,201 @@ function FinancePage() {
         )}
       </Panel>
     </>
+  );
+}
+
+const stageOrder: ServiceInvoiceStage[] = ["emissao", "envio", "recebimento"];
+const stageLabels: Record<ServiceInvoiceStage, string> = {
+  emissao: "Emissão",
+  envio: "Envio",
+  recebimento: "Recebimento",
+};
+
+function ServiceInvoicesTab() {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<ServiceInvoice | null>(null);
+  const query = useQuery(serviceInvoicesListQuery());
+
+  const rows = useMemo(() => {
+    const data = query.data?.data ?? [];
+    const term = q.trim().toLowerCase();
+    if (!term) return data;
+    return data.filter(
+      (i) =>
+        i.code.toLowerCase().includes(term) ||
+        i.title.toLowerCase().includes(term) ||
+        (i.propertyName ?? "").toLowerCase().includes(term) ||
+        (i.ownerName ?? "").toLowerCase().includes(term),
+    );
+  }, [query.data, q]);
+
+  return (
+    <>
+      <div className="mb-4 flex justify-end">
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Buscar por código, imóvel ou proprietário"
+        />
+      </div>
+      <Panel>
+        {query.isPending ? (
+          <ListSkeleton />
+        ) : query.isError ? (
+          <ErrorRows onRetry={() => void query.refetch()} />
+        ) : rows.length === 0 ? (
+          <EmptyRows
+            message={
+              q
+                ? "Nenhuma fatura encontrada para esta busca"
+                : "Nenhuma fatura de serviço emitida ainda"
+            }
+          />
+        ) : (
+          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+            {rows.map((invoice) => (
+              <li key={invoice.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelected(invoice)}
+                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left text-sm"
+                  style={{ color: "var(--stayo-ink)" }}
+                >
+                  <span className="font-medium">{invoice.code}</span>
+                  <span>{invoice.title}</span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                    {invoice.propertyName ?? "—"}
+                  </span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                    {invoice.ownerName ?? "—"}
+                  </span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[11px]"
+                    style={{
+                      backgroundColor: "var(--stayo-forest-soft)",
+                      color: "var(--stayo-forest)",
+                    }}
+                  >
+                    {stageLabels[invoice.stage]}
+                  </span>
+                  <span className="ml-auto" style={{ color: "var(--stayo-ink)" }}>
+                    {formatMoney(invoice.total)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      <Drawer
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        eyebrow="Fatura de serviço"
+        title={selected?.title ?? ""}
+      >
+        {selected && <ServiceInvoiceDetail invoice={selected} />}
+      </Drawer>
+    </>
+  );
+}
+
+function ServiceInvoiceDetail({ invoice }: { invoice: ServiceInvoice }) {
+  const currentIndex = stageOrder.indexOf(invoice.stage);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          {invoice.code}
+        </p>
+        <ol className="mt-2 flex gap-2">
+          {stageOrder.map((stage, index) => (
+            <li key={stage} className="flex flex-1 flex-col gap-1.5">
+              <span
+                className="h-1.5 w-full rounded-full"
+                style={{
+                  backgroundColor:
+                    index <= currentIndex ? "var(--stayo-forest)" : "var(--stayo-border)",
+                }}
+              />
+              <span
+                className="text-xs"
+                style={{
+                  color: index === currentIndex ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                  fontWeight: index === currentIndex ? 600 : 400,
+                }}
+              >
+                {stageLabels[stage]}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Imóvel" value={invoice.propertyName} />
+        <Field label="Proprietário" value={invoice.ownerName} />
+        <Field label="Competência" value={invoice.referenceMonth} />
+        <Field label="Vencimento" value={invoice.dueDate} />
+      </div>
+
+      <div>
+        <p
+          className="mb-2 text-xs uppercase tracking-wide"
+          style={{ color: "var(--stayo-ink-muted)" }}
+        >
+          Serviços faturados
+        </p>
+        <ul
+          className="divide-y rounded-[var(--radius-card)] border"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
+          {invoice.items.map((item, i) => (
+            <li key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+              <span>
+                {item.description}{" "}
+                <span style={{ color: "var(--stayo-ink-muted)" }}>x{item.quantity}</span>
+              </span>
+              <span>{formatMoney(item.total)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-2 flex justify-between text-sm font-medium">
+          <span>Total</span>
+          <span>{formatMoney(invoice.total)}</span>
+        </div>
+      </div>
+
+      {invoice.notes && (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          {invoice.notes}
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <DisabledAction label="Visualizar PDF" />
+        <DisabledAction label="Baixar PDF" />
+        <DisabledAction label="Enviar por WhatsApp" />
+      </div>
+    </div>
+  );
+}
+
+function DisabledAction({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      title="disponível quando o Stayo Core estiver conectado"
+      className="cursor-not-allowed rounded-[var(--radius-control)] border px-3 py-2 text-sm opacity-60"
+      style={{
+        backgroundColor: "var(--stayo-surface)",
+        borderColor: "var(--stayo-border)",
+        color: "var(--stayo-ink-muted)",
+      }}
+    >
+      {label}
+    </button>
   );
 }

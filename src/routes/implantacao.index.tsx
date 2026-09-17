@@ -10,6 +10,8 @@ import {
   Panel,
   SelectFilter,
 } from "../components/data/ListStates";
+import { Drawer } from "../components/patterns/Drawer";
+import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { coreApi, implementationsListQuery } from "../lib/api/queries";
 import {
   alternateStatuses,
@@ -41,7 +43,7 @@ const surface = {
 
 function ImplementationsPage() {
   const [status, setStatus] = useState("all");
-  const [formOpen, setFormOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const query = useQuery(implementationsListQuery());
   const data = query.data?.data ?? [];
 
@@ -69,15 +71,19 @@ function ImplementationsPage() {
         />
         <button
           type="button"
-          onClick={() => setFormOpen((v) => !v)}
+          onClick={() => setDrawerOpen(true)}
           className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
           style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
         >
-          {formOpen ? "Fechar" : "Nova implantação"}
+          Nova implantação
         </button>
       </PageHeader>
 
-      {formOpen && <QuickForm existing={data} onDone={() => setFormOpen(false)} />}
+      <NewImplementationDrawer
+        open={drawerOpen}
+        existing={data}
+        onClose={() => setDrawerOpen(false)}
+      />
 
       <Panel>
         {query.isPending ? (
@@ -107,9 +113,7 @@ function ImplementationsPage() {
                   <span style={{ color: "var(--stayo-ink-muted)" }}>
                     {[i.condominiumName, i.unit].filter(Boolean).join(" · ") || "—"}
                   </span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {statusLabels[i.status]}
-                  </span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>{statusLabels[i.status]}</span>
                   <span style={{ color: "var(--stayo-ink-muted)" }}>
                     {i.startDateEstimate ?? "—"}
                   </span>
@@ -123,23 +127,27 @@ function ImplementationsPage() {
   );
 }
 
-function QuickForm({
+const emptyForm = {
+  name: "",
+  phone: "",
+  condominiumName: "",
+  unit: "",
+  startDateEstimate: "",
+  responsibleUserId: "",
+  notes: "",
+};
+
+function NewImplementationDrawer({
+  open,
   existing,
-  onDone,
+  onClose,
 }: {
+  open: boolean;
   existing: ImplementationProject[];
-  onDone: () => void;
+  onClose: () => void;
 }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    condominiumName: "",
-    unit: "",
-    startDateEstimate: "",
-    responsibleUserId: "",
-    notes: "",
-  });
+  const [form, setForm] = useState(emptyForm);
 
   const mutation = useMutation({
     mutationFn: (input: typeof form) =>
@@ -159,73 +167,87 @@ function QuickForm({
         nextCursor: prev?.nextCursor ?? null,
       }));
       queryClient.setQueryData(["implementations", "detail", created.id], created);
-      onDone();
+      setForm(emptyForm);
+      onClose();
     },
   });
 
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
 
-  return (
-    <form
-      className="mb-4 rounded-[var(--radius-card)] border p-4"
-      style={surface}
-      onSubmit={(e) => {
-        e.preventDefault();
-        mutation.mutate(form);
-      }}
-    >
-      <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-        Cadastro rápido — feito durante a ligação. O restante é completado depois.
-      </p>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <TextField label="Proprietário" value={form.name} onChange={set("name")} required />
-        <TextField label="Telefone" value={form.phone} onChange={set("phone")} required />
-        <TextField
-          label="Condomínio"
-          value={form.condominiumName}
-          onChange={set("condominiumName")}
-        />
-        <TextField label="Unidade" value={form.unit} onChange={set("unit")} />
-        <TextField
-          label="Previsão de início"
-          type="date"
-          value={form.startDateEstimate}
-          onChange={set("startDateEstimate")}
-        />
-        <TextField
-          label="Responsável"
-          value={form.responsibleUserId}
-          onChange={set("responsibleUserId")}
-        />
-        <div className="sm:col-span-3">
-          <TextField label="Observação" value={form.notes} onChange={set("notes")} />
+  const steps: WizardStep[] = [
+    {
+      id: "proprietario",
+      label: "Proprietário",
+      isValid: form.name.trim() !== "" && form.phone.trim() !== "",
+      content: (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+            Cadastro rápido — feito durante a ligação. O restante é completado depois.
+          </p>
+          <TextField label="Proprietário" value={form.name} onChange={set("name")} required />
+          <TextField label="Telefone" value={form.phone} onChange={set("phone")} required />
         </div>
-      </div>
-      <div className="mt-4 flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-        >
-          {mutation.isPending ? "Salvando..." : "Salvar implantação"}
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="text-sm underline"
-          style={{ color: "var(--stayo-ink-muted)" }}
-        >
-          Cancelar
-        </button>
-        {mutation.isError && (
-          <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-            Não foi possível salvar.
-          </span>
-        )}
-      </div>
-    </form>
+      ),
+    },
+    {
+      id: "imovel",
+      label: "Imóvel",
+      content: (
+        <div className="flex flex-col gap-3">
+          <TextField
+            label="Condomínio"
+            value={form.condominiumName}
+            onChange={set("condominiumName")}
+          />
+          <TextField label="Unidade" value={form.unit} onChange={set("unit")} />
+        </div>
+      ),
+    },
+    {
+      id: "planejamento",
+      label: "Planejamento",
+      content: (
+        <div className="flex flex-col gap-3">
+          <TextField
+            label="Previsão de início"
+            type="date"
+            value={form.startDateEstimate}
+            onChange={set("startDateEstimate")}
+          />
+          <TextField
+            label="Responsável"
+            value={form.responsibleUserId}
+            onChange={set("responsibleUserId")}
+          />
+          <TextField label="Observação" value={form.notes} onChange={set("notes")} />
+          {mutation.isError && (
+            <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
+              Não foi possível salvar.
+            </span>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <Drawer
+      open={open}
+      onClose={() => {
+        setForm(emptyForm);
+        onClose();
+      }}
+      eyebrow="Implantação"
+      title="Nova implantação"
+    >
+      <Wizard
+        steps={steps}
+        completeLabel="Salvar implantação"
+        submitting={mutation.isPending}
+        onComplete={() => mutation.mutate(form)}
+      />
+    </Drawer>
   );
 }
 

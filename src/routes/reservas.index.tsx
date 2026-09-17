@@ -45,9 +45,7 @@ function ReservationsPage() {
     return data.filter((r) => {
       if (status !== "all" && r.status !== status) return false;
       if (!term) return true;
-      return (
-        r.id.toLowerCase().includes(term) || (r.externalId ?? "").toLowerCase().includes(term)
-      );
+      return r.id.toLowerCase().includes(term) || (r.externalId ?? "").toLowerCase().includes(term);
     });
   }, [data, q, status]);
 
@@ -86,6 +84,9 @@ function ReservationsPage() {
                   style={{ color: "var(--stayo-ink)" }}
                 >
                   <span className="font-medium">{r.externalId ?? r.id}</span>
+                  {r.channel && (
+                    <span style={{ color: "var(--stayo-ink-muted)" }}>{r.channel}</span>
+                  )}
                   <span style={{ color: "var(--stayo-ink-muted)" }}>
                     {r.checkin} → {r.checkout}
                   </span>

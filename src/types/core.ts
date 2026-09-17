@@ -29,12 +29,7 @@ export type ImplementationStatus =
   | "cancelado";
 
 export type ImplementationItemStatus =
-  | "pendente"
-  | "em_andamento"
-  | "concluido"
-  | "bloqueado"
-  | "nao_aplicavel"
-  | "pulado";
+  "pendente" | "em_andamento" | "concluido" | "bloqueado" | "nao_aplicavel" | "pulado";
 
 export interface Property {
   id: EntityId;
@@ -60,6 +55,12 @@ export interface Condominium {
   updatedAt: string;
 }
 
+/**
+ * Status do web check-in feito pelo hóspede antes da chegada — não é
+ * controle de acesso, só indica se falta ação do hóspede antes do check-in.
+ */
+export type ReservationWebCheckinStatus = "pendente" | "concluido" | "nao_aplicavel";
+
 export interface Reservation {
   id: EntityId;
   externalId: string | null;
@@ -69,7 +70,12 @@ export interface Reservation {
   channel: string | null;
   checkin: string;
   checkout: string;
-  guestsCount: number | null;
+  adultsCount: number | null;
+  childrenCount: number | null;
+  petsCount: number | null;
+  /** Horário previsto de chegada informado pelo hóspede, ex: "15:00". */
+  expectedArrivalTime: string | null;
+  webCheckin: ReservationWebCheckinStatus;
   status: string;
   amount: number | null; // presente apenas quando o scope financial.read for concedido
   createdAt: string;
@@ -160,12 +166,7 @@ export interface Proposal {
 }
 
 export type InspectionType =
-  | "implantacao"
-  | "entrada"
-  | "saida"
-  | "periodica"
-  | "manutencao"
-  | "inventario";
+  "implantacao" | "entrada" | "saida" | "periodica" | "manutencao" | "inventario";
 
 export interface Inspection {
   id: EntityId;
@@ -184,6 +185,37 @@ export interface Inspection {
   updatedAt: string;
 }
 
+/**
+ * Prestador de serviço (limpeza, manutenção etc.) — pessoa ou empresa
+ * externa à equipe interna, que recebe por rotinas executadas. Mesmo
+ * cadastro usado tanto para atribuir rotinas quanto para os fechamentos
+ * financeiros pagos a ele.
+ */
+export interface ServiceProvider {
+  id: EntityId;
+  name: string;
+  /** CPF ou CNPJ, sem formatação garantida. */
+  document: string | null;
+  pixKey: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Um prestador atribuído a uma rotina operacional, com o percentual e o
+ * valor que cabe a ele no custo total da rotina (handoff: cada rotina pode
+ * ser dividida entre mais de um prestador, sempre com um líder marcado).
+ */
+export interface OperationTaskAssignment {
+  providerId: EntityId;
+  providerName: string | null;
+  /** Percentual do valor total que cabe a este prestador (0-100). */
+  share: number;
+  amount: number | null;
+  lead: boolean;
+}
+
 /** Pendência operacional do dia a dia (limpeza, manutenção, check-in etc.). */
 export interface OperationTask {
   id: EntityId;
@@ -196,6 +228,9 @@ export interface OperationTask {
   responsibleUserId: EntityId | null;
   status: string;
   priority: string | null;
+  /** Valor total da rotina, dividido entre `assignments`. Nulo = sem custo. */
+  totalAmount: number | null;
+  assignments: OperationTaskAssignment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -262,6 +297,44 @@ export interface UpsellProduct {
   currency: string | null;
   unit: string | null;
   active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** As três etapas de uma fatura de serviço, na ordem em que acontecem. */
+export type ServiceInvoiceStage = "emissao" | "envio" | "recebimento";
+
+export interface ServiceInvoiceItem {
+  description: string;
+  quantity: number;
+  unitValue: number;
+  total: number;
+}
+
+/**
+ * Fatura de cobrança de serviços realizados num imóvel (ex: limpeza),
+ * emitida para o proprietário. Distinta do repasse (`Payout`, que é o
+ * valor que sai da operação para o proprietário) — aqui é o contrário,
+ * o proprietário paga a operação por um serviço prestado.
+ */
+export interface ServiceInvoice {
+  id: EntityId;
+  code: string; // ex: FSR-00039
+  title: string; // ex: "Limpeza H203"
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  ownerId: EntityId | null;
+  ownerName: string | null;
+  /** Mês de competência do serviço, ex: "2026-09". */
+  referenceMonth: string | null;
+  issuedAt: string | null;
+  dueDate: string | null;
+  items: ServiceInvoiceItem[];
+  total: number;
+  stage: ServiceInvoiceStage;
+  sentAt: string | null;
+  paidAt: string | null;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
 }

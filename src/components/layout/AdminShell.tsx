@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import {
+  Bell,
   Book,
   Building,
   Building2,
@@ -16,6 +17,7 @@ import {
   Menu,
   MessageCircle,
   Plug,
+  Search,
   Server,
   Settings,
   ShoppingBag,
@@ -243,6 +245,35 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </>
             )}
           </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <label
+              className="hidden items-center gap-2 rounded-[var(--radius-control)] border px-3 py-1.5 text-sm sm:flex"
+              style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-bg)" }}
+            >
+              <Search size={15} style={{ color: "var(--stayo-ink-muted)" }} />
+              <input
+                type="search"
+                placeholder="Buscar imóvel, reserva, módulo..."
+                className="w-48 bg-transparent outline-none placeholder:text-current lg:w-64"
+                style={{ color: "var(--stayo-ink)" }}
+              />
+              <kbd
+                className="rounded border px-1.5 py-0.5 text-[10px]"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+              >
+                ⌘K
+              </kbd>
+            </label>
+            <button
+              type="button"
+              aria-label="Notificações"
+              className="rounded-[var(--radius-control)] border p-2"
+              style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+            >
+              <Bell size={16} />
+            </button>
+          </div>
         </header>
         <main className="min-w-0 flex-1 p-4 lg:p-6">{children}</main>
       </div>

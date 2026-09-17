@@ -29,6 +29,8 @@ import type {
   GuideEntry,
   UpsellProduct,
   Payout,
+  ServiceInvoice,
+  ServiceProvider,
 } from "../../types/core";
 import type {
   ConsumerApp,
@@ -122,6 +124,18 @@ export interface CoreApiClient {
   payouts: {
     list(params?: { cursor?: string }): Promise<Page<Payout>>;
     get(id: EntityId): Promise<Payout | null>;
+  };
+
+  /** Faturas de serviço cobradas do proprietário — requer scope financial.read. */
+  serviceInvoices: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<ServiceInvoice>>;
+    get(id: EntityId): Promise<ServiceInvoice | null>;
+  };
+
+  /** Cadastro de prestadores de serviço (limpeza, manutenção etc.). */
+  serviceProviders: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<ServiceProvider>>;
+    get(id: EntityId): Promise<ServiceProvider | null>;
   };
 
   /** Área técnica de Configurações → Stayo Core. */
@@ -221,6 +235,14 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       list: (params) => request(`/api/core/v1/financial/payouts${queryString(params)}`),
       get: (id) => request(`/api/core/v1/financial/payouts/${id}`),
     },
+    serviceInvoices: {
+      list: (params) => request(`/api/core/v1/financial/service-invoices${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/financial/service-invoices/${id}`),
+    },
+    serviceProviders: {
+      list: (params) => request(`/api/core/v1/service-providers${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/service-providers/${id}`),
+    },
     admin: {
       overview: () => request("/api/core/v1/admin/overview"),
       apps: () => request("/api/core/v1/admin/apps"),
@@ -292,6 +314,8 @@ export function createMockCoreApiClient(): CoreApiClient {
     guide: { list: () => empty(), get: () => Promise.resolve(null) },
     products: { list: () => empty(), get: () => Promise.resolve(null) },
     payouts: { list: () => empty(), get: () => Promise.resolve(null) },
+    serviceInvoices: { list: () => empty(), get: () => Promise.resolve(null) },
+    serviceProviders: { list: () => empty(), get: () => Promise.resolve(null) },
     admin: {
       overview: () =>
         Promise.resolve({
@@ -375,8 +399,8 @@ const mockScopes: CoreScope[] = [
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
 export function createDefaultCoreApiClient(): CoreApiClient {
-  const baseUrl = import.meta.env['VITE_CORE_API_URL'] as string | undefined;
-  const appToken = import.meta.env['VITE_CORE_APP_TOKEN'] as string | undefined;
+  const baseUrl = import.meta.env["VITE_CORE_API_URL"] as string | undefined;
+  const appToken = import.meta.env["VITE_CORE_APP_TOKEN"] as string | undefined;
 
   if (!baseUrl || !appToken) {
     return createMockCoreApiClient();
