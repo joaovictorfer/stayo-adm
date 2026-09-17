@@ -92,14 +92,14 @@ const ConfiguracoesStayoCoreRoute = ConfiguracoesStayoCoreRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContratosIndexRoute = ContratosIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ContratosRoute,
+  id: '/contratos/',
+  path: '/contratos/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ContratosIdRoute = ContratosIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ContratosRoute,
+  id: '/contratos/$id',
+  path: '/contratos/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const HospedesIndexRoute = HospedesIndexRouteImport.update({
   id: '/hospedes/',
@@ -142,34 +142,34 @@ const ImplantacaoTemplatesRoute = ImplantacaoTemplatesRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MensagensIndexRoute = MensagensIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => MensagensRoute,
+  id: '/mensagens/',
+  path: '/mensagens/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MensagensIdRoute = MensagensIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MensagensRoute,
+  id: '/mensagens/$id',
+  path: '/mensagens/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OperacaoIndexRoute = OperacaoIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => OperacaoRoute,
+  id: '/operacao/',
+  path: '/operacao/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OperacaoIdRoute = OperacaoIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => OperacaoRoute,
+  id: '/operacao/$id',
+  path: '/operacao/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProprietariosIndexRoute = ProprietariosIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProprietariosRoute,
+  id: '/proprietarios/',
+  path: '/proprietarios/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProprietariosIdRoute = ProprietariosIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ProprietariosRoute,
+  id: '/proprietarios/$id',
+  path: '/proprietarios/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ReservasIndexRoute = ReservasIndexRouteImport.update({
   id: '/reservas/',
@@ -182,14 +182,14 @@ const ReservasIdRoute = ReservasIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const VistoriasIndexRoute = VistoriasIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => VistoriasRoute,
+  id: '/vistorias/',
+  path: '/vistorias/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VistoriasIdRoute = VistoriasIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => VistoriasRoute,
+  id: '/vistorias/$id',
+  path: '/vistorias/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -397,18 +397,28 @@ export interface RootRouteChildren {
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
+  ContratosIdRoute: typeof ContratosIdRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
   ImplantacaoIdRoute: typeof ImplantacaoIdRoute
   ImplantacaoPropostasRoute: typeof ImplantacaoPropostasRoute
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
+  MensagensIdRoute: typeof MensagensIdRoute
+  OperacaoIdRoute: typeof OperacaoIdRoute
+  ProprietariosIdRoute: typeof ProprietariosIdRoute
   ReservasIdRoute: typeof ReservasIdRoute
+  VistoriasIdRoute: typeof VistoriasIdRoute
   CondominiosIndexRoute: typeof CondominiosIndexRoute
   ConfiguracoesIndexRoute: typeof ConfiguracoesIndexRoute
+  ContratosIndexRoute: typeof ContratosIndexRoute
   HospedesIndexRoute: typeof HospedesIndexRoute
   ImoveisIndexRoute: typeof ImoveisIndexRoute
   ImplantacaoIndexRoute: typeof ImplantacaoIndexRoute
+  MensagensIndexRoute: typeof MensagensIndexRoute
+  OperacaoIndexRoute: typeof OperacaoIndexRoute
+  ProprietariosIndexRoute: typeof ProprietariosIndexRoute
   ReservasIndexRoute: typeof ReservasIndexRoute
+  VistoriasIndexRoute: typeof VistoriasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -485,17 +495,17 @@ declare module '@tanstack/react-router' {
     }
     '/contratos/': {
       id: '/contratos/'
-      path: '/'
+      path: '/contratos'
       fullPath: '/contratos/'
       preLoaderRoute: typeof ContratosIndexRouteImport
-      parentRoute: typeof ContratosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/contratos/$id': {
       id: '/contratos/$id'
-      path: '/$id'
+      path: '/contratos/$id'
       fullPath: '/contratos/$id'
       preLoaderRoute: typeof ContratosIdRouteImport
-      parentRoute: typeof ContratosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/hospedes/': {
       id: '/hospedes/'
@@ -555,45 +565,45 @@ declare module '@tanstack/react-router' {
     }
     '/mensagens/': {
       id: '/mensagens/'
-      path: '/'
+      path: '/mensagens'
       fullPath: '/mensagens/'
       preLoaderRoute: typeof MensagensIndexRouteImport
-      parentRoute: typeof MensagensRoute
+      parentRoute: typeof rootRouteImport
     }
     '/mensagens/$id': {
       id: '/mensagens/$id'
-      path: '/$id'
+      path: '/mensagens/$id'
       fullPath: '/mensagens/$id'
       preLoaderRoute: typeof MensagensIdRouteImport
-      parentRoute: typeof MensagensRoute
+      parentRoute: typeof rootRouteImport
     }
     '/operacao/': {
       id: '/operacao/'
-      path: '/'
+      path: '/operacao'
       fullPath: '/operacao/'
       preLoaderRoute: typeof OperacaoIndexRouteImport
-      parentRoute: typeof OperacaoRoute
+      parentRoute: typeof rootRouteImport
     }
     '/operacao/$id': {
       id: '/operacao/$id'
-      path: '/$id'
+      path: '/operacao/$id'
       fullPath: '/operacao/$id'
       preLoaderRoute: typeof OperacaoIdRouteImport
-      parentRoute: typeof OperacaoRoute
+      parentRoute: typeof rootRouteImport
     }
     '/proprietarios/': {
       id: '/proprietarios/'
-      path: '/'
+      path: '/proprietarios'
       fullPath: '/proprietarios/'
       preLoaderRoute: typeof ProprietariosIndexRouteImport
-      parentRoute: typeof ProprietariosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/proprietarios/$id': {
       id: '/proprietarios/$id'
-      path: '/$id'
+      path: '/proprietarios/$id'
       fullPath: '/proprietarios/$id'
       preLoaderRoute: typeof ProprietariosIdRouteImport
-      parentRoute: typeof ProprietariosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/reservas/': {
       id: '/reservas/'
@@ -611,17 +621,17 @@ declare module '@tanstack/react-router' {
     }
     '/vistorias/': {
       id: '/vistorias/'
-      path: '/'
+      path: '/vistorias'
       fullPath: '/vistorias/'
       preLoaderRoute: typeof VistoriasIndexRouteImport
-      parentRoute: typeof VistoriasRoute
+      parentRoute: typeof rootRouteImport
     }
     '/vistorias/$id': {
       id: '/vistorias/$id'
-      path: '/$id'
+      path: '/vistorias/$id'
       fullPath: '/vistorias/$id'
       preLoaderRoute: typeof VistoriasIdRouteImport
-      parentRoute: typeof VistoriasRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -635,18 +645,28 @@ const rootRouteChildren: RootRouteChildren = {
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
+  ContratosIdRoute: ContratosIdRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
   ImplantacaoIdRoute: ImplantacaoIdRoute,
   ImplantacaoPropostasRoute: ImplantacaoPropostasRoute,
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
+  MensagensIdRoute: MensagensIdRoute,
+  OperacaoIdRoute: OperacaoIdRoute,
+  ProprietariosIdRoute: ProprietariosIdRoute,
   ReservasIdRoute: ReservasIdRoute,
+  VistoriasIdRoute: VistoriasIdRoute,
   CondominiosIndexRoute: CondominiosIndexRoute,
   ConfiguracoesIndexRoute: ConfiguracoesIndexRoute,
+  ContratosIndexRoute: ContratosIndexRoute,
   HospedesIndexRoute: HospedesIndexRoute,
   ImoveisIndexRoute: ImoveisIndexRoute,
   ImplantacaoIndexRoute: ImplantacaoIndexRoute,
+  MensagensIndexRoute: MensagensIndexRoute,
+  OperacaoIndexRoute: OperacaoIndexRoute,
+  ProprietariosIndexRoute: ProprietariosIndexRoute,
   ReservasIndexRoute: ReservasIndexRoute,
+  VistoriasIndexRoute: VistoriasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
