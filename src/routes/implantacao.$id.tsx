@@ -14,6 +14,7 @@ import {
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
+  coreApi,
   implementationItemsQuery,
   implementationQuery,
   ownerOnboardingLinkQuery,
@@ -140,6 +141,7 @@ function ImplementationDetailPage() {
             </div>
           ) : tab === "checklist" ? (
             <Checklist
+              implementationId={implementation.id}
               items={itemsQuery.data ?? []}
               loading={itemsQuery.isPending}
               error={itemsQuery.isError}
@@ -371,16 +373,43 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
 }
 
 function Checklist({
+  implementationId,
   items,
   loading,
   error,
   onRetry,
 }: {
+  implementationId: EntityId;
   items: ImplementationItem[];
   loading: boolean;
   error: boolean;
   onRetry: () => void;
 }) {
+  const queryClient = useQueryClient();
+
+  const generate = useMutation({
+    mutationFn: () => coreApi.implementations.generateChecklist(implementationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["implementations", "items", implementationId],
+      });
+    },
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: ({ itemId, status }: { itemId: EntityId; status: ImplementationItem["status"] }) =>
+      coreApi.implementations.updateChecklistItem(itemId, {
+        status,
+        completedAt: status === "concluido" ? new Date().toISOString() : null,
+        completedBy: null,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["implementations", "items", implementationId],
+      });
+    },
+  });
+
   const groups = useMemo(() => {
     const map = new Map<string, Map<string, ImplementationItem[]>>();
     for (const item of [...items].sort((a, b) => a.order - b.order)) {
@@ -418,8 +447,24 @@ function Checklist({
   if (items.length === 0) {
     return (
       <Panel>
-        <div className="px-4 py-16 text-center text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Nenhum item de checklist nesta implantação ainda
+        <div className="flex flex-col items-center gap-3 px-4 py-16 text-center text-sm">
+          <p style={{ color: "var(--stayo-ink-muted)" }}>
+            Nenhum item de checklist nesta implantação ainda
+          </p>
+          <button
+            type="button"
+            onClick={() => generate.mutate()}
+            disabled={generate.isPending}
+            className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          >
+            {generate.isPending ? "Gerando..." : "Gerar checklist a partir do template"}
+          </button>
+          {generate.isError && (
+            <span style={{ color: "var(--stayo-danger)" }} role="alert">
+              Não foi possível gerar o checklist.
+            </span>
+          )}
         </div>
       </Panel>
     );
@@ -456,12 +501,27 @@ function Checklist({
                     {item.mandatory && <Tag label="Obrigatório" />}
                     {item.blocker && <Tag label="Bloqueador" tone="danger" />}
                     {item.ownerVisible && <Tag label="Visível ao proprietário" tone="gold" />}
-                    <span
-                      className="ml-auto text-xs"
-                      style={{ color: itemStatusColor[item.status] }}
+                    <select
+                      value={item.status}
+                      onChange={(e) =>
+                        updateStatus.mutate({
+                          itemId: item.id,
+                          status: e.target.value as ImplementationItem["status"],
+                        })
+                      }
+                      disabled={updateStatus.isPending}
+                      className="ml-auto rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none disabled:opacity-60"
+                      style={{
+                        borderColor: "var(--stayo-border)",
+                        color: itemStatusColor[item.status],
+                      }}
                     >
-                      {itemStatusLabels[item.status]}
-                    </span>
+                      {Object.entries(itemStatusLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                   </li>
                 ))}
               </ul>

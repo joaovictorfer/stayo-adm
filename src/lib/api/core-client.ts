@@ -42,7 +42,7 @@ import type {
   CoreScope,
   CoreWebhook,
 } from "../../types/core-admin";
-import { newId, read, write } from "./local-store";
+import { checklistTemplatesStore, newId, read, write } from "./local-store";
 
 export interface Page<T> {
   data: T[];
@@ -113,6 +113,12 @@ export interface CoreApiClient {
     get(id: EntityId): Promise<ImplementationProject | null>;
     create(input: Partial<ImplementationProject>): Promise<ImplementationProject>;
     items(implementationId: EntityId): Promise<ImplementationItem[]>;
+    /** Clona o template de checklist vigente para esta implantação. Idempotente: se já existem itens, apenas os retorna. */
+    generateChecklist(implementationId: EntityId): Promise<ImplementationItem[]>;
+    updateChecklistItem(
+      itemId: EntityId,
+      patch: Partial<Omit<ImplementationItem, "id" | "implementationId">>,
+    ): Promise<ImplementationItem>;
   };
 
   proposals: {
@@ -259,6 +265,12 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       },
       items: (implementationId) =>
         request(`/api/core/v1/implementations/${implementationId}/items`),
+      generateChecklist: async () => {
+        throw new Error("generateChecklist() ainda não implementado no cliente real");
+      },
+      updateChecklistItem: async () => {
+        throw new Error("updateChecklistItem() ainda não implementado no cliente real");
+      },
     },
     proposals: {
       list: (implementationId) =>
@@ -339,6 +351,7 @@ const PRODUCTS_KEY = "stayo-admin:products";
 const OPERATION_TASKS_KEY = "stayo-admin:operation-tasks";
 const INSPECTIONS_KEY = "stayo-admin:inspections";
 const IMPLEMENTATIONS_KEY = "stayo-admin:implementations";
+const IMPLEMENTATION_ITEMS_KEY = "stayo-admin:implementation-items";
 
 export function createMockCoreApiClient(): CoreApiClient {
   const empty = <T>(): Promise<Page<T>> => Promise.resolve({ data: [], nextCursor: null });
@@ -425,7 +438,53 @@ export function createMockCoreApiClient(): CoreApiClient {
         write(IMPLEMENTATIONS_KEY, [...read<ImplementationProject>(IMPLEMENTATIONS_KEY), project]);
         return Promise.resolve(project);
       },
-      items: () => Promise.resolve([]),
+      items: (implementationId) =>
+        Promise.resolve(
+          read<ImplementationItem>(IMPLEMENTATION_ITEMS_KEY).filter(
+            (i) => i.implementationId === implementationId,
+          ),
+        ),
+      generateChecklist: async (implementationId) => {
+        const existing = read<ImplementationItem>(IMPLEMENTATION_ITEMS_KEY).filter(
+          (i) => i.implementationId === implementationId,
+        );
+        if (existing.length > 0) return existing;
+        const templates = await checklistTemplatesStore.list();
+        const generated: ImplementationItem[] = templates.map((t) => ({
+          id: newId(),
+          implementationId,
+          category: t.category,
+          phase: t.phase,
+          title: t.title,
+          description: t.description,
+          order: t.order,
+          responsibleUserId: null,
+          dueDate: null,
+          status: "pendente",
+          observation: null,
+          mandatory: t.mandatory,
+          blocker: t.blocker,
+          ownerVisible: t.ownerVisible,
+          completedAt: null,
+          completedBy: null,
+        }));
+        write(IMPLEMENTATION_ITEMS_KEY, [
+          ...read<ImplementationItem>(IMPLEMENTATION_ITEMS_KEY),
+          ...generated,
+        ]);
+        return generated;
+      },
+      updateChecklistItem: (itemId, patch) => {
+        const all = read<ImplementationItem>(IMPLEMENTATION_ITEMS_KEY);
+        const target = all.find((i) => i.id === itemId);
+        if (!target) return Promise.reject(new Error("Item de checklist não encontrado"));
+        const updated: ImplementationItem = { ...target, ...patch };
+        write(
+          IMPLEMENTATION_ITEMS_KEY,
+          all.map((i) => (i.id === itemId ? updated : i)),
+        );
+        return Promise.resolve(updated);
+      },
     },
     proposals: { list: () => Promise.resolve([]) },
     guide: {
