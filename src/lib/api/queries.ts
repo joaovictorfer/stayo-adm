@@ -8,6 +8,7 @@
 
 import { queryOptions } from "@tanstack/react-query";
 
+import { createDefaultAdminApiClient, type AdminApiClient } from "./admin-client";
 import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
 import {
   checklistTemplatesStore,
@@ -20,6 +21,15 @@ import type { EntityId } from "../../types/core";
 
 /** Fonte única de dados desta fase. */
 export const coreApi: CoreApiClient = createMockCoreApiClient();
+
+/** Domínio próprio do Admin (Grupo A) — ver docs/OWNER_IMPLEMENTATION_AUDIT.md. */
+export const adminApi: AdminApiClient = createDefaultAdminApiClient();
+
+export const auditLogQuery = (params?: { entityType?: string; entityId?: string }) =>
+  queryOptions({
+    queryKey: ["audit-logs", params ?? null],
+    queryFn: () => adminApi.audit.list(params),
+  });
 
 export const propertiesListQuery = () =>
   queryOptions({

@@ -14,6 +14,7 @@ import { Route as BiRouteImport } from './routes/bi'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
+import { Route as ConfiguracoesAuditoriaRouteImport } from './routes/configuracoes.auditoria'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
@@ -70,6 +71,11 @@ const CondominiosIdRoute = CondominiosIdRouteImport.update({
 const ConfiguracoesIndexRoute = ConfiguracoesIndexRouteImport.update({
   id: '/configuracoes/',
   path: '/configuracoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesAuditoriaRoute = ConfiguracoesAuditoriaRouteImport.update({
+  id: '/configuracoes/auditoria',
+  path: '/configuracoes/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesIntegracoesRoute =
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bi'
     | '/condominios/$id'
+    | '/configuracoes/auditoria'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bi'
     | '/condominios/$id'
+    | '/configuracoes/auditoria'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bi'
     | '/condominios/$id'
+    | '/configuracoes/auditoria'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
@@ -476,6 +488,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
+  ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ContratosIdRoute: typeof ContratosIdRoute
@@ -547,6 +560,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes/'
       preLoaderRoute: typeof ConfiguracoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/auditoria': {
+      id: '/configuracoes/auditoria'
+      path: '/configuracoes/auditoria'
+      fullPath: '/configuracoes/auditoria'
+      preLoaderRoute: typeof ConfiguracoesAuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/integracoes': {
@@ -780,6 +800,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
   CondominiosIdRoute: CondominiosIdRoute,
+  ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ContratosIdRoute: ContratosIdRoute,

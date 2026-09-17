@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { proposalsStore } from "../lib/api/local-store";
 import {
+  adminApi,
   implementationQuery,
   proposalShareLinkByTokenQuery,
   proposalsByImplementationQuery,
@@ -89,7 +90,17 @@ function ProposalView({ implementationId }: { implementationId: string }) {
   const latest = proposalsQ.data?.[0];
 
   const accept = useMutation({
-    mutationFn: () => proposalsStore.accept(latest!.id),
+    mutationFn: async () => {
+      const accepted = await proposalsStore.accept(latest!.id);
+      await adminApi.audit.log({
+        actorId: null,
+        event: "proposal.accepted",
+        entityType: "proposal",
+        entityId: latest!.id,
+        metadata: { implementationId, version: latest!.version },
+      });
+      return accepted;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["proposals"] });
     },

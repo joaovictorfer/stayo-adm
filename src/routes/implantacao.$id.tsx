@@ -14,6 +14,7 @@ import {
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
+  adminApi,
   coreApi,
   implementationItemsQuery,
   implementationQuery,
@@ -61,7 +62,18 @@ function ImplementationDetailPage() {
   const implementation = query.data;
 
   const changeStatus = useMutation({
-    mutationFn: (status: ImplementationStatus) => coreApi.implementations.update(id, { status }),
+    mutationFn: async (status: ImplementationStatus) => {
+      const from = implementation?.status ?? null;
+      const updated = await coreApi.implementations.update(id, { status });
+      await adminApi.audit.log({
+        actorId: null,
+        event: "implementation.status_changed",
+        entityType: "implementation",
+        entityId: id,
+        metadata: { from, to: status },
+      });
+      return updated;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["implementations"] });
     },

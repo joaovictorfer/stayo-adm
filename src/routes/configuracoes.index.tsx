@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Plug, Server } from "lucide-react";
+import { ClipboardList, Plug, Server } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
 import { PageHeader } from "../components/data/ListStates";
@@ -46,6 +46,12 @@ const links: SettingsLink[] = [
     title: "Integrações",
     description:
       "Referência das integrações externas do STAYO.APP (Ayrton, Condfy, WhatsApp, Web Check-in).",
+  },
+  {
+    icon: ClipboardList,
+    to: "/configuracoes/auditoria",
+    title: "Auditoria",
+    description: "Histórico de ações sensíveis: implantações, propostas, convites, cobranças.",
   },
 ];
 
