@@ -42,6 +42,7 @@ import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
 import { Route as ReservasIdRouteImport } from './routes/reservas.$id'
 import { Route as VistoriasIndexRouteImport } from './routes/vistorias.index'
 import { Route as VistoriasIdRouteImport } from './routes/vistorias.$id'
+import { Route as PortalImplantacaoTokenRouteImport } from './routes/portal.implantacao.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -209,6 +210,11 @@ const VistoriasIdRoute = VistoriasIdRouteImport.update({
   path: '/vistorias/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalImplantacaoTokenRoute = PortalImplantacaoTokenRouteImport.update({
+  id: '/portal/implantacao/$token',
+  path: '/portal/implantacao/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
   '/vistorias/': typeof VistoriasIndexRoute
+  '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -279,6 +286,7 @@ export interface FileRoutesByTo {
   '/proprietarios': typeof ProprietariosIndexRoute
   '/reservas': typeof ReservasIndexRoute
   '/vistorias': typeof VistoriasIndexRoute
+  '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
   '/vistorias/': typeof VistoriasIndexRoute
+  '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -352,6 +361,7 @@ export interface FileRouteTypes {
     | '/proprietarios/'
     | '/reservas/'
     | '/vistorias/'
+    | '/portal/implantacao/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -387,6 +397,7 @@ export interface FileRouteTypes {
     | '/proprietarios'
     | '/reservas'
     | '/vistorias'
+    | '/portal/implantacao/$token'
   id:
     | '__root__'
     | '/'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/proprietarios/'
     | '/reservas/'
     | '/vistorias/'
+    | '/portal/implantacao/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -458,6 +470,7 @@ export interface RootRouteChildren {
   ProprietariosIndexRoute: typeof ProprietariosIndexRoute
   ReservasIndexRoute: typeof ReservasIndexRoute
   VistoriasIndexRoute: typeof VistoriasIndexRoute
+  PortalImplantacaoTokenRoute: typeof PortalImplantacaoTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -693,6 +706,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VistoriasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/implantacao/$token': {
+      id: '/portal/implantacao/$token'
+      path: '/portal/implantacao/$token'
+      fullPath: '/portal/implantacao/$token'
+      preLoaderRoute: typeof PortalImplantacaoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -730,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProprietariosIndexRoute: ProprietariosIndexRoute,
   ReservasIndexRoute: ReservasIndexRoute,
   VistoriasIndexRoute: VistoriasIndexRoute,
+  PortalImplantacaoTokenRoute: PortalImplantacaoTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

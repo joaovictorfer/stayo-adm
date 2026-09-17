@@ -9,7 +9,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
-import { checklistTemplatesStore, proposalsStore } from "./local-store";
+import { checklistTemplatesStore, ownerOnboardingStore, proposalsStore } from "./local-store";
 import type { EntityId } from "../../types/core";
 
 /** Fonte única de dados desta fase. */
@@ -101,6 +101,24 @@ export const proposalsByImplementationQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["proposals", "implementation", id],
     queryFn: () => proposalsStore.list(id),
+  });
+
+export const ownerOnboardingLinkQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["owner-onboarding", "link", implementationId],
+    queryFn: () => ownerOnboardingStore.getLink(implementationId),
+  });
+
+export const ownerOnboardingSubmissionQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["owner-onboarding", "submission", implementationId],
+    queryFn: () => ownerOnboardingStore.getSubmission(implementationId),
+  });
+
+export const ownerOnboardingLinkByTokenQuery = (token: string) =>
+  queryOptions({
+    queryKey: ["owner-onboarding", "by-token", token],
+    queryFn: () => ownerOnboardingStore.findByToken(token),
   });
 
 export const ownersListQuery = () =>
