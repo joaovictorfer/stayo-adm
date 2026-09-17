@@ -31,6 +31,7 @@ import type {
   Payout,
   ServiceInvoice,
   ServiceProvider,
+  Settlement,
 } from "../../types/core";
 import type {
   ConsumerApp,
@@ -138,6 +139,12 @@ export interface CoreApiClient {
     get(id: EntityId): Promise<ServiceProvider | null>;
   };
 
+  /** Fechamentos de pagamento a prestadores por período. */
+  settlements: {
+    list(params?: { cursor?: string; providerId?: EntityId }): Promise<Page<Settlement>>;
+    get(id: EntityId): Promise<Settlement | null>;
+  };
+
   /** Área técnica de Configurações → Stayo Core. */
   admin: {
     overview(): Promise<CoreOverview>;
@@ -243,6 +250,10 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       list: (params) => request(`/api/core/v1/service-providers${queryString(params)}`),
       get: (id) => request(`/api/core/v1/service-providers/${id}`),
     },
+    settlements: {
+      list: (params) => request(`/api/core/v1/financial/settlements${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/financial/settlements/${id}`),
+    },
     admin: {
       overview: () => request("/api/core/v1/admin/overview"),
       apps: () => request("/api/core/v1/admin/apps"),
@@ -316,6 +327,7 @@ export function createMockCoreApiClient(): CoreApiClient {
     payouts: { list: () => empty(), get: () => Promise.resolve(null) },
     serviceInvoices: { list: () => empty(), get: () => Promise.resolve(null) },
     serviceProviders: { list: () => empty(), get: () => Promise.resolve(null) },
+    settlements: { list: () => empty(), get: () => Promise.resolve(null) },
     admin: {
       overview: () =>
         Promise.resolve({

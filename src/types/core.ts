@@ -225,6 +225,8 @@ export interface OperationTask {
   propertyName: string | null;
   reservationId: EntityId | null;
   dueDate: string | null;
+  /** Horário previsto de execução no dia, ex: "11:00". */
+  scheduledTime: string | null;
   responsibleUserId: EntityId | null;
   status: string;
   priority: string | null;
@@ -335,6 +337,39 @@ export interface ServiceInvoice {
   sentAt: string | null;
   paidAt: string | null;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SettlementStatus = "aberto" | "pago";
+
+export interface SettlementItem {
+  date: string;
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  description: string;
+  amount: number;
+}
+
+/**
+ * Fechamento — agrupa as rotinas operacionais já concluídas por um
+ * prestador num período, para pagamento único. Gera um recibo (`code`,
+ * ex: BAL-20260830-001) que soma os itens. Distinto da fatura de serviço
+ * (`ServiceInvoice`, cobrada do proprietário): aqui é a operação pagando
+ * o prestador pelo trabalho executado.
+ */
+export interface Settlement {
+  id: EntityId;
+  code: string;
+  providerId: EntityId;
+  providerName: string | null;
+  periodStart: string;
+  periodEnd: string;
+  items: SettlementItem[];
+  total: number;
+  status: SettlementStatus;
+  paymentMethod: string | null;
+  paidAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
