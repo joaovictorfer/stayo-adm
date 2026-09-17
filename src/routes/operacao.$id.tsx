@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
@@ -9,8 +9,11 @@ import {
   PageHeader,
 } from "../components/data/ListStates";
 import { LinkedField } from "../components/patterns/LinkedField";
-import { operationTaskQuery } from "../lib/api/queries";
+import { StatusField } from "../components/patterns/StatusField";
+import { coreApi, operationTaskQuery } from "../lib/api/queries";
 import type { OperationTaskAssignment } from "../types/core";
+
+const statusSuggestions = ["pendente", "em_andamento", "concluida", "cancelada"];
 
 const surface = {
   backgroundColor: "var(--stayo-surface)",
@@ -36,8 +39,16 @@ export const Route = createFileRoute("/operacao/$id")({
 
 function OperationTaskDetailPage() {
   const { id } = Route.useParams();
+  const queryClient = useQueryClient();
   const query = useQuery(operationTaskQuery(id));
   const task = query.data;
+
+  const updateStatus = useMutation({
+    mutationFn: (status: string) => coreApi.operations.update(id, { status }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["operations"] });
+    },
+  });
 
   return (
     <>
@@ -80,7 +91,17 @@ function OperationTaskDetailPage() {
           />
           <Field label="Prazo" value={task.dueDate} />
           <Field label="Responsável" value={task.responsibleUserId} />
-          <Field label="Status" value={task.status} />
+          <Field
+            label="Status"
+            value={
+              <StatusField
+                value={task.status}
+                suggestions={statusSuggestions}
+                onSave={(status) => updateStatus.mutate(status)}
+                saving={updateStatus.isPending}
+              />
+            }
+          />
           <Field label="Prioridade" value={task.priority} />
           <Field label="Criada em" value={task.createdAt} />
           <Field label="Atualizada em" value={task.updatedAt} />
