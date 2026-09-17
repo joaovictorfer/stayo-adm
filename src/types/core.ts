@@ -29,12 +29,7 @@ export type ImplementationStatus =
   | "cancelado";
 
 export type ImplementationItemStatus =
-  | "pendente"
-  | "em_andamento"
-  | "concluido"
-  | "bloqueado"
-  | "nao_aplicavel"
-  | "pulado";
+  "pendente" | "em_andamento" | "concluido" | "bloqueado" | "nao_aplicavel" | "pulado";
 
 export interface Property {
   id: EntityId;
@@ -160,12 +155,7 @@ export interface Proposal {
 }
 
 export type InspectionType =
-  | "implantacao"
-  | "entrada"
-  | "saida"
-  | "periodica"
-  | "manutencao"
-  | "inventario";
+  "implantacao" | "entrada" | "saida" | "periodica" | "manutencao" | "inventario";
 
 export interface Inspection {
   id: EntityId;
@@ -279,6 +269,44 @@ export interface UpsellProduct {
   currency: string | null;
   unit: string | null;
   active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** As três etapas de uma fatura de serviço, na ordem em que acontecem. */
+export type ServiceInvoiceStage = "emissao" | "envio" | "recebimento";
+
+export interface ServiceInvoiceItem {
+  description: string;
+  quantity: number;
+  unitValue: number;
+  total: number;
+}
+
+/**
+ * Fatura de cobrança de serviços realizados num imóvel (ex: limpeza),
+ * emitida para o proprietário. Distinta do repasse (`Payout`, que é o
+ * valor que sai da operação para o proprietário) — aqui é o contrário,
+ * o proprietário paga a operação por um serviço prestado.
+ */
+export interface ServiceInvoice {
+  id: EntityId;
+  code: string; // ex: FSR-00039
+  title: string; // ex: "Limpeza H203"
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  ownerId: EntityId | null;
+  ownerName: string | null;
+  /** Mês de competência do serviço, ex: "2026-09". */
+  referenceMonth: string | null;
+  issuedAt: string | null;
+  dueDate: string | null;
+  items: ServiceInvoiceItem[];
+  total: number;
+  stage: ServiceInvoiceStage;
+  sentAt: string | null;
+  paidAt: string | null;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
 }
