@@ -61,3 +61,21 @@ export const guestQuery = (id: EntityId) =>
     queryKey: ["guests", "detail", id],
     queryFn: () => coreApi.guests.get(id),
   });
+
+export const implementationsListQuery = () =>
+  queryOptions({
+    queryKey: ["implementations", "list"],
+    queryFn: () => coreApi.implementations.list(),
+  });
+
+export const implementationQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["implementations", "detail", id],
+    queryFn: () => coreApi.implementations.get(id),
+  });
+
+export const implementationItemsQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["implementations", "items", id],
+    queryFn: () => coreApi.implementations.items(id),
+  });
