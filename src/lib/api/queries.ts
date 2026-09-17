@@ -162,3 +162,19 @@ export const contractQuery = (id: EntityId) =>
     queryKey: ["contracts", "detail", id],
     queryFn: () => coreApi.contracts.get(id),
   });
+
+/** Área técnica Configurações → Stayo Core. */
+export const coreOverviewQuery = () =>
+  queryOptions({ queryKey: ["core-admin", "overview"], queryFn: () => coreApi.admin.overview() });
+
+export const coreAppsQuery = () =>
+  queryOptions({ queryKey: ["core-admin", "apps"], queryFn: () => coreApi.admin.apps() });
+
+export const coreScopesQuery = () =>
+  queryOptions({ queryKey: ["core-admin", "scopes"], queryFn: () => coreApi.admin.scopes() });
+
+export const coreWebhooksQuery = () =>
+  queryOptions({ queryKey: ["core-admin", "webhooks"], queryFn: () => coreApi.admin.webhooks() });
+
+export const coreLogsQuery = () =>
+  queryOptions({ queryKey: ["core-admin", "logs"], queryFn: () => coreApi.admin.logs() });

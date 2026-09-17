@@ -27,6 +27,13 @@ import type {
   Proposal,
   EntityId,
 } from "../../types/core";
+import type {
+  ConsumerApp,
+  CoreLogEntry,
+  CoreOverview,
+  CoreScope,
+  CoreWebhook,
+} from "../../types/core-admin";
 
 export interface Page<T> {
   data: T[];
@@ -96,6 +103,17 @@ export interface CoreApiClient {
 
   proposals: {
     list(implementationId: EntityId): Promise<Proposal[]>;
+  };
+
+  /** Área técnica de Configurações → Stayo Core. */
+  admin: {
+    overview(): Promise<CoreOverview>;
+    apps(): Promise<ConsumerApp[]>;
+    scopes(): Promise<CoreScope[]>;
+    webhooks(): Promise<CoreWebhook[]>;
+    retryWebhook(id: EntityId): Promise<void>;
+    /** Nunca retorna senha, token, documento ou selfie. */
+    logs(params?: { cursor?: string }): Promise<Page<CoreLogEntry>>;
   };
 }
 
@@ -172,6 +190,16 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       list: (implementationId) =>
         request(`/api/core/v1/implementations/${implementationId}/proposals`),
     },
+    admin: {
+      overview: () => request("/api/core/v1/admin/overview"),
+      apps: () => request("/api/core/v1/admin/apps"),
+      scopes: () => request("/api/core/v1/admin/scopes"),
+      webhooks: () => request("/api/core/v1/admin/webhooks"),
+      retryWebhook: async () => {
+        throw new Error("retryWebhook() ainda não implementado no cliente real");
+      },
+      logs: (params) => request(`/api/core/v1/admin/logs${queryString(params)}`),
+    },
   };
 }
 
@@ -230,8 +258,86 @@ export function createMockCoreApiClient(): CoreApiClient {
       items: () => Promise.resolve([]),
     },
     proposals: { list: () => Promise.resolve([]) },
+    admin: {
+      overview: () =>
+        Promise.resolve({
+          health: {
+            status: "down" as const,
+            version: "mock",
+            checkedAt: new Date().toISOString(),
+            uptimePercent: null,
+            latencyMs: null,
+          },
+          api: {
+            version: "v1 (não conectado)",
+            baseUrl: null,
+            docsUrl: null,
+            environment: null,
+            status: "down" as const,
+          },
+          appsCount: mockApps.length,
+          recentEvents: [],
+          recentErrors: [],
+        }),
+      apps: () => Promise.resolve(mockApps),
+      scopes: () => Promise.resolve(mockScopes),
+      webhooks: () => Promise.resolve([]),
+      retryWebhook: () => Promise.resolve(),
+      logs: () => empty(),
+    },
   };
 }
+
+/**
+ * Catálogo de apps consumidores e de scopes.
+ * Cada app tem credencial própria — nunca existe chave mestra compartilhada.
+ * Os segredos nunca trafegam para a UI: apenas o identificador da credencial.
+ */
+const mockApps: ConsumerApp[] = [
+  {
+    id: "app-stayo-admin",
+    name: "Stayo Admin",
+    description: "Painel interno da equipe.",
+    credentialId: null,
+    credentialCreatedAt: null,
+    credentialLastRotatedAt: null,
+    active: true,
+    scopes: ["properties.read", "reservations.read", "guests.read", "owners.read"],
+  },
+  {
+    id: "app-stayo-agents",
+    name: "Stayo Agents",
+    description: "Automações e agentes de atendimento.",
+    credentialId: null,
+    credentialCreatedAt: null,
+    credentialLastRotatedAt: null,
+    active: false,
+    scopes: ["properties.read", "reservations.read", "messages.read", "messages.write"],
+  },
+  {
+    id: "app-financeiro",
+    name: "Financeiro",
+    description: "Conciliação e repasses.",
+    credentialId: null,
+    credentialCreatedAt: null,
+    credentialLastRotatedAt: null,
+    active: false,
+    scopes: ["reservations.read", "financial.read", "financial.write"],
+  },
+];
+
+const mockScopes: CoreScope[] = [
+  { name: "properties.read", description: "Ler imóveis e condomínios.", sensitive: false },
+  { name: "properties.write", description: "Criar e alterar imóveis.", sensitive: false },
+  { name: "reservations.read", description: "Ler reservas.", sensitive: false },
+  { name: "reservations.write", description: "Criar e alterar reservas.", sensitive: false },
+  { name: "guests.read", description: "Ler dados de contato de hóspedes.", sensitive: true },
+  { name: "owners.read", description: "Ler dados de proprietários.", sensitive: true },
+  { name: "messages.read", description: "Ler conversas da Central de Mensagens.", sensitive: true },
+  { name: "messages.write", description: "Responder conversas.", sensitive: true },
+  { name: "financial.read", description: "Ler valores e repasses.", sensitive: true },
+  { name: "financial.write", description: "Lançar movimentações financeiras.", sensitive: true },
+];
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
 export function createDefaultCoreApiClient(): CoreApiClient {
