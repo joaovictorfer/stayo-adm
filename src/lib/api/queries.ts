@@ -11,6 +11,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
 import {
   checklistTemplatesStore,
+  ownerNotesStore,
   ownerOnboardingStore,
   proposalShareStore,
   proposalsStore,
@@ -130,6 +131,12 @@ export const proposalShareLinkQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["proposal-share", "link", implementationId],
     queryFn: () => proposalShareStore.getLink(implementationId),
+  });
+
+export const ownerNoteQuery = (ownerId: EntityId) =>
+  queryOptions({
+    queryKey: ["owner-notes", ownerId],
+    queryFn: () => ownerNotesStore.get(ownerId),
   });
 
 export const proposalShareLinkByTokenQuery = (token: string) =>

@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Calendar, FileText, Wallet } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   DetailSkeleton,
@@ -13,8 +13,10 @@ import {
 import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
+import { ownerNotesStore } from "../lib/api/local-store";
 import {
   contractsListQuery,
+  ownerNoteQuery,
   ownerQuery,
   payoutsListQuery,
   propertiesListQuery,
@@ -241,6 +243,8 @@ function OwnerDetailPage() {
               <Timeline entries={timeline} />
             )}
           </div>
+
+          <OwnerNotesPanel ownerId={id} />
         </div>
       )}
     </>
@@ -290,4 +294,62 @@ function buildOwnerTimeline(data: {
   }
 
   return entries.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+}
+
+/** Nota interna do time — domínio só do Admin, nunca vem/vai do Core. */
+function OwnerNotesPanel({ ownerId }: { ownerId: string }) {
+  const queryClient = useQueryClient();
+  const query = useQuery(ownerNoteQuery(ownerId));
+  const [draft, setDraft] = useState("");
+
+  useEffect(() => {
+    setDraft(query.data?.content ?? "");
+  }, [query.data]);
+
+  const save = useMutation({
+    mutationFn: (content: string) => ownerNotesStore.save(ownerId, content),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["owner-notes", ownerId] });
+    },
+  });
+
+  const dirty = draft !== (query.data?.content ?? "");
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2
+          className="text-sm"
+          style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+        >
+          Notas internas
+        </h2>
+        {query.data?.updatedAt && (
+          <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Atualizada em {new Date(query.data.updatedAt).toLocaleString("pt-BR")}
+          </span>
+        )}
+      </div>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        disabled={query.isPending}
+        rows={4}
+        placeholder="Observações da equipe sobre este proprietário — preferências de contato, histórico, etc."
+        className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none disabled:opacity-60"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+      />
+      {dirty && (
+        <button
+          type="button"
+          onClick={() => save.mutate(draft)}
+          disabled={save.isPending}
+          className="mt-2 rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+        >
+          {save.isPending ? "Salvando..." : "Salvar"}
+        </button>
+      )}
+    </div>
+  );
 }
