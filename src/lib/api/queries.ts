@@ -256,6 +256,18 @@ export const settlementQuery = (id: EntityId) =>
     queryFn: () => coreApi.settlements.get(id),
   });
 
+export const expensesListQuery = () =>
+  queryOptions({
+    queryKey: ["expenses", "list"],
+    queryFn: () => coreApi.expenses.list(),
+  });
+
+export const expenseQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["expenses", "detail", id],
+    queryFn: () => coreApi.expenses.get(id),
+  });
+
 export const serviceInvoicesListQuery = () =>
   queryOptions({
     queryKey: ["service-invoices", "list"],
