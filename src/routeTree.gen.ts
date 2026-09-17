@@ -11,19 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
-import { Route as ContratosRouteImport } from './routes/contratos'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as GuiaRouteImport } from './routes/guia'
-import { Route as MensagensRouteImport } from './routes/mensagens'
-import { Route as OperacaoRouteImport } from './routes/operacao'
 import { Route as ProdutosRouteImport } from './routes/produtos'
-import { Route as ProprietariosRouteImport } from './routes/proprietarios'
-import { Route as VistoriasRouteImport } from './routes/vistorias'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
+import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
+import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as HospedesIndexRouteImport } from './routes/hospedes.index'
 import { Route as HospedesIdRouteImport } from './routes/hospedes.$id'
 import { Route as ImoveisIndexRouteImport } from './routes/imoveis.index'
@@ -32,8 +29,16 @@ import { Route as ImplantacaoIndexRouteImport } from './routes/implantacao.index
 import { Route as ImplantacaoIdRouteImport } from './routes/implantacao.$id'
 import { Route as ImplantacaoPropostasRouteImport } from './routes/implantacao.propostas'
 import { Route as ImplantacaoTemplatesRouteImport } from './routes/implantacao.templates'
+import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
+import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
+import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
+import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as ProprietariosIndexRouteImport } from './routes/proprietarios.index'
+import { Route as ProprietariosIdRouteImport } from './routes/proprietarios.$id'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
 import { Route as ReservasIdRouteImport } from './routes/reservas.$id'
+import { Route as VistoriasIndexRouteImport } from './routes/vistorias.index'
+import { Route as VistoriasIdRouteImport } from './routes/vistorias.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -43,11 +48,6 @@ const IndexRoute = IndexRouteImport.update({
 const BiRoute = BiRouteImport.update({
   id: '/bi',
   path: '/bi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContratosRoute = ContratosRouteImport.update({
-  id: '/contratos',
-  path: '/contratos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceiroRoute = FinanceiroRouteImport.update({
@@ -60,29 +60,9 @@ const GuiaRoute = GuiaRouteImport.update({
   path: '/guia',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MensagensRoute = MensagensRouteImport.update({
-  id: '/mensagens',
-  path: '/mensagens',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperacaoRoute = OperacaoRouteImport.update({
-  id: '/operacao',
-  path: '/operacao',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProdutosRoute = ProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProprietariosRoute = ProprietariosRouteImport.update({
-  id: '/proprietarios',
-  path: '/proprietarios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VistoriasRoute = VistoriasRouteImport.update({
-  id: '/vistorias',
-  path: '/vistorias',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
@@ -109,6 +89,16 @@ const ConfiguracoesIntegracoesRoute =
 const ConfiguracoesStayoCoreRoute = ConfiguracoesStayoCoreRouteImport.update({
   id: '/configuracoes/stayo-core',
   path: '/configuracoes/stayo-core',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContratosIndexRoute = ContratosIndexRouteImport.update({
+  id: '/contratos/',
+  path: '/contratos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContratosIdRoute = ContratosIdRouteImport.update({
+  id: '/contratos/$id',
+  path: '/contratos/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospedesIndexRoute = HospedesIndexRouteImport.update({
@@ -151,6 +141,36 @@ const ImplantacaoTemplatesRoute = ImplantacaoTemplatesRouteImport.update({
   path: '/implantacao/templates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MensagensIndexRoute = MensagensIndexRouteImport.update({
+  id: '/mensagens/',
+  path: '/mensagens/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MensagensIdRoute = MensagensIdRouteImport.update({
+  id: '/mensagens/$id',
+  path: '/mensagens/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacaoIndexRoute = OperacaoIndexRouteImport.update({
+  id: '/operacao/',
+  path: '/operacao/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacaoIdRoute = OperacaoIdRouteImport.update({
+  id: '/operacao/$id',
+  path: '/operacao/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProprietariosIndexRoute = ProprietariosIndexRouteImport.update({
+  id: '/proprietarios/',
+  path: '/proprietarios/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProprietariosIdRoute = ProprietariosIdRouteImport.update({
+  id: '/proprietarios/$id',
+  path: '/proprietarios/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReservasIndexRoute = ReservasIndexRouteImport.update({
   id: '/reservas/',
   path: '/reservas/',
@@ -161,199 +181,244 @@ const ReservasIdRoute = ReservasIdRouteImport.update({
   path: '/reservas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VistoriasIndexRoute = VistoriasIndexRouteImport.update({
+  id: '/vistorias/',
+  path: '/vistorias/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VistoriasIdRoute = VistoriasIdRouteImport.update({
+  id: '/vistorias/$id',
+  path: '/vistorias/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
-  '/contratos': typeof ContratosRoute
   '/financeiro': typeof FinanceiroRoute
   '/guia': typeof GuiaRoute
-  '/mensagens': typeof MensagensRoute
-  '/operacao': typeof OperacaoRoute
   '/produtos': typeof ProdutosRoute
-  '/proprietarios': typeof ProprietariosRoute
-  '/vistorias': typeof VistoriasRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
+  '/contratos/$id': typeof ContratosIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
+  '/mensagens/$id': typeof MensagensIdRoute
+  '/operacao/$id': typeof OperacaoIdRoute
+  '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
+  '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
   '/configuracoes/': typeof ConfiguracoesIndexRoute
+  '/contratos/': typeof ContratosIndexRoute
   '/hospedes/': typeof HospedesIndexRoute
   '/imoveis/': typeof ImoveisIndexRoute
   '/implantacao/': typeof ImplantacaoIndexRoute
+  '/mensagens/': typeof MensagensIndexRoute
+  '/operacao/': typeof OperacaoIndexRoute
+  '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
+  '/vistorias/': typeof VistoriasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
-  '/contratos': typeof ContratosRoute
   '/financeiro': typeof FinanceiroRoute
   '/guia': typeof GuiaRoute
-  '/mensagens': typeof MensagensRoute
-  '/operacao': typeof OperacaoRoute
   '/produtos': typeof ProdutosRoute
-  '/proprietarios': typeof ProprietariosRoute
-  '/vistorias': typeof VistoriasRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
+  '/contratos/$id': typeof ContratosIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
+  '/mensagens/$id': typeof MensagensIdRoute
+  '/operacao/$id': typeof OperacaoIdRoute
+  '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
+  '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios': typeof CondominiosIndexRoute
   '/configuracoes': typeof ConfiguracoesIndexRoute
+  '/contratos': typeof ContratosIndexRoute
   '/hospedes': typeof HospedesIndexRoute
   '/imoveis': typeof ImoveisIndexRoute
   '/implantacao': typeof ImplantacaoIndexRoute
+  '/mensagens': typeof MensagensIndexRoute
+  '/operacao': typeof OperacaoIndexRoute
+  '/proprietarios': typeof ProprietariosIndexRoute
   '/reservas': typeof ReservasIndexRoute
+  '/vistorias': typeof VistoriasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
-  '/contratos': typeof ContratosRoute
   '/financeiro': typeof FinanceiroRoute
   '/guia': typeof GuiaRoute
-  '/mensagens': typeof MensagensRoute
-  '/operacao': typeof OperacaoRoute
   '/produtos': typeof ProdutosRoute
-  '/proprietarios': typeof ProprietariosRoute
-  '/vistorias': typeof VistoriasRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
+  '/contratos/$id': typeof ContratosIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
+  '/mensagens/$id': typeof MensagensIdRoute
+  '/operacao/$id': typeof OperacaoIdRoute
+  '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
+  '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
   '/configuracoes/': typeof ConfiguracoesIndexRoute
+  '/contratos/': typeof ContratosIndexRoute
   '/hospedes/': typeof HospedesIndexRoute
   '/imoveis/': typeof ImoveisIndexRoute
   '/implantacao/': typeof ImplantacaoIndexRoute
+  '/mensagens/': typeof MensagensIndexRoute
+  '/operacao/': typeof OperacaoIndexRoute
+  '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
+  '/vistorias/': typeof VistoriasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/bi'
-    | '/contratos'
     | '/financeiro'
     | '/guia'
-    | '/mensagens'
-    | '/operacao'
     | '/produtos'
-    | '/proprietarios'
-    | '/vistorias'
     | '/condominios/$id'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
+    | '/contratos/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
     | '/implantacao/propostas'
     | '/implantacao/templates'
+    | '/mensagens/$id'
+    | '/operacao/$id'
+    | '/proprietarios/$id'
     | '/reservas/$id'
+    | '/vistorias/$id'
     | '/condominios/'
     | '/configuracoes/'
+    | '/contratos/'
     | '/hospedes/'
     | '/imoveis/'
     | '/implantacao/'
+    | '/mensagens/'
+    | '/operacao/'
+    | '/proprietarios/'
     | '/reservas/'
+    | '/vistorias/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/bi'
-    | '/contratos'
     | '/financeiro'
     | '/guia'
-    | '/mensagens'
-    | '/operacao'
     | '/produtos'
-    | '/proprietarios'
-    | '/vistorias'
     | '/condominios/$id'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
+    | '/contratos/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
     | '/implantacao/propostas'
     | '/implantacao/templates'
+    | '/mensagens/$id'
+    | '/operacao/$id'
+    | '/proprietarios/$id'
     | '/reservas/$id'
+    | '/vistorias/$id'
     | '/condominios'
     | '/configuracoes'
+    | '/contratos'
     | '/hospedes'
     | '/imoveis'
     | '/implantacao'
+    | '/mensagens'
+    | '/operacao'
+    | '/proprietarios'
     | '/reservas'
+    | '/vistorias'
   id:
     | '__root__'
     | '/'
     | '/bi'
-    | '/contratos'
     | '/financeiro'
     | '/guia'
-    | '/mensagens'
-    | '/operacao'
     | '/produtos'
-    | '/proprietarios'
-    | '/vistorias'
     | '/condominios/$id'
     | '/configuracoes/integracoes'
     | '/configuracoes/stayo-core'
+    | '/contratos/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
     | '/implantacao/propostas'
     | '/implantacao/templates'
+    | '/mensagens/$id'
+    | '/operacao/$id'
+    | '/proprietarios/$id'
     | '/reservas/$id'
+    | '/vistorias/$id'
     | '/condominios/'
     | '/configuracoes/'
+    | '/contratos/'
     | '/hospedes/'
     | '/imoveis/'
     | '/implantacao/'
+    | '/mensagens/'
+    | '/operacao/'
+    | '/proprietarios/'
     | '/reservas/'
+    | '/vistorias/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
-  ContratosRoute: typeof ContratosRoute
   FinanceiroRoute: typeof FinanceiroRoute
   GuiaRoute: typeof GuiaRoute
-  MensagensRoute: typeof MensagensRoute
-  OperacaoRoute: typeof OperacaoRoute
   ProdutosRoute: typeof ProdutosRoute
-  ProprietariosRoute: typeof ProprietariosRoute
-  VistoriasRoute: typeof VistoriasRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
+  ContratosIdRoute: typeof ContratosIdRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
   ImplantacaoIdRoute: typeof ImplantacaoIdRoute
   ImplantacaoPropostasRoute: typeof ImplantacaoPropostasRoute
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
+  MensagensIdRoute: typeof MensagensIdRoute
+  OperacaoIdRoute: typeof OperacaoIdRoute
+  ProprietariosIdRoute: typeof ProprietariosIdRoute
   ReservasIdRoute: typeof ReservasIdRoute
+  VistoriasIdRoute: typeof VistoriasIdRoute
   CondominiosIndexRoute: typeof CondominiosIndexRoute
   ConfiguracoesIndexRoute: typeof ConfiguracoesIndexRoute
+  ContratosIndexRoute: typeof ContratosIndexRoute
   HospedesIndexRoute: typeof HospedesIndexRoute
   ImoveisIndexRoute: typeof ImoveisIndexRoute
   ImplantacaoIndexRoute: typeof ImplantacaoIndexRoute
+  MensagensIndexRoute: typeof MensagensIndexRoute
+  OperacaoIndexRoute: typeof OperacaoIndexRoute
+  ProprietariosIndexRoute: typeof ProprietariosIndexRoute
   ReservasIndexRoute: typeof ReservasIndexRoute
+  VistoriasIndexRoute: typeof VistoriasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,13 +437,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contratos': {
-      id: '/contratos'
-      path: '/contratos'
-      fullPath: '/contratos'
-      preLoaderRoute: typeof ContratosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/financeiro': {
       id: '/financeiro'
       path: '/financeiro'
@@ -393,39 +451,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuiaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mensagens': {
-      id: '/mensagens'
-      path: '/mensagens'
-      fullPath: '/mensagens'
-      preLoaderRoute: typeof MensagensRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operacao': {
-      id: '/operacao'
-      path: '/operacao'
-      fullPath: '/operacao'
-      preLoaderRoute: typeof OperacaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/produtos': {
       id: '/produtos'
       path: '/produtos'
       fullPath: '/produtos'
       preLoaderRoute: typeof ProdutosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/proprietarios': {
-      id: '/proprietarios'
-      path: '/proprietarios'
-      fullPath: '/proprietarios'
-      preLoaderRoute: typeof ProprietariosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/vistorias': {
-      id: '/vistorias'
-      path: '/vistorias'
-      fullPath: '/vistorias'
-      preLoaderRoute: typeof VistoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/condominios/': {
@@ -461,6 +491,20 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes/stayo-core'
       fullPath: '/configuracoes/stayo-core'
       preLoaderRoute: typeof ConfiguracoesStayoCoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contratos/': {
+      id: '/contratos/'
+      path: '/contratos'
+      fullPath: '/contratos/'
+      preLoaderRoute: typeof ContratosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contratos/$id': {
+      id: '/contratos/$id'
+      path: '/contratos/$id'
+      fullPath: '/contratos/$id'
+      preLoaderRoute: typeof ContratosIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospedes/': {
@@ -519,6 +563,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImplantacaoTemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mensagens/': {
+      id: '/mensagens/'
+      path: '/mensagens'
+      fullPath: '/mensagens/'
+      preLoaderRoute: typeof MensagensIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mensagens/$id': {
+      id: '/mensagens/$id'
+      path: '/mensagens/$id'
+      fullPath: '/mensagens/$id'
+      preLoaderRoute: typeof MensagensIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacao/': {
+      id: '/operacao/'
+      path: '/operacao'
+      fullPath: '/operacao/'
+      preLoaderRoute: typeof OperacaoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacao/$id': {
+      id: '/operacao/$id'
+      path: '/operacao/$id'
+      fullPath: '/operacao/$id'
+      preLoaderRoute: typeof OperacaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proprietarios/': {
+      id: '/proprietarios/'
+      path: '/proprietarios'
+      fullPath: '/proprietarios/'
+      preLoaderRoute: typeof ProprietariosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proprietarios/$id': {
+      id: '/proprietarios/$id'
+      path: '/proprietarios/$id'
+      fullPath: '/proprietarios/$id'
+      preLoaderRoute: typeof ProprietariosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reservas/': {
       id: '/reservas/'
       path: '/reservas'
@@ -533,35 +619,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReservasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vistorias/': {
+      id: '/vistorias/'
+      path: '/vistorias'
+      fullPath: '/vistorias/'
+      preLoaderRoute: typeof VistoriasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vistorias/$id': {
+      id: '/vistorias/$id'
+      path: '/vistorias/$id'
+      fullPath: '/vistorias/$id'
+      preLoaderRoute: typeof VistoriasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
-  ContratosRoute: ContratosRoute,
   FinanceiroRoute: FinanceiroRoute,
   GuiaRoute: GuiaRoute,
-  MensagensRoute: MensagensRoute,
-  OperacaoRoute: OperacaoRoute,
   ProdutosRoute: ProdutosRoute,
-  ProprietariosRoute: ProprietariosRoute,
-  VistoriasRoute: VistoriasRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
+  ContratosIdRoute: ContratosIdRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
   ImplantacaoIdRoute: ImplantacaoIdRoute,
   ImplantacaoPropostasRoute: ImplantacaoPropostasRoute,
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
+  MensagensIdRoute: MensagensIdRoute,
+  OperacaoIdRoute: OperacaoIdRoute,
+  ProprietariosIdRoute: ProprietariosIdRoute,
   ReservasIdRoute: ReservasIdRoute,
+  VistoriasIdRoute: VistoriasIdRoute,
   CondominiosIndexRoute: CondominiosIndexRoute,
   ConfiguracoesIndexRoute: ConfiguracoesIndexRoute,
+  ContratosIndexRoute: ContratosIndexRoute,
   HospedesIndexRoute: HospedesIndexRoute,
   ImoveisIndexRoute: ImoveisIndexRoute,
   ImplantacaoIndexRoute: ImplantacaoIndexRoute,
+  MensagensIndexRoute: MensagensIndexRoute,
+  OperacaoIndexRoute: OperacaoIndexRoute,
+  ProprietariosIndexRoute: ProprietariosIndexRoute,
   ReservasIndexRoute: ReservasIndexRoute,
+  VistoriasIndexRoute: VistoriasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
