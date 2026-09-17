@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
@@ -9,8 +9,11 @@ import {
   PageHeader,
 } from "../components/data/ListStates";
 import { LinkedField } from "../components/patterns/LinkedField";
-import { inspectionQuery } from "../lib/api/queries";
+import { StatusField } from "../components/patterns/StatusField";
+import { coreApi, inspectionQuery } from "../lib/api/queries";
 import { inspectionTypeLabels } from "../lib/inspection-types";
+
+const statusSuggestions = ["pendente", "agendada", "concluida", "cancelada"];
 
 export const Route = createFileRoute("/vistorias/$id")({
   head: () => ({
@@ -26,8 +29,16 @@ export const Route = createFileRoute("/vistorias/$id")({
 
 function InspectionDetailPage() {
   const { id } = Route.useParams();
+  const queryClient = useQueryClient();
   const query = useQuery(inspectionQuery(id));
   const inspection = query.data;
+
+  const updateStatus = useMutation({
+    mutationFn: (status: string) => coreApi.inspections.update(id, { status }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["inspections"] });
+    },
+  });
 
   return (
     <>
@@ -79,7 +90,17 @@ function InspectionDetailPage() {
           />
           <Field label="Agendada para" value={inspection.scheduledFor} />
           <Field label="Responsável" value={inspection.responsibleUserId} />
-          <Field label="Status" value={inspection.status} />
+          <Field
+            label="Status"
+            value={
+              <StatusField
+                value={inspection.status}
+                suggestions={statusSuggestions}
+                onSave={(status) => updateStatus.mutate(status)}
+                saving={updateStatus.isPending}
+              />
+            }
+          />
           <Field label="Observação" value={inspection.notes} />
           <Field label="Criada em" value={inspection.createdAt} />
           <Field label="Atualizada em" value={inspection.updatedAt} />

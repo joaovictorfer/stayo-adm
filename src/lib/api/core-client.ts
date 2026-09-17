@@ -82,6 +82,7 @@ export interface CoreApiClient {
     list(params?: { cursor?: string; type?: string }): Promise<Page<Inspection>>;
     get(id: EntityId): Promise<Inspection | null>;
     create(input: Omit<Inspection, "id" | "createdAt" | "updatedAt">): Promise<Inspection>;
+    update(id: EntityId, patch: Partial<Omit<Inspection, "id" | "createdAt">>): Promise<Inspection>;
   };
 
   operations: {
@@ -89,6 +90,10 @@ export interface CoreApiClient {
     get(id: EntityId): Promise<OperationTask | null>;
     create(
       input: Omit<OperationTask, "id" | "assignments" | "createdAt" | "updatedAt">,
+    ): Promise<OperationTask>;
+    update(
+      id: EntityId,
+      patch: Partial<Omit<OperationTask, "id" | "createdAt">>,
     ): Promise<OperationTask>;
   };
 
@@ -243,12 +248,18 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       create: async () => {
         throw new Error("create() ainda não implementado no cliente real");
       },
+      update: async () => {
+        throw new Error("update() ainda não implementado no cliente real");
+      },
     },
     operations: {
       list: (params) => request(`/api/core/v1/operations/tasks${queryString(params)}`),
       get: (id) => request(`/api/core/v1/operations/tasks/${id}`),
       create: async () => {
         throw new Error("create() ainda não implementado no cliente real");
+      },
+      update: async () => {
+        throw new Error("update() ainda não implementado no cliente real");
       },
     },
     conversations: {
@@ -388,6 +399,21 @@ export function createMockCoreApiClient(): CoreApiClient {
         write(INSPECTIONS_KEY, [...read<Inspection>(INSPECTIONS_KEY), inspection]);
         return Promise.resolve(inspection);
       },
+      update: (id, patch) => {
+        const all = read<Inspection>(INSPECTIONS_KEY);
+        const target = all.find((i) => i.id === id);
+        if (!target) return Promise.reject(new Error("Vistoria não encontrada"));
+        const updated: Inspection = {
+          ...target,
+          ...patch,
+          updatedAt: new Date().toISOString(),
+        };
+        write(
+          INSPECTIONS_KEY,
+          all.map((i) => (i.id === id ? updated : i)),
+        );
+        return Promise.resolve(updated);
+      },
     },
     operations: {
       list: () =>
@@ -404,6 +430,21 @@ export function createMockCoreApiClient(): CoreApiClient {
         };
         write(OPERATION_TASKS_KEY, [...read<OperationTask>(OPERATION_TASKS_KEY), task]);
         return Promise.resolve(task);
+      },
+      update: (id, patch) => {
+        const all = read<OperationTask>(OPERATION_TASKS_KEY);
+        const target = all.find((t) => t.id === id);
+        if (!target) return Promise.reject(new Error("Rotina não encontrada"));
+        const updated: OperationTask = {
+          ...target,
+          ...patch,
+          updatedAt: new Date().toISOString(),
+        };
+        write(
+          OPERATION_TASKS_KEY,
+          all.map((t) => (t.id === id ? updated : t)),
+        );
+        return Promise.resolve(updated);
       },
     },
     conversations: {

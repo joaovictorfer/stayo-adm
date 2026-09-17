@@ -165,9 +165,9 @@ export function Field({ label, value }: { label: string; value: ReactNode }) {
       <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
         {label}
       </p>
-      <p className="mt-1 text-sm break-words" style={{ color: "var(--stayo-ink)" }}>
+      <div className="mt-1 text-sm break-words" style={{ color: "var(--stayo-ink)" }}>
         {value === null || value === undefined || value === "" ? "—" : value}
-      </p>
+      </div>
     </div>
   );
 }
