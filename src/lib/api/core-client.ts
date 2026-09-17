@@ -81,6 +81,7 @@ export interface CoreApiClient {
   inspections: {
     list(params?: { cursor?: string; type?: string }): Promise<Page<Inspection>>;
     get(id: EntityId): Promise<Inspection | null>;
+    create(input: Omit<Inspection, "id" | "createdAt" | "updatedAt">): Promise<Inspection>;
   };
 
   operations: {
@@ -229,6 +230,9 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
     inspections: {
       list: (params) => request(`/api/core/v1/inspections${queryString(params)}`),
       get: (id) => request(`/api/core/v1/inspections/${id}`),
+      create: async () => {
+        throw new Error("create() ainda não implementado no cliente real");
+      },
     },
     operations: {
       list: (params) => request(`/api/core/v1/operations/tasks${queryString(params)}`),
@@ -333,6 +337,7 @@ function queryString(params?: Record<string, unknown>): string {
 const GUIDE_KEY = "stayo-admin:guide-entries";
 const PRODUCTS_KEY = "stayo-admin:products";
 const OPERATION_TASKS_KEY = "stayo-admin:operation-tasks";
+const INSPECTIONS_KEY = "stayo-admin:inspections";
 
 export function createMockCoreApiClient(): CoreApiClient {
   const empty = <T>(): Promise<Page<T>> => Promise.resolve({ data: [], nextCursor: null });
@@ -348,7 +353,21 @@ export function createMockCoreApiClient(): CoreApiClient {
       get: () => Promise.resolve(null),
       search: () => Promise.resolve([]),
     },
-    inspections: { list: () => empty(), get: () => Promise.resolve(null) },
+    inspections: {
+      list: () => Promise.resolve({ data: read<Inspection>(INSPECTIONS_KEY), nextCursor: null }),
+      get: (id) =>
+        Promise.resolve(read<Inspection>(INSPECTIONS_KEY).find((i) => i.id === id) ?? null),
+      create: (input) => {
+        const inspection: Inspection = {
+          ...input,
+          id: newId(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        write(INSPECTIONS_KEY, [...read<Inspection>(INSPECTIONS_KEY), inspection]);
+        return Promise.resolve(inspection);
+      },
+    },
     operations: {
       list: () =>
         Promise.resolve({ data: read<OperationTask>(OPERATION_TASKS_KEY), nextCursor: null }),
