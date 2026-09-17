@@ -1,9 +1,11 @@
 # Arquitetura — Central Comercial e de Onboarding do Proprietário
 
-Este documento evolui junto com as Fases 1–15 do plano de execução. Nesta
-versão (fechamento da Fase 3) cobre: a fundação (como o Admin decide entre
-persistência local e Supabase, papéis/auditoria), o proprietário como
-entidade real, e a geração server-side do código da implantação.
+Este documento cobre a fundação comum a todo o resto (Fases 1–3): como o
+Admin decide entre persistência local e Supabase, papéis/auditoria, o
+proprietário como entidade real, e a geração server-side do código da
+implantação. As fases seguintes têm cada uma seu próprio doc, todos
+listados (com o estado final de cada fase) em
+`docs/OWNER_IMPLEMENTATION_FINAL_REPORT.md`.
 
 ## 1. Dois domínios, dois clients
 

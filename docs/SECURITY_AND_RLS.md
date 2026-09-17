@@ -1,5 +1,8 @@
 # Segurança e RLS — Central Comercial e de Onboarding do Proprietário
 
+Ver `docs/OWNER_IMPLEMENTATION_FINAL_REPORT.md` para o estado final de cada
+fase e o que continua bloqueado por credencial externa ao fim da Fase 15.
+
 ## Credenciais
 
 - **Nunca** `service_role` no bundle frontend. O browser só recebe a chave
