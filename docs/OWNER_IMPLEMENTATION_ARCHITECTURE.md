@@ -1,8 +1,9 @@
 # Arquitetura — Central Comercial e de Onboarding do Proprietário
 
 Este documento evolui junto com as Fases 1–15 do plano de execução. Nesta
-versão (fechamento da Fase 1) cobre a fundação: como o Admin decide entre
-persistência local e Supabase, e o modelo de papéis/auditoria.
+versão (fechamento da Fase 3) cobre: a fundação (como o Admin decide entre
+persistência local e Supabase, papéis/auditoria), o proprietário como
+entidade real, e a geração server-side do código da implantação.
 
 ## 1. Dois domínios, dois clients
 
@@ -62,7 +63,24 @@ mudança de status de implantação e aceite de proposta; as fases seguintes
 adicionam os demais eventos (`owner.*`, `portal.*`, `charge.*`,
 `core_conversion.*`) conforme essas ações passam a existir.
 
-## 5. Por que `implementations`/`guide`/`products` continuam no `CoreApiClient`
+## 5. Por que o pré-imóvel não virou uma tabela separada (ainda)
+
+O plano master descreve `implementation_properties` como entidade própria,
+independente da implantação (um proprietário pode ter vários pré-imóveis).
+Na Fase 3, os campos de pré-imóvel (apelido, condomínio, unidade, endereço,
+CEP, cidade, tipo, quartos, capacidade) foram só enriquecidos dentro do
+próprio `ImplementationProject` — não extraídos para uma entidade separada.
+
+Motivo: hoje a relação é sempre 1:1 (cada implantação tem exatamente um
+imóvel sendo implantado) e nenhuma tela ainda precisa endereçar um
+pré-imóvel independente da sua implantação. Extrair a entidade agora seria
+adicionar uma tabela e uma camada de indireção sem nenhum caso de uso
+consumindo — vira dívida de abstração prematura. Isso é reavaliado quando
+surgir a necessidade real (ex: um proprietário reabrindo implantação para
+um imóvel que já teve uma implantação anterior, ou precisando cadastrar o
+imóvel antes de decidir o responsável comercial).
+
+## 6. Por que `implementations`/`guide`/`products` continuam no `CoreApiClient`
 
 Tecnicamente pertencem ao domínio Admin (comentário original no arquivo já
 diz isso), mas movê-los para `AdminApiClient` agora seria refatoração
