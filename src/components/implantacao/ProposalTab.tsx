@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import { ErrorRows, Panel } from "../data/ListStates";
 import {
   commercialTermsQuery,
+  implementationQuery,
   proposalShareLinkQuery,
   proposalsByImplementationQuery,
 } from "../../lib/api/queries";
 import { proposalItemTotal, proposalShareStore, proposalsStore } from "../../lib/api/local-store";
+import { generateProposalPdf } from "../../lib/pdf/proposal-pdf";
 import type { EntityId, ProposalItem } from "../../types/core";
 
 const surface = {
@@ -31,8 +33,35 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const queryClient = useQueryClient();
   const query = useQuery(proposalsByImplementationQuery(implementationId));
   const commercialTermsQ = useQuery(commercialTermsQuery(implementationId));
+  const implementationQ = useQuery(implementationQuery(implementationId));
   const versions = query.data ?? [];
   const latest = versions[0];
+  const shareLinkQ = useQuery({
+    ...proposalShareLinkQuery(latest?.id ?? ""),
+    enabled: Boolean(latest),
+  });
+
+  const downloadPdf = useMutation({
+    mutationFn: async () => {
+      if (!latest || !implementationQ.data) throw new Error("Proposta ou implantação ausente");
+      const portalUrl = shareLinkQ.data
+        ? `${window.location.origin}/portal/proposta/${shareLinkQ.data.token}`
+        : null;
+      const bytes = await generateProposalPdf({
+        implementation: implementationQ.data,
+        proposal: latest,
+        recurringTerms: (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once"),
+        portalUrl,
+      });
+      const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `proposta-${implementationQ.data.code}-v${latest.version}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
 
   const recurringTerms = (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once");
 
@@ -244,11 +273,21 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           >
             {latest ? `Salvar como versão ${latest.version + 1}` : "Salvar versão 1"}
           </button>
-          <DisabledAction label="Gerar PDF" />
+          {latest && (
+            <button
+              type="button"
+              onClick={() => downloadPdf.mutate()}
+              disabled={downloadPdf.isPending || !implementationQ.data}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              {downloadPdf.isPending ? "Gerando..." : `Gerar PDF (v${latest.version})`}
+            </button>
+          )}
           <DisabledAction label="Enviar por WhatsApp" />
         </div>
         <p className="mt-2 text-xs" style={{ color: "var(--stayo-warning)" }}>
-          Gerar PDF e enviar por WhatsApp ficam disponíveis quando o Stayo Core estiver conectado.
+          Enviar por WhatsApp fica disponível quando a integração estiver conectada.
         </p>
       </div>
 

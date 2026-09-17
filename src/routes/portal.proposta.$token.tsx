@@ -5,10 +5,12 @@ import { useState } from "react";
 import { proposalsStore } from "../lib/api/local-store";
 import {
   adminApi,
+  commercialTermsQuery,
   implementationQuery,
   proposalByIdQuery,
   proposalShareLinkByTokenQuery,
 } from "../lib/api/queries";
+import { generateProposalPdf } from "../lib/pdf/proposal-pdf";
 
 export const Route = createFileRoute("/portal/proposta/$token")({
   head: () => ({
@@ -100,9 +102,29 @@ function ProposalView({
   const implementationQ = useQuery(implementationQuery(implementationId));
   // Sempre ESTA versão específica — nunca "a mais recente da implantação".
   const proposalQ = useQuery(proposalByIdQuery(proposalId));
+  const commercialTermsQ = useQuery(commercialTermsQuery(implementationId));
   const proposal = proposalQ.data;
   const [acceptedName, setAcceptedName] = useState("");
   const [agreed, setAgreed] = useState(false);
+
+  const downloadPdf = useMutation({
+    mutationFn: async () => {
+      if (!proposal || !implementationQ.data) throw new Error("Proposta ausente");
+      const bytes = await generateProposalPdf({
+        implementation: implementationQ.data,
+        proposal,
+        recurringTerms: (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once"),
+        portalUrl: typeof window !== "undefined" ? window.location.href : null,
+      });
+      const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `proposta-${implementationQ.data.code}-v${proposal.version}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
 
   const accept = useMutation({
     mutationFn: async () => {
@@ -183,6 +205,16 @@ function ProposalView({
           {currency.format(proposal.total)}
         </span>
       </div>
+
+      <button
+        type="button"
+        onClick={() => downloadPdf.mutate()}
+        disabled={downloadPdf.isPending}
+        className="mt-3 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+        style={{ ...surface, color: "var(--stayo-forest)" }}
+      >
+        {downloadPdf.isPending ? "Gerando PDF..." : "Baixar PDF desta proposta"}
+      </button>
 
       <div className="mt-6">
         {proposal.acceptedAt ? (
