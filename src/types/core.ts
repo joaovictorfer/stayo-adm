@@ -186,14 +186,31 @@ export interface Inspection {
 }
 
 /**
- * Um profissional atribuído a uma rotina operacional, com o percentual e o
+ * Prestador de serviço (limpeza, manutenção etc.) — pessoa ou empresa
+ * externa à equipe interna, que recebe por rotinas executadas. Mesmo
+ * cadastro usado tanto para atribuir rotinas quanto para os fechamentos
+ * financeiros pagos a ele.
+ */
+export interface ServiceProvider {
+  id: EntityId;
+  name: string;
+  /** CPF ou CNPJ, sem formatação garantida. */
+  document: string | null;
+  pixKey: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Um prestador atribuído a uma rotina operacional, com o percentual e o
  * valor que cabe a ele no custo total da rotina (handoff: cada rotina pode
  * ser dividida entre mais de um prestador, sempre com um líder marcado).
  */
 export interface OperationTaskAssignment {
-  userId: EntityId;
-  userName: string | null;
-  /** Percentual do valor total que cabe a este profissional (0-100). */
+  providerId: EntityId;
+  providerName: string | null;
+  /** Percentual do valor total que cabe a este prestador (0-100). */
   share: number;
   amount: number | null;
   lead: boolean;

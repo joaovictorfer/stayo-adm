@@ -106,13 +106,16 @@ function PlanningPanel({
 
       {assignments.length === 0 ? (
         <p className="mt-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Nenhum profissional atribuído ainda.
+          Nenhum prestador atribuído ainda.
         </p>
       ) : (
         <ul className="mt-4 divide-y" style={{ borderColor: "var(--stayo-border)" }}>
           {assignments.map((a) => (
-            <li key={a.userId} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
-              <span style={{ color: "var(--stayo-ink)" }}>{a.userName ?? a.userId}</span>
+            <li
+              key={a.providerId}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm"
+            >
+              <span style={{ color: "var(--stayo-ink)" }}>{a.providerName ?? a.providerId}</span>
               {a.lead && (
                 <span
                   className="rounded-full px-2 py-0.5 text-[11px]"

@@ -197,6 +197,18 @@ export const payoutsListQuery = () =>
 export const payoutQuery = (id: EntityId) =>
   queryOptions({ queryKey: ["payouts", "detail", id], queryFn: () => coreApi.payouts.get(id) });
 
+export const serviceProvidersListQuery = () =>
+  queryOptions({
+    queryKey: ["service-providers", "list"],
+    queryFn: () => coreApi.serviceProviders.list(),
+  });
+
+export const serviceProviderQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["service-providers", "detail", id],
+    queryFn: () => coreApi.serviceProviders.get(id),
+  });
+
 export const serviceInvoicesListQuery = () =>
   queryOptions({
     queryKey: ["service-invoices", "list"],

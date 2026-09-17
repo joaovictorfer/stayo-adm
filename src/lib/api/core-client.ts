@@ -30,6 +30,7 @@ import type {
   UpsellProduct,
   Payout,
   ServiceInvoice,
+  ServiceProvider,
 } from "../../types/core";
 import type {
   ConsumerApp,
@@ -129,6 +130,12 @@ export interface CoreApiClient {
   serviceInvoices: {
     list(params?: { cursor?: string; q?: string }): Promise<Page<ServiceInvoice>>;
     get(id: EntityId): Promise<ServiceInvoice | null>;
+  };
+
+  /** Cadastro de prestadores de serviço (limpeza, manutenção etc.). */
+  serviceProviders: {
+    list(params?: { cursor?: string; q?: string }): Promise<Page<ServiceProvider>>;
+    get(id: EntityId): Promise<ServiceProvider | null>;
   };
 
   /** Área técnica de Configurações → Stayo Core. */
@@ -232,6 +239,10 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
       list: (params) => request(`/api/core/v1/financial/service-invoices${queryString(params)}`),
       get: (id) => request(`/api/core/v1/financial/service-invoices/${id}`),
     },
+    serviceProviders: {
+      list: (params) => request(`/api/core/v1/service-providers${queryString(params)}`),
+      get: (id) => request(`/api/core/v1/service-providers/${id}`),
+    },
     admin: {
       overview: () => request("/api/core/v1/admin/overview"),
       apps: () => request("/api/core/v1/admin/apps"),
@@ -304,6 +315,7 @@ export function createMockCoreApiClient(): CoreApiClient {
     products: { list: () => empty(), get: () => Promise.resolve(null) },
     payouts: { list: () => empty(), get: () => Promise.resolve(null) },
     serviceInvoices: { list: () => empty(), get: () => Promise.resolve(null) },
+    serviceProviders: { list: () => empty(), get: () => Promise.resolve(null) },
     admin: {
       overview: () =>
         Promise.resolve({

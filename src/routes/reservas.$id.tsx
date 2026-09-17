@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import {
   DetailSkeleton,
@@ -8,8 +9,13 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
-import { reservationQuery } from "../lib/api/queries";
-import type { ReservationWebCheckinStatus } from "../types/core";
+import { operationTasksListQuery, reservationQuery } from "../lib/api/queries";
+import type { OperationTask, ReservationWebCheckinStatus } from "../types/core";
+
+const surface = {
+  backgroundColor: "var(--stayo-surface)",
+  borderColor: "var(--stayo-border)",
+};
 
 const webCheckinLabels: Record<ReservationWebCheckinStatus, string> = {
   pendente: "Ação necessária",
@@ -38,7 +44,13 @@ export const Route = createFileRoute("/reservas/$id")({
 function ReservationDetailPage() {
   const { id } = Route.useParams();
   const query = useQuery(reservationQuery(id));
+  const tasksQuery = useQuery(operationTasksListQuery());
   const reservation = query.data;
+
+  const relatedTasks = useMemo(
+    () => (tasksQuery.data?.data ?? []).filter((t) => t.reservationId === reservation?.id),
+    [tasksQuery.data, reservation?.id],
+  );
 
   return (
     <>
@@ -84,8 +96,61 @@ function ReservationDetailPage() {
           <Field label="Valor" value={reservation.amount} />
           <Field label="Criada em" value={reservation.createdAt} />
           <Field label="Atualizada em" value={reservation.updatedAt} />
+
+          <div className="sm:col-span-2">
+            <PropertyReadiness tasks={relatedTasks} loading={tasksQuery.isPending} />
+          </div>
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Prontidão do imóvel para esta reserva — derivada das rotinas operacionais
+ * já vinculadas a ela (`OperationTask.reservationId`), não é um status
+ * separado no contrato. Falta atribuir prestador a alguma rotina vinculada
+ * já basta pra não estar pronto, mesmo que as demais estejam com prestador.
+ */
+function PropertyReadiness({ tasks, loading }: { tasks: OperationTask[]; loading: boolean }) {
+  const unassigned = tasks.filter((t) => t.assignments.length === 0);
+  const ready = !loading && tasks.length > 0 && unassigned.length === 0;
+
+  return (
+    <div
+      className="rounded-[var(--radius-card)] border p-4"
+      style={{
+        ...surface,
+        borderColor: loading
+          ? "var(--stayo-border)"
+          : tasks.length === 0
+            ? "var(--stayo-border)"
+            : ready
+              ? "var(--stayo-success)"
+              : "var(--stayo-gold)",
+      }}
+    >
+      <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+        Prontidão do imóvel
+      </p>
+      {loading ? (
+        <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Carregando...
+        </p>
+      ) : tasks.length === 0 ? (
+        <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Nenhuma rotina de preparo vinculada a esta reserva ainda.
+        </p>
+      ) : ready ? (
+        <p className="mt-1 text-sm" style={{ color: "var(--stayo-success)" }}>
+          Apto pronto — todas as rotinas vinculadas têm prestador atribuído.
+        </p>
+      ) : (
+        <p className="mt-1 text-sm" style={{ color: "var(--stayo-danger)" }}>
+          Falta equipe para{" "}
+          {unassigned.length === 1 ? unassigned[0]?.title : `${unassigned.length} rotinas`}.
+        </p>
+      )}
+    </div>
   );
 }
