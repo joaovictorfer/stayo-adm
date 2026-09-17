@@ -18,6 +18,7 @@ import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configura
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
+import { Route as GuiaIndexRouteImport } from './routes/guia.index'
 import { Route as HospedesIndexRouteImport } from './routes/hospedes.index'
 import { Route as HospedesIdRouteImport } from './routes/hospedes.$id'
 import { Route as ImoveisIndexRouteImport } from './routes/imoveis.index'
@@ -81,6 +82,11 @@ const ContratosIndexRoute = ContratosIndexRouteImport.update({
 const ContratosIdRoute = ContratosIdRouteImport.update({
   id: '/contratos/$id',
   path: '/contratos/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuiaIndexRoute = GuiaIndexRouteImport.update({
+  id: '/guia/',
+  path: '/guia/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospedesIndexRoute = HospedesIndexRouteImport.update({
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/condominios/': typeof CondominiosIndexRoute
   '/configuracoes/': typeof ConfiguracoesIndexRoute
   '/contratos/': typeof ContratosIndexRoute
+  '/guia/': typeof GuiaIndexRoute
   '/hospedes/': typeof HospedesIndexRoute
   '/imoveis/': typeof ImoveisIndexRoute
   '/implantacao/': typeof ImplantacaoIndexRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/condominios': typeof CondominiosIndexRoute
   '/configuracoes': typeof ConfiguracoesIndexRoute
   '/contratos': typeof ContratosIndexRoute
+  '/guia': typeof GuiaIndexRoute
   '/hospedes': typeof HospedesIndexRoute
   '/imoveis': typeof ImoveisIndexRoute
   '/implantacao': typeof ImplantacaoIndexRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/condominios/': typeof CondominiosIndexRoute
   '/configuracoes/': typeof ConfiguracoesIndexRoute
   '/contratos/': typeof ContratosIndexRoute
+  '/guia/': typeof GuiaIndexRoute
   '/hospedes/': typeof HospedesIndexRoute
   '/imoveis/': typeof ImoveisIndexRoute
   '/implantacao/': typeof ImplantacaoIndexRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/condominios/'
     | '/configuracoes/'
     | '/contratos/'
+    | '/guia/'
     | '/hospedes/'
     | '/imoveis/'
     | '/implantacao/'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/condominios'
     | '/configuracoes'
     | '/contratos'
+    | '/guia'
     | '/hospedes'
     | '/imoveis'
     | '/implantacao'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/condominios/'
     | '/configuracoes/'
     | '/contratos/'
+    | '/guia/'
     | '/hospedes/'
     | '/imoveis/'
     | '/implantacao/'
@@ -372,6 +384,7 @@ export interface RootRouteChildren {
   CondominiosIndexRoute: typeof CondominiosIndexRoute
   ConfiguracoesIndexRoute: typeof ConfiguracoesIndexRoute
   ContratosIndexRoute: typeof ContratosIndexRoute
+  GuiaIndexRoute: typeof GuiaIndexRoute
   HospedesIndexRoute: typeof HospedesIndexRoute
   ImoveisIndexRoute: typeof ImoveisIndexRoute
   ImplantacaoIndexRoute: typeof ImplantacaoIndexRoute
@@ -445,6 +458,13 @@ declare module '@tanstack/react-router' {
       path: '/contratos/$id'
       fullPath: '/contratos/$id'
       preLoaderRoute: typeof ContratosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guia/': {
+      id: '/guia/'
+      path: '/guia'
+      fullPath: '/guia/'
+      preLoaderRoute: typeof GuiaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospedes/': {
@@ -596,6 +616,7 @@ const rootRouteChildren: RootRouteChildren = {
   CondominiosIndexRoute: CondominiosIndexRoute,
   ConfiguracoesIndexRoute: ConfiguracoesIndexRoute,
   ContratosIndexRoute: ContratosIndexRoute,
+  GuiaIndexRoute: GuiaIndexRoute,
   HospedesIndexRoute: HospedesIndexRoute,
   ImoveisIndexRoute: ImoveisIndexRoute,
   ImplantacaoIndexRoute: ImplantacaoIndexRoute,
