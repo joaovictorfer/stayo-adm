@@ -75,6 +75,20 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
   return (
     <div className="flex flex-col gap-4">
+      {latest?.acceptedAt && (
+        <div
+          className="rounded-[var(--radius-card)] border px-4 py-3 text-sm"
+          style={{
+            borderColor: "var(--stayo-success)",
+            backgroundColor: "var(--stayo-forest-soft)",
+            color: "var(--stayo-success)",
+          }}
+        >
+          Proposta (versão {latest.version}) aceita pelo proprietário em{" "}
+          {new Date(latest.acceptedAt).toLocaleString("pt-BR")}.
+        </div>
+      )}
+
       <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2
@@ -225,6 +239,17 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
                     {new Date(p.createdAt).toLocaleString("pt-BR")}
                   </span>
+                  {p.acceptedAt && (
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[11px]"
+                      style={{
+                        backgroundColor: "var(--stayo-forest-soft)",
+                        color: "var(--stayo-success)",
+                      }}
+                    >
+                      Aceita em {new Date(p.acceptedAt).toLocaleDateString("pt-BR")}
+                    </span>
+                  )}
                   <span className="ml-auto text-sm" style={{ color: "var(--stayo-ink)" }}>
                     {currency.format(p.total)}
                   </span>

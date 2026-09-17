@@ -338,6 +338,7 @@ const GUIDE_KEY = "stayo-admin:guide-entries";
 const PRODUCTS_KEY = "stayo-admin:products";
 const OPERATION_TASKS_KEY = "stayo-admin:operation-tasks";
 const INSPECTIONS_KEY = "stayo-admin:inspections";
+const IMPLEMENTATIONS_KEY = "stayo-admin:implementations";
 
 export function createMockCoreApiClient(): CoreApiClient {
   const empty = <T>(): Promise<Page<T>> => Promise.resolve({ data: [], nextCursor: null });
@@ -392,10 +393,17 @@ export function createMockCoreApiClient(): CoreApiClient {
     },
     contracts: { list: () => empty(), get: () => Promise.resolve(null) },
     implementations: {
-      list: () => empty(),
-      get: () => Promise.resolve(null),
-      create: (input) =>
+      list: () =>
         Promise.resolve({
+          data: read<ImplementationProject>(IMPLEMENTATIONS_KEY),
+          nextCursor: null,
+        }),
+      get: (id) =>
+        Promise.resolve(
+          read<ImplementationProject>(IMPLEMENTATIONS_KEY).find((i) => i.id === id) ?? null,
+        ),
+      create: (input) => {
+        const project: ImplementationProject = {
           id: crypto.randomUUID(),
           code: "IMP-00000",
           status: "prospect",
@@ -413,7 +421,10 @@ export function createMockCoreApiClient(): CoreApiClient {
           corePropertyId: null,
           coreOwnerId: null,
           ...input,
-        }),
+        };
+        write(IMPLEMENTATIONS_KEY, [...read<ImplementationProject>(IMPLEMENTATIONS_KEY), project]);
+        return Promise.resolve(project);
+      },
       items: () => Promise.resolve([]),
     },
     proposals: { list: () => Promise.resolve([]) },
