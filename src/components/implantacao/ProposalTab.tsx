@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
-import { proposalsByImplementationQuery } from "../../lib/api/queries";
-import { proposalItemTotal, proposalsStore } from "../../lib/api/local-store";
+import { proposalShareLinkQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
+import { proposalItemTotal, proposalShareStore, proposalsStore } from "../../lib/api/local-store";
 import type { EntityId, ProposalItem } from "../../types/core";
 
 const surface = {
@@ -171,9 +172,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             type="button"
-            disabled={
-              save.isPending || draft.every((i) => i.description.trim() === "")
-            }
+            disabled={save.isPending || draft.every((i) => i.description.trim() === "")}
             onClick={() => save.mutate()}
             className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-50"
             style={{ backgroundColor: "var(--stayo-forest)", color: "var(--stayo-surface)" }}
@@ -181,13 +180,14 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             {latest ? `Salvar como versão ${latest.version + 1}` : "Salvar versão 1"}
           </button>
           <DisabledAction label="Gerar PDF" />
-          <DisabledAction label="Gerar link" />
           <DisabledAction label="Enviar por WhatsApp" />
         </div>
         <p className="mt-2 text-xs" style={{ color: "var(--stayo-warning)" }}>
-          disponível quando o Stayo Core estiver conectado
+          Gerar PDF e enviar por WhatsApp ficam disponíveis quando o Stayo Core estiver conectado.
         </p>
       </div>
+
+      {latest && <ShareLinkPanel implementationId={implementationId} />}
 
       <div className="rounded-[var(--radius-card)] border" style={surface}>
         <h2
@@ -241,6 +241,78 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </ul>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Link público (sem autenticação) pro proprietário ver e aceitar a proposta atual. */
+function ShareLinkPanel({ implementationId }: { implementationId: EntityId }) {
+  const queryClient = useQueryClient();
+  const linkQuery = useQuery(proposalShareLinkQuery(implementationId));
+  const [copied, setCopied] = useState(false);
+
+  const createLink = useMutation({
+    mutationFn: () => proposalShareStore.createLink(implementationId),
+    onSuccess: (link) => {
+      queryClient.setQueryData(proposalShareLinkQuery(implementationId).queryKey, link);
+    },
+  });
+
+  const url = linkQuery.data
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/proposta/${linkQuery.data.token}`
+    : null;
+
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard indisponível — link já está visível pra copiar manualmente.
+    }
+  };
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Link para o proprietário
+      </h2>
+      {url ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <code
+            className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+          >
+            {url}
+          </code>
+          <button
+            type="button"
+            onClick={() => void copy()}
+            className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
+            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? "Copiado" : "Copiar"}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => createLink.mutate()}
+          disabled={createLink.isPending}
+          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+        >
+          {createLink.isPending ? "Gerando..." : "Gerar link para o proprietário"}
+        </button>
+      )}
+      <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        O link sempre mostra a versão mais recente da proposta salva.
+      </p>
     </div>
   );
 }
