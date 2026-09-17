@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { ownerOnboardingStore } from "../lib/api/local-store";
@@ -8,6 +8,7 @@ import {
   implementationQuery,
   ownerOnboardingLinkByTokenQuery,
   ownerOnboardingSubmissionQuery,
+  ownerQuery,
 } from "../lib/api/queries";
 import type { OwnerOnboardingSubmissionInput } from "../types/owner-onboarding";
 
@@ -89,14 +90,27 @@ function OwnerOnboardingForm({ implementationId }: { implementationId: string })
   const queryClient = useQueryClient();
   const implementationQ = useQuery(implementationQuery(implementationId));
   const submissionQ = useQuery(ownerOnboardingSubmissionQuery(implementationId));
+  const ownerId = implementationQ.data?.ownerId ?? null;
+  const ownerQ = useQuery({ ...ownerQuery(ownerId ?? ""), enabled: !!ownerId });
 
   const [form, setForm] = useState<OwnerOnboardingSubmissionInput>({
-    fullName: implementationQ.data?.ownerProspect.name ?? "",
+    fullName: "",
     document: null,
-    email: implementationQ.data?.ownerProspect.email ?? "",
-    phone: implementationQ.data?.ownerProspect.phone ?? "",
+    email: "",
+    phone: "",
     pixKey: null,
   });
+
+  useEffect(() => {
+    const owner = ownerQ.data;
+    if (submissionQ.data || !owner) return;
+    setForm((f) => ({
+      ...f,
+      fullName: owner.name,
+      email: owner.email ?? "",
+      phone: owner.phone ?? "",
+    }));
+  }, [ownerQ.data, submissionQ.data]);
 
   const submit = useMutation({
     mutationFn: () => ownerOnboardingStore.submit(implementationId, form),

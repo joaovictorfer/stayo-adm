@@ -112,11 +112,10 @@ export interface ImplementationProject {
   id: EntityId;
   code: string; // ex: IMP-00127
   status: ImplementationStatus;
-  ownerProspect: {
-    name: string;
-    phone: string;
-    email: string | null;
-  };
+  /** FK para `OwnerRecord` (src/types/admin.ts) — nunca objeto embutido. */
+  ownerId: EntityId | null;
+  ownerName: string | null;
+  ownerPhone: string | null;
   condominiumName: string | null;
   unit: string | null;
   city: string | null;

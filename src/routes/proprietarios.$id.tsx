@@ -15,6 +15,7 @@ import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import { ownerNotesStore } from "../lib/api/local-store";
 import {
+  adminApi,
   contractsListQuery,
   ownerNoteQuery,
   ownerQuery,
@@ -24,7 +25,14 @@ import {
   serviceInvoicesListQuery,
 } from "../lib/api/queries";
 import { formatMoney } from "../lib/format";
+import type { OwnerLifecycleStatus, OwnerRecord } from "../types/admin";
 import type { Contract, Reservation, ServiceInvoice } from "../types/core";
+
+const lifecycleLabels: Record<OwnerLifecycleStatus, string> = {
+  prospect: "Prospect",
+  ativo: "Ativo",
+  inativo: "Inativo",
+};
 
 const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
 
@@ -107,11 +115,10 @@ function OwnerDetailPage() {
         <NotFoundPanel message="Proprietário não encontrado" />
       ) : (
         <div className="flex flex-col gap-4">
+          <OwnerContactPanel owner={owner} />
+
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="ID" value={owner.id} />
-            <Field label="Nome" value={owner.name} />
-            <Field label="Telefone" value={owner.phone} />
-            <Field label="E-mail" value={owner.email} />
             <Field label="Criado em" value={owner.createdAt} />
             <Field label="Atualizado em" value={owner.updatedAt} />
           </div>
@@ -294,6 +301,166 @@ function buildOwnerTimeline(data: {
   }
 
   return entries.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+}
+
+/** Dados de contato do proprietário — editáveis (cadastro rápido, completado depois). */
+function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: owner.name,
+    phone: owner.phone ?? "",
+    email: owner.email ?? "",
+    document: owner.document ?? "",
+  });
+
+  useEffect(() => {
+    setForm({
+      name: owner.name,
+      phone: owner.phone ?? "",
+      email: owner.email ?? "",
+      document: owner.document ?? "",
+    });
+  }, [owner]);
+
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["owners", "detail", owner.id] }),
+      queryClient.invalidateQueries({ queryKey: ["owners", "list"] }),
+    ]);
+
+  const save = useMutation({
+    mutationFn: () =>
+      adminApi.owners.update(owner.id, {
+        name: form.name.trim(),
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        document: form.document.trim() || null,
+      }),
+    onSuccess: async () => {
+      await invalidate();
+      setEditing(false);
+    },
+  });
+
+  const changeLifecycle = useMutation({
+    mutationFn: (lifecycleStatus: OwnerLifecycleStatus) =>
+      adminApi.owners.update(owner.id, { lifecycleStatus }),
+    onSuccess: () => invalidate(),
+  });
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2
+          className="text-sm"
+          style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+        >
+          Dados de contato
+        </h2>
+        <div className="flex items-center gap-2">
+          <select
+            value={owner.lifecycleStatus}
+            onChange={(e) => changeLifecycle.mutate(e.target.value as OwnerLifecycleStatus)}
+            disabled={changeLifecycle.isPending}
+            className="rounded-[var(--radius-control)] border px-2 py-1 text-xs disabled:opacity-60"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+          >
+            {(Object.keys(lifecycleLabels) as OwnerLifecycleStatus[]).map((s) => (
+              <option key={s} value={s}>
+                {lifecycleLabels[s]}
+              </option>
+            ))}
+          </select>
+          {!editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="text-xs underline"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Editar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {editing ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ContactField
+            label="Nome"
+            value={form.name}
+            onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+          />
+          <ContactField
+            label="Telefone"
+            value={form.phone}
+            onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+          />
+          <ContactField
+            label="E-mail"
+            value={form.email}
+            onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+          />
+          <ContactField
+            label="CPF/CNPJ"
+            value={form.document}
+            onChange={(v) => setForm((f) => ({ ...f, document: v }))}
+          />
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <button
+              type="button"
+              onClick={() => save.mutate()}
+              disabled={save.isPending || form.name.trim() === ""}
+              className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+            >
+              {save.isPending ? "Salvando..." : "Salvar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="text-sm underline"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Nome" value={owner.name} />
+          <Field label="Telefone" value={owner.phone} />
+          <Field label="E-mail" value={owner.email} />
+          <Field label="CPF/CNPJ" value={owner.document} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContactField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        {label}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+      />
+    </label>
+  );
 }
 
 /** Nota interna do time — domínio só do Admin, nunca vem/vai do Core. */

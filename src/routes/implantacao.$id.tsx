@@ -12,6 +12,7 @@ import {
   Panel,
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
+import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
   adminApi,
@@ -131,9 +132,21 @@ function ImplementationDetailPage() {
                 <Field label="ID" value={implementation.id} />
                 <Field label="Código" value={implementation.code} />
                 <Field label="Status" value={statusLabels[implementation.status]} />
-                <Field label="Proprietário (prospect)" value={implementation.ownerProspect.name} />
-                <Field label="Telefone" value={implementation.ownerProspect.phone} />
-                <Field label="E-mail" value={implementation.ownerProspect.email} />
+                <Field
+                  label="Proprietário"
+                  value={
+                    implementation.ownerId ? (
+                      <LinkedField
+                        to="/proprietarios/$id"
+                        id={implementation.ownerId}
+                        label={implementation.ownerName}
+                      />
+                    ) : (
+                      implementation.ownerName
+                    )
+                  }
+                />
+                <Field label="Telefone" value={implementation.ownerPhone} />
                 <Field label="Condomínio" value={implementation.condominiumName} />
                 <Field label="Unidade" value={implementation.unit} />
                 <Field label="Cidade" value={implementation.city} />

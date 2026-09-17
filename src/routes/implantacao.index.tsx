@@ -12,7 +12,7 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
-import { coreApi, implementationsListQuery } from "../lib/api/queries";
+import { adminApi, coreApi, implementationsListQuery } from "../lib/api/queries";
 import {
   alternateStatuses,
   mainStatusFlow,
@@ -109,7 +109,7 @@ function ImplementationsPage() {
                   style={{ color: "var(--stayo-ink)" }}
                 >
                   <span className="font-medium">{i.code}</span>
-                  <span>{i.ownerProspect.name || "—"}</span>
+                  <span>{i.ownerName || "—"}</span>
                   <span style={{ color: "var(--stayo-ink-muted)" }}>
                     {[i.condominiumName, i.unit].filter(Boolean).join(" · ") || "—"}
                   </span>
@@ -150,17 +150,25 @@ function NewImplementationDrawer({
   const [form, setForm] = useState(emptyForm);
 
   const mutation = useMutation({
-    mutationFn: (input: typeof form) =>
-      coreApi.implementations.create({
+    mutationFn: async (input: typeof form) => {
+      const owner = await adminApi.owners.findOrCreateByPhone({
+        name: input.name,
+        phone: input.phone,
+        email: null,
+      });
+      return coreApi.implementations.create({
         code: nextImplementationCode(existing.map((i) => i.code)),
         status: "prospect",
-        ownerProspect: { name: input.name, phone: input.phone, email: null },
+        ownerId: owner.id,
+        ownerName: owner.name,
+        ownerPhone: owner.phone,
         condominiumName: input.condominiumName || null,
         unit: input.unit || null,
         startDateEstimate: input.startDateEstimate || null,
         responsibleUserId: input.responsibleUserId || null,
         notes: input.notes || null,
-      }),
+      });
+    },
     onSuccess: (created) => {
       queryClient.setQueryData(implementationsListQuery().queryKey, (prev) => ({
         data: [created, ...(prev?.data ?? [])],

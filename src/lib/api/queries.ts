@@ -155,16 +155,21 @@ export const proposalShareLinkByTokenQuery = (token: string) =>
     queryFn: () => proposalShareStore.findByToken(token),
   });
 
-export const ownersListQuery = () =>
+/**
+ * Proprietário como relacionamento comercial (Grupo A, `adminApi.owners`) —
+ * não confundir com `coreApi.owners` (Owner oficial do Core, Grupo B,
+ * populado só após a conversão — ver docs/OWNER_IMPLEMENTATION_AUDIT.md).
+ */
+export const ownersListQuery = (params?: { q?: string }) =>
   queryOptions({
-    queryKey: ["owners", "list"],
-    queryFn: () => coreApi.owners.list(),
+    queryKey: ["owners", "list", params ?? null],
+    queryFn: () => adminApi.owners.list(params),
   });
 
 export const ownerQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["owners", "detail", id],
-    queryFn: () => coreApi.owners.get(id),
+    queryFn: () => adminApi.owners.get(id),
   });
 
 export const inspectionsListQuery = () =>
