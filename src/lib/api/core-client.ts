@@ -43,6 +43,7 @@ import type {
   CoreWebhook,
 } from "../../types/core-admin";
 import { checklistTemplatesStore, newId, read, write } from "./local-store";
+import { nextImplementationCode } from "../implementation-status";
 
 export interface Page<T> {
   data: T[];
@@ -116,7 +117,8 @@ export interface CoreApiClient {
   implementations: {
     list(params?: { cursor?: string; status?: string }): Promise<Page<ImplementationProject>>;
     get(id: EntityId): Promise<ImplementationProject | null>;
-    create(input: Partial<ImplementationProject>): Promise<ImplementationProject>;
+    /** `code` é gerado pelo adapter — nunca calculado no componente. */
+    create(input: Omit<Partial<ImplementationProject>, "code">): Promise<ImplementationProject>;
     update(
       id: EntityId,
       patch: Partial<Omit<ImplementationProject, "id" | "code" | "createdAt">>,
@@ -464,16 +466,23 @@ export function createMockCoreApiClient(): CoreApiClient {
           read<ImplementationProject>(IMPLEMENTATIONS_KEY).find((i) => i.id === id) ?? null,
         ),
       create: (input) => {
+        const existingCodes = read<ImplementationProject>(IMPLEMENTATIONS_KEY).map((i) => i.code);
         const project: ImplementationProject = {
           id: crypto.randomUUID(),
-          code: "IMP-00000",
+          code: nextImplementationCode(existingCodes),
           status: "prospect",
           ownerId: null,
           ownerName: null,
           ownerPhone: null,
+          nickname: null,
           condominiumName: null,
           unit: null,
+          address: null,
+          postalCode: null,
           city: null,
+          propertyType: null,
+          bedrooms: null,
+          capacity: null,
           responsibleUserId: null,
           startDateEstimate: null,
           completionDateEstimate: null,

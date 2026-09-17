@@ -116,9 +116,16 @@ export interface ImplementationProject {
   ownerId: EntityId | null;
   ownerName: string | null;
   ownerPhone: string | null;
+  /** Apelido interno do pré-imóvel, ex: "Cobertura vista mar". */
+  nickname: string | null;
   condominiumName: string | null;
   unit: string | null;
+  address: string | null;
+  postalCode: string | null;
   city: string | null;
+  propertyType: string | null;
+  bedrooms: number | null;
+  capacity: number | null;
   responsibleUserId: EntityId | null;
   startDateEstimate: string | null;
   completionDateEstimate: string | null;

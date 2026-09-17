@@ -147,9 +147,15 @@ function ImplementationDetailPage() {
                   }
                 />
                 <Field label="Telefone" value={implementation.ownerPhone} />
+                <Field label="Apelido do imóvel" value={implementation.nickname} />
                 <Field label="Condomínio" value={implementation.condominiumName} />
                 <Field label="Unidade" value={implementation.unit} />
+                <Field label="Endereço" value={implementation.address} />
+                <Field label="CEP" value={implementation.postalCode} />
                 <Field label="Cidade" value={implementation.city} />
+                <Field label="Tipo do imóvel" value={implementation.propertyType} />
+                <Field label="Quartos" value={implementation.bedrooms} />
+                <Field label="Capacidade" value={implementation.capacity} />
                 <Field label="Responsável" value={implementation.responsibleUserId} />
                 <Field label="Previsão de início" value={implementation.startDateEstimate} />
                 <Field

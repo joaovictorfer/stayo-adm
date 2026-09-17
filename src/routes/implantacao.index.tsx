@@ -13,13 +13,7 @@ import {
 import { Drawer } from "../components/patterns/Drawer";
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { adminApi, coreApi, implementationsListQuery } from "../lib/api/queries";
-import {
-  alternateStatuses,
-  mainStatusFlow,
-  nextImplementationCode,
-  statusLabels,
-} from "../lib/implementation-status";
-import type { ImplementationProject } from "../types/core";
+import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implementation-status";
 
 export const Route = createFileRoute("/implantacao/")({
   head: () => ({
@@ -79,11 +73,7 @@ function ImplementationsPage() {
         </button>
       </PageHeader>
 
-      <NewImplementationDrawer
-        open={drawerOpen}
-        existing={data}
-        onClose={() => setDrawerOpen(false)}
-      />
+      <NewImplementationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       <Panel>
         {query.isPending ? (
@@ -132,20 +122,19 @@ const emptyForm = {
   phone: "",
   condominiumName: "",
   unit: "",
+  nickname: "",
+  city: "",
+  address: "",
+  postalCode: "",
+  propertyType: "",
+  bedrooms: "",
+  capacity: "",
   startDateEstimate: "",
   responsibleUserId: "",
   notes: "",
 };
 
-function NewImplementationDrawer({
-  open,
-  existing,
-  onClose,
-}: {
-  open: boolean;
-  existing: ImplementationProject[];
-  onClose: () => void;
-}) {
+function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
 
@@ -157,13 +146,19 @@ function NewImplementationDrawer({
         email: null,
       });
       return coreApi.implementations.create({
-        code: nextImplementationCode(existing.map((i) => i.code)),
         status: "prospect",
         ownerId: owner.id,
         ownerName: owner.name,
         ownerPhone: owner.phone,
+        nickname: input.nickname || null,
         condominiumName: input.condominiumName || null,
         unit: input.unit || null,
+        address: input.address || null,
+        postalCode: input.postalCode || null,
+        city: input.city || null,
+        propertyType: input.propertyType || null,
+        bedrooms: input.bedrooms ? Number.parseInt(input.bedrooms, 10) : null,
+        capacity: input.capacity ? Number.parseInt(input.capacity, 10) : null,
         startDateEstimate: input.startDateEstimate || null,
         responsibleUserId: input.responsibleUserId || null,
         notes: input.notes || null,
@@ -203,12 +198,33 @@ function NewImplementationDrawer({
       label: "Imóvel",
       content: (
         <div className="flex flex-col gap-3">
+          <TextField label="Apelido" value={form.nickname} onChange={set("nickname")} />
           <TextField
             label="Condomínio"
             value={form.condominiumName}
             onChange={set("condominiumName")}
           />
           <TextField label="Unidade" value={form.unit} onChange={set("unit")} />
+          <TextField label="Cidade" value={form.city} onChange={set("city")} />
+          <TextField label="Endereço" value={form.address} onChange={set("address")} />
+          <TextField label="CEP" value={form.postalCode} onChange={set("postalCode")} />
+          <TextField
+            label="Tipo do imóvel"
+            value={form.propertyType}
+            onChange={set("propertyType")}
+          />
+          <TextField
+            label="Quartos"
+            type="number"
+            value={form.bedrooms}
+            onChange={set("bedrooms")}
+          />
+          <TextField
+            label="Capacidade"
+            type="number"
+            value={form.capacity}
+            onChange={set("capacity")}
+          />
         </div>
       ),
     },
