@@ -234,3 +234,55 @@ export interface Contract {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Conteúdo editorial do Guia do hóspede (administração, não o guia público). */
+export interface GuideEntry {
+  id: EntityId;
+  title: string;
+  category: string | null;
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  /** Escopo: conteúdo global da operação ou específico de um imóvel. */
+  scope: string;
+  status: string;
+  language: string | null;
+  order: number | null;
+  summary: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+
+/** Produto ou serviço de upsell oferecido ao hóspede. */
+export interface UpsellProduct {
+  id: EntityId;
+  name: string;
+  category: string | null;
+  description: string | null;
+  price: number | null;
+  currency: string | null;
+  unit: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Repasse ao proprietário.
+ *
+ * Princípio do menor privilégio: este módulo enxerga imóvel, reserva,
+ * canal, valor e proprietário. Nenhum dado de hóspede — e nunca
+ * documento ou selfie — existe neste tipo, de propósito.
+ */
+export interface Payout {
+  id: EntityId;
+  propertyId: EntityId | null;
+  propertyName: string | null;
+  reservationId: EntityId | null;
+  reservationCode: string | null;
+  channel: string | null;
+  /** Requer scope financial.read. */
+  amount: number | null;
+  currency: string | null;
+  ownerId: EntityId | null;
+  ownerName: string | null;
+}
