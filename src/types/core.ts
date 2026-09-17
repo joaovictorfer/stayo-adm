@@ -184,6 +184,20 @@ export interface Inspection {
   updatedAt: string;
 }
 
+/**
+ * Um profissional atribuído a uma rotina operacional, com o percentual e o
+ * valor que cabe a ele no custo total da rotina (handoff: cada rotina pode
+ * ser dividida entre mais de um prestador, sempre com um líder marcado).
+ */
+export interface OperationTaskAssignment {
+  userId: EntityId;
+  userName: string | null;
+  /** Percentual do valor total que cabe a este profissional (0-100). */
+  share: number;
+  amount: number | null;
+  lead: boolean;
+}
+
 /** Pendência operacional do dia a dia (limpeza, manutenção, check-in etc.). */
 export interface OperationTask {
   id: EntityId;
@@ -196,6 +210,9 @@ export interface OperationTask {
   responsibleUserId: EntityId | null;
   status: string;
   priority: string | null;
+  /** Valor total da rotina, dividido entre `assignments`. Nulo = sem custo. */
+  totalAmount: number | null;
+  assignments: OperationTaskAssignment[];
   createdAt: string;
   updatedAt: string;
 }
