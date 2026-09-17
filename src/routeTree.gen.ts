@@ -32,6 +32,7 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
 import { Route as ProprietariosIndexRouteImport } from './routes/proprietarios.index'
 import { Route as ProprietariosIdRouteImport } from './routes/proprietarios.$id'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
@@ -155,6 +156,11 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProdutosIndexRoute = ProdutosIndexRouteImport.update({
+  id: '/produtos/',
+  path: '/produtos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProprietariosIndexRoute = ProprietariosIndexRouteImport.update({
   id: '/proprietarios/',
   path: '/proprietarios/',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/': typeof ImplantacaoIndexRoute
   '/mensagens/': typeof MensagensIndexRoute
   '/operacao/': typeof OperacaoIndexRoute
+  '/produtos/': typeof ProdutosIndexRoute
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
   '/vistorias/': typeof VistoriasIndexRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/implantacao': typeof ImplantacaoIndexRoute
   '/mensagens': typeof MensagensIndexRoute
   '/operacao': typeof OperacaoIndexRoute
+  '/produtos': typeof ProdutosIndexRoute
   '/proprietarios': typeof ProprietariosIndexRoute
   '/reservas': typeof ReservasIndexRoute
   '/vistorias': typeof VistoriasIndexRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/implantacao/': typeof ImplantacaoIndexRoute
   '/mensagens/': typeof MensagensIndexRoute
   '/operacao/': typeof OperacaoIndexRoute
+  '/produtos/': typeof ProdutosIndexRoute
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
   '/vistorias/': typeof VistoriasIndexRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/implantacao/'
     | '/mensagens/'
     | '/operacao/'
+    | '/produtos/'
     | '/proprietarios/'
     | '/reservas/'
     | '/vistorias/'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/implantacao'
     | '/mensagens'
     | '/operacao'
+    | '/produtos'
     | '/proprietarios'
     | '/reservas'
     | '/vistorias'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/implantacao/'
     | '/mensagens/'
     | '/operacao/'
+    | '/produtos/'
     | '/proprietarios/'
     | '/reservas/'
     | '/vistorias/'
@@ -403,6 +415,7 @@ export interface RootRouteChildren {
   ImplantacaoIndexRoute: typeof ImplantacaoIndexRoute
   MensagensIndexRoute: typeof MensagensIndexRoute
   OperacaoIndexRoute: typeof OperacaoIndexRoute
+  ProdutosIndexRoute: typeof ProdutosIndexRoute
   ProprietariosIndexRoute: typeof ProprietariosIndexRoute
   ReservasIndexRoute: typeof ReservasIndexRoute
   VistoriasIndexRoute: typeof VistoriasIndexRoute
@@ -571,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/produtos/': {
+      id: '/produtos/'
+      path: '/produtos'
+      fullPath: '/produtos/'
+      preLoaderRoute: typeof ProdutosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proprietarios/': {
       id: '/proprietarios/'
       path: '/proprietarios'
@@ -643,6 +663,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoIndexRoute: ImplantacaoIndexRoute,
   MensagensIndexRoute: MensagensIndexRoute,
   OperacaoIndexRoute: OperacaoIndexRoute,
+  ProdutosIndexRoute: ProdutosIndexRoute,
   ProprietariosIndexRoute: ProprietariosIndexRoute,
   ReservasIndexRoute: ReservasIndexRoute,
   VistoriasIndexRoute: VistoriasIndexRoute,
