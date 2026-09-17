@@ -62,8 +62,22 @@ function OperationTaskDetailPage() {
           <Field label="ID" value={task.id} />
           <Field label="Título" value={task.title} />
           <Field label="Tipo" value={task.kind} />
-          <Field label="Imóvel" value={task.propertyName ?? task.propertyId} />
-          <Field label="Reserva" value={task.reservationId} />
+          <Field
+            label="Imóvel"
+            value={
+              task.propertyId ? (
+                <LinkedField to="/imoveis/$id" id={task.propertyId} label={task.propertyName} />
+              ) : (
+                task.propertyName
+              )
+            }
+          />
+          <Field
+            label="Reserva"
+            value={
+              task.reservationId ? <LinkedField to="/reservas/$id" id={task.reservationId} /> : null
+            }
+          />
           <Field label="Prazo" value={task.dueDate} />
           <Field label="Responsável" value={task.responsibleUserId} />
           <Field label="Status" value={task.status} />

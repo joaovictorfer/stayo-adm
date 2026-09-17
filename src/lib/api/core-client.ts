@@ -86,6 +86,9 @@ export interface CoreApiClient {
   operations: {
     list(params?: { cursor?: string; status?: string }): Promise<Page<OperationTask>>;
     get(id: EntityId): Promise<OperationTask | null>;
+    create(
+      input: Omit<OperationTask, "id" | "assignments" | "createdAt" | "updatedAt">,
+    ): Promise<OperationTask>;
   };
 
   /** Lê da Central de Mensagens do STAYO.APP quando o Core expuser. */
@@ -230,6 +233,9 @@ export function createCoreApiClient(config: CoreApiConfig): CoreApiClient {
     operations: {
       list: (params) => request(`/api/core/v1/operations/tasks${queryString(params)}`),
       get: (id) => request(`/api/core/v1/operations/tasks/${id}`),
+      create: async () => {
+        throw new Error("create() ainda não implementado no cliente real");
+      },
     },
     conversations: {
       list: (params) => request(`/api/core/v1/conversations${queryString(params)}`),
@@ -326,6 +332,7 @@ function queryString(params?: Record<string, unknown>): string {
  */
 const GUIDE_KEY = "stayo-admin:guide-entries";
 const PRODUCTS_KEY = "stayo-admin:products";
+const OPERATION_TASKS_KEY = "stayo-admin:operation-tasks";
 
 export function createMockCoreApiClient(): CoreApiClient {
   const empty = <T>(): Promise<Page<T>> => Promise.resolve({ data: [], nextCursor: null });
@@ -342,7 +349,23 @@ export function createMockCoreApiClient(): CoreApiClient {
       search: () => Promise.resolve([]),
     },
     inspections: { list: () => empty(), get: () => Promise.resolve(null) },
-    operations: { list: () => empty(), get: () => Promise.resolve(null) },
+    operations: {
+      list: () =>
+        Promise.resolve({ data: read<OperationTask>(OPERATION_TASKS_KEY), nextCursor: null }),
+      get: (id) =>
+        Promise.resolve(read<OperationTask>(OPERATION_TASKS_KEY).find((t) => t.id === id) ?? null),
+      create: (input) => {
+        const task: OperationTask = {
+          ...input,
+          id: newId(),
+          assignments: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        write(OPERATION_TASKS_KEY, [...read<OperationTask>(OPERATION_TASKS_KEY), task]);
+        return Promise.resolve(task);
+      },
+    },
     conversations: {
       list: () => empty(),
       get: () => Promise.resolve(null),
