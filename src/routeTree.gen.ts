@@ -34,6 +34,8 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
+import { Route as PrestadoresIdRouteImport } from './routes/prestadores.$id'
 import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
 import { Route as ProdutosIdRouteImport } from './routes/produtos.$id'
 import { Route as ProprietariosIndexRouteImport } from './routes/proprietarios.index'
@@ -171,6 +173,16 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrestadoresIndexRoute = PrestadoresIndexRouteImport.update({
+  id: '/prestadores/',
+  path: '/prestadores/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrestadoresIdRoute = PrestadoresIdRouteImport.update({
+  id: '/prestadores/$id',
+  path: '/prestadores/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProdutosIndexRoute = ProdutosIndexRouteImport.update({
   id: '/produtos/',
   path: '/produtos/',
@@ -238,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
@@ -252,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/': typeof ImplantacaoIndexRoute
   '/mensagens/': typeof MensagensIndexRoute
   '/operacao/': typeof OperacaoIndexRoute
+  '/prestadores/': typeof PrestadoresIndexRoute
   '/produtos/': typeof ProdutosIndexRoute
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
@@ -275,6 +289,7 @@ export interface FileRoutesByTo {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
@@ -289,6 +304,7 @@ export interface FileRoutesByTo {
   '/implantacao': typeof ImplantacaoIndexRoute
   '/mensagens': typeof MensagensIndexRoute
   '/operacao': typeof OperacaoIndexRoute
+  '/prestadores': typeof PrestadoresIndexRoute
   '/produtos': typeof ProdutosIndexRoute
   '/proprietarios': typeof ProprietariosIndexRoute
   '/reservas': typeof ReservasIndexRoute
@@ -313,6 +329,7 @@ export interface FileRoutesById {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/reservas/$id': typeof ReservasIdRoute
@@ -327,6 +344,7 @@ export interface FileRoutesById {
   '/implantacao/': typeof ImplantacaoIndexRoute
   '/mensagens/': typeof MensagensIndexRoute
   '/operacao/': typeof OperacaoIndexRoute
+  '/prestadores/': typeof PrestadoresIndexRoute
   '/produtos/': typeof ProdutosIndexRoute
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
@@ -352,6 +370,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
     | '/reservas/$id'
@@ -366,6 +385,7 @@ export interface FileRouteTypes {
     | '/implantacao/'
     | '/mensagens/'
     | '/operacao/'
+    | '/prestadores/'
     | '/produtos/'
     | '/proprietarios/'
     | '/reservas/'
@@ -389,6 +409,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
     | '/reservas/$id'
@@ -403,6 +424,7 @@ export interface FileRouteTypes {
     | '/implantacao'
     | '/mensagens'
     | '/operacao'
+    | '/prestadores'
     | '/produtos'
     | '/proprietarios'
     | '/reservas'
@@ -426,6 +448,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
     | '/reservas/$id'
@@ -440,6 +463,7 @@ export interface FileRouteTypes {
     | '/implantacao/'
     | '/mensagens/'
     | '/operacao/'
+    | '/prestadores/'
     | '/produtos/'
     | '/proprietarios/'
     | '/reservas/'
@@ -464,6 +488,7 @@ export interface RootRouteChildren {
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
+  PrestadoresIdRoute: typeof PrestadoresIdRoute
   ProdutosIdRoute: typeof ProdutosIdRoute
   ProprietariosIdRoute: typeof ProprietariosIdRoute
   ReservasIdRoute: typeof ReservasIdRoute
@@ -478,6 +503,7 @@ export interface RootRouteChildren {
   ImplantacaoIndexRoute: typeof ImplantacaoIndexRoute
   MensagensIndexRoute: typeof MensagensIndexRoute
   OperacaoIndexRoute: typeof OperacaoIndexRoute
+  PrestadoresIndexRoute: typeof PrestadoresIndexRoute
   ProdutosIndexRoute: typeof ProdutosIndexRoute
   ProprietariosIndexRoute: typeof ProprietariosIndexRoute
   ReservasIndexRoute: typeof ReservasIndexRoute
@@ -663,6 +689,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prestadores/': {
+      id: '/prestadores/'
+      path: '/prestadores'
+      fullPath: '/prestadores/'
+      preLoaderRoute: typeof PrestadoresIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prestadores/$id': {
+      id: '/prestadores/$id'
+      path: '/prestadores/$id'
+      fullPath: '/prestadores/$id'
+      preLoaderRoute: typeof PrestadoresIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/produtos/': {
       id: '/produtos/'
       path: '/produtos'
@@ -752,6 +792,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
   OperacaoIdRoute: OperacaoIdRoute,
+  PrestadoresIdRoute: PrestadoresIdRoute,
   ProdutosIdRoute: ProdutosIdRoute,
   ProprietariosIdRoute: ProprietariosIdRoute,
   ReservasIdRoute: ReservasIdRoute,
@@ -766,6 +807,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoIndexRoute: ImplantacaoIndexRoute,
   MensagensIndexRoute: MensagensIndexRoute,
   OperacaoIndexRoute: OperacaoIndexRoute,
+  PrestadoresIndexRoute: PrestadoresIndexRoute,
   ProdutosIndexRoute: ProdutosIndexRoute,
   ProprietariosIndexRoute: ProprietariosIndexRoute,
   ReservasIndexRoute: ReservasIndexRoute,

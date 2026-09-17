@@ -14,6 +14,7 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import { IndicatorCard } from "../components/patterns/IndicatorCard";
+import { LinkedField } from "../components/patterns/LinkedField";
 import {
   expensesListQuery,
   payoutsListQuery,
@@ -479,7 +480,16 @@ function SettlementDetail({ settlement }: { settlement: Settlement }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Prestador" value={settlement.providerName} />
+        <Field
+          label="Prestador"
+          value={
+            <LinkedField
+              to="/prestadores/$id"
+              id={settlement.providerId}
+              label={settlement.providerName}
+            />
+          }
+        />
         <Field label="Status" value={settlementStatusLabels[settlement.status]} />
         <Field label="Período" value={`${settlement.periodStart} – ${settlement.periodEnd}`} />
         <Field label="Pago em" value={settlement.paidAt} />
