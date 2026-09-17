@@ -84,7 +84,11 @@ function InspectionDetailPage() {
             label="Reserva vinculada"
             value={
               inspection.reservationId ? (
-                <LinkedField to="/reservas/$id" id={inspection.reservationId} />
+                <LinkedField
+                  to="/reservas/$id"
+                  id={inspection.reservationId}
+                  label={inspection.reservationCode}
+                />
               ) : null
             }
           />

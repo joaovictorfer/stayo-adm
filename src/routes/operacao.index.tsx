@@ -216,6 +216,7 @@ function NewOperationTaskDrawer({ open, onClose }: { open: boolean; onClose: () 
         propertyId: property?.id ?? null,
         propertyName: property?.name ?? null,
         reservationId: null,
+        reservationCode: null,
         dueDate: form.dueDate || null,
         scheduledTime: form.scheduledTime || null,
         responsibleUserId: null,
