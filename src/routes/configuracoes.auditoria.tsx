@@ -13,11 +13,13 @@ import { isSupabaseConfigured } from "../lib/api/supabase-client";
 import type { AuditEvent } from "../types/audit";
 
 const eventLabels: Record<AuditEvent, string> = {
+  "auth.login": "Login do time interno",
   "owner.created": "Proprietário criado",
   "owner.updated": "Proprietário atualizado",
   "implementation.created": "Implantação criada",
   "implementation.status_changed": "Status da implantação alterado",
   "timeline.item_updated": "Item da timeline atualizado",
+  "readiness.override": "Override de prontidão registrado",
   "proposal.version_created": "Nova versão de proposta",
   "proposal.sent": "Proposta enviada",
   "proposal.accepted": "Proposta aceita",

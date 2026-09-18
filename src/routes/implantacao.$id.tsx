@@ -837,10 +837,10 @@ function Checklist({
       });
       await adminApi.audit.log({
         actorId: null,
-        event: "timeline.item_updated",
+        event: "readiness.override",
         entityType: "implementation-item",
         entityId: itemId,
-        metadata: { readinessOverride: true, reason, by },
+        metadata: { reason, by },
       });
       return updated;
     },

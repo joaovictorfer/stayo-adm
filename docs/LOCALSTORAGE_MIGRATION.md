@@ -72,14 +72,14 @@ fase futura dedicada — trocar um adapter de cada vez, com o mesmo rigor
 de validação. Ver `docs/DATA_PERSISTENCE.md` para o estado exato, tabela
 por tabela, e o que falta para trocar cada uma.
 
-| Chave localStorage | Tipo | Onde vive hoje (leitura real hoje) | Tabela Supabase (schema já existe) | Migration |
-| --- | --- | --- | --- | --- |
-| `stayo-admin:implementations` | `ImplementationProject` | `CoreApiClient` mock (`core-client.ts`) | `implementation_projects` | `0009_implementation_projects.sql` |
-| `stayo-admin:implementation-items` | `ImplementationItem` (checklist) | `CoreApiClient` mock (`core-client.ts`) | `implementation_items` | `0009_implementation_projects.sql` |
-| `stayo-admin:proposals` | `Proposal` (versões) | `proposalsStore` (`local-store.ts`) | `proposals` | `0010_proposals.sql` |
-| `stayo-admin:proposal-share-links` | `ProposalShareLink` | `proposalShareStore` (`local-store.ts`) | `proposal_share_links` | `0010_proposals.sql` |
-| `stayo-admin:checklist-templates` | `ChecklistTemplateItem` | `checklistTemplatesStore` (`local-store.ts`) | `checklist_templates` | `0011_checklist_templates.sql` |
-| `stayo-admin:owner-notes` | Notas internas por proprietário | `ownerNotesStore` (`local-store.ts`) | `owner_notes` | `0012_owner_notes.sql` |
+| Chave localStorage                 | Tipo                             | Onde vive hoje (leitura real hoje)           | Tabela Supabase (schema já existe) | Migration                          |
+| ---------------------------------- | -------------------------------- | -------------------------------------------- | ---------------------------------- | ---------------------------------- |
+| `stayo-admin:implementations`      | `ImplementationProject`          | `CoreApiClient` mock (`core-client.ts`)      | `implementation_projects`          | `0009_implementation_projects.sql` |
+| `stayo-admin:implementation-items` | `ImplementationItem` (checklist) | `CoreApiClient` mock (`core-client.ts`)      | `implementation_items`             | `0009_implementation_projects.sql` |
+| `stayo-admin:proposals`            | `Proposal` (versões)             | `proposalsStore` (`local-store.ts`)          | `proposals`                        | `0010_proposals.sql`               |
+| `stayo-admin:proposal-share-links` | `ProposalShareLink`              | `proposalShareStore` (`local-store.ts`)      | `proposal_share_links`             | `0010_proposals.sql`               |
+| `stayo-admin:checklist-templates`  | `ChecklistTemplateItem`          | `checklistTemplatesStore` (`local-store.ts`) | `checklist_templates`              | `0011_checklist_templates.sql`     |
+| `stayo-admin:owner-notes`          | Notas internas por proprietário  | `ownerNotesStore` (`local-store.ts`)         | `owner_notes`                      | `0012_owner_notes.sql`             |
 
 ## Nunca migra (dado fictício do mock do Core — descartado quando o Core real existir)
 

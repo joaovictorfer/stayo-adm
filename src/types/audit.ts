@@ -6,11 +6,13 @@ import type { EntityId } from "./core";
  * nunca como string livre, para manter a auditoria consultável.
  */
 export type AuditEvent =
+  | "auth.login"
   | "owner.created"
   | "owner.updated"
   | "implementation.created"
   | "implementation.status_changed"
   | "timeline.item_updated"
+  | "readiness.override"
   | "proposal.version_created"
   | "proposal.sent"
   | "proposal.accepted"

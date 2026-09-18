@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { adminApi } from "../lib/api/queries";
 import { isSupabaseConfigured } from "../lib/api/supabase-client";
 import { signInWithPassword, signUp } from "../lib/auth/session";
 
@@ -81,7 +82,16 @@ function LoginPage() {
 
   const login = useMutation({
     mutationFn: () => signInWithPassword(email, password),
-    onSuccess: () => void navigate({ to: "/" }),
+    onSuccess: async (session) => {
+      await adminApi.audit.log({
+        actorId: session.user.id,
+        event: "auth.login",
+        entityType: "admin_profile",
+        entityId: session.user.id,
+        metadata: {},
+      });
+      void navigate({ to: "/" });
+    },
   });
 
   const signup = useMutation({

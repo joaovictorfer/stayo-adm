@@ -42,43 +42,43 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 
 ## Implantações e checklist (`implementation_projects`, `implementation_items`, migration 0009)
 
-| Ação                                        | Papel        | Esperado                                     | Resultado                |
-| ------------------------------------------- | ------------ | --------------------------------------------- | ------------------------- |
-| `select * from implementation_projects`     | `anon`       | 0 linhas                                       | ✅ `anon_can_see: 0`      |
-| `select * from implementation_items`        | `anon`       | 0 linhas                                       | ✅ `anon_can_see: 0`      |
-| `insert into implementation_projects`       | `operations` | aceito                                         | ✅ linha criada           |
-| `select * from implementation_projects`     | `viewer`     | lê normalmente                                 | ✅ `viewer_can_read: 1`   |
-| `insert into implementation_projects`       | `viewer`     | rejeitado                                      | ✅ `42501`                |
-| `insert into implementation_projects`       | `finance`    | rejeitado (não gerencia implantações)          | ✅ `42501`                |
-| `insert into implementation_items`          | `operations` | aceito                                         | ✅ linha criada           |
-| `insert into implementation_items`          | `viewer`     | rejeitado                                      | ✅ `42501`                |
+| Ação                                    | Papel        | Esperado                              | Resultado               |
+| --------------------------------------- | ------------ | ------------------------------------- | ----------------------- |
+| `select * from implementation_projects` | `anon`       | 0 linhas                              | ✅ `anon_can_see: 0`    |
+| `select * from implementation_items`    | `anon`       | 0 linhas                              | ✅ `anon_can_see: 0`    |
+| `insert into implementation_projects`   | `operations` | aceito                                | ✅ linha criada         |
+| `select * from implementation_projects` | `viewer`     | lê normalmente                        | ✅ `viewer_can_read: 1` |
+| `insert into implementation_projects`   | `viewer`     | rejeitado                             | ✅ `42501`              |
+| `insert into implementation_projects`   | `finance`    | rejeitado (não gerencia implantações) | ✅ `42501`              |
+| `insert into implementation_items`      | `operations` | aceito                                | ✅ linha criada         |
+| `insert into implementation_items`      | `viewer`     | rejeitado                             | ✅ `42501`              |
 
 ## Propostas e link público por versão (`proposals`, `proposal_share_links`, migration 0010)
 
-| Ação                                               | Papel            | Esperado                                                  | Resultado                |
-| --------------------------------------------------- | ---------------- | ---------------------------------------------------------- | ------------------------ |
-| `select * from proposals`                          | `anon`           | 0 linhas                                                    | ✅ `anon_direct_select_proposals: 0` |
-| `select * from proposal_share_links`               | `anon`           | 0 linhas (nunca expõe `token_hash` por leitura direta)      | ✅ `anon_direct_select_links: 0` |
-| `proposal_resolve_by_token(token válido)`          | `anon` (via RPC) | resolve a versão exata vinculada ao link, nunca `token_hash`| ✅                       |
-| `proposal_resolve_by_token(token inexistente)`     | `anon`           | 0 linhas                                                    | ✅                       |
-| `proposal_accept_by_token(token válido, "Nome A")` | `anon`           | grava `accepted_at`/`accepted_name`                         | ✅                       |
-| `proposal_accept_by_token(mesmo token, "Nome B")`  | `anon`           | idempotente — devolve o registro já aceito, NÃO troca para "Nome B" | ✅ `accepted_name` continua "Nome A" |
-| `insert into proposals` com `(implementation_id, version)` já existente | `commercial` | rejeitado (`unique`) — garante que duas criações simultâneas da mesma versão nunca colidem | ✅ `23505 duplicate key` |
-| `insert into proposals`                            | `viewer`         | rejeitado                                                   | ✅ `42501`                |
-| `insert into proposals`                            | `commercial`     | aceito                                                      | ✅ linha criada           |
+| Ação                                                                    | Papel            | Esperado                                                                                   | Resultado                            |
+| ----------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------ | ------------------------------------ |
+| `select * from proposals`                                               | `anon`           | 0 linhas                                                                                   | ✅ `anon_direct_select_proposals: 0` |
+| `select * from proposal_share_links`                                    | `anon`           | 0 linhas (nunca expõe `token_hash` por leitura direta)                                     | ✅ `anon_direct_select_links: 0`     |
+| `proposal_resolve_by_token(token válido)`                               | `anon` (via RPC) | resolve a versão exata vinculada ao link, nunca `token_hash`                               | ✅                                   |
+| `proposal_resolve_by_token(token inexistente)`                          | `anon`           | 0 linhas                                                                                   | ✅                                   |
+| `proposal_accept_by_token(token válido, "Nome A")`                      | `anon`           | grava `accepted_at`/`accepted_name`                                                        | ✅                                   |
+| `proposal_accept_by_token(mesmo token, "Nome B")`                       | `anon`           | idempotente — devolve o registro já aceito, NÃO troca para "Nome B"                        | ✅ `accepted_name` continua "Nome A" |
+| `insert into proposals` com `(implementation_id, version)` já existente | `commercial`     | rejeitado (`unique`) — garante que duas criações simultâneas da mesma versão nunca colidem | ✅ `23505 duplicate key`             |
+| `insert into proposals`                                                 | `viewer`         | rejeitado                                                                                  | ✅ `42501`                           |
+| `insert into proposals`                                                 | `commercial`     | aceito                                                                                     | ✅ linha criada                      |
 
 ## Templates de checklist e notas de proprietário (`checklist_templates`, `owner_notes`, migrations 0011/0012)
 
-| Ação                                    | Papel        | Esperado                                   | Resultado                 |
-| ---------------------------------------- | ------------ | -------------------------------------------- | -------------------------- |
-| `select * from checklist_templates`     | `anon`       | 0 linhas                                      | ✅ `anon_can_see: 0`       |
-| `insert into checklist_templates`       | `operations` | aceito                                        | ✅ linha criada            |
-| `select * from checklist_templates`     | `viewer`     | lê normalmente                                | ✅ `viewer_can_read: 1`    |
-| `insert into checklist_templates`       | `viewer`     | rejeitado                                     | ✅ `42501`                 |
-| `select * from owner_notes`             | `anon`       | 0 linhas                                      | ✅ `anon_can_see_notes: 0` |
-| `insert into owner_notes`               | `commercial` | aceito                                        | ✅ linha criada            |
-| `select * from owner_notes`             | `viewer`     | lê normalmente                                | ✅ `viewer_can_read: 1`    |
-| `update owner_notes` (tentando editar)  | `viewer`     | 0 linhas afetadas (RLS filtra, nunca erro explícito em UPDATE) | ✅ confirmado por leitura: conteúdo não mudou |
+| Ação                                   | Papel        | Esperado                                                       | Resultado                                     |
+| -------------------------------------- | ------------ | -------------------------------------------------------------- | --------------------------------------------- |
+| `select * from checklist_templates`    | `anon`       | 0 linhas                                                       | ✅ `anon_can_see: 0`                          |
+| `insert into checklist_templates`      | `operations` | aceito                                                         | ✅ linha criada                               |
+| `select * from checklist_templates`    | `viewer`     | lê normalmente                                                 | ✅ `viewer_can_read: 1`                       |
+| `insert into checklist_templates`      | `viewer`     | rejeitado                                                      | ✅ `42501`                                    |
+| `select * from owner_notes`            | `anon`       | 0 linhas                                                       | ✅ `anon_can_see_notes: 0`                    |
+| `insert into owner_notes`              | `commercial` | aceito                                                         | ✅ linha criada                               |
+| `select * from owner_notes`            | `viewer`     | lê normalmente                                                 | ✅ `viewer_can_read: 1`                       |
+| `update owner_notes` (tentando editar) | `viewer`     | 0 linhas afetadas (RLS filtra, nunca erro explícito em UPDATE) | ✅ confirmado por leitura: conteúdo não mudou |
 
 ## O que esta matriz NÃO cobre ainda
 
