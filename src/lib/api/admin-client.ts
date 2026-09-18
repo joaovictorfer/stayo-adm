@@ -41,6 +41,12 @@ import type {
   ImplementationOwnerLinkInput,
   OwnerFieldState,
 } from "../../types/implementation-owner";
+import type {
+  ImplementationPropertyDetails,
+  ImplementationPropertyDetailsInput,
+  ImplementationRoom,
+  ImplementationRoomInput,
+} from "../../types/implementation-property";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
@@ -149,7 +155,22 @@ export interface AdminApiClient {
       note?: string | null;
     }): Promise<FieldConfirmation>;
   };
+  /** Fase 3 — cadastro estruturado do imóvel da implantação. */
+  propertyDetails: {
+    get(implementationId: string): Promise<ImplementationPropertyDetails | null>;
+    save(
+      implementationId: string,
+      input: ImplementationPropertyDetailsInput,
+    ): Promise<ImplementationPropertyDetails>;
+  };
+  /** Fase 3 — ambientes (quartos, banheiros, áreas) com camas e capacidade. */
+  rooms: {
+    listByImplementation(implementationId: string): Promise<ImplementationRoom[]>;
+    add(input: ImplementationRoomInput): Promise<ImplementationRoom>;
+    remove(id: string): Promise<void>;
+  };
 }
+
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
 // reusar a mesma chave em vez de duplicar a string em outro arquivo.
@@ -164,6 +185,8 @@ export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-su
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
 export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
 export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
+export const PROPERTY_DETAILS_KEY = "stayo-admin:implementation-property-details";
+export const IMPLEMENTATION_ROOMS_KEY = "stayo-admin:implementation-rooms";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
@@ -652,9 +675,86 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const propertyDetails: AdminApiClient["propertyDetails"] = {
+    get: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationPropertyDetails>(PROPERTY_DETAILS_KEY).find(
+          (d) => d.implementationId === implementationId,
+        ) ?? null,
+      ),
+    save: async (implementationId, input) => {
+      const all = read<ImplementationPropertyDetails>(PROPERTY_DETAILS_KEY);
+      const existing = all.find((d) => d.implementationId === implementationId);
+      const updated: ImplementationPropertyDetails = {
+        implementationId,
+        postalCode: null,
+        street: null,
+        number: null,
+        complement: null,
+        district: null,
+        city: null,
+        state: null,
+        propertyType: null,
+        bedrooms: null,
+        suites: null,
+        bathrooms: null,
+        parkingSpots: null,
+        accessNotes: null,
+        wifiNetwork: null,
+        wifiPassword: null,
+        notes: null,
+        ...existing,
+        ...input,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PROPERTY_DETAILS_KEY,
+        existing
+          ? all.map((d) => (d.implementationId === implementationId ? updated : d))
+          : [...all, updated],
+      );
+      return updated;
+    },
+  };
+
+  const rooms: AdminApiClient["rooms"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY)
+          .filter((r) => r.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    add: async (input) => {
+      const room: ImplementationRoom = {
+        id: newId(),
+        implementationId: input.implementationId,
+        name: input.name,
+        kind: input.kind,
+        beds: input.beds,
+        capacity: input.capacity,
+        displayOrder: input.displayOrder ?? 0,
+        notes: input.notes ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_ROOMS_KEY, [
+        ...read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY),
+        room,
+      ]);
+      return room;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_ROOMS_KEY,
+        read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY).filter((r) => r.id !== id),
+      );
+    },
+  };
+
   return {
     audit,
     owners,
+    propertyDetails,
+    rooms,
     commercialTermDefaults,
     commercialTerms,
     outbox,
@@ -1477,9 +1577,88 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const propertyDetails: AdminApiClient["propertyDetails"] = {
+    get: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_property_details")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle<PropertyDetailsRow>();
+      if (error) throw error;
+      return data ? propertyDetailsFromRow(data) : null;
+    },
+    save: async (implementationId, input) => {
+      const { data, error } = await client()
+        .from("implementation_property_details")
+        .upsert(
+          {
+            implementation_id: implementationId,
+            postal_code: input.postalCode ?? null,
+            street: input.street ?? null,
+            number: input.number ?? null,
+            complement: input.complement ?? null,
+            district: input.district ?? null,
+            city: input.city ?? null,
+            state: input.state ?? null,
+            property_type: input.propertyType ?? null,
+            bedrooms: input.bedrooms ?? null,
+            suites: input.suites ?? null,
+            bathrooms: input.bathrooms ?? null,
+            parking_spots: input.parkingSpots ?? null,
+            access_notes: input.accessNotes ?? null,
+            wifi_network: input.wifiNetwork ?? null,
+            wifi_password: input.wifiPassword ?? null,
+            notes: input.notes ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id" },
+        )
+        .select()
+        .single<PropertyDetailsRow>();
+      if (error) throw error;
+      return propertyDetailsFromRow(data);
+    },
+  };
+
+  const rooms: AdminApiClient["rooms"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_rooms")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<RoomRow[]>();
+      if (error) throw error;
+      return data.map(roomFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_rooms")
+        .insert({
+          implementation_id: input.implementationId,
+          name: input.name,
+          kind: input.kind,
+          beds: input.beds,
+          capacity: input.capacity,
+          display_order: input.displayOrder ?? 0,
+          notes: input.notes ?? null,
+        })
+        .select()
+        .single<RoomRow>();
+      if (error) throw error;
+      return roomFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_rooms").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
     audit,
     owners,
+    propertyDetails,
+    rooms,
     commercialTermDefaults,
     commercialTerms,
     outbox,
@@ -1539,5 +1718,75 @@ function fieldConfirmationFromRow(row: FieldConfirmationRow): FieldConfirmation 
     valueSnapshot: row.value_snapshot,
     note: row.note,
     updatedAt: row.updated_at,
+  };
+}
+
+interface PropertyDetailsRow {
+  implementation_id: string;
+  postal_code: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  district: string | null;
+  city: string | null;
+  state: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  suites: number | null;
+  bathrooms: number | null;
+  parking_spots: number | null;
+  access_notes: string | null;
+  wifi_network: string | null;
+  wifi_password: string | null;
+  notes: string | null;
+  updated_at: string;
+}
+
+function propertyDetailsFromRow(row: PropertyDetailsRow): ImplementationPropertyDetails {
+  return {
+    implementationId: row.implementation_id,
+    postalCode: row.postal_code,
+    street: row.street,
+    number: row.number,
+    complement: row.complement,
+    district: row.district,
+    city: row.city,
+    state: row.state,
+    propertyType: row.property_type,
+    bedrooms: row.bedrooms,
+    suites: row.suites,
+    bathrooms: row.bathrooms,
+    parkingSpots: row.parking_spots,
+    accessNotes: row.access_notes,
+    wifiNetwork: row.wifi_network,
+    wifiPassword: row.wifi_password,
+    notes: row.notes,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface RoomRow {
+  id: string;
+  implementation_id: string;
+  name: string;
+  kind: string;
+  beds: string | null;
+  capacity: number | null;
+  display_order: number;
+  notes: string | null;
+  created_at: string;
+}
+
+function roomFromRow(row: RoomRow): ImplementationRoom {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    name: row.name,
+    kind: row.kind,
+    beds: row.beds,
+    capacity: row.capacity,
+    displayOrder: row.display_order,
+    notes: row.notes,
+    createdAt: row.created_at,
   };
 }

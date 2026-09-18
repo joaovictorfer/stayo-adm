@@ -72,6 +72,18 @@ export const fieldConfirmationsQuery = (implementationId: EntityId) =>
     queryFn: () => adminApi.fieldConfirmations.listByImplementation(implementationId),
   });
 
+export const implementationPropertyDetailsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["implementation-property-details", implementationId],
+    queryFn: () => adminApi.propertyDetails.get(implementationId),
+  });
+
+export const implementationRoomsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["implementation-rooms", implementationId],
+    queryFn: () => adminApi.rooms.listByImplementation(implementationId),
+  });
+
 export const propertiesListQuery = () =>
   queryOptions({
     queryKey: ["properties", "list"],

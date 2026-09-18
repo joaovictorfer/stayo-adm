@@ -483,6 +483,121 @@ export type Database = {
           },
         ]
       }
+      implementation_property_details: {
+        Row: {
+          access_notes: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          complement: string | null
+          district: string | null
+          implementation_id: string
+          notes: string | null
+          number: string | null
+          parking_spots: number | null
+          postal_code: string | null
+          property_type: string | null
+          state: string | null
+          street: string | null
+          suites: number | null
+          updated_at: string
+          wifi_network: string | null
+          wifi_password: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          complement?: string | null
+          district?: string | null
+          implementation_id: string
+          notes?: string | null
+          number?: string | null
+          parking_spots?: number | null
+          postal_code?: string | null
+          property_type?: string | null
+          state?: string | null
+          street?: string | null
+          suites?: number | null
+          updated_at?: string
+          wifi_network?: string | null
+          wifi_password?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          complement?: string | null
+          district?: string | null
+          implementation_id?: string
+          notes?: string | null
+          number?: string | null
+          parking_spots?: number | null
+          postal_code?: string | null
+          property_type?: string | null
+          state?: string | null
+          street?: string | null
+          suites?: number | null
+          updated_at?: string
+          wifi_network?: string | null
+          wifi_password?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_property_details_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_rooms: {
+        Row: {
+          beds: string | null
+          capacity: number | null
+          created_at: string
+          display_order: number
+          id: string
+          implementation_id: string
+          kind: string
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          beds?: string | null
+          capacity?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id: string
+          kind?: string
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          beds?: string | null
+          capacity?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          kind?: string
+          name?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_rooms_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       initial_charges: {
         Row: {
           amount: number
