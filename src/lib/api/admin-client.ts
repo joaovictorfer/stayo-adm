@@ -41,6 +41,12 @@ import type {
   ImplementationOwnerLinkInput,
   OwnerFieldState,
 } from "../../types/implementation-owner";
+import type {
+  ImplementationPropertyDetails,
+  ImplementationPropertyDetailsInput,
+  ImplementationRoom,
+  ImplementationRoomInput,
+} from "../../types/implementation-property";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
