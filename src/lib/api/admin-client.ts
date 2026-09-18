@@ -1577,9 +1577,88 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const propertyDetails: AdminApiClient["propertyDetails"] = {
+    get: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_property_details")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle<PropertyDetailsRow>();
+      if (error) throw error;
+      return data ? propertyDetailsFromRow(data) : null;
+    },
+    save: async (implementationId, input) => {
+      const { data, error } = await client()
+        .from("implementation_property_details")
+        .upsert(
+          {
+            implementation_id: implementationId,
+            postal_code: input.postalCode ?? null,
+            street: input.street ?? null,
+            number: input.number ?? null,
+            complement: input.complement ?? null,
+            district: input.district ?? null,
+            city: input.city ?? null,
+            state: input.state ?? null,
+            property_type: input.propertyType ?? null,
+            bedrooms: input.bedrooms ?? null,
+            suites: input.suites ?? null,
+            bathrooms: input.bathrooms ?? null,
+            parking_spots: input.parkingSpots ?? null,
+            access_notes: input.accessNotes ?? null,
+            wifi_network: input.wifiNetwork ?? null,
+            wifi_password: input.wifiPassword ?? null,
+            notes: input.notes ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id" },
+        )
+        .select()
+        .single<PropertyDetailsRow>();
+      if (error) throw error;
+      return propertyDetailsFromRow(data);
+    },
+  };
+
+  const rooms: AdminApiClient["rooms"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_rooms")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<RoomRow[]>();
+      if (error) throw error;
+      return data.map(roomFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_rooms")
+        .insert({
+          implementation_id: input.implementationId,
+          name: input.name,
+          kind: input.kind,
+          beds: input.beds,
+          capacity: input.capacity,
+          display_order: input.displayOrder ?? 0,
+          notes: input.notes ?? null,
+        })
+        .select()
+        .single<RoomRow>();
+      if (error) throw error;
+      return roomFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_rooms").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
     audit,
     owners,
+    propertyDetails,
+    rooms,
     commercialTermDefaults,
     commercialTerms,
     outbox,
