@@ -11,7 +11,9 @@ import {
   PageHeader,
   Panel,
 } from "../components/data/ListStates";
+import { AttentionPanel, attentionItems } from "../components/implantacao/AttentionPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
+import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
