@@ -1413,6 +1413,70 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const implementationOwners: AdminApiClient["implementationOwners"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_owners")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<ImplementationOwnerRow[]>();
+      if (error) throw error;
+      return data.map(implementationOwnerFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_owners")
+        .insert({
+          implementation_id: input.implementationId,
+          owner_id: input.ownerId,
+          role: input.role,
+          share_percent: input.sharePercent,
+          address: input.address,
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<ImplementationOwnerRow>();
+      if (error) throw error;
+      return implementationOwnerFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_owners").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const fieldConfirmations: AdminApiClient["fieldConfirmations"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_field_confirmations")
+        .select()
+        .eq("implementation_id", implementationId)
+        .returns<FieldConfirmationRow[]>();
+      if (error) throw error;
+      return data.map(fieldConfirmationFromRow);
+    },
+    setState: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_field_confirmations")
+        .upsert(
+          {
+            implementation_id: input.implementationId,
+            field_key: input.fieldKey,
+            state: input.state,
+            value_snapshot: input.valueSnapshot ?? null,
+            note: input.note ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id,field_key" },
+        )
+        .select()
+        .single<FieldConfirmationRow>();
+      if (error) throw error;
+      return fieldConfirmationFromRow(data);
+    },
+  };
+
   return {
     audit,
     owners,
@@ -1422,6 +1486,8 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     initialCharges,
     ownerOnboarding,
     ownerTasks,
+    implementationOwners,
+    fieldConfirmations,
   };
 }
 
