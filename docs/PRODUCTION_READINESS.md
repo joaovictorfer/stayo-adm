@@ -36,7 +36,24 @@ Motivo do adiamento e o que falta exatamente: `docs/DATA_PERSISTENCE.md`.
 
 ## Bloqueios externos (não inventados, não contornados)
 
-- `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` deste ambiente de deploy — ver `docs/SUPABASE_PRODUCTION_SETUP.md`.
+- ~~`VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` deste ambiente de deploy~~
+  **Resolvido em 18/09/2026** (Fase 19): o usuário habilitou o Lovable Cloud
+  no projeto, que gerou a credencial real (`VITE_SUPABASE_URL`/
+  `VITE_SUPABASE_PUBLISHABLE_KEY`, projeto `dftzonhzxsqghxrvgkkt` — mesmo
+  banco onde as 18 tabelas deste plano já vinham sendo validadas via
+  `mcp__Lovable__query_database`). O código foi ajustado para reconhecer o
+  nome novo da variável (`isSupabaseConfigured()` em
+  `src/lib/api/supabase-client.ts`). **O que isso NÃO significa ainda**:
+  este ambiente de execução (Claude Code) tem a rede de saída restrita a um
+  allowlist que não inclui `*.supabase.co` — então nenhuma chamada HTTP
+  real a este projeto foi (ou pôde ser) exercida a partir daqui. Validado
+  apenas que a aplicação não quebra com a credencial presente (build,
+  lint, testes unitários com o adapter mockado nos pontos que antes
+  dependiam de rede, e um smoke visual sem erro de aplicação — só ruído de
+  rede do próprio sandbox). A validação HTTP real de
+  `signInWithPassword`/upload/multi-dispositivo (itens abaixo) continua
+  pendente, mas agora por uma limitação de REDE deste ambiente, não mais
+  por falta de credencial.
 
 ## CI
 

@@ -13,8 +13,19 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * O Lovable Cloud gera `VITE_SUPABASE_PUBLISHABLE_KEY` (formato novo de chave
+ * do Supabase, `sb_publishable_...`) — `VITE_SUPABASE_ANON_KEY` (JWT antigo)
+ * fica como alias por compatibilidade, caso alguém configure manualmente com
+ * o nome antigo.
+ */
+function supabaseAnonKey(): string | undefined {
+  return (import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??
+    import.meta.env["VITE_SUPABASE_ANON_KEY"]) as string | undefined;
+}
+
 export function isSupabaseConfigured(): boolean {
-  return Boolean(import.meta.env["VITE_SUPABASE_URL"] && import.meta.env["VITE_SUPABASE_ANON_KEY"]);
+  return Boolean(import.meta.env["VITE_SUPABASE_URL"] && supabaseAnonKey());
 }
 
 let cached: SupabaseClient | null = null;
@@ -26,7 +37,7 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
 
   cached = createClient(
     import.meta.env["VITE_SUPABASE_URL"] as string,
-    import.meta.env["VITE_SUPABASE_ANON_KEY"] as string,
+    supabaseAnonKey() as string,
   );
   return cached;
 }

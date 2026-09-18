@@ -114,8 +114,8 @@ function LoginPage() {
           Autenticação não configurada
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Sem um projeto Supabase configurado (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY), o Admin
-          roda sem login, sobre o adapter local — esta tela não deveria ter sido acessada.
+          Sem um projeto Supabase configurado (VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY), o
+          Admin roda sem login, sobre o adapter local — esta tela não deveria ter sido acessada.
         </p>
       </Shell>
     );

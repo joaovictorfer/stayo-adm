@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 /**
  * Fase 18: nenhum segredo (service_role, credencial, token privado) pode
  * acabar no bundle que vai para o navegador — a regra do plano mestre é
- * "só VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY são público-seguras,
+ * "só VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY são público-seguras,
  * nunca service_role em VITE_*". Este teste builda o app de verdade
  * (mesmo comando de produção) e varre a saída publicável procurando os
  * padrões que nunca deveriam aparecer ali.

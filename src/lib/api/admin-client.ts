@@ -4,7 +4,7 @@
  *
  * Mesmo princípio do `core-client.ts`: nenhuma tela decide mock-vs-real.
  * `createDefaultAdminApiClient()` escolhe o adapter Supabase quando
- * `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` existem, e cai para o
+ * `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` existem, e cai para o
  * adapter local (localStorage) enquanto não existirem — exatamente o
  * blocker de credencial externa descrito na Fase 0: não bloqueia o
  * projeto, só troca de adapter quando a credencial chegar.

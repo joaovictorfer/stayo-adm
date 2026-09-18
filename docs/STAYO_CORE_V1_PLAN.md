@@ -68,6 +68,7 @@ sync/automação) e trocar a implementação interna sem quebrar contrato.
 ## Autenticação e autorização
 
 Reaproveitar o padrão já existente no Core (não inventar um novo):
+
 - `core_applications` (nova tabela, só para este contrato): `client_id`,
   `secret_hash` (nunca texto puro — mesmo padrão do Supabase Vault já
   usado para credenciais Condfy, `docs/STAYO_INTEGRATION_RISK_MAP.md`),
