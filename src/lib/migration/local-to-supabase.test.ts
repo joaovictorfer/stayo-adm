@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { collectLocalAdminSnapshot } from "./local-to-supabase";
+import {
+  collectLocalAdminSnapshot,
+  readMigrationStatus,
+  writeMigrationStatus,
+} from "./local-to-supabase";
 
 describe("collectLocalAdminSnapshot", () => {
   it("nunca lança fora do browser — retorna listas vazias sem `window`", () => {
@@ -15,5 +19,14 @@ describe("collectLocalAdminSnapshot", () => {
       ownerOnboardingLinks: [],
       ownerOnboardingSubmissions: [],
     });
+  });
+});
+
+describe("readMigrationStatus/writeMigrationStatus", () => {
+  it("nunca lança fora do browser — read retorna null, write é no-op", () => {
+    expect(readMigrationStatus()).toBeNull();
+    expect(() =>
+      writeMigrationStatus({ lastImportedAt: "2024-01-01", lastValidatedAt: null, allValid: true }),
+    ).not.toThrow();
   });
 });

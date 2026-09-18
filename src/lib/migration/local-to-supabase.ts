@@ -63,7 +63,87 @@ export interface ImportResult {
   imported: number;
 }
 
+export interface ValidationResult {
+  table: string;
+  expected: number;
+  foundInSupabase: number;
+  ok: boolean;
+}
+
 export class SupabaseNotConfiguredError extends Error {}
+
+/**
+ * Passo "validate" do fluxo detect→preview→import→validate→mark-migrated
+ * (seção 32 do plano): depois do `upsert`, confere de verdade que cada
+ * tabela tem pelo menos as linhas que o snapshot local mandou — nunca
+ * confia só no fato de `upsert` não ter lançado erro. Não compara linha a
+ * linha (o objetivo aqui é pego auditável, não um diff completo); um
+ * `foundInSupabase < expected` é sinal de que algo não persistiu.
+ */
+export async function validateSupabaseImport(
+  snapshot: LocalAdminSnapshot = collectLocalAdminSnapshot(),
+): Promise<ValidationResult[]> {
+  if (!isSupabaseConfigured()) {
+    throw new SupabaseNotConfiguredError(
+      "Supabase não está configurado (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY ausentes) — nada para validar.",
+    );
+  }
+  const client = getSupabaseBrowserClient();
+  if (!client) {
+    throw new SupabaseNotConfiguredError("Cliente Supabase indisponível.");
+  }
+
+  const countTable = async (table: string, expected: number): Promise<ValidationResult> => {
+    if (expected === 0) return { table, expected: 0, foundInSupabase: 0, ok: true };
+    const { count, error } = await client.from(table).select("*", { count: "exact", head: true });
+    if (error) throw error;
+    const foundInSupabase = count ?? 0;
+    return { table, expected, foundInSupabase, ok: foundInSupabase >= expected };
+  };
+
+  return Promise.all([
+    countTable("owner_records", snapshot.ownerRecords.length),
+    countTable("commercial_term_defaults", snapshot.commercialTermDefaults.length),
+    countTable("commercial_terms", snapshot.commercialTerms.length),
+    countTable("outbound_messages", snapshot.outboundMessages.length),
+    countTable("initial_charges", snapshot.initialCharges.length),
+    countTable("owner_portal_invitations", snapshot.ownerOnboardingLinks.length),
+    countTable("owner_onboarding_submissions", snapshot.ownerOnboardingSubmissions.length),
+  ]);
+}
+
+export interface MigrationStatus {
+  lastImportedAt: string;
+  lastValidatedAt: string | null;
+  allValid: boolean;
+}
+
+const MIGRATION_STATUS_KEY = "stayo-admin:migration-status";
+
+/**
+ * Marca a migração como concluída neste navegador — não impede um novo
+ * import (o `upsert` já torna isso seguro por natureza), só dá à tela um
+ * jeito de dizer "isto aqui já rodou" em vez de tratar todo carregamento
+ * de página como a primeira vez. Nunca apaga o localStorage de origem —
+ * isso é uma decisão deliberada do plano (seção 32): a marca é só um sinal
+ * de que já foi enviado, o dado local original continua intacto até uma
+ * limpeza manual e consciente, fora do escopo deste importador.
+ */
+export function readMigrationStatus(): MigrationStatus | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(MIGRATION_STATUS_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as MigrationStatus;
+  } catch {
+    return null;
+  }
+}
+
+export function writeMigrationStatus(status: MigrationStatus): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(MIGRATION_STATUS_KEY, JSON.stringify(status));
+}
 
 /**
  * Envia o snapshot local para o Supabase, em ordem de dependência lógica

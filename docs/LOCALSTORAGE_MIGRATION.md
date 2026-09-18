@@ -92,12 +92,19 @@ por tabela, e o que falta para trocar cada uma.
 
 ## O importador (`src/lib/migration/local-to-supabase.ts`)
 
-- `collectLocalAdminSnapshot()` — função pura, lê as sete chaves "já
-  migradas" (exceto `audit-logs`) via o mesmo `read()` de
+Fluxo completo (Fase 17L): **detect → preview → import → validate →
+mark-migrated → report**. Nenhum passo apaga o localStorage de origem —
+mesmo depois de validado, o dado local original continua intacto (uma
+limpeza manual e consciente fica fora do escopo deste importador).
+
+- **detect/preview** — `collectLocalAdminSnapshot()`: função pura, lê as
+  sete chaves "já migradas" (exceto `audit-logs`) via o mesmo `read()` de
   `local-store.ts`. Roda em qualquer ambiente (retorna listas vazias no
   servidor, onde não há `window`) e não depende do Supabase — por isso é
-  testável com Vitest (`local-to-supabase.test.ts`).
-- `importLocalAdminDataToSupabase()` — só executa se
+  testável com Vitest (`local-to-supabase.test.ts`). A tela
+  (`src/routes/configuracoes.migracao.tsx`) mostra a contagem de cada
+  tabela antes de qualquer import.
+- **import** — `importLocalAdminDataToSupabase()`: só executa se
   `isSupabaseConfigured()` for verdadeiro (nunca tenta conectar sem
   credencial). Faz `upsert` (nunca `insert` simples) com `onConflict: "id"`
   (ou `"implementation_id"` para `owner_onboarding_submissions`, que não
@@ -108,6 +115,25 @@ por tabela, e o que falta para trocar cada uma.
   `owner_onboarding_submissions` (nenhuma tem FK de banco entre si hoje —
   ver nota em `0003_commercial_terms.sql` — mas a ordem segue a
   dependência lógica).
+- **validate** — `validateSupabaseImport()`: reconsulta cada tabela no
+  Supabase (contagem exata via `select({ count: "exact", head: true })`)
+  e confere que o total lá é pelo menos o que o snapshot local mandou.
+  Não é um diff linha a linha — é um "confere de verdade", não só "o
+  `upsert` não lançou erro" — o suficiente para pegar o caso de uma
+  tabela não ter persistido nada apesar do `upsert` parecer ter rodado.
+- **mark-migrated** — `readMigrationStatus()`/`writeMigrationStatus()`:
+  grava `{ lastImportedAt, lastValidatedAt, allValid }` numa chave própria
+  (`stayo-admin:migration-status`) só depois que import+validate
+  terminam. Isto não bloqueia um novo import (o `upsert` já torna isso
+  seguro por natureza — "never-reimport" aqui significa "a tela não
+  finge que é sempre a primeira vez", não um bloqueio técnico); a tela
+  troca o rótulo do botão para "Importar novamente mesmo assim" quando já
+  existe uma marca, e mostra quando rodou pela última vez e se validou
+  limpo.
+- **report** — a tela mostra, lado a lado: contagem local por tabela
+  (preview), quantos registros o `upsert` reportou ter enviado (import),
+  e o resultado da validação por tabela — `ok (N/N)` ou `divergente
+  (N/N)` (validate), além da marca de "já migrado" com data (mark-migrated).
 
 ## Validação contra um projeto Supabase real (Fase 16)
 

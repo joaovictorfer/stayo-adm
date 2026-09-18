@@ -7,7 +7,11 @@ import { isSupabaseConfigured } from "../lib/api/supabase-client";
 import {
   collectLocalAdminSnapshot,
   importLocalAdminDataToSupabase,
+  readMigrationStatus,
+  validateSupabaseImport,
+  writeMigrationStatus,
   type ImportResult,
+  type ValidationResult,
 } from "../lib/migration/local-to-supabase";
 
 export const Route = createFileRoute("/configuracoes/migracao")({
@@ -47,15 +51,37 @@ const pendingKeys = [
 
 function MigrationPage() {
   const [results, setResults] = useState<ImportResult[] | null>(null);
+  const [validation, setValidation] = useState<ValidationResult[] | null>(null);
+  const [status, setStatus] = useState(() => readMigrationStatus());
   const snapshotQuery = useQuery({
     queryKey: ["migration", "local-snapshot"],
     queryFn: () => Promise.resolve(collectLocalAdminSnapshot()),
   });
   const configured = isSupabaseConfigured();
 
+  // Fluxo detect → preview → import → validate → mark-migrated (seção 32
+  // do plano): o import por si só não confirma nada além de "o upsert não
+  // lançou erro" — validate reconsulta o Supabase de verdade, e só então
+  // a marca de "já migrado" é gravada neste navegador.
   const runImport = useMutation({
-    mutationFn: () => importLocalAdminDataToSupabase(),
-    onSuccess: setResults,
+    mutationFn: async () => {
+      const snapshot = collectLocalAdminSnapshot();
+      const importResults = await importLocalAdminDataToSupabase(snapshot);
+      const validationResults = await validateSupabaseImport(snapshot);
+      return { importResults, validationResults };
+    },
+    onSuccess: ({ importResults, validationResults }) => {
+      setResults(importResults);
+      setValidation(validationResults);
+      const allValid = validationResults.every((v) => v.ok);
+      const newStatus = {
+        lastImportedAt: new Date().toISOString(),
+        lastValidatedAt: new Date().toISOString(),
+        allValid,
+      };
+      writeMigrationStatus(newStatus);
+      setStatus(newStatus);
+    },
   });
 
   const snapshot = snapshotQuery.data;
@@ -119,9 +145,25 @@ function MigrationPage() {
 
         <p className="mb-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           {configured
-            ? "Supabase configurado — a importação é segura para rodar mais de uma vez (upsert por id, nunca duplica)."
+            ? "Supabase configurado — a importação é segura para rodar mais de uma vez (upsert por id, nunca duplica). Nunca apaga o localStorage de origem, mesmo depois de validada."
             : "Supabase ainda não configurado (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY ausentes) — o botão abaixo fica desabilitado até existir um projeto real."}
         </p>
+
+        {status && (
+          <p
+            className="mb-2 rounded-[var(--radius-control)] px-3 py-2 text-xs"
+            style={{
+              backgroundColor: status.allValid ? "var(--stayo-forest-soft)" : "var(--stayo-danger)",
+              color: status.allValid ? "var(--stayo-forest)" : "#fff",
+            }}
+          >
+            {status.allValid
+              ? `Já importado e validado neste navegador em ${new Date(status.lastImportedAt).toLocaleString("pt-BR")}.`
+              : `Import rodou em ${new Date(status.lastImportedAt).toLocaleString("pt-BR")}, mas a validação encontrou divergência — ver detalhe abaixo.`}{" "}
+            Rodar de novo é seguro (upsert), mas não é necessário se está tudo válido.
+          </p>
+        )}
+
         <button
           type="button"
           onClick={() => runImport.mutate()}
@@ -129,7 +171,11 @@ function MigrationPage() {
           className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-50"
           style={{ backgroundColor: "var(--stayo-forest)", color: "var(--stayo-surface)" }}
         >
-          {runImport.isPending ? "Importando..." : "Importar para o Supabase"}
+          {runImport.isPending
+            ? "Importando e validando..."
+            : status
+              ? "Importar novamente mesmo assim"
+              : "Importar para o Supabase"}
         </button>
 
         {runImport.isError && (
@@ -147,6 +193,27 @@ function MigrationPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {validation && (
+          <>
+            <h3 className="mt-3 mb-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              Validação (reconsulta o Supabase de verdade, não só confirma que o upsert não deu
+              erro)
+            </h3>
+            <ul className="divide-y text-sm" style={{ borderColor: "var(--stayo-border)" }}>
+              {validation.map((v) => (
+                <li key={v.table} className="flex items-center justify-between py-1.5">
+                  <span>{v.table}</span>
+                  <span style={{ color: v.ok ? "var(--stayo-success)" : "var(--stayo-danger)" }}>
+                    {v.ok
+                      ? `ok (${v.foundInSupabase}/${v.expected})`
+                      : `divergente (${v.foundInSupabase}/${v.expected})`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         {migratedTables.map((t) => (
