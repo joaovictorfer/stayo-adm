@@ -2,7 +2,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { adminApi, ownerQuery, ownerTasksQuery } from "../lib/api/queries";
+import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
+import { ownerQuery, ownerTasksQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import type { OwnerTaskStatus } from "../types/admin";
 
@@ -99,6 +100,14 @@ function OwnerHomePage() {
 function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
+  const attachmentsQ = useQuery({
+    queryKey: ["owner-attachments", ownerId],
+    queryFn: () => listOwnerAttachments(ownerId),
+  });
+  const download = useMutation({
+    mutationFn: (storagePath: string) => getAttachmentSignedUrl(storagePath),
+    onSuccess: (url) => window.open(url, "_blank", "noopener,noreferrer"),
+  });
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
 
   return (
@@ -141,6 +150,35 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
                 {ownerTaskKindLabels[task.kind] ?? task.kind} · {ownerTaskStatusLabels[task.status]}
               </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 className="mt-6 mb-2 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
+        Seus documentos
+      </h2>
+      {attachmentsQ.isPending ? (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Carregando...
+        </p>
+      ) : (attachmentsQ.data ?? []).length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Nenhum documento por aqui ainda.
+        </p>
+      ) : (
+        <ul className="divide-y text-sm" style={{ borderColor: "var(--stayo-border)" }}>
+          {(attachmentsQ.data ?? []).map((att) => (
+            <li key={att.id} className="flex items-center justify-between py-2">
+              <span>{att.filename}</span>
+              <button
+                type="button"
+                onClick={() => download.mutate(att.storagePath)}
+                className="text-xs underline"
+                style={{ color: "var(--stayo-forest)" }}
+              >
+                Baixar
+              </button>
             </li>
           ))}
         </ul>

@@ -13,6 +13,13 @@ import {
 import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
+import {
+  deleteOwnerAttachment,
+  getAttachmentSignedUrl,
+  isAttachmentsAvailable,
+  listOwnerAttachments,
+  uploadOwnerAttachment,
+} from "../lib/api/attachments";
 import { ownerNotesStore } from "../lib/api/local-store";
 import {
   adminApi,
@@ -253,6 +260,8 @@ function OwnerDetailPage() {
           </div>
 
           <OwnerTasksPanel ownerId={id} />
+
+          <OwnerAttachmentsPanel ownerId={id} />
 
           <OwnerNotesPanel ownerId={id} />
         </div>
@@ -599,6 +608,126 @@ function OwnerTasksPanel({ ownerId }: { ownerId: string }) {
           {create.isPending ? "Adicionando..." : "Adicionar pendência"}
         </button>
       </form>
+    </div>
+  );
+}
+
+/**
+ * Anexos/documentos do proprietário (Fase 17I) — só existe com Supabase
+ * configurado (Storage privado real, ver `src/lib/api/attachments.ts`).
+ * Sem isso, não há onde guardar o binário de verdade.
+ */
+function OwnerAttachmentsPanel({ ownerId }: { ownerId: string }) {
+  const queryClient = useQueryClient();
+  const available = isAttachmentsAvailable();
+  const query = useQuery({
+    queryKey: ["owner-attachments", ownerId],
+    queryFn: () => listOwnerAttachments(ownerId),
+    enabled: available,
+  });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["owner-attachments", ownerId] });
+
+  const upload = useMutation({
+    mutationFn: (file: File) =>
+      uploadOwnerAttachment({
+        ownerId,
+        implementationId: null,
+        ownerTaskId: null,
+        category: "custom",
+        file,
+      }),
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (params: { id: string; storagePath: string }) =>
+      deleteOwnerAttachment(params.id, params.storagePath),
+    onSuccess: invalidate,
+  });
+
+  const download = useMutation({
+    mutationFn: (storagePath: string) => getAttachmentSignedUrl(storagePath),
+    onSuccess: (url) => window.open(url, "_blank", "noopener,noreferrer"),
+  });
+
+  if (!available) {
+    return (
+      <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+        <h2
+          className="mb-1 text-sm"
+          style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+        >
+          Anexos
+        </h2>
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Não disponível sem um projeto Supabase configurado.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Anexos
+      </h2>
+
+      {query.isPending ? (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Carregando...
+        </p>
+      ) : (query.data ?? []).length === 0 ? (
+        <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Nenhum anexo enviado ainda.
+        </p>
+      ) : (
+        <ul className="mb-3 divide-y text-sm" style={{ borderColor: "var(--stayo-border)" }}>
+          {(query.data ?? []).map((att) => (
+            <li key={att.id} className="flex items-center justify-between gap-2 py-2">
+              <span className="truncate">{att.filename}</span>
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => download.mutate(att.storagePath)}
+                  className="text-xs underline"
+                  style={{ color: "var(--stayo-forest)" }}
+                >
+                  Baixar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove.mutate({ id: att.id, storagePath: att.storagePath })}
+                  className="text-xs underline"
+                  style={{ color: "var(--stayo-danger)" }}
+                >
+                  Remover
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <input
+        type="file"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) upload.mutate(file);
+          e.target.value = "";
+        }}
+        disabled={upload.isPending}
+        className="text-sm"
+      />
+      {upload.isPending && (
+        <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          Enviando...
+        </p>
+      )}
     </div>
   );
 }

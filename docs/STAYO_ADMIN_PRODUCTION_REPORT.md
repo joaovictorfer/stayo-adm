@@ -90,10 +90,18 @@ ponta a ponta pela UI ainda não estaria testável sem primeiro trocar esse
 adapter.
 
 **12. O upload funciona?**
-Não existe — anexos/documentos é um conceito novo, não construído nesta
-passada (a própria Fase 17 do plano lista isso como fora do escopo
-imediato e pede para não criar módulos de negócio não planejados). Gap
-documentado, não escondido: `docs/DATA_PERSISTENCE.md`.
+Construído (Fase 17I): bucket privado `owner-attachments` (nunca
+público), tabela `attachments` com metadata, RLS testada tanto na tabela
+quanto em `storage.objects` (o que o serviço de Storage de fato consulta
+a cada upload/download) — proprietário só acessa a própria pasta,
+isolamento confirmado entre dois proprietários diferentes. Cliente
+(`src/lib/api/attachments.ts`) segue a API documentada do supabase-js.
+**O que não foi validado**: upload/download reais via HTTP — mesma
+credencial externa bloqueada do resto do domínio. Achado real no
+processo: `storage.objects` bloqueia `delete` direto via SQL cru por
+padrão (`storage.protect_delete()`) — só a API de Storage apaga um
+objeto de verdade, proteção do próprio Supabase contra arquivo órfão.
+Detalhe completo: `docs/DATA_PERSISTENCE.md` §Attachments.
 
 **13. A cobrança é idempotente?**
 Sim, e corrigida de verdade nesta sessão (Fase 17J): a constraint
@@ -153,11 +161,11 @@ lugar nenhum para contornar isso.
 
 **19. O que está pronto para produção, e o que não está?**
 Ver `docs/PRODUCTION_READINESS.md` para o checklist completo. Resumo:
-time interno e proprietário (auth + RLS + 9 verticais de dado, incluindo
-Owner Auth e Owner Tasks) estão prontos para produção assim que a
-credencial existir neste deploy; 4 verticais têm schema/RLS prontos mas
-ainda leem do mock local (troca de adapter é o próximo passo natural);
-Attachments não foi construído (conceito novo, fora do escopo desta
-passada); o cenário multi-contexto completo da Fase 18 e a suíte de
-concorrência real seguem bloqueados por credencial (a parte que não
-depende dela já está commitada em `e2e/` e roda no CI).
+time interno e proprietário (auth + RLS + 10 verticais de dado,
+incluindo Owner Auth, Owner Tasks e Attachments) estão prontos para
+produção assim que a credencial existir neste deploy; 4 verticais têm
+schema/RLS prontos mas ainda leem do mock local (troca de adapter é o
+próximo passo natural); o cenário multi-contexto completo da Fase 18, a
+suíte de concorrência real, e o upload/download real via HTTP de
+attachments seguem bloqueados pela mesma credencial externa (a parte que
+não depende dela já está commitada em `e2e/` e roda no CI).

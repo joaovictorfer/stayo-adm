@@ -107,10 +107,25 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 | `select * from owner_tasks`           | outro proprietário          | 0 linhas — isolamento                           | ✅ `owner_b_sees: 0`      |
 | `update owner_tasks` (marcar `done`)  | proprietário dono da tarefa | 0 linhas afetadas (RLS filtra, sem erro)        | ✅ status continua `pending` |
 
+## Attachments — Storage privado (`attachments`, `storage.objects`, migration 0015)
+
+| Ação                                                           | Papel                       | Esperado                                       | Resultado                 |
+| ---------------------------------------------------------------- | ---------------------------- | -------------------------------------------------- | --------------------------- |
+| `select * from storage.objects where bucket_id = 'owner-attachments'` | `anon`                | 0 linhas                                           | ✅ `anon_can_see: 0`       |
+| `insert into storage.objects` na própria pasta (`<owner_id>/...`) | proprietário                | aceito                                              | ✅ objeto criado           |
+| `insert into storage.objects` na pasta de OUTRO proprietário     | proprietário                | rejeitado                                           | ✅ `42501`                 |
+| `select * from storage.objects`                                  | outro proprietário           | 0 linhas — isolamento                               | ✅ `owner_b_sees: 0`       |
+| `select * from storage.objects`                                  | `operations`                 | vê todos os objetos do bucket                       | ✅ `admin_sees: 1`         |
+| `insert into attachments`                                        | `operations`                 | aceito                                              | ✅ linha criada            |
+| `select * from attachments`                                      | proprietário dono do anexo   | vê o próprio anexo                                  | ✅ 1 linha                 |
+| `select * from attachments`                                      | outro proprietário           | 0 linhas — isolamento                               | ✅ `owner_b_sees: 0`       |
+| `delete from storage.objects` (SQL cru, sem `allow_delete_query`) | qualquer papel                | rejeitado pelo próprio Supabase                     | ✅ `42501` (gatilho `storage.protect_delete()`) |
+
 ## O que esta matriz NÃO cobre ainda
 
-- **Attachments** — conceito novo, não construído, sem tabela nem RLS
-  ainda (ver `docs/DATA_PERSISTENCE.md`).
+- **Upload/download reais via HTTP** (a API de Storage do supabase-js) —
+  bloqueado por credencial externa, ver `docs/DATA_PERSISTENCE.md`
+  §Attachments.
 - **Login real via `supabase-js` (`signInWithPassword`/`signUp`)** — os testes
   acima simulam o papel/uid diretamente no Postgres; não exercitam o
   endpoint HTTP de Auth do Supabase de ponta a ponta (bloqueado por

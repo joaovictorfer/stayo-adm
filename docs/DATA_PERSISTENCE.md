@@ -24,7 +24,7 @@ confundir "schema existe" com "está em produção" — as duas colunas
 | Notas do proprietário (`ownerNotesStore`)                       | ✅ real, testado (Fase 17F)                              | ❌ ainda lê de `ownerNotesStore` (`local-store.ts`)              | `0012_owner_notes.sql`                  | idem                                                          |
 | Owner Auth (`owner_portal_accounts`)                            | ✅ real, testado (Fase 17H)                              | ✅ Supabase quando configurado (`owner-session.ts`, RPC)         | `0013_owner_auth.sql`                   | `docs/RLS_MATRIX.md`, `docs/AUTH_AND_ROLES.md`                |
 | Owner Tasks ("Precisamos de você", `owner_tasks`)               | ✅ real, testado (Fase 17I)                              | ✅ Supabase quando configurado (admin cria/gerencia, proprietário só lê) | `0014_owner_tasks.sql`           | `docs/RLS_MATRIX.md`                                          |
-| Anexos/documentos (attachments)                                 | ❌ não existe (conceito novo, não construído nesta fase) | ❌ não existe                                                    | —                                       | ver nota "Attachments" abaixo                                 |
+| Anexos/documentos (`attachments`, Storage privado)              | ✅ real, testado (Fase 17I)                              | ✅ só Supabase (sem equivalente local — ver nota "Attachments")  | `0015_attachments.sql`                  | `docs/RLS_MATRIX.md`, ver nota "Attachments" abaixo           |
 
 ## Por que `implementation_projects`/`proposals` têm schema mas não adapter
 
@@ -108,9 +108,46 @@ ele). Validado contra o banco real: isolamento entre dois proprietários
 diferentes, `anon`/`viewer` sem escrita, `update` do proprietário
 afetando zero linhas silenciosamente (mesmo padrão de `owner_notes`).
 
-## Nota: Attachments (documentos/anexos)
+## Attachments (documentos/anexos, Fase 17I)
 
-Mesma situação do item acima — armazenamento privado de documentos
-(Storage do Supabase, com metadata de mime/tamanho/categoria/autor) é
-conceito novo, não uma tabela que já existisse em algum mock. Não
-construído nesta passada, pela mesma razão.
+Construído: bucket privado `owner-attachments` (nunca público — criado
+via `insert` direto em `storage.buckets`, que é exatamente o que a API
+de Storage faz por baixo), tabela `attachments` com metadata
+(mime/tamanho/categoria/autor/nome), RLS na tabela E em
+`storage.objects` (o que o próprio serviço de Storage consulta a cada
+upload/download, não só um `select` cru na tabela) — proprietário só
+lê/envia dentro da própria pasta (`<owner_id>/...`), nunca a de outro;
+time interno acessa tudo. Cliente: `src/lib/api/attachments.ts`
+(upload/listagem/URL assinada temporária/remoção — nunca um caminho
+servido publicamente), com UI dos dois lados: admin faz upload/baixa/
+remove em `/proprietarios/$id` ("Anexos"), proprietário só baixa em
+`/portal/inicio` ("Seus documentos").
+
+Diferente do resto do domínio: **não existe adapter local** para isto —
+guardar um arquivo binário de verdade em `localStorage` não é uma opção
+real (limite de tamanho, sem persistência de binário entre sessões), só
+faz sentido com o Storage do Supabase. Sem credencial configurada, a UI
+mostra "não disponível" (mesmo padrão das telas de auth), nunca finge
+funcionar.
+
+Achado real testando contra o banco: `storage.objects` tem um gatilho
+(`storage.protect_delete()`) que bloqueia `delete` direto via SQL cru por
+padrão — só a API de Storage (ou `set local
+storage.allow_delete_query = 'true'`, usado só para limpar dado de teste
+aqui) consegue apagar um objeto. Isso é uma proteção real do próprio
+Supabase contra arquivo órfão, e o cliente (`deleteOwnerAttachment`) já
+usa a API de Storage certa (`storage.from(bucket).remove(...)`), nunca um
+`delete` cru.
+
+Validado contra o Supabase real: `anon` não lê nada no bucket; um
+proprietário insere só na própria pasta (inserir na pasta de outro é
+rejeitado pela RLS); um segundo proprietário não vê o objeto do primeiro;
+o time interno vê tudo; mesmo isolamento replicado na tabela `attachments`
+(metadata). Dados de teste removidos depois.
+
+**O que não foi validado**: upload/download de verdade via HTTP (a API de
+Storage do supabase-js) — bloqueado pela mesma credencial externa do
+resto do domínio (sem `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` neste
+ambiente). O código do cliente segue a API documentada do supabase-js
+exatamente como o resto deste adapter, mas não foi exercitado ponta a
+ponta com um upload real de arquivo.
