@@ -2030,3 +2030,83 @@ function roomFromRow(row: RoomRow): ImplementationRoom {
     createdAt: row.created_at,
   };
 }
+
+interface SupplyItemRow {
+  id: string;
+  implementation_id: string;
+  module: SupplyItem["module"];
+  name: string;
+  room: string | null;
+  size: string | null;
+  required_qty: number;
+  existing_qty: number;
+  status: SupplyItem["status"];
+  priority: SupplyItem["priority"];
+  responsible: string | null;
+  blocks_readiness: boolean;
+  notes: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function supplyItemFromRow(row: SupplyItemRow): SupplyItem {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    module: row.module,
+    name: row.name,
+    room: row.room,
+    size: row.size,
+    requiredQty: row.required_qty,
+    existingQty: row.existing_qty,
+    status: row.status,
+    priority: row.priority,
+    responsible: row.responsible,
+    blocksReadiness: row.blocks_readiness,
+    notes: row.notes,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface SupplyTemplateRow {
+  id: string;
+  name: string;
+  module: SupplyItem["module"];
+  notes: string | null;
+  created_at: string;
+}
+
+function supplyTemplateFromRow(row: SupplyTemplateRow): SupplyTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    module: row.module,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+interface SupplyTemplateItemRow {
+  id: string;
+  template_id: string;
+  name: string;
+  room: string | null;
+  size: string | null;
+  required_qty: number;
+  display_order: number;
+}
+
+function supplyTemplateItemFromRow(row: SupplyTemplateItemRow): SupplyTemplateItem {
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    name: row.name,
+    room: row.room,
+    size: row.size,
+    requiredQty: row.required_qty,
+    displayOrder: row.display_order,
+  };
+}
