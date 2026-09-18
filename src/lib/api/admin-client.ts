@@ -178,6 +178,20 @@ export interface AdminApiClient {
     add(input: ImplementationRoomInput): Promise<ImplementationRoom>;
     remove(id: string): Promise<void>;
   };
+  /** Fase 4 — enxoval e itens faltantes (itens livres, nunca fixos no código). */
+  supplies: {
+    listByImplementation(implementationId: string, module?: SupplyModule): Promise<SupplyItem[]>;
+    add(input: SupplyItemInput): Promise<SupplyItem>;
+    update(id: string, patch: SupplyItemPatch): Promise<SupplyItem>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 4 — templates de enxoval: aplicar copia os itens (snapshot), nunca vincula. */
+  supplyTemplates: {
+    list(module?: SupplyModule): Promise<SupplyTemplate[]>;
+    items(templateId: string): Promise<SupplyTemplateItem[]>;
+    create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
+    remove(id: string): Promise<void>;
+  };
 }
 
 
