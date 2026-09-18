@@ -185,6 +185,8 @@ export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-su
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
 export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
 export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
+export const PROPERTY_DETAILS_KEY = "stayo-admin:implementation-property-details";
+export const IMPLEMENTATION_ROOMS_KEY = "stayo-admin:implementation-rooms";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
