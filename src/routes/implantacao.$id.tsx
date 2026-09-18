@@ -242,6 +242,8 @@ function ImplementationDetailPage() {
             </div>
           ) : tab === "proprietarios" ? (
             <OwnersPanel implementationId={implementation.id} />
+          ) : tab === "imovel" ? (
+            <PropertyPanel implementationId={implementation.id} />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
