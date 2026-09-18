@@ -32,7 +32,7 @@ import type {
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
-import { nextSequentialCode } from "../sequential-code";
+import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
@@ -1002,32 +1002,56 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       if (existingError) throw existingError;
       if (existing) return initialChargeFromRow(existing);
 
-      const { data: currentRows, error: listError } = await supabase
-        .from("initial_charges")
-        .select("code")
-        .returns<{ code: string }[]>();
-      if (listError) throw listError;
-      const code = nextSequentialCode(
-        "COB",
-        currentRows.map((r) => r.code),
-      );
       const amount = input.items.reduce((sum, i) => sum + i.amount, 0);
 
-      const { data, error } = await supabase
-        .from("initial_charges")
-        .insert({
-          code,
-          implementation_id: input.implementationId,
-          owner_id: input.ownerId,
-          proposal_id: input.proposalId,
-          items: input.items,
-          amount,
-          status: "pending",
-        })
-        .select()
-        .single<InitialChargeRow>();
-      if (error) throw error;
-      return initialChargeFromRow(data);
+      // Duas tentativas concorrentes de aceitar a MESMA proposta (duplo
+      // clique, duas abas) passam pelo `existing` acima antes de qualquer
+      // uma inserir — a corrida real só é decidida pelas constraints
+      // `unique` do banco (`proposal_id`, `code`), nunca pela checagem em
+      // memória. Isso torna a operação idempotente de verdade: quem perde
+      // a corrida do `insert` nunca vê um erro cru, só o registro que a
+      // outra chamada já criou.
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const { data: currentRows, error: listError } = await supabase
+          .from("initial_charges")
+          .select("code")
+          .returns<{ code: string }[]>();
+        if (listError) throw listError;
+        const code = nextSequentialCode(
+          "COB",
+          currentRows.map((r) => r.code),
+        );
+
+        const { data, error } = await supabase
+          .from("initial_charges")
+          .insert({
+            code,
+            implementation_id: input.implementationId,
+            owner_id: input.ownerId,
+            proposal_id: input.proposalId,
+            items: input.items,
+            amount,
+            status: "pending",
+          })
+          .select()
+          .single<InitialChargeRow>();
+
+        if (!error) return initialChargeFromRow(data);
+        if (!isUniqueViolation(error)) throw error;
+
+        if (constraintTargetsColumn(error, "proposal_id")) {
+          const { data: winner, error: refetchError } = await supabase
+            .from("initial_charges")
+            .select()
+            .eq("proposal_id", input.proposalId)
+            .single<InitialChargeRow>();
+          if (refetchError) throw refetchError;
+          return initialChargeFromRow(winner);
+        }
+        // Colisão só no `code` (duas gerações concorrentes calcularam o
+        // mesmo próximo número) — tenta de novo com a lista atualizada.
+      }
+      throw new Error("Não foi possível gerar um código de cobrança único após várias tentativas");
     },
     updateStatus: async (id, status, patch) => {
       const { data, error } = await client()

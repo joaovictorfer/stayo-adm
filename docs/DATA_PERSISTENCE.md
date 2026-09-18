@@ -42,6 +42,46 @@ RLS já existem e já foram testados de ponta a ponta contra o banco real,
 então essa fase futura só precisa trocar a camada de leitura/escrita, não
 desenhar nada novo.
 
+## Concorrência/idempotência de cobrança inicial (Fase 17J)
+
+Auditoria do fluxo de `initialCharges.createFromProposal` (o que roda
+quando o proprietário aceita a proposta no portal) contra o requisito
+mais rígido do prompt mestre: "duplo aceite nunca duplica cobrança, sem
+duplicação por retry". A constraint `unique (proposal_id)` da migration
+`0006` já garantia a integridade dos dados (nunca duas linhas para a
+mesma proposta), mas o adapter Supabase (`src/lib/api/admin-client.ts`)
+fazia um `select` de existência seguido de `insert` — uma corrida real
+entre dois `insert`s simultâneos (duplo clique, duas abas) não era
+resolvida pela checagem em memória, só pela constraint do banco, e o
+código não tratava esse erro: quem perdesse a corrida via um erro cru de
+`unique_violation` na tela em vez de uma resposta idempotente.
+
+Corrigido: o `insert` agora captura `23505` (`isUniqueViolation`,
+`src/lib/sequential-code.ts`) e distingue qual constraint foi violada
+(`constraintTargetsColumn`, por texto da mensagem do Postgres — validado
+contra o erro real do banco, ver abaixo). Colisão em `proposal_id`
+(a mesma proposta sendo aceita duas vezes ao mesmo tempo) busca e devolve
+o registro que a outra chamada já criou, sem erro. Colisão só em `code`
+(duas gerações concorrentes calcularam o mesmo próximo número
+sequencial — `nextSequentialCode` nunca foi concorrência-segura sozinho)
+tenta de novo com a lista atualizada, até 5 vezes.
+
+Validado contra o Supabase real: reproduzido um `insert` duplicado por
+`proposal_id` (erro observado: `duplicate key value violates unique
+constraint "initial_charges_proposal_id_key"`) e um duplicado por `code`
+(`"initial_charges_code_key"`) — confirmando que os nomes de constraint
+gerados automaticamente pelo Postgres batem exatamente com o que
+`constraintTargetsColumn` procura. Testes unitários em
+`src/lib/sequential-code.test.ts` cobrem os dois helpers isoladamente.
+
+**Pendência conhecida:** a mesma corrida existe, em teoria, para a
+geração de código `IMP-xxxxx` (`src/lib/implementation-status.ts`), mas
+hoje isso só roda contra o mock local do `CoreApiClient` (sem adapter
+Supabase ainda — ver "Schema e RLS prontos, adapter ainda local" acima),
+onde não há concorrência real (JS de aba única). Quando
+`implementation_projects` ganhar seu adapter Supabase, aplicar o mesmo
+padrão de captura de `23505` usado aqui.
+
 ## Nota sobre `audit_logs`
 
 A policy de `insert` exige `actor_id = auth.uid()` — nunca aceita um
