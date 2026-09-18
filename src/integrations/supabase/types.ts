@@ -237,6 +237,47 @@ export type Database = {
         }
         Relationships: []
       }
+      implementation_field_confirmations: {
+        Row: {
+          field_key: string
+          id: string
+          implementation_id: string
+          note: string | null
+          state: Database["public"]["Enums"]["owner_field_state"]
+          updated_at: string
+          updated_by: string | null
+          value_snapshot: string | null
+        }
+        Insert: {
+          field_key: string
+          id?: string
+          implementation_id: string
+          note?: string | null
+          state?: Database["public"]["Enums"]["owner_field_state"]
+          updated_at?: string
+          updated_by?: string | null
+          value_snapshot?: string | null
+        }
+        Update: {
+          field_key?: string
+          id?: string
+          implementation_id?: string
+          note?: string | null
+          state?: Database["public"]["Enums"]["owner_field_state"]
+          updated_at?: string
+          updated_by?: string | null
+          value_snapshot?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_field_confirmations_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_items: {
         Row: {
           blocker: boolean
@@ -307,6 +348,54 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_owners: {
+        Row: {
+          address: string | null
+          created_at: string
+          display_order: number
+          id: string
+          implementation_id: string
+          owner_id: string
+          role: string
+          share_percent: number | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id: string
+          owner_id: string
+          role?: string
+          share_percent?: number | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          owner_id?: string
+          role?: string
+          share_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_owners_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_owners_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
             referencedColumns: ["id"]
           },
         ]
@@ -924,6 +1013,12 @@ export type Database = {
         | "sent"
         | "failed"
         | "cancelled"
+      owner_field_state:
+        | "not_informed"
+        | "prefilled_by_stayo"
+        | "confirmed_by_owner"
+        | "changed_by_owner"
+        | "reviewed_by_stayo"
       owner_task_status: "pending" | "done" | "dismissed"
     }
     CompositeTypes: {
@@ -1104,6 +1199,13 @@ export const Constants = {
         "sent",
         "failed",
         "cancelled",
+      ],
+      owner_field_state: [
+        "not_informed",
+        "prefilled_by_stayo",
+        "confirmed_by_owner",
+        "changed_by_owner",
+        "reviewed_by_stayo",
       ],
       owner_task_status: ["pending", "done", "dismissed"],
     },
