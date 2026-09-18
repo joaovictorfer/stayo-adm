@@ -57,15 +57,20 @@ que fica fora do escopo desta fase. O histórico de auditoria do protótipo
 recomeça do zero, o que é aceitável para um log de eventos (não é dado de
 negócio).
 
-## Schema e RLS prontos, adapter ainda local (Fase 17E/G)
+## Schema e RLS prontos, adapter ainda local (Fase 17E/F/G)
 
-Estas quatro chaves ganharam tabela + RLS real nesta fase (migrations
-`0009`/`0010`, testadas contra o banco real — ver `docs/RLS_MATRIX.md`),
-mas **o adapter/UI continua lendo do mock local** — trocar a leitura é
-uma refatoração de superfície grande demais para empacotar junto com o
-schema (toda tela de Implantação/Portal/Proposta/Dashboard/BI referencia
-`implementationId`). Ver `docs/DATA_PERSISTENCE.md` para o estado exato,
-tabela por tabela, e o que falta para trocar cada uma.
+Estas seis chaves ganharam tabela + RLS real nesta fase (migrations
+`0009`/`0010`/`0011`/`0012`, todas testadas contra o banco real — ver
+`docs/RLS_MATRIX.md`), mas **o adapter/UI continua lendo do mock local**.
+Para `implementation_projects`/`implementation_items`/`proposals`/
+`proposal_share_links` isso é deliberado: trocar a leitura é uma
+refatoração de superfície grande demais para empacotar junto com o schema
+(toda tela de Implantação/Portal/Proposta/Dashboard/BI referencia
+`implementationId`). Para `checklist_templates`/`owner_notes` é mais
+simples (sem essa mesma superfície), mas ainda assim adiado para a mesma
+fase futura dedicada — trocar um adapter de cada vez, com o mesmo rigor
+de validação. Ver `docs/DATA_PERSISTENCE.md` para o estado exato, tabela
+por tabela, e o que falta para trocar cada uma.
 
 | Chave localStorage | Tipo | Onde vive hoje (leitura real hoje) | Tabela Supabase (schema já existe) | Migration |
 | --- | --- | --- | --- | --- |
@@ -73,13 +78,8 @@ tabela por tabela, e o que falta para trocar cada uma.
 | `stayo-admin:implementation-items` | `ImplementationItem` (checklist) | `CoreApiClient` mock (`core-client.ts`) | `implementation_items` | `0009_implementation_projects.sql` |
 | `stayo-admin:proposals` | `Proposal` (versões) | `proposalsStore` (`local-store.ts`) | `proposals` | `0010_proposals.sql` |
 | `stayo-admin:proposal-share-links` | `ProposalShareLink` | `proposalShareStore` (`local-store.ts`) | `proposal_share_links` | `0010_proposals.sql` |
-
-## Sem schema Supabase ainda (dado de negócio real — precisa de migração futura)
-
-| Chave localStorage                 | Tipo                                             | Onde vive hoje                               | Nota                                                                                                                                                                                                                                                                                                                             |
-| ---------------------------------- | ------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stayo-admin:owner-notes`          | Notas internas por proprietário                  | `ownerNotesStore` (`local-store.ts`)         | Anotação livre da Central do Proprietário; sem tabela ainda.                                                                                                                                                                                                                                                                     |
-| `stayo-admin:checklist-templates`  | Templates de checklist de implantação            | `checklistTemplatesStore` (`local-store.ts`) | Configuração (não é dado transacional), mas ainda assim precisa sobreviver — sem tabela ainda.                                                                                                                                                                                                                                   |
+| `stayo-admin:checklist-templates` | `ChecklistTemplateItem` | `checklistTemplatesStore` (`local-store.ts`) | `checklist_templates` | `0011_checklist_templates.sql` |
+| `stayo-admin:owner-notes` | Notas internas por proprietário | `ownerNotesStore` (`local-store.ts`) | `owner_notes` | `0012_owner_notes.sql` |
 
 ## Nunca migra (dado fictício do mock do Core — descartado quando o Core real existir)
 
@@ -169,3 +169,14 @@ migration.
 Todos os dados de teste (perfis, proprietário, implantação, proposta,
 link) foram removidos depois — confirmado por contagem zerada em todas
 as tabelas antes de seguir para a próxima fase.
+
+## Validação contra um projeto Supabase real (Fase 17F)
+
+As migrations `0011_checklist_templates.sql` e `0012_owner_notes.sql`
+também foram aplicadas e validadas contra o mesmo projeto Supabase real.
+Cobriu: `anon` não lê nenhuma das duas tabelas; `operations` cria
+template de checklist, `viewer` lê mas é rejeitado ao tentar criar;
+`commercial` cria nota de proprietário, `viewer` lê mas seu `update` afeta
+zero linhas (RLS filtra silenciosamente em `UPDATE`, sem erro explícito —
+confirmado lendo o conteúdo depois e vendo que não mudou). Dados de teste
+removidos depois, contagem zerada confirmada em ambas as tabelas.

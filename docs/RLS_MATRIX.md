@@ -67,6 +67,19 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 | `insert into proposals`                            | `viewer`         | rejeitado                                                   | ✅ `42501`                |
 | `insert into proposals`                            | `commercial`     | aceito                                                      | ✅ linha criada           |
 
+## Templates de checklist e notas de proprietário (`checklist_templates`, `owner_notes`, migrations 0011/0012)
+
+| Ação                                    | Papel        | Esperado                                   | Resultado                 |
+| ---------------------------------------- | ------------ | -------------------------------------------- | -------------------------- |
+| `select * from checklist_templates`     | `anon`       | 0 linhas                                      | ✅ `anon_can_see: 0`       |
+| `insert into checklist_templates`       | `operations` | aceito                                        | ✅ linha criada            |
+| `select * from checklist_templates`     | `viewer`     | lê normalmente                                | ✅ `viewer_can_read: 1`    |
+| `insert into checklist_templates`       | `viewer`     | rejeitado                                     | ✅ `42501`                 |
+| `select * from owner_notes`             | `anon`       | 0 linhas                                      | ✅ `anon_can_see_notes: 0` |
+| `insert into owner_notes`               | `commercial` | aceito                                        | ✅ linha criada            |
+| `select * from owner_notes`             | `viewer`     | lê normalmente                                | ✅ `viewer_can_read: 1`    |
+| `update owner_notes` (tentando editar)  | `viewer`     | 0 linhas afetadas (RLS filtra, nunca erro explícito em UPDATE) | ✅ confirmado por leitura: conteúdo não mudou |
+
 ## O que esta matriz NÃO cobre ainda
 
 - **Owner Auth** (proprietário autenticado por conta própria, não só por

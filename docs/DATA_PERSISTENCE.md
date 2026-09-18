@@ -20,8 +20,8 @@ confundir "schema existe" com "está em produção" — as duas colunas
 | Checklist de implantação (`ImplementationItem`) | ✅ real, testado (Fase 17E) | ❌ ainda lê do mock `CoreApiClient` | `0009_implementation_projects.sql` | idem |
 | Proposta versionada (`Proposal`) | ✅ real, testado (Fase 17G) | ❌ ainda lê de `proposalsStore` (`local-store.ts`) | `0010_proposals.sql` | idem |
 | Link público da proposta (`ProposalShareLink`) | ✅ real, testado (Fase 17G) | ❌ ainda lê de `proposalShareStore` | `0010_proposals.sql` | idem |
-| Templates de checklist (`ChecklistTemplateItem`) | ❌ sem tabela ainda | ❌ `local-store.ts` | — | `docs/LOCALSTORAGE_MIGRATION.md` |
-| Notas do proprietário (`ownerNotesStore`) | ❌ sem tabela ainda | ❌ `local-store.ts` | — | idem |
+| Templates de checklist (`ChecklistTemplateItem`) | ✅ real, testado (Fase 17F) | ❌ ainda lê de `checklistTemplatesStore` (`local-store.ts`) | `0011_checklist_templates.sql` | `docs/RLS_MATRIX.md` |
+| Notas do proprietário (`ownerNotesStore`) | ✅ real, testado (Fase 17F) | ❌ ainda lê de `ownerNotesStore` (`local-store.ts`) | `0012_owner_notes.sql` | idem |
 | Owner Auth (conta própria do proprietário) | ❌ não existe | ❌ não existe (acesso só por link/token) | — | `docs/AUTH_AND_ROLES.md` §"O que falta" |
 | Owner Tasks ("Precisamos de você") | ❌ não existe (conceito novo, não construído nesta fase) | ❌ não existe | — | ver nota "Owner Tasks" abaixo |
 | Anexos/documentos (attachments) | ❌ não existe (conceito novo, não construído nesta fase) | ❌ não existe | — | ver nota "Attachments" abaixo |
