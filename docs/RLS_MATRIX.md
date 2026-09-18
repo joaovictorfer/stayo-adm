@@ -80,12 +80,26 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 | `select * from owner_notes`            | `viewer`     | lê normalmente                                                 | ✅ `viewer_can_read: 1`                       |
 | `update owner_notes` (tentando editar) | `viewer`     | 0 linhas afetadas (RLS filtra, nunca erro explícito em UPDATE) | ✅ confirmado por leitura: conteúdo não mudou |
 
+## Owner Auth — leitura própria do proprietário (`owner_portal_accounts`, migration 0013)
+
+| Ação                                                              | Papel                                    | Esperado                                                    | Resultado                |
+| ------------------------------------------------------------------ | ----------------------------------------- | -------------------------------------------------------------- | -------------------------- |
+| `owner_account_link(token válido, com owner_id)`                  | proprietário recém-cadastrado (via RPC)  | vincula `auth.uid()` ao `owner_id` do convite                  | ✅ linha criada em `owner_portal_accounts` |
+| `owner_account_link(mesmo token, mesmo usuário, de novo)`         | idem                                       | idempotente — devolve a conta já vinculada, sem erro           | ✅ mesmo `created_at`     |
+| `owner_account_link(token expirado)`                              | proprietário                              | rejeitado — `convite expirado`                                 | ✅                         |
+| `owner_account_link(token sem owner_id)`                          | proprietário                              | rejeitado — `convite sem proprietário vinculado`               | ✅                         |
+| `owner_account_link(qualquer token)`                              | `anon`                                    | rejeitado — `precisa estar autenticado`                        | ✅                         |
+| `select * from owner_records`                                    | proprietário vinculado                    | só o próprio registro                                          | ✅ 1 linha (o próprio)    |
+| `select * from implementation_projects`                          | proprietário vinculado                    | só a implantação do próprio `owner_id`                         | ✅ 1 linha                 |
+| `select * from proposals`                                        | proprietário vinculado                    | só a proposta da própria implantação                           | ✅ 1 linha                 |
+| `select * from initial_charges`                                  | proprietário vinculado                    | só a própria cobrança                                          | ✅ 1 linha                 |
+| `select` nas quatro tabelas acima                                 | um SEGUNDO proprietário (`owner_id` diferente) | 0 linhas em todas — isolamento entre proprietários             | ✅ `owner_records: 1` (só o próprio) `implementation_projects/proposals/initial_charges: 0` |
+
 ## O que esta matriz NÃO cobre ainda
 
-- **Owner Auth** (proprietário autenticado por conta própria, não só por
-  token) — não existe ainda, ver `docs/AUTH_AND_ROLES.md`. Não há RLS de
-  "proprietário só vê o próprio registro" para testar.
-- **Login real via `supabase-js` (`signInWithPassword`)** — os testes
+- **Owner Tasks/Attachments** — conceitos novos, não construídos, sem
+  tabela nem RLS ainda (ver `docs/DATA_PERSISTENCE.md`).
+- **Login real via `supabase-js` (`signInWithPassword`/`signUp`)** — os testes
   acima simulam o papel/uid diretamente no Postgres; não exercitam o
   endpoint HTTP de Auth do Supabase de ponta a ponta (bloqueado por
   credencial externa — sem `VITE_SUPABASE_ANON_KEY` neste ambiente).

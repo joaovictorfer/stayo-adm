@@ -31,13 +31,17 @@ funções `security definer` por par (onboarding e proposta) para o
 caminho público anônimo.
 
 **5. A autenticação funciona?**
-Sim, para o time interno: login/logout/sessão real via Supabase Auth
-(`src/lib/auth/session.ts`), gate de rota (`__root.tsx`), bootstrap seguro
-do primeiro `super_admin` (migration `0008`, bug real de RLS encontrado e
-corrigido — ver `docs/AUTH_AND_ROLES.md`). **Não testado via HTTP real**
-(bloqueado por credencial — só a lógica de RLS foi exercitada via SQL
-direto simulando papel/uid). **Owner Auth não existe** — proprietário
-continua só por link/token, nunca conta própria com senha.
+Sim, para os dois lados agora. Time interno: login/logout/sessão real via
+Supabase Auth (`src/lib/auth/session.ts`), gate de rota (`__root.tsx`),
+bootstrap seguro do primeiro `super_admin` (migration `0008`, bug real de
+RLS encontrado e corrigido — ver `docs/AUTH_AND_ROLES.md`). Proprietário
+(Fase 17H): conta própria (e-mail/senha) vinculada a `owner_records` via
+o token do convite (`owner_account_link`, migration `0013`), com RLS de
+leitura própria em `owner_records`/`implementation_projects`/`proposals`/
+`initial_charges` — testado por isolamento entre dois proprietários
+diferentes. **Não testado via HTTP real** em nenhum dos dois casos
+(bloqueado por credencial — só a lógica de RLS e das RPCs foi exercitada
+via SQL direto simulando papel/uid).
 
 **6. Quais papéis existem?**
 `super_admin`, `admin`, `commercial`, `operations`, `finance`, `viewer` —
@@ -142,8 +146,9 @@ lugar nenhum para contornar isso.
 
 **19. O que está pronto para produção, e o que não está?**
 Ver `docs/PRODUCTION_READINESS.md` para o checklist completo. Resumo:
-tempo interno (auth + RLS + 7 verticais de dado) está pronto para
-produção assim que a credencial existir neste deploy; 4 verticais têm
-schema/RLS prontos mas ainda leem do mock local (troca de adapter é o
-próximo passo natural); Owner Auth, Owner Tasks e Attachments não foram
-construídos; a suíte E2E formal da Fase 18 não foi executada.
+time interno e proprietário (auth + RLS + 8 verticais de dado, incluindo
+Owner Auth) estão prontos para produção assim que a credencial existir
+neste deploy; 4 verticais têm schema/RLS prontos mas ainda leem do mock
+local (troca de adapter é o próximo passo natural); Owner Tasks e
+Attachments não foram construídos (conceitos novos, fora do escopo desta
+passada); a suíte E2E formal da Fase 18 não foi executada.

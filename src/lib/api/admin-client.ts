@@ -90,9 +90,16 @@ export interface AdminApiClient {
   ownerOnboarding: {
     /** Convite mais recente desta implantação, qualquer que seja o status. */
     getLink(implementationId: string): Promise<OwnerOnboardingLink | null>;
-    /** Sempre cria um convite novo, revogando qualquer um ainda ativo da mesma implantação. */
+    /**
+     * Sempre cria um convite novo, revogando qualquer um ainda ativo da
+     * mesma implantação. `ownerId` fica gravado no convite (Fase 17H) —
+     * é o que permite `owner_account_link` vincular a conta do
+     * proprietário ao `owner_id` certo sem depender do adapter de
+     * `implementation_projects`.
+     */
     createLink(
       implementationId: string,
+      ownerId: string | null,
       validityDays?: number,
     ): Promise<{ link: OwnerOnboardingLink; token: string }>;
     revoke(id: string): Promise<OwnerOnboardingLink>;
@@ -409,7 +416,11 @@ export function createLocalAdminApiClient(): AdminApiClient {
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       return links[0] ?? null;
     },
-    createLink: async (implementationId, validityDays = DEFAULT_INVITATION_VALIDITY_DAYS) => {
+    createLink: async (
+      implementationId,
+      ownerId,
+      validityDays = DEFAULT_INVITATION_VALIDITY_DAYS,
+    ) => {
       const now = new Date();
       const existing = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
       const stillActive = existing.filter(
@@ -421,6 +432,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const link: OwnerOnboardingLink = {
         id: newId(),
         implementationId,
+        ownerId,
         tokenHash,
         createdAt: now.toISOString(),
         createdBy: null,
@@ -679,6 +691,7 @@ function initialChargeFromRow(row: InitialChargeRow): InitialCharge {
 interface OwnerOnboardingLinkRow {
   id: string;
   implementation_id: string;
+  owner_id: string | null;
   token_hash: string;
   created_at: string;
   created_by: string | null;
@@ -692,6 +705,7 @@ function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardin
   return {
     id: row.id,
     implementationId: row.implementation_id,
+    ownerId: row.owner_id,
     tokenHash: row.token_hash,
     createdAt: row.created_at,
     createdBy: row.created_by,
@@ -1084,7 +1098,11 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       if (error) throw error;
       return data ? ownerOnboardingLinkFromRow(data) : null;
     },
-    createLink: async (implementationId, validityDays = DEFAULT_INVITATION_VALIDITY_DAYS) => {
+    createLink: async (
+      implementationId,
+      ownerId,
+      validityDays = DEFAULT_INVITATION_VALIDITY_DAYS,
+    ) => {
       const supabase = client();
       const now = new Date();
       const token = newId();
@@ -1102,6 +1120,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         .from("owner_portal_invitations")
         .insert({
           implementation_id: implementationId,
+          owner_id: ownerId,
           token_hash: tokenHash,
           expires_at: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
         })
@@ -1166,6 +1185,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return {
         id: "",
         implementationId: data.implementation_id,
+        ownerId: null,
         tokenHash: "",
         createdAt: "",
         createdBy: null,

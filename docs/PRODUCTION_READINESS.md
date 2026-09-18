@@ -15,6 +15,7 @@ o checklist resumido.
 - [x] Autenticação real do time interno (Supabase Auth) — login/logout/sessão/gate de rota
 - [x] Matriz de RLS testada por papel (`docs/RLS_MATRIX.md`)
 - [x] Importador do localStorage completo: detect→preview→import→validate→mark-migrated→report
+- [x] `owner_portal_accounts` — Owner Auth (conta própria do proprietário, RLS de leitura própria em 4 tabelas — Fase 17H)
 
 ## Schema + RLS prontos, adapter ainda local (decisão deliberada, não esquecimento)
 
@@ -27,11 +28,10 @@ Motivo do adiamento e o que falta exatamente: `docs/DATA_PERSISTENCE.md`.
 
 ## Não construído (gap conhecido e documentado, não escondido)
 
-- [ ] Owner Auth (conta própria do proprietário com senha, vinculada a `auth.uid()`) — `docs/AUTH_AND_ROLES.md` §"O que falta"
 - [ ] Owner Tasks ("Precisamos de você") — conceito novo, não construído (`docs/DATA_PERSISTENCE.md` nota)
 - [ ] Attachments/upload de documentos — conceito novo, não construído (idem)
 - [ ] Fase 18 — suite E2E multi-contexto completa (30 passos admin↔owner, concorrência de verdade com duas conexões paralelas, secrets-in-bundle, LGPD/PII) — não executada nesta passada
-- [ ] Validação HTTP real de `signInWithPassword`/`signUp` contra o Supabase — bloqueada por credencial externa
+- [ ] Validação HTTP real de `signInWithPassword`/`signUp` (time interno E proprietário) contra o Supabase — bloqueada por credencial externa
 
 ## Bloqueios externos (não inventados, não contornados)
 

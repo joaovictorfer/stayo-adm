@@ -133,7 +133,7 @@ limpeza manual e consciente fica fora do escopo deste importador).
 - **report** — a tela mostra, lado a lado: contagem local por tabela
   (preview), quantos registros o `upsert` reportou ter enviado (import),
   e o resultado da validação por tabela — `ok (N/N)` ou `divergente
-  (N/N)` (validate), além da marca de "já migrado" com data (mark-migrated).
+(N/N)` (validate), além da marca de "já migrado" com data (mark-migrated).
 
 ## Validação contra um projeto Supabase real (Fase 16)
 

@@ -11,6 +11,13 @@ import type { EntityId } from "./core";
 export interface OwnerOnboardingLink {
   id: EntityId;
   implementationId: EntityId;
+  /**
+   * Preenchido quando o admin já sabe o proprietário no momento de gerar
+   * o convite — é o que permite `owner_account_link` (Fase 17H) vincular
+   * a conta do proprietário sem depender do adapter de
+   * `implementation_projects` (ainda local, ver docs/DATA_PERSISTENCE.md).
+   */
+  ownerId: EntityId | null;
   tokenHash: string;
   createdAt: string;
   createdBy: string | null;

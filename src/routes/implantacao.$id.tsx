@@ -186,7 +186,10 @@ function ImplementationDetailPage() {
 
               <CommercialTermsPanel implementationId={implementation.id} />
 
-              <OwnerPortalPanel implementationId={implementation.id} />
+              <OwnerPortalPanel
+                implementationId={implementation.id}
+                ownerId={implementation.ownerId}
+              />
 
               <InitialChargesPanel implementationId={implementation.id} />
 
@@ -363,7 +366,13 @@ const invitationStatusTone: Record<OwnerOnboardingLinkStatus, "neutral" | "dange
  * implantação. O token só é visível uma vez, no momento em que é gerado —
  * depois disso só existe o hash, nunca o valor puro.
  */
-function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) {
+function OwnerPortalPanel({
+  implementationId,
+  ownerId,
+}: {
+  implementationId: EntityId;
+  ownerId: EntityId | null;
+}) {
   const queryClient = useQueryClient();
   const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
   const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(implementationId));
@@ -374,7 +383,7 @@ function OwnerPortalPanel({ implementationId }: { implementationId: EntityId }) 
     queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
 
   const createLink = useMutation({
-    mutationFn: () => adminApi.ownerOnboarding.createLink(implementationId),
+    mutationFn: () => adminApi.ownerOnboarding.createLink(implementationId, ownerId),
     onSuccess: async ({ token }) => {
       setFreshToken(token);
       await invalidateLink();

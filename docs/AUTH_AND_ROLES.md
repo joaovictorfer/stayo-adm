@@ -65,18 +65,60 @@ frontend: toda regra vive em `has_admin_role(...)` dentro de cada policy
 RLS. Ver `docs/RLS_MATRIX.md` para a matriz completa, já testada contra o
 banco real.
 
-## O que falta (documentado, não bloqueia o resto)
+## Owner Auth (Fase 17H)
 
-- **Owner Auth** (login do proprietário): ainda não existe. Hoje o acesso
-  do proprietário ao próprio processo continua sendo só via link/token
-  (convite de auto-cadastro, link da proposta) — nunca uma conta com
-  senha vinculada a `auth.users`. Precisaria de: uma tabela
-  `owner_portal_accounts` ligando `auth.users.id` a `owner_records.id`
-  (ou a uma futura entidade `implementation_projects`), RLS em cada
-  tabela que o proprietário deveria auto-ver restringindo por essa
-  ligação, e uma tela de criação de senha depois do auto-cadastro. Não
-  construído ainda — o auto-cadastro (Fase 8/16) continua funcionando
-  sem isso, só sem "ver depois" sem o link.
+O proprietário agora pode ter conta própria (e-mail/senha via Supabase
+Auth), vinculada a `owner_records` via `auth.uid()` — nunca mais só
+link/token para "ver depois".
+
+### Como o vínculo é provado
+
+O problema real: nada ligava um `implementation_id` (usado no
+convite/onboarding) a um `owner_id` de verdade no banco, exceto via
+`implementation_projects.owner_id` — e essa tabela ainda não tem adapter
+Supabase ligado (schema existe desde a Fase 17E, mas a UI continua lendo
+do mock local, ver `docs/DATA_PERSISTENCE.md`). Em vez de fazer o Owner
+Auth esperar essa troca de adapter, `owner_id` foi adicionado direto em
+`owner_portal_invitations` (migration `0013`) — o admin já sabe o
+proprietário no momento em que gera o convite (`adminApi.ownerOnboarding.createLink(implementationId, ownerId)`),
+então gravar isso ali resolve a dependência sem esperar nada.
+
+### Fluxo (`src/lib/auth/owner-session.ts`, `portal.implantacao.$token.tsx`)
+
+Depois de enviar o auto-cadastro, o proprietário pode criar uma senha
+(e-mail/senha via `signUp()`), e o MESMO token do convite prova o vínculo
+via a função `security definer` `owner_account_link(p_token)` (migration
+`0013`) — nunca um `insert` direto em `owner_portal_accounts` pelo
+cliente (a tabela só aceita `insert` por essa função). A função revalida
+tudo server-side (token existe, não revogado, não expirado, tem
+`owner_id`) e é idempotente: chamar de novo com o mesmo token/usuário
+devolve a conta já vinculada, sem erro.
+
+### RLS de leitura própria
+
+Com `owner_portal_accounts` vinculada, o proprietário passa a poder ler
+(nunca escrever) diretamente, sob RLS, o próprio: `owner_records`,
+`implementation_projects` (por `owner_id`), `proposals` (via join a
+`implementation_projects`), `initial_charges` (por `owner_id`). Escrita
+continua só pelas RPCs `security definer` já existentes
+(`owner_onboarding_submit`, `proposal_accept_by_token`) — nunca um
+`update`/`insert` direto sob a sessão do proprietário.
+
+Testado contra o banco real (ver `docs/RLS_MATRIX.md`): conta vinculada
+via RPC; um segundo proprietário (`owner_id` diferente) não enxerga nada
+do primeiro em nenhuma das quatro tabelas; token expirado, revogado ou
+sem `owner_id` são rejeitados com a mensagem certa; vínculo duplicado
+(mesmo token, mesmo usuário) é idempotente.
+
+### O que ainda falta (documentado, não bloqueia o resto)
+
+- **Owner Tasks/Attachments**: RLS de leitura própria cobre hoje só as
+  quatro tabelas acima — não existe ainda pendência ("Precisamos de
+  você") nem anexo/documento para o proprietário ver (conceitos novos,
+  não construídos, ver `docs/DATA_PERSISTENCE.md`).
+- **Teste E2E de `signUp`/login do proprietário via HTTP real**:
+  bloqueado pela mesma credencial externa do time interno — só a RPC
+  `owner_account_link` e a RLS resultante foram validadas via SQL direto.
 - **Gate server-side**: o gate de rota atual é só client-side
   (`useEffect` depois de montar). Uma versão mais robusta leria o cookie
   de sessão do Supabase dentro do loader/SSR da rota, antes de renderizar
