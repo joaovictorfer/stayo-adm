@@ -210,6 +210,9 @@ export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
 export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
 export const PROPERTY_DETAILS_KEY = "stayo-admin:implementation-property-details";
 export const IMPLEMENTATION_ROOMS_KEY = "stayo-admin:implementation-rooms";
+export const SUPPLY_ITEMS_KEY = "stayo-admin:implementation-supply-items";
+export const SUPPLY_TEMPLATES_KEY = "stayo-admin:supply-templates";
+export const SUPPLY_TEMPLATE_ITEMS_KEY = "stayo-admin:supply-template-items";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
