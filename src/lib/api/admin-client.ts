@@ -35,6 +35,12 @@ import type {
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
+import type {
+  FieldConfirmation,
+  ImplementationOwnerLink,
+  ImplementationOwnerLinkInput,
+  OwnerFieldState,
+} from "../../types/implementation-owner";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
@@ -126,6 +132,23 @@ export interface AdminApiClient {
       input: OwnerOnboardingSubmissionInput,
     ): Promise<OwnerOnboardingSubmission>;
   };
+  /** Fase 2 — vários proprietários/proponentes por implantação (relação, nunca campos duplicados). */
+  implementationOwners: {
+    listByImplementation(implementationId: string): Promise<ImplementationOwnerLink[]>;
+    add(input: ImplementationOwnerLinkInput): Promise<ImplementationOwnerLink>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 2 — estado de confirmação campo a campo; nada é sobrescrito em silêncio. */
+  fieldConfirmations: {
+    listByImplementation(implementationId: string): Promise<FieldConfirmation[]>;
+    setState(input: {
+      implementationId: string;
+      fieldKey: string;
+      state: OwnerFieldState;
+      valueSnapshot?: string | null;
+      note?: string | null;
+    }): Promise<FieldConfirmation>;
+  };
 }
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
@@ -139,6 +162,8 @@ export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
+export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
+export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
@@ -566,6 +591,67 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const implementationOwners: AdminApiClient["implementationOwners"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY)
+          .filter((l) => l.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    add: async (input) => {
+      const link: ImplementationOwnerLink = {
+        id: newId(),
+        implementationId: input.implementationId,
+        ownerId: input.ownerId,
+        role: input.role,
+        sharePercent: input.sharePercent,
+        address: input.address,
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_OWNERS_KEY, [
+        ...read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY),
+        link,
+      ]);
+      return link;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_OWNERS_KEY,
+        read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY).filter((l) => l.id !== id),
+      );
+    },
+  };
+
+  const fieldConfirmations: AdminApiClient["fieldConfirmations"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<FieldConfirmation>(FIELD_CONFIRMATIONS_KEY).filter(
+          (f) => f.implementationId === implementationId,
+        ),
+      ),
+    setState: async (input) => {
+      const all = read<FieldConfirmation>(FIELD_CONFIRMATIONS_KEY);
+      const existing = all.find(
+        (f) => f.implementationId === input.implementationId && f.fieldKey === input.fieldKey,
+      );
+      const updated: FieldConfirmation = {
+        id: existing?.id ?? newId(),
+        implementationId: input.implementationId,
+        fieldKey: input.fieldKey,
+        state: input.state,
+        valueSnapshot: input.valueSnapshot ?? existing?.valueSnapshot ?? null,
+        note: input.note ?? existing?.note ?? null,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        FIELD_CONFIRMATIONS_KEY,
+        existing ? all.map((f) => (f.id === existing.id ? updated : f)) : [...all, updated],
+      );
+      return updated;
+    },
+  };
+
   return {
     audit,
     owners,
@@ -575,6 +661,8 @@ export function createLocalAdminApiClient(): AdminApiClient {
     initialCharges,
     ownerOnboarding,
     ownerTasks,
+    implementationOwners,
+    fieldConfirmations,
   };
 }
 
@@ -1325,6 +1413,70 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const implementationOwners: AdminApiClient["implementationOwners"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_owners")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<ImplementationOwnerRow[]>();
+      if (error) throw error;
+      return data.map(implementationOwnerFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_owners")
+        .insert({
+          implementation_id: input.implementationId,
+          owner_id: input.ownerId,
+          role: input.role,
+          share_percent: input.sharePercent,
+          address: input.address,
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<ImplementationOwnerRow>();
+      if (error) throw error;
+      return implementationOwnerFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_owners").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const fieldConfirmations: AdminApiClient["fieldConfirmations"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_field_confirmations")
+        .select()
+        .eq("implementation_id", implementationId)
+        .returns<FieldConfirmationRow[]>();
+      if (error) throw error;
+      return data.map(fieldConfirmationFromRow);
+    },
+    setState: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_field_confirmations")
+        .upsert(
+          {
+            implementation_id: input.implementationId,
+            field_key: input.fieldKey,
+            state: input.state,
+            value_snapshot: input.valueSnapshot ?? null,
+            note: input.note ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id,field_key" },
+        )
+        .select()
+        .single<FieldConfirmationRow>();
+      if (error) throw error;
+      return fieldConfirmationFromRow(data);
+    },
+  };
+
   return {
     audit,
     owners,
@@ -1334,10 +1486,58 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     initialCharges,
     ownerOnboarding,
     ownerTasks,
+    implementationOwners,
+    fieldConfirmations,
   };
 }
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
 export function createDefaultAdminApiClient(): AdminApiClient {
   return isSupabaseConfigured() ? createSupabaseAdminApiClient() : createLocalAdminApiClient();
+}
+
+interface ImplementationOwnerRow {
+  id: string;
+  implementation_id: string;
+  owner_id: string;
+  role: string;
+  share_percent: number | string | null;
+  address: string | null;
+  display_order: number;
+  created_at: string;
+}
+
+function implementationOwnerFromRow(row: ImplementationOwnerRow): ImplementationOwnerLink {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    ownerId: row.owner_id,
+    role: row.role,
+    sharePercent: row.share_percent === null ? null : Number(row.share_percent),
+    address: row.address,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+  };
+}
+
+interface FieldConfirmationRow {
+  id: string;
+  implementation_id: string;
+  field_key: string;
+  state: OwnerFieldState;
+  value_snapshot: string | null;
+  note: string | null;
+  updated_at: string;
+}
+
+function fieldConfirmationFromRow(row: FieldConfirmationRow): FieldConfirmation {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    fieldKey: row.field_key,
+    state: row.state,
+    valueSnapshot: row.value_snapshot,
+    note: row.note,
+    updatedAt: row.updated_at,
+  };
 }
