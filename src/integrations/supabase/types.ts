@@ -1,143 +1,1111 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5";
-  };
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      [_ in never]: never;
-    };
+      admin_profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["admin_role"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          full_name: string
+          id: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          full_name?: string
+          id?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      attachments: {
+        Row: {
+          category: string
+          created_at: string
+          filename: string
+          id: string
+          implementation_id: string | null
+          mime_type: string
+          owner_id: string
+          owner_task_id: string | null
+          size_bytes: number
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          filename: string
+          id?: string
+          implementation_id?: string | null
+          mime_type: string
+          owner_id: string
+          owner_task_id?: string | null
+          size_bytes: number
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          implementation_id?: string | null
+          mime_type?: string
+          owner_id?: string
+          owner_task_id?: string | null
+          size_bytes?: number
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_owner_task_id_fkey"
+            columns: ["owner_task_id"]
+            isOneToOne: false
+            referencedRelation: "owner_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          event: string
+          id: string
+          metadata: Json
+          request_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          event: string
+          id?: string
+          metadata?: Json
+          request_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          event?: string
+          id?: string
+          metadata?: Json
+          request_id?: string | null
+        }
+        Relationships: []
+      }
+      checklist_templates: {
+        Row: {
+          blocker: boolean
+          category: string
+          description: string | null
+          display_order: number
+          id: string
+          mandatory: boolean
+          owner_visible: boolean
+          phase: string
+          title: string
+        }
+        Insert: {
+          blocker?: boolean
+          category: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          mandatory?: boolean
+          owner_visible?: boolean
+          phase: string
+          title: string
+        }
+        Update: {
+          blocker?: boolean
+          category?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          mandatory?: boolean
+          owner_visible?: boolean
+          phase?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      commercial_term_defaults: {
+        Row: {
+          charge_type: Database["public"]["Enums"]["charge_type"]
+          display_order: number
+          id: string
+          label: string
+          notes: string | null
+          optional: boolean
+          value: number
+        }
+        Insert: {
+          charge_type: Database["public"]["Enums"]["charge_type"]
+          display_order?: number
+          id?: string
+          label: string
+          notes?: string | null
+          optional?: boolean
+          value?: number
+        }
+        Update: {
+          charge_type?: Database["public"]["Enums"]["charge_type"]
+          display_order?: number
+          id?: string
+          label?: string
+          notes?: string | null
+          optional?: boolean
+          value?: number
+        }
+        Relationships: []
+      }
+      commercial_terms: {
+        Row: {
+          charge_type: Database["public"]["Enums"]["charge_type"]
+          display_order: number
+          id: string
+          implementation_id: string
+          label: string
+          notes: string | null
+          optional: boolean
+          value: number
+        }
+        Insert: {
+          charge_type: Database["public"]["Enums"]["charge_type"]
+          display_order?: number
+          id?: string
+          implementation_id: string
+          label: string
+          notes?: string | null
+          optional?: boolean
+          value?: number
+        }
+        Update: {
+          charge_type?: Database["public"]["Enums"]["charge_type"]
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          label?: string
+          notes?: string | null
+          optional?: boolean
+          value?: number
+        }
+        Relationships: []
+      }
+      implementation_items: {
+        Row: {
+          blocker: boolean
+          category: string
+          completed_at: string | null
+          completed_by: string | null
+          description: string | null
+          display_order: number
+          due_date: string | null
+          id: string
+          implementation_id: string
+          mandatory: boolean
+          observation: string | null
+          owner_visible: boolean
+          phase: string
+          readiness_override_at: string | null
+          readiness_override_by: string | null
+          readiness_override_reason: string | null
+          responsible_user_id: string | null
+          status: Database["public"]["Enums"]["implementation_item_status"]
+          title: string
+        }
+        Insert: {
+          blocker?: boolean
+          category: string
+          completed_at?: string | null
+          completed_by?: string | null
+          description?: string | null
+          display_order?: number
+          due_date?: string | null
+          id?: string
+          implementation_id: string
+          mandatory?: boolean
+          observation?: string | null
+          owner_visible?: boolean
+          phase: string
+          readiness_override_at?: string | null
+          readiness_override_by?: string | null
+          readiness_override_reason?: string | null
+          responsible_user_id?: string | null
+          status?: Database["public"]["Enums"]["implementation_item_status"]
+          title: string
+        }
+        Update: {
+          blocker?: boolean
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          description?: string | null
+          display_order?: number
+          due_date?: string | null
+          id?: string
+          implementation_id?: string
+          mandatory?: boolean
+          observation?: string | null
+          owner_visible?: boolean
+          phase?: string
+          readiness_override_at?: string | null
+          readiness_override_by?: string | null
+          readiness_override_reason?: string | null
+          responsible_user_id?: string | null
+          status?: Database["public"]["Enums"]["implementation_item_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_items_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_projects: {
+        Row: {
+          address: string | null
+          bedrooms: number | null
+          capacity: number | null
+          city: string | null
+          code: string
+          completion_date_estimate: string | null
+          condominium_name: string | null
+          core_owner_id: string | null
+          core_property_id: string | null
+          created_at: string
+          id: string
+          nickname: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string | null
+          postal_code: string | null
+          property_type: string | null
+          responsible_user_id: string | null
+          start_date_estimate: string | null
+          status: Database["public"]["Enums"]["implementation_status"]
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          bedrooms?: number | null
+          capacity?: number | null
+          city?: string | null
+          code: string
+          completion_date_estimate?: string | null
+          condominium_name?: string | null
+          core_owner_id?: string | null
+          core_property_id?: string | null
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          notes?: string | null
+          origin?: string | null
+          owner_id?: string | null
+          postal_code?: string | null
+          property_type?: string | null
+          responsible_user_id?: string | null
+          start_date_estimate?: string | null
+          status?: Database["public"]["Enums"]["implementation_status"]
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          bedrooms?: number | null
+          capacity?: number | null
+          city?: string | null
+          code?: string
+          completion_date_estimate?: string | null
+          condominium_name?: string | null
+          core_owner_id?: string | null
+          core_property_id?: string | null
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          notes?: string | null
+          origin?: string | null
+          owner_id?: string | null
+          postal_code?: string | null
+          property_type?: string | null
+          responsible_user_id?: string | null
+          start_date_estimate?: string | null
+          status?: Database["public"]["Enums"]["implementation_status"]
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_projects_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      initial_charges: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          due_at: string | null
+          id: string
+          implementation_id: string
+          items: Json
+          notes: string | null
+          owner_id: string | null
+          paid_at: string | null
+          payment_reference: string | null
+          proposal_id: string
+          status: Database["public"]["Enums"]["initial_charge_status"]
+        }
+        Insert: {
+          amount?: number
+          code: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          implementation_id: string
+          items?: Json
+          notes?: string | null
+          owner_id?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          proposal_id: string
+          status?: Database["public"]["Enums"]["initial_charge_status"]
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          implementation_id?: string
+          items?: Json
+          notes?: string | null
+          owner_id?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          proposal_id?: string
+          status?: Database["public"]["Enums"]["initial_charge_status"]
+        }
+        Relationships: []
+      }
+      outbound_messages: {
+        Row: {
+          body: string
+          created_at: string
+          destination: string
+          error: string | null
+          failed_at: string | null
+          id: string
+          implementation_id: string
+          owner_id: string | null
+          provider_message_id: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["outbound_message_status"]
+          template: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          destination: string
+          error?: string | null
+          failed_at?: string | null
+          id?: string
+          implementation_id: string
+          owner_id?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["outbound_message_status"]
+          template: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          destination?: string
+          error?: string | null
+          failed_at?: string | null
+          id?: string
+          implementation_id?: string
+          owner_id?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["outbound_message_status"]
+          template?: string
+        }
+        Relationships: []
+      }
+      owner_notes: {
+        Row: {
+          content: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_notes_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_onboarding_submissions: {
+        Row: {
+          document: string | null
+          email: string
+          full_name: string
+          id: string
+          implementation_id: string
+          phone: string
+          pix_key: string | null
+          submitted_at: string
+        }
+        Insert: {
+          document?: string | null
+          email: string
+          full_name: string
+          id?: string
+          implementation_id: string
+          phone: string
+          pix_key?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          document?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          implementation_id?: string
+          phone?: string
+          pix_key?: string | null
+          submitted_at?: string
+        }
+        Relationships: []
+      }
+      owner_portal_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_portal_accounts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_portal_invitations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          implementation_id: string
+          last_access_at: string | null
+          owner_id: string | null
+          revoked_at: string | null
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          implementation_id: string
+          last_access_at?: string | null
+          owner_id?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          implementation_id?: string
+          last_access_at?: string | null
+          owner_id?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_portal_invitations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_records: {
+        Row: {
+          core_owner_id: string | null
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          lifecycle_status: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          core_owner_id?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          lifecycle_status?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          core_owner_id?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          lifecycle_status?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      owner_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          implementation_id: string | null
+          kind: string
+          owner_id: string
+          status: Database["public"]["Enums"]["owner_task_status"]
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          implementation_id?: string | null
+          kind: string
+          owner_id: string
+          status?: Database["public"]["Enums"]["owner_task_status"]
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          implementation_id?: string | null
+          kind?: string
+          owner_id?: string
+          status?: Database["public"]["Enums"]["owner_task_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_tasks_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_tasks_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_share_links: {
+        Row: {
+          created_at: string
+          implementation_id: string
+          proposal_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          implementation_id: string
+          proposal_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          implementation_id?: string
+          proposal_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_share_links_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_share_links_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: true
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          accepted_at: string | null
+          accepted_name: string | null
+          created_at: string
+          id: string
+          implementation_id: string
+          items: Json
+          total: number
+          version: number
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_name?: string | null
+          created_at?: string
+          id?: string
+          implementation_id: string
+          items: Json
+          total: number
+          version: number
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_name?: string | null
+          created_at?: string
+          id?: string
+          implementation_id?: string
+          items?: Json
+          total?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      [_ in never]: never;
-    };
+      admin_profiles_is_empty: { Args: never; Returns: boolean }
+      current_admin_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["admin_role"]
+      }
+      has_admin_role: {
+        Args: { roles: Database["public"]["Enums"]["admin_role"][] }
+        Returns: boolean
+      }
+      owner_account_link: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          id: string
+          owner_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "owner_portal_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      owner_onboarding_resolve_token: {
+        Args: { p_token: string }
+        Returns: {
+          expires_at: string
+          implementation_id: string
+          revoked_at: string
+          used_at: string
+        }[]
+      }
+      owner_onboarding_submit: {
+        Args: {
+          p_document: string
+          p_email: string
+          p_full_name: string
+          p_phone: string
+          p_pix_key: string
+          p_token: string
+        }
+        Returns: {
+          document: string | null
+          email: string
+          full_name: string
+          id: string
+          implementation_id: string
+          phone: string
+          pix_key: string | null
+          submitted_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "owner_onboarding_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      proposal_accept_by_token: {
+        Args: { p_accepted_name: string; p_token: string }
+        Returns: {
+          accepted_at: string
+          accepted_name: string
+          created_at: string
+          implementation_id: string
+          items: Json
+          proposal_id: string
+          total: number
+          version: number
+        }[]
+      }
+      proposal_resolve_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          accepted_at: string
+          accepted_name: string
+          created_at: string
+          implementation_id: string
+          items: Json
+          proposal_id: string
+          total: number
+          version: number
+        }[]
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      admin_role:
+        | "super_admin"
+        | "admin"
+        | "commercial"
+        | "operations"
+        | "finance"
+        | "viewer"
+      charge_type:
+        | "percentage"
+        | "fixed_once"
+        | "per_reservation"
+        | "monthly"
+        | "optional"
+        | "informational"
+      implementation_item_status:
+        | "pendente"
+        | "em_andamento"
+        | "concluido"
+        | "bloqueado"
+        | "nao_aplicavel"
+        | "pulado"
+      implementation_status:
+        | "prospect"
+        | "proposta"
+        | "aguardando_aprovacao"
+        | "aprovado"
+        | "planejamento"
+        | "em_implantacao"
+        | "validacao"
+        | "pronto_para_operacao"
+        | "ativo"
+        | "pausado"
+        | "nao_convertido"
+        | "cancelado"
+      initial_charge_status:
+        | "draft"
+        | "issued"
+        | "pending"
+        | "paid"
+        | "cancelled"
+        | "overdue"
+      outbound_message_status:
+        | "draft"
+        | "queued"
+        | "sent"
+        | "failed"
+        | "cancelled"
+      owner_task_status: "pending" | "done" | "dismissed"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never;
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      admin_role: [
+        "super_admin",
+        "admin",
+        "commercial",
+        "operations",
+        "finance",
+        "viewer",
+      ],
+      charge_type: [
+        "percentage",
+        "fixed_once",
+        "per_reservation",
+        "monthly",
+        "optional",
+        "informational",
+      ],
+      implementation_item_status: [
+        "pendente",
+        "em_andamento",
+        "concluido",
+        "bloqueado",
+        "nao_aplicavel",
+        "pulado",
+      ],
+      implementation_status: [
+        "prospect",
+        "proposta",
+        "aguardando_aprovacao",
+        "aprovado",
+        "planejamento",
+        "em_implantacao",
+        "validacao",
+        "pronto_para_operacao",
+        "ativo",
+        "pausado",
+        "nao_convertido",
+        "cancelado",
+      ],
+      initial_charge_status: [
+        "draft",
+        "issued",
+        "pending",
+        "paid",
+        "cancelled",
+        "overdue",
+      ],
+      outbound_message_status: [
+        "draft",
+        "queued",
+        "sent",
+        "failed",
+        "cancelled",
+      ],
+      owner_task_status: ["pending", "done", "dismissed"],
+    },
   },
-} as const;
+} as const
