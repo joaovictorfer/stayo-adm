@@ -1,4 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Testes de lógica pura — nunca devem depender de rede real. Antes da Fase
+// 19 (Lovable Cloud habilitado), `adminApi.audit.log` sempre caía no adapter
+// local (sem Supabase configurado neste ambiente); agora que a credencial
+// real existe, o singleton de `./api/queries` passaria a tentar uma escrita
+// de verdade em `audit_logs` — mockado aqui para manter o teste hermético.
+vi.mock("./api/queries", () => ({
+  adminApi: { audit: { log: vi.fn().mockResolvedValue(undefined) } },
+  coreApi: {
+    owners: { search: vi.fn().mockResolvedValue([]) },
+    properties: { list: vi.fn().mockResolvedValue({ data: [] }) },
+  },
+}));
 
 import { CoreConversionNotAvailableError, coreConversionService } from "./core-conversion";
 import type { ImplementationProject } from "../types/core";

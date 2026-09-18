@@ -33,13 +33,13 @@ Lovable/Supabase) — **UNCONFIRMED**, não verificável por leitura estática.
 serve dado do domínio Property/Reservation/Guest/Condominium (são todas
 Condfy admin/worker + `process-expense-ocr`):
 
-| Função | Autenticação real (código) | Observação |
-|---|---|---|
-| `condfy-artifact-signed-url` | JWT + role admin | URL assinada de 5 min para artefato de job |
-| `condfy-claim-job` / `-complete-job` / `-fail-job` / `-get-job-payload` / `-job-heartbeat` / `-worker-artifact-upload` / `-worker-get-login-credentials` / `-worker-health` | Segredo compartilhado `CONDFY_WORKER_SECRET` + ownership do job | Ver `docs/STAYO_INTEGRATION_RISK_MAP.md` para o detalhe de risco |
-| `get-condfy-connection-status` | JWT + role em {admin, gerente_operacional, manager} | Status não sensível |
-| `save-condfy-credentials` | JWT + role admin | Grava credencial no Vault, nunca em texto puro na tabela |
-| `process-expense-ocr` | **nenhuma checagem própria no código** — depende só do default de plataforma `verify_jwt=true` | **Achado de hardening**: se esse default for desligado globalmente por qualquer motivo, esta função fica aberta. Chama o Lovable AI Gateway (`google/gemini-2.5-flash`) para OCR de recibo. |
+| Função                                                                                                                                                                      | Autenticação real (código)                                                                     | Observação                                                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `condfy-artifact-signed-url`                                                                                                                                                | JWT + role admin                                                                               | URL assinada de 5 min para artefato de job                                                                                                                                                  |
+| `condfy-claim-job` / `-complete-job` / `-fail-job` / `-get-job-payload` / `-job-heartbeat` / `-worker-artifact-upload` / `-worker-get-login-credentials` / `-worker-health` | Segredo compartilhado `CONDFY_WORKER_SECRET` + ownership do job                                | Ver `docs/STAYO_INTEGRATION_RISK_MAP.md` para o detalhe de risco                                                                                                                            |
+| `get-condfy-connection-status`                                                                                                                                              | JWT + role em {admin, gerente_operacional, manager}                                            | Status não sensível                                                                                                                                                                         |
+| `save-condfy-credentials`                                                                                                                                                   | JWT + role admin                                                                               | Grava credencial no Vault, nunca em texto puro na tabela                                                                                                                                    |
+| `process-expense-ocr`                                                                                                                                                       | **nenhuma checagem própria no código** — depende só do default de plataforma `verify_jwt=true` | **Achado de hardening**: se esse default for desligado globalmente por qualquer motivo, esta função fica aberta. Chama o Lovable AI Gateway (`google/gemini-2.5-flash`) para OCR de recibo. |
 
 ## 3. Cron / filas / webhooks (infraestrutura confirmada)
 
@@ -136,10 +136,12 @@ saber que há duas assinaturas, não uma.
 
 `public.reservation_phone_logs` (histórico de troca de telefone de
 hóspede por reserva) tem policies:
+
 ```sql
 CREATE POLICY "Enable select for authenticated" ON public.reservation_phone_logs FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Enable insert for authenticated" ON public.reservation_phone_logs FOR INSERT TO authenticated WITH CHECK (true);
 ```
+
 (`supabase/migrations/20260529005734_3e063ace-fb3d-499c-9194-10e333d9310e.sql`)
 — **qualquer usuário autenticado** (não só staff) pode ler/inserir nessa
 tabela com dado de hóspede. RLS está habilitada mas efetivamente

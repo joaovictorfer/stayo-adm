@@ -85,7 +85,7 @@ export async function validateSupabaseImport(
 ): Promise<ValidationResult[]> {
   if (!isSupabaseConfigured()) {
     throw new SupabaseNotConfiguredError(
-      "Supabase não está configurado (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY ausentes) — nada para validar.",
+      "Supabase não está configurado (VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY ausentes) — nada para validar.",
     );
   }
   const client = getSupabaseBrowserClient();
@@ -155,7 +155,7 @@ export async function importLocalAdminDataToSupabase(
 ): Promise<ImportResult[]> {
   if (!isSupabaseConfigured()) {
     throw new SupabaseNotConfiguredError(
-      "Supabase não está configurado (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY ausentes) — nada foi importado.",
+      "Supabase não está configurado (VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY ausentes) — nada foi importado.",
     );
   }
   const client = getSupabaseBrowserClient();

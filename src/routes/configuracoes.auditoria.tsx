@@ -72,7 +72,7 @@ function AuditoriaPage() {
       <p className="mb-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
         {usingSupabase
           ? "Fonte: Supabase (audit_logs, protegido por RLS)."
-          : "Fonte: armazenamento local do navegador — some ao limpar dados do site. Configure VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY para persistência real e compartilhada entre usuários."}
+          : "Fonte: armazenamento local do navegador — some ao limpar dados do site. Configure VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY para persistência real e compartilhada entre usuários."}
       </p>
 
       <Panel>

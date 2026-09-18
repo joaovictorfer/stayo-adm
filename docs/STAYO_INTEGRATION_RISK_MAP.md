@@ -62,7 +62,7 @@ não são um risco vigente.
 
 - Ayrton: token na URL, comparação em tempo constante, checado **antes**
   de qualquer leitura/escrita; tentativas rejeitadas são logadas em
-  `pms_webhook_attempts` só com um *fingerprint* do token, nunca o token
+  `pms_webhook_attempts` só com um _fingerprint_ do token, nunca o token
   bruto.
 - BTZap/WhatsApp legado: token via header ou querystring, comparado
   contra tokens criptografados no banco
@@ -82,6 +82,7 @@ não são um risco vigente.
 
 Dois mecanismos distintos, por design (`_shared/condfy-admin-auth.ts` e
 `condfy-worker-auth.ts`, lidos na íntegra):
+
 1. **Funções voltadas a admin** (`save-condfy-credentials`, etc.) —
    `requireAdmin()`: JWT bearer → `supabase.auth.getUser` → checa role
    `admin` em `user_roles`.

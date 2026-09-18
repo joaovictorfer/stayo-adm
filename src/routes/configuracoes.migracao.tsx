@@ -146,7 +146,7 @@ function MigrationPage() {
         <p className="mb-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           {configured
             ? "Supabase configurado — a importação é segura para rodar mais de uma vez (upsert por id, nunca duplica). Nunca apaga o localStorage de origem, mesmo depois de validada."
-            : "Supabase ainda não configurado (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY ausentes) — o botão abaixo fica desabilitado até existir um projeto real."}
+            : "Supabase ainda não configurado (VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY ausentes) — o botão abaixo fica desabilitado até existir um projeto real."}
         </p>
 
         {status && (
