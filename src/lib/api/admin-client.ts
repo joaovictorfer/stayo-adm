@@ -591,6 +591,67 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const implementationOwners: AdminApiClient["implementationOwners"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY)
+          .filter((l) => l.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    add: async (input) => {
+      const link: ImplementationOwnerLink = {
+        id: newId(),
+        implementationId: input.implementationId,
+        ownerId: input.ownerId,
+        role: input.role,
+        sharePercent: input.sharePercent,
+        address: input.address,
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_OWNERS_KEY, [
+        ...read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY),
+        link,
+      ]);
+      return link;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_OWNERS_KEY,
+        read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY).filter((l) => l.id !== id),
+      );
+    },
+  };
+
+  const fieldConfirmations: AdminApiClient["fieldConfirmations"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<FieldConfirmation>(FIELD_CONFIRMATIONS_KEY).filter(
+          (f) => f.implementationId === implementationId,
+        ),
+      ),
+    setState: async (input) => {
+      const all = read<FieldConfirmation>(FIELD_CONFIRMATIONS_KEY);
+      const existing = all.find(
+        (f) => f.implementationId === input.implementationId && f.fieldKey === input.fieldKey,
+      );
+      const updated: FieldConfirmation = {
+        id: existing?.id ?? newId(),
+        implementationId: input.implementationId,
+        fieldKey: input.fieldKey,
+        state: input.state,
+        valueSnapshot: input.valueSnapshot ?? existing?.valueSnapshot ?? null,
+        note: input.note ?? existing?.note ?? null,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        FIELD_CONFIRMATIONS_KEY,
+        existing ? all.map((f) => (f.id === existing.id ? updated : f)) : [...all, updated],
+      );
+      return updated;
+    },
+  };
+
   return {
     audit,
     owners,
@@ -600,6 +661,8 @@ export function createLocalAdminApiClient(): AdminApiClient {
     initialCharges,
     ownerOnboarding,
     ownerTasks,
+    implementationOwners,
+    fieldConfirmations,
   };
 }
 
