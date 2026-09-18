@@ -146,13 +146,16 @@ function ImplementationDetailPage() {
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
 
-          <div className="flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "proprietarios", "checklist", "proposta"] as const).map((t) => (
+          <div
+            className="flex gap-2 overflow-x-auto border-b"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            {(["resumo", "proprietarios", "imovel", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className="px-3 py-2 text-sm"
+                className="shrink-0 px-3 py-2 text-sm"
                 style={{
                   color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
                   borderBottom:
@@ -163,9 +166,11 @@ function ImplementationDetailPage() {
                   ? "Resumo"
                   : t === "proprietarios"
                     ? "Proprietários"
-                    : t === "checklist"
-                      ? "Checklist"
-                      : "Proposta"}
+                    : t === "imovel"
+                      ? "Imóvel"
+                      : t === "checklist"
+                        ? "Checklist"
+                        : "Proposta"}
               </button>
             ))}
           </div>
