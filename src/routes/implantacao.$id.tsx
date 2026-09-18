@@ -94,6 +94,10 @@ function ImplementationDetailPage() {
     },
   });
 
+  const checklistItems = itemsQuery.data ?? [];
+  const progress = computeProgress(checklistItems);
+  const readiness = computeReadiness(checklistItems);
+
   return (
     <>
       <PageHeader title={implementation?.code ?? "Implantação"}>
@@ -114,6 +118,19 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="flex flex-col gap-4">
+          <WorkspaceHeader
+            implementation={implementation}
+            progressPercent={progress.percent}
+            progressDone={progress.done}
+            progressTotal={progress.total}
+            ready={readiness.ready}
+            pendingCount={attentionItems(checklistItems).length}
+            onOpenProposal={() => setTab("proposta")}
+            onOpenPortal={() => setTab("resumo")}
+          />
+
+          <AttentionPanel items={checklistItems} />
+
           <StatusStepper
             status={implementation.status}
             onChange={(status) => changeStatus.mutate(status)}
@@ -121,6 +138,7 @@ function ImplementationDetailPage() {
           />
 
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
+
 
           <div className="flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
             {(["resumo", "checklist", "proposta"] as const).map((t) => (
