@@ -673,9 +673,86 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const propertyDetails: AdminApiClient["propertyDetails"] = {
+    get: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationPropertyDetails>(PROPERTY_DETAILS_KEY).find(
+          (d) => d.implementationId === implementationId,
+        ) ?? null,
+      ),
+    save: async (implementationId, input) => {
+      const all = read<ImplementationPropertyDetails>(PROPERTY_DETAILS_KEY);
+      const existing = all.find((d) => d.implementationId === implementationId);
+      const updated: ImplementationPropertyDetails = {
+        implementationId,
+        postalCode: null,
+        street: null,
+        number: null,
+        complement: null,
+        district: null,
+        city: null,
+        state: null,
+        propertyType: null,
+        bedrooms: null,
+        suites: null,
+        bathrooms: null,
+        parkingSpots: null,
+        accessNotes: null,
+        wifiNetwork: null,
+        wifiPassword: null,
+        notes: null,
+        ...existing,
+        ...input,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PROPERTY_DETAILS_KEY,
+        existing
+          ? all.map((d) => (d.implementationId === implementationId ? updated : d))
+          : [...all, updated],
+      );
+      return updated;
+    },
+  };
+
+  const rooms: AdminApiClient["rooms"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY)
+          .filter((r) => r.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    add: async (input) => {
+      const room: ImplementationRoom = {
+        id: newId(),
+        implementationId: input.implementationId,
+        name: input.name,
+        kind: input.kind,
+        beds: input.beds,
+        capacity: input.capacity,
+        displayOrder: input.displayOrder ?? 0,
+        notes: input.notes ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_ROOMS_KEY, [
+        ...read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY),
+        room,
+      ]);
+      return room;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_ROOMS_KEY,
+        read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY).filter((r) => r.id !== id),
+      );
+    },
+  };
+
   return {
     audit,
     owners,
+    propertyDetails,
+    rooms,
     commercialTermDefaults,
     commercialTerms,
     outbox,
