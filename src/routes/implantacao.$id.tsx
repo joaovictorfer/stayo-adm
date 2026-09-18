@@ -13,6 +13,7 @@ import {
 } from "../components/data/ListStates";
 import { AttentionPanel, attentionItems } from "../components/implantacao/AttentionPanel";
 import { OwnersPanel } from "../components/implantacao/OwnersPanel";
+import { PropertyPanel } from "../components/implantacao/PropertyPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
 import { LinkedField } from "../components/patterns/LinkedField";
