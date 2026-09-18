@@ -1495,3 +1495,49 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
 export function createDefaultAdminApiClient(): AdminApiClient {
   return isSupabaseConfigured() ? createSupabaseAdminApiClient() : createLocalAdminApiClient();
 }
+
+interface ImplementationOwnerRow {
+  id: string;
+  implementation_id: string;
+  owner_id: string;
+  role: string;
+  share_percent: number | string | null;
+  address: string | null;
+  display_order: number;
+  created_at: string;
+}
+
+function implementationOwnerFromRow(row: ImplementationOwnerRow): ImplementationOwnerLink {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    ownerId: row.owner_id,
+    role: row.role,
+    sharePercent: row.share_percent === null ? null : Number(row.share_percent),
+    address: row.address,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+  };
+}
+
+interface FieldConfirmationRow {
+  id: string;
+  implementation_id: string;
+  field_key: string;
+  state: OwnerFieldState;
+  value_snapshot: string | null;
+  note: string | null;
+  updated_at: string;
+}
+
+function fieldConfirmationFromRow(row: FieldConfirmationRow): FieldConfirmation {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    fieldKey: row.field_key,
+    state: row.state,
+    valueSnapshot: row.value_snapshot,
+    note: row.note,
+    updatedAt: row.updated_at,
+  };
+}
