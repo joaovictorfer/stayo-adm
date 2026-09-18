@@ -23,7 +23,7 @@ function isOpen(item: ImplementationItem): boolean {
 export function attentionItems(items: ImplementationItem[]): ImplementationItem[] {
   return items
     .filter((item) => isOpen(item) && (item.blocker || item.mandatory))
-    .sort((a, b) => Number(b.blocker) - Number(a.blocker) || a.displayOrder - b.displayOrder);
+    .sort((a, b) => Number(b.blocker) - Number(a.blocker) || a.order - b.order);
 }
 
 export function AttentionPanel({ items }: { items: ImplementationItem[] }) {
