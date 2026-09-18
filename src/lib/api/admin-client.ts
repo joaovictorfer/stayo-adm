@@ -35,6 +35,12 @@ import type {
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
+import type {
+  FieldConfirmation,
+  ImplementationOwnerLink,
+  ImplementationOwnerLinkInput,
+  OwnerFieldState,
+} from "../../types/implementation-owner";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
