@@ -1720,3 +1720,73 @@ function fieldConfirmationFromRow(row: FieldConfirmationRow): FieldConfirmation 
     updatedAt: row.updated_at,
   };
 }
+
+interface PropertyDetailsRow {
+  implementation_id: string;
+  postal_code: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  district: string | null;
+  city: string | null;
+  state: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  suites: number | null;
+  bathrooms: number | null;
+  parking_spots: number | null;
+  access_notes: string | null;
+  wifi_network: string | null;
+  wifi_password: string | null;
+  notes: string | null;
+  updated_at: string;
+}
+
+function propertyDetailsFromRow(row: PropertyDetailsRow): ImplementationPropertyDetails {
+  return {
+    implementationId: row.implementation_id,
+    postalCode: row.postal_code,
+    street: row.street,
+    number: row.number,
+    complement: row.complement,
+    district: row.district,
+    city: row.city,
+    state: row.state,
+    propertyType: row.property_type,
+    bedrooms: row.bedrooms,
+    suites: row.suites,
+    bathrooms: row.bathrooms,
+    parkingSpots: row.parking_spots,
+    accessNotes: row.access_notes,
+    wifiNetwork: row.wifi_network,
+    wifiPassword: row.wifi_password,
+    notes: row.notes,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface RoomRow {
+  id: string;
+  implementation_id: string;
+  name: string;
+  kind: string;
+  beds: string | null;
+  capacity: number | null;
+  display_order: number;
+  notes: string | null;
+  created_at: string;
+}
+
+function roomFromRow(row: RoomRow): ImplementationRoom {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    name: row.name,
+    kind: row.kind,
+    beds: row.beds,
+    capacity: row.capacity,
+    displayOrder: row.display_order,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
