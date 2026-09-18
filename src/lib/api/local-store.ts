@@ -14,18 +14,11 @@ import type {
   ChecklistTemplateItem,
   ChecklistTemplateItemInput,
 } from "../../types/checklist-template";
-import type {
-  OwnerOnboardingLink,
-  OwnerOnboardingSubmission,
-  OwnerOnboardingSubmissionInput,
-} from "../../types/owner-onboarding";
 import type { ProposalShareLink } from "../../types/proposal-share";
 import type { OwnerNote } from "../../types/owner-note";
 
 const TEMPLATES_KEY = "stayo-admin:checklist-templates";
 const PROPOSALS_KEY = "stayo-admin:proposals";
-const OWNER_LINKS_KEY = "stayo-admin:owner-onboarding-links";
-const OWNER_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 const PROPOSAL_SHARE_LINKS_KEY = "stayo-admin:proposal-share-links";
 const OWNER_NOTES_KEY = "stayo-admin:owner-notes";
 
@@ -93,6 +86,10 @@ export const proposalsStore = {
       .filter((p) => p.implementationId === implementationId)
       .sort((a, b) => b.version - a.version),
 
+  /** Busca uma versão específica pelo próprio id — nunca "a mais recente". */
+  get: async (proposalId: EntityId): Promise<Proposal | null> =>
+    read<Proposal>(PROPOSALS_KEY).find((p) => p.id === proposalId) ?? null,
+
   /** Cada salvamento cria uma NOVA versão — nunca sobrescreve a anterior. */
   createVersion: async (implementationId: EntityId, items: ProposalItem[]): Promise<Proposal> => {
     const all = read<Proposal>(PROPOSALS_KEY);
@@ -104,6 +101,7 @@ export const proposalsStore = {
       items,
       total: items.reduce((sum, i) => sum + i.total, 0),
       acceptedAt: null,
+      acceptedName: null,
       createdAt: new Date().toISOString(),
     };
     write(PROPOSALS_KEY, [...all, proposal]);
@@ -111,11 +109,15 @@ export const proposalsStore = {
   },
 
   /** Marca a versão como aceita — não cria versão nova, só registra a aceitação. */
-  accept: async (proposalId: EntityId): Promise<Proposal | null> => {
+  accept: async (proposalId: EntityId, acceptedName: string): Promise<Proposal | null> => {
     const all = read<Proposal>(PROPOSALS_KEY);
     const target = all.find((p) => p.id === proposalId);
     if (!target) return null;
-    const accepted: Proposal = { ...target, acceptedAt: new Date().toISOString() };
+    const accepted: Proposal = {
+      ...target,
+      acceptedAt: new Date().toISOString(),
+      acceptedName,
+    };
     write(
       PROPOSALS_KEY,
       all.map((p) => (p.id === proposalId ? accepted : p)),
@@ -125,16 +127,20 @@ export const proposalsStore = {
 };
 
 export const proposalShareStore = {
-  getLink: async (implementationId: EntityId): Promise<ProposalShareLink | null> =>
-    read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find(
-      (l) => l.implementationId === implementationId,
-    ) ?? null,
+  getLinkForProposal: async (proposalId: EntityId): Promise<ProposalShareLink | null> =>
+    read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find((l) => l.proposalId === proposalId) ??
+    null,
 
-  createLink: async (implementationId: EntityId): Promise<ProposalShareLink> => {
+  /** Idempotente por versão — reaproveita o link já gerado para ESTA versão. */
+  createLinkForProposal: async (
+    proposalId: EntityId,
+    implementationId: EntityId,
+  ): Promise<ProposalShareLink> => {
     const all = read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY);
-    const existing = all.find((l) => l.implementationId === implementationId);
+    const existing = all.find((l) => l.proposalId === proposalId);
     if (existing) return existing;
     const link: ProposalShareLink = {
+      proposalId,
       implementationId,
       token: newId(),
       createdAt: new Date().toISOString(),
@@ -147,55 +153,9 @@ export const proposalShareStore = {
     read<ProposalShareLink>(PROPOSAL_SHARE_LINKS_KEY).find((l) => l.token === token) ?? null,
 };
 
-/**
- * Auto-cadastro do proprietário via link — não é autenticado (não existe
- * login ainda no Admin nem no Core). O token só evita adivinhação trivial
- * da implantação; não é controle de acesso de verdade.
- */
-export const ownerOnboardingStore = {
-  getLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink | null> =>
-    read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find(
-      (l) => l.implementationId === implementationId,
-    ) ?? null,
-
-  /** Idempotente: reaproveita o link existente em vez de invalidar o anterior. */
-  createLink: async (implementationId: EntityId): Promise<OwnerOnboardingLink> => {
-    const all = read<OwnerOnboardingLink>(OWNER_LINKS_KEY);
-    const existing = all.find((l) => l.implementationId === implementationId);
-    if (existing) return existing;
-    const link: OwnerOnboardingLink = {
-      implementationId,
-      token: newId(),
-      createdAt: new Date().toISOString(),
-    };
-    write(OWNER_LINKS_KEY, [...all, link]);
-    return link;
-  },
-
-  findByToken: async (token: string): Promise<OwnerOnboardingLink | null> =>
-    read<OwnerOnboardingLink>(OWNER_LINKS_KEY).find((l) => l.token === token) ?? null,
-
-  getSubmission: async (implementationId: EntityId): Promise<OwnerOnboardingSubmission | null> =>
-    read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).find(
-      (s) => s.implementationId === implementationId,
-    ) ?? null,
-
-  submit: async (
-    implementationId: EntityId,
-    input: OwnerOnboardingSubmissionInput,
-  ): Promise<OwnerOnboardingSubmission> => {
-    const submission: OwnerOnboardingSubmission = {
-      implementationId,
-      ...input,
-      submittedAt: new Date().toISOString(),
-    };
-    const others = read<OwnerOnboardingSubmission>(OWNER_SUBMISSIONS_KEY).filter(
-      (s) => s.implementationId !== implementationId,
-    );
-    write(OWNER_SUBMISSIONS_KEY, [...others, submission]);
-    return submission;
-  },
-};
+// O convite/envio de auto-cadastro do proprietário (antes `ownerOnboardingStore`
+// aqui) foi promovido a `adminApi.ownerOnboarding` (Fase 16) — ver
+// src/lib/api/admin-client.ts e docs/OWNER_ONBOARDING_ARCHITECTURE.md.
 
 export const ownerNotesStore = {
   get: async (ownerId: EntityId): Promise<OwnerNote | null> =>

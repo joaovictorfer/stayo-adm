@@ -29,7 +29,7 @@ function OwnersPage() {
   const query = useQuery(ownersListQuery());
 
   const rows = useMemo(() => {
-    const data = query.data?.data ?? [];
+    const data = query.data ?? [];
     const term = q.trim().toLowerCase();
     if (!term) return data;
     return data.filter(

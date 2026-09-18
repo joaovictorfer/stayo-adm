@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { computeProgress, computeReadiness, nextImplementationCode } from "./implementation-status";
 import type { ImplementationItemStatus } from "../types/core";
 
-function item(status: ImplementationItemStatus, mandatory = false, blocker = false) {
-  return { status, mandatory, blocker };
+function item(
+  status: ImplementationItemStatus,
+  mandatory = false,
+  blocker = false,
+  readinessOverrideAt: string | null = null,
+) {
+  return { status, mandatory, blocker, readinessOverrideAt };
 }
 
 describe("computeProgress", () => {
@@ -53,6 +58,22 @@ describe("computeReadiness", () => {
       ready: false,
       pendingBlockers: 1,
       pendingMandatory: 1,
+    });
+  });
+
+  it("item pulado bloqueador continua impedindo a prontidão (pulado não é resolvido)", () => {
+    const items = [item("concluido"), item("pulado", false, true)];
+    const readiness = computeReadiness(items);
+    expect(readiness.ready).toBe(false);
+    expect(readiness.pendingBlockers).toBe(1);
+  });
+
+  it("item pulado com override formal de prontidão deixa de bloquear", () => {
+    const items = [item("concluido"), item("pulado", false, true, "2026-01-01T00:00:00.000Z")];
+    expect(computeReadiness(items)).toEqual({
+      ready: true,
+      pendingBlockers: 0,
+      pendingMandatory: 0,
     });
   });
 });

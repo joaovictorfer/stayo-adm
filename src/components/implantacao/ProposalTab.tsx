@@ -3,8 +3,19 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
-import { proposalShareLinkQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
+import {
+  adminApi,
+  commercialTermsQuery,
+  implementationQuery,
+  outboxQuery,
+  proposalShareLinkQuery,
+  proposalsByImplementationQuery,
+} from "../../lib/api/queries";
 import { proposalItemTotal, proposalShareStore, proposalsStore } from "../../lib/api/local-store";
+import { generateProposalPdf } from "../../lib/pdf/proposal-pdf";
+import { buildWhatsappDeepLink } from "../../lib/whatsapp/gateway";
+import { proposalReadyMessage } from "../../lib/whatsapp/templates";
+import type { OutboundMessage } from "../../types/admin";
 import type { EntityId, ProposalItem } from "../../types/core";
 
 const surface = {
@@ -26,8 +37,77 @@ const emptyDraftItem: DraftItem = { description: "", quantity: 1, unitValue: 0, 
 export function ProposalTab({ implementationId }: { implementationId: EntityId }) {
   const queryClient = useQueryClient();
   const query = useQuery(proposalsByImplementationQuery(implementationId));
+  const commercialTermsQ = useQuery(commercialTermsQuery(implementationId));
+  const implementationQ = useQuery(implementationQuery(implementationId));
   const versions = query.data ?? [];
   const latest = versions[0];
+  const shareLinkQ = useQuery({
+    ...proposalShareLinkQuery(latest?.id ?? ""),
+    enabled: Boolean(latest),
+  });
+  const outboxQ = useQuery(outboxQuery(implementationId));
+  const lastMessage = (outboxQ.data ?? [])[0];
+
+  const prepareWhatsapp = useMutation({
+    mutationFn: async () => {
+      if (!implementationQ.data) throw new Error("Implantação ausente");
+      const owner = implementationQ.data;
+      let portalUrl: string | null = shareLinkQ.data
+        ? `${window.location.origin}/portal/proposta/${shareLinkQ.data.token}`
+        : null;
+      if (!portalUrl && latest) {
+        const link = await proposalShareStore.createLinkForProposal(latest.id, implementationId);
+        portalUrl = `${window.location.origin}/portal/proposta/${link.token}`;
+        await queryClient.invalidateQueries({ queryKey: ["proposal-share", "link", latest.id] });
+      }
+      const body = proposalReadyMessage({
+        ownerFirstName: owner.ownerName ?? "proprietário",
+        portalUrl,
+      });
+      const message = await adminApi.outbox.enqueue({
+        implementationId,
+        ownerId: owner.ownerId,
+        destination: owner.ownerPhone ?? "",
+        template: "proposal_ready",
+        body,
+      });
+      await adminApi.audit.log({
+        actorId: null,
+        event: "proposal.sent",
+        entityType: "proposal",
+        entityId: latest?.id ?? null,
+        metadata: { implementationId, channel: "whatsapp" },
+      });
+      return message;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["outbox", implementationId] });
+    },
+  });
+
+  const downloadPdf = useMutation({
+    mutationFn: async () => {
+      if (!latest || !implementationQ.data) throw new Error("Proposta ou implantação ausente");
+      const portalUrl = shareLinkQ.data
+        ? `${window.location.origin}/portal/proposta/${shareLinkQ.data.token}`
+        : null;
+      const bytes = await generateProposalPdf({
+        implementation: implementationQ.data,
+        proposal: latest,
+        recurringTerms: (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once"),
+        portalUrl,
+      });
+      const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `proposta-${implementationQ.data.code}-v${latest.version}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+
+  const recurringTerms = (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once");
 
   const [draft, setDraft] = useState<DraftItem[]>([{ ...emptyDraftItem }]);
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
@@ -84,7 +164,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             color: "var(--stayo-success)",
           }}
         >
-          Proposta (versão {latest.version}) aceita pelo proprietário em{" "}
+          Proposta (versão {latest.version}) aceita
+          {latest.acceptedName ? ` por ${latest.acceptedName}` : " pelo proprietário"} em{" "}
           {new Date(latest.acceptedAt).toLocaleString("pt-BR")}.
         </div>
       )}
@@ -164,14 +245,40 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setDraft([...draft, { ...emptyDraftItem }])}
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-            style={{ ...surface, color: "var(--stayo-forest)" }}
-          >
-            Adicionar item
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setDraft([...draft, { ...emptyDraftItem }])}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              Adicionar item
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const fixedTerms = (commercialTermsQ.data ?? []).filter(
+                  (t) => t.chargeType === "fixed_once",
+                );
+                const existingLabels = new Set(draft.map((i) => i.description));
+                const newItems: DraftItem[] = fixedTerms
+                  .filter((t) => !existingLabels.has(t.label))
+                  .map((t) => ({
+                    description: t.label,
+                    quantity: 1,
+                    unitValue: t.value,
+                    discount: 0,
+                  }));
+                if (newItems.length === 0) return;
+                setDraft([...draft.filter((i) => i.description.trim() !== ""), ...newItems]);
+              }}
+              disabled={commercialTermsQ.isPending}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              Adicionar das condições comerciais
+            </button>
+          </div>
           <p style={{ color: "var(--stayo-ink-muted)" }} className="text-xs">
             Total geral
             <span
@@ -183,6 +290,23 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </p>
         </div>
 
+        {recurringTerms.length > 0 && (
+          <div
+            className="mt-3 rounded-[var(--radius-control)] border px-3 py-2 text-xs"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+          >
+            <span className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+              Condições recorrentes (não entram no total acima):
+            </span>{" "}
+            {recurringTerms
+              .map(
+                (t) =>
+                  `${t.label} — ${t.chargeType === "percentage" ? `${t.value}%` : currency.format(t.value)}`,
+              )
+              .join(" · ")}
+          </div>
+        )}
+
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -193,15 +317,38 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           >
             {latest ? `Salvar como versão ${latest.version + 1}` : "Salvar versão 1"}
           </button>
-          <DisabledAction label="Gerar PDF" />
-          <DisabledAction label="Enviar por WhatsApp" />
+          {latest && (
+            <button
+              type="button"
+              onClick={() => downloadPdf.mutate()}
+              disabled={downloadPdf.isPending || !implementationQ.data}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              {downloadPdf.isPending ? "Gerando..." : `Gerar PDF (v${latest.version})`}
+            </button>
+          )}
+          {latest && (
+            <button
+              type="button"
+              onClick={() => prepareWhatsapp.mutate()}
+              disabled={prepareWhatsapp.isPending}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+              style={{ ...surface, color: "var(--stayo-forest)" }}
+            >
+              {prepareWhatsapp.isPending ? "Preparando..." : "Finalizar e enviar por WhatsApp"}
+            </button>
+          )}
         </div>
-        <p className="mt-2 text-xs" style={{ color: "var(--stayo-warning)" }}>
-          Gerar PDF e enviar por WhatsApp ficam disponíveis quando o Stayo Core estiver conectado.
+        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          Sem provider de WhatsApp conectado, o envio é manual: a mensagem fica pronta para você
+          copiar ou abrir direto no WhatsApp.
         </p>
       </div>
 
-      {latest && <ShareLinkPanel implementationId={implementationId} />}
+      {lastMessage && <WhatsappSendPanel message={lastMessage} />}
+
+      {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
 
       <div className="rounded-[var(--radius-card)] border" style={surface}>
         <h2
@@ -247,7 +394,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                         color: "var(--stayo-success)",
                       }}
                     >
-                      Aceita em {new Date(p.acceptedAt).toLocaleDateString("pt-BR")}
+                      Aceita{p.acceptedName ? ` por ${p.acceptedName}` : ""} em{" "}
+                      {new Date(p.acceptedAt).toLocaleDateString("pt-BR")}
                     </span>
                   )}
                   <span className="ml-auto text-sm" style={{ color: "var(--stayo-ink)" }}>
@@ -270,16 +418,27 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   );
 }
 
-/** Link público (sem autenticação) pro proprietário ver e aceitar a proposta atual. */
-function ShareLinkPanel({ implementationId }: { implementationId: EntityId }) {
+/**
+ * Link público (sem autenticação) pro proprietário ver e aceitar ESTA
+ * versão da proposta — nunca a mais recente por implantação. Se uma nova
+ * versão for criada depois, este link continua mostrando a mesma versão;
+ * um novo link precisa ser gerado para compartilhar a versão nova.
+ */
+function ShareLinkPanel({
+  implementationId,
+  proposalId,
+}: {
+  implementationId: EntityId;
+  proposalId: EntityId;
+}) {
   const queryClient = useQueryClient();
-  const linkQuery = useQuery(proposalShareLinkQuery(implementationId));
+  const linkQuery = useQuery(proposalShareLinkQuery(proposalId));
   const [copied, setCopied] = useState(false);
 
   const createLink = useMutation({
-    mutationFn: () => proposalShareStore.createLink(implementationId),
+    mutationFn: () => proposalShareStore.createLinkForProposal(proposalId, implementationId),
     onSuccess: (link) => {
-      queryClient.setQueryData(proposalShareLinkQuery(implementationId).queryKey, link);
+      queryClient.setQueryData(proposalShareLinkQuery(proposalId).queryKey, link);
     },
   });
 
@@ -336,7 +495,8 @@ function ShareLinkPanel({ implementationId }: { implementationId: EntityId }) {
         </button>
       )}
       <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        O link sempre mostra a versão mais recente da proposta salva.
+        Este link é fixo para esta versão da proposta — se uma nova versão for criada, gere um novo
+        link para ela.
       </p>
     </div>
   );
@@ -356,16 +516,60 @@ function NumberCell({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function DisabledAction({ label }: { label: string }) {
+/**
+ * Mensagem pronta no outbox — sem provider real, o envio é sempre manual:
+ * a pessoa copia o texto ou abre o WhatsApp já preenchido e aperta enviar
+ * ela mesma. Nunca contata nenhum servidor de WhatsApp.
+ */
+function WhatsappSendPanel({ message }: { message: OutboundMessage }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.body);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard indisponível — texto já está visível pra copiar manualmente.
+    }
+  };
+
   return (
-    <button
-      type="button"
-      disabled
-      title="disponível quando o Stayo Core estiver conectado"
-      className="cursor-not-allowed rounded-[var(--radius-control)] border px-3 py-2 text-sm opacity-60"
-      style={{ ...surface, color: "var(--stayo-ink-muted)" }}
-    >
-      {label}
-    </button>
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Mensagem para o proprietário
+      </h2>
+      <pre
+        className="mb-3 whitespace-pre-wrap rounded-[var(--radius-control)] border p-3 text-xs"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+      >
+        {message.body}
+      </pre>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          style={{ ...surface, color: "var(--stayo-forest)" }}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          {copied ? "Copiado" : "Copiar mensagem"}
+        </button>
+        {message.destination && (
+          <a
+            href={buildWhatsappDeepLink(message.destination, message.body)}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
+            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          >
+            Abrir WhatsApp
+          </a>
+        )}
+      </div>
+    </div>
   );
 }

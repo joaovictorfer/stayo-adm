@@ -1,14 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
-import { ownerOnboardingStore } from "../lib/api/local-store";
 import {
+  adminApi,
   implementationQuery,
   ownerOnboardingLinkByTokenQuery,
   ownerOnboardingSubmissionQuery,
+  ownerQuery,
 } from "../lib/api/queries";
+import { createOwnerAccountAndLink, isSupabaseConfigured } from "../lib/auth/owner-session";
+import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
 import type { OwnerOnboardingSubmissionInput } from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/portal/implantacao/$token")({
@@ -75,31 +78,63 @@ function OwnerOnboardingPortalPage() {
           Link inválido
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Este link de cadastro não existe ou expirou. Fale com quem enviou o link para receber um
-          novo.
+          Este link de cadastro não existe. Fale com quem enviou o link para receber um novo.
         </p>
       </Shell>
     );
   }
 
-  return <OwnerOnboardingForm implementationId={link.implementationId} />;
+  const status = ownerOnboardingLinkStatus(link);
+  if (status === "expirado" || status === "revogado") {
+    return (
+      <Shell>
+        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
+          {status === "expirado" ? "Link expirado" : "Link revogado"}
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Fale com quem enviou o link para receber um novo.
+        </p>
+      </Shell>
+    );
+  }
+
+  return <OwnerOnboardingForm implementationId={link.implementationId} token={token} />;
 }
 
-function OwnerOnboardingForm({ implementationId }: { implementationId: string }) {
+function OwnerOnboardingForm({
+  implementationId,
+  token,
+}: {
+  implementationId: string;
+  token: string;
+}) {
   const queryClient = useQueryClient();
   const implementationQ = useQuery(implementationQuery(implementationId));
   const submissionQ = useQuery(ownerOnboardingSubmissionQuery(implementationId));
+  const ownerId = implementationQ.data?.ownerId ?? null;
+  const ownerQ = useQuery({ ...ownerQuery(ownerId ?? ""), enabled: !!ownerId });
 
   const [form, setForm] = useState<OwnerOnboardingSubmissionInput>({
-    fullName: implementationQ.data?.ownerProspect.name ?? "",
+    fullName: "",
     document: null,
-    email: implementationQ.data?.ownerProspect.email ?? "",
-    phone: implementationQ.data?.ownerProspect.phone ?? "",
+    email: "",
+    phone: "",
     pixKey: null,
   });
 
+  useEffect(() => {
+    const owner = ownerQ.data;
+    if (submissionQ.data || !owner) return;
+    setForm((f) => ({
+      ...f,
+      fullName: owner.name,
+      email: owner.email ?? "",
+      phone: owner.phone ?? "",
+    }));
+  }, [ownerQ.data, submissionQ.data]);
+
   const submit = useMutation({
-    mutationFn: () => ownerOnboardingStore.submit(implementationId, form),
+    mutationFn: () => adminApi.ownerOnboarding.submit(implementationId, token, form),
     onSuccess: (submission) => {
       queryClient.setQueryData(
         ownerOnboardingSubmissionQuery(implementationId).queryKey,
@@ -123,6 +158,7 @@ function OwnerOnboardingForm({ implementationId }: { implementationId: string })
           Obrigado, {submissionQ.data.fullName}! Já recebemos seus dados. A equipe Stayo entra em
           contato para os próximos passos da implantação.
         </p>
+        <CreateOwnerAccountPanel token={token} defaultEmail={submissionQ.data.email} />
       </Shell>
     );
   }
@@ -188,6 +224,84 @@ function OwnerOnboardingForm({ implementationId }: { implementationId: string })
         onComplete={() => submit.mutate()}
       />
     </Shell>
+  );
+}
+
+/**
+ * Passo opcional de Owner Auth (Fase 17H): logo após o envio do
+ * auto-cadastro, oferece criar uma conta de verdade (e-mail/senha via
+ * Supabase Auth) vinculada ao proprietário pelo MESMO token do convite —
+ * `owner_account_link` (migration 0013) revalida tudo server-side antes
+ * de vincular. Sem Supabase configurado, isto não existe ainda (o
+ * auto-cadastro em si continua funcionando normalmente, só sem "ver
+ * depois" sem o link).
+ */
+function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defaultEmail: string }) {
+  const [email, setEmail] = useState(defaultEmail);
+  const [password, setPassword] = useState("");
+
+  const createAccount = useMutation({
+    mutationFn: () => createOwnerAccountAndLink(email, password, token),
+  });
+
+  if (!isSupabaseConfigured()) {
+    return (
+      <p className="mt-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        Criar uma conta para acompanhar depois ainda não está disponível.
+      </p>
+    );
+  }
+
+  if (createAccount.isSuccess) {
+    return (
+      <p className="mt-4 text-sm" style={{ color: "var(--stayo-forest)" }}>
+        {createAccount.data.account ? (
+          <>
+            Conta criada e vinculada! Você já pode{" "}
+            <a href="/portal/login" className="underline">
+              entrar
+            </a>{" "}
+            com este e-mail e senha para acompanhar depois.
+          </>
+        ) : (
+          "Conta criada — confirme seu e-mail para poder entrar depois."
+        )}
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--stayo-border)" }}>
+      <h2 className="mb-1 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
+        Quer acompanhar depois?
+      </h2>
+      <p className="mb-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        Crie uma senha para entrar de novo mais tarde, sem depender de um link.
+      </p>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          createAccount.mutate();
+        }}
+      >
+        <TextField label="E-mail" type="email" value={email} onChange={setEmail} />
+        <TextField label="Senha" type="password" value={password} onChange={setPassword} />
+        {createAccount.isError && (
+          <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
+            Não foi possível criar a conta. Tente novamente.
+          </span>
+        )}
+        <button
+          type="submit"
+          disabled={createAccount.isPending}
+          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+        >
+          {createAccount.isPending ? "Criando..." : "Criar conta"}
+        </button>
+      </form>
+    </div>
   );
 }
 

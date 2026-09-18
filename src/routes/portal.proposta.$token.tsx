@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { proposalsStore } from "../lib/api/local-store";
 import {
+  adminApi,
+  commercialTermsQuery,
   implementationQuery,
+  initialChargesQuery,
+  proposalByIdQuery,
   proposalShareLinkByTokenQuery,
-  proposalsByImplementationQuery,
 } from "../lib/api/queries";
+import { initialChargeStatusLabels } from "../lib/initial-charge-status";
+import { generateProposalPdf } from "../lib/pdf/proposal-pdf";
 
 export const Route = createFileRoute("/portal/proposta/$token")({
   head: () => ({
@@ -79,23 +85,85 @@ function ProposalPortalPage() {
     );
   }
 
-  return <ProposalView implementationId={linkQuery.data.implementationId} />;
+  return (
+    <ProposalView
+      implementationId={linkQuery.data.implementationId}
+      proposalId={linkQuery.data.proposalId}
+    />
+  );
 }
 
-function ProposalView({ implementationId }: { implementationId: string }) {
+function ProposalView({
+  implementationId,
+  proposalId,
+}: {
+  implementationId: string;
+  proposalId: string;
+}) {
   const queryClient = useQueryClient();
   const implementationQ = useQuery(implementationQuery(implementationId));
-  const proposalsQ = useQuery(proposalsByImplementationQuery(implementationId));
-  const latest = proposalsQ.data?.[0];
+  // Sempre ESTA versão específica — nunca "a mais recente da implantação".
+  const proposalQ = useQuery(proposalByIdQuery(proposalId));
+  const commercialTermsQ = useQuery(commercialTermsQuery(implementationId));
+  const initialChargesQ = useQuery(initialChargesQuery(implementationId));
+  const proposal = proposalQ.data;
+  const charge = initialChargesQ.data?.find((c) => c.proposalId === proposalId);
+  const [acceptedName, setAcceptedName] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
-  const accept = useMutation({
-    mutationFn: () => proposalsStore.accept(latest!.id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["proposals"] });
+  const downloadPdf = useMutation({
+    mutationFn: async () => {
+      if (!proposal || !implementationQ.data) throw new Error("Proposta ausente");
+      const bytes = await generateProposalPdf({
+        implementation: implementationQ.data,
+        proposal,
+        recurringTerms: (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once"),
+        portalUrl: typeof window !== "undefined" ? window.location.href : null,
+      });
+      const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `proposta-${implementationQ.data.code}-v${proposal.version}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     },
   });
 
-  if (proposalsQ.isPending || implementationQ.isPending) {
+  const accept = useMutation({
+    mutationFn: async () => {
+      const accepted = await proposalsStore.accept(proposalId, acceptedName.trim());
+      await adminApi.audit.log({
+        actorId: null,
+        event: "proposal.accepted",
+        entityType: "proposal",
+        entityId: proposalId,
+        metadata: {
+          implementationId,
+          version: proposal?.version,
+          acceptedName: acceptedName.trim(),
+        },
+      });
+      const fixedOnceTerms = (commercialTermsQ.data ?? []).filter(
+        (t) => t.chargeType === "fixed_once",
+      );
+      if (fixedOnceTerms.length > 0) {
+        await adminApi.initialCharges.createFromProposal({
+          implementationId,
+          ownerId: implementationQ.data?.ownerId ?? null,
+          proposalId,
+          items: fixedOnceTerms.map((t) => ({ label: t.label, amount: t.value })),
+        });
+      }
+      return accepted;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["proposals"] });
+      await queryClient.invalidateQueries({ queryKey: ["initial-charges", implementationId] });
+    },
+  });
+
+  if (proposalQ.isPending || implementationQ.isPending) {
     return (
       <Shell>
         <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -105,7 +173,7 @@ function ProposalView({ implementationId }: { implementationId: string }) {
     );
   }
 
-  if (!latest) {
+  if (!proposal) {
     return (
       <Shell>
         <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
@@ -118,10 +186,12 @@ function ProposalView({ implementationId }: { implementationId: string }) {
     );
   }
 
+  const canAccept = acceptedName.trim() !== "" && agreed;
+
   return (
     <Shell>
       <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        {implementationQ.data?.code} · Versão {latest.version}
+        {implementationQ.data?.code} · Versão {proposal.version}
       </p>
       <h1 className="mt-1 text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
         Proposta comercial
@@ -131,7 +201,7 @@ function ProposalView({ implementationId }: { implementationId: string }) {
         className="mt-4 divide-y rounded-[var(--radius-card)] border"
         style={{ borderColor: "var(--stayo-border)" }}
       >
-        {latest.items.map((item, i) => (
+        {proposal.items.map((item, i) => (
           <li key={i} className="flex items-center justify-between px-3 py-2 text-sm">
             <span>
               {item.description}{" "}
@@ -148,25 +218,89 @@ function ProposalView({ implementationId }: { implementationId: string }) {
           className="text-xl"
           style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
         >
-          {currency.format(latest.total)}
+          {currency.format(proposal.total)}
         </span>
       </div>
 
+      <button
+        type="button"
+        onClick={() => downloadPdf.mutate()}
+        disabled={downloadPdf.isPending}
+        className="mt-3 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+        style={{ ...surface, color: "var(--stayo-forest)" }}
+      >
+        {downloadPdf.isPending ? "Gerando PDF..." : "Baixar PDF desta proposta"}
+      </button>
+
       <div className="mt-6">
-        {latest.acceptedAt ? (
-          <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
-            Proposta aceita em {new Date(latest.acceptedAt).toLocaleString("pt-BR")}.
-          </p>
+        {proposal.acceptedAt ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
+              Proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
+              {new Date(proposal.acceptedAt).toLocaleString("pt-BR")}.
+            </p>
+            {charge ? (
+              <div className="rounded-[var(--radius-card)] border p-3 text-sm" style={surface}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Cobrança inicial</span>
+                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                    {initialChargeStatusLabels[charge.status]}
+                  </span>
+                </div>
+                <ul className="mt-2 divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                  {charge.items.map((item, i) => (
+                    <li key={i} className="flex items-center justify-between py-1 text-xs">
+                      <span>{item.label}</span>
+                      <span>{currency.format(item.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {charge.code}
+                  </span>
+                  <span className="text-base font-medium">{currency.format(charge.amount)}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => accept.mutate()}
-            disabled={accept.isPending}
-            className="w-full rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            {accept.isPending ? "Enviando..." : "Aceitar proposta"}
-          </button>
+          <div className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              Seu nome completo
+              <input
+                value={acceptedName}
+                onChange={(e) => setAcceptedName(e.target.value)}
+                className="rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              />
+            </label>
+            <label
+              className="flex items-start gap-2 text-xs"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5"
+              />
+              Li e concordo com a proposta apresentada.
+            </label>
+            <button
+              type="button"
+              onClick={() => accept.mutate()}
+              disabled={accept.isPending || !canAccept}
+              className="w-full rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
+              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+            >
+              {accept.isPending ? "Enviando..." : "Aceitar proposta"}
+            </button>
+            <p className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+              Este aceite registra sua concordância comercial com esta proposta — não substitui a
+              assinatura do contrato de prestação de serviço.
+            </p>
+          </div>
         )}
       </div>
     </Shell>

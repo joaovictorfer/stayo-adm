@@ -8,11 +8,11 @@
 
 import { queryOptions } from "@tanstack/react-query";
 
+import { createDefaultAdminApiClient, type AdminApiClient } from "./admin-client";
 import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
 import {
   checklistTemplatesStore,
   ownerNotesStore,
-  ownerOnboardingStore,
   proposalShareStore,
   proposalsStore,
 } from "./local-store";
@@ -20,6 +20,45 @@ import type { EntityId } from "../../types/core";
 
 /** Fonte única de dados desta fase. */
 export const coreApi: CoreApiClient = createMockCoreApiClient();
+
+/** Domínio próprio do Admin (Grupo A) — ver docs/OWNER_IMPLEMENTATION_AUDIT.md. */
+export const adminApi: AdminApiClient = createDefaultAdminApiClient();
+
+export const auditLogQuery = (params?: { entityType?: string; entityId?: string }) =>
+  queryOptions({
+    queryKey: ["audit-logs", params ?? null],
+    queryFn: () => adminApi.audit.list(params),
+  });
+
+export const commercialTermDefaultsQuery = () =>
+  queryOptions({
+    queryKey: ["commercial-term-defaults"],
+    queryFn: () => adminApi.commercialTermDefaults.list(),
+  });
+
+export const commercialTermsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["commercial-terms", implementationId],
+    queryFn: () => adminApi.commercialTerms.listByImplementation(implementationId),
+  });
+
+export const outboxQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["outbox", implementationId],
+    queryFn: () => adminApi.outbox.listByImplementation(implementationId),
+  });
+
+export const initialChargesQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["initial-charges", implementationId],
+    queryFn: () => adminApi.initialCharges.listByImplementation(implementationId),
+  });
+
+export const ownerTasksQuery = (ownerId: EntityId) =>
+  queryOptions({
+    queryKey: ["owner-tasks", ownerId],
+    queryFn: () => adminApi.ownerTasks.listByOwner(ownerId),
+  });
 
 export const propertiesListQuery = () =>
   queryOptions({
@@ -109,28 +148,34 @@ export const proposalsByImplementationQuery = (id: EntityId) =>
     queryFn: () => proposalsStore.list(id),
   });
 
+export const proposalByIdQuery = (proposalId: EntityId) =>
+  queryOptions({
+    queryKey: ["proposals", "detail", proposalId],
+    queryFn: () => proposalsStore.get(proposalId),
+  });
+
 export const ownerOnboardingLinkQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["owner-onboarding", "link", implementationId],
-    queryFn: () => ownerOnboardingStore.getLink(implementationId),
+    queryFn: () => adminApi.ownerOnboarding.getLink(implementationId),
   });
 
 export const ownerOnboardingSubmissionQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["owner-onboarding", "submission", implementationId],
-    queryFn: () => ownerOnboardingStore.getSubmission(implementationId),
+    queryFn: () => adminApi.ownerOnboarding.getSubmission(implementationId),
   });
 
 export const ownerOnboardingLinkByTokenQuery = (token: string) =>
   queryOptions({
     queryKey: ["owner-onboarding", "by-token", token],
-    queryFn: () => ownerOnboardingStore.findByToken(token),
+    queryFn: () => adminApi.ownerOnboarding.findByToken(token),
   });
 
-export const proposalShareLinkQuery = (implementationId: EntityId) =>
+export const proposalShareLinkQuery = (proposalId: EntityId) =>
   queryOptions({
-    queryKey: ["proposal-share", "link", implementationId],
-    queryFn: () => proposalShareStore.getLink(implementationId),
+    queryKey: ["proposal-share", "link", proposalId],
+    queryFn: () => proposalShareStore.getLinkForProposal(proposalId),
   });
 
 export const ownerNoteQuery = (ownerId: EntityId) =>
@@ -145,16 +190,21 @@ export const proposalShareLinkByTokenQuery = (token: string) =>
     queryFn: () => proposalShareStore.findByToken(token),
   });
 
-export const ownersListQuery = () =>
+/**
+ * Proprietário como relacionamento comercial (Grupo A, `adminApi.owners`) —
+ * não confundir com `coreApi.owners` (Owner oficial do Core, Grupo B,
+ * populado só após a conversão — ver docs/OWNER_IMPLEMENTATION_AUDIT.md).
+ */
+export const ownersListQuery = (params?: { q?: string }) =>
   queryOptions({
-    queryKey: ["owners", "list"],
-    queryFn: () => coreApi.owners.list(),
+    queryKey: ["owners", "list", params ?? null],
+    queryFn: () => adminApi.owners.list(params),
   });
 
 export const ownerQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["owners", "detail", id],
-    queryFn: () => coreApi.owners.get(id),
+    queryFn: () => adminApi.owners.get(id),
   });
 
 export const inspectionsListQuery = () =>

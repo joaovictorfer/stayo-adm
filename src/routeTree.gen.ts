@@ -11,10 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
+import { Route as ConfiguracoesAuditoriaRouteImport } from './routes/configuracoes.auditoria'
+import { Route as ConfiguracoesComercialRouteImport } from './routes/configuracoes.comercial'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
+import { Route as ConfiguracoesMigracaoRouteImport } from './routes/configuracoes.migracao'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
@@ -34,6 +38,8 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
+import { Route as PortalLoginRouteImport } from './routes/portal.login'
 import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
 import { Route as PrestadoresIdRouteImport } from './routes/prestadores.$id'
 import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
@@ -57,6 +63,11 @@ const BiRoute = BiRouteImport.update({
   path: '/bi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
   id: '/condominios/',
   path: '/condominios/',
@@ -72,12 +83,27 @@ const ConfiguracoesIndexRoute = ConfiguracoesIndexRouteImport.update({
   path: '/configuracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfiguracoesAuditoriaRoute = ConfiguracoesAuditoriaRouteImport.update({
+  id: '/configuracoes/auditoria',
+  path: '/configuracoes/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesComercialRoute = ConfiguracoesComercialRouteImport.update({
+  id: '/configuracoes/comercial',
+  path: '/configuracoes/comercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracoesIntegracoesRoute =
   ConfiguracoesIntegracoesRouteImport.update({
     id: '/configuracoes/integracoes',
     path: '/configuracoes/integracoes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ConfiguracoesMigracaoRoute = ConfiguracoesMigracaoRouteImport.update({
+  id: '/configuracoes/migracao',
+  path: '/configuracoes/migracao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracoesStayoCoreRoute = ConfiguracoesStayoCoreRouteImport.update({
   id: '/configuracoes/stayo-core',
   path: '/configuracoes/stayo-core',
@@ -173,6 +199,16 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalInicioRoute = PortalInicioRouteImport.update({
+  id: '/portal/inicio',
+  path: '/portal/inicio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalLoginRoute = PortalLoginRouteImport.update({
+  id: '/portal/login',
+  path: '/portal/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrestadoresIndexRoute = PrestadoresIndexRouteImport.update({
   id: '/prestadores/',
   path: '/prestadores/',
@@ -237,8 +273,12 @@ const PortalPropostaTokenRoute = PortalPropostaTokenRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
+  '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
@@ -250,6 +290,8 @@ export interface FileRoutesByFullPath {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/portal/inicio': typeof PortalInicioRoute
+  '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
@@ -276,8 +318,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
+  '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
@@ -289,6 +335,8 @@ export interface FileRoutesByTo {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/portal/inicio': typeof PortalInicioRoute
+  '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
@@ -316,8 +364,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
+  '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
@@ -329,6 +381,8 @@ export interface FileRoutesById {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/portal/inicio': typeof PortalInicioRoute
+  '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
@@ -357,8 +411,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bi'
+    | '/login'
     | '/condominios/$id'
+    | '/configuracoes/auditoria'
+    | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
+    | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
@@ -370,6 +428,8 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/portal/inicio'
+    | '/portal/login'
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
@@ -396,8 +456,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bi'
+    | '/login'
     | '/condominios/$id'
+    | '/configuracoes/auditoria'
+    | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
+    | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
@@ -409,6 +473,8 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/portal/inicio'
+    | '/portal/login'
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
@@ -435,8 +501,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bi'
+    | '/login'
     | '/condominios/$id'
+    | '/configuracoes/auditoria'
+    | '/configuracoes/comercial'
     | '/configuracoes/integracoes'
+    | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
@@ -448,6 +518,8 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/portal/inicio'
+    | '/portal/login'
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
@@ -475,8 +547,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
+  LoginRoute: typeof LoginRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
+  ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
+  ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
+  ConfiguracoesMigracaoRoute: typeof ConfiguracoesMigracaoRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
@@ -488,6 +564,8 @@ export interface RootRouteChildren {
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
+  PortalInicioRoute: typeof PortalInicioRoute
+  PortalLoginRoute: typeof PortalLoginRoute
   PrestadoresIdRoute: typeof PrestadoresIdRoute
   ProdutosIdRoute: typeof ProdutosIdRoute
   ProprietariosIdRoute: typeof ProprietariosIdRoute
@@ -528,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/condominios/': {
       id: '/condominios/'
       path: '/condominios'
@@ -549,11 +634,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/configuracoes/auditoria': {
+      id: '/configuracoes/auditoria'
+      path: '/configuracoes/auditoria'
+      fullPath: '/configuracoes/auditoria'
+      preLoaderRoute: typeof ConfiguracoesAuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/comercial': {
+      id: '/configuracoes/comercial'
+      path: '/configuracoes/comercial'
+      fullPath: '/configuracoes/comercial'
+      preLoaderRoute: typeof ConfiguracoesComercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/configuracoes/integracoes': {
       id: '/configuracoes/integracoes'
       path: '/configuracoes/integracoes'
       fullPath: '/configuracoes/integracoes'
       preLoaderRoute: typeof ConfiguracoesIntegracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/migracao': {
+      id: '/configuracoes/migracao'
+      path: '/configuracoes/migracao'
+      fullPath: '/configuracoes/migracao'
+      preLoaderRoute: typeof ConfiguracoesMigracaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/stayo-core': {
@@ -689,6 +795,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/inicio': {
+      id: '/portal/inicio'
+      path: '/portal/inicio'
+      fullPath: '/portal/inicio'
+      preLoaderRoute: typeof PortalInicioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/login': {
+      id: '/portal/login'
+      path: '/portal/login'
+      fullPath: '/portal/login'
+      preLoaderRoute: typeof PortalLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/prestadores/': {
       id: '/prestadores/'
       path: '/prestadores'
@@ -779,8 +899,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
+  LoginRoute: LoginRoute,
   CondominiosIdRoute: CondominiosIdRoute,
+  ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
+  ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
+  ConfiguracoesMigracaoRoute: ConfiguracoesMigracaoRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
@@ -792,6 +916,8 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
   OperacaoIdRoute: OperacaoIdRoute,
+  PortalInicioRoute: PortalInicioRoute,
+  PortalLoginRoute: PortalLoginRoute,
   PrestadoresIdRoute: PrestadoresIdRoute,
   ProdutosIdRoute: ProdutosIdRoute,
   ProprietariosIdRoute: ProprietariosIdRoute,

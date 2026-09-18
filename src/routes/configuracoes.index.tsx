@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Plug, Server } from "lucide-react";
+import { ClipboardList, DatabaseZap, HandCoins, Plug, Server } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
 import { PageHeader } from "../components/data/ListStates";
@@ -46,6 +46,25 @@ const links: SettingsLink[] = [
     title: "Integrações",
     description:
       "Referência das integrações externas do STAYO.APP (Ayrton, Condfy, WhatsApp, Web Check-in).",
+  },
+  {
+    icon: ClipboardList,
+    to: "/configuracoes/auditoria",
+    title: "Auditoria",
+    description: "Histórico de ações sensíveis: implantações, propostas, convites, cobranças.",
+  },
+  {
+    icon: HandCoins,
+    to: "/configuracoes/comercial",
+    title: "Condições comerciais",
+    description:
+      "Taxas e valores padrão (administração, limpeza, implantação) para novas propostas.",
+  },
+  {
+    icon: DatabaseZap,
+    to: "/configuracoes/migracao",
+    title: "Migração de dados",
+    description: "Mapa de todo dado hoje em localStorage e o status da migração para o Supabase.",
   },
 ];
 

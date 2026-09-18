@@ -112,14 +112,20 @@ export interface ImplementationProject {
   id: EntityId;
   code: string; // ex: IMP-00127
   status: ImplementationStatus;
-  ownerProspect: {
-    name: string;
-    phone: string;
-    email: string | null;
-  };
+  /** FK para `OwnerRecord` (src/types/admin.ts) — nunca objeto embutido. */
+  ownerId: EntityId | null;
+  ownerName: string | null;
+  ownerPhone: string | null;
+  /** Apelido interno do pré-imóvel, ex: "Cobertura vista mar". */
+  nickname: string | null;
   condominiumName: string | null;
   unit: string | null;
+  address: string | null;
+  postalCode: string | null;
   city: string | null;
+  propertyType: string | null;
+  bedrooms: number | null;
+  capacity: number | null;
   responsibleUserId: EntityId | null;
   startDateEstimate: string | null;
   completionDateEstimate: string | null;
@@ -150,6 +156,15 @@ export interface ImplementationItem {
   ownerVisible: boolean;
   completedAt: string | null;
   completedBy: EntityId | null;
+
+  /**
+   * Override formal de prontidão (seção 12 do plano): sem isto, um item
+   * "pulado" com `blocker`/`mandatory` continua contando como pendência de
+   * prontidão — "pulado" nunca significa "resolvido" automaticamente.
+   */
+  readinessOverrideReason: string | null;
+  readinessOverrideBy: string | null;
+  readinessOverrideAt: string | null;
 }
 
 export interface ProposalItem {
@@ -167,6 +182,8 @@ export interface Proposal {
   items: ProposalItem[];
   total: number;
   acceptedAt: string | null;
+  /** Nome digitado pelo proprietário ao marcar "li e concordo" — não é assinatura jurídica. */
+  acceptedName: string | null;
   createdAt: string;
 }
 
