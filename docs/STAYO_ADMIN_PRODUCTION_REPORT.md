@@ -128,14 +128,21 @@ commit desta sessão passou localmente por `tsc --noEmit`, `vitest run`,
 `eslint` (0 erros) e `vite build` antes do push.
 
 **17. Qual o status dos testes E2E?**
-Testes E2E manuais (Playwright, um script por mudança) rodaram contra o
-adapter local ao longo de toda a sessão, cobrindo o gate de autenticação
-(no-op sem Supabase), a tela de migração, e as telas tocadas em cada
-fase. A suíte formal multi-contexto exigida pela Fase 18 (30 passos
-admin↔owner, concorrência com duas conexões paralelas de verdade,
-secrets-in-bundle, LGPD/PII) **não foi construída nesta passada** —
-escopo grande demais para empacotar junto com o trabalho de schema/RLS
-desta sessão; fica como próximo passo explícito.
+Duas camadas. (a) Scripts manuais (Playwright ad hoc, um por mudança)
+rodaram contra o adapter local ao longo de toda a sessão, cobrindo o gate
+de autenticação, a tela de migração, e as telas tocadas em cada fase —
+não commitados, só validação pontual antes de cada push. (b) Uma suíte
+E2E de verdade, **commitada** em `e2e/` e rodando no CI
+(`bun run test:e2e`, `.github/workflows/ci.yml`): imutabilidade de
+versão de proposta (link da v1 nunca mostra a v2), ciclo de vida completo
+do convite de auto-cadastro (inexistente/expirado/revogado/usado/válido),
+e ausência de `service_role`/segredo no build de produção. As três
+rodam contra o adapter local, sem depender de credencial — são lógica de
+UI/cliente genuinamente testável assim. O que fica de fora: o cenário
+completo de 30 passos admin↔owner com dois `browser.newContext()` reais
+contra o MESMO Supabase, e os testes de concorrência com duas conexões
+paralelas de verdade — bloqueados pela mesma credencial externa (ver
+`e2e/README.md`).
 
 **18. Quais os bloqueios externos?**
 Um único, real, documentado desde o início: `VITE_SUPABASE_URL`/

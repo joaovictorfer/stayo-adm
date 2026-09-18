@@ -26,20 +26,20 @@ foi inventada em lugar nenhum do código ou dos testes.
 
 ## Migrations (schema completo, todas aplicadas e validadas contra o banco real)
 
-| #    | Arquivo                                 | Conteúdo                                                                                     |
-| ---- | --------------------------------------- | -------------------------------------------------------------------------------------------- |
-| 0001 | `0001_admin_foundation.sql`             | `admin_role` enum, `admin_profiles`, `audit_logs`, `has_admin_role()`/`current_admin_role()` |
-| 0002 | `0002_owner_records.sql`                | `owner_records`                                                                              |
-| 0003 | `0003_commercial_terms.sql`             | `commercial_term_defaults`, `commercial_terms`                                               |
-| 0004 | `0004_owner_portal_invitations.sql`     | `owner_portal_invitations` (schema — RPC pública só na 0007)                                 |
-| 0005 | `0005_outbound_messages.sql`            | `outbound_messages`                                                                          |
-| 0006 | `0006_initial_charges.sql`              | `initial_charges`                                                                            |
-| 0007 | `0007_owner_onboarding_submissions.sql` | `owner_onboarding_submissions` + RPCs públicas do convite                                    |
-| 0008 | `0008_admin_auth_bootstrap.sql`         | policy de bootstrap do 1º `super_admin`                                                      |
-| 0009 | `0009_implementation_projects.sql`      | `implementation_projects`, `implementation_items`                                            |
-| 0010 | `0010_proposals.sql`                    | `proposals`, `proposal_share_links` + RPCs públicas da proposta                              |
-| 0011 | `0011_checklist_templates.sql`          | `checklist_templates`                                                                        |
-| 0012 | `0012_owner_notes.sql`                  | `owner_notes`                                                                                |
+| #    | Arquivo                                 | Conteúdo                                                                                                                        |
+| ---- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 0001 | `0001_admin_foundation.sql`             | `admin_role` enum, `admin_profiles`, `audit_logs`, `has_admin_role()`/`current_admin_role()`                                    |
+| 0002 | `0002_owner_records.sql`                | `owner_records`                                                                                                                 |
+| 0003 | `0003_commercial_terms.sql`             | `commercial_term_defaults`, `commercial_terms`                                                                                  |
+| 0004 | `0004_owner_portal_invitations.sql`     | `owner_portal_invitations` (schema — RPC pública só na 0007)                                                                    |
+| 0005 | `0005_outbound_messages.sql`            | `outbound_messages`                                                                                                             |
+| 0006 | `0006_initial_charges.sql`              | `initial_charges`                                                                                                               |
+| 0007 | `0007_owner_onboarding_submissions.sql` | `owner_onboarding_submissions` + RPCs públicas do convite                                                                       |
+| 0008 | `0008_admin_auth_bootstrap.sql`         | policy de bootstrap do 1º `super_admin`                                                                                         |
+| 0009 | `0009_implementation_projects.sql`      | `implementation_projects`, `implementation_items`                                                                               |
+| 0010 | `0010_proposals.sql`                    | `proposals`, `proposal_share_links` + RPCs públicas da proposta                                                                 |
+| 0011 | `0011_checklist_templates.sql`          | `checklist_templates`                                                                                                           |
+| 0012 | `0012_owner_notes.sql`                  | `owner_notes`                                                                                                                   |
 | 0013 | `0013_owner_auth.sql`                   | `owner_portal_accounts`, `owner_id` em `owner_portal_invitations`, RLS de leitura própria do proprietário, `owner_account_link` |
 
 Todas em `supabase/migrations/`, em ordem, sem gaps — aplicar em sequência

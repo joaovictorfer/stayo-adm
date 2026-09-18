@@ -50,6 +50,15 @@ convite — só o token na URL e o banco. Não é o mesmo que rodar dois
 navegadores de verdade, mas é uma evidência real de que a arquitetura
 correta está implementada, não uma alegação vazia.
 
+## O que já é E2E commitado (não só validação pontual)
+
+`e2e/proposal-immutability.spec.ts` e `e2e/invitation-lifecycle.spec.ts`
+(Playwright, `bun run test:e2e`, também no CI) exercitam a UI de ponta a
+ponta contra o adapter local — não é um substituto do teste
+multi-dispositivo real, mas prova que a camada de UI/cliente se comporta
+certo, isolada da parte que só o Supabase real poderia validar (o
+transporte entre dois dispositivos de fato). Ver `e2e/README.md`.
+
 ## O que ainda falta, explicitamente
 
 - O teste E2E com dois `browser.newContext()` de verdade, de ponta a

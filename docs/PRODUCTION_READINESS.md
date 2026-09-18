@@ -16,6 +16,7 @@ o checklist resumido.
 - [x] Matriz de RLS testada por papel (`docs/RLS_MATRIX.md`)
 - [x] Importador do localStorage completo: detect→preview→import→validate→mark-migrated→report
 - [x] `owner_portal_accounts` — Owner Auth (conta própria do proprietário, RLS de leitura própria em 4 tabelas — Fase 17H)
+- [x] Suíte E2E real (Playwright, `e2e/`) — imutabilidade de versão de proposta, ciclo de vida do convite (inexistente/expirado/revogado/usado/válido), ausência de segredo no bundle de produção (`bun run test:e2e`, agora também no CI)
 
 ## Schema + RLS prontos, adapter ainda local (decisão deliberada, não esquecimento)
 
@@ -30,7 +31,7 @@ Motivo do adiamento e o que falta exatamente: `docs/DATA_PERSISTENCE.md`.
 
 - [ ] Owner Tasks ("Precisamos de você") — conceito novo, não construído (`docs/DATA_PERSISTENCE.md` nota)
 - [ ] Attachments/upload de documentos — conceito novo, não construído (idem)
-- [ ] Fase 18 — suite E2E multi-contexto completa (30 passos admin↔owner, concorrência de verdade com duas conexões paralelas, secrets-in-bundle, LGPD/PII) — não executada nesta passada
+- [ ] Fase 18 — o cenário completo de 30 passos admin↔owner com dois `browser.newContext()` de verdade contra o MESMO Supabase real, e os testes de concorrência com duas conexões paralelas de verdade — bloqueados pela mesma credencial externa (ver `e2e/README.md`; a parte que não depende dela — imutabilidade de versão, ciclo de vida do convite, secrets-in-bundle — já está commitada e roda no CI)
 - [ ] Validação HTTP real de `signInWithPassword`/`signUp` (time interno E proprietário) contra o Supabase — bloqueada por credencial externa
 
 ## Bloqueios externos (não inventados, não contornados)

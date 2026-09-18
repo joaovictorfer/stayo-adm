@@ -82,18 +82,18 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 
 ## Owner Auth — leitura própria do proprietário (`owner_portal_accounts`, migration 0013)
 
-| Ação                                                              | Papel                                    | Esperado                                                    | Resultado                |
-| ------------------------------------------------------------------ | ----------------------------------------- | -------------------------------------------------------------- | -------------------------- |
-| `owner_account_link(token válido, com owner_id)`                  | proprietário recém-cadastrado (via RPC)  | vincula `auth.uid()` ao `owner_id` do convite                  | ✅ linha criada em `owner_portal_accounts` |
-| `owner_account_link(mesmo token, mesmo usuário, de novo)`         | idem                                       | idempotente — devolve a conta já vinculada, sem erro           | ✅ mesmo `created_at`     |
-| `owner_account_link(token expirado)`                              | proprietário                              | rejeitado — `convite expirado`                                 | ✅                         |
-| `owner_account_link(token sem owner_id)`                          | proprietário                              | rejeitado — `convite sem proprietário vinculado`               | ✅                         |
-| `owner_account_link(qualquer token)`                              | `anon`                                    | rejeitado — `precisa estar autenticado`                        | ✅                         |
-| `select * from owner_records`                                    | proprietário vinculado                    | só o próprio registro                                          | ✅ 1 linha (o próprio)    |
-| `select * from implementation_projects`                          | proprietário vinculado                    | só a implantação do próprio `owner_id`                         | ✅ 1 linha                 |
-| `select * from proposals`                                        | proprietário vinculado                    | só a proposta da própria implantação                           | ✅ 1 linha                 |
-| `select * from initial_charges`                                  | proprietário vinculado                    | só a própria cobrança                                          | ✅ 1 linha                 |
-| `select` nas quatro tabelas acima                                 | um SEGUNDO proprietário (`owner_id` diferente) | 0 linhas em todas — isolamento entre proprietários             | ✅ `owner_records: 1` (só o próprio) `implementation_projects/proposals/initial_charges: 0` |
+| Ação                                                      | Papel                                          | Esperado                                             | Resultado                                                                                   |
+| --------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `owner_account_link(token válido, com owner_id)`          | proprietário recém-cadastrado (via RPC)        | vincula `auth.uid()` ao `owner_id` do convite        | ✅ linha criada em `owner_portal_accounts`                                                  |
+| `owner_account_link(mesmo token, mesmo usuário, de novo)` | idem                                           | idempotente — devolve a conta já vinculada, sem erro | ✅ mesmo `created_at`                                                                       |
+| `owner_account_link(token expirado)`                      | proprietário                                   | rejeitado — `convite expirado`                       | ✅                                                                                          |
+| `owner_account_link(token sem owner_id)`                  | proprietário                                   | rejeitado — `convite sem proprietário vinculado`     | ✅                                                                                          |
+| `owner_account_link(qualquer token)`                      | `anon`                                         | rejeitado — `precisa estar autenticado`              | ✅                                                                                          |
+| `select * from owner_records`                             | proprietário vinculado                         | só o próprio registro                                | ✅ 1 linha (o próprio)                                                                      |
+| `select * from implementation_projects`                   | proprietário vinculado                         | só a implantação do próprio `owner_id`               | ✅ 1 linha                                                                                  |
+| `select * from proposals`                                 | proprietário vinculado                         | só a proposta da própria implantação                 | ✅ 1 linha                                                                                  |
+| `select * from initial_charges`                           | proprietário vinculado                         | só a própria cobrança                                | ✅ 1 linha                                                                                  |
+| `select` nas quatro tabelas acima                         | um SEGUNDO proprietário (`owner_id` diferente) | 0 linhas em todas — isolamento entre proprietários   | ✅ `owner_records: 1` (só o próprio) `implementation_projects/proposals/initial_charges: 0` |
 
 ## O que esta matriz NÃO cobre ainda
 
