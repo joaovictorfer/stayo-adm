@@ -149,7 +149,22 @@ export interface AdminApiClient {
       note?: string | null;
     }): Promise<FieldConfirmation>;
   };
+  /** Fase 3 — cadastro estruturado do imóvel da implantação. */
+  propertyDetails: {
+    get(implementationId: string): Promise<ImplementationPropertyDetails | null>;
+    save(
+      implementationId: string,
+      input: ImplementationPropertyDetailsInput,
+    ): Promise<ImplementationPropertyDetails>;
+  };
+  /** Fase 3 — ambientes (quartos, banheiros, áreas) com camas e capacidade. */
+  rooms: {
+    listByImplementation(implementationId: string): Promise<ImplementationRoom[]>;
+    add(input: ImplementationRoomInput): Promise<ImplementationRoom>;
+    remove(id: string): Promise<void>;
+  };
 }
+
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
 // reusar a mesma chave em vez de duplicar a string em outro arquivo.
