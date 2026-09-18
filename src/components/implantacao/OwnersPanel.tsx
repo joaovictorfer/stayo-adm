@@ -108,7 +108,10 @@ export function OwnersPanel({ implementationId }: { implementationId: string }) 
 
   return (
     <div className="flex flex-col gap-4">
-      <Panel title="Proprietários e proponentes">
+      <Panel>
+        <h3 className="mb-3 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
+          Proprietários e proponentes
+        </h3>
         {links.isPending ? (
           <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
             Carregando...
@@ -221,7 +224,10 @@ export function OwnersPanel({ implementationId }: { implementationId: string }) 
         </form>
       </Panel>
 
-      <Panel title="Confirmação de dados">
+      <Panel>
+        <h3 className="mb-1 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
+          Confirmação de dados
+        </h3>
         <p className="mb-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           O que o proprietário alterar fica marcado como “Alterado pelo proprietário” até o time
           interno revisar — nenhuma informação crítica é sobrescrita em silêncio.
