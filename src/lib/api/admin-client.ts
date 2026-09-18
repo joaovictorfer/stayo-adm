@@ -776,11 +776,109 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const supplies: AdminApiClient["supplies"] = {
+    listByImplementation: (implementationId, module) =>
+      Promise.resolve(
+        read<SupplyItem>(SUPPLY_ITEMS_KEY)
+          .filter(
+            (i) => i.implementationId === implementationId && (!module || i.module === module),
+          )
+          .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)),
+      ),
+    add: async (input) => {
+      const now = new Date().toISOString();
+      const item: SupplyItem = {
+        id: newId(),
+        implementationId: input.implementationId,
+        module: input.module,
+        name: input.name,
+        room: input.room ?? null,
+        size: input.size ?? null,
+        requiredQty: input.requiredQty ?? 0,
+        existingQty: input.existingQty ?? 0,
+        status: input.status ?? "pendente",
+        priority: input.priority ?? "media",
+        responsible: input.responsible ?? null,
+        blocksReadiness: input.blocksReadiness ?? false,
+        notes: input.notes ?? null,
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      write(SUPPLY_ITEMS_KEY, [...read<SupplyItem>(SUPPLY_ITEMS_KEY), item]);
+      return item;
+    },
+    update: async (id, patch) => {
+      const all = read<SupplyItem>(SUPPLY_ITEMS_KEY);
+      const existing = all.find((i) => i.id === id);
+      if (!existing) throw new Error("Item não encontrado");
+      const updated: SupplyItem = { ...existing, ...patch, updatedAt: new Date().toISOString() };
+      write(
+        SUPPLY_ITEMS_KEY,
+        all.map((i) => (i.id === id ? updated : i)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        SUPPLY_ITEMS_KEY,
+        read<SupplyItem>(SUPPLY_ITEMS_KEY).filter((i) => i.id !== id),
+      );
+    },
+  };
+
+  const supplyTemplates: AdminApiClient["supplyTemplates"] = {
+    list: (module) =>
+      Promise.resolve(
+        read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY)
+          .filter((t) => !module || t.module === module)
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      ),
+    items: (templateId) =>
+      Promise.resolve(
+        read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY)
+          .filter((i) => i.templateId === templateId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    create: async (input) => {
+      const template: SupplyTemplate = {
+        id: newId(),
+        name: input.name,
+        module: input.module,
+        notes: input.notes ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      write(SUPPLY_TEMPLATES_KEY, [...read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY), template]);
+      write(SUPPLY_TEMPLATE_ITEMS_KEY, [
+        ...read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY),
+        ...input.items.map((item, index) => ({
+          ...item,
+          id: newId(),
+          templateId: template.id,
+          displayOrder: item.displayOrder ?? index,
+        })),
+      ]);
+      return template;
+    },
+    remove: async (id) => {
+      write(
+        SUPPLY_TEMPLATES_KEY,
+        read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY).filter((t) => t.id !== id),
+      );
+      write(
+        SUPPLY_TEMPLATE_ITEMS_KEY,
+        read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY).filter((i) => i.templateId !== id),
+      );
+    },
+  };
+
   return {
     audit,
     owners,
     propertyDetails,
     rooms,
+    supplies,
+    supplyTemplates,
     commercialTermDefaults,
     commercialTerms,
     outbox,
