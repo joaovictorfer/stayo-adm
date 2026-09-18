@@ -60,6 +60,18 @@ export const ownerTasksQuery = (ownerId: EntityId) =>
     queryFn: () => adminApi.ownerTasks.listByOwner(ownerId),
   });
 
+export const implementationOwnersQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["implementation-owners", implementationId],
+    queryFn: () => adminApi.implementationOwners.listByImplementation(implementationId),
+  });
+
+export const fieldConfirmationsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["field-confirmations", implementationId],
+    queryFn: () => adminApi.fieldConfirmations.listByImplementation(implementationId),
+  });
+
 export const propertiesListQuery = () =>
   queryOptions({
     queryKey: ["properties", "list"],
