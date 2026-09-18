@@ -40,15 +40,62 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 | `insert into admin_profiles (role: super_admin)` | 2º usuário autenticado, tabela já com 1 linha      | rejeitado | ✅ `42501` (depois de corrigir o bug do `exists` filtrado por RLS — ver `docs/AUTH_AND_ROLES.md`) |
 | `insert into admin_profiles (role: commercial)`  | `super_admin` já existente convidando o 2º usuário | aceito    | ✅ linha criada                                                                                   |
 
+## Implantações e checklist (`implementation_projects`, `implementation_items`, migration 0009)
+
+| Ação                                        | Papel        | Esperado                                     | Resultado                |
+| ------------------------------------------- | ------------ | --------------------------------------------- | ------------------------- |
+| `select * from implementation_projects`     | `anon`       | 0 linhas                                       | ✅ `anon_can_see: 0`      |
+| `select * from implementation_items`        | `anon`       | 0 linhas                                       | ✅ `anon_can_see: 0`      |
+| `insert into implementation_projects`       | `operations` | aceito                                         | ✅ linha criada           |
+| `select * from implementation_projects`     | `viewer`     | lê normalmente                                 | ✅ `viewer_can_read: 1`   |
+| `insert into implementation_projects`       | `viewer`     | rejeitado                                      | ✅ `42501`                |
+| `insert into implementation_projects`       | `finance`    | rejeitado (não gerencia implantações)          | ✅ `42501`                |
+| `insert into implementation_items`          | `operations` | aceito                                         | ✅ linha criada           |
+| `insert into implementation_items`          | `viewer`     | rejeitado                                      | ✅ `42501`                |
+
+## Propostas e link público por versão (`proposals`, `proposal_share_links`, migration 0010)
+
+| Ação                                               | Papel            | Esperado                                                  | Resultado                |
+| --------------------------------------------------- | ---------------- | ---------------------------------------------------------- | ------------------------ |
+| `select * from proposals`                          | `anon`           | 0 linhas                                                    | ✅ `anon_direct_select_proposals: 0` |
+| `select * from proposal_share_links`               | `anon`           | 0 linhas (nunca expõe `token_hash` por leitura direta)      | ✅ `anon_direct_select_links: 0` |
+| `proposal_resolve_by_token(token válido)`          | `anon` (via RPC) | resolve a versão exata vinculada ao link, nunca `token_hash`| ✅                       |
+| `proposal_resolve_by_token(token inexistente)`     | `anon`           | 0 linhas                                                    | ✅                       |
+| `proposal_accept_by_token(token válido, "Nome A")` | `anon`           | grava `accepted_at`/`accepted_name`                         | ✅                       |
+| `proposal_accept_by_token(mesmo token, "Nome B")`  | `anon`           | idempotente — devolve o registro já aceito, NÃO troca para "Nome B" | ✅ `accepted_name` continua "Nome A" |
+| `insert into proposals` com `(implementation_id, version)` já existente | `commercial` | rejeitado (`unique`) — garante que duas criações simultâneas da mesma versão nunca colidem | ✅ `23505 duplicate key` |
+| `insert into proposals`                            | `viewer`         | rejeitado                                                   | ✅ `42501`                |
+| `insert into proposals`                            | `commercial`     | aceito                                                      | ✅ linha criada           |
+
 ## O que esta matriz NÃO cobre ainda
 
 - **Owner Auth** (proprietário autenticado por conta própria, não só por
   token) — não existe ainda, ver `docs/AUTH_AND_ROLES.md`. Não há RLS de
   "proprietário só vê o próprio registro" para testar.
-- **`proposals`/`implementation_projects`/demais tabelas ainda sem
-  schema** (ver `docs/LOCALSTORAGE_MIGRATION.md`) — não existem no banco
-  ainda, então não há RLS para testar.
 - **Login real via `supabase-js` (`signInWithPassword`)** — os testes
   acima simulam o papel/uid diretamente no Postgres; não exercitam o
   endpoint HTTP de Auth do Supabase de ponta a ponta (bloqueado por
   credencial externa — sem `VITE_SUPABASE_ANON_KEY` neste ambiente).
+- **Concorrência real (duas conexões simultâneas de verdade)** — os
+  testes de unicidade acima provam que o banco rejeita a colisão
+  (`constraint` de banco, não checagem em memória do app), mas foram
+  executados em sequência dentro da mesma sessão de teste, não como duas
+  conexões de fato paralelas. Um teste de concorrência real (dois
+  `INSERT`/RPC disparados ao mesmo tempo, de duas conexões) fica para a
+  Fase 18C (Playwright multi-contexto).
+
+## Nota de metodologia: `reset role` não limpa `request.jwt.claims`
+
+Ao testar vários papéis na mesma transação (`set local role X; ...; reset
+role; set local role Y; ...`), descobrimos que `reset role` só reseta o
+papel do Postgres — **não** limpa `request.jwt.claims`, que é uma
+variável de sessão separada. Isso quase gerou um falso positivo: testar
+`anon` logo depois de testar um papel autenticado, sem também resetar
+`request.jwt.claims` (ou setá-la para `'{}'`), faz `auth.uid()` continuar
+devolvendo o uid do usuário anterior — então `has_admin_role(...)`
+avaliava como se `anon` ainda fosse aquele usuário autenticado. Todo teste
+de `anon` nesta matriz sempre inclui `set local request.jwt.claims to
+'{}'` explicitamente, junto com `set local role anon`, para evitar esse
+artefato. Em produção isto nunca acontece de verdade — cada requisição do
+PostgREST é uma conexão/transação nova, sem estado residual de uma
+requisição anterior — mas vale registrar como cuidado de teste.

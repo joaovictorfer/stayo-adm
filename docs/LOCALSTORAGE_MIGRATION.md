@@ -57,16 +57,29 @@ que fica fora do escopo desta fase. O histórico de auditoria do protótipo
 recomeça do zero, o que é aceitável para um log de eventos (não é dado de
 negócio).
 
+## Schema e RLS prontos, adapter ainda local (Fase 17E/G)
+
+Estas quatro chaves ganharam tabela + RLS real nesta fase (migrations
+`0009`/`0010`, testadas contra o banco real — ver `docs/RLS_MATRIX.md`),
+mas **o adapter/UI continua lendo do mock local** — trocar a leitura é
+uma refatoração de superfície grande demais para empacotar junto com o
+schema (toda tela de Implantação/Portal/Proposta/Dashboard/BI referencia
+`implementationId`). Ver `docs/DATA_PERSISTENCE.md` para o estado exato,
+tabela por tabela, e o que falta para trocar cada uma.
+
+| Chave localStorage | Tipo | Onde vive hoje (leitura real hoje) | Tabela Supabase (schema já existe) | Migration |
+| --- | --- | --- | --- | --- |
+| `stayo-admin:implementations` | `ImplementationProject` | `CoreApiClient` mock (`core-client.ts`) | `implementation_projects` | `0009_implementation_projects.sql` |
+| `stayo-admin:implementation-items` | `ImplementationItem` (checklist) | `CoreApiClient` mock (`core-client.ts`) | `implementation_items` | `0009_implementation_projects.sql` |
+| `stayo-admin:proposals` | `Proposal` (versões) | `proposalsStore` (`local-store.ts`) | `proposals` | `0010_proposals.sql` |
+| `stayo-admin:proposal-share-links` | `ProposalShareLink` | `proposalShareStore` (`local-store.ts`) | `proposal_share_links` | `0010_proposals.sql` |
+
 ## Sem schema Supabase ainda (dado de negócio real — precisa de migração futura)
 
 | Chave localStorage                 | Tipo                                             | Onde vive hoje                               | Nota                                                                                                                                                                                                                                                                                                                             |
 | ---------------------------------- | ------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stayo-admin:proposals`            | `Proposal` (versões)                             | `proposalsStore` (`local-store.ts`)          | Nenhuma migration criada; é dado real (propostas comerciais versionadas, aceite do proprietário) — precisa de tabela própria com FK lógica para `implementation_id` no mesmo padrão de `commercial_terms`.                                                                                                                       |
-| `stayo-admin:proposal-share-links` | `ProposalShareLink`                              | `proposalShareStore` (`local-store.ts`)      | Idem — o link público por versão de proposta também não tem tabela ainda.                                                                                                                                                                                                                                                        |
 | `stayo-admin:owner-notes`          | Notas internas por proprietário                  | `ownerNotesStore` (`local-store.ts`)         | Anotação livre da Central do Proprietário; sem tabela ainda.                                                                                                                                                                                                                                                                     |
 | `stayo-admin:checklist-templates`  | Templates de checklist de implantação            | `checklistTemplatesStore` (`local-store.ts`) | Configuração (não é dado transacional), mas ainda assim precisa sobreviver — sem tabela ainda.                                                                                                                                                                                                                                   |
-| `stayo-admin:implementations`      | `ImplementationProject`                          | `CoreApiClient` mock (`core-client.ts`)      | Decisão registrada em `docs/OWNER_IMPLEMENTATION_ARCHITECTURE.md` §5/§6: fica no mock do Core por ora, mas é dado real de pré-imóvel/implantação digitado pelo time — precisa de tabela própria (`implementation_projects`) quando for extraído do mock, com as demais tabelas acima passando a referenciá-lo por FK de verdade. |
-| `stayo-admin:implementation-items` | `ImplementationItem` (checklist por implantação) | `CoreApiClient` mock (`core-client.ts`)      | Mesma situação do item acima — inclui os campos de override de prontidão (Fase 5), que são dado de auditoria operacional real.                                                                                                                                                                                                   |
 
 ## Nunca migra (dado fictício do mock do Core — descartado quando o Core real existir)
 
@@ -121,3 +134,38 @@ resolver. Corrigido diretamente no arquivo da migration.
 
 Todos os dados de teste usados nessa validação foram removidos depois —
 o banco fica com o schema aplicado e vazio, pronto para dado real.
+
+## Validação contra um projeto Supabase real (Fase 17E/G)
+
+As migrations `0009_implementation_projects.sql` e `0010_proposals.sql`
+também foram aplicadas e validadas diretamente contra o mesmo projeto
+Supabase real — não é só leitura estática do SQL. Cobriu:
+
+- RLS por papel em `implementation_projects`/`implementation_items`:
+  `anon` não lê nenhuma das duas, `viewer` lê mas não escreve,
+  `operations` escreve, `finance` não escreve (não gerencia
+  implantações) — ver `docs/RLS_MATRIX.md`.
+- O caminho público de `proposals`/`proposal_share_links` via as funções
+  `security definer` (`proposal_resolve_by_token`/
+  `proposal_accept_by_token`): `anon` não lê nenhuma das duas tabelas
+  diretamente, resolve uma proposta por token e aceita via RPC; um
+  segundo aceite com nome diferente é idempotente (não sobrescreve o
+  aceite original — a versão aceita continua imutável).
+- A constraint `unique (implementation_id, version)` de `proposals`:
+  confirmada rejeitando um segundo `insert` da mesma versão — é isso que
+  garante, no próprio banco (não só em memória do app), que duas criações
+  simultâneas da mesma versão nunca colidem.
+
+Um bug real foi encontrado e corrigido neste processo (não só na fase
+anterior): a primeira versão de `proposal_accept_by_token` usava
+`RETURNS TABLE (accepted_at timestamptz, ...)`, e dentro do corpo da
+função o nome `accepted_at` virou uma variável implícita que colidia
+("ambíguo", erro `42702`) com a coluna de mesmo nome em `proposals`
+referenciada sem qualificador no `UPDATE`/`WHERE`. Corrigido qualificando
+todas as referências com o alias da tabela (`pr.accepted_at`, `pr.id`)
+dentro do corpo da função — ver comentário no próprio arquivo da
+migration.
+
+Todos os dados de teste (perfis, proprietário, implantação, proposta,
+link) foram removidos depois — confirmado por contagem zerada em todas
+as tabelas antes de seguir para a próxima fase.
