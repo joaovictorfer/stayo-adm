@@ -75,7 +75,9 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "proprietarios" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<
+    "resumo" | "proprietarios" | "imovel" | "checklist" | "proposta"
+  >("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
