@@ -47,6 +47,15 @@ import type {
   ImplementationRoom,
   ImplementationRoomInput,
 } from "../../types/implementation-property";
+import type {
+  SupplyItem,
+  SupplyItemInput,
+  SupplyItemPatch,
+  SupplyModule,
+  SupplyTemplate,
+  SupplyTemplateInput,
+  SupplyTemplateItem,
+} from "../../types/implementation-supply";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
