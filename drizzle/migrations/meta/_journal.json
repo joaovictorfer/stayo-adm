@@ -15,6 +15,13 @@
       "when": 1789775575588,
       "tag": "0001_implementation_property_details",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789775881449,
+      "tag": "0002_implementation_supplies",
+      "breakpoints": true
     }
   ]
 }
