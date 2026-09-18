@@ -126,6 +126,23 @@ export interface AdminApiClient {
       input: OwnerOnboardingSubmissionInput,
     ): Promise<OwnerOnboardingSubmission>;
   };
+  /** Fase 2 — vários proprietários/proponentes por implantação (relação, nunca campos duplicados). */
+  implementationOwners: {
+    listByImplementation(implementationId: string): Promise<ImplementationOwnerLink[]>;
+    add(input: ImplementationOwnerLinkInput): Promise<ImplementationOwnerLink>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 2 — estado de confirmação campo a campo; nada é sobrescrito em silêncio. */
+  fieldConfirmations: {
+    listByImplementation(implementationId: string): Promise<FieldConfirmation[]>;
+    setState(input: {
+      implementationId: string;
+      fieldKey: string;
+      state: OwnerFieldState;
+      valueSnapshot?: string | null;
+      note?: string | null;
+    }): Promise<FieldConfirmation>;
+  };
 }
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
@@ -139,6 +156,8 @@ export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
+export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
+export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
