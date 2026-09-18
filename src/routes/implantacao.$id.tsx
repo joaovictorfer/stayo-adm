@@ -12,6 +12,7 @@ import {
   Panel,
 } from "../components/data/ListStates";
 import { AttentionPanel, attentionItems } from "../components/implantacao/AttentionPanel";
+import { OwnersPanel } from "../components/implantacao/OwnersPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -73,7 +74,7 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<"resumo" | "proprietarios" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -143,7 +144,7 @@ function ImplementationDetailPage() {
 
 
           <div className="flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "checklist", "proposta"] as const).map((t) => (
+            {(["resumo", "proprietarios", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -155,7 +156,13 @@ function ImplementationDetailPage() {
                     tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
                 }}
               >
-                {t === "resumo" ? "Resumo" : t === "checklist" ? "Checklist" : "Proposta"}
+                {t === "resumo"
+                  ? "Resumo"
+                  : t === "proprietarios"
+                    ? "Proprietários"
+                    : t === "checklist"
+                      ? "Checklist"
+                      : "Proposta"}
               </button>
             ))}
           </div>
@@ -225,6 +232,8 @@ function ImplementationDetailPage() {
                 <Timeline entries={recentActivity(itemsQuery.data ?? [])} />
               </div>
             </div>
+          ) : tab === "proprietarios" ? (
+            <OwnersPanel implementationId={implementation.id} />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
