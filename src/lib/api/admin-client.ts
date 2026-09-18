@@ -26,6 +26,9 @@ import type {
   OutboundMessageInput,
   OwnerRecord,
   OwnerRecordInput,
+  OwnerTask,
+  OwnerTaskInput,
+  OwnerTaskStatus,
 } from "../../types/admin";
 import type {
   OwnerOnboardingLink,
@@ -87,6 +90,12 @@ export interface AdminApiClient {
       patch?: { paymentReference?: string | null; paidAt?: string | null },
     ): Promise<InitialCharge>;
   };
+  ownerTasks: {
+    listByOwner(ownerId: string): Promise<OwnerTask[]>;
+    create(input: OwnerTaskInput): Promise<OwnerTask>;
+    /** Só o time interno chama isto — nunca o proprietário sob a própria sessão (RLS não tem policy de escrita para ele). */
+    updateStatus(id: string, status: OwnerTaskStatus): Promise<OwnerTask>;
+  };
   ownerOnboarding: {
     /** Convite mais recente desta implantação, qualquer que seja o status. */
     getLink(implementationId: string): Promise<OwnerOnboardingLink | null>;
@@ -129,6 +138,7 @@ export const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
 export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
+export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
@@ -517,6 +527,45 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const ownerTasks: AdminApiClient["ownerTasks"] = {
+    listByOwner: (ownerId) =>
+      Promise.resolve(
+        [...read<OwnerTask>(OWNER_TASKS_KEY)]
+          .filter((t) => t.ownerId === ownerId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      ),
+    create: async (input) => {
+      const task: OwnerTask = {
+        id: newId(),
+        ownerId: input.ownerId,
+        implementationId: input.implementationId,
+        kind: input.kind,
+        title: input.title,
+        description: input.description,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      };
+      write(OWNER_TASKS_KEY, [...read<OwnerTask>(OWNER_TASKS_KEY), task]);
+      return task;
+    },
+    updateStatus: async (id, status) => {
+      const all = read<OwnerTask>(OWNER_TASKS_KEY);
+      const target = all.find((t) => t.id === id);
+      if (!target) throw new Error("Pendência não encontrada");
+      const updated: OwnerTask = {
+        ...target,
+        status,
+        completedAt: status === "done" ? new Date().toISOString() : null,
+      };
+      write(
+        OWNER_TASKS_KEY,
+        all.map((t) => (t.id === id ? updated : t)),
+      );
+      return updated;
+    },
+  };
+
   return {
     audit,
     owners,
@@ -525,6 +574,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
     outbox,
     initialCharges,
     ownerOnboarding,
+    ownerTasks,
   };
 }
 
@@ -713,6 +763,32 @@ function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardin
     usedAt: row.used_at,
     revokedAt: row.revoked_at,
     lastAccessAt: row.last_access_at,
+  };
+}
+
+interface OwnerTaskRow {
+  id: string;
+  owner_id: string;
+  implementation_id: string | null;
+  kind: string;
+  title: string;
+  description: string | null;
+  status: OwnerTaskStatus;
+  created_at: string;
+  completed_at: string | null;
+}
+
+function ownerTaskFromRow(row: OwnerTaskRow): OwnerTask {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    implementationId: row.implementation_id,
+    kind: row.kind,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
   };
 }
 
@@ -1211,6 +1287,44 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const ownerTasks: AdminApiClient["ownerTasks"] = {
+    listByOwner: async (ownerId) => {
+      const { data, error } = await client()
+        .from("owner_tasks")
+        .select()
+        .eq("owner_id", ownerId)
+        .order("created_at", { ascending: false })
+        .returns<OwnerTaskRow[]>();
+      if (error) throw error;
+      return data.map(ownerTaskFromRow);
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("owner_tasks")
+        .insert({
+          owner_id: input.ownerId,
+          implementation_id: input.implementationId,
+          kind: input.kind,
+          title: input.title,
+          description: input.description,
+        })
+        .select()
+        .single<OwnerTaskRow>();
+      if (error) throw error;
+      return ownerTaskFromRow(data);
+    },
+    updateStatus: async (id, status) => {
+      const { data, error } = await client()
+        .from("owner_tasks")
+        .update({ status, completed_at: status === "done" ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select()
+        .single<OwnerTaskRow>();
+      if (error) throw error;
+      return ownerTaskFromRow(data);
+    },
+  };
+
   return {
     audit,
     owners,
@@ -1219,6 +1333,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     outbox,
     initialCharges,
     ownerOnboarding,
+    ownerTasks,
   };
 }
 

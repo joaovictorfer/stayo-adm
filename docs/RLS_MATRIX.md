@@ -95,10 +95,22 @@ removidos depois — o banco fica limpo, só com o schema aplicado.
 | `select * from initial_charges`                           | proprietário vinculado                         | só a própria cobrança                                | ✅ 1 linha                                                                                  |
 | `select` nas quatro tabelas acima                         | um SEGUNDO proprietário (`owner_id` diferente) | 0 linhas em todas — isolamento entre proprietários   | ✅ `owner_records: 1` (só o próprio) `implementation_projects/proposals/initial_charges: 0` |
 
+## Owner Tasks — "Precisamos de você" (`owner_tasks`, migration 0014)
+
+| Ação                                  | Papel                       | Esperado                                     | Resultado                |
+| -------------------------------------- | ---------------------------- | ----------------------------------------------- | -------------------------- |
+| `select * from owner_tasks`           | `anon`                      | 0 linhas                                        | ✅ `anon_can_see: 0`      |
+| `insert into owner_tasks`             | `operations`                | aceito                                          | ✅ linha criada           |
+| `select * from owner_tasks`           | `viewer`                    | lê normalmente                                  | ✅ `viewer_can_read: 1`   |
+| `insert into owner_tasks`             | `viewer`                    | rejeitado                                       | ✅ `42501`                |
+| `select * from owner_tasks`           | proprietário dono da tarefa | vê a própria pendência                          | ✅ 1 linha                |
+| `select * from owner_tasks`           | outro proprietário          | 0 linhas — isolamento                           | ✅ `owner_b_sees: 0`      |
+| `update owner_tasks` (marcar `done`)  | proprietário dono da tarefa | 0 linhas afetadas (RLS filtra, sem erro)        | ✅ status continua `pending` |
+
 ## O que esta matriz NÃO cobre ainda
 
-- **Owner Tasks/Attachments** — conceitos novos, não construídos, sem
-  tabela nem RLS ainda (ver `docs/DATA_PERSISTENCE.md`).
+- **Attachments** — conceito novo, não construído, sem tabela nem RLS
+  ainda (ver `docs/DATA_PERSISTENCE.md`).
 - **Login real via `supabase-js` (`signInWithPassword`/`signUp`)** — os testes
   acima simulam o papel/uid diretamente no Postgres; não exercitam o
   endpoint HTTP de Auth do Supabase de ponta a ponta (bloqueado por

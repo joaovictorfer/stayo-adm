@@ -255,9 +255,17 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
   if (createAccount.isSuccess) {
     return (
       <p className="mt-4 text-sm" style={{ color: "var(--stayo-forest)" }}>
-        {createAccount.data.account
-          ? "Conta criada e vinculada! Você já pode entrar com este e-mail e senha para acompanhar depois."
-          : "Conta criada — confirme seu e-mail para poder entrar depois."}
+        {createAccount.data.account ? (
+          <>
+            Conta criada e vinculada! Você já pode{" "}
+            <a href="/portal/login" className="underline">
+              entrar
+            </a>{" "}
+            com este e-mail e senha para acompanhar depois.
+          </>
+        ) : (
+          "Conta criada — confirme seu e-mail para poder entrar depois."
+        )}
       </p>
     );
   }

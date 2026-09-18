@@ -19,13 +19,14 @@ import {
   contractsListQuery,
   ownerNoteQuery,
   ownerQuery,
+  ownerTasksQuery,
   payoutsListQuery,
   propertiesListQuery,
   reservationsListQuery,
   serviceInvoicesListQuery,
 } from "../lib/api/queries";
 import { formatMoney } from "../lib/format";
-import type { OwnerLifecycleStatus, OwnerRecord } from "../types/admin";
+import type { OwnerLifecycleStatus, OwnerRecord, OwnerTaskStatus } from "../types/admin";
 import type { Contract, Reservation, ServiceInvoice } from "../types/core";
 
 const lifecycleLabels: Record<OwnerLifecycleStatus, string> = {
@@ -251,6 +252,8 @@ function OwnerDetailPage() {
             )}
           </div>
 
+          <OwnerTasksPanel ownerId={id} />
+
           <OwnerNotesPanel ownerId={id} />
         </div>
       )}
@@ -460,6 +463,143 @@ function ContactField({
         style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
       />
     </label>
+  );
+}
+
+const ownerTaskKindLabels: Record<string, string> = {
+  banking_data: "Dado bancário",
+  wifi_info: "Wi-Fi",
+  regulation_document: "Documento de regularização",
+  custom: "Outro",
+};
+
+const ownerTaskStatusLabels: Record<OwnerTaskStatus, string> = {
+  pending: "Pendente",
+  done: "Resolvida",
+  dismissed: "Dispensada",
+};
+
+/**
+ * "Precisamos de você" (Fase 17I) — pendências que o proprietário
+ * precisa resolver, visíveis também para ele no portal. Marcar como
+ * resolvida é sempre uma ação do time interno confirmando que o dado
+ * chegou de verdade — a RLS nem permite o proprietário escrever aqui.
+ */
+function OwnerTasksPanel({ ownerId }: { ownerId: string }) {
+  const queryClient = useQueryClient();
+  const query = useQuery(ownerTasksQuery(ownerId));
+  const [kind, setKind] = useState("banking_data");
+  const [title, setTitle] = useState("");
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["owner-tasks", ownerId] });
+
+  const create = useMutation({
+    mutationFn: () =>
+      adminApi.ownerTasks.create({
+        ownerId,
+        implementationId: null,
+        kind,
+        title: title.trim(),
+        description: null,
+      }),
+    onSuccess: async () => {
+      setTitle("");
+      await invalidate();
+    },
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: (params: { id: string; status: OwnerTaskStatus }) =>
+      adminApi.ownerTasks.updateStatus(params.id, params.status),
+    onSuccess: invalidate,
+  });
+
+  const tasks = query.data ?? [];
+  const pending = tasks.filter((t) => t.status === "pending");
+
+  return (
+    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2
+        className="mb-3 text-sm"
+        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+      >
+        Precisamos de você{" "}
+        {pending.length > 0 ? `(${pending.length} pendente${pending.length === 1 ? "" : "s"})` : ""}
+      </h2>
+
+      {query.isPending ? (
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Carregando...
+        </p>
+      ) : tasks.length === 0 ? (
+        <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Nenhuma pendência registrada.
+        </p>
+      ) : (
+        <ul className="mb-3 divide-y text-sm" style={{ borderColor: "var(--stayo-border)" }}>
+          {tasks.map((task) => (
+            <li key={task.id} className="flex items-center justify-between gap-2 py-2">
+              <div>
+                <p>{task.title}</p>
+                <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                  {ownerTaskKindLabels[task.kind] ?? task.kind} ·{" "}
+                  {ownerTaskStatusLabels[task.status]}
+                </p>
+              </div>
+              {task.status === "pending" && (
+                <button
+                  type="button"
+                  onClick={() => updateStatus.mutate({ id: task.id, status: "done" })}
+                  disabled={updateStatus.isPending}
+                  className="rounded-[var(--radius-control)] border px-2 py-1 text-xs disabled:opacity-60"
+                  style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-forest)" }}
+                >
+                  Marcar resolvida
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (title.trim() === "") return;
+          create.mutate();
+        }}
+      >
+        <select
+          value={kind}
+          onChange={(e) => setKind(e.target.value)}
+          className="rounded-[var(--radius-control)] border px-2 py-2 text-sm"
+          style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+        >
+          {Object.entries(ownerTaskKindLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="O que falta?"
+          className="min-w-[160px] flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+          style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+        />
+        <button
+          type="submit"
+          disabled={create.isPending || title.trim() === ""}
+          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
+          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+        >
+          {create.isPending ? "Adicionando..." : "Adicionar pendência"}
+        </button>
+      </form>
+    </div>
   );
 }
 

@@ -54,6 +54,12 @@ export const initialChargesQuery = (implementationId: EntityId) =>
     queryFn: () => adminApi.initialCharges.listByImplementation(implementationId),
   });
 
+export const ownerTasksQuery = (ownerId: EntityId) =>
+  queryOptions({
+    queryKey: ["owner-tasks", ownerId],
+    queryFn: () => adminApi.ownerTasks.listByOwner(ownerId),
+  });
+
 export const propertiesListQuery = () =>
   queryOptions({
     queryKey: ["properties", "list"],

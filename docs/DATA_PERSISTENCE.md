@@ -23,7 +23,7 @@ confundir "schema existe" com "está em produção" — as duas colunas
 | Templates de checklist (`ChecklistTemplateItem`)                | ✅ real, testado (Fase 17F)                              | ❌ ainda lê de `checklistTemplatesStore` (`local-store.ts`)      | `0011_checklist_templates.sql`          | `docs/RLS_MATRIX.md`                                          |
 | Notas do proprietário (`ownerNotesStore`)                       | ✅ real, testado (Fase 17F)                              | ❌ ainda lê de `ownerNotesStore` (`local-store.ts`)              | `0012_owner_notes.sql`                  | idem                                                          |
 | Owner Auth (`owner_portal_accounts`)                            | ✅ real, testado (Fase 17H)                              | ✅ Supabase quando configurado (`owner-session.ts`, RPC)         | `0013_owner_auth.sql`                   | `docs/RLS_MATRIX.md`, `docs/AUTH_AND_ROLES.md`                |
-| Owner Tasks ("Precisamos de você")                              | ❌ não existe (conceito novo, não construído nesta fase) | ❌ não existe                                                    | —                                       | ver nota "Owner Tasks" abaixo                                 |
+| Owner Tasks ("Precisamos de você", `owner_tasks`)               | ✅ real, testado (Fase 17I)                              | ✅ Supabase quando configurado (admin cria/gerencia, proprietário só lê) | `0014_owner_tasks.sql`           | `docs/RLS_MATRIX.md`                                          |
 | Anexos/documentos (attachments)                                 | ❌ não existe (conceito novo, não construído nesta fase) | ❌ não existe                                                    | —                                       | ver nota "Attachments" abaixo                                 |
 
 ## Por que `implementation_projects`/`proposals` têm schema mas não adapter
@@ -92,16 +92,21 @@ Com a Fase 17B (Supabase Auth do time interno) isso já não é mais
 teórico: qualquer usuário autenticado real grava `actor_id` de verdade.
 Ver `docs/AUTH_AND_ROLES.md` para o estado da autenticação.
 
-## Nota: Owner Tasks ("Precisamos de você")
+## Owner Tasks ("Precisamos de você", Fase 17I)
 
-O prompt mestre da Fase 17I pede um conceito novo — pendências do
-proprietário (dado bancário faltando, Wi-Fi faltando, documento de
-regularização faltando etc.) visíveis tanto para o admin quanto para o
-proprietário. Isto **não foi construído nesta passada**: é um módulo de
-negócio genuinamente novo (não uma extração de dado já existente do
-mock), e a mesma Fase 17 também instrui explicitamente a não criar novos
-módulos de negócio não planejados fora do que já está desenhado. Fica
-registrado aqui como lacuna conhecida, não como "feito silenciosamente".
+Construído: tabela `owner_tasks` (migration `0014`), RLS (time interno
+gerencia; proprietário só lê a própria pendência, via a mesma
+`owner_portal_accounts` da Fase 17H — nenhuma tabela nova de vínculo),
+adapter completo (local + Supabase) e UI dos dois lados: o admin cria e
+marca como resolvida em `/proprietarios/$id` (painel "Precisamos de
+você"), o proprietário vê a lista de pendências em `/portal/inicio`
+depois de entrar em `/portal/login`. Deliberadamente sem escrita do
+proprietário — resolver uma pendência é sempre o time interno
+confirmando que o dado chegou de verdade, nunca um `update` direto do
+proprietário sob a própria sessão (a RLS nem tem policy de escrita para
+ele). Validado contra o banco real: isolamento entre dois proprietários
+diferentes, `anon`/`viewer` sem escrita, `update` do proprietário
+afetando zero linhas silenciosamente (mesmo padrão de `owner_notes`).
 
 ## Nota: Attachments (documentos/anexos)
 

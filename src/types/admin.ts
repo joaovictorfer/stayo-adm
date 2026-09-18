@@ -112,6 +112,33 @@ export type OutboundMessageInput = Omit<
   "id" | "status" | "providerMessageId" | "error" | "createdAt" | "sentAt" | "failedAt"
 >;
 
+export type OwnerTaskStatus = "pending" | "done" | "dismissed";
+
+/**
+ * Pendência do proprietário ("Precisamos de você", seção 17I do plano) —
+ * dado bancário faltando, Wi-Fi faltando, documento de regularização
+ * faltando etc. Visível tanto para o admin (que cria/gerencia) quanto
+ * para o próprio proprietário (só leitura — marcar como resolvida é
+ * sempre o time interno confirmando, nunca um `update` do proprietário
+ * sob a própria sessão).
+ */
+export interface OwnerTask {
+  id: EntityId;
+  ownerId: EntityId;
+  implementationId: EntityId | null;
+  kind: string;
+  title: string;
+  description: string | null;
+  status: OwnerTaskStatus;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export type OwnerTaskInput = Pick<
+  OwnerTask,
+  "ownerId" | "implementationId" | "kind" | "title" | "description"
+>;
+
 export type InitialChargeStatus = "draft" | "issued" | "pending" | "paid" | "cancelled" | "overdue";
 
 export interface InitialChargeItem {

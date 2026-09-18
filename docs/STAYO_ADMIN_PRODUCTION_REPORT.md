@@ -153,9 +153,11 @@ lugar nenhum para contornar isso.
 
 **19. O que está pronto para produção, e o que não está?**
 Ver `docs/PRODUCTION_READINESS.md` para o checklist completo. Resumo:
-time interno e proprietário (auth + RLS + 8 verticais de dado, incluindo
-Owner Auth) estão prontos para produção assim que a credencial existir
-neste deploy; 4 verticais têm schema/RLS prontos mas ainda leem do mock
-local (troca de adapter é o próximo passo natural); Owner Tasks e
-Attachments não foram construídos (conceitos novos, fora do escopo desta
-passada); a suíte E2E formal da Fase 18 não foi executada.
+time interno e proprietário (auth + RLS + 9 verticais de dado, incluindo
+Owner Auth e Owner Tasks) estão prontos para produção assim que a
+credencial existir neste deploy; 4 verticais têm schema/RLS prontos mas
+ainda leem do mock local (troca de adapter é o próximo passo natural);
+Attachments não foi construído (conceito novo, fora do escopo desta
+passada); o cenário multi-contexto completo da Fase 18 e a suíte de
+concorrência real seguem bloqueados por credencial (a parte que não
+depende dela já está commitada em `e2e/` e roda no CI).
