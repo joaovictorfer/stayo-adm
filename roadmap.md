@@ -9,3 +9,4 @@
 - [x] Validação final desktop/mobile e regressões
 
 - [x] Fase 4 — Portal do Proprietário em modo Implantação
+- [ ] Fase 5 — Cadastro integrado e retomável do proprietário no Portal
