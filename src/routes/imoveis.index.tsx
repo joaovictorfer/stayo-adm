@@ -42,7 +42,7 @@ function PropertiesPage() {
 
   return (
     <>
-      <PageHeader title="Imóveis" count={query.isSuccess ? rows.length : undefined} subtitle="Portfólio sob gestão e seu contexto operacional">
+      <PageHeader title="Imóveis" count={query.isSuccess ? rows.length : undefined} subtitle="Portfólio sob gestão e seu contexto operacional" stackOnMobile>
         <SearchInput value={q} onChange={setQ} placeholder="Buscar por nome ou código" />
       </PageHeader>
       <Panel>

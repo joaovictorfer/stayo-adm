@@ -9,15 +9,17 @@ export function PageHeader({
   title,
   count,
   subtitle,
+  stackOnMobile = false,
   children,
 }: {
   title: string;
   count?: number | undefined;
   subtitle?: string | undefined;
+  stackOnMobile?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
+    <div className={`mb-5 grid items-end gap-3 sm:flex sm:flex-wrap sm:justify-between ${stackOnMobile ? "grid-cols-1" : "grid-cols-[minmax(0,1fr)_auto]"}`}>
       <div className="min-w-0">
         <h1
           className="truncate font-display text-2xl font-semibold text-foreground"
@@ -28,7 +30,7 @@ export function PageHeader({
           {subtitle}{subtitle && count !== undefined ? " · " : ""}{count !== undefined ? `${count} ${count === 1 ? "registro" : "registros"}` : ""}
         </p>}
       </div>
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>
+      <div className={`flex shrink-0 flex-wrap items-center gap-2 ${stackOnMobile ? "w-full justify-start sm:w-auto sm:justify-end" : "justify-end"}`}>{children}</div>
     </div>
   );
 }
