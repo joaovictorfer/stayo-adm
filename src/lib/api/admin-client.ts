@@ -95,6 +95,8 @@ export interface AdminApiClient {
     listByImplementation(implementationId: string): Promise<CommercialTerm[]>;
     /** Clona os defaults vigentes para a implantação — idempotente. */
     cloneDefaults(implementationId: string): Promise<CommercialTerm[]>;
+    add(input: Omit<CommercialTerm, "id">): Promise<CommercialTerm>;
+    remove(id: string): Promise<void>;
     update(
       id: string,
       patch: Partial<Omit<CommercialTerm, "id" | "implementationId">>,
