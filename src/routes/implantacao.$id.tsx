@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Check, Copy, FileDown } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -17,6 +17,7 @@ import { PropertyPanel } from "../components/implantacao/PropertyPanel";
 import { SuppliesPanel } from "../components/implantacao/SuppliesPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
+import { OwnerPortalAccess } from "../components/implantacao/OwnerPortalAccess";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -26,8 +27,6 @@ import {
   implementationItemsQuery,
   implementationQuery,
   initialChargesQuery,
-  ownerOnboardingLinkQuery,
-  ownerOnboardingSubmissionQuery,
   supplyItemsQuery,
 } from "../lib/api/queries";
 import { blockingSupplyItems } from "../types/implementation-supply";
@@ -52,10 +51,6 @@ import type {
   ImplementationProject,
   ImplementationStatus,
 } from "../types/core";
-import {
-  type OwnerOnboardingLinkStatus,
-  ownerOnboardingLinkStatus,
-} from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/implantacao/$id")({
   head: () => ({
@@ -85,6 +80,7 @@ function ImplementationDetailPage() {
   const [tab, setTab] = useState<
     "resumo" | "proprietarios" | "imovel" | "enxoval" | "faltantes" | "checklist" | "proposta"
   >("resumo");
+  const [portalOpen, setPortalOpen] = useState(false);
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const suppliesQuery = useQuery(supplyItemsQuery(id));
@@ -142,7 +138,13 @@ function ImplementationDetailPage() {
               blockingSupplyItems(suppliesQuery.data ?? []).length
             }
             onOpenProposal={() => setTab("proposta")}
-            onOpenPortal={() => setTab("resumo")}
+            onOpenPortal={() => setPortalOpen(true)}
+          />
+          <OwnerPortalAccess
+            open={portalOpen}
+            onClose={() => setPortalOpen(false)}
+            implementation={implementation}
+            checklist={checklistItems}
           />
 
           <AttentionPanel items={checklistItems} />
@@ -250,11 +252,6 @@ function ImplementationDetailPage() {
               </div>
 
               <CommercialTermsPanel implementationId={implementation.id} />
-
-              <OwnerPortalPanel
-                implementationId={implementation.id}
-                ownerId={implementation.ownerId}
-              />
 
               <InitialChargesPanel implementationId={implementation.id} />
 
