@@ -22,6 +22,7 @@ import type { EntityId } from "../../types/core";
 export const coreApi: CoreApiClient = createMockCoreApiClient();
 
 /** Domínio próprio do Admin (Grupo A) — ver docs/OWNER_IMPLEMENTATION_AUDIT.md. */
+import type { SupplyModule } from "../../types/implementation-supply";
 export const adminApi: AdminApiClient = createDefaultAdminApiClient();
 
 export const auditLogQuery = (params?: { entityType?: string; entityId?: string }) =>
@@ -365,4 +366,23 @@ export const serviceInvoiceQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["service-invoices", "detail", id],
     queryFn: () => coreApi.serviceInvoices.get(id),
+  });
+
+/** Fase 4 — enxoval e itens faltantes da implantação. */
+export const supplyItemsQuery = (implementationId: EntityId, module?: SupplyModule) =>
+  queryOptions({
+    queryKey: ["implementation-supplies", implementationId, module ?? "all"],
+    queryFn: () => adminApi.supplies.listByImplementation(implementationId, module),
+  });
+
+export const supplyTemplatesQuery = (module?: SupplyModule) =>
+  queryOptions({
+    queryKey: ["supply-templates", module ?? "all"],
+    queryFn: () => adminApi.supplyTemplates.list(module),
+  });
+
+export const supplyTemplateItemsQuery = (templateId: EntityId) =>
+  queryOptions({
+    queryKey: ["supply-templates", "items", templateId],
+    queryFn: () => adminApi.supplyTemplates.items(templateId),
   });
