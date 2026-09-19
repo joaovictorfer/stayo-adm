@@ -451,7 +451,7 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
             onChange={set("name")}
             required
             maxLength={120}
-            error={showErrors ? fieldErrors.name?.[0] : undefined}
+            error={form.name.length > 0 && form.name.trim().length < 2 ? "Informe pelo menos 2 caracteres." : showErrors ? fieldErrors.name?.[0] : undefined}
           />
           <TextField
             label="WhatsApp / telefone"
@@ -464,7 +464,7 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
             inputMode="tel"
             placeholder="(54) 99999-9999"
             maxLength={15}
-            error={showErrors && form.phone ? fieldErrors.phone?.[0] : undefined}
+            error={form.phone.length >= 4 && !isValidBrazilPhone(form.phone) ? "Informe um telefone brasileiro válido com DDD." : showErrors ? fieldErrors.phone?.[0] : undefined}
           />
           {duplicateOwner && isValidBrazilPhone(form.phone) && (
             <div className="rounded-[var(--radius-control)] border border-premium/40 bg-premium-soft p-3" role="status">
