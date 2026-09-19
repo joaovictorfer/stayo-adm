@@ -74,7 +74,7 @@ import type {
   PortalContentBlockPatch,
 } from "../../types/portal-content";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
-import { hashToken } from "./token-hash";
+import { createSecureToken, hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -564,6 +564,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
     createLink: async (
       implementationId,
       ownerId,
+      publicSnapshot,
       validityDays = DEFAULT_INVITATION_VALIDITY_DAYS,
     ) => {
       const now = new Date();
@@ -639,7 +640,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const tokenHash = await hashToken(token);
       const links = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
       const target = links.find((item) => item.tokenHash === tokenHash);
-      if (!target?.publicSnapshot.proposal) throw new Error("Proposta indisponível");
+      if (!target?.publicSnapshot?.proposal) throw new Error("Proposta indisponível");
       const acceptedAt = new Date().toISOString();
       const updated: OwnerOnboardingLink = {
         ...target,
@@ -1774,6 +1775,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     createLink: async (
       implementationId,
       ownerId,
+      publicSnapshot,
       validityDays = DEFAULT_INVITATION_VALIDITY_DAYS,
     ) => {
       const supabase = client();
