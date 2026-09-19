@@ -163,6 +163,13 @@ export const navigation: NavItem[] = [
         roles: ["super_admin"],
       },
       {
+        id: "settings-portal",
+        label: "Conteúdo do portal",
+        path: "/configuracoes/portal",
+        icon: "layout-dashboard",
+        roles: ["super_admin", "admin", "commercial"],
+      },
+      {
         id: "settings-integrations",
         label: "Integrações",
         path: "/configuracoes/integracoes",

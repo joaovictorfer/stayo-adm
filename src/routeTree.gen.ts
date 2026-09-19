@@ -39,6 +39,7 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
 import { Route as PortalLoginRouteImport } from './routes/portal.login'
 import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
@@ -205,6 +206,11 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalIndexRoute = PortalIndexRouteImport.update({
+  id: '/portal/',
+  path: '/portal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalInicioRoute = PortalInicioRouteImport.update({
   id: '/portal/inicio',
   path: '/portal/inicio',
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/': typeof ImplantacaoIndexRoute
   '/mensagens/': typeof MensagensIndexRoute
   '/operacao/': typeof OperacaoIndexRoute
+  '/portal/': typeof PortalIndexRoute
   '/prestadores/': typeof PrestadoresIndexRoute
   '/produtos/': typeof ProdutosIndexRoute
   '/proprietarios/': typeof ProprietariosIndexRoute
@@ -360,6 +367,7 @@ export interface FileRoutesByTo {
   '/implantacao': typeof ImplantacaoIndexRoute
   '/mensagens': typeof MensagensIndexRoute
   '/operacao': typeof OperacaoIndexRoute
+  '/portal': typeof PortalIndexRoute
   '/prestadores': typeof PrestadoresIndexRoute
   '/produtos': typeof ProdutosIndexRoute
   '/proprietarios': typeof ProprietariosIndexRoute
@@ -407,6 +415,7 @@ export interface FileRoutesById {
   '/implantacao/': typeof ImplantacaoIndexRoute
   '/mensagens/': typeof MensagensIndexRoute
   '/operacao/': typeof OperacaoIndexRoute
+  '/portal/': typeof PortalIndexRoute
   '/prestadores/': typeof PrestadoresIndexRoute
   '/produtos/': typeof ProdutosIndexRoute
   '/proprietarios/': typeof ProprietariosIndexRoute
@@ -455,6 +464,7 @@ export interface FileRouteTypes {
     | '/implantacao/'
     | '/mensagens/'
     | '/operacao/'
+    | '/portal/'
     | '/prestadores/'
     | '/produtos/'
     | '/proprietarios/'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/implantacao'
     | '/mensagens'
     | '/operacao'
+    | '/portal'
     | '/prestadores'
     | '/produtos'
     | '/proprietarios'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/implantacao/'
     | '/mensagens/'
     | '/operacao/'
+    | '/portal/'
     | '/prestadores/'
     | '/produtos/'
     | '/proprietarios/'
@@ -594,6 +606,7 @@ export interface RootRouteChildren {
   ImplantacaoIndexRoute: typeof ImplantacaoIndexRoute
   MensagensIndexRoute: typeof MensagensIndexRoute
   OperacaoIndexRoute: typeof OperacaoIndexRoute
+  PortalIndexRoute: typeof PortalIndexRoute
   PrestadoresIndexRoute: typeof PrestadoresIndexRoute
   ProdutosIndexRoute: typeof ProdutosIndexRoute
   ProprietariosIndexRoute: typeof ProprietariosIndexRoute
@@ -815,6 +828,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/': {
+      id: '/portal/'
+      path: '/portal'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/inicio': {
       id: '/portal/inicio'
       path: '/portal/inicio'
@@ -954,6 +974,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoIndexRoute: ImplantacaoIndexRoute,
   MensagensIndexRoute: MensagensIndexRoute,
   OperacaoIndexRoute: OperacaoIndexRoute,
+  PortalIndexRoute: PortalIndexRoute,
   PrestadoresIndexRoute: PrestadoresIndexRoute,
   ProdutosIndexRoute: ProdutosIndexRoute,
   ProprietariosIndexRoute: ProprietariosIndexRoute,
