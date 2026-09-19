@@ -1,6 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { ArrowRight, ClipboardCheck, Plus } from "lucide-react";
 
 import {
   EmptyRows,
@@ -38,6 +39,8 @@ export const Route = createFileRoute("/implantacao/")({
         property: "og:description",
         content: "Acompanhamento das implantações de novos imóveis.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ImplementationsPage,
@@ -116,18 +119,17 @@ function ImplementationsPage() {
 
   return (
     <>
-      <PageHeader title="Implantações" count={query.isSuccess ? rows.length : undefined}>
+      <PageHeader title="Implantações" count={query.isSuccess ? rows.length : undefined} subtitle="Central comercial, onboarding e ativação de novos imóveis">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          className="inline-flex items-center gap-2 rounded-[var(--radius-control)] bg-brand px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-hover"
         >
-          Nova implantação
+          <Plus size={16} /> Nova implantação
         </button>
       </PageHeader>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-border bg-card p-3 shadow-[var(--shadow-card)]">
         <SelectFilter
           label="Filtrar por status"
           value={status}
@@ -140,29 +142,25 @@ function ImplementationsPage() {
           placeholder="Filtrar por responsável"
         />
         <label
-          className="flex items-center gap-1 text-xs"
-          style={{ color: "var(--stayo-ink-muted)" }}
+          className="flex items-center gap-1 text-xs text-muted-foreground"
         >
           De
           <input
             type="date"
             value={periodoFrom}
             onChange={(e) => setPeriodoFrom(e.target.value)}
-            className="rounded-[var(--radius-control)] border px-2 py-2 text-sm outline-none"
-            style={{ ...surface, color: "var(--stayo-ink)" }}
+            className="h-10 rounded-[var(--radius-control)] border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-brand"
           />
         </label>
         <label
-          className="flex items-center gap-1 text-xs"
-          style={{ color: "var(--stayo-ink-muted)" }}
+          className="flex items-center gap-1 text-xs text-muted-foreground"
         >
           Até
           <input
             type="date"
             value={periodoTo}
             onChange={(e) => setPeriodoTo(e.target.value)}
-            className="rounded-[var(--radius-control)] border px-2 py-2 text-sm outline-none"
-            style={{ ...surface, color: "var(--stayo-ink)" }}
+            className="h-10 rounded-[var(--radius-control)] border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-brand"
           />
         </label>
         <SelectFilter
@@ -172,19 +170,14 @@ function ImplementationsPage() {
           options={prontidaoOptions}
         />
         <div
-          className="ml-auto flex rounded-[var(--radius-control)] border p-0.5 text-xs"
-          style={surface}
+          className="ml-auto flex rounded-[var(--radius-control)] bg-muted p-0.5 text-xs"
         >
           {(["lista", "funil"] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
-              className="rounded-[var(--radius-control)] px-3 py-1.5"
-              style={{
-                backgroundColor: view === v ? "var(--stayo-forest)" : "transparent",
-                color: view === v ? "#fdfdfb" : "var(--stayo-ink-muted)",
-              }}
+              className={`rounded-[var(--radius-control)] px-3 py-1.5 font-semibold ${view === v ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
             >
               {v === "lista" ? "Lista" : "Funil"}
             </button>
@@ -208,24 +201,20 @@ function ImplementationsPage() {
         </Panel>
       ) : view === "lista" ? (
         <Panel>
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <ul className="divide-y divide-border">
             {rows.map((i) => (
               <li key={i.id}>
                 <Link
                   to="/implantacao/$id"
                   params={{ id: i.id }}
-                  className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[7rem_1fr_1fr_10rem_7rem]"
-                  style={{ color: "var(--stayo-ink)" }}
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 text-sm hover:bg-muted/60 sm:px-5"
                 >
-                  <span className="font-medium">{i.code}</span>
-                  <span>{i.ownerName || "—"}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {[i.condominiumName, i.unit].filter(Boolean).join(" · ") || "—"}
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand"><ClipboardCheck size={18} /></span>
+                  <span className="min-w-0">
+                    <span className="flex min-w-0 items-center gap-2"><strong className="truncate font-semibold text-foreground">{i.nickname || [i.condominiumName, i.unit].filter(Boolean).join(" · ") || i.code}</strong><span className="hidden rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground sm:inline">{i.code}</span></span>
+                    <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><span>{i.ownerName || "Proprietário não informado"}</span><span>{statusLabels[i.status]}</span><span>Início {i.startDateEstimate ?? "a definir"}</span></span>
                   </span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>{statusLabels[i.status]}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {i.startDateEstimate ?? "—"}
-                  </span>
+                  <ArrowRight size={16} className="shrink-0 text-muted-foreground" />
                 </Link>
               </li>
             ))}
