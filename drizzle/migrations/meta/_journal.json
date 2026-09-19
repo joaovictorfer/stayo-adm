@@ -22,6 +22,13 @@
       "when": 1789775881449,
       "tag": "0002_implementation_supplies",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789776278501,
+      "tag": "0003_proposal_settings_blocks_and_implementation_templates",
+      "breakpoints": true
     }
   ]
 }

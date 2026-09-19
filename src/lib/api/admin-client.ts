@@ -56,6 +56,17 @@ import type {
   SupplyTemplateInput,
   SupplyTemplateItem,
 } from "../../types/implementation-supply";
+import type {
+  ImplementationTemplate,
+  ImplementationTemplateInput,
+  ImplementationTemplatePayload,
+  ProposalContentBlock,
+  ProposalContentBlockInput,
+  ProposalContentBlockPatch,
+  ProposalSettings,
+  ProposalSettingsInput,
+} from "../../types/proposal-config";
+import { emptyTemplatePayload } from "../../types/proposal-config";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
@@ -84,6 +95,8 @@ export interface AdminApiClient {
     listByImplementation(implementationId: string): Promise<CommercialTerm[]>;
     /** Clona os defaults vigentes para a implantação — idempotente. */
     cloneDefaults(implementationId: string): Promise<CommercialTerm[]>;
+    add(input: Omit<CommercialTerm, "id">): Promise<CommercialTerm>;
+    remove(id: string): Promise<void>;
     update(
       id: string,
       patch: Partial<Omit<CommercialTerm, "id" | "implementationId">>,
@@ -190,6 +203,25 @@ export interface AdminApiClient {
     list(module?: SupplyModule): Promise<SupplyTemplate[]>;
     items(templateId: string): Promise<SupplyTemplateItem[]>;
     create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 5 — prazo de validade e observações de pagamento da proposta. */
+  proposalSettings: {
+    get(implementationId: string): Promise<ProposalSettings | null>;
+    save(implementationId: string, input: ProposalSettingsInput): Promise<ProposalSettings>;
+  };
+  /** Fase 5 — blocos de regras/observações com visibilidade por destino. */
+  proposalBlocks: {
+    listByImplementation(implementationId: string): Promise<ProposalContentBlock[]>;
+    add(input: ProposalContentBlockInput): Promise<ProposalContentBlock>;
+    update(id: string, patch: ProposalContentBlockPatch): Promise<ProposalContentBlock>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 5 — modelos de implantação: aplicar COPIA o snapshot, nunca vincula. */
+  implementationTemplates: {
+    list(): Promise<ImplementationTemplate[]>;
+    get(id: string): Promise<ImplementationTemplate | null>;
+    create(input: ImplementationTemplateInput): Promise<ImplementationTemplate>;
     remove(id: string): Promise<void>;
   };
 }
@@ -336,6 +368,17 @@ export function createLocalAdminApiClient(): AdminApiClient {
   };
 
   const commercialTerms: AdminApiClient["commercialTerms"] = {
+    add: async (input) => {
+      const term: CommercialTerm = { ...input, id: newId() };
+      write(COMMERCIAL_TERMS_KEY, [...read<CommercialTerm>(COMMERCIAL_TERMS_KEY), term]);
+      return term;
+    },
+    remove: async (id) => {
+      write(
+        COMMERCIAL_TERMS_KEY,
+        read<CommercialTerm>(COMMERCIAL_TERMS_KEY).filter((t) => t.id !== id),
+      );
+    },
     listByImplementation: (implementationId) =>
       Promise.resolve(
         read<CommercialTerm>(COMMERCIAL_TERMS_KEY)
@@ -872,7 +915,103 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const PROPOSAL_SETTINGS_KEY = "stayo.admin.proposal-settings";
+  const PROPOSAL_BLOCKS_KEY = "stayo.admin.proposal-blocks";
+  const IMPLEMENTATION_TEMPLATES_KEY = "stayo.admin.implementation-templates";
+
+  const proposalSettings: AdminApiClient["proposalSettings"] = {
+    get: async (implementationId) =>
+      read<ProposalSettings>(PROPOSAL_SETTINGS_KEY).find(
+        (s) => s.implementationId === implementationId,
+      ) ?? null,
+    save: async (implementationId, input) => {
+      const all = read<ProposalSettings>(PROPOSAL_SETTINGS_KEY);
+      const current = all.find((s) => s.implementationId === implementationId);
+      const updated: ProposalSettings = {
+        implementationId,
+        validityDays: input.validityDays ?? current?.validityDays ?? 30,
+        paymentNotes:
+          input.paymentNotes === undefined ? (current?.paymentNotes ?? null) : input.paymentNotes,
+        updatedAt: new Date().toISOString(),
+      };
+      write(PROPOSAL_SETTINGS_KEY, [
+        ...all.filter((s) => s.implementationId !== implementationId),
+        updated,
+      ]);
+      return updated;
+    },
+  };
+
+  const proposalBlocks: AdminApiClient["proposalBlocks"] = {
+    listByImplementation: async (implementationId) =>
+      read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY)
+        .filter((b) => b.implementationId === implementationId)
+        .sort((a, b) => a.displayOrder - b.displayOrder),
+    add: async (input) => {
+      const block: ProposalContentBlock = {
+        id: newId(),
+        implementationId: input.implementationId,
+        title: input.title,
+        body: input.body ?? "",
+        visibility: input.visibility ?? "proposta",
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: new Date().toISOString(),
+      };
+      write(PROPOSAL_BLOCKS_KEY, [...read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY), block]);
+      return block;
+    },
+    update: async (id, patch) => {
+      const all = read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco não encontrado");
+      const updated: ProposalContentBlock = { ...target, ...patch };
+      write(
+        PROPOSAL_BLOCKS_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        PROPOSAL_BLOCKS_KEY,
+        read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY).filter((b) => b.id !== id),
+      );
+    },
+  };
+
+  const implementationTemplates: AdminApiClient["implementationTemplates"] = {
+    list: async () =>
+      read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
+    get: async (id) =>
+      read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).find((t) => t.id === id) ?? null,
+    create: async (input) => {
+      const template: ImplementationTemplate = {
+        id: newId(),
+        name: input.name,
+        notes: input.notes ?? null,
+        payload: { ...emptyTemplatePayload, ...input.payload },
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_TEMPLATES_KEY, [
+        ...read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY),
+        template,
+      ]);
+      return template;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_TEMPLATES_KEY,
+        read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).filter((t) => t.id !== id),
+      );
+    },
+  };
+
   return {
+    proposalSettings,
+    proposalBlocks,
+    implementationTemplates,
     audit,
     owners,
     propertyDetails,
@@ -1278,6 +1417,27 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
   };
 
   const commercialTerms: AdminApiClient["commercialTerms"] = {
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("commercial_terms")
+        .insert({
+          implementation_id: input.implementationId,
+          label: input.label,
+          charge_type: input.chargeType,
+          value: input.value,
+          optional: input.optional,
+          display_order: input.displayOrder,
+          notes: input.notes,
+        })
+        .select()
+        .single<CommercialTermRow>();
+      if (error) throw error;
+      return termFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("commercial_terms").delete().eq("id", id);
+      if (error) throw error;
+    },
     listByImplementation: async (implementationId) => {
       const { data, error } = await client()
         .from("commercial_terms")
@@ -1892,7 +2052,128 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const proposalSettings: AdminApiClient["proposalSettings"] = {
+    get: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_proposal_settings")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? proposalSettingsFromRow(data as ProposalSettingsRow) : null;
+    },
+    save: async (implementationId, input) => {
+      const current = await proposalSettings.get(implementationId);
+      const { data, error } = await client()
+        .from("implementation_proposal_settings")
+        .upsert(
+          {
+            implementation_id: implementationId,
+            validity_days: input.validityDays ?? current?.validityDays ?? 30,
+            payment_notes:
+              input.paymentNotes === undefined
+                ? (current?.paymentNotes ?? null)
+                : input.paymentNotes,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return proposalSettingsFromRow(data as ProposalSettingsRow);
+    },
+  };
+
+  const proposalBlocks: AdminApiClient["proposalBlocks"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<ProposalBlockRow[]>();
+      if (error) throw error;
+      return data.map(proposalBlockFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .insert({
+          implementation_id: input.implementationId,
+          title: input.title,
+          body: input.body ?? "",
+          visibility: input.visibility ?? "proposta",
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<ProposalBlockRow>();
+      if (error) throw error;
+      return proposalBlockFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .update({
+          ...(patch.title === undefined ? {} : { title: patch.title }),
+          ...(patch.body === undefined ? {} : { body: patch.body }),
+          ...(patch.visibility === undefined ? {} : { visibility: patch.visibility }),
+          ...(patch.displayOrder === undefined ? {} : { display_order: patch.displayOrder }),
+        })
+        .eq("id", id)
+        .select()
+        .single<ProposalBlockRow>();
+      if (error) throw error;
+      return proposalBlockFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("proposal_content_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const implementationTemplates: AdminApiClient["implementationTemplates"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .select()
+        .order("name", { ascending: true })
+        .returns<ImplementationTemplateRow[]>();
+      if (error) throw error;
+      return data.map(implementationTemplateFromRow);
+    },
+    get: async (id) => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .select()
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? implementationTemplateFromRow(data as ImplementationTemplateRow) : null;
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .insert({
+          name: input.name,
+          notes: input.notes ?? null,
+          payload: input.payload as unknown as Record<string, unknown>,
+        })
+        .select()
+        .single<ImplementationTemplateRow>();
+      if (error) throw error;
+      return implementationTemplateFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
+    proposalSettings,
+    proposalBlocks,
+    implementationTemplates,
     audit,
     owners,
     propertyDetails,
@@ -2108,5 +2389,66 @@ function supplyTemplateItemFromRow(row: SupplyTemplateItemRow): SupplyTemplateIt
     size: row.size,
     requiredQty: row.required_qty,
     displayOrder: row.display_order,
+  };
+}
+
+// ---- Fase 5: linhas e mapeadores de proposta e modelos ----
+
+interface ProposalSettingsRow {
+  implementation_id: string;
+  validity_days: number;
+  payment_notes: string | null;
+  updated_at: string;
+}
+
+function proposalSettingsFromRow(row: ProposalSettingsRow): ProposalSettings {
+  return {
+    implementationId: row.implementation_id,
+    validityDays: row.validity_days,
+    paymentNotes: row.payment_notes,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface ProposalBlockRow {
+  id: string;
+  implementation_id: string;
+  title: string;
+  body: string;
+  visibility: ProposalContentBlock["visibility"];
+  display_order: number;
+  created_at: string;
+}
+
+function proposalBlockFromRow(row: ProposalBlockRow): ProposalContentBlock {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    title: row.title,
+    body: row.body,
+    visibility: row.visibility,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+  };
+}
+
+interface ImplementationTemplateRow {
+  id: string;
+  name: string;
+  notes: string | null;
+  payload: unknown;
+  created_at: string;
+}
+
+function implementationTemplateFromRow(row: ImplementationTemplateRow): ImplementationTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    notes: row.notes,
+    payload: {
+      ...emptyTemplatePayload,
+      ...((row.payload as Partial<ImplementationTemplatePayload> | null) ?? {}),
+    },
+    createdAt: row.created_at,
   };
 }

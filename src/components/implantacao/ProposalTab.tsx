@@ -3,6 +3,8 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
+import { ImplementationTemplatesPanel } from "./ImplementationTemplatesPanel";
+import { ProposalConfigPanel } from "./ProposalConfigPanel";
 import {
   adminApi,
   commercialTermsQuery,
@@ -349,6 +351,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       {lastMessage && <WhatsappSendPanel message={lastMessage} />}
 
       {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
+
+      <ProposalConfigPanel implementationId={implementationId} />
+
+      <ImplementationTemplatesPanel implementationId={implementationId} />
 
       <div className="rounded-[var(--radius-card)] border" style={surface}>
         <h2

@@ -386,3 +386,22 @@ export const supplyTemplateItemsQuery = (templateId: EntityId) =>
     queryKey: ["supply-templates", "items", templateId],
     queryFn: () => adminApi.supplyTemplates.items(templateId),
   });
+
+/** Fase 5 — configuração da proposta e modelos de implantação. */
+export const proposalSettingsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["proposal-settings", implementationId],
+    queryFn: () => adminApi.proposalSettings.get(implementationId),
+  });
+
+export const proposalBlocksQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["proposal-blocks", implementationId],
+    queryFn: () => adminApi.proposalBlocks.listByImplementation(implementationId),
+  });
+
+export const implementationTemplatesQuery = () =>
+  queryOptions({
+    queryKey: ["implementation-templates", "list"],
+    queryFn: () => adminApi.implementationTemplates.list(),
+  });

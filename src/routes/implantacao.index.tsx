@@ -17,6 +17,7 @@ import {
   adminApi,
   coreApi,
   implementationItemsQuery,
+  implementationTemplatesQuery,
   implementationsListQuery,
 } from "../lib/api/queries";
 import {
@@ -329,6 +330,9 @@ const emptyForm = {
 function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
+  const [templateId, setTemplateId] = useState("");
+  const templatesQ = useQuery(implementationTemplatesQuery());
+
 
   const mutation = useMutation({
     mutationFn: async (input: typeof form) => {
@@ -362,8 +366,51 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
         nextCursor: prev?.nextCursor ?? null,
       }));
       queryClient.setQueryData(["implementations", "detail", created.id], created);
-      await adminApi.commercialTerms.cloneDefaults(created.id);
+
+      // Modelo é copiado (snapshot): a implantação não fica vinculada a ele.
+      const template = templateId
+        ? ((templatesQ.data ?? []).find((t) => t.id === templateId) ?? null)
+        : null;
+
+      if (template) {
+        for (const term of template.payload.commercialTerms) {
+          await adminApi.commercialTerms.add({
+            implementationId: created.id,
+            label: term.label,
+            chargeType: term.chargeType as never,
+            value: term.value,
+            optional: term.optional,
+            displayOrder: term.displayOrder,
+            notes: term.notes,
+          });
+        }
+        for (const block of template.payload.blocks) {
+          await adminApi.proposalBlocks.add({ implementationId: created.id, ...block });
+        }
+        for (const supply of template.payload.supplies) {
+          await adminApi.supplies.add({
+            implementationId: created.id,
+            module: supply.module,
+            name: supply.name,
+            room: supply.room,
+            size: supply.size,
+            requiredQty: supply.requiredQty,
+            existingQty: 0,
+            displayOrder: supply.displayOrder,
+          });
+        }
+        if (template.payload.validityDays !== null || template.payload.paymentNotes !== null) {
+          await adminApi.proposalSettings.save(created.id, {
+            validityDays: template.payload.validityDays ?? 30,
+            paymentNotes: template.payload.paymentNotes,
+          });
+        }
+      } else {
+        await adminApi.commercialTerms.cloneDefaults(created.id);
+      }
+
       setForm(emptyForm);
+      setTemplateId("");
       onClose();
     },
   });
@@ -426,6 +473,27 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       label: "Planejamento",
       content: (
         <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Criar a partir de um modelo (opcional)
+            <select
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className="rounded-[var(--radius-control)] border px-2 py-2 text-sm outline-none"
+              style={{
+                backgroundColor: "var(--stayo-surface)",
+                borderColor: "var(--stayo-border)",
+                color: "var(--stayo-ink)",
+              }}
+            >
+              <option value="">Começar do zero</option>
+              {(templatesQ.data ?? []).map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <span>O modelo é copiado; depois a implantação segue independente dele.</span>
+          </label>
           <TextField
             label="Previsão de início"
             type="date"

@@ -554,6 +554,35 @@ export type Database = {
           },
         ]
       }
+      implementation_proposal_settings: {
+        Row: {
+          implementation_id: string
+          payment_notes: string | null
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          implementation_id: string
+          payment_notes?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Update: {
+          implementation_id?: string
+          payment_notes?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_proposal_settings_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_rooms: {
         Row: {
           beds: string | null
@@ -662,6 +691,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      implementation_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          payload?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          payload?: Json
+        }
+        Relationships: []
       }
       initial_charges: {
         Row: {
@@ -978,6 +1031,44 @@ export type Database = {
           },
         ]
       }
+      proposal_content_blocks: {
+        Row: {
+          body: string
+          created_at: string
+          display_order: number
+          id: string
+          implementation_id: string
+          title: string
+          visibility: Database["public"]["Enums"]["proposal_block_visibility"]
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id: string
+          title: string
+          visibility?: Database["public"]["Enums"]["proposal_block_visibility"]
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          title?: string
+          visibility?: Database["public"]["Enums"]["proposal_block_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_content_blocks_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_share_links: {
         Row: {
           created_at: string
@@ -1262,6 +1353,7 @@ export type Database = {
         | "changed_by_owner"
         | "reviewed_by_stayo"
       owner_task_status: "pending" | "done" | "dismissed"
+      proposal_block_visibility: "interno" | "proposta" | "portal"
       supply_module: "enxoval" | "faltante"
       supply_priority: "baixa" | "media" | "alta"
       supply_status:
@@ -1458,6 +1550,7 @@ export const Constants = {
         "reviewed_by_stayo",
       ],
       owner_task_status: ["pending", "done", "dismissed"],
+      proposal_block_visibility: ["interno", "proposta", "portal"],
       supply_module: ["enxoval", "faltante"],
       supply_priority: ["baixa", "media", "alta"],
       supply_status: [
