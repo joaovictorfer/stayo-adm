@@ -17,6 +17,7 @@ import {
   proposalsStore,
 } from "./local-store";
 import type { EntityId } from "../../types/core";
+import type { SupplyModule } from "../../types/implementation-supply";
 
 /** Fonte única de dados desta fase. */
 export const coreApi: CoreApiClient = createMockCoreApiClient();
@@ -58,6 +59,30 @@ export const ownerTasksQuery = (ownerId: EntityId) =>
   queryOptions({
     queryKey: ["owner-tasks", ownerId],
     queryFn: () => adminApi.ownerTasks.listByOwner(ownerId),
+  });
+
+export const implementationOwnersQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["implementation-owners", implementationId],
+    queryFn: () => adminApi.implementationOwners.listByImplementation(implementationId),
+  });
+
+export const fieldConfirmationsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["field-confirmations", implementationId],
+    queryFn: () => adminApi.fieldConfirmations.listByImplementation(implementationId),
+  });
+
+export const implementationPropertyDetailsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["implementation-property-details", implementationId],
+    queryFn: () => adminApi.propertyDetails.get(implementationId),
+  });
+
+export const implementationRoomsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["implementation-rooms", implementationId],
+    queryFn: () => adminApi.rooms.listByImplementation(implementationId),
   });
 
 export const propertiesListQuery = () =>
@@ -172,6 +197,19 @@ export const ownerOnboardingLinkByTokenQuery = (token: string) =>
     queryFn: () => adminApi.ownerOnboarding.findByToken(token),
   });
 
+export const ownerPortalAccessQuery = (token: string) =>
+  queryOptions({
+    queryKey: ["owner-portal", "access", token],
+    queryFn: () => adminApi.ownerOnboarding.resolvePortal(token),
+    staleTime: 30_000,
+  });
+
+export const ownerOnboardingDraftQuery = (token: string) =>
+  queryOptions({
+    queryKey: ["owner-onboarding", "draft", token],
+    queryFn: () => adminApi.ownerOnboarding.getDraft(token),
+  });
+
 export const proposalShareLinkQuery = (proposalId: EntityId) =>
   queryOptions({
     queryKey: ["proposal-share", "link", proposalId],
@@ -205,6 +243,12 @@ export const ownerQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["owners", "detail", id],
     queryFn: () => adminApi.owners.get(id),
+  });
+
+export const ownerAdministrativeRegistrationQuery = (ownerId: EntityId, implementationIds: EntityId[]) =>
+  queryOptions({
+    queryKey: ["owners", "administrative-registration", ownerId, implementationIds],
+    queryFn: () => adminApi.owners.getAdministrativeRegistration(implementationIds),
   });
 
 export const inspectionsListQuery = () =>
@@ -341,4 +385,49 @@ export const serviceInvoiceQuery = (id: EntityId) =>
   queryOptions({
     queryKey: ["service-invoices", "detail", id],
     queryFn: () => coreApi.serviceInvoices.get(id),
+  });
+
+/** Fase 4 — enxoval e itens faltantes da implantação. */
+export const supplyItemsQuery = (implementationId: EntityId, module?: SupplyModule) =>
+  queryOptions({
+    queryKey: ["implementation-supplies", implementationId, module ?? "all"],
+    queryFn: () => adminApi.supplies.listByImplementation(implementationId, module),
+  });
+
+export const supplyTemplatesQuery = (module?: SupplyModule) =>
+  queryOptions({
+    queryKey: ["supply-templates", module ?? "all"],
+    queryFn: () => adminApi.supplyTemplates.list(module),
+  });
+
+export const supplyTemplateItemsQuery = (templateId: EntityId) =>
+  queryOptions({
+    queryKey: ["supply-templates", "items", templateId],
+    queryFn: () => adminApi.supplyTemplates.items(templateId),
+  });
+
+/** Fase 5 — configuração da proposta e modelos de implantação. */
+export const proposalSettingsQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["proposal-settings", implementationId],
+    queryFn: () => adminApi.proposalSettings.get(implementationId),
+  });
+
+export const proposalBlocksQuery = (implementationId: EntityId) =>
+  queryOptions({
+    queryKey: ["proposal-blocks", implementationId],
+    queryFn: () => adminApi.proposalBlocks.listByImplementation(implementationId),
+  });
+
+export const implementationTemplatesQuery = () =>
+  queryOptions({
+    queryKey: ["implementation-templates", "list"],
+    queryFn: () => adminApi.implementationTemplates.list(),
+  });
+
+/** Fase 6 — conteúdo institucional do portal do proprietário. */
+export const portalContentQuery = () =>
+  queryOptions({
+    queryKey: ["portal-content", "list"],
+    queryFn: () => adminApi.portalContent.list(),
   });

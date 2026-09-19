@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Copy } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -11,7 +11,13 @@ import {
   PageHeader,
   Panel,
 } from "../components/data/ListStates";
+import { AttentionPanel, attentionItems } from "../components/implantacao/AttentionPanel";
+import { OwnersPanel } from "../components/implantacao/OwnersPanel";
+import { PropertyPanel } from "../components/implantacao/PropertyPanel";
+import { SuppliesPanel } from "../components/implantacao/SuppliesPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
+import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
+import { OwnerPortalAccess } from "../components/implantacao/OwnerPortalAccess";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -21,9 +27,11 @@ import {
   implementationItemsQuery,
   implementationQuery,
   initialChargesQuery,
-  ownerOnboardingLinkQuery,
-  ownerOnboardingSubmissionQuery,
+  supplyItemsQuery,
 } from "../lib/api/queries";
+import { blockingSupplyItems } from "../types/implementation-supply";
+import { generateImplementationSummaryPdf } from "../lib/pdf/implementation-pdf";
+import { downloadPdfBytes } from "../lib/pdf/download";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
 import {
@@ -33,8 +41,6 @@ import {
   itemStatusColor,
   itemStatusLabels,
   mainStatusFlow,
-  readinessColors,
-  readinessLabels,
   statusLabels,
 } from "../lib/implementation-status";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
@@ -45,10 +51,6 @@ import type {
   ImplementationProject,
   ImplementationStatus,
 } from "../types/core";
-import {
-  type OwnerOnboardingLinkStatus,
-  ownerOnboardingLinkStatus,
-} from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/implantacao/$id")({
   head: () => ({
@@ -60,6 +62,8 @@ export const Route = createFileRoute("/implantacao/$id")({
         property: "og:description",
         content: "Etapas e checklist de uma implantação Stayo.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ImplementationDetailPage,
@@ -73,9 +77,13 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<
+    "resumo" | "proprietarios" | "imovel" | "enxoval" | "faltantes" | "checklist" | "proposta"
+  >("resumo");
+  const [portalOpen, setPortalOpen] = useState(false);
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
+  const suppliesQuery = useQuery(supplyItemsQuery(id));
   const implementation = query.data;
 
   const changeStatus = useMutation({
@@ -96,15 +104,18 @@ function ImplementationDetailPage() {
     },
   });
 
+  const checklistItems = itemsQuery.data ?? [];
+  const progress = computeProgress(checklistItems);
+  const readiness = computeReadiness(checklistItems);
+
   return (
     <>
-      <PageHeader title={implementation?.code ?? "Implantação"}>
+      <PageHeader title="Workspace de implantação" subtitle={implementation?.code}>
         <Link
           to="/implantacao"
-          className="text-sm underline"
-          style={{ color: "var(--stayo-ink-muted)" }}
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          Voltar para implantações
+          <ArrowLeft size={15} /> Voltar
         </Link>
       </PageHeader>
 
@@ -116,6 +127,54 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="flex flex-col gap-4">
+          <WorkspaceHeader
+            implementation={implementation}
+            progressPercent={progress.percent}
+            progressDone={progress.done}
+            progressTotal={progress.total}
+            ready={readiness.ready}
+            pendingCount={
+              attentionItems(checklistItems).length +
+              blockingSupplyItems(suppliesQuery.data ?? []).length
+            }
+            onOpenProposal={() => setTab("proposta")}
+            onOpenPortal={() => setPortalOpen(true)}
+          />
+          <OwnerPortalAccess
+            open={portalOpen}
+            onClose={() => setPortalOpen(false)}
+            implementation={implementation}
+            checklist={checklistItems}
+          />
+
+          <AttentionPanel items={checklistItems} />
+
+          <div>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+              onClick={async () => {
+                const bytes = await generateImplementationSummaryPdf({
+                  implementation,
+                  checklist: checklistItems,
+                  supplies: suppliesQuery.data ?? [],
+                  progressPercent: progress.percent,
+                  ready: readiness.ready,
+                  blockers: [
+                    ...attentionItems(checklistItems).map((item) => item.title),
+                    ...blockingSupplyItems(suppliesQuery.data ?? []).map(
+                      (item) => `Enxoval/faltante: ${item.name}`,
+                    ),
+                  ],
+                  statusLabel: statusLabels[implementation.status],
+                });
+                downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
+              }}
+            >
+              <FileDown size={15} /> Gerar PDF do resumo
+            </button>
+          </div>
+
           <StatusStepper
             status={implementation.status}
             onChange={(status) => changeStatus.mutate(status)}
@@ -124,20 +183,26 @@ function ImplementationDetailPage() {
 
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
-          <div className="flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "checklist", "proposta"] as const).map((t) => (
+
+          <div className="flex gap-1 overflow-x-auto rounded-[var(--radius-card)] border border-border bg-card p-1 shadow-[var(--shadow-card)]">
+            {(
+              [
+                ["resumo", "Resumo"],
+                ["proprietarios", "Proprietários"],
+                ["imovel", "Imóvel"],
+                ["enxoval", "Enxoval"],
+                ["faltantes", "Itens faltantes"],
+                ["checklist", "Checklist"],
+                ["proposta", "Proposta"],
+              ] as const
+            ).map(([t, label]) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className="px-3 py-2 text-sm"
-                style={{
-                  color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  borderBottom:
-                    tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
-                }}
+                className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${tab === t ? "bg-brand text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
-                {t === "resumo" ? "Resumo" : t === "checklist" ? "Checklist" : "Proposta"}
+                {label}
               </button>
             ))}
           </div>
@@ -188,11 +253,6 @@ function ImplementationDetailPage() {
 
               <CommercialTermsPanel implementationId={implementation.id} />
 
-              <OwnerPortalPanel
-                implementationId={implementation.id}
-                ownerId={implementation.ownerId}
-              />
-
               <InitialChargesPanel implementationId={implementation.id} />
 
               <CoreConversionPanel implementation={implementation} />
@@ -207,6 +267,14 @@ function ImplementationDetailPage() {
                 <Timeline entries={recentActivity(itemsQuery.data ?? [])} />
               </div>
             </div>
+          ) : tab === "proprietarios" ? (
+            <OwnersPanel implementationId={implementation.id} />
+          ) : tab === "imovel" ? (
+            <PropertyPanel implementationId={implementation.id} />
+          ) : tab === "enxoval" ? (
+            <SuppliesPanel implementationId={implementation.id} module="enxoval" />
+          ) : tab === "faltantes" ? (
+            <SuppliesPanel implementationId={implementation.id} module="faltante" />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
@@ -343,172 +411,6 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
             </li>
           ))}
         </ul>
-      )}
-    </div>
-  );
-}
-
-const invitationStatusLabels: Record<OwnerOnboardingLinkStatus, string> = {
-  ativo: "Ativo",
-  expirado: "Expirado",
-  revogado: "Revogado",
-  usado: "Usado",
-};
-
-const invitationStatusTone: Record<OwnerOnboardingLinkStatus, "neutral" | "danger" | "gold"> = {
-  ativo: "neutral",
-  expirado: "gold",
-  revogado: "danger",
-  usado: "neutral",
-};
-
-/**
- * Convite público (ainda sem conta/login real — depende de Supabase
- * configurado) pro proprietário preencher os próprios dados durante a
- * implantação. O token só é visível uma vez, no momento em que é gerado —
- * depois disso só existe o hash, nunca o valor puro.
- */
-function OwnerPortalPanel({
-  implementationId,
-  ownerId,
-}: {
-  implementationId: EntityId;
-  ownerId: EntityId | null;
-}) {
-  const queryClient = useQueryClient();
-  const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
-  const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(implementationId));
-  const [copied, setCopied] = useState(false);
-  const [freshToken, setFreshToken] = useState<string | null>(null);
-
-  const invalidateLink = () =>
-    queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
-
-  const createLink = useMutation({
-    mutationFn: () => adminApi.ownerOnboarding.createLink(implementationId, ownerId),
-    onSuccess: async ({ token }) => {
-      setFreshToken(token);
-      await invalidateLink();
-    },
-  });
-
-  const revokeLink = useMutation({
-    mutationFn: (id: EntityId) => adminApi.ownerOnboarding.revoke(id),
-    onSuccess: async () => {
-      setFreshToken(null);
-      await invalidateLink();
-    },
-  });
-
-  const link = linkQuery.data;
-  const status = link ? ownerOnboardingLinkStatus(link) : null;
-  const url = freshToken
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/implantacao/${freshToken}`
-    : null;
-
-  const copy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard indisponível (ex: contexto não seguro) — link já está visível pra copiar manualmente.
-    }
-  };
-
-  return (
-    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <h2
-        className="mb-3 text-sm"
-        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-      >
-        Cadastro do proprietário
-      </h2>
-
-      {submissionQuery.data ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome completo" value={submissionQuery.data.fullName} />
-          <Field label="Documento" value={submissionQuery.data.document} />
-          <Field label="E-mail" value={submissionQuery.data.email} />
-          <Field label="Telefone" value={submissionQuery.data.phone} />
-          <Field label="Chave Pix" value={submissionQuery.data.pixKey} />
-          <Field label="Recebido em" value={submissionQuery.data.submittedAt} />
-        </div>
-      ) : (
-        <>
-          <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim
-            que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser
-            gerado.
-          </p>
-
-          {link && status && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-              <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
-              <span style={{ color: "var(--stayo-ink-muted)" }}>
-                {status === "ativo"
-                  ? `Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                  : status === "revogado"
-                    ? `Revogado em ${new Date(link.revokedAt!).toLocaleString("pt-BR")}`
-                    : status === "expirado"
-                      ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                      : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
-              </span>
-            </div>
-          )}
-
-          {url && (
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <code
-                className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
-                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-              >
-                {url}
-              </code>
-              <button
-                type="button"
-                onClick={() => void copy()}
-                className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? "Copiado" : "Copiar"}
-              </button>
-            </div>
-          )}
-
-          {(!url || status !== "ativo") && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => createLink.mutate()}
-                disabled={createLink.isPending}
-                className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-              >
-                {createLink.isPending
-                  ? "Gerando..."
-                  : link
-                    ? "Gerar novo convite"
-                    : "Gerar convite para o proprietário"}
-              </button>
-            </div>
-          )}
-          {status === "ativo" && link && (
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={() => revokeLink.mutate(link.id)}
-                disabled={revokeLink.isPending}
-                className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-                style={{ ...surface, color: "var(--stayo-danger)" }}
-              >
-                {revokeLink.isPending ? "Revogando..." : "Revogar"}
-              </button>
-            </div>
-          )}
-        </>
       )}
     </div>
   );
@@ -667,7 +569,7 @@ function StatusStepper({
 
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
           Status da implantação
         </p>
@@ -685,39 +587,24 @@ function StatusStepper({
           ))}
         </select>
       </div>
-
-      <ol className="flex flex-col md:flex-row gap-3 md:gap-1.5">
+      <ol className="flex gap-2 overflow-x-auto pb-1">
         {mainStatusFlow.map((s, index) => {
-          let state: "done" | "current" | "future" | "blocked" = "future";
-          
-          if (isAlternate) {
-            state = "blocked";
-          } else if (currentIndex !== -1) {
-            if (index < currentIndex) state = "done";
-            else if (index === currentIndex) state = "current";
-          }
-
-          const color = 
-            state === "done" ? "var(--stayo-forest)" :
-            state === "current" ? "var(--stayo-forest)" :
-            state === "blocked" ? "var(--stayo-danger)" :
-            "var(--stayo-border)";
-            
-          const opacity = state === "done" ? 0.55 : state === "blocked" ? 0.4 : 1;
-          const isCurrent = state === "current";
-
+          const done = currentIndex > index;
+          const current = currentIndex === index;
           return (
-            <li key={s} className="flex md:flex-1 flex-row md:flex-col items-center md:items-start gap-3 md:gap-2 min-w-0">
+            <li key={s} className="flex min-w-[8.5rem] flex-1 flex-col gap-2">
               <span
-                className="h-2 w-8 md:h-1.5 md:w-full shrink-0 rounded-full transition-colors"
-                title={state === "blocked" ? "Bloqueado / Alternativo" : ""}
-                style={{ backgroundColor: color, opacity }}
+                className="h-1.5 w-full rounded-full"
+                style={{
+                  backgroundColor: done || current ? "var(--stayo-forest)" : "var(--stayo-border)",
+                  opacity: done ? 0.55 : 1,
+                }}
               />
               <span
-                className="text-[11px] md:text-[10px] lg:text-[11px] leading-tight break-words md:pr-1"
+                className="text-xs"
                 style={{
-                  color: isCurrent ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  fontWeight: isCurrent ? 600 : 400,
+                  color: current ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                  fontWeight: current ? 600 : 400,
                 }}
               >
                 {statusLabels[s]}
@@ -726,13 +613,12 @@ function StatusStepper({
           );
         })}
       </ol>
-
       {isAlternate && (
         <p
-          className="mt-5 inline-block rounded-[var(--radius-control)] px-2 py-1 text-xs"
+          className="mt-3 inline-block rounded-[var(--radius-control)] px-2 py-1 text-xs"
           style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}
         >
-          Fora da linha principal (bloqueado): {statusLabels[status]}
+          Fora da linha principal: {statusLabels[status]}
         </p>
       )}
     </div>
@@ -773,7 +659,7 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
         className="rounded-[var(--radius-card)] border p-4"
         style={{
           ...surface,
-          borderColor: loading ? "transparent" : readinessColors[readiness.state],
+          borderColor: readiness.ready ? "var(--stayo-success)" : "var(--stayo-gold)",
         }}
       >
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -783,10 +669,14 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
           className="mt-1 text-3xl"
           style={{
             fontFamily: "var(--stayo-font-display)",
-            color: loading ? "var(--stayo-ink-muted)" : readinessColors[readiness.state],
+            color: loading
+              ? "var(--stayo-ink-muted)"
+              : readiness.ready
+                ? "var(--stayo-success)"
+                : "var(--stayo-danger)",
           }}
         >
-          {loading ? "—" : readinessLabels[readiness.state]}
+          {loading ? "—" : readiness.ready ? "Apta" : "Não apta"}
         </p>
         <p className="mt-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           {readiness.pendingBlockers} bloqueador(es) em aberto · {readiness.pendingMandatory}{" "}

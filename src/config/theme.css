@@ -1,83 +1,49 @@
 /**
- * Tokens visuais do Stayo Admin.
- *
- * Direção: hospitalidade premium operacional — não é um site de marketing
- * (sem hero, sem gradiente), é uma ferramenta que a equipe usa o dia
- * inteiro no computador e, em campo (vistoria/implantação), no celular.
- * A paleta parte do "verde institucional Stayo" citado no handoff
- * (seção 44), lido como um verde-floresta abafado — não um verde-SaaS
- * saturado — combinado com um dourado latão discreto para as ações que
- * dependem de alguém fora da equipe (proprietário) responder.
+ * Stayo Admin — sistema visual operacional.
+ * Navy-petróleo diferencia o Admin do Guide; champagne é apenas acento.
  */
-
 :root {
-  /* Base */
-  --stayo-ink: #1b231d;          /* texto primário, títulos */
-  --stayo-ink-muted: #5c665f;    /* texto secundário */
-  --stayo-bg: #f1f3ee;           /* fundo de página — verde-acinzentado suave */
-  --stayo-surface: #fdfdfb;      /* cards */
-  --stayo-border: #e0ded2;       /* divisores, bordas de card */
+  color-scheme: light;
+  --stayo-ink: oklch(0.25 0.025 245);
+  --stayo-ink-muted: oklch(0.54 0.025 245);
+  --stayo-bg: oklch(0.975 0.006 240);
+  --stayo-surface: oklch(1 0 0);
+  --stayo-surface-subtle: oklch(0.965 0.007 240);
+  --stayo-border: oklch(0.91 0.01 240);
 
-  /* Marca / ações primárias */
-  --stayo-forest: #21402e;
-  --stayo-forest-strong: #163020;
-  --stayo-forest-soft: #e4ebe4;  /* fundo de badge/estado "ativo" */
+  --stayo-forest: oklch(0.29 0.065 223);
+  --stayo-forest-strong: oklch(0.23 0.055 230);
+  --stayo-forest-soft: oklch(0.94 0.025 215);
+  --stayo-navy: oklch(0.29 0.065 223);
+  --stayo-navy-hover: oklch(0.39 0.075 220);
+  --stayo-navy-soft: oklch(0.94 0.025 215);
 
-  /* Ação pendente de terceiro (proprietário) — "precisamos de você" */
-  --stayo-gold: #b98f46;
-  --stayo-gold-soft: #f4ecd9;
+  --stayo-gold: oklch(0.69 0.09 80);
+  --stayo-gold-soft: oklch(0.95 0.035 82);
 
-  /* Estados semânticos */
-  --stayo-success: #3b6d11;
-  --stayo-warning: #97661e;
-  --stayo-danger: #8c3a2e;
+  --stayo-success: oklch(0.5 0.13 150);
+  --stayo-success-soft: oklch(0.95 0.035 150);
+  --stayo-warning: oklch(0.58 0.13 72);
+  --stayo-warning-soft: oklch(0.95 0.045 78);
+  --stayo-danger: oklch(0.52 0.18 28);
+  --stayo-danger-soft: oklch(0.95 0.035 25);
+  --stayo-info: oklch(0.52 0.13 245);
+  --stayo-info-soft: oklch(0.95 0.03 245);
 
-  /* Tipografia */
-  --stayo-font-display: "Fraunces", Georgia, serif; /* números de dashboard, títulos de fase/etapa */
-  --stayo-font-ui: "IBM Plex Sans", system-ui, sans-serif; /* nav, tabelas, formulários */
+  --admin-navy: var(--stayo-navy);
+  --admin-navy-dark: var(--stayo-forest-strong);
+  --admin-bg: var(--stayo-bg);
+  --admin-surface: var(--stayo-surface);
+  --admin-border: var(--stayo-border);
+  --admin-text: var(--stayo-ink);
+  --admin-muted: var(--stayo-ink-muted);
+  --admin-accent: var(--stayo-gold);
 
-  --radius-card: 12px;
-  --radius-control: 8px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --stayo-ink: #ecefe9;
-    --stayo-ink-muted: #a3ac9f;
-    --stayo-bg: #141713;
-    --stayo-surface: #1c1f1a;
-    --stayo-border: #2b2e27;
-    --stayo-forest-soft: #1f2c22;
-    --stayo-gold-soft: #2c2517;
-  }
-}
-
-:root[data-theme="dark"] {
-  --stayo-ink: #ecefe9;
-  --stayo-ink-muted: #a3ac9f;
-  --stayo-bg: #141713;
-  --stayo-surface: #1c1f1a;
-  --stayo-border: #2b2e27;
-  --stayo-forest-soft: #1f2c22;
-  --stayo-gold-soft: #2c2517;
-}
-
-/*
- * Variação Admin: Substitui o verde-petróleo original pela nova marca Navy
- * no painel (AdminShell), sem interferir no Portal do Proprietário.
- */
-.stayo-admin-theme {
-  --stayo-forest: #0B3150;
-  --stayo-forest-strong: #0A2945;
-  --stayo-forest-soft: #e6ebf0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .stayo-admin-theme {
-    --stayo-forest-soft: #123F68;
-  }
-}
-
-:root[data-theme="dark"] .stayo-admin-theme {
-  --stayo-forest-soft: #123F68;
+  --stayo-font-display: "Sora", system-ui, sans-serif;
+  --stayo-font-ui: "Manrope", system-ui, sans-serif;
+  --radius-card: 14px;
+  --radius-control: 9px;
+  --shadow-card: 0 1px 2px color-mix(in oklab, var(--stayo-navy) 5%, transparent),
+    0 8px 24px color-mix(in oklab, var(--stayo-navy) 5%, transparent);
+  --shadow-float: 0 18px 48px color-mix(in oklab, var(--stayo-navy) 16%, transparent);
 }

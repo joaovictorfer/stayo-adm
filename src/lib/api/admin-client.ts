@@ -32,11 +32,52 @@ import type {
 } from "../../types/admin";
 import type {
   OwnerOnboardingLink,
+  OwnerOnboardingDraft,
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
+  OwnerAdministrativeRegistration,
 } from "../../types/owner-onboarding";
+import type { OwnerPortalPublicAccess, OwnerPortalSnapshot } from "../../types/owner-portal";
+import type { Json } from "../../integrations/supabase/types";
+import type {
+  FieldConfirmation,
+  ImplementationOwnerLink,
+  ImplementationOwnerLinkInput,
+  OwnerFieldState,
+} from "../../types/implementation-owner";
+import type {
+  ImplementationPropertyDetails,
+  ImplementationPropertyDetailsInput,
+  ImplementationRoom,
+  ImplementationRoomInput,
+} from "../../types/implementation-property";
+import type {
+  SupplyItem,
+  SupplyItemInput,
+  SupplyItemPatch,
+  SupplyModule,
+  SupplyTemplate,
+  SupplyTemplateInput,
+  SupplyTemplateItem,
+} from "../../types/implementation-supply";
+import type {
+  ImplementationTemplate,
+  ImplementationTemplateInput,
+  ImplementationTemplatePayload,
+  ProposalContentBlock,
+  ProposalContentBlockInput,
+  ProposalContentBlockPatch,
+  ProposalSettings,
+  ProposalSettingsInput,
+} from "../../types/proposal-config";
+import { emptyTemplatePayload } from "../../types/proposal-config";
+import type {
+  PortalContentBlock,
+  PortalContentBlockInput,
+  PortalContentBlockPatch,
+} from "../../types/portal-content";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
-import { hashToken } from "./token-hash";
+import { createSecureToken, hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -52,6 +93,8 @@ export interface AdminApiClient {
     update(id: string, patch: Partial<Omit<OwnerRecord, "id" | "createdAt">>): Promise<OwnerRecord>;
     /** Dedupe simples por telefone — usado pelo cadastro rápido da Nova Implantação. */
     findOrCreateByPhone(input: OwnerRecordInput): Promise<OwnerRecord>;
+    /** Projeção cadastral restrita; a chave PIX deve ser mascarada pela UI. */
+    getAdministrativeRegistration(implementationIds: string[]): Promise<OwnerAdministrativeRegistration | null>;
   };
   commercialTermDefaults: {
     list(): Promise<CommercialTermDefault[]>;
@@ -63,6 +106,8 @@ export interface AdminApiClient {
     listByImplementation(implementationId: string): Promise<CommercialTerm[]>;
     /** Clona os defaults vigentes para a implantação — idempotente. */
     cloneDefaults(implementationId: string): Promise<CommercialTerm[]>;
+    add(input: Omit<CommercialTerm, "id">): Promise<CommercialTerm>;
+    remove(id: string): Promise<void>;
     update(
       id: string,
       patch: Partial<Omit<CommercialTerm, "id" | "implementationId">>,
@@ -109,6 +154,7 @@ export interface AdminApiClient {
     createLink(
       implementationId: string,
       ownerId: string | null,
+      publicSnapshot: OwnerPortalSnapshot,
       validityDays?: number,
     ): Promise<{ link: OwnerOnboardingLink; token: string }>;
     revoke(id: string): Promise<OwnerOnboardingLink>;
@@ -118,6 +164,10 @@ export interface AdminApiClient {
      * security-definer (ver migration 0007).
      */
     findByToken(token: string): Promise<OwnerOnboardingLink | null>;
+    resolvePortal(token: string): Promise<OwnerPortalPublicAccess | null>;
+    acceptPortalProposal(token: string, acceptedName: string): Promise<void>;
+    getDraft(token: string): Promise<OwnerOnboardingDraft | null>;
+    saveDraft(token: string, input: OwnerOnboardingDraft, submit?: boolean): Promise<OwnerOnboardingDraft>;
     getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
@@ -126,7 +176,81 @@ export interface AdminApiClient {
       input: OwnerOnboardingSubmissionInput,
     ): Promise<OwnerOnboardingSubmission>;
   };
+  /** Fase 2 — vários proprietários/proponentes por implantação (relação, nunca campos duplicados). */
+  implementationOwners: {
+    listByImplementation(implementationId: string): Promise<ImplementationOwnerLink[]>;
+    add(input: ImplementationOwnerLinkInput): Promise<ImplementationOwnerLink>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 2 — estado de confirmação campo a campo; nada é sobrescrito em silêncio. */
+  fieldConfirmations: {
+    listByImplementation(implementationId: string): Promise<FieldConfirmation[]>;
+    setState(input: {
+      implementationId: string;
+      fieldKey: string;
+      state: OwnerFieldState;
+      valueSnapshot?: string | null;
+      note?: string | null;
+    }): Promise<FieldConfirmation>;
+  };
+  /** Fase 3 — cadastro estruturado do imóvel da implantação. */
+  propertyDetails: {
+    get(implementationId: string): Promise<ImplementationPropertyDetails | null>;
+    save(
+      implementationId: string,
+      input: ImplementationPropertyDetailsInput,
+    ): Promise<ImplementationPropertyDetails>;
+  };
+  /** Fase 3 — ambientes (quartos, banheiros, áreas) com camas e capacidade. */
+  rooms: {
+    listByImplementation(implementationId: string): Promise<ImplementationRoom[]>;
+    add(input: ImplementationRoomInput): Promise<ImplementationRoom>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 4 — enxoval e itens faltantes (itens livres, nunca fixos no código). */
+  supplies: {
+    listByImplementation(implementationId: string, module?: SupplyModule): Promise<SupplyItem[]>;
+    add(input: SupplyItemInput): Promise<SupplyItem>;
+    update(id: string, patch: SupplyItemPatch): Promise<SupplyItem>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 4 — templates de enxoval: aplicar copia os itens (snapshot), nunca vincula. */
+  supplyTemplates: {
+    list(module?: SupplyModule): Promise<SupplyTemplate[]>;
+    items(templateId: string): Promise<SupplyTemplateItem[]>;
+    create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 6 — conteúdo institucional do portal (rascunho e publicado). */
+  portalContent: {
+    list(): Promise<PortalContentBlock[]>;
+    add(input: PortalContentBlockInput): Promise<PortalContentBlock>;
+    update(id: string, patch: PortalContentBlockPatch): Promise<PortalContentBlock>;
+    publish(id: string): Promise<PortalContentBlock>;
+    unpublish(id: string): Promise<PortalContentBlock>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 5 — prazo de validade e observações de pagamento da proposta. */
+  proposalSettings: {
+    get(implementationId: string): Promise<ProposalSettings | null>;
+    save(implementationId: string, input: ProposalSettingsInput): Promise<ProposalSettings>;
+  };
+  /** Fase 5 — blocos de regras/observações com visibilidade por destino. */
+  proposalBlocks: {
+    listByImplementation(implementationId: string): Promise<ProposalContentBlock[]>;
+    add(input: ProposalContentBlockInput): Promise<ProposalContentBlock>;
+    update(id: string, patch: ProposalContentBlockPatch): Promise<ProposalContentBlock>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 5 — modelos de implantação: aplicar COPIA o snapshot, nunca vincula. */
+  implementationTemplates: {
+    list(): Promise<ImplementationTemplate[]>;
+    get(id: string): Promise<ImplementationTemplate | null>;
+    create(input: ImplementationTemplateInput): Promise<ImplementationTemplate>;
+    remove(id: string): Promise<void>;
+  };
 }
+
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
 // reusar a mesma chave em vez de duplicar a string em outro arquivo.
@@ -138,7 +262,15 @@ export const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
 export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
+export const OWNER_ONBOARDING_DRAFTS_KEY = "stayo-admin:owner-onboarding-drafts";
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
+export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
+export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
+export const PROPERTY_DETAILS_KEY = "stayo-admin:implementation-property-details";
+export const IMPLEMENTATION_ROOMS_KEY = "stayo-admin:implementation-rooms";
+export const SUPPLY_ITEMS_KEY = "stayo-admin:implementation-supply-items";
+export const SUPPLY_TEMPLATES_KEY = "stayo-admin:supply-templates";
+export const SUPPLY_TEMPLATE_ITEMS_KEY = "stayo-admin:supply-template-items";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
@@ -225,6 +357,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       if (existing) return existing;
       return owners.create(input);
     },
+    getAdministrativeRegistration: () => Promise.resolve(null),
   };
 
   const commercialTermDefaults: AdminApiClient["commercialTermDefaults"] = {
@@ -262,6 +395,17 @@ export function createLocalAdminApiClient(): AdminApiClient {
   };
 
   const commercialTerms: AdminApiClient["commercialTerms"] = {
+    add: async (input) => {
+      const term: CommercialTerm = { ...input, id: newId() };
+      write(COMMERCIAL_TERMS_KEY, [...read<CommercialTerm>(COMMERCIAL_TERMS_KEY), term]);
+      return term;
+    },
+    remove: async (id) => {
+      write(
+        COMMERCIAL_TERMS_KEY,
+        read<CommercialTerm>(COMMERCIAL_TERMS_KEY).filter((t) => t.id !== id),
+      );
+    },
     listByImplementation: (implementationId) =>
       Promise.resolve(
         read<CommercialTerm>(COMMERCIAL_TERMS_KEY)
@@ -429,6 +573,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
     createLink: async (
       implementationId,
       ownerId,
+      publicSnapshot,
       validityDays = DEFAULT_INVITATION_VALIDITY_DAYS,
     ) => {
       const now = new Date();
@@ -437,7 +582,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
         (l) => l.implementationId === implementationId && !l.revokedAt && !l.usedAt,
       );
 
-      const token = newId();
+      const token = createSecureToken();
       const tokenHash = await hashToken(token);
       const link: OwnerOnboardingLink = {
         id: newId(),
@@ -450,6 +595,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
         usedAt: null,
         revokedAt: null,
         lastAccessAt: null,
+        publicSnapshot,
       };
 
       const revokedIds = new Set(stillActive.map((l) => l.id));
@@ -491,6 +637,44 @@ export function createLocalAdminApiClient(): AdminApiClient {
           (l) => l.tokenHash === tokenHash,
         ) ?? null
       );
+    },
+    resolvePortal: async (token) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link || !link.publicSnapshot || link.revokedAt || new Date(link.expiresAt) < new Date()) {
+        return null;
+      }
+      return { expiresAt: link.expiresAt, revokedAt: link.revokedAt, snapshot: link.publicSnapshot };
+    },
+    acceptPortalProposal: async (token, acceptedName) => {
+      const tokenHash = await hashToken(token);
+      const links = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
+      const target = links.find((item) => item.tokenHash === tokenHash);
+      if (!target?.publicSnapshot?.proposal) throw new Error("Proposta indisponível");
+      const acceptedAt = new Date().toISOString();
+      const updated: OwnerOnboardingLink = {
+        ...target,
+        publicSnapshot: {
+          ...target.publicSnapshot,
+          proposal: { ...target.publicSnapshot.proposal, acceptedAt, acceptedName: acceptedName.trim() },
+          refreshedAt: acceptedAt,
+        },
+      };
+      write(OWNER_ONBOARDING_LINKS_KEY, links.map((item) => (item.id === target.id ? updated : item)));
+    },
+    getDraft: async (token) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link || link.revokedAt || new Date(link.expiresAt) < new Date()) return null;
+      return read<{ implementationId: string; draft: OwnerOnboardingDraft }>(OWNER_ONBOARDING_DRAFTS_KEY)
+        .find((item) => item.implementationId === link.implementationId)?.draft ?? null;
+    },
+    saveDraft: async (token, input, submit = false) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link || link.revokedAt || new Date(link.expiresAt) < new Date()) throw new Error("Acesso inválido");
+      const draft = { ...input, submittedAt: submit ? new Date().toISOString() : input.submittedAt };
+      const all = read<{ implementationId: string; draft: OwnerOnboardingDraft }>(OWNER_ONBOARDING_DRAFTS_KEY)
+        .filter((item) => item.implementationId !== link.implementationId);
+      write(OWNER_ONBOARDING_DRAFTS_KEY, [...all, { implementationId: link.implementationId, draft }]);
+      return draft;
     },
     getSubmission: async (implementationId) =>
       read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
@@ -566,15 +750,429 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const implementationOwners: AdminApiClient["implementationOwners"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY)
+          .filter((l) => l.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    add: async (input) => {
+      const link: ImplementationOwnerLink = {
+        id: newId(),
+        implementationId: input.implementationId,
+        ownerId: input.ownerId,
+        role: input.role,
+        sharePercent: input.sharePercent,
+        address: input.address,
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_OWNERS_KEY, [
+        ...read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY),
+        link,
+      ]);
+      return link;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_OWNERS_KEY,
+        read<ImplementationOwnerLink>(IMPLEMENTATION_OWNERS_KEY).filter((l) => l.id !== id),
+      );
+    },
+  };
+
+  const fieldConfirmations: AdminApiClient["fieldConfirmations"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<FieldConfirmation>(FIELD_CONFIRMATIONS_KEY).filter(
+          (f) => f.implementationId === implementationId,
+        ),
+      ),
+    setState: async (input) => {
+      const all = read<FieldConfirmation>(FIELD_CONFIRMATIONS_KEY);
+      const existing = all.find(
+        (f) => f.implementationId === input.implementationId && f.fieldKey === input.fieldKey,
+      );
+      const updated: FieldConfirmation = {
+        id: existing?.id ?? newId(),
+        implementationId: input.implementationId,
+        fieldKey: input.fieldKey,
+        state: input.state,
+        valueSnapshot: input.valueSnapshot ?? existing?.valueSnapshot ?? null,
+        note: input.note ?? existing?.note ?? null,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        FIELD_CONFIRMATIONS_KEY,
+        existing ? all.map((f) => (f.id === existing.id ? updated : f)) : [...all, updated],
+      );
+      return updated;
+    },
+  };
+
+  const propertyDetails: AdminApiClient["propertyDetails"] = {
+    get: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationPropertyDetails>(PROPERTY_DETAILS_KEY).find(
+          (d) => d.implementationId === implementationId,
+        ) ?? null,
+      ),
+    save: async (implementationId, input) => {
+      const all = read<ImplementationPropertyDetails>(PROPERTY_DETAILS_KEY);
+      const existing = all.find((d) => d.implementationId === implementationId);
+      const updated: ImplementationPropertyDetails = {
+        implementationId,
+        postalCode: null,
+        street: null,
+        number: null,
+        complement: null,
+        district: null,
+        city: null,
+        state: null,
+        propertyType: null,
+        bedrooms: null,
+        suites: null,
+        bathrooms: null,
+        parkingSpots: null,
+        accessNotes: null,
+        wifiNetwork: null,
+        wifiPassword: null,
+        notes: null,
+        ...existing,
+        ...input,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PROPERTY_DETAILS_KEY,
+        existing
+          ? all.map((d) => (d.implementationId === implementationId ? updated : d))
+          : [...all, updated],
+      );
+      return updated;
+    },
+  };
+
+  const rooms: AdminApiClient["rooms"] = {
+    listByImplementation: (implementationId) =>
+      Promise.resolve(
+        read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY)
+          .filter((r) => r.implementationId === implementationId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    add: async (input) => {
+      const room: ImplementationRoom = {
+        id: newId(),
+        implementationId: input.implementationId,
+        name: input.name,
+        kind: input.kind,
+        beds: input.beds,
+        capacity: input.capacity,
+        displayOrder: input.displayOrder ?? 0,
+        notes: input.notes ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_ROOMS_KEY, [
+        ...read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY),
+        room,
+      ]);
+      return room;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_ROOMS_KEY,
+        read<ImplementationRoom>(IMPLEMENTATION_ROOMS_KEY).filter((r) => r.id !== id),
+      );
+    },
+  };
+
+  const supplies: AdminApiClient["supplies"] = {
+    listByImplementation: (implementationId, module) =>
+      Promise.resolve(
+        read<SupplyItem>(SUPPLY_ITEMS_KEY)
+          .filter(
+            (i) => i.implementationId === implementationId && (!module || i.module === module),
+          )
+          .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)),
+      ),
+    add: async (input) => {
+      const now = new Date().toISOString();
+      const item: SupplyItem = {
+        id: newId(),
+        implementationId: input.implementationId,
+        module: input.module,
+        name: input.name,
+        room: input.room ?? null,
+        size: input.size ?? null,
+        requiredQty: input.requiredQty ?? 0,
+        existingQty: input.existingQty ?? 0,
+        status: input.status ?? "pendente",
+        priority: input.priority ?? "media",
+        responsible: input.responsible ?? null,
+        blocksReadiness: input.blocksReadiness ?? false,
+        notes: input.notes ?? null,
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      write(SUPPLY_ITEMS_KEY, [...read<SupplyItem>(SUPPLY_ITEMS_KEY), item]);
+      return item;
+    },
+    update: async (id, patch) => {
+      const all = read<SupplyItem>(SUPPLY_ITEMS_KEY);
+      const existing = all.find((i) => i.id === id);
+      if (!existing) throw new Error("Item não encontrado");
+      const updated: SupplyItem = { ...existing, ...patch, updatedAt: new Date().toISOString() };
+      write(
+        SUPPLY_ITEMS_KEY,
+        all.map((i) => (i.id === id ? updated : i)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        SUPPLY_ITEMS_KEY,
+        read<SupplyItem>(SUPPLY_ITEMS_KEY).filter((i) => i.id !== id),
+      );
+    },
+  };
+
+  const supplyTemplates: AdminApiClient["supplyTemplates"] = {
+    list: (module) =>
+      Promise.resolve(
+        read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY)
+          .filter((t) => !module || t.module === module)
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      ),
+    items: (templateId) =>
+      Promise.resolve(
+        read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY)
+          .filter((i) => i.templateId === templateId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    create: async (input) => {
+      const template: SupplyTemplate = {
+        id: newId(),
+        name: input.name,
+        module: input.module,
+        notes: input.notes ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      write(SUPPLY_TEMPLATES_KEY, [...read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY), template]);
+      write(SUPPLY_TEMPLATE_ITEMS_KEY, [
+        ...read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY),
+        ...input.items.map((item, index) => ({
+          ...item,
+          id: newId(),
+          templateId: template.id,
+          displayOrder: item.displayOrder ?? index,
+        })),
+      ]);
+      return template;
+    },
+    remove: async (id) => {
+      write(
+        SUPPLY_TEMPLATES_KEY,
+        read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY).filter((t) => t.id !== id),
+      );
+      write(
+        SUPPLY_TEMPLATE_ITEMS_KEY,
+        read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY).filter((i) => i.templateId !== id),
+      );
+    },
+  };
+
+  const PROPOSAL_SETTINGS_KEY = "stayo.admin.proposal-settings";
+  const PROPOSAL_BLOCKS_KEY = "stayo.admin.proposal-blocks";
+  const IMPLEMENTATION_TEMPLATES_KEY = "stayo.admin.implementation-templates";
+
+  const proposalSettings: AdminApiClient["proposalSettings"] = {
+    get: async (implementationId) =>
+      read<ProposalSettings>(PROPOSAL_SETTINGS_KEY).find(
+        (s) => s.implementationId === implementationId,
+      ) ?? null,
+    save: async (implementationId, input) => {
+      const all = read<ProposalSettings>(PROPOSAL_SETTINGS_KEY);
+      const current = all.find((s) => s.implementationId === implementationId);
+      const updated: ProposalSettings = {
+        implementationId,
+        validityDays: input.validityDays ?? current?.validityDays ?? 30,
+        paymentNotes:
+          input.paymentNotes === undefined ? (current?.paymentNotes ?? null) : input.paymentNotes,
+        updatedAt: new Date().toISOString(),
+      };
+      write(PROPOSAL_SETTINGS_KEY, [
+        ...all.filter((s) => s.implementationId !== implementationId),
+        updated,
+      ]);
+      return updated;
+    },
+  };
+
+  const proposalBlocks: AdminApiClient["proposalBlocks"] = {
+    listByImplementation: async (implementationId) =>
+      read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY)
+        .filter((b) => b.implementationId === implementationId)
+        .sort((a, b) => a.displayOrder - b.displayOrder),
+    add: async (input) => {
+      const block: ProposalContentBlock = {
+        id: newId(),
+        implementationId: input.implementationId,
+        title: input.title,
+        body: input.body ?? "",
+        visibility: input.visibility ?? "proposta",
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: new Date().toISOString(),
+      };
+      write(PROPOSAL_BLOCKS_KEY, [...read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY), block]);
+      return block;
+    },
+    update: async (id, patch) => {
+      const all = read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco não encontrado");
+      const updated: ProposalContentBlock = { ...target, ...patch };
+      write(
+        PROPOSAL_BLOCKS_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        PROPOSAL_BLOCKS_KEY,
+        read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY).filter((b) => b.id !== id),
+      );
+    },
+  };
+
+  const implementationTemplates: AdminApiClient["implementationTemplates"] = {
+    list: async () =>
+      read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
+    get: async (id) =>
+      read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).find((t) => t.id === id) ?? null,
+    create: async (input) => {
+      const template: ImplementationTemplate = {
+        id: newId(),
+        name: input.name,
+        notes: input.notes ?? null,
+        payload: { ...emptyTemplatePayload, ...input.payload },
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_TEMPLATES_KEY, [
+        ...read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY),
+        template,
+      ]);
+      return template;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_TEMPLATES_KEY,
+        read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).filter((t) => t.id !== id),
+      );
+    },
+  };
+
+  const PORTAL_CONTENT_KEY = "stayo.admin.portal-content";
+
+  const portalContent: AdminApiClient["portalContent"] = {
+    list: async () =>
+      read<PortalContentBlock>(PORTAL_CONTENT_KEY).sort(
+        (a, b) => a.displayOrder - b.displayOrder,
+      ),
+    add: async (input) => {
+      const block: PortalContentBlock = {
+        id: newId(),
+        kind: input.kind,
+        draftTitle: input.draftTitle,
+        draftBody: input.draftBody ?? "",
+        publishedTitle: null,
+        publishedBody: null,
+        publishedAt: null,
+        displayOrder: input.displayOrder ?? 0,
+        updatedAt: new Date().toISOString(),
+      };
+      write(PORTAL_CONTENT_KEY, [...read<PortalContentBlock>(PORTAL_CONTENT_KEY), block]);
+      return block;
+    },
+    update: async (id, patch) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    publish: async (id) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        publishedTitle: target.draftTitle,
+        publishedBody: target.draftBody,
+        publishedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    unpublish: async (id) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        publishedTitle: null,
+        publishedBody: null,
+        publishedAt: null,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        PORTAL_CONTENT_KEY,
+        read<PortalContentBlock>(PORTAL_CONTENT_KEY).filter((b) => b.id !== id),
+      );
+    },
+  };
+
   return {
+    portalContent,
+    proposalSettings,
+    proposalBlocks,
+    implementationTemplates,
     audit,
     owners,
+    propertyDetails,
+    rooms,
+    supplies,
+    supplyTemplates,
     commercialTermDefaults,
     commercialTerms,
     outbox,
     initialCharges,
     ownerOnboarding,
     ownerTasks,
+    implementationOwners,
+    fieldConfirmations,
   };
 }
 
@@ -610,6 +1208,16 @@ interface OwnerRecordRow {
   core_owner_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface OwnerAdministrativeRegistrationRow {
+  implementation_id: string;
+  submitted_at: string | null;
+  bank_name: string | null;
+  account_holder: string | null;
+  pix_type: OwnerAdministrativeRegistration["pixType"];
+  pix_key: string | null;
+  is_primary: boolean | null;
 }
 
 function ownerFromRow(row: OwnerRecordRow): OwnerRecord {
@@ -749,6 +1357,7 @@ interface OwnerOnboardingLinkRow {
   used_at: string | null;
   revoked_at: string | null;
   last_access_at: string | null;
+  public_snapshot: OwnerPortalSnapshot | null;
 }
 
 function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardingLink {
@@ -763,6 +1372,7 @@ function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardin
     usedAt: row.used_at,
     revokedAt: row.revoked_at,
     lastAccessAt: row.last_access_at,
+    publicSnapshot: row.public_snapshot,
   };
 }
 
@@ -914,6 +1524,44 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       }
       return owners.create(input);
     },
+    getAdministrativeRegistration: async (implementationIds) => {
+      if (implementationIds.length === 0) return null;
+      const firstImplementationId = implementationIds[0];
+      if (!firstImplementationId) return null;
+      const supabase = client();
+      const { data: accounts, error: accountsError } = await supabase
+        .from("owner_payout_accounts")
+        .select("implementation_id, bank_name, account_holder, pix_type, pix_key, is_primary")
+        .in("implementation_id", implementationIds)
+        .eq("is_primary", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .returns<OwnerAdministrativeRegistrationRow[]>();
+      if (accountsError) throw accountsError;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("owner_onboarding_profiles")
+        .select("implementation_id, submitted_at")
+        .in("implementation_id", implementationIds)
+        .not("submitted_at", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .returns<Array<{ implementation_id: string; submitted_at: string | null }>>();
+      if (profilesError) throw profilesError;
+
+      const account = accounts[0] ?? null;
+      const profile = profiles[0] ?? null;
+      if (!account && !profile) return null;
+      return {
+        implementationId: account?.implementation_id ?? profile?.implementation_id ?? firstImplementationId,
+        submittedAt: profile?.submitted_at ?? null,
+        bankName: account?.bank_name ?? null,
+        accountHolder: account?.account_holder ?? null,
+        pixType: account?.pix_type ?? null,
+        pixKey: account?.pix_key ?? null,
+        isPrimary: account?.is_primary ?? false,
+      };
+    },
   };
 
   const commercialTermDefaults: AdminApiClient["commercialTermDefaults"] = {
@@ -966,6 +1614,27 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
   };
 
   const commercialTerms: AdminApiClient["commercialTerms"] = {
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("commercial_terms")
+        .insert({
+          implementation_id: input.implementationId,
+          label: input.label,
+          charge_type: input.chargeType,
+          value: input.value,
+          optional: input.optional,
+          display_order: input.displayOrder,
+          notes: input.notes,
+        })
+        .select()
+        .single<CommercialTermRow>();
+      if (error) throw error;
+      return termFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("commercial_terms").delete().eq("id", id);
+      if (error) throw error;
+    },
     listByImplementation: async (implementationId) => {
       const { data, error } = await client()
         .from("commercial_terms")
@@ -1177,11 +1846,12 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     createLink: async (
       implementationId,
       ownerId,
+      publicSnapshot,
       validityDays = DEFAULT_INVITATION_VALIDITY_DAYS,
     ) => {
       const supabase = client();
       const now = new Date();
-      const token = newId();
+      const token = createSecureToken();
       const tokenHash = await hashToken(token);
 
       const { error: revokeError } = await supabase
@@ -1198,6 +1868,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
           implementation_id: implementationId,
           owner_id: ownerId,
           token_hash: tokenHash,
+          public_snapshot: publicSnapshot,
           expires_at: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
         })
         .select()
@@ -1269,7 +1940,45 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         usedAt: data.used_at,
         revokedAt: data.revoked_at,
         lastAccessAt: null,
+        publicSnapshot: null,
       };
+    },
+    resolvePortal: async (token) => {
+      const { data, error } = await client()
+        .rpc("owner_portal_resolve", { p_token: token })
+        .maybeSingle<{
+          expires_at: string;
+          revoked_at: string | null;
+          public_snapshot: OwnerPortalSnapshot | null;
+        }>();
+      if (error) throw error;
+      if (!data?.public_snapshot) return null;
+      return {
+        expiresAt: data.expires_at,
+        revokedAt: data.revoked_at,
+        snapshot: data.public_snapshot,
+      };
+    },
+    acceptPortalProposal: async (token, acceptedName) => {
+      const { error } = await client().rpc("owner_portal_accept_proposal", {
+        p_token: token,
+        p_accepted_name: acceptedName,
+      });
+      if (error) throw error;
+    },
+    getDraft: async (token) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", { p_token: token });
+      if (error) throw error;
+      return (data as OwnerOnboardingDraft | null) ?? null;
+    },
+    saveDraft: async (token, input, submit = false) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_save", {
+        p_token: token,
+        p_data: input as unknown as Json,
+        p_submit: submit,
+      });
+      if (error) throw error;
+      return data as unknown as OwnerOnboardingDraft;
     },
     submit: async (_implementationId, token, input) => {
       const { data, error } = await client()
@@ -1325,19 +2034,760 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const implementationOwners: AdminApiClient["implementationOwners"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_owners")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<ImplementationOwnerRow[]>();
+      if (error) throw error;
+      return data.map(implementationOwnerFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_owners")
+        .insert({
+          implementation_id: input.implementationId,
+          owner_id: input.ownerId,
+          role: input.role,
+          share_percent: input.sharePercent,
+          address: input.address,
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<ImplementationOwnerRow>();
+      if (error) throw error;
+      return implementationOwnerFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_owners").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const fieldConfirmations: AdminApiClient["fieldConfirmations"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_field_confirmations")
+        .select()
+        .eq("implementation_id", implementationId)
+        .returns<FieldConfirmationRow[]>();
+      if (error) throw error;
+      return data.map(fieldConfirmationFromRow);
+    },
+    setState: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_field_confirmations")
+        .upsert(
+          {
+            implementation_id: input.implementationId,
+            field_key: input.fieldKey,
+            state: input.state,
+            value_snapshot: input.valueSnapshot ?? null,
+            note: input.note ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id,field_key" },
+        )
+        .select()
+        .single<FieldConfirmationRow>();
+      if (error) throw error;
+      return fieldConfirmationFromRow(data);
+    },
+  };
+
+  const propertyDetails: AdminApiClient["propertyDetails"] = {
+    get: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_property_details")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle<PropertyDetailsRow>();
+      if (error) throw error;
+      return data ? propertyDetailsFromRow(data) : null;
+    },
+    save: async (implementationId, input) => {
+      const { data, error } = await client()
+        .from("implementation_property_details")
+        .upsert(
+          {
+            implementation_id: implementationId,
+            postal_code: input.postalCode ?? null,
+            street: input.street ?? null,
+            number: input.number ?? null,
+            complement: input.complement ?? null,
+            district: input.district ?? null,
+            city: input.city ?? null,
+            state: input.state ?? null,
+            property_type: input.propertyType ?? null,
+            bedrooms: input.bedrooms ?? null,
+            suites: input.suites ?? null,
+            bathrooms: input.bathrooms ?? null,
+            parking_spots: input.parkingSpots ?? null,
+            access_notes: input.accessNotes ?? null,
+            wifi_network: input.wifiNetwork ?? null,
+            wifi_password: input.wifiPassword ?? null,
+            notes: input.notes ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id" },
+        )
+        .select()
+        .single<PropertyDetailsRow>();
+      if (error) throw error;
+      return propertyDetailsFromRow(data);
+    },
+  };
+
+  const rooms: AdminApiClient["rooms"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_rooms")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<RoomRow[]>();
+      if (error) throw error;
+      return data.map(roomFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_rooms")
+        .insert({
+          implementation_id: input.implementationId,
+          name: input.name,
+          kind: input.kind,
+          beds: input.beds,
+          capacity: input.capacity,
+          display_order: input.displayOrder ?? 0,
+          notes: input.notes ?? null,
+        })
+        .select()
+        .single<RoomRow>();
+      if (error) throw error;
+      return roomFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_rooms").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const supplies: AdminApiClient["supplies"] = {
+    listByImplementation: async (implementationId, module) => {
+      let query = client()
+        .from("implementation_supply_items")
+        .select()
+        .eq("implementation_id", implementationId);
+      if (module) query = query.eq("module", module);
+      const { data, error } = await query
+        .order("display_order", { ascending: true })
+        .returns<SupplyItemRow[]>();
+      if (error) throw error;
+      return data.map(supplyItemFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_supply_items")
+        .insert({
+          implementation_id: input.implementationId,
+          module: input.module,
+          name: input.name,
+          room: input.room ?? null,
+          size: input.size ?? null,
+          required_qty: input.requiredQty ?? 0,
+          existing_qty: input.existingQty ?? 0,
+          status: input.status ?? "pendente",
+          priority: input.priority ?? "media",
+          responsible: input.responsible ?? null,
+          blocks_readiness: input.blocksReadiness ?? false,
+          notes: input.notes ?? null,
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<SupplyItemRow>();
+      if (error) throw error;
+      return supplyItemFromRow(data);
+    },
+    update: async (id, patch) => {
+      const row: Record<string, unknown> = {};
+      if (patch.name !== undefined) row["name"] = patch.name;
+      if (patch.room !== undefined) row["room"] = patch.room;
+      if (patch.size !== undefined) row["size"] = patch.size;
+      if (patch.requiredQty !== undefined) row["required_qty"] = patch.requiredQty;
+      if (patch.existingQty !== undefined) row["existing_qty"] = patch.existingQty;
+      if (patch.status !== undefined) row["status"] = patch.status;
+      if (patch.priority !== undefined) row["priority"] = patch.priority;
+      if (patch.responsible !== undefined) row["responsible"] = patch.responsible;
+      if (patch.blocksReadiness !== undefined) row["blocks_readiness"] = patch.blocksReadiness;
+      if (patch.notes !== undefined) row["notes"] = patch.notes;
+      if (patch.displayOrder !== undefined) row["display_order"] = patch.displayOrder;
+      const { data, error } = await client()
+        .from("implementation_supply_items")
+        .update(row)
+        .eq("id", id)
+        .select()
+        .single<SupplyItemRow>();
+      if (error) throw error;
+      return supplyItemFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_supply_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const supplyTemplates: AdminApiClient["supplyTemplates"] = {
+    list: async (module) => {
+      let query = client().from("supply_templates").select();
+      if (module) query = query.eq("module", module);
+      const { data, error } = await query
+        .order("name", { ascending: true })
+        .returns<SupplyTemplateRow[]>();
+      if (error) throw error;
+      return data.map(supplyTemplateFromRow);
+    },
+    items: async (templateId) => {
+      const { data, error } = await client()
+        .from("supply_template_items")
+        .select()
+        .eq("template_id", templateId)
+        .order("display_order", { ascending: true })
+        .returns<SupplyTemplateItemRow[]>();
+      if (error) throw error;
+      return data.map(supplyTemplateItemFromRow);
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("supply_templates")
+        .insert({ name: input.name, module: input.module, notes: input.notes ?? null })
+        .select()
+        .single<SupplyTemplateRow>();
+      if (error) throw error;
+      if (input.items.length > 0) {
+        const { error: itemsError } = await client()
+          .from("supply_template_items")
+          .insert(
+            input.items.map((item, index) => ({
+              template_id: data.id,
+              name: item.name,
+              room: item.room ?? null,
+              size: item.size ?? null,
+              required_qty: item.requiredQty ?? 0,
+              display_order: item.displayOrder ?? index,
+            })),
+          );
+        if (itemsError) throw itemsError;
+      }
+      return supplyTemplateFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("supply_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const proposalSettings: AdminApiClient["proposalSettings"] = {
+    get: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_proposal_settings")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? proposalSettingsFromRow(data as ProposalSettingsRow) : null;
+    },
+    save: async (implementationId, input) => {
+      const current = await proposalSettings.get(implementationId);
+      const { data, error } = await client()
+        .from("implementation_proposal_settings")
+        .upsert(
+          {
+            implementation_id: implementationId,
+            validity_days: input.validityDays ?? current?.validityDays ?? 30,
+            payment_notes:
+              input.paymentNotes === undefined
+                ? (current?.paymentNotes ?? null)
+                : input.paymentNotes,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return proposalSettingsFromRow(data as ProposalSettingsRow);
+    },
+  };
+
+  const proposalBlocks: AdminApiClient["proposalBlocks"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<ProposalBlockRow[]>();
+      if (error) throw error;
+      return data.map(proposalBlockFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .insert({
+          implementation_id: input.implementationId,
+          title: input.title,
+          body: input.body ?? "",
+          visibility: input.visibility ?? "proposta",
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<ProposalBlockRow>();
+      if (error) throw error;
+      return proposalBlockFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .update({
+          ...(patch.title === undefined ? {} : { title: patch.title }),
+          ...(patch.body === undefined ? {} : { body: patch.body }),
+          ...(patch.visibility === undefined ? {} : { visibility: patch.visibility }),
+          ...(patch.displayOrder === undefined ? {} : { display_order: patch.displayOrder }),
+        })
+        .eq("id", id)
+        .select()
+        .single<ProposalBlockRow>();
+      if (error) throw error;
+      return proposalBlockFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("proposal_content_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const implementationTemplates: AdminApiClient["implementationTemplates"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .select()
+        .order("name", { ascending: true })
+        .returns<ImplementationTemplateRow[]>();
+      if (error) throw error;
+      return data.map(implementationTemplateFromRow);
+    },
+    get: async (id) => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .select()
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? implementationTemplateFromRow(data as ImplementationTemplateRow) : null;
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .insert({
+          name: input.name,
+          notes: input.notes ?? null,
+          payload: input.payload as unknown as Record<string, unknown>,
+        })
+        .select()
+        .single<ImplementationTemplateRow>();
+      if (error) throw error;
+      return implementationTemplateFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const portalContent: AdminApiClient["portalContent"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .select()
+        .order("display_order", { ascending: true })
+        .returns<PortalContentBlockRow[]>();
+      if (error) throw error;
+      return data.map(portalBlockFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .insert({
+          kind: input.kind,
+          draft_title: input.draftTitle,
+          draft_body: input.draftBody ?? "",
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({
+          ...(patch.kind === undefined ? {} : { kind: patch.kind }),
+          ...(patch.draftTitle === undefined ? {} : { draft_title: patch.draftTitle }),
+          ...(patch.draftBody === undefined ? {} : { draft_body: patch.draftBody }),
+          ...(patch.displayOrder === undefined ? {} : { display_order: patch.displayOrder }),
+        })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    publish: async (id) => {
+      const { data: current, error: readError } = await client()
+        .from("portal_content_blocks")
+        .select()
+        .eq("id", id)
+        .single<PortalContentBlockRow>();
+      if (readError) throw readError;
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({
+          published_title: current.draft_title,
+          published_body: current.draft_body,
+          published_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    unpublish: async (id) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({ published_title: null, published_body: null, published_at: null })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("portal_content_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
+    portalContent,
+    proposalSettings,
+    proposalBlocks,
+    implementationTemplates,
     audit,
     owners,
+    propertyDetails,
+    rooms,
+    supplies,
+    supplyTemplates,
     commercialTermDefaults,
     commercialTerms,
     outbox,
     initialCharges,
     ownerOnboarding,
     ownerTasks,
+    implementationOwners,
+    fieldConfirmations,
   };
 }
 
 /** Ponto único de decisão mock vs real — nenhuma tela deve checar env var. */
 export function createDefaultAdminApiClient(): AdminApiClient {
   return isSupabaseConfigured() ? createSupabaseAdminApiClient() : createLocalAdminApiClient();
+}
+
+interface ImplementationOwnerRow {
+  id: string;
+  implementation_id: string;
+  owner_id: string;
+  role: string;
+  share_percent: number | string | null;
+  address: string | null;
+  display_order: number;
+  created_at: string;
+}
+
+function implementationOwnerFromRow(row: ImplementationOwnerRow): ImplementationOwnerLink {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    ownerId: row.owner_id,
+    role: row.role,
+    sharePercent: row.share_percent === null ? null : Number(row.share_percent),
+    address: row.address,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+  };
+}
+
+interface FieldConfirmationRow {
+  id: string;
+  implementation_id: string;
+  field_key: string;
+  state: OwnerFieldState;
+  value_snapshot: string | null;
+  note: string | null;
+  updated_at: string;
+}
+
+function fieldConfirmationFromRow(row: FieldConfirmationRow): FieldConfirmation {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    fieldKey: row.field_key,
+    state: row.state,
+    valueSnapshot: row.value_snapshot,
+    note: row.note,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface PropertyDetailsRow {
+  implementation_id: string;
+  postal_code: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  district: string | null;
+  city: string | null;
+  state: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  suites: number | null;
+  bathrooms: number | null;
+  parking_spots: number | null;
+  access_notes: string | null;
+  wifi_network: string | null;
+  wifi_password: string | null;
+  notes: string | null;
+  updated_at: string;
+}
+
+function propertyDetailsFromRow(row: PropertyDetailsRow): ImplementationPropertyDetails {
+  return {
+    implementationId: row.implementation_id,
+    postalCode: row.postal_code,
+    street: row.street,
+    number: row.number,
+    complement: row.complement,
+    district: row.district,
+    city: row.city,
+    state: row.state,
+    propertyType: row.property_type,
+    bedrooms: row.bedrooms,
+    suites: row.suites,
+    bathrooms: row.bathrooms,
+    parkingSpots: row.parking_spots,
+    accessNotes: row.access_notes,
+    wifiNetwork: row.wifi_network,
+    wifiPassword: row.wifi_password,
+    notes: row.notes,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface RoomRow {
+  id: string;
+  implementation_id: string;
+  name: string;
+  kind: string;
+  beds: string | null;
+  capacity: number | null;
+  display_order: number;
+  notes: string | null;
+  created_at: string;
+}
+
+function roomFromRow(row: RoomRow): ImplementationRoom {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    name: row.name,
+    kind: row.kind,
+    beds: row.beds,
+    capacity: row.capacity,
+    displayOrder: row.display_order,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+interface SupplyItemRow {
+  id: string;
+  implementation_id: string;
+  module: SupplyItem["module"];
+  name: string;
+  room: string | null;
+  size: string | null;
+  required_qty: number;
+  existing_qty: number;
+  status: SupplyItem["status"];
+  priority: SupplyItem["priority"];
+  responsible: string | null;
+  blocks_readiness: boolean;
+  notes: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function supplyItemFromRow(row: SupplyItemRow): SupplyItem {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    module: row.module,
+    name: row.name,
+    room: row.room,
+    size: row.size,
+    requiredQty: row.required_qty,
+    existingQty: row.existing_qty,
+    status: row.status,
+    priority: row.priority,
+    responsible: row.responsible,
+    blocksReadiness: row.blocks_readiness,
+    notes: row.notes,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface SupplyTemplateRow {
+  id: string;
+  name: string;
+  module: SupplyItem["module"];
+  notes: string | null;
+  created_at: string;
+}
+
+function supplyTemplateFromRow(row: SupplyTemplateRow): SupplyTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    module: row.module,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+interface SupplyTemplateItemRow {
+  id: string;
+  template_id: string;
+  name: string;
+  room: string | null;
+  size: string | null;
+  required_qty: number;
+  display_order: number;
+}
+
+function supplyTemplateItemFromRow(row: SupplyTemplateItemRow): SupplyTemplateItem {
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    name: row.name,
+    room: row.room,
+    size: row.size,
+    requiredQty: row.required_qty,
+    displayOrder: row.display_order,
+  };
+}
+
+// ---- Fase 5: linhas e mapeadores de proposta e modelos ----
+
+interface ProposalSettingsRow {
+  implementation_id: string;
+  validity_days: number;
+  payment_notes: string | null;
+  updated_at: string;
+}
+
+function proposalSettingsFromRow(row: ProposalSettingsRow): ProposalSettings {
+  return {
+    implementationId: row.implementation_id,
+    validityDays: row.validity_days,
+    paymentNotes: row.payment_notes,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface ProposalBlockRow {
+  id: string;
+  implementation_id: string;
+  title: string;
+  body: string;
+  visibility: ProposalContentBlock["visibility"];
+  display_order: number;
+  created_at: string;
+}
+
+function proposalBlockFromRow(row: ProposalBlockRow): ProposalContentBlock {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    title: row.title,
+    body: row.body,
+    visibility: row.visibility,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+  };
+}
+
+interface ImplementationTemplateRow {
+  id: string;
+  name: string;
+  notes: string | null;
+  payload: unknown;
+  created_at: string;
+}
+
+function implementationTemplateFromRow(row: ImplementationTemplateRow): ImplementationTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    notes: row.notes,
+    payload: {
+      ...emptyTemplatePayload,
+      ...((row.payload as Partial<ImplementationTemplatePayload> | null) ?? {}),
+    },
+    createdAt: row.created_at,
+  };
+}
+
+interface PortalContentBlockRow {
+  id: string;
+  kind: PortalContentBlock["kind"];
+  draft_title: string;
+  draft_body: string;
+  published_title: string | null;
+  published_body: string | null;
+  published_at: string | null;
+  display_order: number;
+  updated_at: string;
+}
+
+function portalBlockFromRow(row: PortalContentBlockRow): PortalContentBlock {
+  return {
+    id: row.id,
+    kind: row.kind,
+    draftTitle: row.draft_title,
+    draftBody: row.draft_body,
+    publishedTitle: row.published_title,
+    publishedBody: row.published_body,
+    publishedAt: row.published_at,
+    displayOrder: row.display_order,
+    updatedAt: row.updated_at,
+  };
 }

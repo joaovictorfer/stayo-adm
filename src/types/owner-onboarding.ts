@@ -1,4 +1,5 @@
 import type { EntityId } from "./core";
+import type { OwnerPortalSnapshot } from "./owner-portal";
 
 /**
  * Convite público para o proprietário se auto-cadastrar durante a
@@ -25,6 +26,7 @@ export interface OwnerOnboardingLink {
   usedAt: string | null;
   revokedAt: string | null;
   lastAccessAt: string | null;
+  publicSnapshot: OwnerPortalSnapshot | null;
 }
 
 export type OwnerOnboardingLinkStatus = "ativo" | "expirado" | "revogado" | "usado";
@@ -53,3 +55,42 @@ export type OwnerOnboardingSubmissionInput = Omit<
   OwnerOnboardingSubmission,
   "implementationId" | "submittedAt"
 >;
+
+export type OwnerPersonType = "pf" | "pj";
+export type PixKeyType = "cpf" | "cnpj" | "phone" | "email" | "random";
+
+export interface OwnerOnboardingDraft {
+  personType: OwnerPersonType | null;
+  legalName: string;
+  tradeName: string;
+  taxId: string;
+  email: string;
+  phone: string;
+  postalCode: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
+  currentStep: number;
+  submittedAt: string | null;
+  bankName: string;
+  accountHolder: string;
+  holderTaxId: string;
+  pixType: PixKeyType | null;
+  pixKey: string;
+  isPrimary: boolean;
+  confirmed: boolean;
+}
+
+/** Projeção restrita usada somente no workspace administrativo. */
+export interface OwnerAdministrativeRegistration {
+  implementationId: EntityId;
+  submittedAt: string | null;
+  bankName: string | null;
+  accountHolder: string | null;
+  pixType: PixKeyType | null;
+  pixKey: string | null;
+  isPrimary: boolean;
+}

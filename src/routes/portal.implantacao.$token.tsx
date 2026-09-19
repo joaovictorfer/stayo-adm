@@ -1,333 +1,275 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-
-import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import {
-  adminApi,
-  implementationQuery,
-  ownerOnboardingLinkByTokenQuery,
-  ownerOnboardingSubmissionQuery,
-  ownerQuery,
-} from "../lib/api/queries";
-import { createOwnerAccountAndLink, isSupabaseConfigured } from "../lib/auth/owner-session";
-import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
-import type { OwnerOnboardingSubmissionInput } from "../types/owner-onboarding";
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  FileText,
+  Flag,
+  ListChecks,
+  Menu,
+  ReceiptText,
+  ShieldCheck,
+  Sparkles,
+  Wrench,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+import logoAsset from "../assets/stayo-logo-clara.png.asset.json";
+import { OwnerOnboardingFlow } from "../components/portal/OwnerOnboardingFlow";
+import { Button } from "../components/ui/button";
+import { adminApi, ownerPortalAccessQuery } from "../lib/api/queries";
+import {
+  availableOwnerPortalModules,
+  isOwnerPortalModuleAvailable,
+  ownerPortalStage,
+} from "../lib/owner-portal-lifecycle";
+import { formatMoney } from "../lib/format";
+import type { OwnerPortalModule, OwnerPortalSnapshot, OwnerPortalStage } from "../types/owner-portal";
 
 export const Route = createFileRoute("/portal/implantacao/$token")({
   head: () => ({
     meta: [
-      { title: "Cadastro do proprietário — Stayo" },
-      { name: "description", content: "Complete seu cadastro para a implantação do seu imóvel." },
+      { title: "Portal do Proprietário — Stayo" },
+      { name: "description", content: "Acompanhe seu imóvel em todas as etapas com a Stayo." },
+      { property: "og:title", content: "Portal do Proprietário — Stayo" },
+      { property: "og:description", content: "Acompanhe seu imóvel em todas as etapas com a Stayo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: OwnerOnboardingPortalPage,
+  component: OwnerPortal,
 });
 
-const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
+const publicStages = ["Proposta", "Planejamento", "Preparação do imóvel", "Configuração", "Validação", "Pronto para operar"];
 
-function Shell({ children }: { children: React.ReactNode }) {
+const moduleLabels: Record<OwnerPortalModule, string> = {
+  overview: "Visão geral",
+  implementation: "Minha implantação",
+  profile: "Meus dados",
+  proposal: "Proposta",
+  reservations: "Reservas",
+  calendar: "Calendário",
+  property: "Meu imóvel",
+  inspections: "Vistorias",
+  maintenance: "Manutenções",
+  financial: "Financeiro",
+  documents: "Documentos",
+};
+
+function publicStageIndex(status: OwnerPortalSnapshot["status"]): number {
+  if (["prospect", "proposta", "aguardando_aprovacao"].includes(status)) return 0;
+  if (["aprovado", "planejamento"].includes(status)) return 1;
+  if (status === "em_implantacao") return 2;
+  if (status === "validacao") return 4;
+  if (status === "pronto_para_operacao" || status === "ativo") return 5;
+  return 0;
+}
+
+function PortalShell({ children, stage }: { children: React.ReactNode; stage?: OwnerPortalStage }) {
   return (
-    <div
-      className="flex min-h-screen items-start justify-center px-4 py-10 sm:items-center"
-      style={{
-        backgroundColor: "var(--stayo-bg)",
-        color: "var(--stayo-ink)",
-        fontFamily: "var(--stayo-font-ui)",
-      }}
-    >
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo
-          </span>
+    <div className="min-h-screen bg-[#f5f7f9] text-[#17232f]">
+      <header className="bg-[#0b3150] px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <img src={logoAsset.url} alt="Stayo Gramado" className="w-28" />
+          {stage ? <span className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/80">{stage === "active" ? "Imóvel ativo" : stage === "ready" ? "Pronto para operar" : "Em implantação"}</span> : null}
         </div>
-        <div className="rounded-[var(--radius-card)] border p-6" style={surface}>
-          {children}
-        </div>
+      </header>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-9">{children}</main>
+      <footer className="mx-auto max-w-6xl px-4 pb-8 text-center text-xs text-[#6b7785]">Portal seguro Stayo</footer>
+    </div>
+  );
+}
+
+function OwnerPortal() {
+  const { token } = Route.useParams();
+  const query = useQuery(ownerPortalAccessQuery(token));
+
+  if (query.isPending) return <PortalShell><div className="h-52 animate-pulse rounded-lg bg-white" /></PortalShell>;
+  if (query.isError || !query.data) {
+    return <PortalShell><div className="rounded-lg border border-[#e4e8ec] bg-white p-7"><h1 className="text-xl font-semibold">Acesso indisponível</h1><p className="mt-2 text-sm text-[#6b7785]">Este link expirou, foi revogado ou não existe. Solicite um novo acesso à equipe Stayo.</p></div></PortalShell>;
+  }
+
+  return <ProgressivePortal token={token} snapshot={query.data.snapshot} />;
+}
+
+function ProgressivePortal({ token, snapshot }: { token: string; snapshot: OwnerPortalSnapshot }) {
+  const stage = ownerPortalStage(snapshot.status, snapshot.corePropertyId ?? null);
+  const modules = useMemo(() => availableOwnerPortalModules(snapshot), [snapshot]);
+  const [activeModule, setActiveModule] = useState<OwnerPortalModule>("overview");
+  const [mobileMenu, setMobileMenu] = useState(false);
+
+  useEffect(() => {
+    if (!isOwnerPortalModuleAvailable(snapshot, activeModule)) setActiveModule("overview");
+  }, [activeModule, snapshot]);
+
+  const choose = (module: OwnerPortalModule) => {
+    setActiveModule(module);
+    setMobileMenu(false);
+  };
+
+  return (
+    <PortalShell stage={stage}>
+      <div className="space-y-6">
+        <section className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-[#8a682d]">{snapshot.propertyLabel}</p>
+            <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Olá, {snapshot.ownerFirstName}.</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6b7785] sm:text-base">{stage === "active" ? "Seu imóvel está em operação com a Stayo." : stage === "ready" ? "Seu imóvel está pronto para começar a receber hóspedes." : "Estamos preparando seu imóvel para começar a operar com a Stayo."}</p>
+          </div>
+          <Button variant="outline" size="icon" className="shrink-0 md:hidden" onClick={() => setMobileMenu((value) => !value)} aria-label="Abrir menu">{mobileMenu ? <X /> : <Menu />}</Button>
+        </section>
+
+        <nav aria-label="Portal do proprietário" className={`${mobileMenu ? "grid" : "hidden"} gap-1 rounded-lg border border-[#e4e8ec] bg-white p-2 md:flex md:overflow-x-auto`}>
+          {modules.map((module) => (
+            <Button key={module} variant={activeModule === module ? "default" : "ghost"} size="sm" className="justify-start whitespace-nowrap" onClick={() => choose(module)}>{moduleLabels[module]}</Button>
+          ))}
+        </nav>
+
+        {stage === "ready" && activeModule === "overview" ? <ReadyTransition snapshot={snapshot} /> : null}
+        {activeModule === "overview" ? (stage === "active" ? <ActiveOverview snapshot={snapshot} /> : <ImplementationOverview snapshot={snapshot} />) : null}
+        {activeModule === "implementation" ? <ImplementationDetails snapshot={snapshot} /> : null}
+        {activeModule === "profile" ? <OwnerOnboardingFlow token={token} snapshot={snapshot} /> : null}
+        {activeModule === "proposal" ? <Proposal token={token} snapshot={snapshot} /> : null}
+        {activeModule === "reservations" ? <Reservations snapshot={snapshot} /> : null}
+        {activeModule === "calendar" ? <EmptyModule icon={<CalendarDays />} title="Calendário" description="As datas das reservas aparecerão aqui quando forem recebidas do sistema oficial." /> : null}
+        {activeModule === "property" ? <PropertyView snapshot={snapshot} /> : null}
+        {activeModule === "inspections" ? <Inspections snapshot={snapshot} /> : null}
+        {activeModule === "maintenance" ? <Maintenance snapshot={snapshot} /> : null}
+        {activeModule === "financial" ? <Financial snapshot={snapshot} /> : null}
+        {activeModule === "documents" ? <EmptyModule icon={<FileText />} title="Documentos" description="Nenhum documento foi liberado para este acesso." /> : null}
+      </div>
+    </PortalShell>
+  );
+}
+
+function ReadyTransition({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  const transition = snapshot.transition;
+  return (
+    <section className="border-l-4 border-[#b38a44] bg-[#fffaf0] p-5 sm:p-6">
+      <div className="flex gap-3"><Sparkles className="shrink-0 text-[#8a682d]" /><div><h2 className="text-lg font-semibold">Seu imóvel está pronto para começar a receber hóspedes.</h2><p className="mt-1 text-sm leading-6 text-[#6b7785]">Estamos concluindo a ativação operacional. Os novos menus serão liberados após o vínculo com o imóvel oficial.</p></div></div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <TransitionItem label="Data de ativação" value={snapshot.activationDate ? formatDate(snapshot.activationDate) : "A confirmar"} />
+        <TransitionItem label="Vistoria inicial" value={transitionLabel(transition?.initialInspection)} />
+        <TransitionItem label="Configuração Guest" value={transitionLabel(transition?.guestConfiguration)} />
+        <TransitionItem label="Anúncios e canais" value={transition?.channels.length ? transition.channels.join(", ") : "Ainda não disponíveis"} />
+      </div>
+    </section>
+  );
+}
+
+function ImplementationOverview({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  const stage = publicStageIndex(snapshot.status);
+  return (
+    <div className="space-y-5">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Summary icon={<Flag />} label="Etapa atual" value={publicStages[stage] ?? "Proposta"} />
+        <Summary icon={<CheckCircle2 />} label="Progresso" value={`${snapshot.visibleProgress.percent}%`} hint={`${snapshot.visibleProgress.done} de ${snapshot.visibleProgress.total} atividades`} />
+        <Summary icon={<CalendarDays />} label="Previsão" value={formatDate(snapshot.completionDateEstimate ?? snapshot.startDateEstimate)} />
+        <Summary icon={<ListChecks />} label="Precisamos de você" value={String(snapshot.tasks.length)} hint="pendências visíveis" />
+      </section>
+      <ImplementationTimeline stage={stage} />
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+        <section className="rounded-lg border border-[#e4e8ec] bg-white p-5 sm:p-6"><h2 className="font-semibold">Precisamos de você</h2><p className="mt-1 text-sm text-[#6b7785]">Somente tarefas compartilhadas pela equipe Stayo aparecem aqui.</p><div className="mt-4 space-y-3">{snapshot.tasks.length ? snapshot.tasks.map((task) => <div key={`${task.source}-${task.id}`} className="rounded-md border border-[#e4e8ec] p-4"><p className="text-sm font-semibold">{task.title}</p>{task.description ? <p className="mt-1 text-sm text-[#6b7785]">{task.description}</p> : null}</div>) : <p className="rounded-md bg-[#f5f7f9] p-4 text-sm text-[#6b7785]">Nenhuma pendência sua no momento.</p>}</div></section>
+        <Updates snapshot={snapshot} />
       </div>
     </div>
   );
 }
 
-function OwnerOnboardingPortalPage() {
-  const { token } = Route.useParams();
-  const linkQuery = useQuery(ownerOnboardingLinkByTokenQuery(token));
-  const link = linkQuery.data;
-
-  if (linkQuery.isPending) {
-    return (
-      <Shell>
-        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Carregando...
-        </p>
-      </Shell>
-    );
-  }
-
-  if (!link) {
-    return (
-      <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Link inválido
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Este link de cadastro não existe. Fale com quem enviou o link para receber um novo.
-        </p>
-      </Shell>
-    );
-  }
-
-  const status = ownerOnboardingLinkStatus(link);
-  if (status === "expirado" || status === "revogado") {
-    return (
-      <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          {status === "expirado" ? "Link expirado" : "Link revogado"}
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Fale com quem enviou o link para receber um novo.
-        </p>
-      </Shell>
-    );
-  }
-
-  return <OwnerOnboardingForm implementationId={link.implementationId} token={token} />;
-}
-
-function OwnerOnboardingForm({
-  implementationId,
-  token,
-}: {
-  implementationId: string;
-  token: string;
-}) {
-  const queryClient = useQueryClient();
-  const implementationQ = useQuery(implementationQuery(implementationId));
-  const submissionQ = useQuery(ownerOnboardingSubmissionQuery(implementationId));
-  const ownerId = implementationQ.data?.ownerId ?? null;
-  const ownerQ = useQuery({ ...ownerQuery(ownerId ?? ""), enabled: !!ownerId });
-
-  const [form, setForm] = useState<OwnerOnboardingSubmissionInput>({
-    fullName: "",
-    document: null,
-    email: "",
-    phone: "",
-    pixKey: null,
-  });
-
-  useEffect(() => {
-    const owner = ownerQ.data;
-    if (submissionQ.data || !owner) return;
-    setForm((f) => ({
-      ...f,
-      fullName: owner.name,
-      email: owner.email ?? "",
-      phone: owner.phone ?? "",
-    }));
-  }, [ownerQ.data, submissionQ.data]);
-
-  const submit = useMutation({
-    mutationFn: () => adminApi.ownerOnboarding.submit(implementationId, token, form),
-    onSuccess: (submission) => {
-      queryClient.setQueryData(
-        ownerOnboardingSubmissionQuery(implementationId).queryKey,
-        submission,
-      );
-    },
-  });
-
-  const set =
-    (key: keyof OwnerOnboardingSubmissionInput) =>
-    (value: string): void =>
-      setForm((f) => ({ ...f, [key]: value || null }));
-
-  if (submissionQ.data) {
-    return (
-      <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Cadastro recebido
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Obrigado, {submissionQ.data.fullName}! Já recebemos seus dados. A equipe Stayo entra em
-          contato para os próximos passos da implantação.
-        </p>
-        <CreateOwnerAccountPanel token={token} defaultEmail={submissionQ.data.email} />
-      </Shell>
-    );
-  }
-
-  const steps: WizardStep[] = [
-    {
-      id: "identificacao",
-      label: "Identificação",
-      isValid: form.fullName.trim() !== "",
-      content: (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Confirme seus dados para a implantação do seu imóvel na Stayo.
-          </p>
-          <TextField label="Nome completo" value={form.fullName} onChange={set("fullName")} />
-          <TextField label="CPF ou CNPJ" value={form.document ?? ""} onChange={set("document")} />
-        </div>
-      ),
-    },
-    {
-      id: "contato",
-      label: "Contato",
-      isValid: form.email.trim() !== "" && form.phone.trim() !== "",
-      content: (
-        <div className="flex flex-col gap-3">
-          <TextField label="E-mail" type="email" value={form.email} onChange={set("email")} />
-          <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
-        </div>
-      ),
-    },
-    {
-      id: "pagamento",
-      label: "Pagamento",
-      content: (
-        <div className="flex flex-col gap-3">
-          <TextField
-            label="Chave Pix (para repasses futuros)"
-            value={form.pixKey ?? ""}
-            onChange={set("pixKey")}
-          />
-          {submit.isError && (
-            <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-              Não foi possível enviar. Tente novamente.
-            </span>
-          )}
-        </div>
-      ),
-    },
+function ActiveOverview({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  const metrics: Array<{ label: string; value: string }> = [
+    { label: "Resumo do mês", value: "Sem dados" },
+    { label: "Ocupação", value: "Sem dados" },
+    { label: "Receita", value: "Sem dados" },
+    { label: "Diária média", value: "Sem dados" },
+    { label: "Próximas reservas", value: "Sem dados" },
+    { label: "Repasse previsto", value: "Sem dados" },
   ];
-
   return (
-    <Shell>
-      <h1 className="mb-1 text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-        Complete seu cadastro
-      </h1>
-      <p className="mb-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-        Leva menos de um minuto.
-      </p>
-      <Wizard
-        steps={steps}
-        completeLabel="Enviar"
-        submitting={submit.isPending}
-        onComplete={() => submit.mutate()}
-      />
-    </Shell>
-  );
-}
-
-/**
- * Passo opcional de Owner Auth (Fase 17H): logo após o envio do
- * auto-cadastro, oferece criar uma conta de verdade (e-mail/senha via
- * Supabase Auth) vinculada ao proprietário pelo MESMO token do convite —
- * `owner_account_link` (migration 0013) revalida tudo server-side antes
- * de vincular. Sem Supabase configurado, isto não existe ainda (o
- * auto-cadastro em si continua funcionando normalmente, só sem "ver
- * depois" sem o link).
- */
-function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defaultEmail: string }) {
-  const [email, setEmail] = useState(defaultEmail);
-  const [password, setPassword] = useState("");
-
-  const createAccount = useMutation({
-    mutationFn: () => createOwnerAccountAndLink(email, password, token),
-  });
-
-  if (!isSupabaseConfigured()) {
-    return (
-      <p className="mt-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Criar uma conta para acompanhar depois ainda não está disponível.
-      </p>
-    );
-  }
-
-  if (createAccount.isSuccess) {
-    return (
-      <p className="mt-4 text-sm" style={{ color: "var(--stayo-forest)" }}>
-        {createAccount.data.account ? (
-          <>
-            Conta criada e vinculada! Você já pode{" "}
-            <a href="/portal/login" className="underline">
-              entrar
-            </a>{" "}
-            com este e-mail e senha para acompanhar depois.
-          </>
-        ) : (
-          "Conta criada — confirme seu e-mail para poder entrar depois."
-        )}
-      </p>
-    );
-  }
-
-  return (
-    <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--stayo-border)" }}>
-      <h2 className="mb-1 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
-        Quer acompanhar depois?
-      </h2>
-      <p className="mb-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Crie uma senha para entrar de novo mais tarde, sem depender de um link.
-      </p>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          createAccount.mutate();
-        }}
-      >
-        <TextField label="E-mail" type="email" value={email} onChange={setEmail} />
-        <TextField label="Senha" type="password" value={password} onChange={setPassword} />
-        {createAccount.isError && (
-          <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-            Não foi possível criar a conta. Tente novamente.
-          </span>
-        )}
-        <button
-          type="submit"
-          disabled={createAccount.isPending}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-        >
-          {createAccount.isPending ? "Criando..." : "Criar conta"}
-        </button>
-      </form>
+    <div className="space-y-5">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        {metrics.map((metric) => <Summary key={metric.label} icon={<ReceiptText />} label={metric.label} value={metric.value} />)}
+      </section>
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+        <EmptyModule icon={<CalendarDays />} title="Próximas reservas" description="As próximas reservas aparecerão quando a integração oficial fornecer os dados deste imóvel." />
+        <Updates snapshot={snapshot} />
+      </div>
     </div>
   );
 }
 
-function TextField({
-  label,
-  value,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-}) {
-  return (
-    <label className="block text-sm">
-      <span className="mb-1 block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-        style={{ ...surface, color: "var(--stayo-ink)" }}
-      />
-    </label>
-  );
+function ImplementationDetails({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  return <div className="space-y-5"><ImplementationTimeline stage={publicStageIndex(snapshot.status)} /><section className="rounded-lg border border-[#e4e8ec] bg-white p-5"><h2 className="font-semibold">Resumo da implantação</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2"><Detail label="Imóvel" value={snapshot.propertyLabel} /><Detail label="Etapa" value={publicStages[publicStageIndex(snapshot.status)] ?? "Proposta"} /><Detail label="Início estimado" value={formatDate(snapshot.startDateEstimate)} /><Detail label="Conclusão estimada" value={formatDate(snapshot.completionDateEstimate)} /></dl></section></div>;
+}
+
+function Proposal({ token, snapshot }: { token: string; snapshot: OwnerPortalSnapshot }) {
+  const queryClient = useQueryClient();
+  const [acceptedName, setAcceptedName] = useState("");
+  const accept = useMutation({ mutationFn: () => adminApi.ownerOnboarding.acceptPortalProposal(token, acceptedName.trim()), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["owner-portal", "access", token] }) });
+  if (!snapshot.proposal) return <EmptyModule icon={<FileText />} title="Proposta" description="Nenhuma proposta está disponível neste momento." />;
+  return <section className="rounded-lg border border-[#dfd0ad] bg-white p-5 sm:p-6"><div className="flex items-start gap-3"><FileText className="text-[#8a682d]" /><div><h2 className="font-semibold">Proposta · versão {snapshot.proposal.version}</h2><p className="mt-1 text-2xl font-semibold text-[#0b3150]">{formatMoney(snapshot.proposal.total)}</p></div></div>{snapshot.proposal.acceptedAt ? <p className="mt-4 rounded-md bg-[#edf7f2] p-3 text-sm font-medium text-[#237a57]">Proposta aceita em {new Date(snapshot.proposal.acceptedAt).toLocaleString("pt-BR")}.</p> : <div className="mt-4 border-t border-[#e4e8ec] pt-4"><label className="text-xs font-semibold text-[#6b7785]">Seu nome para confirmar o aceite</label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><input value={acceptedName} onChange={(event) => setAcceptedName(event.target.value)} className="min-w-0 flex-1 rounded-md border border-[#d8dde2] bg-white px-3 py-2 text-sm" placeholder="Nome completo" /><Button onClick={() => accept.mutate()} disabled={acceptedName.trim().length < 2 || accept.isPending}>{accept.isPending ? "Confirmando..." : "Aceitar proposta"}</Button></div>{accept.isError ? <p className="mt-2 text-sm text-red-700">Não foi possível confirmar. Tente novamente.</p> : null}</div>}</section>;
+}
+
+function Reservations({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  const reservations = snapshot.operations?.reservations ?? [];
+  if (!reservations.length) return <EmptyModule icon={<CalendarDays />} title="Reservas" description="Ainda não há reservas disponíveis para este imóvel." />;
+  return <section className="overflow-hidden rounded-lg border border-[#e4e8ec] bg-white"><div className="border-b border-[#e4e8ec] p-5"><h2 className="font-semibold">Reservas</h2></div><div className="divide-y divide-[#e4e8ec]">{reservations.map((reservation) => <div key={reservation.id} className="grid gap-2 p-4 text-sm sm:grid-cols-5"><span>{formatDate(reservation.checkin)} — {formatDate(reservation.checkout)}</span><span>{reservation.propertyName}</span><span>{reservation.channel ?? "Canal não informado"}</span><span>{reservation.guestCount ?? "—"} hóspedes</span><span>{reservation.amount === null ? "Valor não disponível" : formatMoney(reservation.amount)}</span></div>)}</div></section>;
+}
+
+function PropertyView({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  return <section className="rounded-lg border border-[#e4e8ec] bg-white p-5 sm:p-6"><div className="flex gap-3"><Building2 className="text-[#8a682d]" /><div><h2 className="font-semibold">{snapshot.propertyLabel}</h2><p className="mt-1 text-sm text-[#6b7785]">Imóvel ativo e vinculado à operação Stayo.</p></div></div></section>;
+}
+
+function Inspections({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  return (snapshot.operations?.inspections.length ?? 0) === 0 ? <EmptyModule icon={<ShieldCheck />} title="Vistorias" description="Nenhuma vistoria foi liberada para sua visualização." /> : <EmptyModule icon={<ShieldCheck />} title="Vistorias" description="As vistorias liberadas aparecem aqui." />;
+}
+
+function Maintenance({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  return (snapshot.operations?.maintenance.length ?? 0) === 0 ? <EmptyModule icon={<Wrench />} title="Manutenções" description="Nenhuma ocorrência de manutenção está visível no momento." /> : <EmptyModule icon={<Wrench />} title="Manutenções" description="As manutenções compartilhadas aparecem aqui." />;
+}
+
+function Financial({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  const items = snapshot.operations?.financial ?? [];
+  return <div className="space-y-5"><section className="grid gap-3 sm:grid-cols-3"><Summary icon={<ReceiptText />} label="Demonstrativos" value="Sem dados" /><Summary icon={<ReceiptText />} label="Repasses" value="Sem dados" /><Summary icon={<ReceiptText />} label="Despesas" value="Sem dados" /></section>{items.length ? null : <EmptyModule icon={<ReceiptText />} title="Movimentações financeiras" description="Demonstrativos, repasses, despesas e arquivos PDF/CSV aparecerão quando enviados pelo sistema financeiro oficial." />}</div>;
+}
+
+function ImplementationTimeline({ stage }: { stage: number }) {
+  return <section className="rounded-lg border border-[#e4e8ec] bg-white p-5 sm:p-6"><h2 className="font-semibold">Próximos marcos</h2><div className="mt-5 grid grid-cols-3 gap-y-5 sm:grid-cols-6">{publicStages.map((label, index) => <div key={label} className="text-center"><span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold ${index < stage ? "border-[#237a57] bg-[#237a57] text-white" : index === stage ? "border-[#0b3150] bg-[#0b3150] text-white" : "border-[#d8dde2] bg-white text-[#6b7785]"}`}>{index < stage ? "✓" : index + 1}</span><p className="mt-2 px-1 text-[11px] leading-tight text-[#6b7785]">{label}</p></div>)}</div></section>;
+}
+
+function Updates({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  return <section className="rounded-lg border border-[#e4e8ec] bg-white p-5 sm:p-6"><h2 className="font-semibold">Atualizações</h2><div className="mt-4 space-y-4">{snapshot.updates.length ? snapshot.updates.slice(0, 6).map((update) => <div key={update.id} className="flex gap-3"><Clock3 className="mt-0.5 shrink-0 text-[#237a57]" size={17} /><div><p className="text-sm font-medium">{update.title}</p><p className="text-xs text-[#6b7785]">{new Date(update.completedAt).toLocaleDateString("pt-BR")}</p></div></div>) : <p className="text-sm text-[#6b7785]">As atualizações públicas aparecerão aqui.</p>}</div></section>;
+}
+
+function EmptyModule({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return <section className="rounded-lg border border-dashed border-[#cfd6dc] bg-white p-6 sm:p-8"><div className="text-[#8a682d] [&>svg]:h-5 [&>svg]:w-5">{icon}</div><h2 className="mt-3 font-semibold">{title}</h2><p className="mt-1 max-w-xl text-sm leading-6 text-[#6b7785]">{description}</p></section>;
+}
+
+function Summary({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
+  return <div className="rounded-lg border border-[#e4e8ec] bg-white p-4"><div className="text-[#8a682d] [&>svg]:h-4 [&>svg]:w-4">{icon}</div><p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-[#6b7785]">{label}</p><p className="mt-1 text-sm font-semibold sm:text-base">{value}</p>{hint ? <p className="mt-1 text-[11px] text-[#6b7785]">{hint}</p> : null}</div>;
+}
+
+function TransitionItem({ label, value }: { label: string; value: string }) {
+  return <div><p className="text-xs font-semibold text-[#6b7785]">{label}</p><p className="mt-1 text-sm font-medium">{value}</p></div>;
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return <div><dt className="text-xs font-semibold text-[#6b7785]">{label}</dt><dd className="mt-1 text-sm">{value}</dd></div>;
+}
+
+function transitionLabel(value?: "pending" | "scheduled" | "completed" | "in_progress" | "unavailable"): string {
+  if (value === "completed") return "Concluída";
+  if (value === "scheduled") return "Agendada";
+  if (value === "in_progress") return "Em andamento";
+  if (value === "pending") return "Pendente";
+  return "Ainda não disponível";
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return "A confirmar";
+  const normalized = value.length === 10 ? `${value}T12:00:00` : value;
+  return new Date(normalized).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }

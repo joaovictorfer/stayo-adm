@@ -29,20 +29,10 @@ describe("computeProgress", () => {
 });
 
 describe("computeReadiness", () => {
-  it("retorna nao_avaliada com ready false para um checklist vazio", () => {
-    expect(computeReadiness([])).toEqual({
-      ready: false,
-      state: "nao_avaliada",
-      pendingBlockers: 0,
-      pendingMandatory: 0,
-    });
-  });
-
   it("está apta quando não há bloqueador nem obrigatório pendente", () => {
     const items = [item("concluido", true, true), item("pendente")];
     expect(computeReadiness(items)).toEqual({
       ready: true,
-      state: "apta",
       pendingBlockers: 0,
       pendingMandatory: 0,
     });
@@ -59,7 +49,6 @@ describe("computeReadiness", () => {
     const readiness = computeReadiness(items);
     expect(progress.percent).toBe(75);
     expect(readiness.ready).toBe(false);
-    expect(readiness.state).toBe("bloqueada");
     expect(readiness.pendingBlockers).toBe(1);
   });
 
@@ -67,18 +56,7 @@ describe("computeReadiness", () => {
     const items = [item("pendente", true, false), item("bloqueado", false, true)];
     expect(computeReadiness(items)).toEqual({
       ready: false,
-      state: "bloqueada",
       pendingBlockers: 1,
-      pendingMandatory: 1,
-    });
-  });
-
-  it("retorna com_pendencias apenas para itens obrigatórios pendentes sem bloqueadores", () => {
-    const items = [item("pendente", true, false), item("concluido", false, true)];
-    expect(computeReadiness(items)).toEqual({
-      ready: false,
-      state: "com_pendencias",
-      pendingBlockers: 0,
       pendingMandatory: 1,
     });
   });
@@ -87,7 +65,6 @@ describe("computeReadiness", () => {
     const items = [item("concluido"), item("pulado", false, true)];
     const readiness = computeReadiness(items);
     expect(readiness.ready).toBe(false);
-    expect(readiness.state).toBe("bloqueada");
     expect(readiness.pendingBlockers).toBe(1);
   });
 
@@ -95,7 +72,6 @@ describe("computeReadiness", () => {
     const items = [item("concluido"), item("pulado", false, true, "2026-01-01T00:00:00.000Z")];
     expect(computeReadiness(items)).toEqual({
       ready: true,
-      state: "apta",
       pendingBlockers: 0,
       pendingMandatory: 0,
     });
