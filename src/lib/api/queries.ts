@@ -17,12 +17,12 @@ import {
   proposalsStore,
 } from "./local-store";
 import type { EntityId } from "../../types/core";
+import type { SupplyModule } from "../../types/implementation-supply";
 
 /** Fonte única de dados desta fase. */
 export const coreApi: CoreApiClient = createMockCoreApiClient();
 
 /** Domínio próprio do Admin (Grupo A) — ver docs/OWNER_IMPLEMENTATION_AUDIT.md. */
-import type { SupplyModule } from "../../types/implementation-supply";
 export const adminApi: AdminApiClient = createDefaultAdminApiClient();
 
 export const auditLogQuery = (params?: { entityType?: string; entityId?: string }) =>
