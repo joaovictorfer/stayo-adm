@@ -171,21 +171,24 @@ export async function generateSuppliesPdf(input: SuppliesPdfInput): Promise<Uint
     for (const item of roomItems) {
       const missing = missingQty(item);
       totalMissing += missing;
-      const parts = [
-        item.name,
-        item.size ? `tam. ${item.size}` : null,
+      const main = [item.name, item.size ? `tam. ${item.size}` : null]
+        .filter(Boolean)
+        .join("  ·  ");
+      writer.text(clamp(main, 70), { size: 9.5, font: bold });
+      const details = [
         `necessário ${item.requiredQty}`,
         `existente ${item.existingQty}`,
         `falta ${missing}`,
         supplyStatusLabels[item.status],
-        `prioridade ${supplyPriorityLabels[item.priority].toLowerCase()}`,
-        item.responsible ? `resp. ${item.responsible}` : null,
-        item.blocksReadiness ? "BLOQUEIA PRONTIDÃO" : null,
+        supplyPriorityLabels[item.priority].toLowerCase(),
+        item.responsible ? `resp. ${clamp(item.responsible, 24)}` : null,
+        item.blocksReadiness ? "BLOQUEIA PRONTIDAO" : null,
       ].filter(Boolean);
-      writer.text(parts.join("  ·  "), { size: 9.5 });
+      writer.text(`   ${details.join("  ·  ")}`, { size: 9, color: INK_MUTED });
       if (item.notes?.trim()) {
-        writer.text(`   ${item.notes.trim()}`, { size: 9, color: INK_MUTED });
+        writer.text(`   ${clamp(item.notes.trim(), 95)}`, { size: 9, color: INK_MUTED });
       }
+      writer.spacer(2);
     }
     writer.spacer(8);
   }
