@@ -2357,3 +2357,64 @@ function supplyTemplateItemFromRow(row: SupplyTemplateItemRow): SupplyTemplateIt
     displayOrder: row.display_order,
   };
 }
+
+// ---- Fase 5: linhas e mapeadores de proposta e modelos ----
+
+interface ProposalSettingsRow {
+  implementation_id: string;
+  validity_days: number;
+  payment_notes: string | null;
+  updated_at: string;
+}
+
+function proposalSettingsFromRow(row: ProposalSettingsRow): ProposalSettings {
+  return {
+    implementationId: row.implementation_id,
+    validityDays: row.validity_days,
+    paymentNotes: row.payment_notes,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface ProposalBlockRow {
+  id: string;
+  implementation_id: string;
+  title: string;
+  body: string;
+  visibility: ProposalContentBlock["visibility"];
+  display_order: number;
+  created_at: string;
+}
+
+function proposalBlockFromRow(row: ProposalBlockRow): ProposalContentBlock {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    title: row.title,
+    body: row.body,
+    visibility: row.visibility,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+  };
+}
+
+interface ImplementationTemplateRow {
+  id: string;
+  name: string;
+  notes: string | null;
+  payload: unknown;
+  created_at: string;
+}
+
+function implementationTemplateFromRow(row: ImplementationTemplateRow): ImplementationTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    notes: row.notes,
+    payload: {
+      ...emptyTemplatePayload,
+      ...((row.payload as Partial<ImplementationTemplatePayload> | null) ?? {}),
+    },
+    createdAt: row.created_at,
+  };
+}
