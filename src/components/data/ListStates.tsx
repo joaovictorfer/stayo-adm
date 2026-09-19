@@ -8,10 +8,12 @@ const surface = {
 export function PageHeader({
   title,
   count,
+  subtitle,
   children,
 }: {
   title: string;
   count?: number | undefined;
+  subtitle?: string | undefined;
   children?: ReactNode;
 }) {
   return (
@@ -22,11 +24,9 @@ export function PageHeader({
         >
           {title}
         </h1>
-        {count !== undefined && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {count} {count === 1 ? "registro" : "registros"}
-          </p>
-        )}
+        {(subtitle || count !== undefined) && <p className="mt-1 text-xs text-muted-foreground">
+          {subtitle}{subtitle && count !== undefined ? " · " : ""}{count !== undefined ? `${count} ${count === 1 ? "registro" : "registros"}` : ""}
+        </p>}
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>
     </div>
