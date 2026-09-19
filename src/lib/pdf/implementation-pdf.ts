@@ -30,8 +30,12 @@ const BORDER = rgb(0.88, 0.87, 0.82);
 
 /** pdf-lib com fontes padrão não suporta caracteres fora do Latin-1 (ex.: emoji). */
 function safe(value: string): string {
-  // eslint-disable-next-line no-control-regex
-  return value.replace(/[^\u0000-\u00FF]/g, "");
+  return value
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/\u2022/g, "-")
+    .replace(/[^\u0000-\u00FF]/g, "");
 }
 
 function createDoc() {
