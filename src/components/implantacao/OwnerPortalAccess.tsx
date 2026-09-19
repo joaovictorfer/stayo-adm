@@ -56,6 +56,11 @@ export function OwnerPortalAccess({
       ownerEmail: ownerQ.data?.email ?? null,
       propertyLabel,
       status: implementation.status,
+      corePropertyId: implementation.corePropertyId,
+      coreOwnerId: implementation.coreOwnerId,
+      activationDate: implementation.status === "ativo" && implementation.corePropertyId
+        ? implementation.updatedAt
+        : null,
       startDateEstimate: implementation.startDateEstimate,
       completionDateEstimate: implementation.completionDateEstimate,
       visibleProgress: progress,
@@ -92,6 +97,14 @@ export function OwnerPortalAccess({
             acceptedName: proposal.acceptedName,
             items: proposal.items,
           }
+        : null,
+      transition: {
+        initialInspection: "unavailable",
+        guestConfiguration: "unavailable",
+        channels: [],
+      },
+      operations: implementation.corePropertyId
+        ? { reservations: [], inspections: [], maintenance: [], financial: [] }
         : null,
       refreshedAt: new Date().toISOString(),
     };
