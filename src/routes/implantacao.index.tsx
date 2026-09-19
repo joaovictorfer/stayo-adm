@@ -329,6 +329,9 @@ const emptyForm = {
 function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
+  const [templateId, setTemplateId] = useState("");
+  const templatesQ = useQuery(implementationTemplatesQuery());
+
 
   const mutation = useMutation({
     mutationFn: async (input: typeof form) => {
