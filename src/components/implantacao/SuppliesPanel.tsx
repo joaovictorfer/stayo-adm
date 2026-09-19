@@ -108,6 +108,7 @@ export function SuppliesPanel({
   const queryClient = useQueryClient();
   const items = useQuery(supplyItemsQuery(implementationId, module));
   const templates = useQuery(supplyTemplatesQuery(module));
+  const implementation = useQuery(implementationQuery(implementationId));
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [templateId, setTemplateId] = useState("");
