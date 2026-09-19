@@ -368,6 +368,17 @@ export function createLocalAdminApiClient(): AdminApiClient {
   };
 
   const commercialTerms: AdminApiClient["commercialTerms"] = {
+    add: async (input) => {
+      const term: CommercialTerm = { ...input, id: newId() };
+      write(COMMERCIAL_TERMS_KEY, [...read<CommercialTerm>(COMMERCIAL_TERMS_KEY), term]);
+      return term;
+    },
+    remove: async (id) => {
+      write(
+        COMMERCIAL_TERMS_KEY,
+        read<CommercialTerm>(COMMERCIAL_TERMS_KEY).filter((t) => t.id !== id),
+      );
+    },
     listByImplementation: (implementationId) =>
       Promise.resolve(
         read<CommercialTerm>(COMMERCIAL_TERMS_KEY)
