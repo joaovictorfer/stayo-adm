@@ -14,7 +14,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { adminApi, supplyItemsQuery, supplyTemplatesQuery } from "../../lib/api/queries";
+import {
+  adminApi,
+  implementationQuery,
+  supplyItemsQuery,
+  supplyTemplatesQuery,
+} from "../../lib/api/queries";
+import { generateSuppliesPdf } from "../../lib/pdf/implementation-pdf";
+import { downloadPdfBytes } from "../../lib/pdf/download";
 import {
   blockingSupplyItems,
   missingQty,
