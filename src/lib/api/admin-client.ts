@@ -1417,6 +1417,27 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
   };
 
   const commercialTerms: AdminApiClient["commercialTerms"] = {
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("commercial_terms")
+        .insert({
+          implementation_id: input.implementationId,
+          label: input.label,
+          charge_type: input.chargeType,
+          value: input.value,
+          optional: input.optional,
+          display_order: input.displayOrder,
+          notes: input.notes,
+        })
+        .select()
+        .single<CommercialTermRow>();
+      if (error) throw error;
+      return termFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("commercial_terms").delete().eq("id", id);
+      if (error) throw error;
+    },
     listByImplementation: async (implementationId) => {
       const { data, error } = await client()
         .from("commercial_terms")
