@@ -19,6 +19,14 @@ export interface OwnerPortalProposalView {
   version: number;
   total: number;
   acceptedAt: string | null;
+  acceptedName: string | null;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitValue: number;
+    discount: number;
+    total: number;
+  }>;
 }
 
 export interface OwnerPortalSnapshot {
