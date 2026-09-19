@@ -144,6 +144,36 @@ function ImplementationDetailPage() {
 
           <AttentionPanel items={checklistItems} />
 
+          <div>
+            <button
+              type="button"
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--stayo-surface)",
+                borderColor: "var(--stayo-border)",
+              }}
+              onClick={async () => {
+                const bytes = await generateImplementationSummaryPdf({
+                  implementation,
+                  checklist: checklistItems,
+                  supplies: suppliesQuery.data ?? [],
+                  progressPercent: progress.percent,
+                  ready: readiness.ready,
+                  blockers: [
+                    ...attentionItems(checklistItems).map((item) => item.title),
+                    ...blockingSupplyItems(suppliesQuery.data ?? []).map(
+                      (item) => `Enxoval/faltante: ${item.name}`,
+                    ),
+                  ],
+                  statusLabel: statusLabels[implementation.status],
+                });
+                downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
+              }}
+            >
+              Gerar PDF do resumo da implantação
+            </button>
+          </div>
+
           <StatusStepper
             status={implementation.status}
             onChange={(status) => changeStatus.mutate(status)}
