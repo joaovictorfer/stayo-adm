@@ -56,6 +56,17 @@ import type {
   SupplyTemplateInput,
   SupplyTemplateItem,
 } from "../../types/implementation-supply";
+import type {
+  ImplementationTemplate,
+  ImplementationTemplateInput,
+  ImplementationTemplatePayload,
+  ProposalContentBlock,
+  ProposalContentBlockInput,
+  ProposalContentBlockPatch,
+  ProposalSettings,
+  ProposalSettingsInput,
+} from "../../types/proposal-config";
+import { emptyTemplatePayload } from "../../types/proposal-config";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
