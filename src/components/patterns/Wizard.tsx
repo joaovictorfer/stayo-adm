@@ -34,10 +34,7 @@ export function Wizard({
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
-        <div
-          className="flex items-center justify-between text-xs"
-          style={{ color: "var(--stayo-ink-muted)" }}
-        >
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
             Etapa {index + 1} de {steps.length}
           </span>
@@ -53,10 +50,7 @@ export function Wizard({
           {steps.map((s, i) => (
             <span
               key={s.id}
-              className="h-1 flex-1 rounded-full"
-              style={{
-                backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
-              }}
+              className={`h-1 flex-1 rounded-full ${i <= index ? "bg-brand" : "bg-border"}`}
             />
           ))}
         </div>
@@ -69,8 +63,7 @@ export function Wizard({
           <button
             type="button"
             onClick={() => setIndex((i) => i - 1)}
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+            className="rounded-[var(--radius-control)] border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
           >
             Voltar
           </button>
@@ -79,8 +72,7 @@ export function Wizard({
           type="button"
           disabled={step.isValid === false || submitting}
           onClick={() => (isLast ? onComplete() : setIndex((i) => i + 1))}
-          className="ml-auto rounded-[var(--radius-control)] px-4 py-2 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          className="ml-auto rounded-[var(--radius-control)] bg-brand px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-hover disabled:opacity-60"
         >
           {isLast ? (submitting ? "Salvando..." : completeLabel) : "Continuar"}
         </button>

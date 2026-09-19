@@ -1,7 +1,8 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, ClipboardCheck, Plus } from "lucide-react";
+import { z } from "zod";
 
 import {
   EmptyRows,
@@ -17,10 +18,12 @@ import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import {
   adminApi,
   coreApi,
+  condominiumsListQuery,
   implementationItemsQuery,
-  implementationTemplatesQuery,
   implementationsListQuery,
+  ownersListQuery,
 } from "../lib/api/queries";
+import { listActiveAdminProfiles, useAuthSession } from "../lib/auth/session";
 import {
   alternateStatuses,
   computeReadiness,
@@ -28,6 +31,8 @@ import {
   statusLabels,
 } from "../lib/implementation-status";
 import type { ImplementationItem, ImplementationProject } from "../types/core";
+import type { OwnerRecord } from "../types/admin";
+import { formatBrazilPhone, isValidBrazilPhone, normalizeBrazilPhone, sameBrazilPhone } from "../lib/phone";
 
 export const Route = createFileRoute("/implantacao/")({
   head: () => ({
