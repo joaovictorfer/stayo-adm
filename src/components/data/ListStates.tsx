@@ -15,28 +15,27 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <div>
+    <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:flex sm:flex-wrap sm:justify-between">
+      <div className="min-w-0">
         <h1
-          className="text-2xl"
-          style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+          className="truncate font-display text-2xl font-semibold text-foreground"
         >
           {title}
         </h1>
         {count !== undefined && (
-          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          <p className="mt-1 text-xs text-muted-foreground">
             {count} {count === 1 ? "registro" : "registros"}
           </p>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2">{children}</div>
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>
     </div>
   );
 }
 
 export function Panel({ children }: { children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-[var(--radius-card)] border" style={surface}>
+    <div className="overflow-hidden rounded-[var(--radius-card)] border bg-card shadow-[var(--shadow-card)]" style={{ borderColor: "var(--stayo-border)" }}>
       {children}
     </div>
   );
@@ -57,8 +56,7 @@ export function SearchInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none sm:w-72"
-      style={{ ...surface, color: "var(--stayo-ink)" }}
+      className="h-10 w-full rounded-[var(--radius-control)] border bg-card px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand focus:ring-2 focus:ring-brand/10 sm:w-72"
     />
   );
 }
@@ -79,8 +77,7 @@ export function SelectFilter({
       aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-      style={{ ...surface, color: "var(--stayo-ink)" }}
+      className="h-10 rounded-[var(--radius-control)] border bg-card px-3 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
@@ -116,8 +113,9 @@ export function ListSkeleton({ rows = 6 }: { rows?: number }) {
 
 export function EmptyRows({ message }: { message: string }) {
   return (
-    <div className="px-4 py-16 text-center text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-      {message}
+    <div className="px-6 py-16 text-center">
+      <p className="font-display text-sm font-semibold text-foreground">Tudo organizado por aqui</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }
@@ -131,8 +129,7 @@ export function ErrorRows({ onRetry }: { onRetry: () => void }) {
       <button
         type="button"
         onClick={onRetry}
-        className="mt-3 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-        style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+        className="mt-3 rounded-[var(--radius-control)] bg-brand px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-hover"
       >
         Tentar novamente
       </button>
@@ -161,11 +158,11 @@ export function DetailSkeleton() {
 
 export function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+    <div className="rounded-[var(--radius-card)] border bg-card p-4 shadow-[var(--shadow-card)]" style={{ borderColor: "var(--stayo-border)" }}>
+      <p className="text-[11px] font-semibold uppercase text-muted-foreground">
         {label}
       </p>
-      <div className="mt-1 text-sm break-words" style={{ color: "var(--stayo-ink)" }}>
+      <div className="mt-1 break-words text-sm font-medium text-foreground">
         {value === null || value === undefined || value === "" ? "—" : value}
       </div>
     </div>
