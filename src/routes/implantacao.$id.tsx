@@ -667,7 +667,7 @@ function StatusStepper({
 
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
           Status da implantação
         </p>
@@ -685,24 +685,39 @@ function StatusStepper({
           ))}
         </select>
       </div>
-      <ol className="flex gap-2 overflow-x-auto pb-1">
+
+      <ol className="flex flex-col md:flex-row gap-3 md:gap-1.5">
         {mainStatusFlow.map((s, index) => {
-          const done = currentIndex > index;
-          const current = currentIndex === index;
+          let state: "done" | "current" | "future" | "blocked" = "future";
+          
+          if (isAlternate) {
+            state = "blocked";
+          } else if (currentIndex !== -1) {
+            if (index < currentIndex) state = "done";
+            else if (index === currentIndex) state = "current";
+          }
+
+          const color = 
+            state === "done" ? "var(--stayo-forest)" :
+            state === "current" ? "var(--stayo-forest)" :
+            state === "blocked" ? "var(--stayo-danger)" :
+            "var(--stayo-border)";
+            
+          const opacity = state === "done" ? 0.55 : state === "blocked" ? 0.4 : 1;
+          const isCurrent = state === "current";
+
           return (
-            <li key={s} className="flex min-w-[8.5rem] flex-1 flex-col gap-2">
+            <li key={s} className="flex md:flex-1 flex-row md:flex-col items-center md:items-start gap-3 md:gap-2 min-w-0">
               <span
-                className="h-1.5 w-full rounded-full"
-                style={{
-                  backgroundColor: done || current ? "var(--stayo-forest)" : "var(--stayo-border)",
-                  opacity: done ? 0.55 : 1,
-                }}
+                className="h-2 w-8 md:h-1.5 md:w-full shrink-0 rounded-full transition-colors"
+                title={state === "blocked" ? "Bloqueado / Alternativo" : ""}
+                style={{ backgroundColor: color, opacity }}
               />
               <span
-                className="text-xs"
+                className="text-[11px] md:text-[10px] lg:text-[11px] leading-tight break-words md:pr-1"
                 style={{
-                  color: current ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  fontWeight: current ? 600 : 400,
+                  color: isCurrent ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                  fontWeight: isCurrent ? 600 : 400,
                 }}
               >
                 {statusLabels[s]}
@@ -711,12 +726,13 @@ function StatusStepper({
           );
         })}
       </ol>
+
       {isAlternate && (
         <p
-          className="mt-3 inline-block rounded-[var(--radius-control)] px-2 py-1 text-xs"
+          className="mt-5 inline-block rounded-[var(--radius-control)] px-2 py-1 text-xs"
           style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}
         >
-          Fora da linha principal: {statusLabels[status]}
+          Fora da linha principal (bloqueado): {statusLabels[status]}
         </p>
       )}
     </div>
