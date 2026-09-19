@@ -1526,6 +1526,8 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
     getAdministrativeRegistration: async (implementationIds) => {
       if (implementationIds.length === 0) return null;
+      const firstImplementationId = implementationIds[0];
+      if (!firstImplementationId) return null;
       const supabase = client();
       const { data: accounts, error: accountsError } = await supabase
         .from("owner_payout_accounts")
@@ -1551,7 +1553,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       const profile = profiles[0] ?? null;
       if (!account && !profile) return null;
       return {
-        implementationId: account?.implementation_id ?? profile?.implementation_id ?? implementationIds[0],
+        implementationId: account?.implementation_id ?? profile?.implementation_id ?? firstImplementationId,
         submittedAt: profile?.submitted_at ?? null,
         bankName: account?.bank_name ?? null,
         accountHolder: account?.account_holder ?? null,
