@@ -67,6 +67,11 @@ import type {
   ProposalSettingsInput,
 } from "../../types/proposal-config";
 import { emptyTemplatePayload } from "../../types/proposal-config";
+import type {
+  PortalContentBlock,
+  PortalContentBlockInput,
+  PortalContentBlockPatch,
+} from "../../types/portal-content";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
@@ -203,6 +208,15 @@ export interface AdminApiClient {
     list(module?: SupplyModule): Promise<SupplyTemplate[]>;
     items(templateId: string): Promise<SupplyTemplateItem[]>;
     create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 6 — conteúdo institucional do portal (rascunho e publicado). */
+  portalContent: {
+    list(): Promise<PortalContentBlock[]>;
+    add(input: PortalContentBlockInput): Promise<PortalContentBlock>;
+    update(id: string, patch: PortalContentBlockPatch): Promise<PortalContentBlock>;
+    publish(id: string): Promise<PortalContentBlock>;
+    unpublish(id: string): Promise<PortalContentBlock>;
     remove(id: string): Promise<void>;
   };
   /** Fase 5 — prazo de validade e observações de pagamento da proposta. */
@@ -1008,7 +1022,87 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const PORTAL_CONTENT_KEY = "stayo.admin.portal-content";
+
+  const portalContent: AdminApiClient["portalContent"] = {
+    list: async () =>
+      read<PortalContentBlock>(PORTAL_CONTENT_KEY).sort(
+        (a, b) => a.displayOrder - b.displayOrder,
+      ),
+    add: async (input) => {
+      const block: PortalContentBlock = {
+        id: newId(),
+        kind: input.kind,
+        draftTitle: input.draftTitle,
+        draftBody: input.draftBody ?? "",
+        publishedTitle: null,
+        publishedBody: null,
+        publishedAt: null,
+        displayOrder: input.displayOrder ?? 0,
+        updatedAt: new Date().toISOString(),
+      };
+      write(PORTAL_CONTENT_KEY, [...read<PortalContentBlock>(PORTAL_CONTENT_KEY), block]);
+      return block;
+    },
+    update: async (id, patch) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    publish: async (id) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        publishedTitle: target.draftTitle,
+        publishedBody: target.draftBody,
+        publishedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    unpublish: async (id) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        publishedTitle: null,
+        publishedBody: null,
+        publishedAt: null,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        PORTAL_CONTENT_KEY,
+        read<PortalContentBlock>(PORTAL_CONTENT_KEY).filter((b) => b.id !== id),
+      );
+    },
+  };
+
   return {
+    portalContent,
     proposalSettings,
     proposalBlocks,
     implementationTemplates,
@@ -2170,7 +2264,83 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const portalContent: AdminApiClient["portalContent"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .select()
+        .order("display_order", { ascending: true })
+        .returns<PortalContentBlockRow[]>();
+      if (error) throw error;
+      return data.map(portalBlockFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .insert({
+          kind: input.kind,
+          draft_title: input.draftTitle,
+          draft_body: input.draftBody ?? "",
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({
+          ...(patch.kind === undefined ? {} : { kind: patch.kind }),
+          ...(patch.draftTitle === undefined ? {} : { draft_title: patch.draftTitle }),
+          ...(patch.draftBody === undefined ? {} : { draft_body: patch.draftBody }),
+          ...(patch.displayOrder === undefined ? {} : { display_order: patch.displayOrder }),
+        })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    publish: async (id) => {
+      const { data: current, error: readError } = await client()
+        .from("portal_content_blocks")
+        .select()
+        .eq("id", id)
+        .single<PortalContentBlockRow>();
+      if (readError) throw readError;
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({
+          published_title: current.draft_title,
+          published_body: current.draft_body,
+          published_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    unpublish: async (id) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({ published_title: null, published_body: null, published_at: null })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("portal_content_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
+    portalContent,
     proposalSettings,
     proposalBlocks,
     implementationTemplates,
@@ -2450,5 +2620,31 @@ function implementationTemplateFromRow(row: ImplementationTemplateRow): Implemen
       ...((row.payload as Partial<ImplementationTemplatePayload> | null) ?? {}),
     },
     createdAt: row.created_at,
+  };
+}
+
+interface PortalContentBlockRow {
+  id: string;
+  kind: PortalContentBlock["kind"];
+  draft_title: string;
+  draft_body: string;
+  published_title: string | null;
+  published_body: string | null;
+  published_at: string | null;
+  display_order: number;
+  updated_at: string;
+}
+
+function portalBlockFromRow(row: PortalContentBlockRow): PortalContentBlock {
+  return {
+    id: row.id,
+    kind: row.kind,
+    draftTitle: row.draft_title,
+    draftBody: row.draft_body,
+    publishedTitle: row.published_title,
+    publishedBody: row.published_body,
+    publishedAt: row.published_at,
+    displayOrder: row.display_order,
+    updatedAt: row.updated_at,
   };
 }
