@@ -192,6 +192,25 @@ export interface AdminApiClient {
     create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
     remove(id: string): Promise<void>;
   };
+  /** Fase 5 — prazo de validade e observações de pagamento da proposta. */
+  proposalSettings: {
+    get(implementationId: string): Promise<ProposalSettings | null>;
+    save(implementationId: string, input: ProposalSettingsInput): Promise<ProposalSettings>;
+  };
+  /** Fase 5 — blocos de regras/observações com visibilidade por destino. */
+  proposalBlocks: {
+    listByImplementation(implementationId: string): Promise<ProposalContentBlock[]>;
+    add(input: ProposalContentBlockInput): Promise<ProposalContentBlock>;
+    update(id: string, patch: ProposalContentBlockPatch): Promise<ProposalContentBlock>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 5 — modelos de implantação: aplicar COPIA o snapshot, nunca vincula. */
+  implementationTemplates: {
+    list(): Promise<ImplementationTemplate[]>;
+    get(id: string): Promise<ImplementationTemplate | null>;
+    create(input: ImplementationTemplateInput): Promise<ImplementationTemplate>;
+    remove(id: string): Promise<void>;
+  };
 }
 
 
