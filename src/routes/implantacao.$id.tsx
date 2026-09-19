@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Copy } from "lucide-react";
+import { ArrowLeft, Check, Copy, FileDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -67,6 +67,8 @@ export const Route = createFileRoute("/implantacao/$id")({
         property: "og:description",
         content: "Etapas e checklist de uma implantação Stayo.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ImplementationDetailPage,
@@ -112,13 +114,12 @@ function ImplementationDetailPage() {
 
   return (
     <>
-      <PageHeader title={implementation?.code ?? "Implantação"}>
+      <PageHeader title="Workspace de implantação" subtitle={implementation?.code}>
         <Link
           to="/implantacao"
-          className="text-sm underline"
-          style={{ color: "var(--stayo-ink-muted)" }}
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          Voltar para implantações
+          <ArrowLeft size={15} /> Voltar
         </Link>
       </PageHeader>
 
@@ -149,11 +150,7 @@ function ImplementationDetailPage() {
           <div>
             <button
               type="button"
-              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-              style={{
-                backgroundColor: "var(--stayo-surface)",
-                borderColor: "var(--stayo-border)",
-              }}
+              className="inline-flex items-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
               onClick={async () => {
                 const bytes = await generateImplementationSummaryPdf({
                   implementation,
@@ -172,7 +169,7 @@ function ImplementationDetailPage() {
                 downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
               }}
             >
-              Gerar PDF do resumo da implantação
+              <FileDown size={15} /> Gerar PDF do resumo
             </button>
           </div>
 
@@ -185,10 +182,7 @@ function ImplementationDetailPage() {
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
 
-          <div
-            className="flex gap-2 overflow-x-auto border-b"
-            style={{ borderColor: "var(--stayo-border)" }}
-          >
+          <div className="flex gap-1 overflow-x-auto rounded-[var(--radius-card)] border border-border bg-card p-1 shadow-[var(--shadow-card)]">
             {(
               [
                 ["resumo", "Resumo"],
@@ -204,12 +198,7 @@ function ImplementationDetailPage() {
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className="shrink-0 px-3 py-2 text-sm"
-                style={{
-                  color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  borderBottom:
-                    tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
-                }}
+                className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${tab === t ? "bg-brand text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
                 {label}
               </button>
