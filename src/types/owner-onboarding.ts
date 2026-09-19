@@ -55,3 +55,31 @@ export type OwnerOnboardingSubmissionInput = Omit<
   OwnerOnboardingSubmission,
   "implementationId" | "submittedAt"
 >;
+
+export type OwnerPersonType = "pf" | "pj";
+export type PixKeyType = "cpf" | "cnpj" | "phone" | "email" | "random";
+
+export interface OwnerOnboardingDraft {
+  personType: OwnerPersonType | null;
+  legalName: string;
+  tradeName: string;
+  taxId: string;
+  email: string;
+  phone: string;
+  postalCode: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
+  currentStep: number;
+  submittedAt: string | null;
+  bankName: string;
+  accountHolder: string;
+  holderTaxId: string;
+  pixType: PixKeyType | null;
+  pixKey: string;
+  isPrimary: boolean;
+  confirmed: boolean;
+}

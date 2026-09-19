@@ -204,6 +204,12 @@ export const ownerPortalAccessQuery = (token: string) =>
     staleTime: 30_000,
   });
 
+export const ownerOnboardingDraftQuery = (token: string) =>
+  queryOptions({
+    queryKey: ["owner-onboarding", "draft", token],
+    queryFn: () => adminApi.ownerOnboarding.getDraft(token),
+  });
+
 export const proposalShareLinkQuery = (proposalId: EntityId) =>
   queryOptions({
     queryKey: ["proposal-share", "link", proposalId],

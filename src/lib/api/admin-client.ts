@@ -32,6 +32,7 @@ import type {
 } from "../../types/admin";
 import type {
   OwnerOnboardingLink,
+  OwnerOnboardingDraft,
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
@@ -161,6 +162,8 @@ export interface AdminApiClient {
     findByToken(token: string): Promise<OwnerOnboardingLink | null>;
     resolvePortal(token: string): Promise<OwnerPortalPublicAccess | null>;
     acceptPortalProposal(token: string, acceptedName: string): Promise<void>;
+    getDraft(token: string): Promise<OwnerOnboardingDraft | null>;
+    saveDraft(token: string, input: OwnerOnboardingDraft, submit?: boolean): Promise<OwnerOnboardingDraft>;
     getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
@@ -255,6 +258,7 @@ export const INITIAL_CHARGES_KEY = "stayo-admin:initial-charges";
 export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
+export const OWNER_ONBOARDING_DRAFTS_KEY = "stayo-admin:owner-onboarding-drafts";
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
 export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
 export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
@@ -651,6 +655,21 @@ export function createLocalAdminApiClient(): AdminApiClient {
         },
       };
       write(OWNER_ONBOARDING_LINKS_KEY, links.map((item) => (item.id === target.id ? updated : item)));
+    },
+    getDraft: async (token) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link || link.revokedAt || new Date(link.expiresAt) < new Date()) return null;
+      return read<{ implementationId: string; draft: OwnerOnboardingDraft }>(OWNER_ONBOARDING_DRAFTS_KEY)
+        .find((item) => item.implementationId === link.implementationId)?.draft ?? null;
+    },
+    saveDraft: async (token, input, submit = false) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link || link.revokedAt || new Date(link.expiresAt) < new Date()) throw new Error("Acesso inválido");
+      const draft = { ...input, submittedAt: submit ? new Date().toISOString() : input.submittedAt };
+      const all = read<{ implementationId: string; draft: OwnerOnboardingDraft }>(OWNER_ONBOARDING_DRAFTS_KEY)
+        .filter((item) => item.implementationId !== link.implementationId);
+      write(OWNER_ONBOARDING_DRAFTS_KEY, [...all, { implementationId: link.implementationId, draft }]);
+      return draft;
     },
     getSubmission: async (implementationId) =>
       read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
@@ -1893,6 +1912,20 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         p_accepted_name: acceptedName,
       });
       if (error) throw error;
+    },
+    getDraft: async (token) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", { p_token: token });
+      if (error) throw error;
+      return (data as OwnerOnboardingDraft | null) ?? null;
+    },
+    saveDraft: async (token, input, submit = false) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_save", {
+        p_token: token,
+        p_data: input,
+        p_submit: submit,
+      });
+      if (error) throw error;
+      return data as unknown as OwnerOnboardingDraft;
     },
     submit: async (_implementationId, token, input) => {
       const { data, error } = await client()
