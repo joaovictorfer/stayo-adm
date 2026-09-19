@@ -78,7 +78,7 @@ function DashboardPage() {
         >
           Visão geral da operação
         </h1>
-        <p className="mt-2 max-w-2xl text-sm" style={{ color: "var(--stayo-forest-soft)" }}>
+        <p className="mt-2 max-w-2xl text-sm" style={{ color: "rgba(253, 253, 251, 0.8)" }}>
           Resumo dos módulos do Stayo Admin. Os números refletem hoje o mock local — passam a vir do
           Stayo Core assim que a API v1 estiver disponível.
         </p>

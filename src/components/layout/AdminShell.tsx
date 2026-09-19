@@ -179,7 +179,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="min-h-screen lg:flex"
+      className="min-h-screen lg:flex stayo-admin-theme"
       style={{
         backgroundColor: "var(--stayo-bg)",
         color: "var(--stayo-ink)",

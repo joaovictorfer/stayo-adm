@@ -61,3 +61,23 @@
   --stayo-forest-soft: #1f2c22;
   --stayo-gold-soft: #2c2517;
 }
+
+/*
+ * Variação Admin: Substitui o verde-petróleo original pela nova marca Navy
+ * no painel (AdminShell), sem interferir no Portal do Proprietário.
+ */
+.stayo-admin-theme {
+  --stayo-forest: #0B3150;
+  --stayo-forest-strong: #0A2945;
+  --stayo-forest-soft: #e6ebf0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .stayo-admin-theme {
+    --stayo-forest-soft: #123F68;
+  }
+}
+
+:root[data-theme="dark"] .stayo-admin-theme {
+  --stayo-forest-soft: #123F68;
+}
