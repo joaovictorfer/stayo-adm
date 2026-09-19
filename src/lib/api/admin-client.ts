@@ -2622,3 +2622,29 @@ function implementationTemplateFromRow(row: ImplementationTemplateRow): Implemen
     createdAt: row.created_at,
   };
 }
+
+interface PortalContentBlockRow {
+  id: string;
+  kind: PortalContentBlock["kind"];
+  draft_title: string;
+  draft_body: string;
+  published_title: string | null;
+  published_body: string | null;
+  published_at: string | null;
+  display_order: number;
+  updated_at: string;
+}
+
+function portalBlockFromRow(row: PortalContentBlockRow): PortalContentBlock {
+  return {
+    id: row.id,
+    kind: row.kind,
+    draftTitle: row.draft_title,
+    draftBody: row.draft_body,
+    publishedTitle: row.published_title,
+    publishedBody: row.published_body,
+    publishedAt: row.published_at,
+    displayOrder: row.display_order,
+    updatedAt: row.updated_at,
+  };
+}
