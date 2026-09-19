@@ -473,6 +473,27 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       label: "Planejamento",
       content: (
         <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Criar a partir de um modelo (opcional)
+            <select
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className="rounded-[var(--radius-control)] border px-2 py-2 text-sm outline-none"
+              style={{
+                backgroundColor: "var(--stayo-surface)",
+                borderColor: "var(--stayo-border)",
+                color: "var(--stayo-ink)",
+              }}
+            >
+              <option value="">Começar do zero</option>
+              {(templatesQ.data ?? []).map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <span>O modelo é copiado; depois a implantação segue independente dele.</span>
+          </label>
           <TextField
             label="Previsão de início"
             type="date"
