@@ -71,7 +71,7 @@ function PortalDashboard({ token, snapshot }: { token: string; snapshot: OwnerPo
       </section>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Summary icon={<Flag />} label="Etapa atual" value={publicStages[stage]} />
+        <Summary icon={<Flag />} label="Etapa atual" value={publicStages[stage] ?? "Proposta"} />
         <Summary icon={<CheckCircle2 />} label="Progresso" value={`${snapshot.visibleProgress.percent}%`} hint={`${snapshot.visibleProgress.done} de ${snapshot.visibleProgress.total} atividades`} />
         <Summary icon={<CalendarDays />} label="Previsão" value={formatDate(snapshot.completionDateEstimate ?? snapshot.startDateEstimate)} />
         <Summary icon={<ListChecks />} label="Precisamos de você" value={String(snapshot.tasks.length)} hint="pendências visíveis" />
