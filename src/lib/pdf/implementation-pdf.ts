@@ -234,10 +234,14 @@ export async function generateImplementationSummaryPdf(
     size: 10,
     font: bold,
   });
-  writer.text(
-    "Progresso e prontidão são números separados: uma implantação pode estar quase concluída e continuar não apta por um único item bloqueador.",
-    { size: 9, color: INK_MUTED },
-  );
+  writer.text("Progresso e prontidão são números separados: uma implantação pode estar quase", {
+    size: 9,
+    color: INK_MUTED,
+  });
+  writer.text("concluída e continuar não apta por um único item bloqueador em aberto.", {
+    size: 9,
+    color: INK_MUTED,
+  });
   writer.spacer(10);
 
   writer.rule();
