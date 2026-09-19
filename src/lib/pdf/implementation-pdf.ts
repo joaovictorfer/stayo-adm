@@ -294,10 +294,14 @@ export async function generateImplementationSummaryPdf(
   writer.spacer(10);
 
   writer.rule();
-  writer.text(
-    "Documento interno Stayo. Não contém dados de acesso do imóvel (Wi-Fi, fechadura, chaves) nem documentos pessoais.",
-    { size: 9, color: INK_MUTED },
-  );
+  writer.text("Documento interno Stayo. Não contém dados de acesso do imóvel", {
+    size: 9,
+    color: INK_MUTED,
+  });
+  writer.text("(Wi-Fi, fechadura, chaves) nem documentos pessoais.", {
+    size: 9,
+    color: INK_MUTED,
+  });
 
   return writer.finish();
 }
