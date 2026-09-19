@@ -247,7 +247,7 @@ export async function generateImplementationSummaryPdf(
     writer.text("Nenhuma pendência bloqueadora.", { size: 10, color: INK_MUTED });
   } else {
     for (const blocker of blockers) {
-      writer.text(`• ${blocker}`, { size: 10 });
+      writer.text(`- ${clamp(blocker, 90)}`, { size: 10 });
     }
   }
   writer.spacer(10);
