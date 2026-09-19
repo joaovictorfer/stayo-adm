@@ -405,3 +405,10 @@ export const implementationTemplatesQuery = () =>
     queryKey: ["implementation-templates", "list"],
     queryFn: () => adminApi.implementationTemplates.list(),
   });
+
+/** Fase 6 — conteúdo institucional do portal do proprietário. */
+export const portalContentQuery = () =>
+  queryOptions({
+    queryKey: ["portal-content", "list"],
+    queryFn: () => adminApi.portalContent.list(),
+  });
