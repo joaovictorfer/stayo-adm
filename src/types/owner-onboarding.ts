@@ -1,4 +1,5 @@
 import type { EntityId } from "./core";
+import type { OwnerPortalSnapshot } from "./owner-portal";
 
 /**
  * Convite público para o proprietário se auto-cadastrar durante a
@@ -25,6 +26,7 @@ export interface OwnerOnboardingLink {
   usedAt: string | null;
   revokedAt: string | null;
   lastAccessAt: string | null;
+  publicSnapshot: OwnerPortalSnapshot | null;
 }
 
 export type OwnerOnboardingLinkStatus = "ativo" | "expirado" | "revogado" | "usado";

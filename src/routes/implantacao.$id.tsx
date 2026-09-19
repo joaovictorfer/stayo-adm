@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Check, Copy, FileDown } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -17,6 +17,7 @@ import { PropertyPanel } from "../components/implantacao/PropertyPanel";
 import { SuppliesPanel } from "../components/implantacao/SuppliesPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
+import { OwnerPortalAccess } from "../components/implantacao/OwnerPortalAccess";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -26,8 +27,6 @@ import {
   implementationItemsQuery,
   implementationQuery,
   initialChargesQuery,
-  ownerOnboardingLinkQuery,
-  ownerOnboardingSubmissionQuery,
   supplyItemsQuery,
 } from "../lib/api/queries";
 import { blockingSupplyItems } from "../types/implementation-supply";
@@ -52,10 +51,6 @@ import type {
   ImplementationProject,
   ImplementationStatus,
 } from "../types/core";
-import {
-  type OwnerOnboardingLinkStatus,
-  ownerOnboardingLinkStatus,
-} from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/implantacao/$id")({
   head: () => ({
@@ -85,6 +80,7 @@ function ImplementationDetailPage() {
   const [tab, setTab] = useState<
     "resumo" | "proprietarios" | "imovel" | "enxoval" | "faltantes" | "checklist" | "proposta"
   >("resumo");
+  const [portalOpen, setPortalOpen] = useState(false);
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const suppliesQuery = useQuery(supplyItemsQuery(id));
@@ -142,7 +138,13 @@ function ImplementationDetailPage() {
               blockingSupplyItems(suppliesQuery.data ?? []).length
             }
             onOpenProposal={() => setTab("proposta")}
-            onOpenPortal={() => setTab("resumo")}
+            onOpenPortal={() => setPortalOpen(true)}
+          />
+          <OwnerPortalAccess
+            open={portalOpen}
+            onClose={() => setPortalOpen(false)}
+            implementation={implementation}
+            checklist={checklistItems}
           />
 
           <AttentionPanel items={checklistItems} />
@@ -250,11 +252,6 @@ function ImplementationDetailPage() {
               </div>
 
               <CommercialTermsPanel implementationId={implementation.id} />
-
-              <OwnerPortalPanel
-                implementationId={implementation.id}
-                ownerId={implementation.ownerId}
-              />
 
               <InitialChargesPanel implementationId={implementation.id} />
 
@@ -414,172 +411,6 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
             </li>
           ))}
         </ul>
-      )}
-    </div>
-  );
-}
-
-const invitationStatusLabels: Record<OwnerOnboardingLinkStatus, string> = {
-  ativo: "Ativo",
-  expirado: "Expirado",
-  revogado: "Revogado",
-  usado: "Usado",
-};
-
-const invitationStatusTone: Record<OwnerOnboardingLinkStatus, "neutral" | "danger" | "gold"> = {
-  ativo: "neutral",
-  expirado: "gold",
-  revogado: "danger",
-  usado: "neutral",
-};
-
-/**
- * Convite público (ainda sem conta/login real — depende de Supabase
- * configurado) pro proprietário preencher os próprios dados durante a
- * implantação. O token só é visível uma vez, no momento em que é gerado —
- * depois disso só existe o hash, nunca o valor puro.
- */
-function OwnerPortalPanel({
-  implementationId,
-  ownerId,
-}: {
-  implementationId: EntityId;
-  ownerId: EntityId | null;
-}) {
-  const queryClient = useQueryClient();
-  const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
-  const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(implementationId));
-  const [copied, setCopied] = useState(false);
-  const [freshToken, setFreshToken] = useState<string | null>(null);
-
-  const invalidateLink = () =>
-    queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
-
-  const createLink = useMutation({
-    mutationFn: () => adminApi.ownerOnboarding.createLink(implementationId, ownerId),
-    onSuccess: async ({ token }) => {
-      setFreshToken(token);
-      await invalidateLink();
-    },
-  });
-
-  const revokeLink = useMutation({
-    mutationFn: (id: EntityId) => adminApi.ownerOnboarding.revoke(id),
-    onSuccess: async () => {
-      setFreshToken(null);
-      await invalidateLink();
-    },
-  });
-
-  const link = linkQuery.data;
-  const status = link ? ownerOnboardingLinkStatus(link) : null;
-  const url = freshToken
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/implantacao/${freshToken}`
-    : null;
-
-  const copy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard indisponível (ex: contexto não seguro) — link já está visível pra copiar manualmente.
-    }
-  };
-
-  return (
-    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <h2
-        className="mb-3 text-sm"
-        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-      >
-        Cadastro do proprietário
-      </h2>
-
-      {submissionQuery.data ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome completo" value={submissionQuery.data.fullName} />
-          <Field label="Documento" value={submissionQuery.data.document} />
-          <Field label="E-mail" value={submissionQuery.data.email} />
-          <Field label="Telefone" value={submissionQuery.data.phone} />
-          <Field label="Chave Pix" value={submissionQuery.data.pixKey} />
-          <Field label="Recebido em" value={submissionQuery.data.submittedAt} />
-        </div>
-      ) : (
-        <>
-          <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim
-            que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser
-            gerado.
-          </p>
-
-          {link && status && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-              <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
-              <span style={{ color: "var(--stayo-ink-muted)" }}>
-                {status === "ativo"
-                  ? `Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                  : status === "revogado"
-                    ? `Revogado em ${new Date(link.revokedAt!).toLocaleString("pt-BR")}`
-                    : status === "expirado"
-                      ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                      : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
-              </span>
-            </div>
-          )}
-
-          {url && (
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <code
-                className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
-                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-              >
-                {url}
-              </code>
-              <button
-                type="button"
-                onClick={() => void copy()}
-                className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? "Copiado" : "Copiar"}
-              </button>
-            </div>
-          )}
-
-          {(!url || status !== "ativo") && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => createLink.mutate()}
-                disabled={createLink.isPending}
-                className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-              >
-                {createLink.isPending
-                  ? "Gerando..."
-                  : link
-                    ? "Gerar novo convite"
-                    : "Gerar convite para o proprietário"}
-              </button>
-            </div>
-          )}
-          {status === "ativo" && link && (
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={() => revokeLink.mutate(link.id)}
-                disabled={revokeLink.isPending}
-                className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-                style={{ ...surface, color: "var(--stayo-danger)" }}
-              >
-                {revokeLink.isPending ? "Revogando..." : "Revogar"}
-              </button>
-            </div>
-          )}
-        </>
       )}
     </div>
   );

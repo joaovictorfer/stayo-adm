@@ -1,333 +1,123 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { CalendarDays, CheckCircle2, Clock3, FileText, Flag, ListChecks } from "lucide-react";
+import { useState } from "react";
 
-import { Wizard, type WizardStep } from "../components/patterns/Wizard";
-import {
-  adminApi,
-  implementationQuery,
-  ownerOnboardingLinkByTokenQuery,
-  ownerOnboardingSubmissionQuery,
-  ownerQuery,
-} from "../lib/api/queries";
-import { createOwnerAccountAndLink, isSupabaseConfigured } from "../lib/auth/owner-session";
-import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
-import type { OwnerOnboardingSubmissionInput } from "../types/owner-onboarding";
+import logoAsset from "../assets/stayo-logo-clara.png.asset.json";
+import { adminApi, ownerPortalAccessQuery } from "../lib/api/queries";
+import { formatMoney } from "../lib/format";
+import type { OwnerPortalSnapshot } from "../types/owner-portal";
 
 export const Route = createFileRoute("/portal/implantacao/$token")({
   head: () => ({
     meta: [
-      { title: "Cadastro do proprietário — Stayo" },
-      { name: "description", content: "Complete seu cadastro para a implantação do seu imóvel." },
+      { title: "Implantação do seu imóvel — Stayo" },
+      { name: "description", content: "Acompanhe a preparação do seu imóvel para operar com a Stayo." },
     ],
   }),
-  component: OwnerOnboardingPortalPage,
+  component: OwnerImplementationPortal,
 });
 
-const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
+const publicStages = ["Proposta", "Planejamento", "Preparação do imóvel", "Configuração", "Validação", "Pronto para operar"];
 
-function Shell({ children }: { children: React.ReactNode }) {
+function publicStageIndex(status: OwnerPortalSnapshot["status"]): number {
+  if (status === "prospect" || status === "proposta" || status === "aguardando_aprovacao") return 0;
+  if (status === "aprovado" || status === "planejamento") return 1;
+  if (status === "em_implantacao") return 2;
+  if (status === "validacao") return 4;
+  if (status === "pronto_para_operacao" || status === "ativo") return 5;
+  return 0;
+}
+
+function PortalShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex min-h-screen items-start justify-center px-4 py-10 sm:items-center"
-      style={{
-        backgroundColor: "var(--stayo-bg)",
-        color: "var(--stayo-ink)",
-        fontFamily: "var(--stayo-font-ui)",
-      }}
-    >
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo
-          </span>
-        </div>
-        <div className="rounded-[var(--radius-card)] border p-6" style={surface}>
-          {children}
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#f5f7f9] text-[#17232f]">
+      <header className="bg-[#0b3150] px-5 py-5">
+        <div className="mx-auto max-w-5xl"><img src={logoAsset.url} alt="Stayo Gramado" className="w-28" /></div>
+      </header>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">{children}</main>
+      <footer className="mx-auto max-w-5xl px-4 pb-8 text-center text-xs text-[#6b7785]">Portal seguro Stayo · Modo implantação</footer>
     </div>
   );
 }
 
-function OwnerOnboardingPortalPage() {
+function OwnerImplementationPortal() {
   const { token } = Route.useParams();
-  const linkQuery = useQuery(ownerOnboardingLinkByTokenQuery(token));
-  const link = linkQuery.data;
+  const query = useQuery(ownerPortalAccessQuery(token));
 
-  if (linkQuery.isPending) {
-    return (
-      <Shell>
-        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Carregando...
-        </p>
-      </Shell>
-    );
+  if (query.isPending) return <PortalShell><div className="h-52 animate-pulse rounded-2xl bg-white" /></PortalShell>;
+  if (query.isError || !query.data) {
+    return <PortalShell><div className="rounded-2xl border border-[#e4e8ec] bg-white p-7"><h1 className="text-xl font-semibold">Acesso indisponível</h1><p className="mt-2 text-sm text-[#6b7785]">Este link expirou, foi revogado ou não existe. Solicite um novo acesso à equipe Stayo.</p></div></PortalShell>;
   }
 
-  if (!link) {
-    return (
-      <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Link inválido
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Este link de cadastro não existe. Fale com quem enviou o link para receber um novo.
-        </p>
-      </Shell>
-    );
-  }
-
-  const status = ownerOnboardingLinkStatus(link);
-  if (status === "expirado" || status === "revogado") {
-    return (
-      <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          {status === "expirado" ? "Link expirado" : "Link revogado"}
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Fale com quem enviou o link para receber um novo.
-        </p>
-      </Shell>
-    );
-  }
-
-  return <OwnerOnboardingForm implementationId={link.implementationId} token={token} />;
+  return <PortalDashboard token={token} snapshot={query.data.snapshot} />;
 }
 
-function OwnerOnboardingForm({
-  implementationId,
-  token,
-}: {
-  implementationId: string;
-  token: string;
-}) {
+function PortalDashboard({ token, snapshot }: { token: string; snapshot: OwnerPortalSnapshot }) {
   const queryClient = useQueryClient();
-  const implementationQ = useQuery(implementationQuery(implementationId));
-  const submissionQ = useQuery(ownerOnboardingSubmissionQuery(implementationId));
-  const ownerId = implementationQ.data?.ownerId ?? null;
-  const ownerQ = useQuery({ ...ownerQuery(ownerId ?? ""), enabled: !!ownerId });
-
-  const [form, setForm] = useState<OwnerOnboardingSubmissionInput>({
-    fullName: "",
-    document: null,
-    email: "",
-    phone: "",
-    pixKey: null,
+  const [acceptedName, setAcceptedName] = useState("");
+  const stage = publicStageIndex(snapshot.status);
+  const accept = useMutation({
+    mutationFn: () => adminApi.ownerOnboarding.acceptPortalProposal(token, acceptedName.trim()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["owner-portal", "access", token] }),
   });
-
-  useEffect(() => {
-    const owner = ownerQ.data;
-    if (submissionQ.data || !owner) return;
-    setForm((f) => ({
-      ...f,
-      fullName: owner.name,
-      email: owner.email ?? "",
-      phone: owner.phone ?? "",
-    }));
-  }, [ownerQ.data, submissionQ.data]);
-
-  const submit = useMutation({
-    mutationFn: () => adminApi.ownerOnboarding.submit(implementationId, token, form),
-    onSuccess: (submission) => {
-      queryClient.setQueryData(
-        ownerOnboardingSubmissionQuery(implementationId).queryKey,
-        submission,
-      );
-    },
-  });
-
-  const set =
-    (key: keyof OwnerOnboardingSubmissionInput) =>
-    (value: string): void =>
-      setForm((f) => ({ ...f, [key]: value || null }));
-
-  if (submissionQ.data) {
-    return (
-      <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Cadastro recebido
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Obrigado, {submissionQ.data.fullName}! Já recebemos seus dados. A equipe Stayo entra em
-          contato para os próximos passos da implantação.
-        </p>
-        <CreateOwnerAccountPanel token={token} defaultEmail={submissionQ.data.email} />
-      </Shell>
-    );
-  }
-
-  const steps: WizardStep[] = [
-    {
-      id: "identificacao",
-      label: "Identificação",
-      isValid: form.fullName.trim() !== "",
-      content: (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Confirme seus dados para a implantação do seu imóvel na Stayo.
-          </p>
-          <TextField label="Nome completo" value={form.fullName} onChange={set("fullName")} />
-          <TextField label="CPF ou CNPJ" value={form.document ?? ""} onChange={set("document")} />
-        </div>
-      ),
-    },
-    {
-      id: "contato",
-      label: "Contato",
-      isValid: form.email.trim() !== "" && form.phone.trim() !== "",
-      content: (
-        <div className="flex flex-col gap-3">
-          <TextField label="E-mail" type="email" value={form.email} onChange={set("email")} />
-          <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
-        </div>
-      ),
-    },
-    {
-      id: "pagamento",
-      label: "Pagamento",
-      content: (
-        <div className="flex flex-col gap-3">
-          <TextField
-            label="Chave Pix (para repasses futuros)"
-            value={form.pixKey ?? ""}
-            onChange={set("pixKey")}
-          />
-          {submit.isError && (
-            <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-              Não foi possível enviar. Tente novamente.
-            </span>
-          )}
-        </div>
-      ),
-    },
-  ];
 
   return (
-    <Shell>
-      <h1 className="mb-1 text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-        Complete seu cadastro
-      </h1>
-      <p className="mb-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-        Leva menos de um minuto.
-      </p>
-      <Wizard
-        steps={steps}
-        completeLabel="Enviar"
-        submitting={submit.isPending}
-        onComplete={() => submit.mutate()}
-      />
-    </Shell>
-  );
-}
+    <div className="space-y-5 sm:space-y-7">
+      <section>
+        <p className="text-sm font-semibold text-[#a17b39]">{snapshot.propertyLabel}</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Olá, {snapshot.ownerFirstName}.</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6b7785] sm:text-base">Estamos preparando seu imóvel para começar a operar com a Stayo.</p>
+      </section>
 
-/**
- * Passo opcional de Owner Auth (Fase 17H): logo após o envio do
- * auto-cadastro, oferece criar uma conta de verdade (e-mail/senha via
- * Supabase Auth) vinculada ao proprietário pelo MESMO token do convite —
- * `owner_account_link` (migration 0013) revalida tudo server-side antes
- * de vincular. Sem Supabase configurado, isto não existe ainda (o
- * auto-cadastro em si continua funcionando normalmente, só sem "ver
- * depois" sem o link).
- */
-function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defaultEmail: string }) {
-  const [email, setEmail] = useState(defaultEmail);
-  const [password, setPassword] = useState("");
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Summary icon={<Flag />} label="Etapa atual" value={publicStages[stage] ?? "Proposta"} />
+        <Summary icon={<CheckCircle2 />} label="Progresso" value={`${snapshot.visibleProgress.percent}%`} hint={`${snapshot.visibleProgress.done} de ${snapshot.visibleProgress.total} atividades`} />
+        <Summary icon={<CalendarDays />} label="Previsão" value={formatDate(snapshot.completionDateEstimate ?? snapshot.startDateEstimate)} />
+        <Summary icon={<ListChecks />} label="Precisamos de você" value={String(snapshot.tasks.length)} hint="pendências visíveis" />
+      </section>
 
-  const createAccount = useMutation({
-    mutationFn: () => createOwnerAccountAndLink(email, password, token),
-  });
+      <section className="rounded-2xl border border-[#e4e8ec] bg-white p-5 sm:p-6">
+        <h2 className="font-semibold">Próximos marcos</h2>
+        <div className="mt-5 grid grid-cols-3 gap-y-5 sm:grid-cols-6">
+          {publicStages.map((label, index) => (
+            <div key={label} className="relative text-center">
+              <span className={`relative z-10 mx-auto flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold ${index < stage ? "border-[#237a57] bg-[#237a57] text-white" : index === stage ? "border-[#0b3150] bg-[#0b3150] text-white" : "border-[#d8dde2] bg-white text-[#6b7785]"}`}>{index < stage ? "✓" : index + 1}</span>
+              <p className="mt-2 px-1 text-[11px] leading-tight text-[#6b7785]">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-  if (!isSupabaseConfigured()) {
-    return (
-      <p className="mt-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Criar uma conta para acompanhar depois ainda não está disponível.
-      </p>
-    );
-  }
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+        <section className="rounded-2xl border border-[#e4e8ec] bg-white p-5 sm:p-6">
+          <h2 className="font-semibold">Precisamos de você</h2>
+          <p className="mt-1 text-sm text-[#6b7785]">Somente tarefas compartilhadas pela equipe Stayo aparecem aqui.</p>
+          <div className="mt-4 space-y-3">
+            {snapshot.tasks.length ? snapshot.tasks.map((task) => <div key={`${task.source}-${task.id}`} className="rounded-xl border border-[#e4e8ec] p-4"><p className="text-sm font-semibold">{task.title}</p>{task.description ? <p className="mt-1 text-sm text-[#6b7785]">{task.description}</p> : null}</div>) : <p className="rounded-xl bg-[#f5f7f9] p-4 text-sm text-[#6b7785]">Nenhuma pendência sua no momento.</p>}
+          </div>
+        </section>
 
-  if (createAccount.isSuccess) {
-    return (
-      <p className="mt-4 text-sm" style={{ color: "var(--stayo-forest)" }}>
-        {createAccount.data.account ? (
-          <>
-            Conta criada e vinculada! Você já pode{" "}
-            <a href="/portal/login" className="underline">
-              entrar
-            </a>{" "}
-            com este e-mail e senha para acompanhar depois.
-          </>
-        ) : (
-          "Conta criada — confirme seu e-mail para poder entrar depois."
-        )}
-      </p>
-    );
-  }
+        <section className="rounded-2xl border border-[#e4e8ec] bg-white p-5 sm:p-6">
+          <h2 className="font-semibold">Atualizações</h2>
+          <div className="mt-4 space-y-4">
+            {snapshot.updates.length ? snapshot.updates.slice(0, 6).map((update) => <div key={update.id} className="flex gap-3"><Clock3 className="mt-0.5 shrink-0 text-[#237a57]" size={17} /><div><p className="text-sm font-medium">{update.title}</p><p className="text-xs text-[#6b7785]">{new Date(update.completedAt).toLocaleDateString("pt-BR")}</p></div></div>) : <p className="text-sm text-[#6b7785]">As atualizações públicas aparecerão aqui.</p>}
+          </div>
+        </section>
+      </div>
 
-  return (
-    <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--stayo-border)" }}>
-      <h2 className="mb-1 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
-        Quer acompanhar depois?
-      </h2>
-      <p className="mb-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Crie uma senha para entrar de novo mais tarde, sem depender de um link.
-      </p>
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          createAccount.mutate();
-        }}
-      >
-        <TextField label="E-mail" type="email" value={email} onChange={setEmail} />
-        <TextField label="Senha" type="password" value={password} onChange={setPassword} />
-        {createAccount.isError && (
-          <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-            Não foi possível criar a conta. Tente novamente.
-          </span>
-        )}
-        <button
-          type="submit"
-          disabled={createAccount.isPending}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-        >
-          {createAccount.isPending ? "Criando..." : "Criar conta"}
-        </button>
-      </form>
+      {snapshot.proposal ? <section className="rounded-2xl border border-[#dfd0ad] bg-white p-5 sm:p-6"><div className="flex items-start gap-3"><FileText className="text-[#a17b39]" /><div><h2 className="font-semibold">Proposta · versão {snapshot.proposal.version}</h2><p className="mt-1 text-2xl font-semibold text-[#0b3150]">{formatMoney(snapshot.proposal.total)}</p></div></div>{snapshot.proposal.acceptedAt ? <p className="mt-4 rounded-xl bg-[#edf7f2] p-3 text-sm font-medium text-[#237a57]">Proposta aceita em {new Date(snapshot.proposal.acceptedAt).toLocaleString("pt-BR")}.</p> : <div className="mt-4 border-t border-[#e4e8ec] pt-4"><label className="text-xs font-semibold text-[#6b7785]">Seu nome para confirmar o aceite</label><div className="mt-2 flex flex-col gap-2 sm:flex-row"><input value={acceptedName} onChange={(event) => setAcceptedName(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-[#d8dde2] bg-white px-3 py-2 text-sm" placeholder="Nome completo" /><button onClick={() => accept.mutate()} disabled={acceptedName.trim().length < 2 || accept.isPending} className="rounded-lg bg-[#0b3150] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{accept.isPending ? "Confirmando..." : "Aceitar proposta"}</button></div>{accept.isError ? <p className="mt-2 text-sm text-red-700">Não foi possível confirmar. Tente novamente.</p> : null}</div>}</section> : null}
+
+      <section className="rounded-2xl border border-dashed border-[#d8dde2] p-5 text-sm text-[#6b7785]"><strong className="text-[#17232f]">Documentos</strong><p className="mt-1">Nenhum documento foi liberado para este acesso.</p></section>
     </div>
   );
 }
 
-function TextField({
-  label,
-  value,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-}) {
-  return (
-    <label className="block text-sm">
-      <span className="mb-1 block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-        style={{ ...surface, color: "var(--stayo-ink)" }}
-      />
-    </label>
-  );
+function Summary({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
+  return <div className="rounded-2xl border border-[#e4e8ec] bg-white p-4"><div className="text-[#a17b39] [&>svg]:h-4 [&>svg]:w-4">{icon}</div><p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-[#6b7785]">{label}</p><p className="mt-1 text-sm font-semibold text-[#17232f] sm:text-base">{value}</p>{hint ? <p className="mt-1 text-[11px] text-[#6b7785]">{hint}</p> : null}</div>;
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return "A confirmar";
+  return new Date(`${value.length === 10 ? value + "T12:00:00" : value}`).toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
 }
