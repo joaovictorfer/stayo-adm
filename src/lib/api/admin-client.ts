@@ -646,12 +646,11 @@ export function createLocalAdminApiClient(): AdminApiClient {
         ...target,
         publicSnapshot: {
           ...target.publicSnapshot,
-          proposal: { ...target.publicSnapshot.proposal, acceptedAt },
+          proposal: { ...target.publicSnapshot.proposal, acceptedAt, acceptedName: acceptedName.trim() },
           refreshedAt: acceptedAt,
         },
       };
       write(OWNER_ONBOARDING_LINKS_KEY, links.map((item) => (item.id === target.id ? updated : item)));
-      void acceptedName;
     },
     getSubmission: async (implementationId) =>
       read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
