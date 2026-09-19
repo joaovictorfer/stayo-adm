@@ -1017,7 +1017,87 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const PORTAL_CONTENT_KEY = "stayo.admin.portal-content";
+
+  const portalContent: AdminApiClient["portalContent"] = {
+    list: async () =>
+      read<PortalContentBlock>(PORTAL_CONTENT_KEY).sort(
+        (a, b) => a.displayOrder - b.displayOrder,
+      ),
+    add: async (input) => {
+      const block: PortalContentBlock = {
+        id: newId(),
+        kind: input.kind,
+        draftTitle: input.draftTitle,
+        draftBody: input.draftBody ?? "",
+        publishedTitle: null,
+        publishedBody: null,
+        publishedAt: null,
+        displayOrder: input.displayOrder ?? 0,
+        updatedAt: new Date().toISOString(),
+      };
+      write(PORTAL_CONTENT_KEY, [...read<PortalContentBlock>(PORTAL_CONTENT_KEY), block]);
+      return block;
+    },
+    update: async (id, patch) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    publish: async (id) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        publishedTitle: target.draftTitle,
+        publishedBody: target.draftBody,
+        publishedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    unpublish: async (id) => {
+      const all = read<PortalContentBlock>(PORTAL_CONTENT_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco do portal não encontrado");
+      const updated: PortalContentBlock = {
+        ...target,
+        publishedTitle: null,
+        publishedBody: null,
+        publishedAt: null,
+        updatedAt: new Date().toISOString(),
+      };
+      write(
+        PORTAL_CONTENT_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        PORTAL_CONTENT_KEY,
+        read<PortalContentBlock>(PORTAL_CONTENT_KEY).filter((b) => b.id !== id),
+      );
+    },
+  };
+
   return {
+    portalContent,
     proposalSettings,
     proposalBlocks,
     implementationTemplates,
