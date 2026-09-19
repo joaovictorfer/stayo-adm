@@ -3,12 +3,13 @@
  * Navy-petróleo diferencia o Admin do Guide; champagne é apenas acento.
  */
 :root {
-  --stayo-ink: oklch(0.26 0.035 245);
-  --stayo-ink-muted: oklch(0.55 0.025 245);
-  --stayo-bg: oklch(0.975 0.004 210);
+  color-scheme: light;
+  --stayo-ink: oklch(0.25 0.025 245);
+  --stayo-ink-muted: oklch(0.54 0.025 245);
+  --stayo-bg: oklch(0.975 0.006 240);
   --stayo-surface: oklch(1 0 0);
-  --stayo-surface-subtle: oklch(0.965 0.006 215);
-  --stayo-border: oklch(0.91 0.012 225);
+  --stayo-surface-subtle: oklch(0.965 0.007 240);
+  --stayo-border: oklch(0.91 0.01 240);
 
   --stayo-forest: oklch(0.29 0.065 223);
   --stayo-forest-strong: oklch(0.23 0.055 230);
@@ -29,6 +30,15 @@
   --stayo-info: oklch(0.52 0.13 245);
   --stayo-info-soft: oklch(0.95 0.03 245);
 
+  --admin-navy: var(--stayo-navy);
+  --admin-navy-dark: var(--stayo-forest-strong);
+  --admin-bg: var(--stayo-bg);
+  --admin-surface: var(--stayo-surface);
+  --admin-border: var(--stayo-border);
+  --admin-text: var(--stayo-ink);
+  --admin-muted: var(--stayo-ink-muted);
+  --admin-accent: var(--stayo-gold);
+
   --stayo-font-display: "Sora", system-ui, sans-serif;
   --stayo-font-ui: "Manrope", system-ui, sans-serif;
   --radius-card: 14px;
@@ -36,34 +46,4 @@
   --shadow-card: 0 1px 2px color-mix(in oklab, var(--stayo-navy) 5%, transparent),
     0 8px 24px color-mix(in oklab, var(--stayo-navy) 5%, transparent);
   --shadow-float: 0 18px 48px color-mix(in oklab, var(--stayo-navy) 16%, transparent);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --stayo-ink: oklch(0.94 0.01 220);
-    --stayo-ink-muted: oklch(0.72 0.018 220);
-    --stayo-bg: oklch(0.17 0.025 230);
-    --stayo-surface: oklch(0.22 0.03 230);
-    --stayo-surface-subtle: oklch(0.25 0.03 230);
-    --stayo-border: oklch(0.32 0.025 225);
-    --stayo-forest-soft: oklch(0.27 0.04 220);
-    --stayo-navy-soft: oklch(0.27 0.04 220);
-    --stayo-gold-soft: oklch(0.3 0.04 78);
-    --stayo-success-soft: oklch(0.27 0.04 150);
-    --stayo-warning-soft: oklch(0.3 0.045 78);
-    --stayo-danger-soft: oklch(0.29 0.045 28);
-    --stayo-info-soft: oklch(0.28 0.04 245);
-  }
-}
-
-:root[data-theme="dark"] {
-  --stayo-ink: oklch(0.94 0.01 220);
-  --stayo-ink-muted: oklch(0.72 0.018 220);
-  --stayo-bg: oklch(0.17 0.025 230);
-  --stayo-surface: oklch(0.22 0.03 230);
-  --stayo-surface-subtle: oklch(0.25 0.03 230);
-  --stayo-border: oklch(0.32 0.025 225);
-  --stayo-forest-soft: oklch(0.27 0.04 220);
-  --stayo-navy-soft: oklch(0.27 0.04 220);
-  --stayo-gold-soft: oklch(0.3 0.04 78);
 }

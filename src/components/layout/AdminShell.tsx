@@ -171,23 +171,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <Brand /><div className="flex-1 overflow-y-auto pt-5"><SidebarNav pathname={pathname} /></div><AccountBlock />
     </aside>
 
-    {drawer && <div className="fixed inset-0 z-50 lg:hidden">
-      <button type="button" aria-label="Fechar menu" className="absolute inset-0 bg-foreground/35 backdrop-blur-[2px]" onClick={() => setDrawer(false)} />
-      <aside className="absolute inset-y-0 left-0 flex w-[min(19rem,88vw)] flex-col bg-sidebar text-sidebar-foreground shadow-2xl">
+    {drawer && <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">
+      <button type="button" aria-label="Fechar menu" className="absolute inset-0 bg-foreground/30 backdrop-blur-[2px]" onClick={() => setDrawer(false)} />
+      <aside className="absolute inset-y-0 left-0 flex w-[min(19rem,88vw)] max-w-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground shadow-2xl">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start"><Brand /><button type="button" onClick={() => setDrawer(false)} aria-label="Fechar menu" className="mr-3 mt-4 rounded-lg p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent"><X size={19} /></button></div>
         <div className="flex-1 overflow-y-auto pt-5"><SidebarNav pathname={pathname} onNavigate={() => setDrawer(false)} /></div><AccountBlock />
       </aside>
     </div>}
 
     <div className="flex min-w-0 flex-1 flex-col">
-      <header className="sticky top-0 z-30 grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-30 grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-card/95 px-4 shadow-[0_1px_0_color-mix(in_oklab,var(--stayo-navy)_3%,transparent)] backdrop-blur-md sm:px-6 lg:px-8">
         <button type="button" onClick={() => setDrawer(true)} className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden" aria-label="Abrir menu"><Menu size={20} /></button>
         <div className="min-w-0">
           <p className="truncate font-display text-sm font-semibold text-foreground sm:text-base">{section?.label ?? "Stayo Admin"}</p>
           <p className="hidden text-[11px] text-muted-foreground sm:block">Centro de controle operacional</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <label className="hidden h-9 items-center gap-2 rounded-lg bg-muted px-3 text-sm lg:flex">
+          <label className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm shadow-sm lg:flex">
             <Search size={15} className="text-muted-foreground" />
             <input type="search" placeholder="Buscar imóvel, reserva, proprietário..." className="w-64 bg-transparent text-foreground outline-none placeholder:text-muted-foreground" aria-label="Busca global" />
             <kbd className="text-[10px] text-muted-foreground">⌘K</kbd>
