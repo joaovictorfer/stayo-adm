@@ -1526,25 +1526,33 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
     getAdministrativeRegistration: async (implementationIds) => {
       if (implementationIds.length === 0) return null;
-      const { data, error } = await client()
+      const supabase = client();
+      const { data: accounts, error: accountsError } = await supabase
+        .from("owner_payout_accounts")
+        .select("implementation_id, bank_name, account_holder, pix_type, pix_key, is_primary")
+        .in("implementation_id", implementationIds)
+        .eq("is_primary", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .returns<OwnerAdministrativeRegistrationRow[]>();
+      if (accountsError) throw accountsError;
+
+      const { data: profiles, error: profilesError } = await supabase
         .from("owner_onboarding_profiles")
-        .select("implementation_id, submitted_at, owner_payout_accounts(bank_name, account_holder, pix_type, pix_key, is_primary)")
+        .select("implementation_id, submitted_at")
         .in("implementation_id", implementationIds)
         .not("submitted_at", "is", null)
         .order("updated_at", { ascending: false })
         .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) return null;
-      const raw = data as unknown as {
-        implementation_id: string;
-        submitted_at: string | null;
-        owner_payout_accounts: Array<{ bank_name: string | null; account_holder: string | null; pix_type: OwnerAdministrativeRegistration["pixType"]; pix_key: string | null; is_primary: boolean }> | { bank_name: string | null; account_holder: string | null; pix_type: OwnerAdministrativeRegistration["pixType"]; pix_key: string | null; is_primary: boolean } | null;
-      };
-      const account = Array.isArray(raw.owner_payout_accounts) ? raw.owner_payout_accounts[0] : raw.owner_payout_accounts;
+        .returns<Array<{ implementation_id: string; submitted_at: string | null }>>();
+      if (profilesError) throw profilesError;
+
+      const account = accounts[0] ?? null;
+      const profile = profiles[0] ?? null;
+      if (!account && !profile) return null;
       return {
-        implementationId: raw.implementation_id,
-        submittedAt: raw.submitted_at,
+        implementationId: account?.implementation_id ?? profile?.implementation_id ?? implementationIds[0],
+        submittedAt: profile?.submitted_at ?? null,
         bankName: account?.bank_name ?? null,
         accountHolder: account?.account_holder ?? null,
         pixType: account?.pix_type ?? null,
