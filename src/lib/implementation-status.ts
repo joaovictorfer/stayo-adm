@@ -85,6 +85,22 @@ function isResolvedForReadiness(item: {
  * obrigatório em aberto para a implantação não estar apta, mesmo com 95%
  * do checklist concluído.
  */
+export type ReadinessState = "nao_avaliada" | "com_pendencias" | "bloqueada" | "apta";
+
+export const readinessLabels: Record<ReadinessState, string> = {
+  nao_avaliada: "Não avaliada",
+  com_pendencias: "Com pendências",
+  bloqueada: "Bloqueada",
+  apta: "Apta",
+};
+
+export const readinessColors: Record<ReadinessState, string> = {
+  nao_avaliada: "var(--stayo-ink-muted)",
+  com_pendencias: "var(--stayo-warning)",
+  bloqueada: "var(--stayo-danger)",
+  apta: "var(--stayo-success)",
+};
+
 export function computeReadiness(
   items: {
     status: ImplementationItemStatus;
@@ -92,15 +108,27 @@ export function computeReadiness(
     blocker: boolean;
     readinessOverrideAt?: string | null;
   }[],
-): { ready: boolean; pendingBlockers: number; pendingMandatory: number } {
+): { ready: boolean; state: ReadinessState; pendingBlockers: number; pendingMandatory: number } {
+  if (items.length === 0) {
+    return { ready: false, state: "nao_avaliada", pendingBlockers: 0, pendingMandatory: 0 };
+  }
+
   const open = items.filter((i) => !isResolvedForReadiness(i));
   const pendingBlockers = open.filter((i) => i.blocker).length;
   const pendingMandatory = open.filter((i) => i.mandatory).length;
-  return {
-    ready: pendingBlockers === 0 && pendingMandatory === 0,
-    pendingBlockers,
-    pendingMandatory,
-  };
+  
+  const ready = pendingBlockers === 0 && pendingMandatory === 0;
+
+  let state: ReadinessState;
+  if (pendingBlockers > 0) {
+    state = "bloqueada";
+  } else if (pendingMandatory > 0) {
+    state = "com_pendencias";
+  } else {
+    state = "apta";
+  }
+
+  return { ready, state, pendingBlockers, pendingMandatory };
 }
 
 export function nextImplementationCode(existingCodes: string[]): string {

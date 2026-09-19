@@ -33,6 +33,8 @@ import {
   itemStatusColor,
   itemStatusLabels,
   mainStatusFlow,
+  readinessColors,
+  readinessLabels,
   statusLabels,
 } from "../lib/implementation-status";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
@@ -755,7 +757,7 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
         className="rounded-[var(--radius-card)] border p-4"
         style={{
           ...surface,
-          borderColor: readiness.ready ? "var(--stayo-success)" : "var(--stayo-gold)",
+          borderColor: loading ? "transparent" : readinessColors[readiness.state],
         }}
       >
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -765,14 +767,10 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
           className="mt-1 text-3xl"
           style={{
             fontFamily: "var(--stayo-font-display)",
-            color: loading
-              ? "var(--stayo-ink-muted)"
-              : readiness.ready
-                ? "var(--stayo-success)"
-                : "var(--stayo-danger)",
+            color: loading ? "var(--stayo-ink-muted)" : readinessColors[readiness.state],
           }}
         >
-          {loading ? "—" : readiness.ready ? "Apta" : "Não apta"}
+          {loading ? "—" : readinessLabels[readiness.state]}
         </p>
         <p className="mt-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           {readiness.pendingBlockers} bloqueador(es) em aberto · {readiness.pendingMandatory}{" "}

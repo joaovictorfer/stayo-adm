@@ -23,6 +23,7 @@ import {
   alternateStatuses,
   computeReadiness,
   mainStatusFlow,
+  readinessLabels,
   statusLabels,
 } from "../lib/implementation-status";
 import type { ImplementationItem, ImplementationProject } from "../types/core";
@@ -49,8 +50,10 @@ const surface = {
 
 const prontidaoOptions = [
   { value: "all", label: "Prontidão: todas" },
-  { value: "pronta", label: "Prontas para operação" },
-  { value: "pendente", label: "Com pendência (bloqueio/obrigatório aberto)" },
+  { value: "nao_avaliada", label: "Não avaliada (sem requisitos)" },
+  { value: "apta", label: "Apta para operação" },
+  { value: "com_pendencias", label: "Com pendências" },
+  { value: "bloqueada", label: "Bloqueada" },
 ];
 
 function ImplementationsPage() {
@@ -93,8 +96,7 @@ function ImplementationsPage() {
       if (prontidao !== "all") {
         const readiness = readinessById.get(i.id);
         if (!readiness) return false;
-        if (prontidao === "pronta" && !readiness.ready) return false;
-        if (prontidao === "pendente" && readiness.ready) return false;
+        if (prontidao !== readiness.state) return false;
       }
       return true;
     });
@@ -275,15 +277,15 @@ function PipelineView({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{r.code}</span>
-                      {readiness && !readiness.ready && (
+                      {readiness && readiness.state !== "apta" && readiness.state !== "nao_avaliada" && (
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px]"
                           style={{
                             backgroundColor: "var(--stayo-gold-soft)",
-                            color: "var(--stayo-warning)",
+                            color: readiness.state === "bloqueada" ? "var(--stayo-danger)" : "var(--stayo-warning)",
                           }}
                         >
-                          Pendente
+                          {readinessLabels[readiness.state]}
                         </span>
                       )}
                     </div>
