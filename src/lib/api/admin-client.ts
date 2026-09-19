@@ -2018,7 +2018,128 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const proposalSettings: AdminApiClient["proposalSettings"] = {
+    get: async (implementationId) => {
+      const { data, error } = await client()
+        .from("implementation_proposal_settings")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? proposalSettingsFromRow(data as ProposalSettingsRow) : null;
+    },
+    save: async (implementationId, input) => {
+      const current = await proposalSettings.get(implementationId);
+      const { data, error } = await client()
+        .from("implementation_proposal_settings")
+        .upsert(
+          {
+            implementation_id: implementationId,
+            validity_days: input.validityDays ?? current?.validityDays ?? 30,
+            payment_notes:
+              input.paymentNotes === undefined
+                ? (current?.paymentNotes ?? null)
+                : input.paymentNotes,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "implementation_id" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return proposalSettingsFromRow(data as ProposalSettingsRow);
+    },
+  };
+
+  const proposalBlocks: AdminApiClient["proposalBlocks"] = {
+    listByImplementation: async (implementationId) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .select()
+        .eq("implementation_id", implementationId)
+        .order("display_order", { ascending: true })
+        .returns<ProposalBlockRow[]>();
+      if (error) throw error;
+      return data.map(proposalBlockFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .insert({
+          implementation_id: input.implementationId,
+          title: input.title,
+          body: input.body ?? "",
+          visibility: input.visibility ?? "proposta",
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<ProposalBlockRow>();
+      if (error) throw error;
+      return proposalBlockFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("proposal_content_blocks")
+        .update({
+          ...(patch.title === undefined ? {} : { title: patch.title }),
+          ...(patch.body === undefined ? {} : { body: patch.body }),
+          ...(patch.visibility === undefined ? {} : { visibility: patch.visibility }),
+          ...(patch.displayOrder === undefined ? {} : { display_order: patch.displayOrder }),
+        })
+        .eq("id", id)
+        .select()
+        .single<ProposalBlockRow>();
+      if (error) throw error;
+      return proposalBlockFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("proposal_content_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const implementationTemplates: AdminApiClient["implementationTemplates"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .select()
+        .order("name", { ascending: true })
+        .returns<ImplementationTemplateRow[]>();
+      if (error) throw error;
+      return data.map(implementationTemplateFromRow);
+    },
+    get: async (id) => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .select()
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? implementationTemplateFromRow(data as ImplementationTemplateRow) : null;
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_templates")
+        .insert({
+          name: input.name,
+          notes: input.notes ?? null,
+          payload: input.payload as unknown as Record<string, unknown>,
+        })
+        .select()
+        .single<ImplementationTemplateRow>();
+      if (error) throw error;
+      return implementationTemplateFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
+    proposalSettings,
+    proposalBlocks,
+    implementationTemplates,
     audit,
     owners,
     propertyDetails,
