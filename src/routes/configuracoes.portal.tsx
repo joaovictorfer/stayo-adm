@@ -74,7 +74,8 @@ function PortalContentPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
         <div className="flex flex-col gap-4">
-          <Panel title="Blocos">
+          <Panel>
+            <h2 className="border-b px-4 py-3 text-sm" style={{ borderColor: "var(--stayo-border)" }}>Blocos</h2>
             {blocksQ.isPending ? (
               <p className="p-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
                 Carregando...
@@ -98,7 +99,8 @@ function PortalContentPage() {
         </div>
 
         <div className="flex flex-col gap-4">
-          <Panel title="Novo bloco">
+          <Panel>
+            <h2 className="border-b px-4 py-3 text-sm" style={{ borderColor: "var(--stayo-border)" }}>Novo bloco</h2>
             <div className="flex flex-col gap-3 p-4">
               <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
                 Tipo
@@ -149,7 +151,8 @@ function PortalContentPage() {
             </div>
           </Panel>
 
-          <Panel title="Visualizar">
+          <Panel>
+            <h2 className="border-b px-4 py-3 text-sm" style={{ borderColor: "var(--stayo-border)" }}>Visualizar</h2>
             <div className="flex flex-col gap-2 p-4">
               <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
                 {pending === 0
