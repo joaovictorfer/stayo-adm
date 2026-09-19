@@ -3,6 +3,8 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
+import { ImplementationTemplatesPanel } from "./ImplementationTemplatesPanel";
+import { ProposalConfigPanel } from "./ProposalConfigPanel";
 import {
   adminApi,
   commercialTermsQuery,
