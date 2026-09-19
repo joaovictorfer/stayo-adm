@@ -67,6 +67,11 @@ import type {
   ProposalSettingsInput,
 } from "../../types/proposal-config";
 import { emptyTemplatePayload } from "../../types/proposal-config";
+import type {
+  PortalContentBlock,
+  PortalContentBlockInput,
+  PortalContentBlockPatch,
+} from "../../types/portal-content";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
