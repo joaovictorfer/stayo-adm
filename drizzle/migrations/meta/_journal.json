@@ -36,6 +36,13 @@
       "when": 1789776689231,
       "tag": "0004_portal_content_blocks",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789780145303,
+      "tag": "0005_owner_portal_implementation_mode",
+      "breakpoints": true
     }
   ]
 }

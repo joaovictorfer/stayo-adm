@@ -903,6 +903,7 @@ export type Database = {
           implementation_id: string
           last_access_at: string | null
           owner_id: string | null
+          public_snapshot: Json | null
           revoked_at: string | null
           token_hash: string
           used_at: string | null
@@ -915,6 +916,7 @@ export type Database = {
           implementation_id: string
           last_access_at?: string | null
           owner_id?: string | null
+          public_snapshot?: Json | null
           revoked_at?: string | null
           token_hash: string
           used_at?: string | null
@@ -927,6 +929,7 @@ export type Database = {
           implementation_id?: string
           last_access_at?: string | null
           owner_id?: string | null
+          public_snapshot?: Json | null
           revoked_at?: string | null
           token_hash?: string
           used_at?: string | null
@@ -1309,6 +1312,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      owner_portal_accept_proposal: {
+        Args: { p_accepted_name: string; p_token: string }
+        Returns: Json
+      }
+      owner_portal_resolve: {
+        Args: { p_token: string }
+        Returns: {
+          expires_at: string
+          public_snapshot: Json
+          revoked_at: string
+        }[]
       }
       proposal_accept_by_token: {
         Args: { p_accepted_name: string; p_token: string }
