@@ -23,6 +23,7 @@ import {
 import type { OwnerRecord } from "../../types/admin";
 import type {
   Contract, ImplementationProject, Property, Reservation, ServiceInvoice,
+  Payout,
 } from "../../types/core";
 import type { OwnerAdministrativeRegistration, OwnerOnboardingLink } from "../../types/owner-onboarding";
 import { ownerOnboardingLinkStatus } from "../../types/owner-onboarding";
@@ -228,7 +229,7 @@ function Tasks({ ownerId, tasks }: { ownerId: string; tasks: Awaited<ReturnType<
   return <div className="divide-y divide-border">{pending.map((task) => <div key={task.id} className="flex items-center justify-between gap-3 py-2"><div><p className="text-sm font-medium">{task.title}</p>{task.description ? <p className="text-xs text-muted-foreground">{task.description}</p> : null}</div><Button variant="outline" size="sm" onClick={() => resolve.mutate(task.id)}>Resolver</Button></div>)}</div>;
 }
 
-function FinancialPanel({ payouts, invoices }: { payouts: Awaited<ReturnType<typeof import("../../lib/api/core-client").CoreApiClient["payouts"]["list"]>>["data"]; invoices: ServiceInvoice[] }) {
+function FinancialPanel({ payouts, invoices }: { payouts: Payout[]; invoices: ServiceInvoice[] }) {
   const amount = payouts.reduce((sum, item) => sum + (item.amount ?? 0), 0);
   const open = invoices.filter((item) => !item.paidAt);
   return <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2"><Metric icon={CheckCircle2} label="Total repassado" value={formatMoney(amount)} /><Metric icon={Clock3} label="Faturas pendentes" value={`${open.length} · ${formatMoney(open.reduce((sum, item) => sum + item.total, 0))}`} tone={open.length ? "warning" : "success"} /></div><ListPanel title="Repasses" empty="Nenhum repasse disponível.">{payouts.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm"><span>{item.propertyName ?? "Imóvel"}</span><strong>{formatMoney(item.amount) ?? "—"}</strong></div>)}</ListPanel></div>;
