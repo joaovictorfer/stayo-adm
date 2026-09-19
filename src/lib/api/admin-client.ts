@@ -35,6 +35,7 @@ import type {
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
+import type { OwnerPortalPublicAccess, OwnerPortalSnapshot } from "../../types/owner-portal";
 import type {
   FieldConfirmation,
   ImplementationOwnerLink,
@@ -148,6 +149,7 @@ export interface AdminApiClient {
     createLink(
       implementationId: string,
       ownerId: string | null,
+      publicSnapshot: OwnerPortalSnapshot,
       validityDays?: number,
     ): Promise<{ link: OwnerOnboardingLink; token: string }>;
     revoke(id: string): Promise<OwnerOnboardingLink>;
@@ -157,6 +159,8 @@ export interface AdminApiClient {
      * security-definer (ver migration 0007).
      */
     findByToken(token: string): Promise<OwnerOnboardingLink | null>;
+    resolvePortal(token: string): Promise<OwnerPortalPublicAccess | null>;
+    acceptPortalProposal(token: string, acceptedName: string): Promise<void>;
     getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
@@ -568,7 +572,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
         (l) => l.implementationId === implementationId && !l.revokedAt && !l.usedAt,
       );
 
-      const token = newId();
+      const token = createSecureToken();
       const tokenHash = await hashToken(token);
       const link: OwnerOnboardingLink = {
         id: newId(),
@@ -581,6 +585,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
         usedAt: null,
         revokedAt: null,
         lastAccessAt: null,
+        publicSnapshot,
       };
 
       const revokedIds = new Set(stillActive.map((l) => l.id));
@@ -622,6 +627,30 @@ export function createLocalAdminApiClient(): AdminApiClient {
           (l) => l.tokenHash === tokenHash,
         ) ?? null
       );
+    },
+    resolvePortal: async (token) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link || !link.publicSnapshot || link.revokedAt || new Date(link.expiresAt) < new Date()) {
+        return null;
+      }
+      return { expiresAt: link.expiresAt, revokedAt: link.revokedAt, snapshot: link.publicSnapshot };
+    },
+    acceptPortalProposal: async (token, acceptedName) => {
+      const tokenHash = await hashToken(token);
+      const links = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
+      const target = links.find((item) => item.tokenHash === tokenHash);
+      if (!target?.publicSnapshot.proposal) throw new Error("Proposta indisponível");
+      const acceptedAt = new Date().toISOString();
+      const updated: OwnerOnboardingLink = {
+        ...target,
+        publicSnapshot: {
+          ...target.publicSnapshot,
+          proposal: { ...target.publicSnapshot.proposal, acceptedAt },
+          refreshedAt: acceptedAt,
+        },
+      };
+      write(OWNER_ONBOARDING_LINKS_KEY, links.map((item) => (item.id === target.id ? updated : item)));
+      void acceptedName;
     },
     getSubmission: async (implementationId) =>
       read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
@@ -1294,6 +1323,7 @@ interface OwnerOnboardingLinkRow {
   used_at: string | null;
   revoked_at: string | null;
   last_access_at: string | null;
+  public_snapshot: OwnerPortalSnapshot | null;
 }
 
 function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardingLink {
@@ -1308,6 +1338,7 @@ function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardin
     usedAt: row.used_at,
     revokedAt: row.revoked_at,
     lastAccessAt: row.last_access_at,
+    publicSnapshot: row.public_snapshot,
   };
 }
 
@@ -1747,7 +1778,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     ) => {
       const supabase = client();
       const now = new Date();
-      const token = newId();
+      const token = createSecureToken();
       const tokenHash = await hashToken(token);
 
       const { error: revokeError } = await supabase
@@ -1764,6 +1795,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
           implementation_id: implementationId,
           owner_id: ownerId,
           token_hash: tokenHash,
+          public_snapshot: publicSnapshot,
           expires_at: new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
         })
         .select()
@@ -1835,7 +1867,31 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         usedAt: data.used_at,
         revokedAt: data.revoked_at,
         lastAccessAt: null,
+        publicSnapshot: null,
       };
+    },
+    resolvePortal: async (token) => {
+      const { data, error } = await client()
+        .rpc("owner_portal_resolve", { p_token: token })
+        .maybeSingle<{
+          expires_at: string;
+          revoked_at: string | null;
+          public_snapshot: OwnerPortalSnapshot | null;
+        }>();
+      if (error) throw error;
+      if (!data?.public_snapshot) return null;
+      return {
+        expiresAt: data.expires_at,
+        revokedAt: data.revoked_at,
+        snapshot: data.public_snapshot,
+      };
+    },
+    acceptPortalProposal: async (token, acceptedName) => {
+      const { error } = await client().rpc("owner_portal_accept_proposal", {
+        p_token: token,
+        p_accepted_name: acceptedName,
+      });
+      if (error) throw error;
     },
     submit: async (_implementationId, token, input) => {
       const { data, error } = await client()
