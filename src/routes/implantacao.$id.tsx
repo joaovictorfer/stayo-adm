@@ -31,6 +31,8 @@ import {
   supplyItemsQuery,
 } from "../lib/api/queries";
 import { blockingSupplyItems } from "../types/implementation-supply";
+import { generateImplementationSummaryPdf } from "../lib/pdf/implementation-pdf";
+import { downloadPdfBytes } from "../lib/pdf/download";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
 import {
@@ -143,6 +145,36 @@ function ImplementationDetailPage() {
           />
 
           <AttentionPanel items={checklistItems} />
+
+          <div>
+            <button
+              type="button"
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--stayo-surface)",
+                borderColor: "var(--stayo-border)",
+              }}
+              onClick={async () => {
+                const bytes = await generateImplementationSummaryPdf({
+                  implementation,
+                  checklist: checklistItems,
+                  supplies: suppliesQuery.data ?? [],
+                  progressPercent: progress.percent,
+                  ready: readiness.ready,
+                  blockers: [
+                    ...attentionItems(checklistItems).map((item) => item.title),
+                    ...blockingSupplyItems(suppliesQuery.data ?? []).map(
+                      (item) => `Enxoval/faltante: ${item.name}`,
+                    ),
+                  ],
+                  statusLabel: statusLabels[implementation.status],
+                });
+                downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
+              }}
+            >
+              Gerar PDF do resumo da implantação
+            </button>
+          </div>
 
           <StatusStepper
             status={implementation.status}

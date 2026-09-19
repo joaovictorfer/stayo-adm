@@ -14,7 +14,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { adminApi, supplyItemsQuery, supplyTemplatesQuery } from "../../lib/api/queries";
+import {
+  adminApi,
+  implementationQuery,
+  supplyItemsQuery,
+  supplyTemplatesQuery,
+} from "../../lib/api/queries";
+import { generateSuppliesPdf } from "../../lib/pdf/implementation-pdf";
+import { downloadPdfBytes } from "../../lib/pdf/download";
 import {
   blockingSupplyItems,
   missingQty,
@@ -101,6 +108,7 @@ export function SuppliesPanel({
   const queryClient = useQueryClient();
   const items = useQuery(supplyItemsQuery(implementationId, module));
   const templates = useQuery(supplyTemplatesQuery(module));
+  const implementation = useQuery(implementationQuery(implementationId));
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [templateId, setTemplateId] = useState("");
@@ -212,6 +220,44 @@ export function SuppliesPanel({
             mesmo que o checklist esteja avançado.
           </p>
         ) : null}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-50"
+            style={surface}
+            disabled={!implementation.data || list.length === 0}
+            onClick={async () => {
+              if (!implementation.data) return;
+              const bytes = await generateSuppliesPdf({
+                implementation: implementation.data,
+                items: list,
+                module,
+                scope: "completo",
+              });
+              downloadPdfBytes(bytes, `${module}-${implementation.data.code}-completo.pdf`);
+            }}
+          >
+            Gerar PDF — lista completa
+          </button>
+          <button
+            type="button"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-50"
+            style={surface}
+            disabled={!implementation.data || totalMissing === 0}
+            onClick={async () => {
+              if (!implementation.data) return;
+              const bytes = await generateSuppliesPdf({
+                implementation: implementation.data,
+                items: list,
+                module,
+                scope: "faltantes",
+              });
+              downloadPdfBytes(bytes, `${module}-${implementation.data.code}-faltantes.pdf`);
+            }}
+          >
+            Gerar PDF — só o que falta
+          </button>
+        </div>
       </Panel>
 
       <Panel>
