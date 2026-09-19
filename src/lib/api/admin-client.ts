@@ -205,6 +205,15 @@ export interface AdminApiClient {
     create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
     remove(id: string): Promise<void>;
   };
+  /** Fase 6 — conteúdo institucional do portal (rascunho e publicado). */
+  portalContent: {
+    list(): Promise<PortalContentBlock[]>;
+    add(input: PortalContentBlockInput): Promise<PortalContentBlock>;
+    update(id: string, patch: PortalContentBlockPatch): Promise<PortalContentBlock>;
+    publish(id: string): Promise<PortalContentBlock>;
+    unpublish(id: string): Promise<PortalContentBlock>;
+    remove(id: string): Promise<void>;
+  };
   /** Fase 5 — prazo de validade e observações de pagamento da proposta. */
   proposalSettings: {
     get(implementationId: string): Promise<ProposalSettings | null>;
