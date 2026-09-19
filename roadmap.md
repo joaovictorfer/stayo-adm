@@ -7,3 +7,5 @@
 - [x] Etapa 3 — Implantação piloto
 - [x] Etapa 4 — Imóvel piloto
 - [x] Validação final desktop/mobile e regressões
+
+- [ ] Fase 4 — Portal do Proprietário em modo Implantação
