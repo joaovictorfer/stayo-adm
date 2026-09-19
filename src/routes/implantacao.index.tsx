@@ -577,12 +577,12 @@ function TextField({
   onChange: (v: string) => void;
   type?: string;
   required?: boolean;
-  placeholder?: string;
-  maxLength?: number;
-  inputMode?: "text" | "tel";
-  list?: string;
-  error?: string;
-  hint?: string;
+  placeholder?: string | undefined;
+  maxLength?: number | undefined;
+  inputMode?: "text" | "tel" | undefined;
+  list?: string | undefined;
+  error?: string | undefined;
+  hint?: string | undefined;
 }) {
   return (
     <label className="block text-sm">
