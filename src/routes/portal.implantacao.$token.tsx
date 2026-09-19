@@ -4,6 +4,7 @@ import { CalendarDays, CheckCircle2, Clock3, FileText, Flag, ListChecks } from "
 import { useState } from "react";
 
 import logoAsset from "../assets/stayo-logo-clara.png.asset.json";
+import { OwnerOnboardingFlow } from "../components/portal/OwnerOnboardingFlow";
 import { adminApi, ownerPortalAccessQuery } from "../lib/api/queries";
 import { formatMoney } from "../lib/format";
 import type { OwnerPortalSnapshot } from "../types/owner-portal";
@@ -13,6 +14,10 @@ export const Route = createFileRoute("/portal/implantacao/$token")({
     meta: [
       { title: "Implantação do seu imóvel — Stayo" },
       { name: "description", content: "Acompanhe a preparação do seu imóvel para operar com a Stayo." },
+      { property: "og:title", content: "Implantação do seu imóvel — Stayo" },
+      { property: "og:description", content: "Acompanhe a preparação do seu imóvel para operar com a Stayo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: OwnerImplementationPortal,
@@ -94,6 +99,7 @@ function PortalDashboard({ token, snapshot }: { token: string; snapshot: OwnerPo
           <h2 className="font-semibold">Precisamos de você</h2>
           <p className="mt-1 text-sm text-[#6b7785]">Somente tarefas compartilhadas pela equipe Stayo aparecem aqui.</p>
           <div className="mt-4 space-y-3">
+            <OwnerOnboardingFlow token={token} snapshot={snapshot} />
             {snapshot.tasks.length ? snapshot.tasks.map((task) => <div key={`${task.source}-${task.id}`} className="rounded-xl border border-[#e4e8ec] p-4"><p className="text-sm font-semibold">{task.title}</p>{task.description ? <p className="mt-1 text-sm text-[#6b7785]">{task.description}</p> : null}</div>) : <p className="rounded-xl bg-[#f5f7f9] p-4 text-sm text-[#6b7785]">Nenhuma pendência sua no momento.</p>}
           </div>
         </section>
