@@ -350,6 +350,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
       {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
 
+      <ProposalConfigPanel implementationId={implementationId} />
+
+      <ImplementationTemplatesPanel implementationId={implementationId} />
+
       <div className="rounded-[var(--radius-card)] border" style={surface}>
         <h2
           className="border-b px-4 py-3 text-sm"
