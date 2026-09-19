@@ -37,6 +37,7 @@ import type {
   OwnerOnboardingSubmissionInput,
 } from "../../types/owner-onboarding";
 import type { OwnerPortalPublicAccess, OwnerPortalSnapshot } from "../../types/owner-portal";
+import type { Json } from "../../integrations/supabase/types";
 import type {
   FieldConfirmation,
   ImplementationOwnerLink,
@@ -1921,7 +1922,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     saveDraft: async (token, input, submit = false) => {
       const { data, error } = await client().rpc("owner_onboarding_draft_save", {
         p_token: token,
-        p_data: input,
+        p_data: input as unknown as Json,
         p_submit: submit,
       });
       if (error) throw error;

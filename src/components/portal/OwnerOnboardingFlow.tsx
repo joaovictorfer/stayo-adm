@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, ChevronRight, LoaderCircle, MapPin, Pencil, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 
 import { adminApi, ownerOnboardingDraftQuery } from "../../lib/api/queries";
 import { formatBrazilPhone } from "../../lib/phone";
@@ -17,6 +17,16 @@ function blankDraft(snapshot: OwnerPortalSnapshot): OwnerOnboardingDraft {
   return { personType: null, legalName: snapshot.ownerName ?? "", tradeName: "", taxId: "", email: snapshot.ownerEmail ?? "", phone: snapshot.ownerPhone ?? "", postalCode: "", street: "", number: "", complement: "", district: "", city: "", state: "", currentStep: 1, submittedAt: null, bankName: "", accountHolder: snapshot.ownerName ?? "", holderTaxId: "", pixType: null, pixKey: "", isPrimary: true, confirmed: false };
 }
 
+function restoreDraft(saved: OwnerOnboardingDraft, snapshot: OwnerPortalSnapshot): OwnerOnboardingDraft {
+  const fallback = blankDraft(snapshot);
+  return Object.fromEntries(
+    Object.entries(fallback).map(([key, fallbackValue]) => {
+      const savedValue = saved[key as keyof OwnerOnboardingDraft];
+      return [key, savedValue === null || savedValue === undefined ? fallbackValue : savedValue];
+    }),
+  ) as unknown as OwnerOnboardingDraft;
+}
+
 export function OwnerOnboardingFlow({ token, snapshot }: { token: string; snapshot: OwnerPortalSnapshot }) {
   const queryClient = useQueryClient();
   const query = useQuery(ownerOnboardingDraftQuery(token));
@@ -27,7 +37,7 @@ export function OwnerOnboardingFlow({ token, snapshot }: { token: string; snapsh
 
   useEffect(() => {
     if (query.data) {
-      setDraft({ ...blankDraft(snapshot), ...query.data, confirmed: false });
+      setDraft({ ...restoreDraft(query.data, snapshot), confirmed: false });
       setStep(Math.min(5, Math.max(1, query.data.currentStep || 1)));
     }
   }, [query.data, snapshot]);
@@ -59,7 +69,7 @@ export function OwnerOnboardingFlow({ token, snapshot }: { token: string; snapsh
         <div className="flex h-full w-full flex-col overflow-hidden bg-background sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:rounded-lg sm:border sm:border-border sm:shadow-2xl">
           <header className="flex items-start justify-between border-b border-border bg-card px-4 py-4 sm:px-6">
             <div><p className="text-xs font-semibold uppercase text-premium">Cadastro do proprietário</p><h2 className="mt-1 text-xl font-semibold text-foreground">{labels[step - 1]}</h2><p className="mt-1 text-sm text-muted-foreground">Etapa {step} de 5</p></div>
-            <Button variant="ghost" size="icon" aria-label="Salvar e sair" onClick={() => save.mutate({ next: step })}><X /></Button>
+            <Button variant="ghost" size="icon" aria-label="Salvar e sair" onClick={() => save.mutate({ next: step }, { onSuccess: () => setOpen(false) })}><X /></Button>
           </header>
           <div className="grid grid-cols-5 gap-1 bg-card px-4 pb-4 sm:px-6">{labels.map((label, index) => <span key={label} className={`h-1 rounded-full ${index < step ? "bg-brand" : "bg-border"}`} />)}</div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">{step === 1 ? <Identity draft={draft} setDraft={setDraft} /> : step === 2 ? <Contact draft={draft} setDraft={setDraft} /> : step === 3 ? <Address draft={draft} setDraft={setDraft} /> : step === 4 ? <Payout draft={draft} setDraft={setDraft} /> : <Review draft={draft} setDraft={setDraft} />}{message ? <p role="status" className="mt-4 text-sm text-green-700">{message}</p> : null}{save.isError ? <p role="alert" className="mt-4 text-sm text-destructive">Não foi possível salvar. Confira os dados e tente novamente.</p> : null}</div>
@@ -75,7 +85,7 @@ export function OwnerOnboardingFlow({ token, snapshot }: { token: string; snapsh
 
 const field = "mt-1 h-10 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground";
 const label = "block text-xs font-semibold text-muted-foreground";
-type Setter = React.Dispatch<React.SetStateAction<OwnerOnboardingDraft>>;
+type Setter = Dispatch<SetStateAction<OwnerOnboardingDraft>>;
 const change = (setDraft: Setter, key: keyof OwnerOnboardingDraft, value: unknown) => setDraft((current) => ({ ...current, [key]: value }));
 
 function Identity({ draft, setDraft }: { draft: OwnerOnboardingDraft; setDraft: Setter }) {
