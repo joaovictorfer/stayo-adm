@@ -14,6 +14,7 @@ import {
 import { AttentionPanel, attentionItems } from "../components/implantacao/AttentionPanel";
 import { OwnersPanel } from "../components/implantacao/OwnersPanel";
 import { PropertyPanel } from "../components/implantacao/PropertyPanel";
+import { SuppliesPanel } from "../components/implantacao/SuppliesPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -27,7 +28,9 @@ import {
   initialChargesQuery,
   ownerOnboardingLinkQuery,
   ownerOnboardingSubmissionQuery,
+  supplyItemsQuery,
 } from "../lib/api/queries";
+import { blockingSupplyItems } from "../types/implementation-supply";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
 import {
@@ -76,10 +79,11 @@ function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<
-    "resumo" | "proprietarios" | "imovel" | "checklist" | "proposta"
+    "resumo" | "proprietarios" | "imovel" | "enxoval" | "faltantes" | "checklist" | "proposta"
   >("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
+  const suppliesQuery = useQuery(supplyItemsQuery(id));
   const implementation = query.data;
 
   const changeStatus = useMutation({
@@ -130,7 +134,10 @@ function ImplementationDetailPage() {
             progressDone={progress.done}
             progressTotal={progress.total}
             ready={readiness.ready}
-            pendingCount={attentionItems(checklistItems).length}
+            pendingCount={
+              attentionItems(checklistItems).length +
+              blockingSupplyItems(suppliesQuery.data ?? []).length
+            }
             onOpenProposal={() => setTab("proposta")}
             onOpenPortal={() => setTab("resumo")}
           />
@@ -150,7 +157,17 @@ function ImplementationDetailPage() {
             className="flex gap-2 overflow-x-auto border-b"
             style={{ borderColor: "var(--stayo-border)" }}
           >
-            {(["resumo", "proprietarios", "imovel", "checklist", "proposta"] as const).map((t) => (
+            {(
+              [
+                ["resumo", "Resumo"],
+                ["proprietarios", "Proprietários"],
+                ["imovel", "Imóvel"],
+                ["enxoval", "Enxoval"],
+                ["faltantes", "Itens faltantes"],
+                ["checklist", "Checklist"],
+                ["proposta", "Proposta"],
+              ] as const
+            ).map(([t, label]) => (
               <button
                 key={t}
                 type="button"
@@ -162,15 +179,7 @@ function ImplementationDetailPage() {
                     tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
                 }}
               >
-                {t === "resumo"
-                  ? "Resumo"
-                  : t === "proprietarios"
-                    ? "Proprietários"
-                    : t === "imovel"
-                      ? "Imóvel"
-                      : t === "checklist"
-                        ? "Checklist"
-                        : "Proposta"}
+                {label}
               </button>
             ))}
           </div>
@@ -244,6 +253,10 @@ function ImplementationDetailPage() {
             <OwnersPanel implementationId={implementation.id} />
           ) : tab === "imovel" ? (
             <PropertyPanel implementationId={implementation.id} />
+          ) : tab === "enxoval" ? (
+            <SuppliesPanel implementationId={implementation.id} module="enxoval" />
+          ) : tab === "faltantes" ? (
+            <SuppliesPanel implementationId={implementation.id} module="faltante" />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}

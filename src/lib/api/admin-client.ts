@@ -47,6 +47,15 @@ import type {
   ImplementationRoom,
   ImplementationRoomInput,
 } from "../../types/implementation-property";
+import type {
+  SupplyItem,
+  SupplyItemInput,
+  SupplyItemPatch,
+  SupplyModule,
+  SupplyTemplate,
+  SupplyTemplateInput,
+  SupplyTemplateItem,
+} from "../../types/implementation-supply";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
@@ -169,6 +178,20 @@ export interface AdminApiClient {
     add(input: ImplementationRoomInput): Promise<ImplementationRoom>;
     remove(id: string): Promise<void>;
   };
+  /** Fase 4 — enxoval e itens faltantes (itens livres, nunca fixos no código). */
+  supplies: {
+    listByImplementation(implementationId: string, module?: SupplyModule): Promise<SupplyItem[]>;
+    add(input: SupplyItemInput): Promise<SupplyItem>;
+    update(id: string, patch: SupplyItemPatch): Promise<SupplyItem>;
+    remove(id: string): Promise<void>;
+  };
+  /** Fase 4 — templates de enxoval: aplicar copia os itens (snapshot), nunca vincula. */
+  supplyTemplates: {
+    list(module?: SupplyModule): Promise<SupplyTemplate[]>;
+    items(templateId: string): Promise<SupplyTemplateItem[]>;
+    create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
+    remove(id: string): Promise<void>;
+  };
 }
 
 
@@ -187,6 +210,9 @@ export const IMPLEMENTATION_OWNERS_KEY = "stayo-admin:implementation-owners";
 export const FIELD_CONFIRMATIONS_KEY = "stayo-admin:field-confirmations";
 export const PROPERTY_DETAILS_KEY = "stayo-admin:implementation-property-details";
 export const IMPLEMENTATION_ROOMS_KEY = "stayo-admin:implementation-rooms";
+export const SUPPLY_ITEMS_KEY = "stayo-admin:implementation-supply-items";
+export const SUPPLY_TEMPLATES_KEY = "stayo-admin:supply-templates";
+export const SUPPLY_TEMPLATE_ITEMS_KEY = "stayo-admin:supply-template-items";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
@@ -750,11 +776,109 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const supplies: AdminApiClient["supplies"] = {
+    listByImplementation: (implementationId, module) =>
+      Promise.resolve(
+        read<SupplyItem>(SUPPLY_ITEMS_KEY)
+          .filter(
+            (i) => i.implementationId === implementationId && (!module || i.module === module),
+          )
+          .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)),
+      ),
+    add: async (input) => {
+      const now = new Date().toISOString();
+      const item: SupplyItem = {
+        id: newId(),
+        implementationId: input.implementationId,
+        module: input.module,
+        name: input.name,
+        room: input.room ?? null,
+        size: input.size ?? null,
+        requiredQty: input.requiredQty ?? 0,
+        existingQty: input.existingQty ?? 0,
+        status: input.status ?? "pendente",
+        priority: input.priority ?? "media",
+        responsible: input.responsible ?? null,
+        blocksReadiness: input.blocksReadiness ?? false,
+        notes: input.notes ?? null,
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      write(SUPPLY_ITEMS_KEY, [...read<SupplyItem>(SUPPLY_ITEMS_KEY), item]);
+      return item;
+    },
+    update: async (id, patch) => {
+      const all = read<SupplyItem>(SUPPLY_ITEMS_KEY);
+      const existing = all.find((i) => i.id === id);
+      if (!existing) throw new Error("Item não encontrado");
+      const updated: SupplyItem = { ...existing, ...patch, updatedAt: new Date().toISOString() };
+      write(
+        SUPPLY_ITEMS_KEY,
+        all.map((i) => (i.id === id ? updated : i)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        SUPPLY_ITEMS_KEY,
+        read<SupplyItem>(SUPPLY_ITEMS_KEY).filter((i) => i.id !== id),
+      );
+    },
+  };
+
+  const supplyTemplates: AdminApiClient["supplyTemplates"] = {
+    list: (module) =>
+      Promise.resolve(
+        read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY)
+          .filter((t) => !module || t.module === module)
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      ),
+    items: (templateId) =>
+      Promise.resolve(
+        read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY)
+          .filter((i) => i.templateId === templateId)
+          .sort((a, b) => a.displayOrder - b.displayOrder),
+      ),
+    create: async (input) => {
+      const template: SupplyTemplate = {
+        id: newId(),
+        name: input.name,
+        module: input.module,
+        notes: input.notes ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      write(SUPPLY_TEMPLATES_KEY, [...read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY), template]);
+      write(SUPPLY_TEMPLATE_ITEMS_KEY, [
+        ...read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY),
+        ...input.items.map((item, index) => ({
+          ...item,
+          id: newId(),
+          templateId: template.id,
+          displayOrder: item.displayOrder ?? index,
+        })),
+      ]);
+      return template;
+    },
+    remove: async (id) => {
+      write(
+        SUPPLY_TEMPLATES_KEY,
+        read<SupplyTemplate>(SUPPLY_TEMPLATES_KEY).filter((t) => t.id !== id),
+      );
+      write(
+        SUPPLY_TEMPLATE_ITEMS_KEY,
+        read<SupplyTemplateItem>(SUPPLY_TEMPLATE_ITEMS_KEY).filter((i) => i.templateId !== id),
+      );
+    },
+  };
+
   return {
     audit,
     owners,
     propertyDetails,
     rooms,
+    supplies,
+    supplyTemplates,
     commercialTermDefaults,
     commercialTerms,
     outbox,
@@ -1654,11 +1778,127 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const supplies: AdminApiClient["supplies"] = {
+    listByImplementation: async (implementationId, module) => {
+      let query = client()
+        .from("implementation_supply_items")
+        .select()
+        .eq("implementation_id", implementationId);
+      if (module) query = query.eq("module", module);
+      const { data, error } = await query
+        .order("display_order", { ascending: true })
+        .returns<SupplyItemRow[]>();
+      if (error) throw error;
+      return data.map(supplyItemFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("implementation_supply_items")
+        .insert({
+          implementation_id: input.implementationId,
+          module: input.module,
+          name: input.name,
+          room: input.room ?? null,
+          size: input.size ?? null,
+          required_qty: input.requiredQty ?? 0,
+          existing_qty: input.existingQty ?? 0,
+          status: input.status ?? "pendente",
+          priority: input.priority ?? "media",
+          responsible: input.responsible ?? null,
+          blocks_readiness: input.blocksReadiness ?? false,
+          notes: input.notes ?? null,
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<SupplyItemRow>();
+      if (error) throw error;
+      return supplyItemFromRow(data);
+    },
+    update: async (id, patch) => {
+      const row: Record<string, unknown> = {};
+      if (patch.name !== undefined) row["name"] = patch.name;
+      if (patch.room !== undefined) row["room"] = patch.room;
+      if (patch.size !== undefined) row["size"] = patch.size;
+      if (patch.requiredQty !== undefined) row["required_qty"] = patch.requiredQty;
+      if (patch.existingQty !== undefined) row["existing_qty"] = patch.existingQty;
+      if (patch.status !== undefined) row["status"] = patch.status;
+      if (patch.priority !== undefined) row["priority"] = patch.priority;
+      if (patch.responsible !== undefined) row["responsible"] = patch.responsible;
+      if (patch.blocksReadiness !== undefined) row["blocks_readiness"] = patch.blocksReadiness;
+      if (patch.notes !== undefined) row["notes"] = patch.notes;
+      if (patch.displayOrder !== undefined) row["display_order"] = patch.displayOrder;
+      const { data, error } = await client()
+        .from("implementation_supply_items")
+        .update(row)
+        .eq("id", id)
+        .select()
+        .single<SupplyItemRow>();
+      if (error) throw error;
+      return supplyItemFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("implementation_supply_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
+  const supplyTemplates: AdminApiClient["supplyTemplates"] = {
+    list: async (module) => {
+      let query = client().from("supply_templates").select();
+      if (module) query = query.eq("module", module);
+      const { data, error } = await query
+        .order("name", { ascending: true })
+        .returns<SupplyTemplateRow[]>();
+      if (error) throw error;
+      return data.map(supplyTemplateFromRow);
+    },
+    items: async (templateId) => {
+      const { data, error } = await client()
+        .from("supply_template_items")
+        .select()
+        .eq("template_id", templateId)
+        .order("display_order", { ascending: true })
+        .returns<SupplyTemplateItemRow[]>();
+      if (error) throw error;
+      return data.map(supplyTemplateItemFromRow);
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("supply_templates")
+        .insert({ name: input.name, module: input.module, notes: input.notes ?? null })
+        .select()
+        .single<SupplyTemplateRow>();
+      if (error) throw error;
+      if (input.items.length > 0) {
+        const { error: itemsError } = await client()
+          .from("supply_template_items")
+          .insert(
+            input.items.map((item, index) => ({
+              template_id: data.id,
+              name: item.name,
+              room: item.room ?? null,
+              size: item.size ?? null,
+              required_qty: item.requiredQty ?? 0,
+              display_order: item.displayOrder ?? index,
+            })),
+          );
+        if (itemsError) throw itemsError;
+      }
+      return supplyTemplateFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("supply_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
     audit,
     owners,
     propertyDetails,
     rooms,
+    supplies,
+    supplyTemplates,
     commercialTermDefaults,
     commercialTerms,
     outbox,
@@ -1788,5 +2028,85 @@ function roomFromRow(row: RoomRow): ImplementationRoom {
     displayOrder: row.display_order,
     notes: row.notes,
     createdAt: row.created_at,
+  };
+}
+
+interface SupplyItemRow {
+  id: string;
+  implementation_id: string;
+  module: SupplyItem["module"];
+  name: string;
+  room: string | null;
+  size: string | null;
+  required_qty: number;
+  existing_qty: number;
+  status: SupplyItem["status"];
+  priority: SupplyItem["priority"];
+  responsible: string | null;
+  blocks_readiness: boolean;
+  notes: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function supplyItemFromRow(row: SupplyItemRow): SupplyItem {
+  return {
+    id: row.id,
+    implementationId: row.implementation_id,
+    module: row.module,
+    name: row.name,
+    room: row.room,
+    size: row.size,
+    requiredQty: row.required_qty,
+    existingQty: row.existing_qty,
+    status: row.status,
+    priority: row.priority,
+    responsible: row.responsible,
+    blocksReadiness: row.blocks_readiness,
+    notes: row.notes,
+    displayOrder: row.display_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface SupplyTemplateRow {
+  id: string;
+  name: string;
+  module: SupplyItem["module"];
+  notes: string | null;
+  created_at: string;
+}
+
+function supplyTemplateFromRow(row: SupplyTemplateRow): SupplyTemplate {
+  return {
+    id: row.id,
+    name: row.name,
+    module: row.module,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+interface SupplyTemplateItemRow {
+  id: string;
+  template_id: string;
+  name: string;
+  room: string | null;
+  size: string | null;
+  required_qty: number;
+  display_order: number;
+}
+
+function supplyTemplateItemFromRow(row: SupplyTemplateItemRow): SupplyTemplateItem {
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    name: row.name,
+    room: row.room,
+    size: row.size,
+    requiredQty: row.required_qty,
+    displayOrder: row.display_order,
   };
 }

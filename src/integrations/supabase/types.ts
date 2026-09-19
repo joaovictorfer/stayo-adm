@@ -598,6 +598,71 @@ export type Database = {
           },
         ]
       }
+      implementation_supply_items: {
+        Row: {
+          blocks_readiness: boolean
+          created_at: string
+          display_order: number
+          existing_qty: number
+          id: string
+          implementation_id: string
+          module: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes: string | null
+          priority: Database["public"]["Enums"]["supply_priority"]
+          required_qty: number
+          responsible: string | null
+          room: string | null
+          size: string | null
+          status: Database["public"]["Enums"]["supply_status"]
+          updated_at: string
+        }
+        Insert: {
+          blocks_readiness?: boolean
+          created_at?: string
+          display_order?: number
+          existing_qty?: number
+          id?: string
+          implementation_id: string
+          module: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["supply_priority"]
+          required_qty?: number
+          responsible?: string | null
+          room?: string | null
+          size?: string | null
+          status?: Database["public"]["Enums"]["supply_status"]
+          updated_at?: string
+        }
+        Update: {
+          blocks_readiness?: boolean
+          created_at?: string
+          display_order?: number
+          existing_qty?: number
+          id?: string
+          implementation_id?: string
+          module?: Database["public"]["Enums"]["supply_module"]
+          name?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["supply_priority"]
+          required_qty?: number
+          responsible?: string | null
+          room?: string | null
+          size?: string | null
+          status?: Database["public"]["Enums"]["supply_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_supply_items_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       initial_charges: {
         Row: {
           amount: number
@@ -990,6 +1055,68 @@ export type Database = {
           },
         ]
       }
+      supply_template_items: {
+        Row: {
+          display_order: number
+          id: string
+          name: string
+          required_qty: number
+          room: string | null
+          size: string | null
+          template_id: string
+        }
+        Insert: {
+          display_order?: number
+          id?: string
+          name: string
+          required_qty?: number
+          room?: string | null
+          size?: string | null
+          template_id: string
+        }
+        Update: {
+          display_order?: number
+          id?: string
+          name?: string
+          required_qty?: number
+          room?: string | null
+          size?: string | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "supply_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_templates: {
+        Row: {
+          created_at: string
+          id: string
+          module: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module?: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module?: Database["public"]["Enums"]["supply_module"]
+          name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1135,6 +1262,14 @@ export type Database = {
         | "changed_by_owner"
         | "reviewed_by_stayo"
       owner_task_status: "pending" | "done" | "dismissed"
+      supply_module: "enxoval" | "faltante"
+      supply_priority: "baixa" | "media" | "alta"
+      supply_status:
+        | "pendente"
+        | "comprado"
+        | "entregue"
+        | "instalado"
+        | "nao_aplicavel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1323,6 +1458,15 @@ export const Constants = {
         "reviewed_by_stayo",
       ],
       owner_task_status: ["pending", "done", "dismissed"],
+      supply_module: ["enxoval", "faltante"],
+      supply_priority: ["baixa", "media", "alta"],
+      supply_status: [
+        "pendente",
+        "comprado",
+        "entregue",
+        "instalado",
+        "nao_aplicavel",
+      ],
     },
   },
 } as const
