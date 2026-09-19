@@ -134,7 +134,10 @@ function ImplementationDetailPage() {
             progressDone={progress.done}
             progressTotal={progress.total}
             ready={readiness.ready}
-            pendingCount={attentionItems(checklistItems).length}
+            pendingCount={
+              attentionItems(checklistItems).length +
+              blockingSupplyItems(suppliesQuery.data ?? []).length
+            }
             onOpenProposal={() => setTab("proposta")}
             onOpenPortal={() => setTab("resumo")}
           />
