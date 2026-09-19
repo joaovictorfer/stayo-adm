@@ -14,6 +14,7 @@ import {
 import { AttentionPanel, attentionItems } from "../components/implantacao/AttentionPanel";
 import { OwnersPanel } from "../components/implantacao/OwnersPanel";
 import { PropertyPanel } from "../components/implantacao/PropertyPanel";
+import { SuppliesPanel } from "../components/implantacao/SuppliesPanel";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { WorkspaceHeader } from "../components/implantacao/WorkspaceHeader";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -27,7 +28,9 @@ import {
   initialChargesQuery,
   ownerOnboardingLinkQuery,
   ownerOnboardingSubmissionQuery,
+  supplyItemsQuery,
 } from "../lib/api/queries";
+import { blockingSupplyItems } from "../types/implementation-supply";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
 import {
