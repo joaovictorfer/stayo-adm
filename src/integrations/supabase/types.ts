@@ -835,6 +835,77 @@ export type Database = {
           },
         ]
       }
+      owner_onboarding_profiles: {
+        Row: {
+          city: string | null
+          complement: string | null
+          created_at: string
+          current_step: number
+          district: string | null
+          email: string | null
+          implementation_id: string
+          legal_name: string | null
+          number: string | null
+          person_type: string | null
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          street: string | null
+          submitted_at: string | null
+          tax_id: string | null
+          trade_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          current_step?: number
+          district?: string | null
+          email?: string | null
+          implementation_id: string
+          legal_name?: string | null
+          number?: string | null
+          person_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          submitted_at?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          current_step?: number
+          district?: string | null
+          email?: string | null
+          implementation_id?: string
+          legal_name?: string | null
+          number?: string | null
+          person_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          submitted_at?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_onboarding_profiles_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_onboarding_submissions: {
         Row: {
           document: string | null
@@ -867,6 +938,53 @@ export type Database = {
           submitted_at?: string
         }
         Relationships: []
+      }
+      owner_payout_accounts: {
+        Row: {
+          account_holder: string | null
+          bank_name: string | null
+          created_at: string
+          holder_tax_id: string | null
+          id: string
+          implementation_id: string
+          is_primary: boolean
+          pix_key: string | null
+          pix_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          bank_name?: string | null
+          created_at?: string
+          holder_tax_id?: string | null
+          id?: string
+          implementation_id: string
+          is_primary?: boolean
+          pix_key?: string | null
+          pix_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          bank_name?: string | null
+          created_at?: string
+          holder_tax_id?: string | null
+          id?: string
+          implementation_id?: string
+          is_primary?: boolean
+          pix_key?: string | null
+          pix_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_payout_accounts_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       owner_portal_accounts: {
         Row: {
@@ -1277,6 +1395,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      owner_onboarding_draft_resolve: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      owner_onboarding_draft_save: {
+        Args: { p_data: Json; p_submit?: boolean; p_token: string }
+        Returns: Json
       }
       owner_onboarding_resolve_token: {
         Args: { p_token: string }
