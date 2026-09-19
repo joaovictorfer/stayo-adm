@@ -2264,7 +2264,83 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const portalContent: AdminApiClient["portalContent"] = {
+    list: async () => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .select()
+        .order("display_order", { ascending: true })
+        .returns<PortalContentBlockRow[]>();
+      if (error) throw error;
+      return data.map(portalBlockFromRow);
+    },
+    add: async (input) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .insert({
+          kind: input.kind,
+          draft_title: input.draftTitle,
+          draft_body: input.draftBody ?? "",
+          display_order: input.displayOrder ?? 0,
+        })
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({
+          ...(patch.kind === undefined ? {} : { kind: patch.kind }),
+          ...(patch.draftTitle === undefined ? {} : { draft_title: patch.draftTitle }),
+          ...(patch.draftBody === undefined ? {} : { draft_body: patch.draftBody }),
+          ...(patch.displayOrder === undefined ? {} : { display_order: patch.displayOrder }),
+        })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    publish: async (id) => {
+      const { data: current, error: readError } = await client()
+        .from("portal_content_blocks")
+        .select()
+        .eq("id", id)
+        .single<PortalContentBlockRow>();
+      if (readError) throw readError;
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({
+          published_title: current.draft_title,
+          published_body: current.draft_body,
+          published_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    unpublish: async (id) => {
+      const { data, error } = await client()
+        .from("portal_content_blocks")
+        .update({ published_title: null, published_body: null, published_at: null })
+        .eq("id", id)
+        .select()
+        .single<PortalContentBlockRow>();
+      if (error) throw error;
+      return portalBlockFromRow(data);
+    },
+    remove: async (id) => {
+      const { error } = await client().from("portal_content_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+  };
+
   return {
+    portalContent,
     proposalSettings,
     proposalBlocks,
     implementationTemplates,
