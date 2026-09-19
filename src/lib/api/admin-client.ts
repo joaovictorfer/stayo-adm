@@ -902,7 +902,103 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const PROPOSAL_SETTINGS_KEY = "stayo.admin.proposal-settings";
+  const PROPOSAL_BLOCKS_KEY = "stayo.admin.proposal-blocks";
+  const IMPLEMENTATION_TEMPLATES_KEY = "stayo.admin.implementation-templates";
+
+  const proposalSettings: AdminApiClient["proposalSettings"] = {
+    get: async (implementationId) =>
+      read<ProposalSettings>(PROPOSAL_SETTINGS_KEY).find(
+        (s) => s.implementationId === implementationId,
+      ) ?? null,
+    save: async (implementationId, input) => {
+      const all = read<ProposalSettings>(PROPOSAL_SETTINGS_KEY);
+      const current = all.find((s) => s.implementationId === implementationId);
+      const updated: ProposalSettings = {
+        implementationId,
+        validityDays: input.validityDays ?? current?.validityDays ?? 30,
+        paymentNotes:
+          input.paymentNotes === undefined ? (current?.paymentNotes ?? null) : input.paymentNotes,
+        updatedAt: new Date().toISOString(),
+      };
+      write(PROPOSAL_SETTINGS_KEY, [
+        ...all.filter((s) => s.implementationId !== implementationId),
+        updated,
+      ]);
+      return updated;
+    },
+  };
+
+  const proposalBlocks: AdminApiClient["proposalBlocks"] = {
+    listByImplementation: async (implementationId) =>
+      read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY)
+        .filter((b) => b.implementationId === implementationId)
+        .sort((a, b) => a.displayOrder - b.displayOrder),
+    add: async (input) => {
+      const block: ProposalContentBlock = {
+        id: newId(),
+        implementationId: input.implementationId,
+        title: input.title,
+        body: input.body ?? "",
+        visibility: input.visibility ?? "proposta",
+        displayOrder: input.displayOrder ?? 0,
+        createdAt: new Date().toISOString(),
+      };
+      write(PROPOSAL_BLOCKS_KEY, [...read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY), block]);
+      return block;
+    },
+    update: async (id, patch) => {
+      const all = read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY);
+      const target = all.find((b) => b.id === id);
+      if (!target) throw new Error("Bloco não encontrado");
+      const updated: ProposalContentBlock = { ...target, ...patch };
+      write(
+        PROPOSAL_BLOCKS_KEY,
+        all.map((b) => (b.id === id ? updated : b)),
+      );
+      return updated;
+    },
+    remove: async (id) => {
+      write(
+        PROPOSAL_BLOCKS_KEY,
+        read<ProposalContentBlock>(PROPOSAL_BLOCKS_KEY).filter((b) => b.id !== id),
+      );
+    },
+  };
+
+  const implementationTemplates: AdminApiClient["implementationTemplates"] = {
+    list: async () =>
+      read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
+    get: async (id) =>
+      read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).find((t) => t.id === id) ?? null,
+    create: async (input) => {
+      const template: ImplementationTemplate = {
+        id: newId(),
+        name: input.name,
+        notes: input.notes ?? null,
+        payload: { ...emptyTemplatePayload, ...input.payload },
+        createdAt: new Date().toISOString(),
+      };
+      write(IMPLEMENTATION_TEMPLATES_KEY, [
+        ...read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY),
+        template,
+      ]);
+      return template;
+    },
+    remove: async (id) => {
+      write(
+        IMPLEMENTATION_TEMPLATES_KEY,
+        read<ImplementationTemplate>(IMPLEMENTATION_TEMPLATES_KEY).filter((t) => t.id !== id),
+      );
+    },
+  };
+
   return {
+    proposalSettings,
+    proposalBlocks,
+    implementationTemplates,
     audit,
     owners,
     propertyDetails,
