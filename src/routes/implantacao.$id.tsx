@@ -253,6 +253,10 @@ function ImplementationDetailPage() {
             <OwnersPanel implementationId={implementation.id} />
           ) : tab === "imovel" ? (
             <PropertyPanel implementationId={implementation.id} />
+          ) : tab === "enxoval" ? (
+            <SuppliesPanel implementationId={implementation.id} module="enxoval" />
+          ) : tab === "faltantes" ? (
+            <SuppliesPanel implementationId={implementation.id} module="faltante" />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
