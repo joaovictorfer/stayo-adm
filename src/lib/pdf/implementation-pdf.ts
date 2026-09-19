@@ -272,7 +272,7 @@ export async function generateImplementationSummaryPdf(
         ]
           .filter(Boolean)
           .join(", ");
-        writer.text(`   ${item.title}  ·  ${tags}`, { size: 9.5, color: INK_MUTED });
+        writer.text(`   ${clamp(item.title, 60)}  ·  ${tags}`, { size: 9.5, color: INK_MUTED });
       }
       writer.spacer(4);
     }
