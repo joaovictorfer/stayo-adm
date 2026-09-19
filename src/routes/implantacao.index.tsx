@@ -1,7 +1,8 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ClipboardCheck, Plus } from "lucide-react";
+import { z } from "zod";
 
 import {
   EmptyRows,
@@ -17,10 +18,12 @@ import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import {
   adminApi,
   coreApi,
+  condominiumsListQuery,
   implementationItemsQuery,
-  implementationTemplatesQuery,
   implementationsListQuery,
+  ownersListQuery,
 } from "../lib/api/queries";
+import { listActiveAdminProfiles, useAuthSession } from "../lib/auth/session";
 import {
   alternateStatuses,
   computeReadiness,
@@ -28,6 +31,8 @@ import {
   statusLabels,
 } from "../lib/implementation-status";
 import type { ImplementationItem, ImplementationProject } from "../types/core";
+import type { OwnerRecord } from "../types/admin";
+import { formatBrazilPhone, isValidBrazilPhone, normalizeBrazilPhone, sameBrazilPhone } from "../lib/phone";
 
 export const Route = createFileRoute("/implantacao/")({
   head: () => ({
@@ -299,54 +304,109 @@ function PipelineView({
   );
 }
 
+const quickImplementationSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome do proprietário.").max(120),
+  phone: z.string().refine(isValidBrazilPhone, "Informe um telefone brasileiro válido com DDD."),
+  condominiumName: z.string().trim().min(2, "Informe o condomínio ou empreendimento.").max(120),
+  unit: z.string().trim().min(1, "Informe a unidade.").max(30),
+  city: z.string().trim().max(100),
+  startDateEstimate: z.string().regex(/^$|^\d{4}-\d{2}$/, "Informe um mês válido."),
+  responsibleUserId: z.string().trim().max(100),
+});
+
 const emptyForm = {
   name: "",
   phone: "",
   condominiumName: "",
   unit: "",
-  nickname: "",
   city: "",
-  address: "",
-  postalCode: "",
-  propertyType: "",
-  bedrooms: "",
-  capacity: "",
   startDateEstimate: "",
   responsibleUserId: "",
-  notes: "",
 };
 
 function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const auth = useAuthSession();
   const [form, setForm] = useState(emptyForm);
-  const [templateId, setTemplateId] = useState("");
-  const templatesQ = useQuery(implementationTemplatesQuery());
+  const [ownerChoice, setOwnerChoice] = useState<"link" | "new" | null>(null);
+  const [showErrors, setShowErrors] = useState(false);
+  const ownersQ = useQuery(ownersListQuery());
+  const condominiumsQ = useQuery(condominiumsListQuery());
+  const implementationsQ = useQuery(implementationsListQuery());
+  const adminsQ = useQuery({
+    queryKey: ["admin-profiles", "active"],
+    queryFn: listActiveAdminProfiles,
+    enabled: open,
+  });
 
+  const currentResponsibleId = auth.profile?.id ?? auth.session?.user.id ?? "";
+  useEffect(() => {
+    if (open && !form.responsibleUserId && currentResponsibleId) {
+      setForm((current) => ({ ...current, responsibleUserId: currentResponsibleId }));
+    }
+  }, [currentResponsibleId, form.responsibleUserId, open]);
+
+  const normalizedPhone = normalizeBrazilPhone(form.phone);
+  const duplicateOwner = useMemo(
+    () => (ownersQ.data ?? []).find((owner) => sameBrazilPhone(owner.phone, normalizedPhone)) ?? null,
+    [normalizedPhone, ownersQ.data],
+  );
+  const ownerResolved = !duplicateOwner || ownerChoice !== null;
+
+  const condominiumSuggestions = useMemo(() => {
+    const byName = new Map<string, { name: string; city: string | null }>();
+    for (const condominium of condominiumsQ.data?.data ?? []) {
+      byName.set(condominium.name.toLocaleLowerCase("pt-BR"), {
+        name: condominium.name,
+        city: condominium.city,
+      });
+    }
+    for (const implementation of implementationsQ.data?.data ?? []) {
+      if (!implementation.condominiumName) continue;
+      const key = implementation.condominiumName.toLocaleLowerCase("pt-BR");
+      if (!byName.has(key)) {
+        byName.set(key, { name: implementation.condominiumName, city: implementation.city });
+      }
+    }
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [condominiumsQ.data, implementationsQ.data]);
+
+  const responsibleOptions = useMemo(() => {
+    const byId = new Map((adminsQ.data ?? []).map((profile) => [profile.id, profile.fullName]));
+    if (currentResponsibleId && !byId.has(currentResponsibleId)) {
+      byId.set(
+        currentResponsibleId,
+        auth.profile?.fullName ?? auth.session?.user.email ?? "Usuário atual",
+      );
+    }
+    return [...byId.entries()].map(([id, name]) => ({ id, name }));
+  }, [adminsQ.data, auth.profile?.fullName, auth.session?.user.email, currentResponsibleId]);
+
+  const validation = quickImplementationSchema.safeParse(form);
+  const fieldErrors = validation.success ? {} : validation.error.flatten().fieldErrors;
 
   const mutation = useMutation({
     mutationFn: async (input: typeof form) => {
-      const owner = await adminApi.owners.findOrCreateByPhone({
-        name: input.name,
-        phone: input.phone,
-        email: null,
-      });
+      const validated = quickImplementationSchema.parse(input);
+      if (duplicateOwner && ownerChoice === null) throw new Error("Escolha como tratar o proprietário encontrado.");
+      const owner: OwnerRecord = duplicateOwner && ownerChoice === "link"
+        ? duplicateOwner
+        : await adminApi.owners.create({
+            name: validated.name,
+            phone: normalizeBrazilPhone(validated.phone),
+            email: null,
+          });
       return coreApi.implementations.create({
         status: "prospect",
         ownerId: owner.id,
         ownerName: owner.name,
         ownerPhone: owner.phone,
-        nickname: input.nickname || null,
-        condominiumName: input.condominiumName || null,
-        unit: input.unit || null,
-        address: input.address || null,
-        postalCode: input.postalCode || null,
-        city: input.city || null,
-        propertyType: input.propertyType || null,
-        bedrooms: input.bedrooms ? Number.parseInt(input.bedrooms, 10) : null,
-        capacity: input.capacity ? Number.parseInt(input.capacity, 10) : null,
-        startDateEstimate: input.startDateEstimate || null,
-        responsibleUserId: input.responsibleUserId || null,
-        notes: input.notes || null,
+        condominiumName: validated.condominiumName,
+        unit: validated.unit,
+        city: validated.city || null,
+        startDateEstimate: validated.startDateEstimate ? `${validated.startDateEstimate}-01` : null,
+        responsibleUserId: validated.responsibleUserId || null,
       });
     },
     onSuccess: async (created) => {
@@ -356,51 +416,13 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       }));
       queryClient.setQueryData(["implementations", "detail", created.id], created);
 
-      // Modelo é copiado (snapshot): a implantação não fica vinculada a ele.
-      const template = templateId
-        ? ((templatesQ.data ?? []).find((t) => t.id === templateId) ?? null)
-        : null;
-
-      if (template) {
-        for (const term of template.payload.commercialTerms) {
-          await adminApi.commercialTerms.add({
-            implementationId: created.id,
-            label: term.label,
-            chargeType: term.chargeType as never,
-            value: term.value,
-            optional: term.optional,
-            displayOrder: term.displayOrder,
-            notes: term.notes,
-          });
-        }
-        for (const block of template.payload.blocks) {
-          await adminApi.proposalBlocks.add({ implementationId: created.id, ...block });
-        }
-        for (const supply of template.payload.supplies) {
-          await adminApi.supplies.add({
-            implementationId: created.id,
-            module: supply.module,
-            name: supply.name,
-            room: supply.room,
-            size: supply.size,
-            requiredQty: supply.requiredQty,
-            existingQty: 0,
-            displayOrder: supply.displayOrder,
-          });
-        }
-        if (template.payload.validityDays !== null || template.payload.paymentNotes !== null) {
-          await adminApi.proposalSettings.save(created.id, {
-            validityDays: template.payload.validityDays ?? 30,
-            paymentNotes: template.payload.paymentNotes,
-          });
-        }
-      } else {
-        await adminApi.commercialTerms.cloneDefaults(created.id);
-      }
+      await adminApi.commercialTerms.cloneDefaults(created.id);
 
       setForm(emptyForm);
-      setTemplateId("");
+      setOwnerChoice(null);
+      setShowErrors(false);
       onClose();
+      await navigate({ to: "/implantacao/$id", params: { id: created.id } });
     },
   });
 
@@ -409,96 +431,103 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
 
   const steps: WizardStep[] = [
     {
-      id: "proprietario",
-      label: "Proprietário",
-      isValid: form.name.trim() !== "" && form.phone.trim() !== "",
+      id: "contato",
+      label: "Contato",
+      isValid:
+        form.name.trim().length >= 2 &&
+        isValidBrazilPhone(form.phone) &&
+        ownerResolved,
       content: (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Cadastro rápido — feito durante a ligação. O restante é completado depois.
-          </p>
-          <TextField label="Proprietário" value={form.name} onChange={set("name")} required />
-          <TextField label="Telefone" value={form.phone} onChange={set("phone")} required />
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="font-display text-base font-semibold text-foreground">Cadastro rápido</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cadastre apenas o essencial. As demais informações poderão ser preenchidas depois.
+            </p>
+          </div>
+          <TextField
+            label="Nome do proprietário"
+            value={form.name}
+            onChange={set("name")}
+            required
+            maxLength={120}
+            error={form.name.length > 0 && form.name.trim().length < 2 ? "Informe pelo menos 2 caracteres." : showErrors ? fieldErrors.name?.[0] : undefined}
+          />
+          <TextField
+            label="WhatsApp / telefone"
+            value={form.phone}
+            onChange={(value) => {
+              set("phone")(formatBrazilPhone(value));
+              setOwnerChoice(null);
+            }}
+            required
+            inputMode="tel"
+            placeholder="(54) 99999-9999"
+            maxLength={15}
+            error={form.phone.length >= 4 && !isValidBrazilPhone(form.phone) ? "Informe um telefone brasileiro válido com DDD." : showErrors ? fieldErrors.phone?.[0] : undefined}
+          />
+          {duplicateOwner && isValidBrazilPhone(form.phone) && (
+            <div className="rounded-[var(--radius-control)] border border-premium/40 bg-premium-soft p-3" role="status">
+              <p className="text-sm font-semibold text-foreground">Encontramos um proprietário com este telefone.</p>
+              <p className="mt-1 text-xs text-muted-foreground">{duplicateOwner.name} · {formatBrazilPhone(duplicateOwner.phone ?? "")}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={() => setOwnerChoice("link")} className={`rounded-[var(--radius-control)] px-3 py-2 text-xs font-semibold ${ownerChoice === "link" ? "bg-brand text-primary-foreground" : "border border-border bg-card text-foreground hover:bg-muted"}`}>Vincular proprietário</button>
+                <button type="button" onClick={() => setOwnerChoice("new")} className={`rounded-[var(--radius-control)] px-3 py-2 text-xs font-semibold ${ownerChoice === "new" ? "bg-brand text-primary-foreground" : "border border-border bg-card text-foreground hover:bg-muted"}`}>Continuar com novo cadastro</button>
+              </div>
+            </div>
+          )}
+          <label className="block text-sm">
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Responsável interno</span>
+            <select value={form.responsibleUserId} onChange={(event) => set("responsibleUserId")(event.target.value)} className="h-10 w-full rounded-[var(--radius-control)] border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/10">
+              <option value="">Definir depois</option>
+              {responsibleOptions.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}
+            </select>
+          </label>
         </div>
       ),
     },
     {
       id: "imovel",
       label: "Imóvel",
+      isValid: form.condominiumName.trim().length >= 2 && form.unit.trim().length > 0,
       content: (
-        <div className="flex flex-col gap-3">
-          <TextField label="Apelido" value={form.nickname} onChange={set("nickname")} />
+        <div className="flex flex-col gap-4">
           <TextField
-            label="Condomínio"
+            label="Condomínio / empreendimento"
             value={form.condominiumName}
-            onChange={set("condominiumName")}
+            onChange={(value) => {
+              set("condominiumName")(value);
+              const match = condominiumSuggestions.find((item) => item.name.toLocaleLowerCase("pt-BR") === value.trim().toLocaleLowerCase("pt-BR"));
+              if (match?.city && !form.city) set("city")(match.city);
+            }}
+            required
+            list="condominium-suggestions"
+            placeholder="Digite para buscar ou informar um novo"
+            maxLength={120}
+            error={showErrors ? fieldErrors.condominiumName?.[0] : undefined}
           />
-          <TextField label="Unidade" value={form.unit} onChange={set("unit")} />
-          <TextField label="Cidade" value={form.city} onChange={set("city")} />
-          <TextField label="Endereço" value={form.address} onChange={set("address")} />
-          <TextField label="CEP" value={form.postalCode} onChange={set("postalCode")} />
+          <datalist id="condominium-suggestions">
+            {condominiumSuggestions.map((item) => <option key={item.name} value={item.name}>{item.city ?? "Empreendimento existente"}</option>)}
+          </datalist>
           <TextField
-            label="Tipo do imóvel"
-            value={form.propertyType}
-            onChange={set("propertyType")}
+            label="Unidade"
+            value={form.unit}
+            onChange={set("unit")}
+            required
+            placeholder="Ex.: G304"
+            maxLength={30}
+            error={showErrors ? fieldErrors.unit?.[0] : undefined}
           />
+          <TextField label="Cidade" value={form.city} onChange={set("city")} placeholder="Ex.: Gramado" maxLength={100} />
           <TextField
-            label="Quartos"
-            type="number"
-            value={form.bedrooms}
-            onChange={set("bedrooms")}
-          />
-          <TextField
-            label="Capacidade"
-            type="number"
-            value={form.capacity}
-            onChange={set("capacity")}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "planejamento",
-      label: "Planejamento",
-      content: (
-        <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Criar a partir de um modelo (opcional)
-            <select
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-              className="rounded-[var(--radius-control)] border px-2 py-2 text-sm outline-none"
-              style={{
-                backgroundColor: "var(--stayo-surface)",
-                borderColor: "var(--stayo-border)",
-                color: "var(--stayo-ink)",
-              }}
-            >
-              <option value="">Começar do zero</option>
-              {(templatesQ.data ?? []).map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
-            <span>O modelo é copiado; depois a implantação segue independente dele.</span>
-          </label>
-          <TextField
-            label="Previsão de início"
-            type="date"
+            label="Previsão inicial"
+            type="month"
             value={form.startDateEstimate}
             onChange={set("startDateEstimate")}
+            hint="Opcional — informe apenas o mês aproximado."
           />
-          <TextField
-            label="Responsável"
-            value={form.responsibleUserId}
-            onChange={set("responsibleUserId")}
-          />
-          <TextField label="Observação" value={form.notes} onChange={set("notes")} />
           {mutation.isError && (
-            <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-              Não foi possível salvar.
-            </span>
+            <span className="text-sm text-destructive" role="alert">Não foi possível criar a implantação. Tente novamente.</span>
           )}
         </div>
       ),
@@ -510,16 +539,21 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       open={open}
       onClose={() => {
         setForm(emptyForm);
+        setOwnerChoice(null);
+        setShowErrors(false);
         onClose();
       }}
-      eyebrow="Implantação"
+      eyebrow="Cadastro rápido"
       title="Nova implantação"
     >
       <Wizard
         steps={steps}
-        completeLabel="Salvar implantação"
+        completeLabel="Criar implantação"
         submitting={mutation.isPending}
-        onComplete={() => mutation.mutate(form)}
+        onComplete={() => {
+          setShowErrors(true);
+          if (validation.success && ownerResolved) mutation.mutate(form);
+        }}
       />
     </Drawer>
   );
@@ -531,26 +565,44 @@ function TextField({
   onChange,
   type = "text",
   required = false,
+  placeholder,
+  maxLength,
+  inputMode,
+  list,
+  error,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   required?: boolean;
+  placeholder?: string | undefined;
+  maxLength?: number | undefined;
+  inputMode?: "text" | "tel" | undefined;
+  list?: string | undefined;
+  error?: string | undefined;
+  hint?: string | undefined;
 }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        {label}
+      <span className="mb-1 block text-xs font-medium text-muted-foreground">
+        {label}{required ? " *" : ""}
       </span>
       <input
         type={type}
         value={value}
         required={required}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        inputMode={inputMode}
+        list={list}
+        aria-invalid={Boolean(error)}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-        style={{ ...surface, color: "var(--stayo-ink)" }}
+        className={`h-10 w-full rounded-[var(--radius-control)] border bg-card px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand focus:ring-2 focus:ring-brand/10 ${error ? "border-destructive" : "border-border"}`}
       />
+      {error ? <span className="mt-1 block text-xs text-destructive" role="alert">{error}</span> : null}
+      {!error && hint ? <span className="mt-1 block text-xs text-muted-foreground">{hint}</span> : null}
     </label>
   );
 }

@@ -72,6 +72,18 @@ export async function getAdminProfile(userId: string): Promise<AdminProfile | nu
   return data ? profileFromRow(data) : null;
 }
 
+export async function listActiveAdminProfiles(): Promise<AdminProfile[]> {
+  const client = getSupabaseBrowserClient();
+  if (!client) return [];
+  const { data, error } = await client
+    .from("admin_profiles")
+    .select("id, full_name, role, active")
+    .eq("active", true)
+    .order("full_name");
+  if (error) throw error;
+  return (data as AdminProfileRow[]).map(profileFromRow);
+}
+
 /**
  * Só funciona (via RLS — migration 0008) se `admin_profiles` ainda
  * estiver vazia. Falha silenciosamente (retorna `null`) caso contrário:
