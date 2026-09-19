@@ -35,6 +35,7 @@ import type {
   OwnerOnboardingDraft,
   OwnerOnboardingSubmission,
   OwnerOnboardingSubmissionInput,
+  OwnerAdministrativeRegistration,
 } from "../../types/owner-onboarding";
 import type { OwnerPortalPublicAccess, OwnerPortalSnapshot } from "../../types/owner-portal";
 import type { Json } from "../../integrations/supabase/types";
@@ -92,6 +93,8 @@ export interface AdminApiClient {
     update(id: string, patch: Partial<Omit<OwnerRecord, "id" | "createdAt">>): Promise<OwnerRecord>;
     /** Dedupe simples por telefone — usado pelo cadastro rápido da Nova Implantação. */
     findOrCreateByPhone(input: OwnerRecordInput): Promise<OwnerRecord>;
+    /** Projeção cadastral restrita; a chave PIX deve ser mascarada pela UI. */
+    getAdministrativeRegistration(implementationIds: string[]): Promise<OwnerAdministrativeRegistration | null>;
   };
   commercialTermDefaults: {
     list(): Promise<CommercialTermDefault[]>;
@@ -354,6 +357,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       if (existing) return existing;
       return owners.create(input);
     },
+    getAdministrativeRegistration: () => Promise.resolve(null),
   };
 
   const commercialTermDefaults: AdminApiClient["commercialTermDefaults"] = {
@@ -1206,6 +1210,16 @@ interface OwnerRecordRow {
   updated_at: string;
 }
 
+interface OwnerAdministrativeRegistrationRow {
+  implementation_id: string;
+  submitted_at: string | null;
+  bank_name: string | null;
+  account_holder: string | null;
+  pix_type: OwnerAdministrativeRegistration["pixType"];
+  pix_key: string | null;
+  is_primary: boolean | null;
+}
+
 function ownerFromRow(row: OwnerRecordRow): OwnerRecord {
   return {
     id: row.id,
@@ -1509,6 +1523,44 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         if (data) return ownerFromRow(data);
       }
       return owners.create(input);
+    },
+    getAdministrativeRegistration: async (implementationIds) => {
+      if (implementationIds.length === 0) return null;
+      const firstImplementationId = implementationIds[0];
+      if (!firstImplementationId) return null;
+      const supabase = client();
+      const { data: accounts, error: accountsError } = await supabase
+        .from("owner_payout_accounts")
+        .select("implementation_id, bank_name, account_holder, pix_type, pix_key, is_primary")
+        .in("implementation_id", implementationIds)
+        .eq("is_primary", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .returns<OwnerAdministrativeRegistrationRow[]>();
+      if (accountsError) throw accountsError;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("owner_onboarding_profiles")
+        .select("implementation_id, submitted_at")
+        .in("implementation_id", implementationIds)
+        .not("submitted_at", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .returns<Array<{ implementation_id: string; submitted_at: string | null }>>();
+      if (profilesError) throw profilesError;
+
+      const account = accounts[0] ?? null;
+      const profile = profiles[0] ?? null;
+      if (!account && !profile) return null;
+      return {
+        implementationId: account?.implementation_id ?? profile?.implementation_id ?? firstImplementationId,
+        submittedAt: profile?.submitted_at ?? null,
+        bankName: account?.bank_name ?? null,
+        accountHolder: account?.account_holder ?? null,
+        pixType: account?.pix_type ?? null,
+        pixKey: account?.pix_key ?? null,
+        isPrimary: account?.is_primary ?? false,
+      };
     },
   };
 

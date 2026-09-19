@@ -83,3 +83,14 @@ export interface OwnerOnboardingDraft {
   isPrimary: boolean;
   confirmed: boolean;
 }
+
+/** Projeção restrita usada somente no workspace administrativo. */
+export interface OwnerAdministrativeRegistration {
+  implementationId: EntityId;
+  submittedAt: string | null;
+  bankName: string | null;
+  accountHolder: string | null;
+  pixType: PixKeyType | null;
+  pixKey: string | null;
+  isPrimary: boolean;
+}

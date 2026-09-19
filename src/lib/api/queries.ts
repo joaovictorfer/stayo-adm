@@ -245,6 +245,12 @@ export const ownerQuery = (id: EntityId) =>
     queryFn: () => adminApi.owners.get(id),
   });
 
+export const ownerAdministrativeRegistrationQuery = (ownerId: EntityId, implementationIds: EntityId[]) =>
+  queryOptions({
+    queryKey: ["owners", "administrative-registration", ownerId, implementationIds],
+    queryFn: () => adminApi.owners.getAdministrativeRegistration(implementationIds),
+  });
+
 export const inspectionsListQuery = () =>
   queryOptions({
     queryKey: ["inspections", "list"],
