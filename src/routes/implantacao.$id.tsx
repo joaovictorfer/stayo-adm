@@ -157,7 +157,17 @@ function ImplementationDetailPage() {
             className="flex gap-2 overflow-x-auto border-b"
             style={{ borderColor: "var(--stayo-border)" }}
           >
-            {(["resumo", "proprietarios", "imovel", "checklist", "proposta"] as const).map((t) => (
+            {(
+              [
+                ["resumo", "Resumo"],
+                ["proprietarios", "Proprietários"],
+                ["imovel", "Imóvel"],
+                ["enxoval", "Enxoval"],
+                ["faltantes", "Itens faltantes"],
+                ["checklist", "Checklist"],
+                ["proposta", "Proposta"],
+              ] as const
+            ).map(([t, label]) => (
               <button
                 key={t}
                 type="button"
@@ -169,15 +179,7 @@ function ImplementationDetailPage() {
                     tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
                 }}
               >
-                {t === "resumo"
-                  ? "Resumo"
-                  : t === "proprietarios"
-                    ? "Proprietários"
-                    : t === "imovel"
-                      ? "Imóvel"
-                      : t === "checklist"
-                        ? "Checklist"
-                        : "Proposta"}
+                {label}
               </button>
             ))}
           </div>
