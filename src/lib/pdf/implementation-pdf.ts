@@ -40,7 +40,7 @@ function safe(value: string): string {
 
 /** Corta o texto para caber na largura útil da página (fonte de largura variável). */
 function clamp(value: string, maxChars: number): string {
-  return value.length <= maxChars ? value : `${value.slice(0, maxChars - 1)}…`;
+  return value.length <= maxChars ? value : `${value.slice(0, maxChars - 3)}...`;
 }
 
 function createDoc() {
