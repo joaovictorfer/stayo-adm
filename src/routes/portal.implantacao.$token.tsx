@@ -180,10 +180,18 @@ function ImplementationOverview({ snapshot }: { snapshot: OwnerPortalSnapshot })
 }
 
 function ActiveOverview({ snapshot }: { snapshot: OwnerPortalSnapshot }) {
+  const metrics: Array<{ label: string; value: string }> = [
+    { label: "Resumo do mês", value: "Sem dados" },
+    { label: "Ocupação", value: "Sem dados" },
+    { label: "Receita", value: "Sem dados" },
+    { label: "Diária média", value: "Sem dados" },
+    { label: "Próximas reservas", value: "Sem dados" },
+    { label: "Repasse previsto", value: "Sem dados" },
+  ];
   return (
     <div className="space-y-5">
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
-        {[["Resumo do mês", "Sem dados"], ["Ocupação", "Sem dados"], ["Receita", "Sem dados"], ["Diária média", "Sem dados"], ["Próximas reservas", "Sem dados"], ["Repasse previsto", "Sem dados"]].map(([label, value]) => <Summary key={label} icon={<ReceiptText />} label={label} value={value} />)}
+        {metrics.map((metric) => <Summary key={metric.label} icon={<ReceiptText />} label={metric.label} value={metric.value} />)}
       </section>
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <EmptyModule icon={<CalendarDays />} title="Próximas reservas" description="As próximas reservas aparecerão quando a integração oficial fornecer os dados deste imóvel." />
