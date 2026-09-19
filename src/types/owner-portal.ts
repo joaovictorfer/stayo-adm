@@ -32,6 +32,9 @@ export interface OwnerPortalProposalView {
 export interface OwnerPortalSnapshot {
   mode: "implementation";
   ownerFirstName: string;
+  ownerName: string | null;
+  ownerPhone: string | null;
+  ownerEmail: string | null;
   propertyLabel: string;
   status: ImplementationStatus;
   startDateEstimate: string | null;

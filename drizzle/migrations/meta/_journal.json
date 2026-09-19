@@ -43,6 +43,13 @@
       "when": 1789780145303,
       "tag": "0005_owner_portal_implementation_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789780401374,
+      "tag": "0006_owner_portal_resumable_onboarding",
+      "breakpoints": true
     }
   ]
 }

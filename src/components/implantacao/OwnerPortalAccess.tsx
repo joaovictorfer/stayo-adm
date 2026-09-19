@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, Check, Copy, ExternalLink, Link2, RefreshCw, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { adminApi, ownerOnboardingLinkQuery, ownerTasksQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
+import { adminApi, ownerOnboardingLinkQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
 import { computeProgress } from "../../lib/implementation-status";
 import type { ImplementationItem, ImplementationProject } from "../../types/core";
 import { ownerOnboardingLinkStatus } from "../../types/owner-onboarding";
@@ -35,6 +35,7 @@ export function OwnerPortalAccess({
     enabled: Boolean(implementation.ownerId),
   });
   const proposalsQ = useQuery(proposalsByImplementationQuery(implementation.id));
+  const ownerQ = useQuery({ ...ownerQuery(implementation.ownerId ?? ""), enabled: Boolean(implementation.ownerId) });
   const [token, setToken] = useState<string | null>(() => readSessionToken(implementation.id));
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -50,6 +51,9 @@ export function OwnerPortalAccess({
     return {
       mode: "implementation",
       ownerFirstName: implementation.ownerName?.trim().split(/\s+/)[0] || "proprietário",
+      ownerName: implementation.ownerName,
+      ownerPhone: implementation.ownerPhone,
+      ownerEmail: ownerQ.data?.email ?? null,
       propertyLabel,
       status: implementation.status,
       startDateEstimate: implementation.startDateEstimate,
@@ -91,7 +95,7 @@ export function OwnerPortalAccess({
         : null,
       refreshedAt: new Date().toISOString(),
     };
-  }, [checklist, implementation, proposalsQ.data, tasksQ.data]);
+  }, [checklist, implementation, ownerQ.data, proposalsQ.data, tasksQ.data]);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementation.id] });
