@@ -366,8 +366,51 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
         nextCursor: prev?.nextCursor ?? null,
       }));
       queryClient.setQueryData(["implementations", "detail", created.id], created);
-      await adminApi.commercialTerms.cloneDefaults(created.id);
+
+      // Modelo é copiado (snapshot): a implantação não fica vinculada a ele.
+      const template = templateId
+        ? ((templatesQ.data ?? []).find((t) => t.id === templateId) ?? null)
+        : null;
+
+      if (template) {
+        for (const term of template.payload.commercialTerms) {
+          await adminApi.commercialTerms.add({
+            implementationId: created.id,
+            label: term.label,
+            chargeType: term.chargeType as never,
+            value: term.value,
+            optional: term.optional,
+            displayOrder: term.displayOrder,
+            notes: term.notes,
+          });
+        }
+        for (const block of template.payload.blocks) {
+          await adminApi.proposalBlocks.add({ implementationId: created.id, ...block });
+        }
+        for (const supply of template.payload.supplies) {
+          await adminApi.supplies.add({
+            implementationId: created.id,
+            module: supply.module,
+            name: supply.name,
+            room: supply.room,
+            size: supply.size,
+            requiredQty: supply.requiredQty,
+            existingQty: 0,
+            displayOrder: supply.displayOrder,
+          });
+        }
+        if (template.payload.validityDays !== null || template.payload.paymentNotes !== null) {
+          await adminApi.proposalSettings.save(created.id, {
+            validityDays: template.payload.validityDays ?? 30,
+            paymentNotes: template.payload.paymentNotes,
+          });
+        }
+      } else {
+        await adminApi.commercialTerms.cloneDefaults(created.id);
+      }
+
       setForm(emptyForm);
+      setTemplateId("");
       onClose();
     },
   });
