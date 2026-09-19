@@ -220,6 +220,44 @@ export function SuppliesPanel({
             mesmo que o checklist esteja avançado.
           </p>
         ) : null}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-50"
+            style={surface}
+            disabled={!implementation.data || list.length === 0}
+            onClick={async () => {
+              if (!implementation.data) return;
+              const bytes = await generateSuppliesPdf({
+                implementation: implementation.data,
+                items: list,
+                module,
+                scope: "completo",
+              });
+              downloadPdfBytes(bytes, `${module}-${implementation.data.code}-completo.pdf`);
+            }}
+          >
+            Gerar PDF — lista completa
+          </button>
+          <button
+            type="button"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-50"
+            style={surface}
+            disabled={!implementation.data || totalMissing === 0}
+            onClick={async () => {
+              if (!implementation.data) return;
+              const bytes = await generateSuppliesPdf({
+                implementation: implementation.data,
+                items: list,
+                module,
+                scope: "faltantes",
+              });
+              downloadPdfBytes(bytes, `${module}-${implementation.data.code}-faltantes.pdf`);
+            }}
+          >
+            Gerar PDF — só o que falta
+          </button>
+        </div>
       </Panel>
 
       <Panel>
