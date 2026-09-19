@@ -1031,6 +1031,45 @@ export type Database = {
           },
         ]
       }
+      portal_content_blocks: {
+        Row: {
+          created_at: string
+          display_order: number
+          draft_body: string
+          draft_title: string
+          id: string
+          kind: Database["public"]["Enums"]["portal_block_kind"]
+          published_at: string | null
+          published_body: string | null
+          published_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          draft_body?: string
+          draft_title?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["portal_block_kind"]
+          published_at?: string | null
+          published_body?: string | null
+          published_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          draft_body?: string
+          draft_title?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["portal_block_kind"]
+          published_at?: string | null
+          published_body?: string | null
+          published_title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       proposal_content_blocks: {
         Row: {
           body: string
@@ -1353,6 +1392,7 @@ export type Database = {
         | "changed_by_owner"
         | "reviewed_by_stayo"
       owner_task_status: "pending" | "done" | "dismissed"
+      portal_block_kind: "hero" | "destaque" | "passo" | "faq" | "rodape"
       proposal_block_visibility: "interno" | "proposta" | "portal"
       supply_module: "enxoval" | "faltante"
       supply_priority: "baixa" | "media" | "alta"
@@ -1550,6 +1590,7 @@ export const Constants = {
         "reviewed_by_stayo",
       ],
       owner_task_status: ["pending", "done", "dismissed"],
+      portal_block_kind: ["hero", "destaque", "passo", "faq", "rodape"],
       proposal_block_visibility: ["interno", "proposta", "portal"],
       supply_module: ["enxoval", "faltante"],
       supply_priority: ["baixa", "media", "alta"],
