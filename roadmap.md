@@ -1,5 +1,6 @@
 # Redesign Stayo Admin
 
+- [x] Fase 1 — Corrigir a base visual clara e o contraste global
 - [x] Etapa 1 — Design System e App Shell
 - [x] Etapa 2 — Dashboard piloto
 - [x] Etapa 3 — Implantação piloto

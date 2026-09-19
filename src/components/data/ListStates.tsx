@@ -115,7 +115,7 @@ export function ListSkeleton({ rows = 6 }: { rows?: number }) {
 
 export function EmptyRows({ message }: { message: string }) {
   return (
-    <div className="px-6 py-16 text-center">
+    <div className="bg-card px-6 py-16 text-center">
       <p className="font-display text-sm font-semibold text-foreground">Tudo organizado por aqui</p>
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{message}</p>
     </div>
@@ -124,7 +124,7 @@ export function EmptyRows({ message }: { message: string }) {
 
 export function ErrorRows({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="px-4 py-16 text-center" role="alert">
+    <div className="bg-card px-4 py-16 text-center" role="alert">
       <p className="text-sm" style={{ color: "var(--stayo-danger)" }}>
         Não foi possível carregar os dados.
       </p>

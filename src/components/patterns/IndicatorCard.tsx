@@ -1,10 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
 
-const surface = {
-  backgroundColor: "var(--stayo-surface)",
-  borderColor: "var(--stayo-border)",
-};
-
 export function IndicatorCard({
   icon: IconCmp,
   label,
@@ -67,11 +62,7 @@ export function PeriodFilter<T extends string>({
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
-            className="rounded-[calc(var(--radius-control)-2px)] px-3 py-1.5 transition-colors"
-            style={{
-              backgroundColor: active ? "var(--stayo-forest)" : "transparent",
-              color: active ? "#fdfdfb" : "var(--stayo-ink-muted)",
-            }}
+            className={`rounded-[calc(var(--radius-control)-2px)] px-3 py-1.5 font-medium transition-colors ${active ? "bg-brand text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
           >
             {o.label}
           </button>
