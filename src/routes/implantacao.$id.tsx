@@ -79,10 +79,11 @@ function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<
-    "resumo" | "proprietarios" | "imovel" | "checklist" | "proposta"
+    "resumo" | "proprietarios" | "imovel" | "enxoval" | "faltantes" | "checklist" | "proposta"
   >("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
+  const suppliesQuery = useQuery(supplyItemsQuery(id));
   const implementation = query.data;
 
   const changeStatus = useMutation({
