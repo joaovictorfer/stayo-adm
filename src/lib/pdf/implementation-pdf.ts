@@ -92,14 +92,35 @@ async function rasterUrlAsPng(url: string): Promise<ArrayBuffer | null> {
     const response = await fetch(url);
     if (!response.ok) return null;
     const blob = await response.blob();
-    const bitmap = await createImageBitmap(blob);
+    let width = 0;
+    let height = 0;
     const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
     const context = canvas.getContext("2d");
     if (!context) return null;
-    context.drawImage(bitmap, 0, 0);
-    bitmap.close();
+    if (typeof createImageBitmap === "function") {
+      const bitmap = await createImageBitmap(blob);
+      width = bitmap.width;
+      height = bitmap.height;
+      canvas.width = width;
+      canvas.height = height;
+      context.drawImage(bitmap, 0, 0);
+      bitmap.close();
+    } else {
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const image = new Image();
+        image.src = objectUrl;
+        await image.decode();
+        width = image.naturalWidth;
+        height = image.naturalHeight;
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(image, 0, 0);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+    if (width === 0 || height === 0) return null;
     const pngBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     return pngBlob ? pngBlob.arrayBuffer() : null;
   } catch {
@@ -411,7 +432,13 @@ export async function generateImplementationSummaryPdf(
         const scale = Math.max(contentWidth / image.width, imageHeight / image.height);
         const imageWidth = image.width * scale;
         const drawnHeight = image.height * scale;
-        page.drawImage(image, { x: MARGIN + (contentWidth - imageWidth) / 2, y: y - imageHeight + (imageHeight - drawnHeight) / 2, width: imageWidth, height: drawnHeight });
+        page.drawImage(image, {
+          x: MARGIN + (contentWidth - imageWidth) / 2,
+          y: y - imageHeight + (imageHeight - drawnHeight) / 2,
+          width: imageWidth,
+          height: drawnHeight,
+          clip: { x: MARGIN, y: y - imageHeight, width: contentWidth, height: imageHeight },
+        });
         page.drawRectangle({ x: MARGIN, y: y - imageHeight, width: contentWidth, height: 42, color: NAVY, opacity: 0.86 });
         page.drawText(safe(clamp(propertyLine(implementation), 52)), { x: MARGIN + 16, y: y - imageHeight + 17, size: 15, font: bold, color: WHITE });
         y -= imageHeight + 16;
