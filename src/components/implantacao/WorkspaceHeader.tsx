@@ -23,11 +23,11 @@ function Metric({
   hint?: string;
   tone?: "neutral" | "success" | "warning" | "danger";
 }) {
-  const toneClass = {
-    neutral: "text-foreground",
-    success: "text-success",
-    warning: "text-warning",
-    danger: "text-destructive",
+  const toneColor = {
+    neutral: "var(--foreground)",
+    success: "var(--stayo-success)",
+    warning: "var(--stayo-warning)",
+    danger: "var(--destructive)",
   }[tone ?? "neutral"];
 
   return (
@@ -35,7 +35,7 @@ function Metric({
       <p className="text-[10px] font-semibold uppercase text-muted-foreground">
         {label}
       </p>
-      <p className={`mt-2 font-display text-xl font-semibold leading-tight ${toneClass}`}>
+      <p className="mt-2 font-display text-xl font-semibold leading-tight" style={{ color: toneColor }}>
         {value}
       </p>
       {hint && (
