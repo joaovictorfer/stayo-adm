@@ -17,4 +17,4 @@
 
 - [x] Corrigir os quatro estados centralizados de prontidão operacional no workspace e PDF
 - [x] Corrigir gestão do acesso ao Portal quando o token original não estiver disponível no dispositivo
-- [ ] Rodar testes e build dos ajustes
+- [x] Rodar testes e build dos ajustes

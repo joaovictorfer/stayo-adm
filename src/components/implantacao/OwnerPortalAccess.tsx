@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { adminApi, ownerOnboardingLinkQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
 import { computeProgress } from "../../lib/implementation-status";
+import { availablePortalToken, type CreatedPortalAccess } from "../../lib/owner-portal-access";
 import type { ImplementationItem, ImplementationProject } from "../../types/core";
 import { ownerOnboardingLinkStatus } from "../../types/owner-onboarding";
 import type { OwnerPortalSnapshot } from "../../types/owner-portal";
@@ -31,7 +32,7 @@ export function OwnerPortalAccess({
   const ownerQ = useQuery({ ...ownerQuery(implementation.ownerId ?? ""), enabled: Boolean(implementation.ownerId) });
   // O token bruto existe apenas na memória desta tela após a criação. O banco
   // guarda somente o hash; outro navegador não consegue reconstruir o link.
-  const [createdAccess, setCreatedAccess] = useState<{ linkId: string; token: string } | null>(null);
+  const [createdAccess, setCreatedAccess] = useState<CreatedPortalAccess | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const snapshot = useMemo<OwnerPortalSnapshot>(() => {
@@ -126,7 +127,7 @@ export function OwnerPortalAccess({
   const link = linkQ.data;
   const status = link ? ownerOnboardingLinkStatus(link) : null;
   const active = status === "ativo";
-  const availableToken = active && link && createdAccess?.linkId === link.id ? createdAccess.token : null;
+  const availableToken = availablePortalToken(active && link ? link.id : null, createdAccess);
   const url = availableToken && typeof window !== "undefined"
     ? `${window.location.origin}/portal/implantacao/${availableToken}`
     : null;
