@@ -28,29 +28,14 @@ const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--s
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex min-h-screen items-start justify-center px-4 py-10 sm:items-center"
-      style={{
-        backgroundColor: "var(--stayo-bg)",
-        color: "var(--stayo-ink)",
-        fontFamily: "var(--stayo-font-ui)",
-      }}
-    >
+    <div className="min-h-screen px-4 py-6 sm:flex sm:items-center sm:justify-center sm:py-10" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-ink)", fontFamily: "var(--stayo-font-ui)" }}>
       <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo
-          </span>
+        <div className="mb-6 flex items-center gap-3 px-1">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>S</span>
+          <div><span className="block text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>Stayo</span><span className="block text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--stayo-ink-muted)" }}>Cadastro do proprietário</span></div>
         </div>
-        <div className="rounded-[var(--radius-card)] border p-6" style={surface}>
-          {children}
-        </div>
+        <div className="rounded-3xl border p-5 shadow-[0_20px_60px_rgba(32,48,40,0.06)] sm:p-7" style={surface}>{children}</div>
+        <p className="mt-5 text-center text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Seus dados são tratados com cuidado pela equipe Stayo.</p>
       </div>
     </div>
   );
