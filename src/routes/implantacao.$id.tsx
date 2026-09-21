@@ -3,6 +3,9 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { Check, Copy } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
+import { Progress } from "../components/ui/progress";
+
 import {
   DetailSkeleton,
   ErrorRows,
@@ -1273,70 +1276,125 @@ function Checklist({
     );
   }
 
+  const totalItems = items.length;
+  const completedItems = items.filter(i => i.status === "concluido").length;
+  const pendingItems = items.filter(i => i.status !== "concluido");
+  const blockersPending = pendingItems.filter(i => i.blocker).length;
+  const nextAction = pendingItems.sort((a,b) => a.order - b.order)[0];
+  const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
   return (
     <div className="flex flex-col gap-4">
-      {[...groups.entries()].map(([phase, categories]) => (
-        <div key={phase} className="rounded-[var(--radius-card)] border" style={surface}>
-          <h2
-            className="border-b px-4 py-3 text-sm"
-            style={{
-              borderColor: "var(--stayo-border)",
-              fontFamily: "var(--stayo-font-display)",
-              color: "var(--stayo-ink)",
-            }}
-          >
-            {phase}
-          </h2>
-          {[...categories.entries()].map(([category, list]) => (
-            <div key={category}>
-              <p
-                className="px-4 pt-3 text-xs uppercase tracking-wide"
-                style={{ color: "var(--stayo-ink-muted)" }}
-              >
-                {category}
-              </p>
-              <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-                {list.map((item) => (
-                  <li key={item.id} className="flex flex-col gap-2 px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm" style={{ color: "var(--stayo-ink)" }}>
-                        {item.title}
-                      </span>
-                      {item.mandatory && <Tag label="Obrigatório" />}
-                      {item.blocker && <Tag label="Bloqueador" tone="danger" />}
-                      {item.ownerVisible && <Tag label="Visível ao proprietário" tone="gold" />}
-                      <select
-                        value={item.status}
-                        onChange={(e) =>
-                          updateStatus.mutate({
-                            itemId: item.id,
-                            status: e.target.value as ImplementationItem["status"],
-                          })
-                        }
-                        disabled={updateStatus.isPending}
-                        className="ml-auto rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none disabled:opacity-60"
-                        style={{
-                          borderColor: "var(--stayo-border)",
-                          color: itemStatusColor[item.status],
-                        }}
-                      >
-                        {Object.entries(itemStatusLabels).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {item.status === "pulado" && (item.mandatory || item.blocker) && (
-                      <ReadinessOverrideRow item={item} onConfirm={override.mutate} />
-                    )}
-                  </li>
-                ))}
-              </ul>
+      {/* Painel de status geral */}
+      <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>Progresso Geral</h2>
+            <div className="flex items-center gap-3 mt-2">
+               <Progress value={progressPercent} className="w-32 lg:w-48 h-2" />
+               <span className="text-[11px] font-medium" style={{ color: "var(--stayo-ink-muted)" }}>{progressPercent}% ({completedItems}/{totalItems})</span>
             </div>
-          ))}
+          </div>
+          <div className="flex flex-wrap gap-6">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>Bloqueadores</span>
+              <span className={`text-sm font-semibold mt-1 ${blockersPending > 0 ? 'text-red-600' : 'text-slate-600'}`}>{blockersPending} pendente(s)</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>Próxima ação</span>
+              <span className="text-sm font-medium mt-1 truncate max-w-[200px] sm:max-w-[300px]" style={{ color: "var(--stayo-ink)" }} title={nextAction ? nextAction.title : "Tudo concluído"}>{nextAction ? nextAction.title : "Tudo concluído"}</span>
+            </div>
+          </div>
         </div>
-      ))}
+      </div>
+
+      <Accordion type="multiple" className="w-full space-y-4">
+        {[...groups.entries()].map(([phase, categories]) => {
+          const phaseItems = Array.from(categories.values()).flat();
+          const phaseTotal = phaseItems.length;
+          const phaseCompleted = phaseItems.filter(i => i.status === "concluido").length;
+          
+          return (
+            <AccordionItem key={phase} value={phase} className="rounded-[var(--radius-card)] border bg-white overflow-hidden shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+              <AccordionTrigger className="px-4 py-3 hover:no-underline border-b bg-slate-50/50" style={{ borderColor: "var(--stayo-border)" }}>
+                <div className="flex items-center justify-between w-full pr-4">
+                  <span className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{phase}</span>
+                  <span className="text-[11px] font-medium rounded-full bg-slate-200/60 px-2.5 py-0.5" style={{ color: "var(--stayo-ink)" }}>
+                    {phaseCompleted}/{phaseTotal}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-0 bg-white pb-0">
+                {[...categories.entries()].map(([category, list], idx, arr) => (
+                  <div key={category}>
+                    <p
+                      className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider font-bold"
+                      style={{ color: "var(--stayo-ink-muted)" }}
+                    >
+                      {category}
+                    </p>
+                    <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                      {list.map((item) => (
+                        <li key={item.id} className="flex flex-col gap-2 px-4 py-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <select
+                                value={item.status}
+                                onChange={(e) =>
+                                  updateStatus.mutate({
+                                    itemId: item.id,
+                                    status: e.target.value as ImplementationItem["status"],
+                                  })
+                                }
+                                disabled={updateStatus.isPending}
+                                className="flex-shrink-0 w-36 rounded-[var(--radius-control)] border px-2 py-1 text-[11px] outline-none disabled:opacity-60 bg-transparent font-medium"
+                                style={{
+                                  borderColor: "var(--stayo-border)",
+                                  color: itemStatusColor[item.status],
+                                }}
+                              >
+                                {Object.entries(itemStatusLabels).map(([value, label]) => (
+                                  <option key={value} value={value}>
+                                    {label}
+                                  </option>
+                                ))}
+                              </select>
+                              <span className="text-sm font-medium leading-tight" style={{ color: "var(--stayo-ink)" }}>
+                                {item.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap sm:justify-end">
+                              {(item as any).dueDate && (
+                                <span className="text-[10px] rounded bg-slate-100 px-2 py-1 text-slate-600">
+                                  🗓 {new Date((item as any).dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                </span>
+                              )}
+                              {(item as any).responsibleUserId && (
+                                <span className="text-[10px] rounded bg-slate-100 px-2 py-1 text-slate-600 truncate max-w-[120px]" title={(item as any).responsibleUserId}>
+                                  👤 {(item as any).responsibleUserId.split('-')[0]}
+                                </span>
+                              )}
+                              {item.mandatory && <Tag label="Obrigatório" />}
+                              {item.blocker && <Tag label="Bloqueador" tone="danger" />}
+                              {item.ownerVisible && <Tag label="Visível" tone="gold" />}
+                            </div>
+                          </div>
+                          {item.status === "pulado" && (item.mandatory || item.blocker) && (
+                            <div className="mt-2 text-xs">
+                              <ReadinessOverrideRow item={item} onConfirm={override.mutate} />
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {idx < arr.length - 1 && <div className="border-b" style={{ borderColor: "var(--stayo-border)" }} />}
+                  </div>
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
     </div>
   );
 }
