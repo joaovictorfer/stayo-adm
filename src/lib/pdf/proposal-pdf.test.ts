@@ -10,6 +10,7 @@ const implementation: ImplementationProject = {
   ownerId: "owner-1",
   ownerName: "Maria Teste",
   ownerPhone: "11999999999",
+  coverImage: null,
   nickname: "Apto vista mar",
   condominiumName: "Residencial Sol",
   unit: "304",

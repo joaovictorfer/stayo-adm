@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { getAttachmentSignedUrl, isAttachmentsAvailable, listOwnerAttachments } from "../../lib/api/attachments";
+import { coreApi } from "../../lib/api/queries";
 import { resolveImplementationCover } from "../../lib/implementation-cover";
 import type { ImplementationProject } from "../../types/core";
 
@@ -8,11 +9,20 @@ export function implementationCoverQuery(implementation: ImplementationProject) 
   return {
     queryKey: ["implementation-cover", implementation.id, implementation.coverImage, implementation.ownerId],
     queryFn: async () => {
-      const attachments = implementation.ownerId && isAttachmentsAvailable()
-        ? await listOwnerAttachments(implementation.ownerId)
-        : [];
+      const [attachments, condominiums] = await Promise.all([
+        implementation.ownerId && isAttachmentsAvailable()
+          ? listOwnerAttachments(implementation.ownerId)
+          : Promise.resolve([]),
+        implementation.condominiumName
+          ? coreApi.condominiums.list()
+          : Promise.resolve({ data: [], nextCursor: null }),
+      ]);
+      const condominiumImage = condominiums.data.find(
+        (item) => item.name.toLocaleLowerCase("pt-BR") === implementation.condominiumName?.toLocaleLowerCase("pt-BR"),
+      )?.coverImage ?? null;
       return resolveImplementationCover({
         implementation,
+        condominiumImage,
         attachments,
         attachmentUrl: getAttachmentSignedUrl,
       });

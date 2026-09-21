@@ -9,7 +9,15 @@ import { resolveImplementationCover, selectFallbackAttachment } from "./implemen
 import type { Attachment } from "./api/attachments";
 import type { ImplementationProject } from "../types/core";
 
-const implementation = { id: "impl-1", code: "IMP-00001", coverImage: null } as ImplementationProject;
+const implementation = {
+  id: "impl-1", code: "IMP-00001", status: "prospect", ownerId: null,
+  ownerName: null, ownerPhone: null, coverImage: null, nickname: null,
+  condominiumName: null, unit: null, address: null, postalCode: null, city: null,
+  propertyType: null, bedrooms: null, capacity: null, responsibleUserId: null,
+  startDateEstimate: null, completionDateEstimate: null, notes: null, origin: null,
+  createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
+  corePropertyId: null, coreOwnerId: null,
+} satisfies ImplementationProject;
 const image = (overrides: Partial<Attachment>): Attachment => ({
   id: "a1", ownerId: "o1", implementationId: "impl-1", ownerTaskId: null,
   storagePath: "o1/photo.jpg", category: "foto", mimeType: "image/jpeg", sizeBytes: 10,
