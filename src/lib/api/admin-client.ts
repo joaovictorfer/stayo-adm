@@ -1215,6 +1215,7 @@ interface OwnerAdministrativeRegistrationRow {
   submitted_at: string | null;
   bank_name: string | null;
   account_holder: string | null;
+  holder_tax_id: string | null;
   pix_type: OwnerAdministrativeRegistration["pixType"];
   pix_key: string | null;
   is_primary: boolean | null;
@@ -1531,7 +1532,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       const supabase = client();
       const { data: accounts, error: accountsError } = await supabase
         .from("owner_payout_accounts")
-        .select("implementation_id, bank_name, account_holder, pix_type, pix_key, is_primary")
+        .select("implementation_id, bank_name, account_holder, holder_tax_id, pix_type, pix_key, is_primary")
         .in("implementation_id", implementationIds)
         .eq("is_primary", true)
         .order("updated_at", { ascending: false })
@@ -1557,6 +1558,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         submittedAt: profile?.submitted_at ?? null,
         bankName: account?.bank_name ?? null,
         accountHolder: account?.account_holder ?? null,
+        holderTaxId: account?.holder_tax_id ?? null,
         pixType: account?.pix_type ?? null,
         pixKey: account?.pix_key ?? null,
         isPrimary: account?.is_primary ?? false,

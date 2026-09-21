@@ -17,8 +17,9 @@ import {
 import { useAuthSession } from "../../lib/auth/session";
 import { formatMoney } from "../../lib/format";
 import { statusLabels } from "../../lib/implementation-status";
+import { pixKeyTypeLabels } from "../../config/payout";
 import {
-  deriveOwnerWorkspaceStatus, maskPixKey, ownerRegistrationStatus, pendingOwnerTasks,
+  deriveOwnerWorkspaceStatus, maskPixKey, maskTaxId, ownerRegistrationStatus, pendingOwnerTasks,
 } from "../../lib/owner-workspace";
 import type { OwnerRecord } from "../../types/admin";
 import type {
@@ -33,7 +34,6 @@ import { Timeline, type TimelineEntry } from "../patterns/Timeline";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
-const pixLabels = { cpf: "CPF", cnpj: "CNPJ", phone: "Telefone", email: "E-mail", random: "Chave aleatória" };
 type WorkspaceTab = "resumo" | "imoveis" | "implantacoes" | "contratos" | "financeiro" | "documentos" | "portal" | "historico";
 
 export function OwnerWorkspace({ owner }: { owner: OwnerRecord }) {
@@ -208,7 +208,7 @@ function Contact({ owner, editing, onEditingChange }: { owner: OwnerRecord; edit
 
 function PayoutAccount({ registration }: { registration: OwnerAdministrativeRegistration | null }) {
   if (!registration?.pixKey) return <Empty text="Conta de repasse ainda não informada." />;
-  return <dl className="grid gap-3"><Data label="Banco" value={registration.bankName} /><Data label="Tipo de PIX" value={registration.pixType ? pixLabels[registration.pixType] : null} /><Data label="PIX" value={maskPixKey(registration.pixKey)} /><Data label="Titular" value={registration.accountHolder} /></dl>;
+  return <dl className="grid gap-3 sm:grid-cols-2"><Data label="Banco" value={registration.bankName} /><Data label="Titular" value={registration.accountHolder} /><Data label="CPF/CNPJ do titular" value={maskTaxId(registration.holderTaxId)} /><Data label="Tipo da chave Pix" value={registration.pixType ? pixKeyTypeLabels[registration.pixType] : null} /><Data label="Chave Pix" value={maskPixKey(registration.pixKey)} /><Data label="Conta principal para repasses" value={registration.isPrimary ? "Sim" : "Não"} /></dl>;
 }
 function Data({ label, value, icon: Icon }: { label: string; value: ReactNode; icon?: typeof Home }) { return <div><dt className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">{Icon ? <Icon size={13} /> : null}{label}</dt><dd className="mt-1 break-words text-sm font-medium text-foreground">{value || "—"}</dd></div>; }
 function StatusLine({ label, complete }: { label: string; complete: boolean }) { return <div className="flex items-center justify-between gap-3 text-sm"><span>{label}</span><span className={`inline-flex items-center gap-1 text-xs font-semibold ${complete ? "text-success" : "text-warning"}`}>{complete ? <CheckCircle2 size={14} /> : <Clock3 size={14} />}{complete ? "Completo" : "Pendente"}</span></div>; }

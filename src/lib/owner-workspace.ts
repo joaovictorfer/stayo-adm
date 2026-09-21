@@ -34,3 +34,11 @@ export function maskPixKey(value: string | null): string {
   const visible = value.slice(-4);
   return `${"•".repeat(Math.min(Math.max(value.length - 4, 4), 10))}${visible}`;
 }
+
+export function maskTaxId(value: string | null): string {
+  if (!value) return "—";
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 11) return `•••.•••.${digits.slice(6, 9)}-${digits.slice(-2)}`;
+  if (digits.length === 14) return `••.•••.•••/${digits.slice(8, 12)}-${digits.slice(-2)}`;
+  return maskPixKey(value);
+}
