@@ -28,11 +28,12 @@ duplicada dentro de um componente.
 - `computeProgress()` — quantos itens estão `concluido` sobre o total que
   "conta" (`nao_aplicavel`/`pulado` saem do denominador). É só indicador de
   andamento.
-- `computeReadiness()` — **operacional**: basta um item `mandatory` ou
-  `blocker` em aberto para a implantação não estar apta, mesmo com 95% do
-  checklist concluído. As duas contas são deliberadamente separadas — uma
-  implantação pode estar "quase pronta" em progresso e ainda assim não
-  operacional.
+- `computeReadiness()` — **operacional** e centralizada em quatro estados:
+  sem requisito `mandatory`/`blocker` é **Não avaliada**; bloqueador aberto é
+  **Bloqueada**; obrigatório aberto sem bloqueador é **Com pendências**; só
+  fica **Apta** quando existem requisitos avaliados e todos estão resolvidos.
+  As duas contas são deliberadamente separadas — uma implantação pode estar
+  "quase pronta" em progresso e ainda assim bloqueada.
 - **"Pulado" nunca resolve prontidão sozinho.** `isResolvedForReadiness()`
   só considera um item `pulado` resolvido se ele tiver um override formal
   registrado (`readinessOverrideAt` não nulo) — ver próxima seção. Sem

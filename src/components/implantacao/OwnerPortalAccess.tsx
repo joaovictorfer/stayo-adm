@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, Check, Copy, ExternalLink, Link2, RefreshCw, Share2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { adminApi, ownerOnboardingLinkQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery } from "../../lib/api/queries";
 import { computeProgress } from "../../lib/implementation-status";
@@ -9,13 +9,6 @@ import { ownerOnboardingLinkStatus } from "../../types/owner-onboarding";
 import type { OwnerPortalSnapshot } from "../../types/owner-portal";
 import { Button } from "../ui/button";
 import { Drawer } from "../patterns/Drawer";
-
-const tokenKey = (implementationId: string) => `stayo-admin:portal-token:${implementationId}`;
-
-function readSessionToken(implementationId: string): string | null {
-  if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(tokenKey(implementationId));
-}
 
 export function OwnerPortalAccess({
   open,
@@ -36,10 +29,10 @@ export function OwnerPortalAccess({
   });
   const proposalsQ = useQuery(proposalsByImplementationQuery(implementation.id));
   const ownerQ = useQuery({ ...ownerQuery(implementation.ownerId ?? ""), enabled: Boolean(implementation.ownerId) });
-  const [token, setToken] = useState<string | null>(() => readSessionToken(implementation.id));
+  // O token bruto existe apenas na memória desta tela após a criação. O banco
+  // guarda somente o hash; outro navegador não consegue reconstruir o link.
+  const [createdAccess, setCreatedAccess] = useState<{ linkId: string; token: string } | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-
-  useEffect(() => setToken(readSessionToken(implementation.id)), [implementation.id]);
 
   const snapshot = useMemo<OwnerPortalSnapshot>(() => {
     const visible = checklist.filter((item) => item.ownerVisible);
@@ -115,18 +108,16 @@ export function OwnerPortalAccess({
 
   const create = useMutation({
     mutationFn: () => adminApi.ownerOnboarding.createLink(implementation.id, implementation.ownerId, snapshot, 30),
-    onSuccess: async ({ token: createdToken }) => {
-      window.sessionStorage.setItem(tokenKey(implementation.id), createdToken);
-      setToken(createdToken);
-      setFeedback("Acesso criado. O link ficará disponível nesta sessão.");
+    onSuccess: async ({ link: createdLink, token: createdToken }) => {
+      setCreatedAccess({ linkId: createdLink.id, token: createdToken });
+      setFeedback("Novo acesso criado. O link anterior foi invalidado.");
       await invalidate();
     },
   });
   const revoke = useMutation({
     mutationFn: (id: string) => adminApi.ownerOnboarding.revoke(id),
     onSuccess: async () => {
-      window.sessionStorage.removeItem(tokenKey(implementation.id));
-      setToken(null);
+      setCreatedAccess(null);
       setFeedback("Acesso revogado.");
       await invalidate();
     },
@@ -135,7 +126,10 @@ export function OwnerPortalAccess({
   const link = linkQ.data;
   const status = link ? ownerOnboardingLinkStatus(link) : null;
   const active = status === "ativo";
-  const url = token ? `${window.location.origin}/portal/implantacao/${token}` : null;
+  const availableToken = active && link && createdAccess?.linkId === link.id ? createdAccess.token : null;
+  const url = availableToken && typeof window !== "undefined"
+    ? `${window.location.origin}/portal/implantacao/${availableToken}`
+    : null;
 
   const copy = async () => {
     if (!url) return;
@@ -171,7 +165,7 @@ export function OwnerPortalAccess({
 
         {active && !url ? (
           <p className="rounded-md border border-premium/40 bg-premium/10 p-3 text-sm text-foreground">
-            O segredo deste acesso não é recuperável. Gere um novo link para copiar ou compartilhar; o anterior será invalidado.
+            Acesso ativo. O link original não está disponível neste dispositivo.
           </p>
         ) : null}
 
@@ -195,7 +189,7 @@ export function OwnerPortalAccess({
           ) : (
             <>
               <Button variant="outline" onClick={() => create.mutate()} disabled={create.isPending}>
-                <RefreshCw /> {create.isPending ? "Gerando..." : "Gerar novo link"}
+                <RefreshCw /> {create.isPending ? "Gerando..." : "Gerar novo acesso"}
               </Button>
               {link ? <Button variant="destructive" onClick={() => revoke.mutate(link.id)} disabled={revoke.isPending}><Ban /> {revoke.isPending ? "Revogando..." : "Revogar acesso"}</Button> : null}
             </>

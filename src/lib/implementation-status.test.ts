@@ -29,10 +29,32 @@ describe("computeProgress", () => {
 });
 
 describe("computeReadiness", () => {
+  it("fica não avaliada quando o checklist está vazio", () => {
+    expect(computeReadiness([])).toEqual({
+      status: "nao_avaliada",
+      label: "Não avaliada",
+      ready: false,
+      evaluatedRequirements: 0,
+      pendingBlockers: 0,
+      pendingMandatory: 0,
+    });
+  });
+
+  it("fica não avaliada quando há checklist, mas nenhum requisito de prontidão", () => {
+    expect(computeReadiness([item("concluido"), item("pendente")])).toMatchObject({
+      status: "nao_avaliada",
+      ready: false,
+      evaluatedRequirements: 0,
+    });
+  });
+
   it("está apta quando não há bloqueador nem obrigatório pendente", () => {
     const items = [item("concluido", true, true), item("pendente")];
     expect(computeReadiness(items)).toEqual({
+      status: "apta",
+      label: "Apta",
       ready: true,
+      evaluatedRequirements: 1,
       pendingBlockers: 0,
       pendingMandatory: 0,
     });
@@ -49,15 +71,27 @@ describe("computeReadiness", () => {
     const readiness = computeReadiness(items);
     expect(progress.percent).toBe(75);
     expect(readiness.ready).toBe(false);
+    expect(readiness.status).toBe("bloqueada");
     expect(readiness.pendingBlockers).toBe(1);
   });
 
   it("conta obrigatórios pendentes separadamente de bloqueadores", () => {
     const items = [item("pendente", true, false), item("bloqueado", false, true)];
     expect(computeReadiness(items)).toEqual({
+      status: "bloqueada",
+      label: "Bloqueada",
       ready: false,
+      evaluatedRequirements: 2,
       pendingBlockers: 1,
       pendingMandatory: 1,
+    });
+  });
+
+  it("fica com pendências quando há obrigatório aberto sem bloqueador", () => {
+    expect(computeReadiness([item("pendente", true, false)])).toMatchObject({
+      status: "com_pendencias",
+      label: "Com pendências",
+      ready: false,
     });
   });
 
@@ -71,7 +105,10 @@ describe("computeReadiness", () => {
   it("item pulado com override formal de prontidão deixa de bloquear", () => {
     const items = [item("concluido"), item("pulado", false, true, "2026-01-01T00:00:00.000Z")];
     expect(computeReadiness(items)).toEqual({
+      status: "apta",
+      label: "Apta",
       ready: true,
+      evaluatedRequirements: 1,
       pendingBlockers: 0,
       pendingMandatory: 0,
     });

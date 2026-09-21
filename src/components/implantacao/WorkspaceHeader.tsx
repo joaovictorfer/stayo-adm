@@ -9,7 +9,7 @@
 import { Check, Copy, FileText, ExternalLink, MapPin } from "lucide-react";
 import { useState } from "react";
 
-import { statusLabels } from "../../lib/implementation-status";
+import { statusLabels, type ReadinessResult } from "../../lib/implementation-status";
 import type { ImplementationProject } from "../../types/core";
 
 function Metric({
@@ -72,7 +72,7 @@ export function WorkspaceHeader({
   progressPercent,
   progressDone,
   progressTotal,
-  ready,
+  readiness,
   pendingCount,
   onOpenProposal,
   onOpenPortal,
@@ -81,7 +81,7 @@ export function WorkspaceHeader({
   progressPercent: number;
   progressDone: number;
   progressTotal: number;
-  ready: boolean;
+  readiness: ReadinessResult;
   pendingCount: number;
   onOpenProposal: () => void;
   onOpenPortal: () => void;
@@ -137,8 +137,14 @@ export function WorkspaceHeader({
         />
         <Metric
           label="Prontidão"
-          value={ready ? "Apta" : "Não apta"}
-          tone={ready ? "var(--stayo-success)" : "var(--stayo-gold)"}
+          value={readiness.label}
+          tone={
+            readiness.status === "apta"
+              ? "var(--stayo-success)"
+              : readiness.status === "bloqueada"
+                ? "var(--stayo-danger)"
+                : "var(--stayo-gold)"
+          }
           hint="Não é o mesmo que progresso"
         />
         <Metric
