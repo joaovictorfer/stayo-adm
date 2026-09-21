@@ -257,6 +257,52 @@ function ImplementationDetailPage() {
                 })()}
               </div>
 
+              {/* Bloco 5: Implantação & Bloco 6: Pendências */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+                  <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
+                    Implantação
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                    <Field label="Status atual" value={statusLabels[implementation.status]} />
+                    {implementation.responsibleUserId && <Field label="Responsável" value={implementation.responsibleUserId} />}
+                    {implementation.startDateEstimate && <Field label="Previsão de início" value={implementation.startDateEstimate} />}
+                    {implementation.completionDateEstimate && <Field label="Previsão de conclusão" value={implementation.completionDateEstimate} />}
+                  </div>
+                </div>
+
+                <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+                  <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
+                    Pendências
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    {(() => {
+                      const pendingItems = (itemsQuery.data ?? []).filter((i) => i.status !== "concluido");
+                      const blockers = pendingItems.filter((i) => i.blocker).length;
+                      const mandatory = pendingItems.filter((i) => i.mandatory).length;
+                      return (
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 border border-amber-200">
+                            {pendingItems.length} tarefa(s) em aberto
+                          </span>
+                          {blockers > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 border border-red-200">
+                              {blockers} bloqueador(es)
+                            </span>
+                          )}
+                          {mandatory > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200">
+                              {mandatory} obrigatório(s)
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloco 4: Condições comerciais */}
               <CommercialTermsPanel implementationId={implementation.id} />
 
               <OwnerPortalPanel
@@ -266,19 +312,16 @@ function ImplementationDetailPage() {
 
               <InitialChargesPanel implementationId={implementation.id} />
 
+              {/* Detalhes técnicos recolhíveis ao final */}
               <details className="rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
                 <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                  Detalhes técnicos e Integração
+                  Detalhes técnicos e Integração (IDs e Registros)
                 </summary>
-                <div className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
-                  <Field label="ID" value={implementation.id} />
+                <div className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2 text-xs" style={{ borderColor: "var(--stayo-border)" }}>
+                  <Field label="ID da Implantação" value={implementation.id} />
                   <Field label="Código" value={implementation.code} />
-                  <Field label="Status" value={statusLabels[implementation.status]} />
-                  {implementation.responsibleUserId && <Field label="Responsável" value={implementation.responsibleUserId} />}
-                  {implementation.startDateEstimate && <Field label="Previsão de início" value={implementation.startDateEstimate} />}
-                  {implementation.completionDateEstimate && <Field label="Previsão de conclusão" value={implementation.completionDateEstimate} />}
                   {implementation.origin && <Field label="Origem" value={implementation.origin} />}
-                  {implementation.notes && <Field label="Observação" value={implementation.notes} />}
+                  {implementation.notes && <Field label="Observações técnicas" value={implementation.notes} />}
                   {implementation.corePropertyId && <Field label="Imóvel no Core" value={implementation.corePropertyId} />}
                   {implementation.coreOwnerId && <Field label="Proprietário no Core" value={implementation.coreOwnerId} />}
                   <Field label="Criada em" value={implementation.createdAt} />
@@ -289,9 +332,10 @@ function ImplementationDetailPage() {
                 </div>
               </details>
 
+              {/* Bloco 7: Atividade recente */}
               <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
                 <h2
-                  className="mb-3 text-sm"
+                  className="mb-3 text-sm font-semibold"
                   style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
                 >
                   Atividade recente
