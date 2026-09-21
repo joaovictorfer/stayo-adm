@@ -13,6 +13,7 @@
 
 import { PDFDocument, type PDFFont, StandardFonts, rgb } from "pdf-lib";
 
+import logoAsset from "../../assets/stayo-logo-clara.png.asset.json";
 import type { ImplementationItem, ImplementationProject } from "../../types/core";
 import { itemStatusLabels, type ReadinessResult } from "../implementation-status";
 import {
@@ -34,6 +35,8 @@ const BORDER = rgb(228 / 255, 232 / 255, 236 / 255);
 const SOFT = rgb(245 / 255, 247 / 255, 249 / 255);
 const DANGER = rgb(166 / 255, 45 / 255, 45 / 255);
 const SUCCESS = rgb(29 / 255, 112 / 255, 74 / 255);
+const WARNING = rgb(174 / 255, 103 / 255, 0);
+const CHAMPAGNE = rgb(205 / 255, 173 / 255, 104 / 255);
 
 /** pdf-lib com fontes padrão não suporta caracteres fora do Latin-1 (ex.: emoji). */
 function safe(value: string): string {
@@ -48,6 +51,60 @@ function safe(value: string): string {
 /** Corta o texto para caber na largura útil da página (fonte de largura variável). */
 function clamp(value: string, maxChars: number): string {
   return value.length <= maxChars ? value : `${value.slice(0, maxChars - 3)}...`;
+}
+
+function wrapText(value: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const paragraphs = safe(value).split(/\n+/);
+  const lines: string[] = [];
+  for (const paragraph of paragraphs) {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      lines.push("");
+      continue;
+    }
+    let line = words[0] ?? "";
+    for (const word of words.slice(1)) {
+      const candidate = `${line} ${word}`;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) line = candidate;
+      else {
+        lines.push(line);
+        line = word;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/** Remove linhas de observação que possam conter segredos operacionais. */
+export function safeOperationalNotes(notes: string | null): string | null {
+  if (!notes?.trim()) return null;
+  const sensitive = /\b(senha|password|wi[ -]?fi|fechadura|token|credencial|c[oó]digo de acesso|localiza[cç][aã]o da chave|chave do im[oó]vel)\b/i;
+  const safeLines = notes
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter((line) => line && !sensitive.test(line));
+  return safeLines.length > 0 ? safeLines.join("\n") : null;
+}
+
+async function rasterUrlAsPng(url: string): Promise<ArrayBuffer | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const pngBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    return pngBlob ? pngBlob.arrayBuffer() : null;
+  } catch {
+    return null;
+  }
 }
 
 function createDoc() {
