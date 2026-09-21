@@ -57,6 +57,20 @@
       "when": 1789782097645,
       "tag": "0007_owner_portal_progressive_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789956755588,
+      "tag": "0008_prevent_multiple_active_owner_portal_accesses",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789956905359,
+      "tag": "0009_prevent_multiple_unrevoked_owner_portal_accesses",
+      "breakpoints": true
     }
   ]
 }

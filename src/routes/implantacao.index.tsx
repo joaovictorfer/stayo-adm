@@ -59,7 +59,9 @@ const surface = {
 const prontidaoOptions = [
   { value: "all", label: "Prontidão: todas" },
   { value: "pronta", label: "Prontas para operação" },
-  { value: "pendente", label: "Com pendência (bloqueio/obrigatório aberto)" },
+  { value: "pendente", label: "Com pendências" },
+  { value: "bloqueada", label: "Bloqueadas" },
+  { value: "nao_avaliada", label: "Não avaliadas" },
 ];
 
 function ImplementationsPage() {
@@ -102,8 +104,10 @@ function ImplementationsPage() {
       if (prontidao !== "all") {
         const readiness = readinessById.get(i.id);
         if (!readiness) return false;
-        if (prontidao === "pronta" && !readiness.ready) return false;
-        if (prontidao === "pendente" && readiness.ready) return false;
+        if (prontidao === "pronta" && readiness.status !== "apta") return false;
+        if (prontidao === "pendente" && readiness.status !== "com_pendencias") return false;
+        if (prontidao === "bloqueada" && readiness.status !== "bloqueada") return false;
+        if (prontidao === "nao_avaliada" && readiness.status !== "nao_avaliada") return false;
       }
       return true;
     });
@@ -270,7 +274,7 @@ function PipelineView({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{r.code}</span>
-                      {readiness && !readiness.ready && (
+                      {readiness && readiness.status !== "apta" && (
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px]"
                           style={{
@@ -278,7 +282,7 @@ function PipelineView({
                             color: "var(--stayo-warning)",
                           }}
                         >
-                          Pendente
+                          {readiness.label}
                         </span>
                       )}
                     </div>

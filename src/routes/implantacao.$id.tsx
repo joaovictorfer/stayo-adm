@@ -132,7 +132,7 @@ function ImplementationDetailPage() {
             progressPercent={progress.percent}
             progressDone={progress.done}
             progressTotal={progress.total}
-            ready={readiness.ready}
+            readiness={readiness}
             pendingCount={
               attentionItems(checklistItems).length +
               blockingSupplyItems(suppliesQuery.data ?? []).length
@@ -159,7 +159,7 @@ function ImplementationDetailPage() {
                   checklist: checklistItems,
                   supplies: suppliesQuery.data ?? [],
                   progressPercent: progress.percent,
-                  ready: readiness.ready,
+                  readiness,
                   blockers: [
                     ...attentionItems(checklistItems).map((item) => item.title),
                     ...blockingSupplyItems(suppliesQuery.data ?? []).map(
@@ -659,7 +659,12 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
         className="rounded-[var(--radius-card)] border p-4"
         style={{
           ...surface,
-          borderColor: readiness.ready ? "var(--stayo-success)" : "var(--stayo-gold)",
+          borderColor:
+            readiness.status === "apta"
+              ? "var(--stayo-success)"
+              : readiness.status === "bloqueada"
+                ? "var(--stayo-danger)"
+                : "var(--stayo-gold)",
         }}
       >
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -671,16 +676,19 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
             fontFamily: "var(--stayo-font-display)",
             color: loading
               ? "var(--stayo-ink-muted)"
-              : readiness.ready
+              : readiness.status === "apta"
                 ? "var(--stayo-success)"
-                : "var(--stayo-danger)",
+                : readiness.status === "bloqueada"
+                  ? "var(--stayo-danger)"
+                  : "var(--stayo-warning)",
           }}
         >
-          {loading ? "—" : readiness.ready ? "Apta" : "Não apta"}
+          {loading ? "—" : readiness.label}
         </p>
         <p className="mt-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          {readiness.pendingBlockers} bloqueador(es) em aberto · {readiness.pendingMandatory}{" "}
-          obrigatório(s) em aberto
+          {readiness.status === "nao_avaliada"
+            ? "Checklist/requisitos de prontidão ainda não configurados"
+            : `${readiness.pendingBlockers} bloqueador(es) em aberto · ${readiness.pendingMandatory} obrigatório(s) em aberto`}
         </p>
         <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           Não é a mesma coisa que progresso: um único bloqueador pendente impede a operação.

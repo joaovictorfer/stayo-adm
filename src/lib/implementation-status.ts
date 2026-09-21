@@ -50,6 +50,24 @@ export const itemStatusColor: Record<ImplementationItemStatus, string> = {
   pulado: "var(--stayo-ink-muted)",
 };
 
+export type ReadinessStatus = "nao_avaliada" | "com_pendencias" | "bloqueada" | "apta";
+
+export interface ReadinessResult {
+  status: ReadinessStatus;
+  label: string;
+  ready: boolean;
+  evaluatedRequirements: number;
+  pendingBlockers: number;
+  pendingMandatory: number;
+}
+
+export const readinessStatusLabels: Record<ReadinessStatus, string> = {
+  nao_avaliada: "Não avaliada",
+  com_pendencias: "Com pendências",
+  bloqueada: "Bloqueada",
+  apta: "Apta",
+};
+
 /** Itens que não contam para progresso (foram descartados do escopo). */
 const countsForProgress = (status: ImplementationItemStatus) =>
   status !== "nao_aplicavel" && status !== "pulado";
@@ -92,12 +110,24 @@ export function computeReadiness(
     blocker: boolean;
     readinessOverrideAt?: string | null;
   }[],
-): { ready: boolean; pendingBlockers: number; pendingMandatory: number } {
-  const open = items.filter((i) => !isResolvedForReadiness(i));
+): ReadinessResult {
+  const requirements = items.filter((item) => item.mandatory || item.blocker);
+  const open = requirements.filter((item) => !isResolvedForReadiness(item));
   const pendingBlockers = open.filter((i) => i.blocker).length;
   const pendingMandatory = open.filter((i) => i.mandatory).length;
+  const status: ReadinessStatus =
+    requirements.length === 0
+      ? "nao_avaliada"
+      : pendingBlockers > 0
+        ? "bloqueada"
+        : pendingMandatory > 0
+          ? "com_pendencias"
+          : "apta";
   return {
-    ready: pendingBlockers === 0 && pendingMandatory === 0,
+    status,
+    label: readinessStatusLabels[status],
+    ready: status === "apta",
+    evaluatedRequirements: requirements.length,
     pendingBlockers,
     pendingMandatory,
   };

@@ -14,6 +14,7 @@
 import { PDFDocument, type PDFFont, StandardFonts, rgb } from "pdf-lib";
 
 import type { ImplementationItem, ImplementationProject } from "../../types/core";
+import type { ReadinessResult } from "../implementation-status";
 import {
   supplyPriorityLabels,
   supplyStatusLabels,
@@ -212,7 +213,7 @@ export interface ImplementationSummaryPdfInput {
   checklist: ImplementationItem[];
   supplies: SupplyItem[];
   progressPercent: number;
-  ready: boolean;
+  readiness: ReadinessResult;
   blockers: string[];
   statusLabel: string;
 }
@@ -220,7 +221,7 @@ export interface ImplementationSummaryPdfInput {
 export async function generateImplementationSummaryPdf(
   input: ImplementationSummaryPdfInput,
 ): Promise<Uint8Array> {
-  const { implementation, checklist, supplies, progressPercent, ready, blockers, statusLabel } =
+  const { implementation, checklist, supplies, progressPercent, readiness, blockers, statusLabel } =
     input;
   const { writer, bold } = await makeWriter();
 
@@ -230,7 +231,7 @@ export async function generateImplementationSummaryPdf(
   writer.spacer(2);
   writer.text(`Status: ${statusLabel}`, { size: 10 });
   writer.text(`Progresso do checklist: ${progressPercent}%`, { size: 10 });
-  writer.text(`Prontidão operacional: ${ready ? "Apta" : "Não apta"}`, {
+  writer.text(`Prontidão operacional: ${readiness.label}`, {
     size: 10,
     font: bold,
   });
@@ -238,7 +239,7 @@ export async function generateImplementationSummaryPdf(
     size: 9,
     color: INK_MUTED,
   });
-  writer.text("concluída e continuar não apta por um único item bloqueador em aberto.", {
+  writer.text("concluída e continuar bloqueada por um único item crítico em aberto.", {
     size: 9,
     color: INK_MUTED,
   });
