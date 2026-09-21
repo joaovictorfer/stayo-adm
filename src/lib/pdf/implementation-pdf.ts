@@ -14,7 +14,7 @@
 import { PDFDocument, type PDFFont, StandardFonts, rgb } from "pdf-lib";
 
 import type { ImplementationItem, ImplementationProject } from "../../types/core";
-import type { ReadinessResult } from "../implementation-status";
+import { itemStatusLabels, type ReadinessResult } from "../implementation-status";
 import {
   supplyPriorityLabels,
   supplyStatusLabels,
@@ -23,11 +23,17 @@ import {
 } from "../../types/implementation-supply";
 
 const PAGE_SIZE: [number, number] = [595.28, 841.89]; // A4
-const MARGIN = 56;
-const FOREST = rgb(0.13, 0.25, 0.18);
-const INK = rgb(0.11, 0.14, 0.11);
-const INK_MUTED = rgb(0.36, 0.4, 0.37);
-const BORDER = rgb(0.88, 0.87, 0.82);
+const MARGIN = 48;
+const NAVY = rgb(11 / 255, 49 / 255, 80 / 255);
+const NAVY_LIGHT = rgb(18 / 255, 63 / 255, 104 / 255);
+const FOREST = NAVY;
+const WHITE = rgb(1, 1, 1);
+const INK = rgb(23 / 255, 35 / 255, 47 / 255);
+const INK_MUTED = rgb(107 / 255, 119 / 255, 133 / 255);
+const BORDER = rgb(228 / 255, 232 / 255, 236 / 255);
+const SOFT = rgb(245 / 255, 247 / 255, 249 / 255);
+const DANGER = rgb(166 / 255, 45 / 255, 45 / 255);
+const SUCCESS = rgb(29 / 255, 112 / 255, 74 / 255);
 
 /** pdf-lib com fontes padrão não suporta caracteres fora do Latin-1 (ex.: emoji). */
 function safe(value: string): string {
@@ -55,6 +61,9 @@ interface Writer {
   ) => void;
   spacer: (h?: number) => void;
   rule: () => void;
+  section: (title: string) => void;
+  metric: (label: string, value: string, x: number, width: number, color?: ReturnType<typeof rgb>) => void;
+  progress: (percent: number) => void;
   finish: () => Promise<Uint8Array>;
 }
 
@@ -98,6 +107,24 @@ async function makeWriter(): Promise<{ writer: Writer; bold: PDFFont }> {
         color: BORDER,
       });
       y -= 14;
+    },
+    section: (title) => {
+      ensureSpace(32);
+      page.drawRectangle({ x: MARGIN, y: y - 3, width: 3, height: 18, color: NAVY_LIGHT });
+      page.drawText(safe(title), { x: MARGIN + 11, y, size: 12, font: bold, color: NAVY });
+      y -= 26;
+    },
+    metric: (label, value, x, width, color = NAVY) => {
+      page.drawRectangle({ x, y: y - 48, width, height: 54, color: SOFT, borderColor: BORDER, borderWidth: 0.75 });
+      page.drawText(safe(label.toUpperCase()), { x: x + 10, y: y - 10, size: 7.5, font: bold, color: INK_MUTED });
+      page.drawText(safe(clamp(value, 24)), { x: x + 10, y: y - 31, size: 13, font: bold, color });
+    },
+    progress: (percent) => {
+      const width = PAGE_SIZE[0] - MARGIN * 2;
+      const safePercent = Math.max(0, Math.min(100, percent));
+      page.drawRectangle({ x: MARGIN, y: y - 7, width, height: 7, color: BORDER });
+      page.drawRectangle({ x: MARGIN, y: y - 7, width: width * (safePercent / 100), height: 7, color: NAVY_LIGHT });
+      y -= 18;
     },
     finish: () => pdfDoc.save(),
   };
@@ -216,50 +243,55 @@ export interface ImplementationSummaryPdfInput {
   readiness: ReadinessResult;
   blockers: string[];
   statusLabel: string;
+  responsibleName?: string | null;
 }
 
 export async function generateImplementationSummaryPdf(
   input: ImplementationSummaryPdfInput,
 ): Promise<Uint8Array> {
-  const { implementation, checklist, supplies, progressPercent, readiness, blockers, statusLabel } =
-    input;
+  const { implementation, checklist, supplies, progressPercent, readiness, blockers, statusLabel } = input;
   const { writer, bold } = await makeWriter();
 
-  header(writer, bold, implementation, "Resumo da implantação");
-
-  writer.text("Situação", { size: 13, font: bold, color: FOREST });
-  writer.spacer(2);
-  writer.text(`Status: ${statusLabel}`, { size: 10 });
-  writer.text(`Progresso do checklist: ${progressPercent}%`, { size: 10 });
-  writer.text(`Prontidão operacional: ${readiness.label}`, {
-    size: 10,
-    font: bold,
-  });
-  writer.text("Progresso e prontidão são números separados: uma implantação pode estar quase", {
-    size: 9,
-    color: INK_MUTED,
-  });
-  writer.text("concluída e continuar bloqueada por um único item crítico em aberto.", {
-    size: 9,
-    color: INK_MUTED,
-  });
-  writer.spacer(10);
-
+  writer.text("STAYO", { size: 22, font: bold, color: NAVY });
+  writer.text("RESUMO INTERNO DE IMPLANTAÇÃO", { size: 8, font: bold, color: NAVY_LIGHT });
+  writer.spacer(8);
   writer.rule();
-  writer.text("Precisa de atenção", { size: 13, font: bold, color: FOREST });
-  writer.spacer(2);
+  writer.text(propertyLine(implementation), { size: 17, font: bold, color: INK });
+  writer.spacer(3);
+  writer.text(`Código ${implementation.code}  ·  Proprietário ${implementation.ownerName ?? "Não informado"}`, { size: 9.5, color: INK_MUTED });
+  writer.text(`Responsável ${input.responsibleName ?? "Não definido"}  ·  Atualizado em ${new Date().toLocaleDateString("pt-BR")}`, { size: 9.5, color: INK_MUTED });
+  writer.spacer(16);
+
+  const metricWidth = (PAGE_SIZE[0] - MARGIN * 2 - 20) / 3;
+  writer.metric("Situação atual", statusLabel, MARGIN, metricWidth);
+  writer.metric("Progresso", `${progressPercent}%`, MARGIN + metricWidth + 10, metricWidth);
+  writer.metric(
+    "Prontidão",
+    readiness.label,
+    MARGIN + (metricWidth + 10) * 2,
+    metricWidth,
+    readiness.status === "apta" ? SUCCESS : readiness.status === "nao_avaliada" ? INK_MUTED : DANGER,
+  );
+  writer.spacer(66);
+  writer.text("Progresso do checklist", { size: 8.5, font: bold, color: INK_MUTED });
+  writer.progress(progressPercent);
+  writer.text(
+    `Prontidão avalia requisitos críticos separadamente: ${readiness.evaluatedRequirements} requisito(s), ${readiness.pendingMandatory} obrigatório(s) e ${readiness.pendingBlockers} bloqueador(es) pendente(s).`,
+    { size: 8.5, color: INK_MUTED },
+  );
+  writer.spacer(12);
+
+  writer.section("Pendências críticas");
   if (blockers.length === 0) {
-    writer.text("Nenhuma pendência bloqueadora.", { size: 10, color: INK_MUTED });
+    writer.text("Nenhuma pendência crítica registrada.", { size: 10, color: INK_MUTED });
   } else {
     for (const blocker of blockers) {
-      writer.text(`- ${clamp(blocker, 90)}`, { size: 10 });
+      writer.text(`- ${clamp(blocker, 82)}`, { size: 9.5, color: DANGER });
     }
   }
-  writer.spacer(10);
+  writer.spacer(12);
 
-  writer.rule();
-  writer.text("Checklist por fase", { size: 13, font: bold, color: FOREST });
-  writer.spacer(2);
+  writer.section("Checklist por fase");
   if (checklist.length === 0) {
     writer.text("Checklist ainda não montado.", { size: 10, color: INK_MUTED });
   } else {
@@ -268,41 +300,52 @@ export async function generateImplementationSummaryPdf(
       byPhase.set(item.phase, [...(byPhase.get(item.phase) ?? []), item]);
     }
     for (const [phase, phaseItems] of byPhase) {
-      writer.text(phase, { size: 11, font: bold });
+      writer.text(`${phase}  ·  ${phaseItems.filter((item) => item.status === "concluido").length}/${phaseItems.length} concluídos`, { size: 10.5, font: bold, color: NAVY });
       for (const item of phaseItems) {
         const tags = [
-          item.status,
+          itemStatusLabels[item.status],
           item.mandatory ? "obrigatório" : null,
           item.blocker ? "bloqueador" : null,
         ]
           .filter(Boolean)
           .join(", ");
-        writer.text(`   ${clamp(item.title, 60)}  ·  ${tags}`, { size: 9.5, color: INK_MUTED });
+        writer.text(`   ${clamp(item.title, 58)}  ·  ${tags}`, { size: 9, color: INK_MUTED });
       }
-      writer.spacer(4);
+      writer.spacer(7);
     }
   }
 
-  writer.rule();
-  writer.text("Enxoval e itens faltantes", { size: 13, font: bold, color: FOREST });
-  writer.spacer(2);
+  writer.spacer(6);
+  writer.section("Enxoval e itens faltantes");
   const missingTotal = supplies.reduce((sum, item) => sum + missingQty(item), 0);
   const blockingSupplies = supplies.filter((i) => i.blocksReadiness && missingQty(i) > 0).length;
   writer.text(
     `Itens cadastrados: ${supplies.length}  ·  Peças faltando: ${missingTotal}  ·  Itens que bloqueiam a prontidão: ${blockingSupplies}`,
-    { size: 10 },
+    { size: 9.5, font: bold },
   );
-  writer.spacer(10);
+  const openSupplies = supplies.filter((item) => missingQty(item) > 0 && item.status !== "nao_aplicavel");
+  if (openSupplies.length === 0) {
+    writer.text("Nenhum item faltante registrado.", { size: 9.5, color: INK_MUTED });
+  } else {
+    for (const item of openSupplies) {
+      const details = [
+        item.module === "enxoval" ? "Enxoval" : "Item faltante",
+        item.room,
+        `falta ${missingQty(item)}`,
+        supplyStatusLabels[item.status],
+        item.blocksReadiness ? "bloqueia prontidão" : null,
+      ].filter(Boolean);
+      writer.text(`- ${clamp(item.name, 48)}  ·  ${details.join(" · ")}`, {
+        size: 9,
+        color: item.blocksReadiness ? DANGER : INK_MUTED,
+      });
+    }
+  }
+  writer.spacer(14);
 
   writer.rule();
-  writer.text("Documento interno Stayo. Não contém dados de acesso do imóvel", {
-    size: 9,
-    color: INK_MUTED,
-  });
-  writer.text("(Wi-Fi, fechadura, chaves) nem documentos pessoais.", {
-    size: 9,
-    color: INK_MUTED,
-  });
+  writer.text("Documento interno STAYO · Uso operacional", { size: 8, font: bold, color: NAVY });
+  writer.text("Este resumo não contém senhas, Wi-Fi, fechaduras, chaves, tokens ou documentos pessoais.", { size: 8, color: INK_MUTED });
 
   return writer.finish();
 }
