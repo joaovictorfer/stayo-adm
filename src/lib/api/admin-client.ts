@@ -579,7 +579,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const now = new Date();
       const existing = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
       const stillActive = existing.filter(
-        (l) => l.implementationId === implementationId && !l.revokedAt && !l.usedAt,
+        (l) => l.implementationId === implementationId && !l.revokedAt,
       );
 
       const token = createSecureToken();
@@ -1858,8 +1858,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         .from("owner_portal_invitations")
         .update({ revoked_at: now.toISOString() })
         .eq("implementation_id", implementationId)
-        .is("revoked_at", null)
-        .is("used_at", null);
+        .is("revoked_at", null);
       if (revokeError) throw revokeError;
 
       const { data, error } = await supabase

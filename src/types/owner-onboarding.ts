@@ -36,7 +36,6 @@ export function ownerOnboardingLinkStatus(
   now: Date = new Date(),
 ): OwnerOnboardingLinkStatus {
   if (link.revokedAt) return "revogado";
-  if (link.usedAt) return "usado";
   if (new Date(link.expiresAt) < now) return "expirado";
   return "ativo";
 }
