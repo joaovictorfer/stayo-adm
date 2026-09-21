@@ -1,38 +1,22 @@
 /**
  * Gerador de PDF da proposta (Fase 7 do plano de evolução).
  *
- * Roda no navegador (client-side) — não existe backend real ainda; os
- * dados vivem em localStorage, então o PDF só pode nascer de onde os dados
- * já estão. O PDF é sempre gerado a partir do MESMO snapshot imutável de
- * uma `Proposal` (uma versão específica) — nunca de "a versão mais
- * recente". Regenerar o PDF da mesma versão sempre produz o mesmo
- * documento; não há necessidade de armazená-lo à parte enquanto isso for
- * verdade (ver docs/OWNER_IMPLEMENTATION_ARCHITECTURE.md).
- *
- * Nunca inclui dados bancários ou documento completo (nada disso existe
- * neste tipo de proposta comercial de qualquer forma).
+ * Roda no navegador (client-side). Usa o StayoPdfBuilder subjacente
+ * para formatação uniforme (cabeçalho, paginação, margens e tipografia).
  */
-
-import { PDFDocument, type PDFFont, StandardFonts, rgb } from "pdf-lib";
 
 import type { CommercialTerm } from "../../types/admin";
 import type { ImplementationProject, Proposal } from "../../types/core";
+import { PDF_STYLES, StayoPdfBuilder } from "./base-document";
 
 export interface ProposalPdfInput {
   implementation: ImplementationProject;
   proposal: Proposal;
   recurringTerms: CommercialTerm[];
   portalUrl: string | null;
-  /** Dias de validade a partir da geração — default do plano, ainda sem tela de configuração própria. */
   validityDays?: number;
+  coverImageBytes?: Uint8Array;
 }
-
-const PAGE_SIZE: [number, number] = [595.28, 841.89]; // A4 em pontos
-const MARGIN = 56;
-const FOREST = rgb(0.13, 0.25, 0.18);
-const INK = rgb(0.11, 0.14, 0.11);
-const INK_MUTED = rgb(0.36, 0.4, 0.37);
-const BORDER = rgb(0.88, 0.87, 0.82);
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -46,127 +30,75 @@ const chargeTypeLabels: Record<CommercialTerm["chargeType"], string> = {
 };
 
 export async function generateProposalPdf(input: ProposalPdfInput): Promise<Uint8Array> {
-  const { implementation, proposal, recurringTerms, portalUrl, validityDays = 15 } = input;
+  const { implementation, proposal, recurringTerms, portalUrl, validityDays = 15, coverImageBytes } = input;
 
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const builder = await StayoPdfBuilder.create("Proposta Comercial", new Date(proposal.createdAt));
 
-  let page = pdfDoc.addPage(PAGE_SIZE);
-  let y = PAGE_SIZE[1] - MARGIN;
-
-  const ensureSpace = (needed: number) => {
-    if (y - needed < MARGIN) {
-      page = pdfDoc.addPage(PAGE_SIZE);
-      y = PAGE_SIZE[1] - MARGIN;
-    }
-  };
-
-  const text = (
-    value: string,
-    opts: { size?: number; color?: ReturnType<typeof rgb>; font?: PDFFont; x?: number } = {},
-  ) => {
-    const size = opts.size ?? 10;
-    ensureSpace(size + 6);
-    page.drawText(value, {
-      x: opts.x ?? MARGIN,
-      y,
-      size,
-      font: opts.font ?? font,
-      color: opts.color ?? INK,
-    });
-    y -= size + 6;
-  };
-
-  const spacer = (h = 10) => {
-    y -= h;
-  };
-
-  const rule = () => {
-    ensureSpace(12);
-    page.drawLine({
-      start: { x: MARGIN, y },
-      end: { x: PAGE_SIZE[0] - MARGIN, y },
-      thickness: 0.75,
-      color: BORDER,
-    });
-    y -= 14;
-  };
-
-  // Capa
-  text("STAYO", { size: 20, font: bold, color: FOREST });
-  spacer(4);
-  text("Proposta comercial de implantação", { size: 14, font: bold, color: INK });
-  spacer(8);
-  text(`Código: ${implementation.code}`, { size: 10, color: INK_MUTED });
-  text(`Proprietário: ${implementation.ownerName ?? "—"}`, { size: 10, color: INK_MUTED });
-  text(
-    `Imóvel: ${[implementation.nickname, implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "—"}`,
-    { size: 10, color: INK_MUTED },
+  const subtitle = [implementation.nickname, implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ");
+  
+  await builder.drawCover(
+    "Proposta comercial de implantação",
+    subtitle || `Código: ${implementation.code}`,
+    coverImageBytes
   );
-  text(`Data: ${new Date(proposal.createdAt).toLocaleDateString("pt-BR")}`, {
-    size: 10,
-    color: INK_MUTED,
-  });
-  text(`Versão: ${proposal.version}`, { size: 10, color: INK_MUTED });
-  text(`Válida por ${validityDays} dias a partir da data acima`, { size: 10, color: INK_MUTED });
-  spacer(12);
-  rule();
 
-  // Condições comerciais — itens da proposta
-  text("Condições comerciais", { size: 13, font: bold, color: FOREST });
-  spacer(4);
+  builder.text(`Proprietário: ${implementation.ownerName ?? "—"}`, { size: 10, color: PDF_STYLES.colors.inkMuted });
+  builder.text(`Versão: ${proposal.version}`, { size: 10, color: PDF_STYLES.colors.inkMuted });
+  builder.text(`Válida por ${validityDays} dias a partir da data de geração`, { size: 10, color: PDF_STYLES.colors.inkMuted });
+
+  // Força que a primeira página de conteúdo efetivamente tenha aderência ao layout de texto padrão
+  builder.addPage(true);
+
+  builder.text("Condições comerciais", { size: 13, font: "bold", color: PDF_STYLES.colors.forest });
+  builder.spacer(4);
   for (const item of proposal.items) {
-    ensureSpace(14);
-    text(`${item.description}  ·  ${item.quantity}x  ·  ${currency.format(item.total)}`, {
-      size: 10,
-    });
+    builder.ensureSpace(14);
+    builder.text(`${item.description}  ·  ${item.quantity}x  ·  ${currency.format(item.total)}`, { size: 10 });
   }
-  spacer(4);
-  text(`Total: ${currency.format(proposal.total)}`, { size: 12, font: bold, color: INK });
-  spacer(12);
+  builder.spacer(4);
+  builder.text(`Total: ${currency.format(proposal.total)}`, { size: 12, font: "bold", color: PDF_STYLES.colors.ink });
+  builder.spacer(12);
 
   if (recurringTerms.length > 0) {
-    rule();
-    text("Condições recorrentes (aplicadas durante a operação)", {
+    builder.rule();
+    builder.text("Condições recorrentes (aplicadas durante a operação)", {
       size: 12,
-      font: bold,
-      color: FOREST,
+      font: "bold",
+      color: PDF_STYLES.colors.forest,
     });
-    spacer(4);
+    builder.spacer(4);
     for (const term of recurringTerms) {
-      const value =
-        term.chargeType === "percentage" ? `${term.value}%` : currency.format(term.value);
-      text(`${term.label} — ${value} (${chargeTypeLabels[term.chargeType]})`, { size: 10 });
+      const value = term.chargeType === "percentage" ? `${term.value}%` : currency.format(term.value);
+      builder.text(`${term.label} — ${value} (${chargeTypeLabels[term.chargeType]})`, { size: 10 });
     }
-    spacer(12);
+    builder.spacer(12);
   }
 
-  rule();
-  text("Escopo Stayo", { size: 13, font: bold, color: FOREST });
-  spacer(4);
-  text("Gestão completa da hospedagem: divulgação em canais, precificação, atendimento ao", {
+  builder.rule();
+  builder.text("Escopo Stayo", { size: 13, font: "bold", color: PDF_STYLES.colors.forest });
+  builder.spacer(4);
+  builder.text("Gestão completa da hospedagem: divulgação em canais, precificação, atendimento ao", {
     size: 10,
-    color: INK_MUTED,
+    color: PDF_STYLES.colors.inkMuted,
   });
-  text("hóspede, limpeza e vistoria entre estadias, e repasse financeiro ao proprietário.", {
+  builder.text("hóspede, limpeza e vistoria entre estadias, e repasse financeiro ao proprietário.", {
     size: 10,
-    color: INK_MUTED,
+    color: PDF_STYLES.colors.inkMuted,
   });
-  spacer(12);
+  builder.spacer(12);
 
-  rule();
-  text("Próximos passos", { size: 13, font: bold, color: FOREST });
-  spacer(4);
+  builder.rule();
+  builder.text("Próximos passos", { size: 13, font: "bold", color: PDF_STYLES.colors.forest });
+  builder.spacer(4);
   if (portalUrl) {
-    text("Acompanhe a implantação e aceite esta proposta em:", { size: 10, color: INK_MUTED });
-    text(portalUrl, { size: 10, font: bold, color: FOREST });
+    builder.text("Acompanhe a implantação e aceite esta proposta em:", { size: 10, color: PDF_STYLES.colors.inkMuted });
+    builder.text(portalUrl, { size: 10, font: "bold", color: PDF_STYLES.colors.forest });
   } else {
-    text("Fale com a equipe Stayo para gerar o link de acompanhamento.", {
+    builder.text("Fale com a equipe Stayo para gerar o link de acompanhamento.", {
       size: 10,
-      color: INK_MUTED,
+      color: PDF_STYLES.colors.inkMuted,
     });
   }
 
-  return pdfDoc.save();
+  return builder.save();
 }
