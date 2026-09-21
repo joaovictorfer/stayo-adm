@@ -138,10 +138,11 @@ async function makeWriter(): Promise<{ writer: Writer; bold: PDFFont }> {
           : await pdfDoc.embedJpg(bytes);
         const width = PAGE_SIZE[0] - MARGIN * 2;
         const height = 150;
-        const scale = Math.max(width / image.width, height / image.height);
+        const scale = Math.min(width / image.width, height / image.height);
         const drawnWidth = image.width * scale;
         const drawnHeight = image.height * scale;
         ensureSpace(height + 12);
+        page.drawRectangle({ x: MARGIN, y: y - height, width, height, color: SOFT });
         page.drawImage(image, {
           x: MARGIN + (width - drawnWidth) / 2,
           y: y - height + (height - drawnHeight) / 2,
