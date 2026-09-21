@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveOwnerWorkspaceStatus, maskPixKey } from "./owner-workspace";
+import { deriveOwnerWorkspaceStatus, maskPixKey, maskTaxId } from "./owner-workspace";
 import type { OwnerRecord } from "../types/admin";
 import type { ImplementationProject, Property } from "../types/core";
 
@@ -19,5 +19,9 @@ describe("owner workspace", () => {
   });
   it("mascara a chave PIX e preserva apenas quatro caracteres", () => {
     expect(maskPixKey("victor@example.com")).toBe("••••••••••.com");
+  });
+  it("mascara CPF e CNPJ do titular", () => {
+    expect(maskTaxId("12345678901")).toBe("•••.•••.789-01");
+    expect(maskTaxId("12345678000199")).toBe("••.•••.•••/0001-99");
   });
 });

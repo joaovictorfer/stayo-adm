@@ -89,6 +89,7 @@ export interface OwnerAdministrativeRegistration {
   submittedAt: string | null;
   bankName: string | null;
   accountHolder: string | null;
+  holderTaxId: string | null;
   pixType: PixKeyType | null;
   pixKey: string | null;
   isPrimary: boolean;
