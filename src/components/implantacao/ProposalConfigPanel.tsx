@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Panel } from "../data/ListStates";
 import { Button } from "../ui/button";
@@ -65,6 +65,15 @@ function Heading({ title, hint }: { title: string; hint?: string }) {
         </p>
       )}
     </div>
+  );
+}
+
+function TermLabel({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+      {label}
+      {children}
+    </label>
   );
 }
 
