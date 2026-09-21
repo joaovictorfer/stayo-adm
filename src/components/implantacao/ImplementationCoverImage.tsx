@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAttachmentSignedUrl, isAttachmentsAvailable, listOwnerAttachments } from "../../lib/api/attachments";
 import { coreApi } from "../../lib/api/queries";
 import { resolveImplementationCover } from "../../lib/implementation-cover";
+import { implementationCoverPlaceholderUrl } from "../../lib/implementation-cover";
 import type { ImplementationProject } from "../../types/core";
 
 export function implementationCoverQuery(implementation: ImplementationProject) {
@@ -43,7 +44,7 @@ export function ImplementationCoverImage({
   const cover = useQuery(implementationCoverQuery(implementation));
   return (
     <img
-      src={cover.data?.url}
+      src={cover.data?.url ?? implementationCoverPlaceholderUrl}
       alt={`Capa de ${implementation.nickname || implementation.condominiumName || implementation.code}`}
       className={className}
       width={1600}

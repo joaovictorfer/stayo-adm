@@ -52,15 +52,18 @@ function ActionButton({
   children,
   onClick,
   icon,
+  disabled = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   icon: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-primary-foreground/20 bg-primary-foreground/[0.08] px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/15"
     >
       {icon}
@@ -122,6 +125,7 @@ export function WorkspaceHeader({
         <ActionButton
           onClick={() => fileInputRef.current?.click()}
           icon={<ImagePlus size={14} />}
+          disabled={!coverUploadAvailable || coverUploading}
         >
           {coverUploading ? "Enviando..." : implementation.coverImage ? "Trocar capa" : "Adicionar capa"}
         </ActionButton>
