@@ -33,7 +33,6 @@ import { Timeline, type TimelineEntry } from "../patterns/Timeline";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
-const tokenKey = (id: string) => `stayo-admin:portal-token:${id}`;
 const pixLabels = { cpf: "CPF", cnpj: "CNPJ", phone: "Telefone", email: "E-mail", random: "Chave aleatória" };
 type WorkspaceTab = "resumo" | "imoveis" | "implantacoes" | "contratos" | "financeiro" | "documentos" | "portal" | "historico";
 
@@ -102,9 +101,7 @@ export function OwnerWorkspace({ owner }: { owner: OwnerRecord }) {
 
   const openPortal = () => {
     if (!portalImplementation) return;
-    const token = window.sessionStorage.getItem(tokenKey(portalImplementation.id));
-    if (token) window.open(`/portal/implantacao/${token}`, "_blank", "noopener,noreferrer");
-    else setPortalOpen(true);
+    setPortalOpen(true);
   };
 
   return (
