@@ -15,6 +15,7 @@ import {
   Panel,
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
+import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
@@ -323,6 +324,8 @@ function ImplementationDetailPage() {
 
               {/* Bloco 4: Condições comerciais */}
               <CommercialTermsPanel implementationId={implementation.id} />
+
+              <ContractConditionsPanel implementationId={implementation.id} />
 
               <OwnerPortalPanel
                 implementationId={implementation.id}
