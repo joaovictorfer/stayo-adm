@@ -1,7 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ClipboardCheck, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { z } from "zod";
 
 import {
@@ -33,6 +33,7 @@ import {
 import type { ImplementationItem, ImplementationProject } from "../types/core";
 import type { OwnerRecord } from "../types/admin";
 import { formatBrazilPhone, isValidBrazilPhone, normalizeBrazilPhone, sameBrazilPhone } from "../lib/phone";
+import { ImplementationCoverImage } from "../components/implantacao/ImplementationCoverImage";
 
 export const Route = createFileRoute("/implantacao/")({
   head: () => ({
@@ -218,7 +219,7 @@ function ImplementationsPage() {
                   params={{ id: i.id }}
                   className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 text-sm hover:bg-muted/60 sm:px-5"
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand"><ClipboardCheck size={18} /></span>
+                   <ImplementationCoverImage implementation={i} className="h-12 w-16 shrink-0 rounded-lg object-cover" />
                   <span className="min-w-0">
                     <span className="flex min-w-0 items-center gap-2"><strong className="truncate font-semibold text-foreground">{i.nickname || [i.condominiumName, i.unit].filter(Boolean).join(" · ") || i.code}</strong><span className="hidden rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground sm:inline">{i.code}</span></span>
                     <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><span>{i.ownerName || "Proprietário não informado"}</span><span>{statusLabels[i.status]}</span><span>Início {i.startDateEstimate ?? "a definir"}</span></span>
