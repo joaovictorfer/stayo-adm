@@ -127,6 +127,7 @@ function createLocalClient(): CoreClient {
           ownerId: null,
           ownerName: null,
           ownerPhone: null,
+          coverImage: null,
           nickname: null,
           condominiumName: null,
           unit: null,

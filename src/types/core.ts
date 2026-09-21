@@ -54,6 +54,8 @@ export interface Condominium {
   id: EntityId;
   name: string;
   city: string | null;
+  /** Imagem institucional do empreendimento, quando exposta pelo Core. */
+  coverImage: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,6 +118,8 @@ export interface ImplementationProject {
   ownerId: EntityId | null;
   ownerName: string | null;
   ownerPhone: string | null;
+  /** URL externa ou caminho privado da capa escolhida para a implantação. */
+  coverImage: string | null;
   /** Apelido interno do pré-imóvel, ex: "Cobertura vista mar". */
   nickname: string | null;
   condominiumName: string | null;

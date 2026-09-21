@@ -23,6 +23,7 @@ const baseImplementation: ImplementationProject = {
   ownerId: "owner-1",
   ownerName: "Dono Teste",
   ownerPhone: "11999990000",
+  coverImage: null,
   nickname: null,
   condominiumName: null,
   unit: null,

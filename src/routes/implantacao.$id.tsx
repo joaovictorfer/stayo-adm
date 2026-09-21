@@ -32,6 +32,12 @@ import {
 import { blockingSupplyItems } from "../types/implementation-supply";
 import { generateImplementationSummaryPdf } from "../lib/pdf/implementation-pdf";
 import { downloadPdfBytes } from "../lib/pdf/download";
+import { implementationCoverQuery } from "../components/implantacao/ImplementationCoverImage";
+import {
+  deleteImplementationCover,
+  isImplementationCoverUploadAvailable,
+  uploadImplementationCover,
+} from "../lib/api/implementation-covers";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { listActiveAdminProfiles } from "../lib/auth/session";
 import { formatMoney } from "../lib/format";
@@ -91,6 +97,29 @@ function ImplementationDetailPage() {
   });
   const implementation = query.data;
 
+  const coverUpload = useMutation({
+    mutationFn: async (file: File) => {
+      if (!implementation) throw new Error("Implantação não encontrada");
+      const previousCover = implementation.coverImage;
+      const storedPath = await uploadImplementationCover(implementation.id, file);
+      try {
+        const updated = await coreApi.implementations.update(implementation.id, { coverImage: storedPath });
+        if (previousCover) await deleteImplementationCover(previousCover);
+        return updated;
+      } catch (error) {
+        await deleteImplementationCover(storedPath);
+        throw error;
+      }
+    },
+    onSuccess: async (updated) => {
+      queryClient.setQueryData(["implementations", "detail", updated.id], updated);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["implementations", "list"] }),
+        queryClient.invalidateQueries({ queryKey: ["implementation-cover", updated.id] }),
+      ]);
+    },
+  });
+
   const changeStatus = useMutation({
     mutationFn: async (status: ImplementationStatus) => {
       const from = implementation?.status ?? null;
@@ -142,7 +171,11 @@ function ImplementationDetailPage() {
               attentionItems(checklistItems).length +
               blockingSupplyItems(suppliesQuery.data ?? []).length
             }
+            coverUploadAvailable={isImplementationCoverUploadAvailable()}
+            coverUploading={coverUpload.isPending}
+            onCoverSelected={(file) => coverUpload.mutate(file)}
             onGenerateSummary={async () => {
+              const cover = await queryClient.fetchQuery(implementationCoverQuery(implementation));
               const bytes = await generateImplementationSummaryPdf({
                 implementation,
                 checklist: checklistItems,
@@ -155,6 +188,7 @@ function ImplementationDetailPage() {
                 ],
                 statusLabel: statusLabels[implementation.status],
                 responsibleName: adminProfilesQuery.data?.find((profile) => profile.id === implementation.responsibleUserId)?.fullName ?? null,
+                coverImageUrl: cover.url,
               });
               downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
             }}

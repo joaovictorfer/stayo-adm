@@ -6,11 +6,12 @@
  * barra só — são conceitos distintos (ver implementation-status.ts).
  */
 
-import { AlertTriangle, Check, Copy, FileDown, ExternalLink, MapPin } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, FileDown, ExternalLink, ImagePlus, MapPin } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { statusLabels, type ReadinessResult } from "../../lib/implementation-status";
 import type { ImplementationProject } from "../../types/core";
+import { ImplementationCoverImage } from "./ImplementationCoverImage";
 
 function Metric({
   label,
@@ -51,15 +52,18 @@ function ActionButton({
   children,
   onClick,
   icon,
+  disabled = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   icon: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-primary-foreground/20 bg-primary-foreground/[0.08] px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/15"
     >
       {icon}
@@ -77,6 +81,9 @@ export function WorkspaceHeader({
   pendingCount,
   onGenerateSummary,
   onOpenPortal,
+  onCoverSelected,
+  coverUploadAvailable,
+  coverUploading,
 }: {
   implementation: ImplementationProject;
   progressPercent: number;
@@ -86,8 +93,12 @@ export function WorkspaceHeader({
   pendingCount: number;
   onGenerateSummary: () => void;
   onOpenPortal: () => void;
+  onCoverSelected: (file: File) => void;
+  coverUploadAvailable: boolean;
+  coverUploading: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const place = [implementation.condominiumName, implementation.unit]
     .filter(Boolean)
@@ -95,8 +106,31 @@ export function WorkspaceHeader({
 
   return (
     <div className="space-y-3">
-      <section className="rounded-[var(--radius-card)] bg-brand px-4 py-4 text-primary-foreground shadow-[var(--shadow-card)] sm:px-5 sm:py-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="relative isolate min-h-64 overflow-hidden rounded-[var(--radius-card)] bg-brand text-primary-foreground shadow-[var(--shadow-card)] sm:min-h-72">
+      <ImplementationCoverImage implementation={implementation} eager className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--admin-navy-dark)_94%,transparent)_0%,color-mix(in_oklab,var(--admin-navy)_78%,transparent)_48%,color-mix(in_oklab,var(--admin-navy)_28%,transparent)_100%)]" />
+      <div className="relative flex min-h-64 flex-col justify-between gap-8 px-4 py-4 sm:min-h-72 sm:px-5 sm:py-5">
+      <div className="flex justify-end">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) onCoverSelected(file);
+            event.target.value = "";
+          }}
+        />
+        <ActionButton
+          onClick={() => fileInputRef.current?.click()}
+          icon={<ImagePlus size={14} />}
+          disabled={!coverUploadAvailable || coverUploading}
+        >
+          {coverUploading ? "Enviando..." : implementation.coverImage ? "Trocar capa" : "Adicionar capa"}
+        </ActionButton>
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xs font-semibold uppercase text-premium">{implementation.code}</p>
@@ -133,6 +167,10 @@ export function WorkspaceHeader({
             Gerar resumo
           </ActionButton>
         </div>
+      </div>
+      {!coverUploadAvailable && (
+        <p className="text-right text-[11px] text-primary-foreground/65">A troca de capa estará disponível com o armazenamento conectado.</p>
+      )}
       </div>
       </section>
 

@@ -64,6 +64,7 @@ interface Writer {
   section: (title: string) => void;
   metric: (label: string, value: string, x: number, width: number, color?: ReturnType<typeof rgb>) => void;
   progress: (percent: number) => void;
+  coverImage: (url: string) => Promise<void>;
   finish: () => Promise<Uint8Array>;
 }
 
@@ -125,6 +126,33 @@ async function makeWriter(): Promise<{ writer: Writer; bold: PDFFont }> {
       page.drawRectangle({ x: MARGIN, y: y - 7, width, height: 7, color: BORDER });
       page.drawRectangle({ x: MARGIN, y: y - 7, width: width * (safePercent / 100), height: 7, color: NAVY_LIGHT });
       y -= 18;
+    },
+    coverImage: async (url) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) return;
+        const bytes = await response.arrayBuffer();
+        const contentType = response.headers.get("content-type") ?? "";
+        const image = contentType.includes("png") || url.toLowerCase().includes(".png")
+          ? await pdfDoc.embedPng(bytes)
+          : await pdfDoc.embedJpg(bytes);
+        const width = PAGE_SIZE[0] - MARGIN * 2;
+        const height = 150;
+        const scale = Math.min(width / image.width, height / image.height);
+        const drawnWidth = image.width * scale;
+        const drawnHeight = image.height * scale;
+        ensureSpace(height + 12);
+        page.drawRectangle({ x: MARGIN, y: y - height, width, height, color: SOFT });
+        page.drawImage(image, {
+          x: MARGIN + (width - drawnWidth) / 2,
+          y: y - height + (height - drawnHeight) / 2,
+          width: drawnWidth,
+          height: drawnHeight,
+        });
+        y -= height + 16;
+      } catch {
+        // A capa é complementar: falha de rede/formato nunca impede o PDF operacional.
+      }
     },
     finish: () => pdfDoc.save(),
   };
@@ -244,6 +272,7 @@ export interface ImplementationSummaryPdfInput {
   blockers: string[];
   statusLabel: string;
   responsibleName?: string | null;
+  coverImageUrl?: string | null;
 }
 
 export async function generateImplementationSummaryPdf(
@@ -256,6 +285,7 @@ export async function generateImplementationSummaryPdf(
   writer.text("RESUMO INTERNO DE IMPLANTAÇÃO", { size: 8, font: bold, color: NAVY_LIGHT });
   writer.spacer(8);
   writer.rule();
+  if (input.coverImageUrl) await writer.coverImage(input.coverImageUrl);
   writer.text(propertyLine(implementation), { size: 17, font: bold, color: INK });
   writer.spacer(3);
   writer.text(`Código ${implementation.code}  ·  Proprietário ${implementation.ownerName ?? "Não informado"}`, { size: 9.5, color: INK_MUTED });
