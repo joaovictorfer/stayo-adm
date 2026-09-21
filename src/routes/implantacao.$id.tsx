@@ -227,11 +227,48 @@ function ImplementationDetailPage() {
                   {implementation.bedrooms !== null && implementation.bedrooms !== undefined && <Field label="Quartos" value={implementation.bedrooms} />}
                   {implementation.capacity !== null && implementation.capacity !== undefined && <Field label="Capacidade" value={implementation.capacity} />}
                 </div>
+                {(() => {
+                  const missing = [
+                    !implementation.nickname && "Apelido",
+                    !implementation.condominiumName && "Condomínio",
+                    !implementation.unit && "Unidade",
+                    !implementation.address && "Endereço",
+                    !implementation.city && "Cidade",
+                    !implementation.propertyType && "Tipo",
+                    (implementation.bedrooms === null || implementation.bedrooms === undefined) && "Quartos",
+                    (implementation.capacity === null || implementation.capacity === undefined) && "Capacidade",
+                  ].filter(Boolean);
+
+                  if (missing.length === 0) return null;
+                  return (
+                    <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--stayo-border)" }}>
+                      <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
+                        Pendentes de preenchimento
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {missing.map((field) => (
+                          <span key={field as string} className="rounded-md border bg-slate-50/50 px-2.5 py-1 text-[11px] font-medium text-slate-500" style={{ borderColor: "var(--stayo-border)" }}>
+                            {field}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
+
+              <CommercialTermsPanel implementationId={implementation.id} />
+
+              <OwnerPortalPanel
+                implementationId={implementation.id}
+                ownerId={implementation.ownerId}
+              />
+
+              <InitialChargesPanel implementationId={implementation.id} />
 
               <details className="rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
                 <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                  Detalhes técnicos
+                  Detalhes técnicos e Integração
                 </summary>
                 <div className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
                   <Field label="ID" value={implementation.id} />
@@ -247,18 +284,10 @@ function ImplementationDetailPage() {
                   <Field label="Criada em" value={implementation.createdAt} />
                   <Field label="Atualizada em" value={implementation.updatedAt} />
                 </div>
+                <div className="border-t p-4" style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}>
+                  <CoreConversionPanel implementation={implementation} />
+                </div>
               </details>
-
-              <CommercialTermsPanel implementationId={implementation.id} />
-
-              <OwnerPortalPanel
-                implementationId={implementation.id}
-                ownerId={implementation.ownerId}
-              />
-
-              <InitialChargesPanel implementationId={implementation.id} />
-
-              <CoreConversionPanel implementation={implementation} />
 
               <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
                 <h2
