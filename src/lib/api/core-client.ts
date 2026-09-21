@@ -4,11 +4,11 @@
  * REGRA DE OURO (handoff seção 39/71): o Stayo Admin é um sistema apartado
  * e NUNCA acessa o banco do STAYO.APP diretamente. Toda leitura/escrita
  * passa por esta interface. Enquanto o Core real não existe, usamos
- * `createMockCoreClient()` — nenhuma tela deve importar `fetch`
+ * `createMockCoreApiClient()` — nenhuma tela deve importar `fetch`
  * diretamente para dados de negócio.
  *
  * Quando o Core v1 (properties, condominiums, reservations, guests)
- * estiver no ar, troca-se apenas `createCoreClient()` — nenhum
+ * estiver no ar, troca-se apenas o adapter no ponto de composição — nenhum
  * componente de UI muda.
  */
 
