@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Eye, FileDown, Save, Settings2, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ErrorRows, Panel } from "../data/ListStates";
+import { Drawer } from "../patterns/Drawer";
+import { Button } from "../ui/button";
 import { ImplementationTemplatesPanel } from "./ImplementationTemplatesPanel";
 import { ProposalConfigPanel } from "./ProposalConfigPanel";
 import {
@@ -10,7 +12,9 @@ import {
   commercialTermsQuery,
   implementationQuery,
   outboxQuery,
+  proposalBlocksQuery,
   proposalShareLinkQuery,
+  proposalSettingsQuery,
   proposalsByImplementationQuery,
 } from "../../lib/api/queries";
 import { proposalItemTotal, proposalShareStore, proposalsStore } from "../../lib/api/local-store";
@@ -48,7 +52,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
     enabled: Boolean(latest),
   });
   const outboxQ = useQuery(outboxQuery(implementationId));
+  const settingsQ = useQuery(proposalSettingsQuery(implementationId));
+  const blocksQ = useQuery(proposalBlocksQuery(implementationId));
   const lastMessage = (outboxQ.data ?? [])[0];
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const prepareWhatsapp = useMutation({
     mutationFn: async () => {
@@ -110,6 +117,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   });
 
   const recurringTerms = (commercialTermsQ.data ?? []).filter((t) => t.chargeType !== "fixed_once");
+  const proposalBlocks = (blocksQ.data ?? []).filter((block) => block.visibility !== "interno");
 
   const [draft, setDraft] = useState<DraftItem[]>([{ ...emptyDraftItem }]);
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
@@ -173,12 +181,71 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       )}
 
       <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase text-premium">Proposta comercial</p>
+            <h2 className="mt-1 font-display text-lg font-semibold text-foreground">
+              {latest ? `Versão atual ${latest.version}` : "Nova proposta"}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {latest
+                ? "As alterações serão salvas como uma nova versão, preservando o histórico."
+                : "Organize os serviços e revise as condições antes de salvar a primeira versão."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              disabled={!latest}
+              onClick={() => {
+                if (!latest) return;
+                const existingToken = shareLinkQ.data?.token;
+                if (existingToken) {
+                  window.open(`/portal/proposta/${existingToken}`, "_blank", "noopener,noreferrer");
+                  return;
+                }
+                void proposalShareStore.createLinkForProposal(latest.id, implementationId).then((link) => {
+                  queryClient.setQueryData(proposalShareLinkQuery(latest.id).queryKey, link);
+                  window.open(`/portal/proposta/${link.token}`, "_blank", "noopener,noreferrer");
+                });
+              }}
+            >
+              <Eye /> Visualizar
+            </Button>
+            <Button
+              disabled={save.isPending || draft.every((item) => item.description.trim() === "")}
+              onClick={() => save.mutate()}
+            >
+              <Save /> {save.isPending ? "Salvando..." : "Salvar nova versão"}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!latest || downloadPdf.isPending || !implementationQ.data}
+              onClick={() => downloadPdf.mutate()}
+            >
+              <FileDown /> {downloadPdf.isPending ? "Gerando..." : "Gerar documento"}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!latest || prepareWhatsapp.isPending}
+              onClick={() => prepareWhatsapp.mutate()}
+            >
+              <Share2 /> {prepareWhatsapp.isPending ? "Preparando..." : "Compartilhar"}
+            </Button>
+            <Button variant="ghost" onClick={() => setAdvancedOpen(true)}>
+              <Settings2 /> Opções
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2
             className="text-sm"
             style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
           >
-            {latest ? `Editando a partir da versão ${latest.version}` : "Primeira versão"}
+            1. Serviços e valores
           </h2>
           <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
             Cada salvamento cria uma nova versão — a anterior nunca é sobrescrita.
@@ -309,52 +376,56 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            disabled={save.isPending || draft.every((i) => i.description.trim() === "")}
-            onClick={() => save.mutate()}
-            className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-50"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "var(--stayo-surface)" }}
-          >
-            {latest ? `Salvar como versão ${latest.version + 1}` : "Salvar versão 1"}
-          </button>
-          {latest && (
-            <button
-              type="button"
-              onClick={() => downloadPdf.mutate()}
-              disabled={downloadPdf.isPending || !implementationQ.data}
-              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-              style={{ ...surface, color: "var(--stayo-forest)" }}
-            >
-              {downloadPdf.isPending ? "Gerando..." : `Gerar PDF (v${latest.version})`}
-            </button>
-          )}
-          {latest && (
-            <button
-              type="button"
-              onClick={() => prepareWhatsapp.mutate()}
-              disabled={prepareWhatsapp.isPending}
-              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-              style={{ ...surface, color: "var(--stayo-forest)" }}
-            >
-              {prepareWhatsapp.isPending ? "Preparando..." : "Finalizar e enviar por WhatsApp"}
-            </button>
-          )}
-        </div>
-        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          Sem provider de WhatsApp conectado, o envio é manual: a mensagem fica pronta para você
-          copiar ou abrir direto no WhatsApp.
-        </p>
       </div>
 
       {lastMessage && <WhatsappSendPanel message={lastMessage} />}
 
-      {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
-
-      <ProposalConfigPanel implementationId={implementationId} />
-
-      <ImplementationTemplatesPanel implementationId={implementationId} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ProposalSummarySection
+          number="2"
+          title="Condições comerciais"
+          description={
+            commercialTermsQ.isPending
+              ? "Carregando condições..."
+              : commercialTermsQ.data?.length
+                ? `${commercialTermsQ.data.length} condição(ões) configurada(s), sendo ${recurringTerms.length} recorrente(s).`
+                : "Nenhuma condição comercial configurada."
+          }
+          onEdit={() => setAdvancedOpen(true)}
+        />
+        <ProposalSummarySection
+          number="3"
+          title="Responsabilidades / inclusos"
+          description={
+            blocksQ.isPending
+              ? "Carregando conteúdo..."
+              : proposalBlocks.length
+                ? `${proposalBlocks.length} bloco(s) incluído(s) na comunicação da proposta.`
+                : "Nenhuma responsabilidade ou item incluso configurado."
+          }
+          onEdit={() => setAdvancedOpen(true)}
+        />
+        <ProposalSummarySection
+          number="4"
+          title="Prazo e pagamento"
+          description={
+            settingsQ.isPending
+              ? "Carregando condições..."
+              : `Validade de ${settingsQ.data?.validityDays ?? 30} dias${settingsQ.data?.paymentNotes ? ` · ${settingsQ.data.paymentNotes}` : " · sem observações de pagamento"}.`
+          }
+          onEdit={() => setAdvancedOpen(true)}
+        />
+        <ProposalSummarySection
+          number="5"
+          title="Termos"
+          description={
+            latest
+              ? `${versions.length} versão(ões) preservada(s) no histórico. A versão ${latest.version} é a vigente.`
+              : "Os termos serão registrados ao salvar a primeira versão."
+          }
+          onEdit={() => setAdvancedOpen(true)}
+        />
+      </div>
 
       <div className="rounded-[var(--radius-card)] border" style={surface}>
         <h2
@@ -365,7 +436,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             color: "var(--stayo-ink)",
           }}
         >
-          Versões
+          Histórico de versões
         </h2>
         {query.isPending ? (
           <div className="space-y-3 p-4">
@@ -420,7 +491,46 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </ul>
         )}
       </div>
+
+      <Drawer
+        open={advancedOpen}
+        onClose={() => setAdvancedOpen(false)}
+        eyebrow="Proposta"
+        title="Configurações e modelos"
+      >
+        <div className="flex flex-col gap-4">
+          {latest && <ShareLinkPanel implementationId={implementationId} proposalId={latest.id} />}
+          <ProposalConfigPanel implementationId={implementationId} />
+          <ImplementationTemplatesPanel implementationId={implementationId} />
+        </div>
+      </Drawer>
     </div>
+  );
+}
+
+function ProposalSummarySection({
+  number,
+  title,
+  description,
+  onEdit,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  onEdit: () => void;
+}) {
+  return (
+    <section className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <div className="min-w-0">
+          <h2 className="font-display text-sm font-semibold text-foreground">
+            {number}. {title}
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onEdit}>Editar</Button>
+      </div>
+    </section>
   );
 }
 
