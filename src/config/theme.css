@@ -1,6 +1,7 @@
 /**
  * Stayo Admin — sistema visual operacional.
- * Navy-petróleo diferencia o Admin do Guide; champagne é apenas acento.
+ * Base compartilhada. O Admin redefine a identidade navy em .stayo-admin-theme;
+ * o Portal preserva sua paleta própria.
  */
 :root {
   color-scheme: light;
@@ -46,4 +47,19 @@
   --shadow-card: 0 1px 2px color-mix(in oklab, var(--stayo-navy) 5%, transparent),
     0 8px 24px color-mix(in oklab, var(--stayo-navy) 5%, transparent);
   --shadow-float: 0 18px 48px color-mix(in oklab, var(--stayo-navy) 16%, transparent);
+}
+
+/**
+ * Stayo Admin — navy claramente azul.
+ * Mantém cores de status independentes e não alcança as rotas do Portal.
+ */
+.stayo-admin-theme {
+  --stayo-forest: #0b3150;
+  --stayo-forest-strong: #0a2945;
+  --stayo-forest-soft: #edf3f8;
+  --stayo-navy: #0b3150;
+  --stayo-navy-hover: #123f68;
+  --stayo-navy-soft: #edf3f8;
+  --admin-navy: #0b3150;
+  --admin-navy-dark: #0a2945;
 }
