@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Panel } from "../data/ListStates";
+import { Button } from "../ui/button";
 import {
   adminApi,
   commercialTermsQuery,
@@ -30,6 +32,24 @@ const chargeTypeLabels: Record<ChargeType, string> = {
   informational: "Informativo",
 };
 
+function commercialDescription(term: CommercialTerm) {
+  const amount = currency.format(term.value);
+  switch (term.chargeType) {
+    case "percentage":
+      return `${term.value}% sobre reservas${term.optional ? " · opcional" : ""}`;
+    case "fixed_once":
+      return `${amount} · pagamento único${term.optional ? " · opcional" : ""}`;
+    case "per_reservation":
+      return `${amount} por reserva${term.optional ? " · opcional" : ""}`;
+    case "monthly":
+      return `${amount} por mês${term.optional ? " · opcional" : ""}`;
+    case "optional":
+      return term.value > 0 ? `${amount} · opcional` : "Opcional";
+    case "informational":
+      return term.value > 0 ? amount : "Incluso";
+  }
+}
+
 function Heading({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="mb-3">
@@ -45,6 +65,15 @@ function Heading({ title, hint }: { title: string; hint?: string }) {
         </p>
       )}
     </div>
+  );
+}
+
+function TermLabel({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+      {label}
+      {children}
+    </label>
   );
 }
 
@@ -65,6 +94,7 @@ export function ProposalConfigPanel({ implementationId }: { implementationId: st
     onSuccess: async () => {
       await invalidateTerms();
       setTermDraft({ ...emptyTerm });
+      setShowTermForm(false);
     },
   });
 
@@ -94,6 +124,8 @@ export function ProposalConfigPanel({ implementationId }: { implementationId: st
     notes: null,
   };
   const [termDraft, setTermDraft] = useState<Omit<CommercialTerm, "id">>({ ...emptyTerm });
+  const [showTermForm, setShowTermForm] = useState(false);
+  const [editingTermId, setEditingTermId] = useState<string | null>(null);
 
   // Prazo de validade e observações de pagamento
   const [validityDays, setValidityDays] = useState(30);
@@ -162,170 +194,160 @@ export function ProposalConfigPanel({ implementationId }: { implementationId: st
   return (
     <div className="flex flex-col gap-4">
       <Panel>
-        <Heading
-          title="Condições comerciais"
-          hint="Percentual, valor fixo único, por reserva, mensal, opcional ou informativo. Só o valor fixo único entra no total da proposta."
-        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <Heading
+            title="Condições comerciais"
+            hint="Valores e serviços apresentados ao proprietário."
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => cloneDefaults.mutate()}
+              disabled={cloneDefaults.isPending || terms.length > 0}
+            >
+              Aplicar padrão
+            </Button>
+            <Button type="button" size="sm" onClick={() => setShowTermForm((open) => !open)}>
+              <Plus /> Nova condição
+            </Button>
+          </div>
+        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-sm">
-            <thead>
-              <tr style={{ color: "var(--stayo-ink-muted)" }}>
-                <th className="py-2 text-left text-xs font-normal">Condição</th>
-                <th className="py-2 text-left text-xs font-normal">Tipo</th>
-                <th className="py-2 text-right text-xs font-normal">Valor</th>
-                <th className="py-2 text-center text-xs font-normal">Opcional</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-              {terms.map((term) => (
-                <tr key={term.id}>
-                  <td className="py-2 pr-2">
+        <div className="grid gap-2 sm:grid-cols-2">
+          {terms.map((term) => (
+            <div key={term.id} className="rounded-[var(--radius-control)] border border-border bg-card p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground">{term.label}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{commercialDescription(term)}</p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Editar ${term.label}`}
+                    onClick={() => setEditingTermId(editingTermId === term.id ? null : term.id)}
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Excluir ${term.label}`}
+                    onClick={() => removeTerm.mutate(term.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+              </div>
+
+              {editingTermId === term.id && (
+                <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
+                  <TermLabel label="Descrição">
                     <input
                       defaultValue={term.label}
-                      onBlur={(e) =>
-                        e.target.value !== term.label &&
-                        updateTerm.mutate({ id: term.id, patch: { label: e.target.value } })
-                      }
+                      onBlur={(event) => {
+                        const label = event.target.value.trim();
+                        if (label && label !== term.label) updateTerm.mutate({ id: term.id, patch: { label } });
+                      }}
                       className={`w-full ${control}`}
-                      style={{ ...surface, color: "var(--stayo-ink)" }}
                     />
-                  </td>
-                  <td className="py-2 pr-2">
+                  </TermLabel>
+                  <TermLabel label="Como é cobrado">
                     <select
                       value={term.chargeType}
-                      onChange={(e) =>
-                        updateTerm.mutate({
-                          id: term.id,
-                          patch: { chargeType: e.target.value as ChargeType },
-                        })
-                      }
-                      className={control}
-                      style={{ ...surface, color: "var(--stayo-ink)" }}
+                      onChange={(event) => updateTerm.mutate({ id: term.id, patch: { chargeType: event.target.value as ChargeType } })}
+                      className={`w-full ${control}`}
                     >
-                      {Object.entries(chargeTypeLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
+                      {Object.entries(chargeTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                     </select>
-                  </td>
-                  <td className="py-2 pr-2 text-right">
+                  </TermLabel>
+                  <TermLabel label={term.chargeType === "percentage" ? "Percentual" : "Valor"}>
                     <input
                       type="number"
+                      min={0}
                       step="0.01"
                       defaultValue={term.value}
-                      onBlur={(e) =>
-                        updateTerm.mutate({ id: term.id, patch: { value: Number(e.target.value) } })
-                      }
-                      className={`w-28 text-right ${control}`}
-                      style={{ ...surface, color: "var(--stayo-ink)" }}
+                      onBlur={(event) => updateTerm.mutate({ id: term.id, patch: { value: Number(event.target.value) } })}
+                      className={`w-full ${control}`}
                     />
-                    <span className="ml-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                      {term.chargeType === "percentage" ? "%" : currency.format(term.value)}
-                    </span>
-                  </td>
-                  <td className="py-2 text-center">
+                  </TermLabel>
+                  <label className="flex items-center gap-2 self-end py-2 text-sm text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={term.optional}
-                      onChange={(e) =>
-                        updateTerm.mutate({ id: term.id, patch: { optional: e.target.checked } })
-                      }
+                      onChange={(event) => updateTerm.mutate({ id: term.id, patch: { optional: event.target.checked } })}
                     />
-                  </td>
-                  <td className="py-2 pl-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => removeTerm.mutate(term.id)}
-                      className="text-xs underline"
-                      style={{ color: "var(--stayo-danger)" }}
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {terms.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                    Nenhuma condição cadastrada nesta implantação.
-                  </td>
-                </tr>
+                    Contratação opcional
+                  </label>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+          ))}
+          {terms.length === 0 && (
+            <div className="rounded-[var(--radius-control)] border border-dashed border-border p-5 text-sm text-muted-foreground sm:col-span-2">
+              Nenhuma condição cadastrada. Adicione uma condição ou aplique o padrão comercial.
+            </div>
+          )}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Nova condição
-            <input
-              value={termDraft.label}
-              onChange={(e) => setTermDraft({ ...termDraft, label: e.target.value })}
-              placeholder="Taxa de administração"
-              className={control}
-              style={{ ...surface, color: "var(--stayo-ink)" }}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Tipo
-            <select
-              value={termDraft.chargeType}
-              onChange={(e) =>
-                setTermDraft({ ...termDraft, chargeType: e.target.value as ChargeType })
-              }
-              className={control}
-              style={{ ...surface, color: "var(--stayo-ink)" }}
-            >
-              {Object.entries(chargeTypeLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Valor
-            <input
-              type="number"
-              step="0.01"
-              value={termDraft.value}
-              onChange={(e) => setTermDraft({ ...termDraft, value: Number(e.target.value) })}
-              className={`w-28 text-right ${control}`}
-              style={{ ...surface, color: "var(--stayo-ink)" }}
-            />
-          </label>
-          <label className="flex items-center gap-2 py-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            <input
-              type="checkbox"
-              checked={termDraft.optional}
-              onChange={(e) => setTermDraft({ ...termDraft, optional: e.target.checked })}
-            />
-            Opcional
-          </label>
-          <button
-            type="button"
-            disabled={termDraft.label.trim() === "" || addTerm.isPending}
-            onClick={() =>
-              addTerm.mutate({ ...termDraft, label: termDraft.label.trim(), displayOrder: terms.length })
-            }
-            className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-50"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "var(--stayo-surface)" }}
-          >
-            Adicionar
-          </button>
-          <button
-            type="button"
-            onClick={() => cloneDefaults.mutate()}
-            disabled={cloneDefaults.isPending || terms.length > 0}
-            className={`${control} px-3 py-2 disabled:opacity-50`}
-            style={{ ...surface, color: "var(--stayo-forest)" }}
-          >
-            Aplicar condições padrão
-          </button>
-        </div>
+        {showTermForm && (
+          <div className="mt-3 rounded-[var(--radius-control)] border border-border bg-muted/40 p-3">
+            <p className="mb-3 text-sm font-medium text-foreground">Nova condição comercial</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TermLabel label="Descrição">
+                <input
+                  value={termDraft.label}
+                  onChange={(event) => setTermDraft({ ...termDraft, label: event.target.value })}
+                  placeholder="Ex.: Limpeza"
+                  className={`w-full ${control}`}
+                />
+              </TermLabel>
+              <TermLabel label="Como é cobrado">
+                <select
+                  value={termDraft.chargeType}
+                  onChange={(event) => setTermDraft({ ...termDraft, chargeType: event.target.value as ChargeType })}
+                  className={`w-full ${control}`}
+                >
+                  {Object.entries(chargeTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </TermLabel>
+              <TermLabel label={termDraft.chargeType === "percentage" ? "Percentual" : "Valor"}>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={termDraft.value}
+                  onChange={(event) => setTermDraft({ ...termDraft, value: Number(event.target.value) })}
+                  className={`w-full ${control}`}
+                />
+              </TermLabel>
+              <label className="flex items-center gap-2 self-end py-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={termDraft.optional}
+                  onChange={(event) => setTermDraft({ ...termDraft, optional: event.target.checked })}
+                />
+                Contratação opcional
+              </label>
+            </div>
+            <div className="mt-3 flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setShowTermForm(false)}>Cancelar</Button>
+              <Button
+                type="button"
+                disabled={termDraft.label.trim() === "" || addTerm.isPending}
+                onClick={() => addTerm.mutate({ ...termDraft, label: termDraft.label.trim(), displayOrder: terms.length })}
+              >
+                {addTerm.isPending ? "Adicionando..." : "Adicionar condição"}
+              </Button>
+            </div>
+          </div>
+        )}
       </Panel>
 
       <Panel>
