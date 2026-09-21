@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft, Check, FileDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -569,10 +569,18 @@ function StatusStepper({
 
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
-          Status da implantação
-        </p>
+      <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+            Status da implantação
+          </p>
+          <div className="mt-2 hidden flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground sm:flex" aria-label="Legenda da timeline">
+            <TimelineLegend color="var(--stayo-success)" label="Concluído" />
+            <TimelineLegend color="var(--stayo-forest)" label="Atual" />
+            <TimelineLegend color="var(--stayo-border)" label="Futuro" />
+            <TimelineLegend color="var(--stayo-danger)" label="Bloqueado" />
+          </div>
+        </div>
         <select
           value={status}
           onChange={(e) => onChange(e.target.value as ImplementationStatus)}
@@ -587,27 +595,59 @@ function StatusStepper({
           ))}
         </select>
       </div>
-      <ol className="flex gap-2 overflow-x-auto pb-1">
+      <ol className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-9" aria-label="Etapas da implantação">
         {mainStatusFlow.map((s, index) => {
           const done = currentIndex > index;
           const current = currentIndex === index;
+          const future = !done && !current;
           return (
-            <li key={s} className="flex min-w-[8.5rem] flex-1 flex-col gap-2">
+            <li
+              key={s}
+              className="relative grid min-w-0 grid-cols-[2rem_minmax(0,1fr)] gap-3 pb-5 last:pb-0 sm:flex sm:flex-col sm:items-center sm:gap-2 sm:px-1 sm:pb-0 sm:text-center"
+              aria-current={current ? "step" : undefined}
+            >
+              {index < mainStatusFlow.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-[0.9375rem] top-8 h-[calc(100%-2rem)] w-0.5 sm:left-1/2 sm:top-[0.9375rem] sm:h-0.5 sm:w-full"
+                  style={{ backgroundColor: done ? "var(--stayo-success)" : "var(--stayo-border)" }}
+                />
+              )}
               <span
-                className="h-1.5 w-full rounded-full"
+                className="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold"
                 style={{
-                  backgroundColor: done || current ? "var(--stayo-forest)" : "var(--stayo-border)",
-                  opacity: done ? 0.55 : 1,
-                }}
-              />
-              <span
-                className="text-xs"
-                style={{
-                  color: current ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  fontWeight: current ? 600 : 400,
+                  borderColor: done
+                    ? "var(--stayo-success)"
+                    : current
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-border)",
+                  backgroundColor: done
+                    ? "var(--stayo-success)"
+                    : current
+                      ? "var(--stayo-forest-soft)"
+                      : "var(--stayo-surface)",
+                  color: done
+                    ? "var(--stayo-surface)"
+                    : current
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-ink-muted)",
                 }}
               >
-                {statusLabels[s]}
+                {done ? <Check aria-hidden="true" size={15} strokeWidth={2.5} /> : index + 1}
+              </span>
+              <span className="min-w-0 pt-1 sm:pt-0">
+                <span
+                  className="block text-xs leading-4"
+                  style={{
+                    color: current ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                    fontWeight: current ? 700 : done ? 600 : 400,
+                  }}
+                >
+                  {statusLabels[s]}
+                </span>
+                <span className="mt-0.5 block text-[10px] font-medium uppercase sm:hidden" style={{ color: current ? "var(--stayo-forest)" : "var(--stayo-ink-muted)" }}>
+                  {done ? "Concluído" : current ? "Atual" : future ? "Futuro" : ""}
+                </span>
               </span>
             </li>
           );
@@ -615,13 +655,23 @@ function StatusStepper({
       </ol>
       {isAlternate && (
         <p
-          className="mt-3 inline-block rounded-[var(--radius-control)] px-2 py-1 text-xs"
-          style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}
+          className="mt-4 flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-xs font-semibold"
+          style={{ backgroundColor: "var(--stayo-danger-soft)", color: "var(--stayo-danger)" }}
         >
-          Fora da linha principal: {statusLabels[status]}
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: "var(--stayo-danger)" }} />
+          Fluxo bloqueado: {statusLabels[status]}
         </p>
       )}
     </div>
+  );
+}
+
+function TimelineLegend({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      {label}
+    </span>
   );
 }
 
