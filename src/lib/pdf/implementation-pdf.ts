@@ -13,6 +13,7 @@
 
 import { PDFDocument, type PDFFont, StandardFonts, rgb } from "pdf-lib";
 
+import logoAsset from "../../assets/stayo-logo-clara.png.asset.json";
 import type { ImplementationItem, ImplementationProject } from "../../types/core";
 import { itemStatusLabels, type ReadinessResult } from "../implementation-status";
 import {
@@ -34,6 +35,8 @@ const BORDER = rgb(228 / 255, 232 / 255, 236 / 255);
 const SOFT = rgb(245 / 255, 247 / 255, 249 / 255);
 const DANGER = rgb(166 / 255, 45 / 255, 45 / 255);
 const SUCCESS = rgb(29 / 255, 112 / 255, 74 / 255);
+const WARNING = rgb(174 / 255, 103 / 255, 0);
+const CHAMPAGNE = rgb(205 / 255, 173 / 255, 104 / 255);
 
 /** pdf-lib com fontes padrão não suporta caracteres fora do Latin-1 (ex.: emoji). */
 function safe(value: string): string {
@@ -48,6 +51,81 @@ function safe(value: string): string {
 /** Corta o texto para caber na largura útil da página (fonte de largura variável). */
 function clamp(value: string, maxChars: number): string {
   return value.length <= maxChars ? value : `${value.slice(0, maxChars - 3)}...`;
+}
+
+function wrapText(value: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const paragraphs = safe(value).split(/\n+/);
+  const lines: string[] = [];
+  for (const paragraph of paragraphs) {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      lines.push("");
+      continue;
+    }
+    let line = words[0] ?? "";
+    for (const word of words.slice(1)) {
+      const candidate = `${line} ${word}`;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) line = candidate;
+      else {
+        lines.push(line);
+        line = word;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/** Remove linhas de observação que possam conter segredos operacionais. */
+export function safeOperationalNotes(notes: string | null): string | null {
+  if (!notes?.trim()) return null;
+  const sensitive = /\b(senha|password|wi[ -]?fi|fechadura|token|credencial|c[oó]digo de acesso|localiza[cç][aã]o da chave|chave do im[oó]vel)\b/i;
+  const safeLines = notes
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter((line) => line && !sensitive.test(line));
+  return safeLines.length > 0 ? safeLines.join("\n") : null;
+}
+
+async function rasterUrlAsPng(url: string): Promise<ArrayBuffer | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    let width = 0;
+    let height = 0;
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    if (typeof createImageBitmap === "function") {
+      const bitmap = await createImageBitmap(blob);
+      width = bitmap.width;
+      height = bitmap.height;
+      canvas.width = width;
+      canvas.height = height;
+      context.drawImage(bitmap, 0, 0);
+      bitmap.close();
+    } else {
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const image = new Image();
+        image.src = objectUrl;
+        await image.decode();
+        width = image.naturalWidth;
+        height = image.naturalHeight;
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(image, 0, 0);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+    if (width === 0 || height === 0) return null;
+    const pngBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    return pngBlob ? pngBlob.arrayBuffer() : null;
+  } catch {
+    return null;
+  }
 }
 
 function createDoc() {
@@ -279,103 +357,175 @@ export async function generateImplementationSummaryPdf(
   input: ImplementationSummaryPdfInput,
 ): Promise<Uint8Array> {
   const { implementation, checklist, supplies, progressPercent, readiness, blockers, statusLabel } = input;
-  const { writer, bold } = await makeWriter();
+  const pdfDoc = await createDoc();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const contentWidth = PAGE_SIZE[0] - MARGIN * 2;
+  let page = pdfDoc.addPage(PAGE_SIZE);
+  let y = PAGE_SIZE[1] - MARGIN;
+  let pageNumber = 1;
 
-  writer.text("STAYO", { size: 22, font: bold, color: NAVY });
-  writer.text("RESUMO INTERNO DE IMPLANTAÇÃO", { size: 8, font: bold, color: NAVY_LIGHT });
-  writer.spacer(8);
-  writer.rule();
-  if (input.coverImageUrl) await writer.coverImage(input.coverImageUrl);
-  writer.text(propertyLine(implementation), { size: 17, font: bold, color: INK });
-  writer.spacer(3);
-  writer.text(`Código ${implementation.code}  ·  Proprietário ${implementation.ownerName ?? "Não informado"}`, { size: 9.5, color: INK_MUTED });
-  writer.text(`Responsável ${input.responsibleName ?? "Não definido"}  ·  Atualizado em ${new Date().toLocaleDateString("pt-BR")}`, { size: 9.5, color: INK_MUTED });
-  writer.spacer(16);
-
-  const metricWidth = (PAGE_SIZE[0] - MARGIN * 2 - 20) / 3;
-  writer.metric("Situação atual", statusLabel, MARGIN, metricWidth);
-  writer.metric("Progresso", `${progressPercent}%`, MARGIN + metricWidth + 10, metricWidth);
-  writer.metric(
-    "Prontidão",
-    readiness.label,
-    MARGIN + (metricWidth + 10) * 2,
-    metricWidth,
-    readiness.status === "apta" ? SUCCESS : readiness.status === "nao_avaliada" ? INK_MUTED : DANGER,
-  );
-  writer.spacer(66);
-  writer.text("Progresso do checklist", { size: 8.5, font: bold, color: INK_MUTED });
-  writer.progress(progressPercent);
-  writer.text(
-    `Prontidão avalia requisitos críticos separadamente: ${readiness.evaluatedRequirements} requisito(s), ${readiness.pendingMandatory} obrigatório(s) e ${readiness.pendingBlockers} bloqueador(es) pendente(s).`,
-    { size: 8.5, color: INK_MUTED },
-  );
-  writer.spacer(12);
-
-  writer.section("Pendências críticas");
-  if (blockers.length === 0) {
-    writer.text("Nenhuma pendência crítica registrada.", { size: 10, color: INK_MUTED });
-  } else {
-    for (const blocker of blockers) {
-      writer.text(`- ${clamp(blocker, 82)}`, { size: 9.5, color: DANGER });
+  const drawFooter = () => {
+    page.drawLine({ start: { x: MARGIN, y: 34 }, end: { x: PAGE_SIZE[0] - MARGIN, y: 34 }, thickness: 0.6, color: BORDER });
+    page.drawText("STAYO  |  USO INTERNO E OPERACIONAL", { x: MARGIN, y: 20, size: 6.8, font: bold, color: NAVY });
+    page.drawText(`Página ${pageNumber}`, { x: PAGE_SIZE[0] - MARGIN - 35, y: 20, size: 6.8, font, color: INK_MUTED });
+  };
+  const newPage = () => {
+    drawFooter();
+    page = pdfDoc.addPage(PAGE_SIZE);
+    pageNumber += 1;
+    y = PAGE_SIZE[1] - MARGIN;
+    page.drawRectangle({ x: MARGIN, y: y - 5, width: 26, height: 3, color: CHAMPAGNE });
+    page.drawText("RESUMO INTERNO DE IMPLANTAÇÃO", { x: MARGIN + 35, y: y - 8, size: 7.5, font: bold, color: NAVY });
+    y -= 30;
+  };
+  const ensureSpace = (needed: number) => {
+    if (y - needed < 52) newPage();
+  };
+  const paragraph = (value: string, options: { size?: number; color?: ReturnType<typeof rgb>; font?: PDFFont; indent?: number; gap?: number } = {}) => {
+    const size = options.size ?? 9;
+    const lineHeight = size + 4;
+    const indent = options.indent ?? 0;
+    const lines = wrapText(value, options.font ?? font, size, contentWidth - indent);
+    ensureSpace(lines.length * lineHeight + (options.gap ?? 0));
+    for (const line of lines) {
+      page.drawText(line, { x: MARGIN + indent, y, size, font: options.font ?? font, color: options.color ?? INK });
+      y -= lineHeight;
     }
+    y -= options.gap ?? 0;
+  };
+  const section = (index: number, title: string) => {
+    ensureSpace(34);
+    page.drawText(String(index).padStart(2, "0"), { x: MARGIN, y, size: 7.5, font: bold, color: CHAMPAGNE });
+    page.drawText(safe(title.toUpperCase()), { x: MARGIN + 27, y, size: 10.5, font: bold, color: NAVY });
+    page.drawLine({ start: { x: MARGIN + 27, y: y - 7 }, end: { x: PAGE_SIZE[0] - MARGIN, y: y - 7 }, thickness: 0.7, color: BORDER });
+    y -= 25;
+  };
+  const statusTone = readiness.status === "apta" ? SUCCESS : readiness.status === "nao_avaliada" ? WARNING : DANGER;
+  const emissionDate = new Date().toLocaleDateString("pt-BR");
+
+  // Cabeçalho institucional navy com a marca oficial em branco.
+  page.drawRectangle({ x: 0, y: PAGE_SIZE[1] - 102, width: PAGE_SIZE[0], height: 102, color: NAVY });
+  const logoBytes = await rasterUrlAsPng(logoAsset.url);
+  if (logoBytes) {
+    const logo = await pdfDoc.embedPng(logoBytes);
+    const scale = Math.min(88 / logo.width, 55 / logo.height);
+    page.drawImage(logo, { x: MARGIN, y: PAGE_SIZE[1] - 80, width: logo.width * scale, height: logo.height * scale });
+  } else {
+    page.drawText("STAYO", { x: MARGIN, y: PAGE_SIZE[1] - 62, size: 21, font: bold, color: WHITE });
   }
-  writer.spacer(12);
+  page.drawText("RESUMO INTERNO", { x: 355, y: PAGE_SIZE[1] - 46, size: 8, font: bold, color: CHAMPAGNE });
+  page.drawText("DE IMPLANTAÇÃO", { x: 355, y: PAGE_SIZE[1] - 68, size: 16, font: bold, color: WHITE });
+  y = PAGE_SIZE[1] - 126;
 
-  writer.section("Checklist por fase");
-  if (checklist.length === 0) {
-    writer.text("Checklist ainda não montado.", { size: 10, color: INK_MUTED });
-  } else {
-    const byPhase = new Map<string, ImplementationItem[]>();
-    for (const item of checklist) {
-      byPhase.set(item.phase, [...(byPhase.get(item.phase) ?? []), item]);
-    }
-    for (const [phase, phaseItems] of byPhase) {
-      writer.text(`${phase}  ·  ${phaseItems.filter((item) => item.status === "concluido").length}/${phaseItems.length} concluídos`, { size: 10.5, font: bold, color: NAVY });
-      for (const item of phaseItems) {
-        const tags = [
-          itemStatusLabels[item.status],
-          item.mandatory ? "obrigatório" : null,
-          item.blocker ? "bloqueador" : null,
-        ]
-          .filter(Boolean)
-          .join(", ");
-        writer.text(`   ${clamp(item.title, 58)}  ·  ${tags}`, { size: 9, color: INK_MUTED });
+  // Capa em enquadramento "cover"; o chamador sempre fornece o placeholder institucional no fallback.
+  if (input.coverImageUrl) {
+    try {
+      const response = await fetch(input.coverImageUrl);
+      if (response.ok) {
+        const bytes = await response.arrayBuffer();
+        const contentType = response.headers.get("content-type") ?? "";
+        const image = contentType.includes("png") || input.coverImageUrl.toLowerCase().includes(".png")
+          ? await pdfDoc.embedPng(bytes)
+          : await pdfDoc.embedJpg(bytes);
+        const imageHeight = 172;
+        const scale = Math.min(contentWidth / image.width, imageHeight / image.height);
+        const imageWidth = image.width * scale;
+        const drawnHeight = image.height * scale;
+        page.drawRectangle({ x: MARGIN, y: y - imageHeight, width: contentWidth, height: imageHeight, color: SOFT });
+        page.drawImage(image, {
+          x: MARGIN + (contentWidth - imageWidth) / 2,
+          y: y - imageHeight + (imageHeight - drawnHeight) / 2,
+          width: imageWidth,
+          height: drawnHeight,
+        });
+        page.drawRectangle({ x: MARGIN, y: y - imageHeight, width: contentWidth, height: 42, color: NAVY, opacity: 0.86 });
+        page.drawText(safe(clamp(propertyLine(implementation), 52)), { x: MARGIN + 16, y: y - imageHeight + 17, size: 15, font: bold, color: WHITE });
+        y -= imageHeight + 16;
       }
-      writer.spacer(7);
+    } catch {
+      // O documento segue sem foto caso o arquivo fique indisponível durante a geração.
     }
   }
+  if (y === PAGE_SIZE[1] - 126) {
+    page.drawRectangle({ x: MARGIN, y: y - 82, width: contentWidth, height: 82, color: SOFT, borderColor: BORDER, borderWidth: 0.7 });
+    page.drawText(safe(clamp(propertyLine(implementation), 52)), { x: MARGIN + 16, y: y - 36, size: 16, font: bold, color: NAVY });
+    page.drawText("Imagem institucional indisponível", { x: MARGIN + 16, y: y - 56, size: 8, font, color: INK_MUTED });
+    y -= 98;
+  }
 
-  writer.spacer(6);
-  writer.section("Enxoval e itens faltantes");
-  const missingTotal = supplies.reduce((sum, item) => sum + missingQty(item), 0);
-  const blockingSupplies = supplies.filter((i) => i.blocksReadiness && missingQty(i) > 0).length;
-  writer.text(
-    `Itens cadastrados: ${supplies.length}  ·  Peças faltando: ${missingTotal}  ·  Itens que bloqueiam a prontidão: ${blockingSupplies}`,
-    { size: 9.5, font: bold },
+  page.drawText("CÓDIGO", { x: MARGIN, y, size: 6.8, font: bold, color: INK_MUTED });
+  page.drawText("PROPRIETÁRIO", { x: MARGIN + 126, y, size: 6.8, font: bold, color: INK_MUTED });
+  page.drawText("RESPONSÁVEL", { x: MARGIN + 302, y, size: 6.8, font: bold, color: INK_MUTED });
+  page.drawText("EMISSÃO", { x: MARGIN + 421, y, size: 6.8, font: bold, color: INK_MUTED });
+  page.drawText(safe(implementation.code), { x: MARGIN, y: y - 17, size: 9.5, font: bold, color: INK });
+  page.drawText(safe(clamp(implementation.ownerName ?? "Não informado", 26)), { x: MARGIN + 126, y: y - 17, size: 9.5, font: bold, color: INK });
+  page.drawText(safe(clamp(input.responsibleName ?? "Não definido", 18)), { x: MARGIN + 302, y: y - 17, size: 9.5, font: bold, color: INK });
+  page.drawText(emissionDate, { x: MARGIN + 421, y: y - 17, size: 9.5, font: bold, color: INK });
+  y -= 47;
+
+  section(1, "Situação atual");
+  paragraph(statusLabel, { size: 15, font: bold, color: NAVY });
+  paragraph(`Etapa operacional registrada em ${emissionDate}.`, { size: 8.5, color: INK_MUTED, gap: 8 });
+
+  section(2, "Progresso");
+  const progress = Math.max(0, Math.min(100, progressPercent));
+  page.drawText(`${progress}%`, { x: MARGIN, y, size: 18, font: bold, color: NAVY });
+  page.drawText(`${checklist.filter((item) => item.status === "concluido").length} de ${checklist.length} itens concluídos`, { x: MARGIN + 58, y: y + 3, size: 8.5, font, color: INK_MUTED });
+  y -= 17;
+  page.drawRectangle({ x: MARGIN, y, width: contentWidth, height: 7, color: BORDER });
+  if (progress > 0) page.drawRectangle({ x: MARGIN, y, width: contentWidth * (progress / 100), height: 7, color: NAVY_LIGHT });
+  y -= 25;
+
+  section(3, "Prontidão");
+  paragraph(readiness.label, { size: 15, font: bold, color: statusTone });
+  paragraph(
+    readiness.status === "nao_avaliada"
+      ? "Os requisitos obrigatórios e bloqueadores ainda não foram configurados. Prontidão não é calculada como apta sem avaliação."
+      : `${readiness.evaluatedRequirements} requisito(s) avaliado(s), ${readiness.pendingMandatory} obrigatório(s) pendente(s) e ${readiness.pendingBlockers} bloqueador(es) aberto(s).`,
+    { size: 8.5, color: INK_MUTED, gap: 10 },
   );
-  const openSupplies = supplies.filter((item) => missingQty(item) > 0 && item.status !== "nao_aplicavel");
-  if (openSupplies.length === 0) {
-    writer.text("Nenhum item faltante registrado.", { size: 9.5, color: INK_MUTED });
-  } else {
-    for (const item of openSupplies) {
-      const details = [
-        item.module === "enxoval" ? "Enxoval" : "Item faltante",
-        item.room,
-        `falta ${missingQty(item)}`,
-        supplyStatusLabels[item.status],
-        item.blocksReadiness ? "bloqueia prontidão" : null,
-      ].filter(Boolean);
-      writer.text(`- ${clamp(item.name, 48)}  ·  ${details.join(" · ")}`, {
-        size: 9,
-        color: item.blocksReadiness ? DANGER : INK_MUTED,
-      });
+
+  section(4, "Pendências críticas");
+  if (blockers.length === 0) paragraph("Nenhuma pendência crítica registrada.", { color: INK_MUTED, gap: 10 });
+  else for (const blocker of blockers) paragraph(`• ${blocker}`, { size: 9, color: DANGER, indent: 4, gap: 2 });
+  y -= 8;
+
+  section(5, "Checklist por fase");
+  if (checklist.length === 0) paragraph("Checklist ainda não configurado.", { color: INK_MUTED, gap: 8 });
+  else {
+    const byPhase = new Map<string, ImplementationItem[]>();
+    for (const item of checklist) byPhase.set(item.phase, [...(byPhase.get(item.phase) ?? []), item]);
+    for (const [phase, phaseItems] of byPhase) {
+      ensureSpace(38);
+      const done = phaseItems.filter((item) => item.status === "concluido").length;
+      paragraph(`${phase}  |  ${done}/${phaseItems.length} concluídos`, { size: 9.5, font: bold, color: NAVY, gap: 1 });
+      for (const item of phaseItems) {
+        const tags = [itemStatusLabels[item.status], item.mandatory ? "obrigatório" : null, item.blocker ? "bloqueador" : null].filter(Boolean).join(" · ");
+        paragraph(`• ${item.title}  —  ${tags}`, { size: 8.4, color: item.blocker && item.status !== "concluido" ? DANGER : INK_MUTED, indent: 5, gap: 1 });
+      }
+      y -= 5;
     }
   }
-  writer.spacer(14);
+  y -= 8;
 
-  writer.rule();
-  writer.text("Documento interno STAYO · Uso operacional", { size: 8, font: bold, color: NAVY });
-  writer.text("Este resumo não contém senhas, Wi-Fi, fechaduras, chaves, tokens ou documentos pessoais.", { size: 8, color: INK_MUTED });
+  section(6, "Enxoval e itens faltantes");
+  const missingTotal = supplies.reduce((sum, item) => sum + missingQty(item), 0);
+  const blockingSupplies = supplies.filter((item) => item.blocksReadiness && missingQty(item) > 0).length;
+  paragraph(`${supplies.length} itens cadastrados  |  ${missingTotal} peças faltando  |  ${blockingSupplies} bloqueiam prontidão`, { size: 9, font: bold, color: NAVY, gap: 3 });
+  const openSupplies = supplies.filter((item) => missingQty(item) > 0 && item.status !== "nao_aplicavel");
+  if (openSupplies.length === 0) paragraph("Nenhum item faltante registrado.", { color: INK_MUTED, gap: 8 });
+  else for (const item of openSupplies) {
+    const details = [item.module === "enxoval" ? "Enxoval" : "Item faltante", item.room, `falta ${missingQty(item)}`, supplyStatusLabels[item.status], item.blocksReadiness ? "bloqueia prontidão" : null].filter(Boolean).join(" · ");
+    paragraph(`• ${item.name}  —  ${details}`, { size: 8.4, color: item.blocksReadiness ? DANGER : INK_MUTED, indent: 5, gap: 1 });
+  }
+  y -= 8;
 
-  return writer.finish();
+  section(7, "Observações operacionais relevantes");
+  const notes = safeOperationalNotes(implementation.notes);
+  paragraph(notes ?? "Nenhuma observação operacional registrada.", { size: 9, color: notes ? INK : INK_MUTED, gap: 10 });
+  paragraph("Por segurança, este documento omite senhas, Wi-Fi, fechaduras, chaves, tokens, credenciais e documentos pessoais.", { size: 7.5, color: INK_MUTED });
+
+  drawFooter();
+  return pdfDoc.save();
 }
