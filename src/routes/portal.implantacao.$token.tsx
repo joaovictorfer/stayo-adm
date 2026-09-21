@@ -70,15 +70,15 @@ function publicStageIndex(status: OwnerPortalSnapshot["status"]): number {
 
 function PortalShell({ children, stage }: { children: React.ReactNode; stage?: OwnerPortalStage }) {
   return (
-    <div className="min-h-screen bg-[#f5f7f9] text-[#17232f]">
-      <header className="bg-[#0b3150] px-4 py-4 sm:px-6">
+    <div className="stayo-owner-portal min-h-screen bg-background text-foreground">
+      <header className="bg-portal-navy px-4 py-3 sm:px-6 sm:py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <img src={logoAsset.url} alt="Stayo Gramado" className="w-28" />
-          {stage ? <span className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/80">{stage === "active" ? "Imóvel ativo" : stage === "ready" ? "Pronto para operar" : "Em implantação"}</span> : null}
+          {stage ? <span className="rounded-full border border-primary-foreground/25 px-3 py-1 text-xs font-semibold text-primary-foreground">{stage === "active" ? "Imóvel ativo" : stage === "ready" ? "Pronto para operar" : "Em implantação"}</span> : null}
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-9">{children}</main>
-      <footer className="mx-auto max-w-6xl px-4 pb-8 text-center text-xs text-[#6b7785]">Portal seguro Stayo</footer>
+      <footer className="mx-auto max-w-6xl px-4 pb-8 text-center text-xs text-muted-foreground">Portal seguro Stayo</footer>
     </div>
   );
 }
@@ -87,9 +87,9 @@ function OwnerPortal() {
   const { token } = Route.useParams();
   const query = useQuery(ownerPortalAccessQuery(token));
 
-  if (query.isPending) return <PortalShell><div className="h-52 animate-pulse rounded-lg bg-white" /></PortalShell>;
+  if (query.isPending) return <PortalShell><div className="h-52 animate-pulse rounded-lg bg-card shadow-[var(--shadow-card)]" /></PortalShell>;
   if (query.isError || !query.data) {
-    return <PortalShell><div className="rounded-lg border border-[#e4e8ec] bg-white p-7"><h1 className="text-xl font-semibold">Acesso indisponível</h1><p className="mt-2 text-sm text-[#6b7785]">Este link expirou, foi revogado ou não existe. Solicite um novo acesso à equipe Stayo.</p></div></PortalShell>;
+    return <PortalShell><div className="rounded-lg border border-border bg-card p-7 shadow-[var(--shadow-card)]"><h1 className="text-xl font-semibold">Acesso indisponível</h1><p className="mt-2 text-sm text-muted-foreground">Este link expirou, foi revogado ou não existe. Solicite um novo acesso à equipe Stayo.</p></div></PortalShell>;
   }
 
   return <ProgressivePortal token={token} snapshot={query.data.snapshot} />;
@@ -115,14 +115,14 @@ function ProgressivePortal({ token, snapshot }: { token: string; snapshot: Owner
       <div className="space-y-6">
         <section className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-[#8a682d]">{snapshot.propertyLabel}</p>
+            <p className="text-sm font-semibold text-premium">{snapshot.propertyLabel}</p>
             <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Olá, {snapshot.ownerFirstName}.</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6b7785] sm:text-base">{stage === "active" ? "Seu imóvel está em operação com a Stayo." : stage === "ready" ? "Seu imóvel está pronto para começar a receber hóspedes." : "Estamos preparando seu imóvel para começar a operar com a Stayo."}</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{stage === "active" ? "Seu imóvel está em operação com a Stayo." : stage === "ready" ? "Seu imóvel está pronto para começar a receber hóspedes." : "Estamos preparando seu imóvel para começar a operar com a Stayo."}</p>
           </div>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden" onClick={() => setMobileMenu((value) => !value)} aria-label="Abrir menu">{mobileMenu ? <X /> : <Menu />}</Button>
         </section>
 
-        <nav aria-label="Portal do proprietário" className={`${mobileMenu ? "grid" : "hidden"} gap-1 rounded-lg border border-[#e4e8ec] bg-white p-2 md:flex md:overflow-x-auto`}>
+        <nav aria-label="Portal do proprietário" className={`${mobileMenu ? "grid" : "hidden"} gap-1 rounded-lg border border-border bg-card p-2 shadow-[var(--shadow-card)] md:flex md:overflow-x-auto`}>
           {modules.map((module) => (
             <Button key={module} variant={activeModule === module ? "default" : "ghost"} size="sm" className="justify-start whitespace-nowrap" onClick={() => choose(module)}>{moduleLabels[module]}</Button>
           ))}
