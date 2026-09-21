@@ -194,21 +194,28 @@ function ImplementationDetailPage() {
 
                 <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
                   <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
-                    Proprietário
+                    Proprietário vinculado
                   </p>
-                  <div className="space-y-2">
-                    {implementation.ownerId ? (
-                      <LinkedField
-                        to="/proprietarios/$id"
-                        id={implementation.ownerId}
-                        label={implementation.ownerName}
-                      />
-                    ) : (
-                      <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{implementation.ownerName || "Não informado"}</p>
-                    )}
-                    {implementation.ownerPhone && (
-                      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{implementation.ownerPhone}</p>
-                    )}
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      {implementation.ownerId ? (
+                        <LinkedField
+                          to="/proprietarios/$id"
+                          id={implementation.ownerId}
+                          label={implementation.ownerName}
+                        />
+                      ) : (
+                        <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{implementation.ownerName || "Não informado"}</p>
+                      )}
+                    </div>
+                    <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 text-sm">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--stayo-ink-muted)" }}>Telefone</p>
+                        <p style={{ color: implementation.ownerPhone ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>
+                          {implementation.ownerPhone || "Não informado"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
