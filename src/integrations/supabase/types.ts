@@ -411,6 +411,7 @@ export type Database = {
           condominium_name: string | null
           core_owner_id: string | null
           core_property_id: string | null
+          cover_image: string | null
           created_at: string
           id: string
           nickname: string | null
@@ -435,6 +436,7 @@ export type Database = {
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
+          cover_image?: string | null
           created_at?: string
           id?: string
           nickname?: string | null
@@ -459,6 +461,7 @@ export type Database = {
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
+          cover_image?: string | null
           created_at?: string
           id?: string
           nickname?: string | null
