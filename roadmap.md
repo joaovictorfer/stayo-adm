@@ -12,3 +12,9 @@
 - [x] Fase 5 — Cadastro integrado e retomável do proprietário no Portal
 - [x] Fase 6 — Portal progressivo do proprietário (implantação → transição → ativo)
 - [x] Fase 7 — Workspace administrativo do proprietário
+
+# Ajustes de confiabilidade
+
+- [ ] Corrigir os quatro estados centralizados de prontidão operacional no workspace e PDF
+- [ ] Corrigir gestão do acesso ao Portal quando o token original não estiver disponível no dispositivo
+- [ ] Rodar testes e build dos ajustes
