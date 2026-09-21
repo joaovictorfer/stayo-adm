@@ -33,6 +33,7 @@ import { blockingSupplyItems } from "../types/implementation-supply";
 import { generateImplementationSummaryPdf } from "../lib/pdf/implementation-pdf";
 import { downloadPdfBytes } from "../lib/pdf/download";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
+import { listActiveAdminProfiles } from "../lib/auth/session";
 import { formatMoney } from "../lib/format";
 import {
   alternateStatuses,
@@ -84,6 +85,10 @@ function ImplementationDetailPage() {
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const suppliesQuery = useQuery(supplyItemsQuery(id));
+  const adminProfilesQuery = useQuery({
+    queryKey: ["admin-profiles", "active"],
+    queryFn: listActiveAdminProfiles,
+  });
   const implementation = query.data;
 
   const changeStatus = useMutation({
@@ -167,6 +172,10 @@ function ImplementationDetailPage() {
                     ),
                   ],
                   statusLabel: statusLabels[implementation.status],
+                  responsibleName:
+                    adminProfilesQuery.data?.find(
+                      (profile) => profile.id === implementation.responsibleUserId,
+                    )?.fullName ?? null,
                 });
                 downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
               }}
