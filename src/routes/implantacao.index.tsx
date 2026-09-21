@@ -314,18 +314,17 @@ function PipelineView({
 const emptyForm = {
   name: "",
   phone: "",
+  responsibleUserId: "",
   condominiumName: "",
   unit: "",
-  nickname: "",
   city: "",
-  address: "",
-  postalCode: "",
-  propertyType: "",
-  bedrooms: "",
-  capacity: "",
-  startDateEstimate: "",
-  responsibleUserId: "",
-  notes: "",
+  taxaAdmin: "20%",
+  limpeza: "Incluso",
+  repasse: "Dia 10",
+  limiteManutencao: "R$ 200,00",
+  exclusividade: "Sim",
+  vigencia: "12 meses",
+  avisoPrevio: "60 dias",
 };
 
 function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -339,23 +338,34 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
         phone: input.phone,
         email: null,
       });
+
+      const condicoesText = [
+        `Taxa admin: ${input.taxaAdmin}`,
+        `Limpeza: ${input.limpeza}`,
+        `Repasse: ${input.repasse}`,
+        `Limite manutenção: ${input.limiteManutencao}`,
+        `Exclusividade: ${input.exclusividade}`,
+        `Vigência: ${input.vigencia}`,
+        `Aviso prévio: ${input.avisoPrevio}`,
+      ].join("\n");
+
       return coreApi.implementations.create({
         status: "prospect",
         ownerId: owner.id,
         ownerName: owner.name,
         ownerPhone: owner.phone,
-        nickname: input.nickname || null,
+        nickname: null,
         condominiumName: input.condominiumName || null,
         unit: input.unit || null,
-        address: input.address || null,
-        postalCode: input.postalCode || null,
+        address: null,
+        postalCode: null,
         city: input.city || null,
-        propertyType: input.propertyType || null,
-        bedrooms: input.bedrooms ? Number.parseInt(input.bedrooms, 10) : null,
-        capacity: input.capacity ? Number.parseInt(input.capacity, 10) : null,
-        startDateEstimate: input.startDateEstimate || null,
+        propertyType: null,
+        bedrooms: null,
+        capacity: null,
+        startDateEstimate: null,
         responsibleUserId: input.responsibleUserId || null,
-        notes: input.notes || null,
+        notes: condicoesText,
       });
     },
     onSuccess: async (created) => {
@@ -381,10 +391,11 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       content: (
         <div className="flex flex-col gap-3">
           <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Cadastro rápido — feito durante a ligação. O restante é completado depois.
+            Dados principais do proprietário e responsável.
           </p>
-          <TextField label="Proprietário" value={form.name} onChange={set("name")} required />
-          <TextField label="Telefone" value={form.phone} onChange={set("phone")} required />
+          <TextField label="Nome" value={form.name} onChange={set("name")} required />
+          <TextField label="WhatsApp" value={form.phone} onChange={set("phone")} required />
+          <TextField label="Responsável interno" value={form.responsibleUserId} onChange={set("responsibleUserId")} />
         </div>
       ),
     },
@@ -393,7 +404,9 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       label: "Imóvel",
       content: (
         <div className="flex flex-col gap-3">
-          <TextField label="Apelido" value={form.nickname} onChange={set("nickname")} />
+          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+            Identificação básica do local.
+          </p>
           <TextField
             label="Condomínio"
             value={form.condominiumName}
@@ -401,45 +414,28 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
           />
           <TextField label="Unidade" value={form.unit} onChange={set("unit")} />
           <TextField label="Cidade" value={form.city} onChange={set("city")} />
-          <TextField label="Endereço" value={form.address} onChange={set("address")} />
-          <TextField label="CEP" value={form.postalCode} onChange={set("postalCode")} />
-          <TextField
-            label="Tipo do imóvel"
-            value={form.propertyType}
-            onChange={set("propertyType")}
-          />
-          <TextField
-            label="Quartos"
-            type="number"
-            value={form.bedrooms}
-            onChange={set("bedrooms")}
-          />
-          <TextField
-            label="Capacidade"
-            type="number"
-            value={form.capacity}
-            onChange={set("capacity")}
-          />
         </div>
       ),
     },
     {
-      id: "planejamento",
-      label: "Planejamento",
+      id: "condicoes",
+      label: "Condições",
       content: (
         <div className="flex flex-col gap-3">
-          <TextField
-            label="Previsão de início"
-            type="date"
-            value={form.startDateEstimate}
-            onChange={set("startDateEstimate")}
-          />
-          <TextField
-            label="Responsável"
-            value={form.responsibleUserId}
-            onChange={set("responsibleUserId")}
-          />
-          <TextField label="Observação" value={form.notes} onChange={set("notes")} />
+          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+            Verifique ou ajuste as condições comerciais para esta implantação.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <TextField label="Taxa admin" value={form.taxaAdmin} onChange={set("taxaAdmin")} />
+            <TextField label="Limpeza" value={form.limpeza} onChange={set("limpeza")} />
+            <TextField label="Repasse" value={form.repasse} onChange={set("repasse")} />
+            <TextField label="Limite manutenção" value={form.limiteManutencao} onChange={set("limiteManutencao")} />
+            <TextField label="Exclusividade" value={form.exclusividade} onChange={set("exclusividade")} />
+            <TextField label="Vigência" value={form.vigencia} onChange={set("vigencia")} />
+            <div className="sm:col-span-2">
+              <TextField label="Aviso prévio" value={form.avisoPrevio} onChange={set("avisoPrevio")} />
+            </div>
+          </div>
           {mutation.isError && (
             <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
               Não foi possível salvar.
@@ -462,7 +458,7 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
     >
       <Wizard
         steps={steps}
-        completeLabel="Salvar implantação"
+        completeLabel="Criar implantação"
         submitting={mutation.isPending}
         onComplete={() => mutation.mutate(form)}
       />
