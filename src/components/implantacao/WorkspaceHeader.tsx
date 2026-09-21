@@ -6,7 +6,7 @@
  * barra só — são conceitos distintos (ver implementation-status.ts).
  */
 
-import { Check, Copy, FileText, ExternalLink, MapPin } from "lucide-react";
+import { AlertTriangle, Check, Copy, FileDown, ExternalLink, MapPin } from "lucide-react";
 import { useState } from "react";
 
 import { statusLabels, type ReadinessResult } from "../../lib/implementation-status";
@@ -21,24 +21,25 @@ function Metric({
   label: string;
   value: string;
   hint?: string;
-  tone?: string;
+  tone?: "neutral" | "success" | "warning" | "danger";
 }) {
+  const toneColor = {
+    neutral: "var(--foreground)",
+    success: "var(--stayo-success)",
+    warning: "var(--stayo-warning)",
+    danger: "var(--destructive)",
+  }[tone ?? "neutral"];
+
   return (
-    <div className="rounded-[var(--radius-control)] border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-3">
-      <p className="text-[10px] font-semibold uppercase text-primary-foreground/55">
+    <div className="min-h-28 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+      <p className="text-[10px] font-semibold uppercase text-muted-foreground">
         {label}
       </p>
-      <p
-        className="mt-1 font-display text-lg font-semibold leading-tight"
-        style={{
-          fontFamily: "var(--stayo-font-display)",
-          color: tone ?? "var(--primary-foreground)",
-        }}
-      >
+      <p className="mt-2 font-display text-xl font-semibold leading-tight" style={{ color: toneColor }}>
         {value}
       </p>
       {hint && (
-        <p className="mt-1 text-[10px] text-primary-foreground/55">
+        <p className="mt-2 text-xs leading-4 text-muted-foreground">
           {hint}
         </p>
       )}
@@ -59,7 +60,7 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] border border-primary-foreground/15 bg-primary-foreground/[0.06] px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary-foreground/10"
+      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-primary-foreground/20 bg-primary-foreground/[0.08] px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/15"
     >
       {icon}
       {children}
@@ -74,7 +75,7 @@ export function WorkspaceHeader({
   progressTotal,
   readiness,
   pendingCount,
-  onOpenProposal,
+  onGenerateSummary,
   onOpenPortal,
 }: {
   implementation: ImplementationProject;
@@ -83,7 +84,7 @@ export function WorkspaceHeader({
   progressTotal: number;
   readiness: ReadinessResult;
   pendingCount: number;
-  onOpenProposal: () => void;
+  onGenerateSummary: () => void;
   onOpenPortal: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -93,20 +94,26 @@ export function WorkspaceHeader({
     .join(" • ");
 
   return (
-    <section className="rounded-[var(--radius-card)] bg-brand p-5 text-primary-foreground shadow-[var(--shadow-card)] sm:p-6">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+    <div className="space-y-3">
+      <section className="rounded-[var(--radius-card)] bg-brand px-4 py-4 text-primary-foreground shadow-[var(--shadow-card)] sm:px-5 sm:py-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase text-premium">{implementation.code} · {statusLabels[implementation.status]}</p>
-          <h1 className="mt-2 truncate font-display text-xl font-semibold leading-tight sm:text-2xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase text-premium">{implementation.code}</p>
+            <span className="rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-2 py-0.5 text-[11px] font-semibold">
+              {statusLabels[implementation.status]}
+            </span>
+          </div>
+          <h1 className="mt-1.5 font-display text-xl font-semibold leading-tight sm:text-2xl">
             {implementation.nickname || place || "Imóvel ainda sem identificação"}
           </h1>
-          {implementation.nickname && place && <p className="mt-1 flex items-center gap-1.5 text-sm text-primary-foreground/70"><MapPin size={13} />{place}</p>}
-          <p className="mt-1 text-sm text-primary-foreground/70">
-            {implementation.ownerName || "Proprietário não informado"}
-          </p>
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-primary-foreground/70">
+            {implementation.nickname && place && <p className="flex items-center gap-1.5"><MapPin size={13} />{place}</p>}
+            <p>Proprietário: <span className="font-medium text-primary-foreground">{implementation.ownerName || "Não informado"}</span></p>
+          </div>
         </div>
 
-        <div className="hidden flex-wrap justify-end gap-2 sm:flex">
+        <div className="flex flex-wrap gap-2 lg:max-w-md lg:justify-end">
           <ActionButton onClick={onOpenPortal} icon={<ExternalLink size={14} />}>
             Portal
           </ActionButton>
@@ -122,14 +129,15 @@ export function WorkspaceHeader({
           >
             {copied ? "Link copiado" : "Compartilhar"}
           </ActionButton>
-          <ActionButton onClick={onOpenProposal} icon={<FileText size={14} />}>
-            Gerar documento
+          <ActionButton onClick={onGenerateSummary} icon={<FileDown size={14} />}>
+            Gerar resumo
           </ActionButton>
         </div>
       </div>
+      </section>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Status" value={statusLabels[implementation.status]} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Metric label="Etapa atual" value={statusLabels[implementation.status]} />
         <Metric
           label="Progresso"
           value={`${progressPercent}%`}
@@ -140,24 +148,20 @@ export function WorkspaceHeader({
           value={readiness.label}
           tone={
             readiness.status === "apta"
-              ? "var(--stayo-success)"
+              ? "success"
               : readiness.status === "bloqueada"
-                ? "var(--stayo-danger)"
-                : "var(--stayo-gold)"
+                ? "danger"
+                : "warning"
           }
-          hint="Não é o mesmo que progresso"
+          hint={`${readiness.pendingBlockers} bloqueador(es) · ${readiness.pendingMandatory} obrigatório(s)`}
         />
         <Metric
           label="Pendências"
           value={String(pendingCount)}
-          tone={pendingCount > 0 ? "var(--stayo-gold)" : "var(--primary-foreground)"}
-          hint="Itens obrigatórios ou bloqueadores em aberto"
+          tone={pendingCount > 0 ? "warning" : "success"}
+          hint={pendingCount > 0 ? "Requerem acompanhamento" : "Nenhuma pendência crítica"}
         />
       </div>
-      <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
-        <ActionButton onClick={onOpenPortal} icon={<ExternalLink size={14} />}>Portal</ActionButton>
-        <ActionButton onClick={onOpenProposal} icon={<FileText size={14} />}>Documento</ActionButton>
-      </div>
-    </section>
+    </div>
   );
 }
