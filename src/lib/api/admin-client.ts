@@ -80,148 +80,46 @@ import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "
 import { createSecureToken, hashToken } from "./token-hash";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
+import type { AdminImplementationsDomain } from "./admin-domains/implementations";
+import { fieldConfirmationFromRow, implementationOwnerFromRow, propertyDetailsFromRow, roomFromRow, type FieldConfirmationRow, type ImplementationOwnerRow, type PropertyDetailsRow, type RoomRow } from "./admin-domains/implementations";
+import type { AdminOwnersDomain } from "./admin-domains/owners";
+import { ownerFromRow, type OwnerAdministrativeRegistrationRow, type OwnerRecordRow } from "./admin-domains/owners";
+import type { AdminOwnerPortalDomain } from "./admin-domains/owner-portal";
+import { ownerOnboardingLinkFromRow, ownerOnboardingSubmissionFromRow, type OwnerOnboardingLinkRow, type OwnerOnboardingSubmissionRow } from "./admin-domains/owner-portal";
+import type { AdminProposalsDomain } from "./admin-domains/proposals";
+import { implementationTemplateFromRow, proposalBlockFromRow, proposalSettingsFromRow, type ImplementationTemplateRow, type ProposalBlockRow, type ProposalSettingsRow } from "./admin-domains/proposals";
+import type { AdminContractsDomain } from "./admin-domains/contracts";
+import { defaultFromRow, initialChargeFromRow, termFromRow, type CommercialTermDefaultRow, type CommercialTermRow, type InitialChargeRow } from "./admin-domains/contracts";
 
-export interface AdminApiClient {
+export interface AdminApiClient
+  extends AdminImplementationsDomain, AdminOwnersDomain, AdminOwnerPortalDomain, AdminProposalsDomain, AdminContractsDomain {
   audit: {
     log(input: AuditLogInput): Promise<AuditLogEntry>;
     list(params?: { entityType?: string; entityId?: string }): Promise<AuditLogEntry[]>;
   };
-  owners: {
-    list(params?: { q?: string }): Promise<OwnerRecord[]>;
-    get(id: string): Promise<OwnerRecord | null>;
-    create(input: OwnerRecordInput): Promise<OwnerRecord>;
-    update(id: string, patch: Partial<Omit<OwnerRecord, "id" | "createdAt">>): Promise<OwnerRecord>;
-    /** Dedupe simples por telefone — usado pelo cadastro rápido da Nova Implantação. */
-    findOrCreateByPhone(input: OwnerRecordInput): Promise<OwnerRecord>;
-    /** Projeção cadastral restrita; a chave PIX deve ser mascarada pela UI. */
-    getAdministrativeRegistration(implementationIds: string[]): Promise<OwnerAdministrativeRegistration | null>;
-  };
-  commercialTermDefaults: {
-    list(): Promise<CommercialTermDefault[]>;
-    create(input: CommercialTermDefaultInput): Promise<CommercialTermDefault>;
-    update(id: string, input: CommercialTermDefaultInput): Promise<CommercialTermDefault>;
-    remove(id: string): Promise<void>;
-  };
-  commercialTerms: {
-    listByImplementation(implementationId: string): Promise<CommercialTerm[]>;
-    /** Clona os defaults vigentes para a implantação — idempotente. */
-    cloneDefaults(implementationId: string): Promise<CommercialTerm[]>;
-    add(input: Omit<CommercialTerm, "id">): Promise<CommercialTerm>;
-    remove(id: string): Promise<void>;
-    update(
-      id: string,
-      patch: Partial<Omit<CommercialTerm, "id" | "implementationId">>,
-    ): Promise<CommercialTerm>;
-  };
   outbox: {
     listByImplementation(implementationId: string): Promise<OutboundMessage[]>;
-    /** Sempre nasce "queued" — o envio de verdade depende do gateway (mock hoje). */
     enqueue(input: OutboundMessageInput): Promise<OutboundMessage>;
     markSent(id: string, providerMessageId: string | null): Promise<OutboundMessage>;
     markFailed(id: string, error: string): Promise<OutboundMessage>;
   };
-  initialCharges: {
-    listByImplementation(implementationId: string): Promise<InitialCharge[]>;
-    /** Idempotente por proposalId — aceitar a mesma versão duas vezes não duplica cobrança. */
-    createFromProposal(input: {
-      implementationId: string;
-      ownerId: string | null;
-      proposalId: string;
-      items: InitialChargeItem[];
-    }): Promise<InitialCharge>;
-    updateStatus(
-      id: string,
-      status: InitialChargeStatus,
-      patch?: { paymentReference?: string | null; paidAt?: string | null },
-    ): Promise<InitialCharge>;
-  };
   ownerTasks: {
     listByOwner(ownerId: string): Promise<OwnerTask[]>;
     create(input: OwnerTaskInput): Promise<OwnerTask>;
-    /** Só o time interno chama isto — nunca o proprietário sob a própria sessão (RLS não tem policy de escrita para ele). */
     updateStatus(id: string, status: OwnerTaskStatus): Promise<OwnerTask>;
   };
-  ownerOnboarding: {
-    /** Convite mais recente desta implantação, qualquer que seja o status. */
-    getLink(implementationId: string): Promise<OwnerOnboardingLink | null>;
-    /**
-     * Sempre cria um convite novo, revogando qualquer um ainda ativo da
-     * mesma implantação. `ownerId` fica gravado no convite (Fase 17H) —
-     * é o que permite `owner_account_link` vincular a conta do
-     * proprietário ao `owner_id` certo sem depender do adapter de
-     * `implementation_projects`.
-     */
-    createLink(
-      implementationId: string,
-      ownerId: string | null,
-      publicSnapshot: OwnerPortalSnapshot,
-      validityDays?: number,
-    ): Promise<{ link: OwnerOnboardingLink; token: string }>;
-    revoke(id: string): Promise<OwnerOnboardingLink>;
-    /**
-     * Chamado pelo portal público (sem autenticação) — nunca lê a tabela
-     * diretamente sob RLS; no adapter Supabase, resolve via função
-     * security-definer (ver migration 0007).
-     */
-    findByToken(token: string): Promise<OwnerOnboardingLink | null>;
-    resolvePortal(token: string): Promise<OwnerPortalPublicAccess | null>;
-    acceptPortalProposal(token: string, acceptedName: string): Promise<void>;
-    getDraft(token: string): Promise<OwnerOnboardingDraft | null>;
-    saveDraft(token: string, input: OwnerOnboardingDraft, submit?: boolean): Promise<OwnerOnboardingDraft>;
-    getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
-    /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
-    submit(
-      implementationId: string,
-      token: string,
-      input: OwnerOnboardingSubmissionInput,
-    ): Promise<OwnerOnboardingSubmission>;
-  };
-  /** Fase 2 — vários proprietários/proponentes por implantação (relação, nunca campos duplicados). */
-  implementationOwners: {
-    listByImplementation(implementationId: string): Promise<ImplementationOwnerLink[]>;
-    add(input: ImplementationOwnerLinkInput): Promise<ImplementationOwnerLink>;
-    remove(id: string): Promise<void>;
-  };
-  /** Fase 2 — estado de confirmação campo a campo; nada é sobrescrito em silêncio. */
-  fieldConfirmations: {
-    listByImplementation(implementationId: string): Promise<FieldConfirmation[]>;
-    setState(input: {
-      implementationId: string;
-      fieldKey: string;
-      state: OwnerFieldState;
-      valueSnapshot?: string | null;
-      note?: string | null;
-    }): Promise<FieldConfirmation>;
-  };
-  /** Fase 3 — cadastro estruturado do imóvel da implantação. */
-  propertyDetails: {
-    get(implementationId: string): Promise<ImplementationPropertyDetails | null>;
-    save(
-      implementationId: string,
-      input: ImplementationPropertyDetailsInput,
-    ): Promise<ImplementationPropertyDetails>;
-  };
-  /** Fase 3 — ambientes (quartos, banheiros, áreas) com camas e capacidade. */
-  rooms: {
-    listByImplementation(implementationId: string): Promise<ImplementationRoom[]>;
-    add(input: ImplementationRoomInput): Promise<ImplementationRoom>;
-    remove(id: string): Promise<void>;
-  };
-  /** Fase 4 — enxoval e itens faltantes (itens livres, nunca fixos no código). */
   supplies: {
     listByImplementation(implementationId: string, module?: SupplyModule): Promise<SupplyItem[]>;
     add(input: SupplyItemInput): Promise<SupplyItem>;
     update(id: string, patch: SupplyItemPatch): Promise<SupplyItem>;
     remove(id: string): Promise<void>;
   };
-  /** Fase 4 — templates de enxoval: aplicar copia os itens (snapshot), nunca vincula. */
   supplyTemplates: {
     list(module?: SupplyModule): Promise<SupplyTemplate[]>;
     items(templateId: string): Promise<SupplyTemplateItem[]>;
     create(input: SupplyTemplateInput): Promise<SupplyTemplate>;
     remove(id: string): Promise<void>;
   };
-  /** Fase 6 — conteúdo institucional do portal (rascunho e publicado). */
   portalContent: {
     list(): Promise<PortalContentBlock[]>;
     add(input: PortalContentBlockInput): Promise<PortalContentBlock>;
@@ -230,27 +128,7 @@ export interface AdminApiClient {
     unpublish(id: string): Promise<PortalContentBlock>;
     remove(id: string): Promise<void>;
   };
-  /** Fase 5 — prazo de validade e observações de pagamento da proposta. */
-  proposalSettings: {
-    get(implementationId: string): Promise<ProposalSettings | null>;
-    save(implementationId: string, input: ProposalSettingsInput): Promise<ProposalSettings>;
-  };
-  /** Fase 5 — blocos de regras/observações com visibilidade por destino. */
-  proposalBlocks: {
-    listByImplementation(implementationId: string): Promise<ProposalContentBlock[]>;
-    add(input: ProposalContentBlockInput): Promise<ProposalContentBlock>;
-    update(id: string, patch: ProposalContentBlockPatch): Promise<ProposalContentBlock>;
-    remove(id: string): Promise<void>;
-  };
-  /** Fase 5 — modelos de implantação: aplicar COPIA o snapshot, nunca vincula. */
-  implementationTemplates: {
-    list(): Promise<ImplementationTemplate[]>;
-    get(id: string): Promise<ImplementationTemplate | null>;
-    create(input: ImplementationTemplateInput): Promise<ImplementationTemplate>;
-    remove(id: string): Promise<void>;
-  };
 }
-
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
 // reusar a mesma chave em vez de duplicar a string em outro arquivo.
@@ -1198,89 +1076,6 @@ function auditFromRow(row: AuditLogRow): AuditLogEntry {
   };
 }
 
-interface OwnerRecordRow {
-  id: string;
-  name: string;
-  phone: string | null;
-  email: string | null;
-  document: string | null;
-  lifecycle_status: OwnerRecord["lifecycleStatus"];
-  core_owner_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface OwnerAdministrativeRegistrationRow {
-  implementation_id: string;
-  submitted_at: string | null;
-  bank_name: string | null;
-  account_holder: string | null;
-  holder_tax_id: string | null;
-  pix_type: OwnerAdministrativeRegistration["pixType"];
-  pix_key: string | null;
-  is_primary: boolean | null;
-}
-
-function ownerFromRow(row: OwnerRecordRow): OwnerRecord {
-  return {
-    id: row.id,
-    name: row.name,
-    phone: row.phone,
-    email: row.email,
-    document: row.document,
-    lifecycleStatus: row.lifecycle_status,
-    coreOwnerId: row.core_owner_id,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-interface CommercialTermDefaultRow {
-  id: string;
-  label: string;
-  charge_type: CommercialTermDefault["chargeType"];
-  value: number;
-  optional: boolean;
-  display_order: number;
-  notes: string | null;
-}
-
-function defaultFromRow(row: CommercialTermDefaultRow): CommercialTermDefault {
-  return {
-    id: row.id,
-    label: row.label,
-    chargeType: row.charge_type,
-    value: row.value,
-    optional: row.optional,
-    displayOrder: row.display_order,
-    notes: row.notes,
-  };
-}
-
-interface CommercialTermRow {
-  id: string;
-  implementation_id: string;
-  label: string;
-  charge_type: CommercialTerm["chargeType"];
-  value: number;
-  optional: boolean;
-  display_order: number;
-  notes: string | null;
-}
-
-function termFromRow(row: CommercialTermRow): CommercialTerm {
-  return {
-    id: row.id,
-    implementationId: row.implementation_id,
-    label: row.label,
-    chargeType: row.charge_type,
-    value: row.value,
-    optional: row.optional,
-    displayOrder: row.display_order,
-    notes: row.notes,
-  };
-}
-
 interface OutboundMessageRow {
   id: string;
   implementation_id: string;
@@ -1313,70 +1108,6 @@ function outboundMessageFromRow(row: OutboundMessageRow): OutboundMessage {
   };
 }
 
-interface InitialChargeRow {
-  id: string;
-  code: string;
-  implementation_id: string;
-  owner_id: string | null;
-  proposal_id: string;
-  items: InitialChargeItem[];
-  amount: number;
-  status: InitialChargeStatus;
-  due_at: string | null;
-  payment_reference: string | null;
-  paid_at: string | null;
-  notes: string | null;
-  created_at: string;
-}
-
-function initialChargeFromRow(row: InitialChargeRow): InitialCharge {
-  return {
-    id: row.id,
-    code: row.code,
-    implementationId: row.implementation_id,
-    ownerId: row.owner_id,
-    proposalId: row.proposal_id,
-    items: row.items,
-    amount: row.amount,
-    status: row.status,
-    dueAt: row.due_at,
-    paymentReference: row.payment_reference,
-    paidAt: row.paid_at,
-    notes: row.notes,
-    createdAt: row.created_at,
-  };
-}
-
-interface OwnerOnboardingLinkRow {
-  id: string;
-  implementation_id: string;
-  owner_id: string | null;
-  token_hash: string;
-  created_at: string;
-  created_by: string | null;
-  expires_at: string;
-  used_at: string | null;
-  revoked_at: string | null;
-  last_access_at: string | null;
-  public_snapshot: OwnerPortalSnapshot | null;
-}
-
-function ownerOnboardingLinkFromRow(row: OwnerOnboardingLinkRow): OwnerOnboardingLink {
-  return {
-    id: row.id,
-    implementationId: row.implementation_id,
-    ownerId: row.owner_id,
-    tokenHash: row.token_hash,
-    createdAt: row.created_at,
-    createdBy: row.created_by,
-    expiresAt: row.expires_at,
-    usedAt: row.used_at,
-    revokedAt: row.revoked_at,
-    lastAccessAt: row.last_access_at,
-    publicSnapshot: row.public_snapshot,
-  };
-}
-
 interface OwnerTaskRow {
   id: string;
   owner_id: string;
@@ -1400,30 +1131,6 @@ function ownerTaskFromRow(row: OwnerTaskRow): OwnerTask {
     status: row.status,
     createdAt: row.created_at,
     completedAt: row.completed_at,
-  };
-}
-
-interface OwnerOnboardingSubmissionRow {
-  implementation_id: string;
-  full_name: string;
-  document: string | null;
-  email: string;
-  phone: string;
-  pix_key: string | null;
-  submitted_at: string;
-}
-
-function ownerOnboardingSubmissionFromRow(
-  row: OwnerOnboardingSubmissionRow,
-): OwnerOnboardingSubmission {
-  return {
-    implementationId: row.implementation_id,
-    fullName: row.full_name,
-    document: row.document,
-    email: row.email,
-    phone: row.phone,
-    pixKey: row.pix_key,
-    submittedAt: row.submitted_at,
   };
 }
 
@@ -2510,122 +2217,6 @@ export function createDefaultAdminApiClient(): AdminApiClient {
   return isSupabaseConfigured() ? createSupabaseAdminApiClient() : createLocalAdminApiClient();
 }
 
-interface ImplementationOwnerRow {
-  id: string;
-  implementation_id: string;
-  owner_id: string;
-  role: string;
-  share_percent: number | string | null;
-  address: string | null;
-  display_order: number;
-  created_at: string;
-}
-
-function implementationOwnerFromRow(row: ImplementationOwnerRow): ImplementationOwnerLink {
-  return {
-    id: row.id,
-    implementationId: row.implementation_id,
-    ownerId: row.owner_id,
-    role: row.role,
-    sharePercent: row.share_percent === null ? null : Number(row.share_percent),
-    address: row.address,
-    displayOrder: row.display_order,
-    createdAt: row.created_at,
-  };
-}
-
-interface FieldConfirmationRow {
-  id: string;
-  implementation_id: string;
-  field_key: string;
-  state: OwnerFieldState;
-  value_snapshot: string | null;
-  note: string | null;
-  updated_at: string;
-}
-
-function fieldConfirmationFromRow(row: FieldConfirmationRow): FieldConfirmation {
-  return {
-    id: row.id,
-    implementationId: row.implementation_id,
-    fieldKey: row.field_key,
-    state: row.state,
-    valueSnapshot: row.value_snapshot,
-    note: row.note,
-    updatedAt: row.updated_at,
-  };
-}
-
-interface PropertyDetailsRow {
-  implementation_id: string;
-  postal_code: string | null;
-  street: string | null;
-  number: string | null;
-  complement: string | null;
-  district: string | null;
-  city: string | null;
-  state: string | null;
-  property_type: string | null;
-  bedrooms: number | null;
-  suites: number | null;
-  bathrooms: number | null;
-  parking_spots: number | null;
-  access_notes: string | null;
-  wifi_network: string | null;
-  wifi_password: string | null;
-  notes: string | null;
-  updated_at: string;
-}
-
-function propertyDetailsFromRow(row: PropertyDetailsRow): ImplementationPropertyDetails {
-  return {
-    implementationId: row.implementation_id,
-    postalCode: row.postal_code,
-    street: row.street,
-    number: row.number,
-    complement: row.complement,
-    district: row.district,
-    city: row.city,
-    state: row.state,
-    propertyType: row.property_type,
-    bedrooms: row.bedrooms,
-    suites: row.suites,
-    bathrooms: row.bathrooms,
-    parkingSpots: row.parking_spots,
-    accessNotes: row.access_notes,
-    wifiNetwork: row.wifi_network,
-    wifiPassword: row.wifi_password,
-    notes: row.notes,
-    updatedAt: row.updated_at,
-  };
-}
-
-interface RoomRow {
-  id: string;
-  implementation_id: string;
-  name: string;
-  kind: string;
-  beds: string | null;
-  capacity: number | null;
-  display_order: number;
-  notes: string | null;
-  created_at: string;
-}
-
-function roomFromRow(row: RoomRow): ImplementationRoom {
-  return {
-    id: row.id,
-    implementationId: row.implementation_id,
-    name: row.name,
-    kind: row.kind,
-    beds: row.beds,
-    capacity: row.capacity,
-    displayOrder: row.display_order,
-    notes: row.notes,
-    createdAt: row.created_at,
-  };
-}
-
 interface SupplyItemRow {
   id: string;
   implementation_id: string;
@@ -2703,67 +2294,6 @@ function supplyTemplateItemFromRow(row: SupplyTemplateItemRow): SupplyTemplateIt
     size: row.size,
     requiredQty: row.required_qty,
     displayOrder: row.display_order,
-  };
-}
-
-// ---- Fase 5: linhas e mapeadores de proposta e modelos ----
-
-interface ProposalSettingsRow {
-  implementation_id: string;
-  validity_days: number;
-  payment_notes: string | null;
-  updated_at: string;
-}
-
-function proposalSettingsFromRow(row: ProposalSettingsRow): ProposalSettings {
-  return {
-    implementationId: row.implementation_id,
-    validityDays: row.validity_days,
-    paymentNotes: row.payment_notes,
-    updatedAt: row.updated_at,
-  };
-}
-
-interface ProposalBlockRow {
-  id: string;
-  implementation_id: string;
-  title: string;
-  body: string;
-  visibility: ProposalContentBlock["visibility"];
-  display_order: number;
-  created_at: string;
-}
-
-function proposalBlockFromRow(row: ProposalBlockRow): ProposalContentBlock {
-  return {
-    id: row.id,
-    implementationId: row.implementation_id,
-    title: row.title,
-    body: row.body,
-    visibility: row.visibility,
-    displayOrder: row.display_order,
-    createdAt: row.created_at,
-  };
-}
-
-interface ImplementationTemplateRow {
-  id: string;
-  name: string;
-  notes: string | null;
-  payload: unknown;
-  created_at: string;
-}
-
-function implementationTemplateFromRow(row: ImplementationTemplateRow): ImplementationTemplate {
-  return {
-    id: row.id,
-    name: row.name,
-    notes: row.notes,
-    payload: {
-      ...emptyTemplatePayload,
-      ...((row.payload as Partial<ImplementationTemplatePayload> | null) ?? {}),
-    },
-    createdAt: row.created_at,
   };
 }
 
