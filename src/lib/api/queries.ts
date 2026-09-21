@@ -3,13 +3,13 @@
  *
  * Toda leitura de dados de negócio passa pelo CoreApiClient — nenhuma tela
  * chama `fetch` nem monta objeto na mão. Nesta fase o client é o mock
- * (`createMockCoreApiClient()`), então as listas vêm vazias por contrato.
+ * (`LocalCoreAdapter`, mock/dev), selecionado fora das telas.
  */
 
 import { queryOptions } from "@tanstack/react-query";
 
 import { createDefaultAdminApiClient, type AdminApiClient } from "./admin-client";
-import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
+import { createDefaultCoreApiClient, type CoreClient } from "./core-client";
 import {
   checklistTemplatesStore,
   ownerNotesStore,
@@ -20,7 +20,7 @@ import type { EntityId } from "../../types/core";
 import type { SupplyModule } from "../../types/implementation-supply";
 
 /** Fonte única de dados desta fase. */
-export const coreApi: CoreApiClient = createMockCoreApiClient();
+export const coreApi: CoreClient = createDefaultCoreApiClient();
 
 /** Domínio próprio do Admin (Grupo A) — ver docs/OWNER_IMPLEMENTATION_AUDIT.md. */
 export const adminApi: AdminApiClient = createDefaultAdminApiClient();
