@@ -237,6 +237,91 @@ export type Database = {
         }
         Relationships: []
       }
+      implementation_contract_conditions: {
+        Row: {
+          administration_fee: number | null
+          cleaning_responsibility: string | null
+          duration_months: number | null
+          exclusivity: boolean | null
+          implementation_id: string
+          maintenance_limit: number | null
+          notice_period_days: number | null
+          payout_rule: string | null
+          updated_at: string
+        }
+        Insert: {
+          administration_fee?: number | null
+          cleaning_responsibility?: string | null
+          duration_months?: number | null
+          exclusivity?: boolean | null
+          implementation_id: string
+          maintenance_limit?: number | null
+          notice_period_days?: number | null
+          payout_rule?: string | null
+          updated_at?: string
+        }
+        Update: {
+          administration_fee?: number | null
+          cleaning_responsibility?: string | null
+          duration_months?: number | null
+          exclusivity?: boolean | null
+          implementation_id?: string
+          maintenance_limit?: number | null
+          notice_period_days?: number | null
+          payout_rule?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_contract_conditions_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_field_confirmations: {
+        Row: {
+          field_key: string
+          id: string
+          implementation_id: string
+          note: string | null
+          state: Database["public"]["Enums"]["owner_field_state"]
+          updated_at: string
+          updated_by: string | null
+          value_snapshot: string | null
+        }
+        Insert: {
+          field_key: string
+          id?: string
+          implementation_id: string
+          note?: string | null
+          state?: Database["public"]["Enums"]["owner_field_state"]
+          updated_at?: string
+          updated_by?: string | null
+          value_snapshot?: string | null
+        }
+        Update: {
+          field_key?: string
+          id?: string
+          implementation_id?: string
+          note?: string | null
+          state?: Database["public"]["Enums"]["owner_field_state"]
+          updated_at?: string
+          updated_by?: string | null
+          value_snapshot?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_field_confirmations_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_items: {
         Row: {
           blocker: boolean
@@ -311,6 +396,54 @@ export type Database = {
           },
         ]
       }
+      implementation_owners: {
+        Row: {
+          address: string | null
+          created_at: string
+          display_order: number
+          id: string
+          implementation_id: string
+          owner_id: string
+          role: string
+          share_percent: number | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id: string
+          owner_id: string
+          role?: string
+          share_percent?: number | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          owner_id?: string
+          role?: string
+          share_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_owners_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_owners_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_projects: {
         Row: {
           address: string | null
@@ -322,6 +455,7 @@ export type Database = {
           condominium_name: string | null
           core_owner_id: string | null
           core_property_id: string | null
+          cover_image: string | null
           created_at: string
           id: string
           nickname: string | null
@@ -346,6 +480,7 @@ export type Database = {
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
+          cover_image?: string | null
           created_at?: string
           id?: string
           nickname?: string | null
@@ -370,6 +505,7 @@ export type Database = {
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
+          cover_image?: string | null
           created_at?: string
           id?: string
           nickname?: string | null
@@ -393,6 +529,239 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      implementation_property_details: {
+        Row: {
+          access_notes: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          complement: string | null
+          district: string | null
+          implementation_id: string
+          notes: string | null
+          number: string | null
+          parking_spots: number | null
+          postal_code: string | null
+          property_type: string | null
+          state: string | null
+          street: string | null
+          suites: number | null
+          updated_at: string
+          wifi_network: string | null
+          wifi_password: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          complement?: string | null
+          district?: string | null
+          implementation_id: string
+          notes?: string | null
+          number?: string | null
+          parking_spots?: number | null
+          postal_code?: string | null
+          property_type?: string | null
+          state?: string | null
+          street?: string | null
+          suites?: number | null
+          updated_at?: string
+          wifi_network?: string | null
+          wifi_password?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          complement?: string | null
+          district?: string | null
+          implementation_id?: string
+          notes?: string | null
+          number?: string | null
+          parking_spots?: number | null
+          postal_code?: string | null
+          property_type?: string | null
+          state?: string | null
+          street?: string | null
+          suites?: number | null
+          updated_at?: string
+          wifi_network?: string | null
+          wifi_password?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_property_details_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_proposal_settings: {
+        Row: {
+          implementation_id: string
+          payment_notes: string | null
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          implementation_id: string
+          payment_notes?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Update: {
+          implementation_id?: string
+          payment_notes?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_proposal_settings_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_rooms: {
+        Row: {
+          beds: string | null
+          capacity: number | null
+          created_at: string
+          display_order: number
+          id: string
+          implementation_id: string
+          kind: string
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          beds?: string | null
+          capacity?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id: string
+          kind?: string
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          beds?: string | null
+          capacity?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          kind?: string
+          name?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_rooms_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_supply_items: {
+        Row: {
+          blocks_readiness: boolean
+          created_at: string
+          display_order: number
+          existing_qty: number
+          id: string
+          implementation_id: string
+          module: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes: string | null
+          priority: Database["public"]["Enums"]["supply_priority"]
+          required_qty: number
+          responsible: string | null
+          room: string | null
+          size: string | null
+          status: Database["public"]["Enums"]["supply_status"]
+          updated_at: string
+        }
+        Insert: {
+          blocks_readiness?: boolean
+          created_at?: string
+          display_order?: number
+          existing_qty?: number
+          id?: string
+          implementation_id: string
+          module: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["supply_priority"]
+          required_qty?: number
+          responsible?: string | null
+          room?: string | null
+          size?: string | null
+          status?: Database["public"]["Enums"]["supply_status"]
+          updated_at?: string
+        }
+        Update: {
+          blocks_readiness?: boolean
+          created_at?: string
+          display_order?: number
+          existing_qty?: number
+          id?: string
+          implementation_id?: string
+          module?: Database["public"]["Enums"]["supply_module"]
+          name?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["supply_priority"]
+          required_qty?: number
+          responsible?: string | null
+          room?: string | null
+          size?: string | null
+          status?: Database["public"]["Enums"]["supply_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_supply_items_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          payload?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          payload?: Json
+        }
+        Relationships: []
       }
       initial_charges: {
         Row: {
@@ -513,6 +882,77 @@ export type Database = {
           },
         ]
       }
+      owner_onboarding_profiles: {
+        Row: {
+          city: string | null
+          complement: string | null
+          created_at: string
+          current_step: number
+          district: string | null
+          email: string | null
+          implementation_id: string
+          legal_name: string | null
+          number: string | null
+          person_type: string | null
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          street: string | null
+          submitted_at: string | null
+          tax_id: string | null
+          trade_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          current_step?: number
+          district?: string | null
+          email?: string | null
+          implementation_id: string
+          legal_name?: string | null
+          number?: string | null
+          person_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          submitted_at?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          current_step?: number
+          district?: string | null
+          email?: string | null
+          implementation_id?: string
+          legal_name?: string | null
+          number?: string | null
+          person_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          submitted_at?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_onboarding_profiles_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_onboarding_submissions: {
         Row: {
           document: string | null
@@ -545,6 +985,53 @@ export type Database = {
           submitted_at?: string
         }
         Relationships: []
+      }
+      owner_payout_accounts: {
+        Row: {
+          account_holder: string | null
+          bank_name: string | null
+          created_at: string
+          holder_tax_id: string | null
+          id: string
+          implementation_id: string
+          is_primary: boolean
+          pix_key: string | null
+          pix_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          bank_name?: string | null
+          created_at?: string
+          holder_tax_id?: string | null
+          id?: string
+          implementation_id: string
+          is_primary?: boolean
+          pix_key?: string | null
+          pix_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          bank_name?: string | null
+          created_at?: string
+          holder_tax_id?: string | null
+          id?: string
+          implementation_id?: string
+          is_primary?: boolean
+          pix_key?: string | null
+          pix_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_payout_accounts_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       owner_portal_accounts: {
         Row: {
@@ -581,6 +1068,7 @@ export type Database = {
           implementation_id: string
           last_access_at: string | null
           owner_id: string | null
+          public_snapshot: Json | null
           revoked_at: string | null
           token_hash: string
           used_at: string | null
@@ -593,6 +1081,7 @@ export type Database = {
           implementation_id: string
           last_access_at?: string | null
           owner_id?: string | null
+          public_snapshot?: Json | null
           revoked_at?: string | null
           token_hash: string
           used_at?: string | null
@@ -605,6 +1094,7 @@ export type Database = {
           implementation_id?: string
           last_access_at?: string | null
           owner_id?: string | null
+          public_snapshot?: Json | null
           revoked_at?: string | null
           token_hash?: string
           used_at?: string | null
@@ -709,6 +1199,83 @@ export type Database = {
           },
         ]
       }
+      portal_content_blocks: {
+        Row: {
+          created_at: string
+          display_order: number
+          draft_body: string
+          draft_title: string
+          id: string
+          kind: Database["public"]["Enums"]["portal_block_kind"]
+          published_at: string | null
+          published_body: string | null
+          published_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          draft_body?: string
+          draft_title?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["portal_block_kind"]
+          published_at?: string | null
+          published_body?: string | null
+          published_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          draft_body?: string
+          draft_title?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["portal_block_kind"]
+          published_at?: string | null
+          published_body?: string | null
+          published_title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proposal_content_blocks: {
+        Row: {
+          body: string
+          created_at: string
+          display_order: number
+          id: string
+          implementation_id: string
+          title: string
+          visibility: Database["public"]["Enums"]["proposal_block_visibility"]
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id: string
+          title: string
+          visibility?: Database["public"]["Enums"]["proposal_block_visibility"]
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          implementation_id?: string
+          title?: string
+          visibility?: Database["public"]["Enums"]["proposal_block_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_content_blocks_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_share_links: {
         Row: {
           created_at: string
@@ -786,6 +1353,68 @@ export type Database = {
           },
         ]
       }
+      supply_template_items: {
+        Row: {
+          display_order: number
+          id: string
+          name: string
+          required_qty: number
+          room: string | null
+          size: string | null
+          template_id: string
+        }
+        Insert: {
+          display_order?: number
+          id?: string
+          name: string
+          required_qty?: number
+          room?: string | null
+          size?: string | null
+          template_id: string
+        }
+        Update: {
+          display_order?: number
+          id?: string
+          name?: string
+          required_qty?: number
+          room?: string | null
+          size?: string | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "supply_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_templates: {
+        Row: {
+          created_at: string
+          id: string
+          module: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module?: Database["public"]["Enums"]["supply_module"]
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module?: Database["public"]["Enums"]["supply_module"]
+          name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -813,6 +1442,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      owner_onboarding_draft_resolve: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      owner_onboarding_draft_save: {
+        Args: { p_data: Json; p_submit?: boolean; p_token: string }
+        Returns: Json
       }
       owner_onboarding_resolve_token: {
         Args: { p_token: string }
@@ -848,6 +1485,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      owner_portal_accept_proposal: {
+        Args: { p_accepted_name: string; p_token: string }
+        Returns: Json
+      }
+      owner_portal_resolve: {
+        Args: { p_token: string }
+        Returns: {
+          expires_at: string
+          public_snapshot: Json
+          revoked_at: string
+        }[]
       }
       proposal_accept_by_token: {
         Args: { p_accepted_name: string; p_token: string }
@@ -924,7 +1573,23 @@ export type Database = {
         | "sent"
         | "failed"
         | "cancelled"
+      owner_field_state:
+        | "not_informed"
+        | "prefilled_by_stayo"
+        | "confirmed_by_owner"
+        | "changed_by_owner"
+        | "reviewed_by_stayo"
       owner_task_status: "pending" | "done" | "dismissed"
+      portal_block_kind: "hero" | "destaque" | "passo" | "faq" | "rodape"
+      proposal_block_visibility: "interno" | "proposta" | "portal"
+      supply_module: "enxoval" | "faltante"
+      supply_priority: "baixa" | "media" | "alta"
+      supply_status:
+        | "pendente"
+        | "comprado"
+        | "entregue"
+        | "instalado"
+        | "nao_aplicavel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1105,7 +1770,25 @@ export const Constants = {
         "failed",
         "cancelled",
       ],
+      owner_field_state: [
+        "not_informed",
+        "prefilled_by_stayo",
+        "confirmed_by_owner",
+        "changed_by_owner",
+        "reviewed_by_stayo",
+      ],
       owner_task_status: ["pending", "done", "dismissed"],
+      portal_block_kind: ["hero", "destaque", "passo", "faq", "rodape"],
+      proposal_block_visibility: ["interno", "proposta", "portal"],
+      supply_module: ["enxoval", "faltante"],
+      supply_priority: ["baixa", "media", "alta"],
+      supply_status: [
+        "pendente",
+        "comprado",
+        "entregue",
+        "instalado",
+        "nao_aplicavel",
+      ],
     },
   },
 } as const
