@@ -77,6 +77,7 @@ function ImplementationDetailPage() {
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
+  const nextItem = (itemsQuery.data ?? []).find((item) => item.status !== "concluido");
 
   const changeStatus = useMutation({
     mutationFn: async (status: ImplementationStatus) => {
@@ -116,6 +117,35 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="flex flex-col gap-4">
+          <div className="relative overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+            <div className="absolute inset-0 bg-gradient-to-r from-[rgba(11,49,80,0.92)] via-[rgba(11,49,80,0.72)] to-transparent" />
+            {implementation.coverImage ? (
+              <img
+                src={implementation.coverImage}
+                alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#0B3150_0%,#123F68_58%,#d6b36a_160%)]" />
+            )}
+            <div className="relative flex min-h-[148px] flex-col justify-end gap-3 p-5 text-white sm:min-h-[168px] sm:p-6">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/75">
+                <span className="rounded-full border border-white/25 bg-white/10 px-2.5 py-1">Implantação</span>
+                <span>{implementation.code}</span>
+              </div>
+              <div>
+                <h1 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {implementation.nickname || implementation.condominiumName || "Novo imóvel"}
+                </h1>
+                <p className="mt-1 text-sm text-white/80">
+                  {[implementation.condominiumName, implementation.unit, implementation.city]
+                    .filter(Boolean)
+                    .join(" · ") || "Detalhes da implantação"}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <StatusStepper
             status={implementation.status}
             onChange={(status) => changeStatus.mutate(status)}
@@ -144,47 +174,80 @@ function ImplementationDetailPage() {
 
           {tab === "resumo" ? (
             <div className="flex flex-col gap-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="ID" value={implementation.id} />
-                <Field label="Código" value={implementation.code} />
-                <Field label="Status" value={statusLabels[implementation.status]} />
-                <Field
-                  label="Proprietário"
-                  value={
-                    implementation.ownerId ? (
+              <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
+                        Próxima ação
+                      </p>
+                      <h2 className="mt-1 text-base font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                        {nextItem?.title ?? "Tudo em dia por enquanto"}
+                      </h2>
+                    </div>
+                    {nextItem && <Tag label="Pendente" tone="gold" />}
+                  </div>
+                  <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {nextItem?.description || "Revise o progresso e acompanhe as próximas etapas da implantação."}
+                  </p>
+                </div>
+
+                <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+                  <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
+                    Proprietário
+                  </p>
+                  <div className="space-y-2">
+                    {implementation.ownerId ? (
                       <LinkedField
                         to="/proprietarios/$id"
                         id={implementation.ownerId}
                         label={implementation.ownerName}
                       />
                     ) : (
-                      implementation.ownerName
-                    )
-                  }
-                />
-                <Field label="Telefone" value={implementation.ownerPhone} />
-                <Field label="Apelido do imóvel" value={implementation.nickname} />
-                <Field label="Condomínio" value={implementation.condominiumName} />
-                <Field label="Unidade" value={implementation.unit} />
-                <Field label="Endereço" value={implementation.address} />
-                <Field label="CEP" value={implementation.postalCode} />
-                <Field label="Cidade" value={implementation.city} />
-                <Field label="Tipo do imóvel" value={implementation.propertyType} />
-                <Field label="Quartos" value={implementation.bedrooms} />
-                <Field label="Capacidade" value={implementation.capacity} />
-                <Field label="Responsável" value={implementation.responsibleUserId} />
-                <Field label="Previsão de início" value={implementation.startDateEstimate} />
-                <Field
-                  label="Previsão de conclusão"
-                  value={implementation.completionDateEstimate}
-                />
-                <Field label="Origem" value={implementation.origin} />
-                <Field label="Observação" value={implementation.notes} />
-                <Field label="Imóvel no Core" value={implementation.corePropertyId} />
-                <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
-                <Field label="Criada em" value={implementation.createdAt} />
-                <Field label="Atualizada em" value={implementation.updatedAt} />
+                      <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{implementation.ownerName || "Não informado"}</p>
+                    )}
+                    {implementation.ownerPhone && (
+                      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{implementation.ownerPhone}</p>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+                <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>
+                  Dados principais do imóvel
+                </p>
+                <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {implementation.nickname && <Field label="Apelido" value={implementation.nickname} />}
+                  {implementation.condominiumName && <Field label="Condomínio" value={implementation.condominiumName} />}
+                  {implementation.unit && <Field label="Unidade" value={implementation.unit} />}
+                  {implementation.address && <Field label="Endereço" value={implementation.address} />}
+                  {implementation.city && <Field label="Cidade" value={implementation.city} />}
+                  {implementation.propertyType && <Field label="Tipo" value={implementation.propertyType} />}
+                  {implementation.bedrooms !== null && implementation.bedrooms !== undefined && <Field label="Quartos" value={implementation.bedrooms} />}
+                  {implementation.capacity !== null && implementation.capacity !== undefined && <Field label="Capacidade" value={implementation.capacity} />}
+                </div>
+              </div>
+
+              <details className="rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+                  Detalhes técnicos
+                </summary>
+                <div className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
+                  <Field label="ID" value={implementation.id} />
+                  <Field label="Código" value={implementation.code} />
+                  <Field label="Status" value={statusLabels[implementation.status]} />
+                  {implementation.responsibleUserId && <Field label="Responsável" value={implementation.responsibleUserId} />}
+                  {implementation.startDateEstimate && <Field label="Previsão de início" value={implementation.startDateEstimate} />}
+                  {implementation.completionDateEstimate && <Field label="Previsão de conclusão" value={implementation.completionDateEstimate} />}
+                  {implementation.origin && <Field label="Origem" value={implementation.origin} />}
+                  {implementation.notes && <Field label="Observação" value={implementation.notes} />}
+                  {implementation.corePropertyId && <Field label="Imóvel no Core" value={implementation.corePropertyId} />}
+                  {implementation.coreOwnerId && <Field label="Proprietário no Core" value={implementation.coreOwnerId} />}
+                  <Field label="Criada em" value={implementation.createdAt} />
+                  <Field label="Atualizada em" value={implementation.updatedAt} />
+                </div>
+              </details>
 
               <CommercialTermsPanel implementationId={implementation.id} />
 
@@ -744,56 +807,35 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
   const readiness = computeReadiness(items);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-        <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
-          Progresso do checklist
-        </p>
-        <p
-          className="mt-1 text-3xl"
-          style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-        >
-          {loading ? "—" : `${progress.percent}%`}
-        </p>
-        <div
-          className="mt-3 h-2 w-full overflow-hidden rounded-full"
-          style={{ backgroundColor: "var(--stayo-border)" }}
-        >
-          <div
-            className="h-full rounded-full"
-            style={{ width: `${progress.percent}%`, backgroundColor: "var(--stayo-forest)" }}
-          />
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div className="rounded-[var(--radius-card)] border bg-white px-4 py-3 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em]" style={{ color: "var(--stayo-ink-muted)" }}>
+            Progresso
+          </p>
+          <p className="text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
+            {loading ? "—" : `${progress.percent}%`}
+          </p>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
+          <div className="h-full rounded-full transition-all" style={{ width: `${progress.percent}%`, backgroundColor: "var(--stayo-forest)" }} />
         </div>
         <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
           {progress.done} de {progress.total} itens concluídos
         </p>
       </div>
 
-      <div
-        className="rounded-[var(--radius-card)] border p-4"
-        style={{
-          ...surface,
-          borderColor: loading ? "transparent" : readinessColors[readiness.state],
-        }}
-      >
-        <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
-          Prontidão operacional
-        </p>
-        <p
-          className="mt-1 text-3xl"
-          style={{
-            fontFamily: "var(--stayo-font-display)",
-            color: loading ? "var(--stayo-ink-muted)" : readinessColors[readiness.state],
-          }}
-        >
-          {loading ? "—" : readinessLabels[readiness.state]}
-        </p>
-        <p className="mt-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          {readiness.pendingBlockers} bloqueador(es) em aberto · {readiness.pendingMandatory}{" "}
-          obrigatório(s) em aberto
-        </p>
-        <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          Não é a mesma coisa que progresso: um único bloqueador pendente impede a operação.
+      <div className="rounded-[var(--radius-card)] border bg-white px-4 py-3 shadow-sm" style={{ borderColor: loading ? "var(--stayo-border)" : readinessColors[readiness.state] }}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em]" style={{ color: "var(--stayo-ink-muted)" }}>
+            Prontidão
+          </p>
+          <p className="text-base font-semibold" style={{ color: loading ? "var(--stayo-ink-muted)" : readinessColors[readiness.state] }}>
+            {loading ? "—" : readinessLabels[readiness.state]}
+          </p>
+        </div>
+        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          {readiness.pendingBlockers} bloqueador(es) · {readiness.pendingMandatory} obrigatório(s) em aberto
         </p>
       </div>
     </div>
