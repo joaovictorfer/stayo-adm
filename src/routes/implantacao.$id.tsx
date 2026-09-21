@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Check, FileDown } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -115,7 +115,7 @@ function ImplementationDetailPage() {
 
   return (
     <>
-      <PageHeader title="Workspace de implantação" subtitle={implementation?.code}>
+      <PageHeader title="Implantação" subtitle="Workspace operacional">
         <Link
           to="/implantacao"
           className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -142,7 +142,22 @@ function ImplementationDetailPage() {
               attentionItems(checklistItems).length +
               blockingSupplyItems(suppliesQuery.data ?? []).length
             }
-            onOpenProposal={() => setTab("proposta")}
+            onGenerateSummary={async () => {
+              const bytes = await generateImplementationSummaryPdf({
+                implementation,
+                checklist: checklistItems,
+                supplies: suppliesQuery.data ?? [],
+                progressPercent: progress.percent,
+                readiness,
+                blockers: [
+                  ...attentionItems(checklistItems).map((item) => item.title),
+                  ...blockingSupplyItems(suppliesQuery.data ?? []).map((item) => `Enxoval/faltante: ${item.name}`),
+                ],
+                statusLabel: statusLabels[implementation.status],
+                responsibleName: adminProfilesQuery.data?.find((profile) => profile.id === implementation.responsibleUserId)?.fullName ?? null,
+              });
+              downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
+            }}
             onOpenPortal={() => setPortalOpen(true)}
           />
           <OwnerPortalAccess
@@ -152,37 +167,7 @@ function ImplementationDetailPage() {
             checklist={checklistItems}
           />
 
-          <AttentionPanel items={checklistItems} />
-
-          <div>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
-              onClick={async () => {
-                const bytes = await generateImplementationSummaryPdf({
-                  implementation,
-                  checklist: checklistItems,
-                  supplies: suppliesQuery.data ?? [],
-                  progressPercent: progress.percent,
-                  readiness,
-                  blockers: [
-                    ...attentionItems(checklistItems).map((item) => item.title),
-                    ...blockingSupplyItems(suppliesQuery.data ?? []).map(
-                      (item) => `Enxoval/faltante: ${item.name}`,
-                    ),
-                  ],
-                  statusLabel: statusLabels[implementation.status],
-                  responsibleName:
-                    adminProfilesQuery.data?.find(
-                      (profile) => profile.id === implementation.responsibleUserId,
-                    )?.fullName ?? null,
-                });
-                downloadPdfBytes(bytes, `resumo-${implementation.code}.pdf`);
-              }}
-            >
-              <FileDown size={15} /> Gerar PDF do resumo
-            </button>
-          </div>
+          <AttentionPanel items={checklistItems} onResolve={() => setTab("checklist")} />
 
           <StatusStepper
             status={implementation.status}
@@ -190,10 +175,8 @@ function ImplementationDetailPage() {
             pending={changeStatus.isPending}
           />
 
-          <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
-
-
-          <div className="flex gap-1 overflow-x-auto rounded-[var(--radius-card)] border border-border bg-card p-1 shadow-[var(--shadow-card)]">
+          <div className="overflow-x-auto border-b border-border [scrollbar-width:none]">
+            <div className="flex min-w-max gap-1">
             {(
               [
                 ["resumo", "Resumo"],
@@ -209,11 +192,12 @@ function ImplementationDetailPage() {
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${tab === t ? "bg-brand text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                className={`shrink-0 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${tab === t ? "border-brand text-brand" : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"}`}
               >
                 {label}
               </button>
             ))}
+            </div>
           </div>
 
           {tab === "resumo" ? (

@@ -4,7 +4,7 @@
  * inventado: cada linha vem de um ImplementationItem real.
  */
 
-import { AlertTriangle } from "lucide-react";
+import { ArrowRight, AlertTriangle } from "lucide-react";
 
 import { itemStatusLabels } from "../../lib/implementation-status";
 import type { ImplementationItem } from "../../types/core";
@@ -26,45 +26,33 @@ export function attentionItems(items: ImplementationItem[]): ImplementationItem[
     .sort((a, b) => Number(b.blocker) - Number(a.blocker) || a.order - b.order);
 }
 
-export function AttentionPanel({ items }: { items: ImplementationItem[] }) {
+export function AttentionPanel({ items, onResolve }: { items: ImplementationItem[]; onResolve: () => void }) {
   const pending = attentionItems(items);
-  if (pending.length === 0) return null;
+  const next = pending[0];
 
   return (
     <section
-      className="rounded-[var(--radius-card)] border p-4"
-      style={{ ...surface, borderColor: "var(--stayo-warning)" }}
+      className="grid gap-4 rounded-[var(--radius-card)] border p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+      style={{ ...surface, borderColor: next ? "var(--stayo-warning)" : "var(--stayo-border)" }}
     >
-      <h2
-        className="mb-2 flex items-center gap-2 text-sm"
-        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-      >
-        <AlertTriangle size={15} style={{ color: "var(--stayo-warning)" }} />
-        Precisamos de atenção
-      </h2>
-      <ul className="flex flex-col gap-1.5">
-        {pending.slice(0, 8).map((item) => (
-          <li key={item.id} className="flex flex-wrap items-center gap-2 text-sm">
-            <span style={{ color: "var(--stayo-ink)" }}>{item.title}</span>
-            <span
-              className="rounded-full px-2 py-0.5 text-[11px]"
-              style={{
-                backgroundColor: item.blocker ? "var(--stayo-gold-soft)" : "var(--stayo-forest-soft)",
-                color: item.blocker ? "var(--stayo-warning)" : "var(--stayo-ink-muted)",
-              }}
-            >
-              {item.blocker ? "Bloqueador" : "Obrigatório"}
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-              {item.phase} · {itemStatusLabels[item.status]}
-            </span>
-          </li>
-        ))}
-      </ul>
-      {pending.length > 8 && (
-        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          e mais {pending.length - 8} item(ns) na aba Checklist.
+      <div className="min-w-0">
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+          <AlertTriangle size={15} className={next ? "text-warning" : "text-success"} />
+          Próxima ação recomendada
         </p>
+        <h2 className="mt-1.5 font-display text-base font-semibold text-foreground sm:text-lg">
+          {next ? next.title : "Nenhuma ação crítica pendente"}
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {next
+            ? `${next.phase} · ${next.blocker ? "Bloqueador" : "Obrigatório"} · ${itemStatusLabels[next.status]}${pending.length > 1 ? ` · mais ${pending.length - 1} pendência(s)` : ""}`
+            : "Acompanhe as próximas etapas da implantação pela timeline."}
+        </p>
+      </div>
+      {next && (
+        <button type="button" onClick={onResolve} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-brand px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-strong">
+          Resolver agora <ArrowRight size={15} />
+        </button>
       )}
     </section>
   );
