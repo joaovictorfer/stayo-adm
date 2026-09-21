@@ -429,15 +429,15 @@ export async function generateImplementationSummaryPdf(
           ? await pdfDoc.embedPng(bytes)
           : await pdfDoc.embedJpg(bytes);
         const imageHeight = 172;
-        const scale = Math.max(contentWidth / image.width, imageHeight / image.height);
+        const scale = Math.min(contentWidth / image.width, imageHeight / image.height);
         const imageWidth = image.width * scale;
         const drawnHeight = image.height * scale;
+        page.drawRectangle({ x: MARGIN, y: y - imageHeight, width: contentWidth, height: imageHeight, color: SOFT });
         page.drawImage(image, {
           x: MARGIN + (contentWidth - imageWidth) / 2,
           y: y - imageHeight + (imageHeight - drawnHeight) / 2,
           width: imageWidth,
           height: drawnHeight,
-          clip: { x: MARGIN, y: y - imageHeight, width: contentWidth, height: imageHeight },
         });
         page.drawRectangle({ x: MARGIN, y: y - imageHeight, width: contentWidth, height: 42, color: NAVY, opacity: 0.86 });
         page.drawText(safe(clamp(propertyLine(implementation), 52)), { x: MARGIN + 16, y: y - imageHeight + 17, size: 15, font: bold, color: WHITE });
