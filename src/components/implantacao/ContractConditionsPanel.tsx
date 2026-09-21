@@ -15,6 +15,7 @@ import {
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
+import { Textarea } from "../ui/textarea";
 import { supabase } from "../../integrations/supabase/client";
 import type { EntityId } from "../../types/core";
 
@@ -209,23 +210,25 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="cleaning_responsibility">Limpeza</Label>
-                <Input
+                <Textarea
                   id="cleaning_responsibility"
                   value={form.cleaning_responsibility}
                   onChange={(event) => updateField("cleaning_responsibility", event.target.value)}
-                  placeholder="Ex.: Proprietário"
+                  placeholder="Ex.: Sob responsabilidade do proprietário na entrega. Limpeza operacional avulsa..."
+                  className="min-h-[80px] resize-none"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="payout_rule">Repasse</Label>
-                <Input
+                <Textarea
                   id="payout_rule"
                   value={form.payout_rule}
                   onChange={(event) => updateField("payout_rule", event.target.value)}
-                  placeholder="Ex.: Até o dia 10"
+                  placeholder="Ex.: Repasse efetuado até o 5º dia útil do mês subsequente..."
+                  className="min-h-[80px] resize-none"
                 />
               </div>
 
