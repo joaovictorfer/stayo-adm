@@ -154,8 +154,8 @@ function ImplementationDetailPage() {
 
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
-          <div className="flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "checklist", "proposta"] as const).map((t) => (
+          <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
+            {(["resumo", "imovel", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -167,7 +167,13 @@ function ImplementationDetailPage() {
                     tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
                 }}
               >
-                {t === "resumo" ? "Resumo" : t === "checklist" ? "Checklist" : "Proposta"}
+                {t === "resumo"
+                  ? "Resumo"
+                  : t === "imovel"
+                    ? "Imóvel"
+                    : t === "checklist"
+                      ? "Checklist"
+                      : "Proposta"}
               </button>
             ))}
           </div>
@@ -350,6 +356,8 @@ function ImplementationDetailPage() {
                 <Timeline entries={recentActivity(itemsQuery.data ?? [])} />
               </div>
             </div>
+          ) : tab === "imovel" ? (
+            <PropertyTab implementation={implementation} />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
@@ -918,6 +926,210 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
           {readiness.pendingBlockers} bloqueador(es) · {readiness.pendingMandatory} obrigatório(s) em aberto
         </p>
       </div>
+    </div>
+  );
+}
+
+function PropertyTab({ implementation }: { implementation: ImplementationProject }) {
+  const queryClient = useQueryClient();
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [postalCode, setPostalCode] = useState("");
+  const [addressDraft, setAddressDraft] = useState(implementation.address ?? "");
+  const [notesDraft, setNotesDraft] = useState(implementation.notes ?? "");
+  const [addressLookupMessage, setAddressLookupMessage] = useState("");
+
+  const updateImplementation = useMutation({
+    mutationFn: (input: { address?: string | null; notes?: string | null }) =>
+      coreApi.implementations.update(implementation.id, input),
+    onSuccess: async () => {
+      setEditingSection(null);
+      await queryClient.invalidateQueries({ queryKey: ["implementations", implementation.id] });
+      await queryClient.invalidateQueries({ queryKey: ["implementations"] });
+    },
+  });
+
+  const filledFields = [
+    implementation.nickname,
+    implementation.condominiumName,
+    implementation.unit,
+    implementation.address,
+    implementation.city,
+    implementation.propertyType,
+    implementation.bedrooms,
+    implementation.capacity,
+  ].filter((value) => value !== null && value !== undefined && value !== "").length;
+  const totalFields = 8;
+  const completionPercent = Math.round((filledFields / totalFields) * 100);
+
+  async function searchPostalCode() {
+    const normalized = postalCode.replace(/\\D/g, "");
+    if (normalized.length !== 8) {
+      setAddressLookupMessage("Informe um CEP válido com 8 números.");
+      return;
+    }
+
+    setAddressLookupMessage("Buscando endereço...");
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${normalized}/json/`);
+      const data = (await response.json()) as {
+        erro?: boolean;
+        logradouro?: string;
+        bairro?: string;
+        localidade?: string;
+        uf?: string;
+      };
+
+      if (!response.ok || data.erro) {
+        setAddressLookupMessage("CEP não encontrado.");
+        return;
+      }
+
+      const addressParts = [data.logradouro, data.bairro, data.localidade, data.uf].filter(Boolean);
+      setAddressDraft(addressParts.join(", "));
+      setAddressLookupMessage("Endereço encontrado. Revise e salve a seção.");
+    } catch {
+      setAddressLookupMessage("Não foi possível consultar o CEP agora.");
+    }
+  }
+
+  function Section({
+    id,
+    title,
+    description,
+    children,
+  }: {
+    id: string;
+    title: string;
+    description?: string;
+    children: React.ReactNode;
+  }) {
+    const isEditing = editingSection === id;
+    return (
+      <details open className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{title}</h2>
+            {description && <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{description}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              setEditingSection(isEditing ? null : id);
+            }}
+            className="shrink-0 rounded-[var(--radius-control)] border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-slate-50"
+            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-forest)" }}
+          >
+            {isEditing ? "Fechar edição" : "Editar seção"}
+          </button>
+        </summary>
+        <div className="border-t px-4 py-4" style={{ borderColor: "var(--stayo-border)" }}>
+          {children}
+        </div>
+      </details>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+        {implementation.coverImage ? (
+          <img src={implementation.coverImage} alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`} className="h-48 w-full object-cover sm:h-60" />
+        ) : (
+          <div className="flex h-48 items-end bg-[linear-gradient(135deg,#0B3150_0%,#123F68_58%,#d6b36a_160%)] p-5 sm:h-60">
+            <span className="text-sm text-white/75">Sem foto de capa cadastrada</span>
+          </div>
+        )}
+        <div className="flex flex-col gap-3 bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Imóvel</p>
+            <h1 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>{implementation.nickname || "Imóvel sem apelido"}</h1>
+            <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+              {[implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Condomínio e unidade não informados"}
+            </p>
+          </div>
+          <div className="min-w-44 rounded-lg bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span style={{ color: "var(--stayo-ink-muted)" }}>Preenchimento</span>
+              <strong style={{ color: "var(--stayo-forest)" }}>{completionPercent}%</strong>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
+              <div className="h-full rounded-full" style={{ width: `${completionPercent}%`, backgroundColor: "var(--stayo-forest)" }} />
+            </div>
+            <p className="mt-1.5 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{filledFields} de {totalFields} campos principais</p>
+          </div>
+        </div>
+      </div>
+
+      <Section id="identificacao" title="Identificação e endereço" description="Dados básicos do imóvel e localização">
+        {editingSection === "identificacao" ? (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Apelido" value={implementation.nickname || "Não informado"} />
+              <Field label="Condomínio" value={implementation.condominiumName || "Não informado"} />
+              <Field label="Unidade" value={implementation.unit || "Não informado"} />
+              <Field label="Cidade" value={implementation.city || "Não informado"} />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <label className="flex-1 text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+                Buscar endereço por CEP
+                <input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} placeholder="00000-000" className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+              </label>
+              <button type="button" onClick={() => void searchPostalCode()} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>Buscar CEP</button>
+            </div>
+            {addressLookupMessage && <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{addressLookupMessage}</p>}
+            <label className="block text-xs font-medium" style={{ color: "var(--stayo-ink-muted) }}>
+              Endereço
+              <input value={addressDraft} onChange={(event) => setAddressDraft(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+            </label>
+            <button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ address: addressDraft })} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</button>
+          </div>
+        ) : (
+          <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Apelido" value={implementation.nickname || "Não informado"} />
+            <Field label="Condomínio" value={implementation.condominiumName || "Não informado"} />
+            <Field label="Unidade" value={implementation.unit || "Não informado"} />
+            <Field label="Endereço" value={implementation.address || "Não informado"} />
+            <Field label="Cidade" value={implementation.city || "Não informado"} />
+          </div>
+        )}
+      </Section>
+
+      <Section id="composicao" title="Composição" description="Características principais da acomodação">
+        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
+          <Field label="Tipo de imóvel" value={implementation.propertyType || "Não informado"} />
+          <Field label="Quartos" value={implementation.bedrooms ?? "Não informado"} />
+          <Field label="Capacidade" value={implementation.capacity ?? "Não informado"} />
+        </div>
+      </Section>
+
+      <Section id="ambientes" title="Ambientes e camas" description="Organização dos ambientes e lugares de dormir">
+        <div className="rounded-lg border border-dashed bg-slate-50 p-4" style={{ borderColor: "var(--stayo-border)" }}>
+          <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{implementation.bedrooms ?? "Não informado"} quarto(s) cadastrado(s)</p>
+          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Detalhamento de ambientes, camas e capacidades por cômodo ainda não informado nesta implantação.</p>
+        </div>
+      </Section>
+
+      <Section id="acessos" title="Acessos e Wi-Fi" description="Informações operacionais de entrada e conectividade">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-4">
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>Dados de acesso e Wi-Fi</p>
+            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Ainda não informados</p>
+          </div>
+          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800">Privado · somente operação</span>
+        </div>
+      </Section>
+
+      <Section id="observacoes" title="Observações internas" description="Notas de uso exclusivo da operação">
+        {editingSection === "observacoes" ? (
+          <div className="space-y-3">
+            <textarea value={notesDraft} onChange={(event) => setNotesDraft(event.target.value)} rows={5} placeholder="Adicione observações internas sobre o imóvel" className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+            <button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ notes: notesDraft })} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</button>
+          </div>
+        ) : (
+          <p className="whitespace-pre-wrap text-sm" style={{ color: implementation.notes ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{implementation.notes || "Nenhuma observação interna cadastrada."}</p>
+        )}
+      </Section>
     </div>
   );
 }
