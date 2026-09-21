@@ -12,6 +12,7 @@ import {
   Panel,
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
+import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -73,7 +74,7 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<"resumo" | "imovel" | "enxoval" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -155,12 +156,12 @@ function ImplementationDetailPage() {
           <IndicatorCards items={itemsQuery.data ?? []} loading={itemsQuery.isPending} />
 
           <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "imovel", "checklist", "proposta"] as const).map((t) => (
+            {(["resumo", "imovel", "enxoval", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className="px-3 py-2 text-sm"
+                className="px-3 py-2 text-sm font-medium transition-colors"
                 style={{
                   color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
                   borderBottom:
@@ -171,9 +172,11 @@ function ImplementationDetailPage() {
                   ? "Resumo"
                   : t === "imovel"
                     ? "Imóvel"
-                    : t === "checklist"
-                      ? "Checklist"
-                      : "Proposta"}
+                    : t === "enxoval"
+                      ? "Enxoval"
+                      : t === "checklist"
+                        ? "Checklist"
+                        : "Proposta"}
               </button>
             ))}
           </div>
@@ -358,6 +361,8 @@ function ImplementationDetailPage() {
             </div>
           ) : tab === "imovel" ? (
             <PropertyTab implementation={implementation} />
+          ) : tab === "enxoval" ? (
+            <EnxovalTab implementationId={implementation.id} />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
