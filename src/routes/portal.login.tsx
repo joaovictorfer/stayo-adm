@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { isSupabaseConfigured, ownerSignInWithPassword } from "../lib/auth/owner-session";
+import { PortalBrand } from "../components/portal/PortalBrand";
 
 export const Route = createFileRoute("/portal/login")({
   head: () => ({
@@ -16,7 +17,7 @@ const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--s
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="flex min-h-screen items-center justify-center px-4"
+      className="stayo-owner-portal flex min-h-screen items-center justify-center bg-background px-4 py-8 text-foreground"
       style={{
         backgroundColor: "var(--stayo-bg)",
         color: "var(--stayo-ink)",
@@ -24,18 +25,8 @@ function Shell({ children }: { children: React.ReactNode }) {
       }}
     >
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo
-          </span>
-        </div>
-        <div className="rounded-[var(--radius-card)] border p-6" style={surface}>
+        <div className="mb-6"><PortalBrand /></div>
+        <div className="rounded-[var(--radius-card)] border bg-card p-6 shadow-[var(--shadow-card)]" style={surface}>
           {children}
         </div>
       </div>
@@ -117,8 +108,7 @@ function OwnerLoginPage() {
         <button
           type="submit"
           disabled={login.isPending}
-          className="mt-1 rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          className="mt-1 rounded-[var(--radius-control)] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-portal-navy-hover disabled:opacity-60"
         >
           {login.isPending ? "Entrando..." : "Entrar"}
         </button>

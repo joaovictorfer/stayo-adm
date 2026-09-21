@@ -63,3 +63,40 @@
   --admin-navy: #0b3150;
   --admin-navy-dark: #0a2945;
 }
+
+/** Portal do Proprietário — hospitalidade clara, premium e mobile-first. */
+.stayo-owner-portal {
+  color-scheme: light;
+  --stayo-ink: oklch(0.25 0.025 245);
+  --stayo-ink-muted: oklch(0.5 0.025 245);
+  --stayo-bg: oklch(0.98 0.008 85);
+  --stayo-surface: oklch(1 0 0);
+  --stayo-surface-subtle: oklch(0.965 0.008 240);
+  --stayo-border: oklch(0.9 0.012 240);
+  --stayo-forest: oklch(0.29 0.065 245);
+  --stayo-forest-strong: oklch(0.23 0.06 245);
+  --stayo-forest-soft: oklch(0.95 0.025 245);
+  --stayo-navy: oklch(0.29 0.065 245);
+  --stayo-navy-hover: oklch(0.37 0.075 245);
+  --stayo-navy-soft: oklch(0.95 0.025 245);
+  --stayo-gold: oklch(0.62 0.085 78);
+  --stayo-gold-soft: oklch(0.97 0.03 82);
+  --background: var(--stayo-bg);
+  --foreground: var(--stayo-ink);
+  --card: var(--stayo-surface);
+  --card-foreground: var(--stayo-ink);
+  --popover: var(--stayo-surface);
+  --popover-foreground: var(--stayo-ink);
+  --primary: var(--stayo-navy);
+  --primary-foreground: oklch(0.99 0.003 85);
+  --secondary: var(--stayo-surface-subtle);
+  --secondary-foreground: var(--stayo-ink);
+  --muted: var(--stayo-surface-subtle);
+  --muted-foreground: var(--stayo-ink-muted);
+  --accent: var(--stayo-navy-soft);
+  --accent-foreground: var(--stayo-navy);
+  --border: var(--stayo-border);
+  --input: var(--stayo-border);
+  --ring: var(--stayo-navy-hover);
+  --shadow-card: 0 1px 2px color-mix(in oklab, var(--stayo-navy) 4%, transparent), 0 10px 30px color-mix(in oklab, var(--stayo-navy) 7%, transparent);
+}

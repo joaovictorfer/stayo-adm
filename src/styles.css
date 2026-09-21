@@ -67,6 +67,8 @@
   --color-brand-soft: var(--stayo-navy-soft);
   --color-premium: var(--stayo-gold);
   --color-premium-soft: var(--stayo-gold-soft);
+  --color-portal-navy: var(--stayo-navy);
+  --color-portal-navy-hover: var(--stayo-navy-hover);
 }
 
 :root {

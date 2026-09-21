@@ -3,6 +3,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 
 import { portalContentQuery } from "../lib/api/queries";
 import { blockView, type PortalContentBlock } from "../types/portal-content";
+import { PortalBrand } from "../components/portal/PortalBrand";
 
 /**
  * Fase 6 — portal do proprietário como landing page (mobile-first).
@@ -54,7 +55,7 @@ function PortalLandingPage() {
 
   return (
     <div
-      className="min-h-screen"
+      className="stayo-owner-portal min-h-screen bg-background text-foreground"
       style={{
         backgroundColor: "var(--stayo-bg)",
         color: "var(--stayo-ink)",
@@ -71,21 +72,10 @@ function PortalLandingPage() {
       ) : null}
 
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-5">
-        <div className="flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo
-          </span>
-        </div>
+        <PortalBrand compact />
         <a
           href="/portal/login"
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          className="rounded-[var(--radius-control)] bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-portal-navy-hover"
         >
           Entrar
         </a>
@@ -107,8 +97,7 @@ function PortalLandingPage() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <a
               href="/portal/login"
-              className="rounded-[var(--radius-control)] px-4 py-3 text-center text-sm"
-              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              className="rounded-[var(--radius-control)] bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground shadow-[var(--shadow-card)] hover:bg-portal-navy-hover"
             >
               Acessar minha conta
             </a>
@@ -140,14 +129,14 @@ function PortalLandingPage() {
                 return (
                   <li
                     key={b.id}
-                    className="flex gap-3 rounded-[var(--radius-card)] border p-4"
+                    className="flex gap-3 rounded-[var(--radius-card)] border bg-card p-4 shadow-[var(--shadow-card)]"
                     style={surface}
                   >
                     <span
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs"
                       style={{
-                        backgroundColor: "var(--stayo-forest-soft)",
-                        color: "var(--stayo-forest)",
+                        backgroundColor: "var(--stayo-navy-soft)",
+                        color: "var(--stayo-navy)",
                       }}
                     >
                       {index + 1}
@@ -177,7 +166,7 @@ function PortalLandingPage() {
               return (
                 <details
                   key={b.id}
-                  className="rounded-[var(--radius-card)] border p-4"
+                  className="rounded-[var(--radius-card)] border bg-card p-4 shadow-[var(--shadow-card)]"
                   style={surface}
                 >
                   <summary className="cursor-pointer text-sm">{view.title}</summary>
@@ -229,7 +218,7 @@ function Card({
 }) {
   const view = blockView(block, mode);
   return (
-    <div className="flex flex-col gap-1 rounded-[var(--radius-card)] border p-4" style={surface}>
+    <div className="flex flex-col gap-1 rounded-[var(--radius-card)] border bg-card p-4 shadow-[var(--shadow-card)]" style={surface}>
       <span className="text-sm">{view.title}</span>
       {view.body ? (
         <span className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>

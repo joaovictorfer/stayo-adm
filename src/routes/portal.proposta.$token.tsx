@@ -13,6 +13,7 @@ import {
 } from "../lib/api/queries";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
 import { generateProposalPdf } from "../lib/pdf/proposal-pdf";
+import { PortalBrand } from "../components/portal/PortalBrand";
 
 export const Route = createFileRoute("/portal/proposta/$token")({
   head: () => ({
@@ -30,7 +31,7 @@ const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="flex min-h-screen items-start justify-center px-4 py-10 sm:items-center"
+      className="stayo-owner-portal flex min-h-screen items-start justify-center bg-background px-4 py-8 text-foreground sm:items-center sm:py-10"
       style={{
         backgroundColor: "var(--stayo-bg)",
         color: "var(--stayo-ink)",
@@ -38,18 +39,8 @@ function Shell({ children }: { children: React.ReactNode }) {
       }}
     >
       <div className="w-full max-w-lg">
-        <div className="mb-6 flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo
-          </span>
-        </div>
-        <div className="rounded-[var(--radius-card)] border p-6" style={surface}>
+        <div className="mb-6"><PortalBrand /></div>
+        <div className="rounded-[var(--radius-card)] border bg-card p-5 shadow-[var(--shadow-card)] sm:p-6" style={surface}>
           {children}
         </div>
       </div>
@@ -291,8 +282,7 @@ function ProposalView({
               type="button"
               onClick={() => accept.mutate()}
               disabled={accept.isPending || !canAccept}
-              className="w-full rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
-              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              className="w-full rounded-[var(--radius-control)] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-portal-navy-hover disabled:opacity-60"
             >
               {accept.isPending ? "Enviando..." : "Aceitar proposta"}
             </button>
