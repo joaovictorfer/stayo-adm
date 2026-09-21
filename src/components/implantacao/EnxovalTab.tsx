@@ -1,4 +1,4 @@
-import { useState } from "@tanstack/react-start";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -220,27 +220,30 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
     return acc;
   }, {});
 
-  // Filtros de Itens Faltantes
-  const missingItems = items.filter((item) => {
-    const isMissing = item.existing_qty < item.required_qty || item.status !== "instalado";
-    return isMissing;
-  });
+  // Itens Faltantes derivados automaticamente da diferença do enxoval + status
+  const isMissing = (item: SupplyItem) =>
+    item.status === "cancelado"
+      ? false
+      : item.existing_qty < item.required_qty || item.status !== "instalado";
+
+  const isResolved = (item: SupplyItem) =>
+    item.existing_qty >= item.required_qty &&
+    (item.status === "instalado" || item.status === "comprado" || item.status === "entregue");
+
+  const missingItems = items.filter(isMissing);
 
   const filteredMissingItems = items.filter((item) => {
-    const isMissing = item.existing_qty < item.required_qty || item.status !== "instalado";
-    const isResolved = item.existing_qty >= item.required_qty && (item.status === "instalado" || item.status === "comprado");
-
     if (filter === "bloqueadores") {
-      return isMissing && item.blocks_readiness;
+      return isMissing(item) && item.blocks_readiness;
     }
     if (filter === "comprar") {
-      return isMissing && (item.status === "em_compras" || item.status === "pendente");
+      return isMissing(item) && (item.status === "em_compras" || item.status === "pendente");
     }
     if (filter === "resolvidos") {
-      return isResolved;
+      return isResolved(item);
     }
     // "todos"
-    return isMissing;
+    return isMissing(item);
   });
 
   // Métricas rápidas
