@@ -166,7 +166,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const section = currentSection(pathname);
   useEffect(() => setDrawer(false), [pathname]);
 
-  return <div className="min-h-screen bg-background text-foreground lg:flex">
+  return <div className="stayo-admin-theme min-h-screen bg-background text-foreground lg:flex">
     <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:flex lg:h-screen">
       <Brand /><div className="flex-1 overflow-y-auto pt-5"><SidebarNav pathname={pathname} /></div><AccountBlock />
     </aside>
