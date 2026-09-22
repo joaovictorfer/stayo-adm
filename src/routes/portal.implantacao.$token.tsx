@@ -5,6 +5,7 @@ import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
+import { Button } from "../components/ui/button";
 import {
   adminApi,
   implementationQuery,
