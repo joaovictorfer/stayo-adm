@@ -339,6 +339,25 @@ function recentActivity(items: ImplementationItem[]): TimelineEntry[] {
     }));
 }
 
+function SummaryHeading({ children }: { children: string }) {
+  return (
+    <h2 className="mb-5 border-b pb-2 text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}>
+      {children}
+    </h2>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3 text-sm">
+      <dt style={{ color: "var(--stayo-ink-muted)" }}>{label}</dt>
+      <dd className="text-right font-semibold" style={{ color: value ? "var(--stayo-forest)" : "var(--stayo-ink-muted)" }}>
+        {value || "Não informado"}
+      </dd>
+    </div>
+  );
+}
+
 const chargeTypeLabels: Record<ChargeType, string> = {
   percentage: "Percentual",
   fixed_once: "Valor fixo (uma vez)",
@@ -766,7 +785,7 @@ function StatusStepper({
   const isAlternate = alternateStatuses.includes(status);
 
   return (
-    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+    <div className="border-y bg-white px-4 py-4 sm:px-6" style={{ borderColor: "var(--stayo-border)" }}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
           Status da implantação
@@ -786,7 +805,7 @@ function StatusStepper({
         </select>
       </div>
 
-      <ol className="flex flex-col md:flex-row gap-3 md:gap-1.5">
+      <ol className="flex flex-col gap-3 md:flex-row md:gap-1.5">
         {mainStatusFlow.map((s, index) => {
           let state: "done" | "current" | "future" | "blocked" = "future";
           
@@ -809,12 +828,12 @@ function StatusStepper({
           return (
             <li key={s} className="flex md:flex-1 flex-row md:flex-col items-center md:items-start gap-3 md:gap-2 min-w-0">
               <span
-                className="h-2 w-8 md:h-1.5 md:w-full shrink-0 rounded-full transition-colors"
+                className="h-1.5 w-8 shrink-0 rounded-full transition-colors md:h-0.5 md:w-full"
                 title={state === "blocked" ? "Bloqueado / Alternativo" : ""}
                 style={{ backgroundColor: color, opacity }}
               />
               <span
-                className="text-[11px] md:text-[10px] lg:text-[11px] leading-tight break-words md:pr-1"
+                className="text-[11px] leading-tight md:pr-1 md:text-[9px] lg:text-[10px]"
                 style={{
                   color: isCurrent ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
                   fontWeight: isCurrent ? 600 : 400,
@@ -842,39 +861,23 @@ function StatusStepper({
 function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loading: boolean }) {
   const progress = computeProgress(items);
   const readiness = computeReadiness(items);
+  const pending = items.filter((item) => item.status !== "concluido").length;
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      <div className="rounded-[var(--radius-card)] border bg-white px-4 py-3 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em]" style={{ color: "var(--stayo-ink-muted)" }}>
-            Progresso
-          </p>
-          <p className="text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
-            {loading ? "—" : `${progress.percent}%`}
-          </p>
-        </div>
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
-          <div className="h-full rounded-full transition-all" style={{ width: `${progress.percent}%`, backgroundColor: "var(--stayo-forest)" }} />
-        </div>
-        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          {progress.done} de {progress.total} itens concluídos
-        </p>
-      </div>
+    <div className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border bg-white sm:grid-cols-3" style={{ borderColor: "var(--stayo-border)" }}>
+      <Metric label="Progresso" value={loading ? "—" : `${progress.percent}%`} detail={`${progress.done} de ${progress.total} concluídos`} />
+      <Metric label="Prontidão" value={loading ? "—" : readinessLabels[readiness.state]} detail={`${readiness.pendingBlockers} bloqueador(es)`} color={loading ? undefined : readinessColors[readiness.state]} />
+      <Metric label="Pendências" value={loading ? "—" : String(pending).padStart(2, "0")} detail={`${readiness.pendingMandatory} obrigatório(s)`} className="col-span-2 sm:col-span-1" />
+    </div>
+  );
+}
 
-      <div className="rounded-[var(--radius-card)] border bg-white px-4 py-3 shadow-sm" style={{ borderColor: loading ? "var(--stayo-border)" : readinessColors[readiness.state] }}>
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em]" style={{ color: "var(--stayo-ink-muted)" }}>
-            Prontidão
-          </p>
-          <p className="text-base font-semibold" style={{ color: loading ? "var(--stayo-ink-muted)" : readinessColors[readiness.state] }}>
-            {loading ? "—" : readinessLabels[readiness.state]}
-          </p>
-        </div>
-        <p className="mt-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          {readiness.pendingBlockers} bloqueador(es) · {readiness.pendingMandatory} obrigatório(s) em aberto
-        </p>
-      </div>
+function Metric({ label, value, detail, color, className = "" }: { label: string; value: string; detail: string; color?: string; className?: string }) {
+  return (
+    <div className={`border-r p-4 text-center last:border-r-0 sm:p-5 ${className}`} style={{ borderColor: "var(--stayo-border)" }}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
+      <p className="mt-1 text-lg font-semibold sm:text-xl" style={{ color: color ?? "var(--stayo-forest)", fontFamily: "var(--stayo-font-display)" }}>{value}</p>
+      <p className="mt-1 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{detail}</p>
     </div>
   );
 }
