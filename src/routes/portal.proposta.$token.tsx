@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
+import { FileSignature } from "lucide-react";
+import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { Button } from "../components/ui/button";
 import { proposalsStore } from "../lib/api/local-store";
 import {
@@ -152,12 +153,7 @@ function ProposalView({
   if (!proposal) {
     return (
       <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Nenhuma proposta disponível
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Ainda não há uma proposta salva para compartilhar.
-        </p>
+        <PortalEmptyState icon={<FileSignature />} title="Sua proposta ainda não está disponível" description="A equipe Stayo está preparando os detalhes comerciais para apresentar tudo com clareza." nextStep="Quando a proposta for liberada, você poderá ler, baixar e registrar seu aceite por este acesso." />
       </Shell>
     );
   }

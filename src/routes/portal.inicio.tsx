@@ -22,6 +22,8 @@ import {
   FileImage,
   ExternalLink,
   ShieldCheck,
+  BellRing,
+  CircleCheckBig,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -717,7 +719,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               {tasksQ.isPending ? (
                 <LoadingBlock />
               ) : pending.length === 0 ? (
-                <PortalEmptyState positive title="Tudo em dia por aqui" description="Você não tem nenhuma ação pendente agora. Quando precisarmos de algo, avisaremos por aqui." />
+                <PortalEmptyState positive icon={<CircleCheckBig />} title="Tudo em dia por aqui" description="Você não tem nenhuma ação pendente agora." nextStep="Quando precisarmos de alguma informação ou confirmação, ela aparecerá nesta área." />
               ) : (
                 <ul className="portal-card divide-y divide-[var(--portal-border)]">
                   {pending.map((task) => (
@@ -735,6 +737,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               )}
             </div>
           </section>
+          <section>
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]"><BellRing className="h-5 w-5" /></div>
+              <div><h2 className="text-base font-semibold">Atualizações</h2><p className="text-xs text-[var(--portal-muted)]">Novidades compartilhadas pela equipe Stayo.</p></div>
+            </div>
+            <PortalEmptyState icon={<BellRing />} title="Nenhuma novidade por enquanto" description="Seu acompanhamento está em dia e não há novas atualizações públicas neste momento." nextStep="Assim que uma etapa avançar ou houver algo importante, você verá a atualização aqui." action={{ label: "Ver minha implantação", onClick: () => setActiveTab("implantacao") }} />
+          </section>
         </TabsContent>
 
         <TabsContent value="implantacao" className="tab-content-anim space-y-6">
@@ -743,7 +752,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           ) : implementation ? (
             <ImplementationJourney implementation={implementation} />
           ) : (
-            <PortalEmptyState icon={<Key />} title="Estamos preparando seu imóvel" description="Assim que os próximos marcos estiverem definidos, você poderá acompanhar cada avanço nesta área." />
+            <PortalEmptyState icon={<Key />} title="Estamos preparando seu acompanhamento" description="Os dados adicionais do seu imóvel ainda estão sendo organizados pela equipe Stayo." nextStep="Assim que os próximos marcos forem definidos, você acompanhará cada avanço nesta área." />
           )}
         </TabsContent>
 
@@ -769,7 +778,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           ) : currentProposal ? (
             <OwnerProposal proposal={currentProposal} versions={proposalVersions} terms={commercialTermsQ.data ?? []} shareToken={proposalLinkQ.data?.token} />
           ) : (
-            <PortalEmptyState icon={<FileSignature />} title="Sua proposta está sendo preparada" description="A equipe Stayo está organizando os detalhes comerciais do seu imóvel. Assim que estiver pronta, você poderá visualizar, baixar e aceitar a proposta por aqui." />
+            <PortalEmptyState icon={<FileSignature />} title="Sua proposta está sendo preparada" description="A equipe Stayo está organizando os detalhes comerciais do seu imóvel." nextStep="Assim que estiver pronta, você poderá visualizar, baixar e aceitar a proposta por aqui." action={{ label: "Acompanhar implantação", onClick: () => setActiveTab("implantacao") }} />
           )}
         </TabsContent>
 
@@ -786,9 +795,9 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
             {attachmentsQ.isPending ? (
               <PortalSkeleton rows={3} />
             ) : attachmentsQ.isError ? (
-              <PortalEmptyState icon={<FileText />} title="Não foi possível abrir sua pasta agora" description="Seus documentos continuam protegidos. Tente novamente em alguns instantes." />
+              <PortalEmptyState icon={<FileText />} title="Não foi possível abrir sua pasta agora" description="Seus documentos continuam protegidos." nextStep="Tente novamente em alguns instantes. Se o problema continuar, fale com a equipe Stayo." />
             ) : (attachmentsQ.data ?? []).length === 0 ? (
-              <PortalEmptyState icon={<FileText />} title="Sua pasta está pronta" description="Ainda não há documentos liberados para você. Quando a equipe Stayo disponibilizar contratos, propostas ou outros arquivos, eles aparecerão aqui com data e status." />
+              <PortalEmptyState icon={<FileText />} title="Sua pasta está pronta" description="Ainda não há documentos liberados para você." nextStep="Contratos, propostas e outros arquivos aparecerão aqui com data e status quando forem disponibilizados." action={{ label: "Ver minhas pendências", onClick: () => setActiveTab("visao-geral") }} />
             ) : (
               <ul className="portal-document-list">
                 {(attachmentsQ.data ?? []).map((attachment) => (

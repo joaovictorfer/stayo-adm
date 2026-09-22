@@ -682,6 +682,8 @@
 }
 .portal-empty-icon svg { width: 1.25rem; height: 1.25rem; }
 .portal-empty-icon-success { background: color-mix(in srgb, var(--portal-success) 10%, white); color: var(--portal-success); }
+.portal-empty-next { margin-top: .55rem; color: var(--portal-ink); font-size: .72rem; font-weight: 500; line-height: 1.5; }
+.portal-empty-action { margin-top: .85rem; }
 
 .portal-skeleton {
   position: relative;
