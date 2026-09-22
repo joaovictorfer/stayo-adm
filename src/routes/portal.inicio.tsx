@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Button } from "../components/ui/button";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
-import { implementationsListQuery, ownerQuery, ownerTasksQuery } from "../lib/api/queries";
+import { implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
 import type { OwnerTaskStatus } from "../types/admin";
@@ -227,6 +227,92 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
             : `Neste momento, nosso foco é ${(currentMilestone?.label ?? statusLabels[implementation.status]).toLocaleLowerCase("pt-BR")}. Atualizaremos esta página conforme cada marco for concluído.`}
       </p>
     </div>
+  );
+}
+
+interface ProfileStep {
+  label: string;
+  description: string;
+  complete: boolean;
+}
+
+function OwnerDataJourney({
+  name,
+  email,
+  phone,
+  document,
+  hasPaymentData,
+  hasDocuments,
+  onReviewPending,
+}: {
+  name: string | null | undefined;
+  email: string | null | undefined;
+  phone: string | null | undefined;
+  document: string | null | undefined;
+  hasPaymentData: boolean;
+  hasDocuments: boolean;
+  onReviewPending: () => void;
+}) {
+  const steps: ProfileStep[] = [
+    { label: "Identificação", description: "Nome completo e documento principal", complete: Boolean(name && document) },
+    { label: "Contato", description: "E-mail e telefone para falarmos com você", complete: Boolean(email && phone) },
+    { label: "Conta para repasse", description: "Dados necessários para futuros repasses", complete: hasPaymentData },
+    { label: "Documentos", description: "Arquivos solicitados pela equipe Stayo", complete: hasDocuments },
+  ];
+  const completed = steps.filter((step) => step.complete).length;
+  const percent = Math.round((completed / steps.length) * 100);
+  const nextStep = steps.find((step) => !step.complete);
+
+  return (
+    <section className="portal-profile-journey" aria-labelledby="profile-journey-title">
+      <div className="portal-profile-intro">
+        <div>
+          <p className="portal-milestones-eyebrow">Seu cadastro</p>
+          <h2 id="profile-journey-title">Vamos completar juntos</h2>
+          <p>Você pode acompanhar cada etapa com tranquilidade. Seus dados são tratados com cuidado pela equipe Stayo.</p>
+        </div>
+        <div className="portal-profile-progress" aria-label={`${percent}% do cadastro concluído`}>
+          <strong>{percent}%</strong>
+          <span>{completed} de {steps.length} etapas</span>
+        </div>
+      </div>
+
+      <div className="portal-profile-progress-track" aria-hidden="true">
+        <span style={{ width: `${percent}%` }} />
+      </div>
+
+      {nextStep ? (
+        <div className="portal-profile-next">
+          <div>
+            <span>Próximo passo</span>
+            <strong>{nextStep.label}</strong>
+            <p>{nextStep.description}. Leva apenas alguns minutos.</p>
+          </div>
+          <Button type="button" onClick={onReviewPending} className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">
+            Ver o que falta <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="portal-profile-success" role="status">
+          <CheckCircle2 aria-hidden="true" />
+          <div><strong>Cadastro completo</strong><p>Recebemos as informações necessárias. Avisaremos se precisarmos confirmar algo.</p></div>
+        </div>
+      )}
+
+      <ol className="portal-profile-checklist">
+        {steps.map((step, index) => (
+          <li key={step.label} className={step.complete ? "is-complete" : nextStep?.label === step.label ? "is-current" : "is-pending"}>
+            <span className="portal-profile-step-marker">
+              {step.complete ? <CheckCircle2 aria-hidden="true" /> : index + 1}
+            </span>
+            <div><strong>{step.label}</strong><p>{step.description}</p></div>
+            <span className="portal-profile-step-status">{step.complete ? "Concluído" : nextStep?.label === step.label ? "Próximo" : "Aguardando"}</span>
+          </li>
+        ))}
+      </ol>
+
+      <p className="portal-profile-save-note"><CheckCircle2 aria-hidden="true" /> As informações já enviadas ficam salvas com segurança.</p>
+    </section>
   );
 }
 
@@ -436,6 +522,11 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
   const implementationsQ = useQuery(implementationsListQuery());
+  const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
+  const submissionQ = useQuery({
+    ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
+    enabled: Boolean(implementation?.id),
+  });
   const attachmentsQ = useQuery({
     queryKey: ["owner-attachments", ownerId],
     queryFn: () => listOwnerAttachments(ownerId),
@@ -447,7 +538,6 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
-  const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
 
   return (
     <div className="space-y-2">
@@ -535,54 +625,19 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </TabsContent>
 
         <TabsContent value="dados" className="tab-content-anim space-y-6">
-           <div className="portal-card">
-             <div className="mb-6 flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full"
-                     style={{ backgroundColor: "var(--portal-gold-soft)", color: "var(--portal-gold)" }}
-                >
-                  <User className="h-6 w-6" strokeWidth={1.75} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold" style={{ color: "var(--stayo-ink)" }}>Seus dados</h3>
-                   <p className="text-xs text-[var(--portal-muted)]">Informações cadastrais e de contato.</p>
-                </div>
-             </div>
-             
-             <dl className="grid gap-6 sm:grid-cols-2">
-               <div>
-                 <dt className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--stayo-ink-muted)" }}>
-                   Nome completo
-                 </dt>
-                  <dd className="text-sm font-medium text-[var(--portal-ink)]">
-                    {ownerQ.data?.name || "Vamos completar juntos"}
-                 </dd>
-               </div>
-               <div>
-                 <dt className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--stayo-ink-muted)" }}>
-                   E-mail
-                 </dt>
-                 <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                    {ownerQ.data?.email || "Vamos completar juntos"}
-                 </dd>
-               </div>
-               <div>
-                 <dt className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--stayo-ink-muted)" }}>
-                   Telefone
-                 </dt>
-                 <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                    {ownerQ.data?.phone || "Vamos completar juntos"}
-                 </dd>
-               </div>
-               <div>
-                 <dt className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--stayo-ink-muted)" }}>
-                   Documento principal
-                 </dt>
-                 <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                    {ownerQ.data?.document || "Vamos completar juntos"}
-                 </dd>
-               </div>
-             </dl>
-          </div>
+          {ownerQ.isPending || attachmentsQ.isPending || submissionQ.isPending ? (
+            <PortalSkeleton rows={4} />
+          ) : (
+            <OwnerDataJourney
+              name={ownerQ.data?.name}
+              email={ownerQ.data?.email}
+              phone={ownerQ.data?.phone}
+              document={ownerQ.data?.document}
+              hasPaymentData={Boolean(submissionQ.data?.pixKey)}
+              hasDocuments={(attachmentsQ.data ?? []).length > 0}
+              onReviewPending={() => setActiveTab("visao-geral")}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="proposta" className="tab-content-anim space-y-6">
