@@ -163,7 +163,11 @@ function OwnerHomePage() {
     );
   }
 
-  return <OwnerHomeContent ownerId={auth.account.ownerId} onSignOut={() => signOut.mutate()} />;
+  return (
+    <Shell>
+      <OwnerHomeContent ownerId={auth.account.ownerId} onSignOut={() => signOut.mutate()} />
+    </Shell>
+  );
 }
 
 function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
