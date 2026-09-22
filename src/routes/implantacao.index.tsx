@@ -1,6 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Pencil } from "lucide-react";
 
 import {
   EmptyRows,
@@ -13,8 +14,17 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
+import { Button } from "../components/ui/button";
+import {
+  CLEANING_RESPONSIBILITY_LABELS,
+  DEFAULT_QUICK_IMPLEMENTATION_CONDITIONS,
+  cleaningResponsibilityText,
+  type CleaningResponsibility,
+} from "../config/commercial-defaults";
+import { useAuthSession } from "../lib/auth/session";
 import {
   adminApi,
+  commercialTermDefaultsQuery,
   coreApi,
   implementationItemsQuery,
   implementationsListQuery,
@@ -26,6 +36,8 @@ import {
   readinessLabels,
   statusLabels,
 } from "../lib/implementation-status";
+import { supabase } from "../integrations/supabase/client";
+import { isSupabaseConfigured } from "../lib/api/supabase-client";
 import type { ImplementationItem, ImplementationProject } from "../types/core";
 
 export const Route = createFileRoute("/implantacao/")({
@@ -318,18 +330,28 @@ const emptyForm = {
   condominiumName: "",
   unit: "",
   city: "",
-  taxaAdmin: "20%",
-  limpeza: "Incluso",
-  repasse: "Dia 10",
-  limiteManutencao: "R$ 200,00",
-  exclusividade: "Sim",
-  vigencia: "12 meses",
-  avisoPrevio: "60 dias",
+  ...DEFAULT_QUICK_IMPLEMENTATION_CONDITIONS,
 };
 
 function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const auth = useAuthSession();
+  const defaultsQuery = useQuery(commercialTermDefaultsQuery());
   const [form, setForm] = useState(emptyForm);
+  const [editingConditions, setEditingConditions] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const administrationDefault = defaultsQuery.data?.find(
+      (term) => term.chargeType === "percentage" && term.label.toLocaleLowerCase("pt-BR").includes("admin"),
+    );
+    setForm((current) => ({
+      ...current,
+      responsibleUserId: current.responsibleUserId || auth.profile?.id || "",
+      administrationFee: administrationDefault ? String(administrationDefault.value) : current.administrationFee,
+    }));
+  }, [auth.profile?.id, defaultsQuery.data, open]);
 
   const mutation = useMutation({
     mutationFn: async (input: typeof form) => {
@@ -340,16 +362,16 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       });
 
       const condicoesText = [
-        `Taxa admin: ${input.taxaAdmin}`,
-        `Limpeza: ${input.limpeza}`,
-        `Repasse: ${input.repasse}`,
-        `Limite manutenção: ${input.limiteManutencao}`,
-        `Exclusividade: ${input.exclusividade}`,
-        `Vigência: ${input.vigencia}`,
-        `Aviso prévio: ${input.avisoPrevio}`,
+        `Taxa de administração: ${input.administrationFee}%`,
+        `Limpeza: ${cleaningResponsibilityText(input)}`,
+        `Repasse: ${input.payoutRule}`,
+        `Limite de manutenção: R$ ${input.maintenanceLimit}`,
+        `Exclusividade: ${input.exclusivity ? "Sim" : "Não"}`,
+        `Vigência: ${input.durationMonths} meses`,
+        `Aviso prévio: ${input.noticePeriodDays} dias`,
       ].join("\n");
 
-      return coreApi.implementations.create({
+      const created = await coreApi.implementations.create({
         status: "prospect",
         ownerId: owner.id,
         ownerName: owner.name,
@@ -367,6 +389,33 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
         responsibleUserId: input.responsibleUserId || null,
         notes: condicoesText,
       });
+
+      const clonedTerms = await adminApi.commercialTerms.cloneDefaults(created.id);
+      const administrationTerm = clonedTerms.find(
+        (term) => term.chargeType === "percentage" && term.label.toLocaleLowerCase("pt-BR").includes("admin"),
+      );
+      if (administrationTerm && administrationTerm.value !== Number(input.administrationFee)) {
+        await adminApi.commercialTerms.update(administrationTerm.id, {
+          value: Number(input.administrationFee),
+        });
+      }
+
+      if (isSupabaseConfigured()) {
+        const { error } = await supabase.from("implementation_contract_conditions").upsert({
+          implementation_id: created.id,
+          administration_fee: Number(input.administrationFee),
+          cleaning_responsibility: cleaningResponsibilityText(input),
+          payout_rule: input.payoutRule.trim(),
+          maintenance_limit: Number(input.maintenanceLimit),
+          exclusivity: input.exclusivity,
+          duration_months: Number(input.durationMonths),
+          notice_period_days: Number(input.noticePeriodDays),
+          updated_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+      }
+
+      return created;
     },
     onSuccess: async (created) => {
       queryClient.setQueryData(implementationsListQuery().queryKey, (prev) => ({
@@ -374,9 +423,10 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
         nextCursor: prev?.nextCursor ?? null,
       }));
       queryClient.setQueryData(["implementations", "detail", created.id], created);
-      await adminApi.commercialTerms.cloneDefaults(created.id);
       setForm(emptyForm);
+      setEditingConditions(false);
       onClose();
+      await navigate({ to: "/implantacao/$id", params: { id: created.id } });
     },
   });
 
@@ -394,8 +444,8 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
             Dados principais do proprietário e responsável.
           </p>
           <TextField label="Nome" value={form.name} onChange={set("name")} required />
-          <TextField label="WhatsApp" value={form.phone} onChange={set("phone")} required />
-          <TextField label="Responsável interno" value={form.responsibleUserId} onChange={set("responsibleUserId")} />
+           <TextField label="WhatsApp" value={form.phone} onChange={(value) => set("phone")(formatBrazilianPhone(value))} inputMode="tel" required />
+           <TextField label="Responsável interno" value={auth.profile?.fullName && form.responsibleUserId === auth.profile.id ? auth.profile.fullName : form.responsibleUserId} onChange={set("responsibleUserId")} />
         </div>
       ),
     },
@@ -422,20 +472,37 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       label: "Condições",
       content: (
         <div className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Verifique ou ajuste as condições comerciais para esta implantação.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <TextField label="Taxa admin" value={form.taxaAdmin} onChange={set("taxaAdmin")} />
-            <TextField label="Limpeza" value={form.limpeza} onChange={set("limpeza")} />
-            <TextField label="Repasse" value={form.repasse} onChange={set("repasse")} />
-            <TextField label="Limite manutenção" value={form.limiteManutencao} onChange={set("limiteManutencao")} />
-            <TextField label="Exclusividade" value={form.exclusividade} onChange={set("exclusividade")} />
-            <TextField label="Vigência" value={form.vigencia} onChange={set("vigencia")} />
-            <div className="sm:col-span-2">
-              <TextField label="Aviso prévio" value={form.avisoPrevio} onChange={set("avisoPrevio")} />
-            </div>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+              Condições padrão Stayo já aplicadas. Altere somente se houver exceção.
+            </p>
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditingConditions((value) => !value)} className="shrink-0 gap-1.5">
+              <Pencil className="size-3.5" />
+              {editingConditions ? "Fechar" : "Alterar exceções"}
+            </Button>
           </div>
+          {!editingConditions ? (
+            <div className="divide-y rounded-[var(--radius-card)] border bg-white px-4" style={{ borderColor: "var(--stayo-border)" }}>
+              <ConditionSummary label="Taxa de administração" value={`${form.administrationFee}%`} />
+              <ConditionSummary label="Taxa de limpeza" value={cleaningResponsibilityText(form)} />
+              <ConditionSummary label="Forma de repasse" value={form.payoutRule} />
+              <ConditionSummary label="Manutenção sem autorização" value={`Até ${formatCurrencyInput(form.maintenanceLimit)}`} />
+              <ConditionSummary label="Exclusividade" value={form.exclusivity ? "Sim" : "Não"} />
+              <ConditionSummary label="Vigência" value={`${form.durationMonths} meses`} />
+              <ConditionSummary label="Aviso prévio" value={`${form.noticePeriodDays} dias`} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <TextField label="Taxa de administração (%)" value={form.administrationFee} onChange={set("administrationFee")} type="number" inputMode="decimal" />
+              <SelectField label="Taxa de limpeza" value={form.cleaningResponsibility} onChange={(value) => setForm((current) => ({ ...current, cleaningResponsibility: value as CleaningResponsibility }))} options={Object.entries(CLEANING_RESPONSIBILITY_LABELS).map(([value, label]) => ({ value, label }))} />
+              {form.cleaningResponsibility === "custom" && <div className="sm:col-span-2"><TextField label="Responsabilidade personalizada" value={form.customCleaningResponsibility} onChange={set("customCleaningResponsibility")} /></div>}
+              <div className="sm:col-span-2"><TextField label="Forma de repasse" value={form.payoutRule} onChange={set("payoutRule")} /></div>
+              <TextField label="Limite de manutenção sem autorização (R$)" value={form.maintenanceLimit} onChange={set("maintenanceLimit")} type="number" inputMode="decimal" />
+              <SelectField label="Exclusividade" value={form.exclusivity ? "yes" : "no"} onChange={(value) => setForm((current) => ({ ...current, exclusivity: value === "yes" }))} options={[{ value: "yes", label: "Sim" }, { value: "no", label: "Não" }]} />
+              <TextField label="Vigência (meses)" value={form.durationMonths} onChange={set("durationMonths")} type="number" inputMode="numeric" />
+              <TextField label="Aviso prévio (dias)" value={form.noticePeriodDays} onChange={set("noticePeriodDays")} type="number" inputMode="numeric" />
+            </div>
+          )}
           {mutation.isError && (
             <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
               Não foi possível salvar.
@@ -451,6 +518,7 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
       open={open}
       onClose={() => {
         setForm(emptyForm);
+        setEditingConditions(false);
         onClose();
       }}
       eyebrow="Implantação"
@@ -472,12 +540,14 @@ function TextField({
   onChange,
   type = "text",
   required = false,
+  inputMode,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   required?: boolean;
+  inputMode?: "text" | "tel" | "numeric" | "decimal";
 }) {
   return (
     <label className="block text-sm">
@@ -488,10 +558,40 @@ function TextField({
         type={type}
         value={value}
         required={required}
+        inputMode={inputMode}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
         style={{ ...surface, color: "var(--stayo-ink)" }}
       />
     </label>
   );
+}
+
+function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ ...surface, color: "var(--stayo-ink)" }}>
+        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function ConditionSummary({ label, value }: { label: string; value: string }) {
+  return <div className="flex items-start justify-between gap-4 py-2.5 text-sm"><span style={{ color: "var(--stayo-ink-muted)" }}>{label}</span><strong className="text-right font-medium" style={{ color: "var(--stayo-ink)" }}>{value}</strong></div>;
+}
+
+function formatBrazilianPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "").slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function formatCurrencyInput(value: string): string {
+  const parsed = Number(value.replace(",", "."));
+  if (!Number.isFinite(parsed)) return "Não informado";
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(parsed);
 }
