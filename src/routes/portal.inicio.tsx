@@ -15,6 +15,9 @@ import {
   CalendarDays,
   ArrowRight,
   Clock3,
+  Eye,
+  BadgeCheck,
+  History,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -23,11 +26,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Button } from "../components/ui/button";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
-import { implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery } from "../lib/api/queries";
+import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
 import type { OwnerTaskStatus } from "../types/admin";
-import type { ImplementationProject, ImplementationStatus } from "../types/core";
+import type { CommercialTerm } from "../types/admin";
+import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
@@ -316,6 +320,87 @@ function OwnerDataJourney({
   );
 }
 
+const portalCurrency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+function describeCommercialTerm(term: CommercialTerm): string {
+  if (term.chargeType === "percentage") return `${term.value}%`;
+  if (["fixed_once", "per_reservation", "monthly"].includes(term.chargeType)) return portalCurrency.format(term.value);
+  if (term.chargeType === "optional") return "Opcional";
+  return term.notes || "Incluído";
+}
+
+function OwnerProposal({
+  proposal,
+  versions,
+  terms,
+  shareToken,
+}: {
+  proposal: Proposal;
+  versions: Proposal[];
+  terms: CommercialTerm[];
+  shareToken: string | undefined;
+}) {
+  const proposalUrl = shareToken ? `/portal/proposta/${encodeURIComponent(shareToken)}` : null;
+
+  return (
+    <section className="portal-proposal-showcase" aria-labelledby="owner-proposal-title">
+      <div className="portal-proposal-heading">
+        <div>
+          <p className="portal-milestones-eyebrow">Proposta comercial</p>
+          <h2 id="owner-proposal-title">Uma parceria pensada para o seu imóvel</h2>
+          <p>Confira os principais valores e condições com calma. A equipe Stayo está disponível para esclarecer qualquer ponto.</p>
+        </div>
+        <span className={`portal-proposal-status${proposal.acceptedAt ? " is-accepted" : ""}`}>
+          {proposal.acceptedAt ? <BadgeCheck aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
+          {proposal.acceptedAt ? "Aceita" : "Aguardando você"}
+        </span>
+      </div>
+
+      <div className="portal-proposal-summary">
+        <div className="portal-proposal-total">
+          <span>Investimento apresentado</span>
+          <strong>{portalCurrency.format(proposal.total)}</strong>
+          <small>Versão {proposal.version} · {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.createdAt))}</small>
+        </div>
+        <div className="portal-proposal-terms">
+          <span>Condições principais</span>
+          {terms.length > 0 ? (
+            <ul>{terms.slice(0, 4).map((term) => <li key={term.id}><strong>{term.label}</strong><span>{describeCommercialTerm(term)}</span></li>)}</ul>
+          ) : (
+            <p>As condições completas estão organizadas no documento da proposta.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="portal-proposal-actions">
+        {proposalUrl ? (
+          <Button asChild className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">
+            <a href={proposalUrl}><Eye className="h-4 w-4" /> Visualizar proposta</a>
+          </Button>
+        ) : (
+          <p>O documento está sendo preparado para visualização. Avisaremos assim que estiver disponível.</p>
+        )}
+        {!proposal.acceptedAt && proposalUrl && <span>O aceite fica disponível dentro da proposta.</span>}
+        {proposal.acceptedAt && <span>Aceita em {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.acceptedAt))}.</span>}
+      </div>
+
+      {versions.length > 1 && (
+        <details className="portal-proposal-history">
+          <summary><History aria-hidden="true" /> Histórico de versões <span>{versions.length}</span></summary>
+          <ol>
+            {versions.map((version) => (
+              <li key={version.id}>
+                <div><strong>Versão {version.version}</strong><span>{new Intl.DateTimeFormat("pt-BR").format(new Date(version.createdAt))}</span></div>
+                <span>{portalCurrency.format(version.total)}</span>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </section>
+  );
+}
+
 function propertyName(implementation: ImplementationProject | undefined): string {
   if (!implementation) return "Seu imóvel";
   if (implementation.nickname) return implementation.nickname;
@@ -527,6 +612,20 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
     ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
     enabled: Boolean(implementation?.id),
   });
+  const proposalsQ = useQuery({
+    ...proposalsByImplementationQuery(implementation?.id ?? ""),
+    enabled: Boolean(implementation?.id),
+  });
+  const commercialTermsQ = useQuery({
+    ...commercialTermsQuery(implementation?.id ?? ""),
+    enabled: Boolean(implementation?.id),
+  });
+  const proposalVersions = [...(proposalsQ.data ?? [])].sort((a, b) => b.version - a.version);
+  const currentProposal = proposalVersions[0];
+  const proposalLinkQ = useQuery({
+    ...proposalShareLinkQuery(currentProposal?.id ?? ""),
+    enabled: Boolean(currentProposal?.id),
+  });
   const attachmentsQ = useQuery({
     queryKey: ["owner-attachments", ownerId],
     queryFn: () => listOwnerAttachments(ownerId),
@@ -641,7 +740,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </TabsContent>
 
         <TabsContent value="proposta" className="tab-content-anim space-y-6">
-           <PortalEmptyState icon={<FileSignature />} title="Nenhuma proposta aguardando você" description="Quando houver uma proposta pronta para leitura ou aceite, ela ficará disponível aqui." />
+          {proposalsQ.isPending || commercialTermsQ.isPending || proposalLinkQ.isPending ? (
+            <PortalSkeleton rows={4} />
+          ) : currentProposal ? (
+            <OwnerProposal proposal={currentProposal} versions={proposalVersions} terms={commercialTermsQ.data ?? []} shareToken={proposalLinkQ.data?.token} />
+          ) : (
+            <PortalEmptyState icon={<FileSignature />} title="Sua proposta está sendo preparada" description="A equipe Stayo está organizando os detalhes comerciais do seu imóvel. Assim que estiver pronta, você poderá visualizar, baixar e aceitar a proposta por aqui." />
+          )}
         </TabsContent>
 
         <TabsContent value="documentos" className="tab-content-anim space-y-6">
