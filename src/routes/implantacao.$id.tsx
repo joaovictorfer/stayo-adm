@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, ExternalLink, ListChecks, Share2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Copy, ExternalLink, ListChecks, Send, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
@@ -29,6 +29,7 @@ import {
   initialChargesQuery,
   ownerOnboardingLinkQuery,
   ownerOnboardingSubmissionQuery,
+  ownerQuery,
 } from "../lib/api/queries";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
@@ -79,7 +80,7 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "imovel" | "enxoval" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<"resumo" | "proprietario" | "imovel" | "enxoval" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -180,7 +181,7 @@ function ImplementationDetailPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => document.getElementById("portal-owner-panel")?.scrollIntoView({ behavior: "smooth" })}>
+                <Button variant="outline" size="sm" onClick={() => setTab("proprietario")}>
                   <ExternalLink /> Portal
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => void shareWorkspace()}>
@@ -199,7 +200,7 @@ function ImplementationDetailPage() {
           <IndicatorCards items={items} loading={itemsQuery.isPending} />
 
           <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "imovel", "enxoval", "checklist", "proposta"] as const).map((t) => (
+            {(["resumo", "proprietario", "imovel", "enxoval", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -213,6 +214,8 @@ function ImplementationDetailPage() {
               >
                 {t === "resumo"
                   ? "Resumo"
+                  : t === "proprietario"
+                    ? "Proprietário"
                   : t === "imovel"
                     ? "Imóvel"
                     : t === "enxoval"
@@ -307,7 +310,6 @@ function ImplementationDetailPage() {
                   <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Configurações operacionais</summary>
                   <div className="mt-4 grid gap-4">
                     <ContractConditionsPanel implementationId={implementation.id} />
-                    <div id="portal-owner-panel"><OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} /></div>
                     <InitialChargesPanel implementationId={implementation.id} />
                   </div>
                 </details>
@@ -333,6 +335,8 @@ function ImplementationDetailPage() {
               </details>
 
             </div>
+          ) : tab === "proprietario" ? (
+            <OwnerTab implementation={implementation} />
           ) : tab === "imovel" ? (
             <PropertyTab implementation={implementation} />
           ) : tab === "enxoval" ? (
