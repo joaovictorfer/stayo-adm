@@ -603,6 +603,36 @@
 .portal-proposal-history li strong { color: var(--portal-ink); }
 .portal-proposal-history li span { color: var(--portal-muted); }
 
+.portal-documents {
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 14px;
+  background: var(--portal-surface);
+  box-shadow: 0 12px 38px color-mix(in srgb, var(--portal-navy) 6%, transparent);
+}
+.portal-documents-heading { display: flex; align-items: flex-start; gap: .9rem; padding: 1.5rem; }
+.portal-documents-heading-icon { display: grid; width: 2.4rem; height: 2.4rem; flex: 0 0 auto; place-items: center; border-radius: 10px; background: var(--portal-gold-soft); color: var(--portal-gold); }
+.portal-documents-heading-icon svg { width: 1.15rem; height: 1.15rem; }
+.portal-documents-heading h2 { margin-top: .22rem; color: var(--portal-navy); font-family: var(--stayo-font-display); font-size: 1.55rem; font-weight: 600; }
+.portal-documents-heading p:last-child { margin-top: .4rem; max-width: 38rem; color: var(--portal-muted); font-size: .76rem; line-height: 1.5; }
+.portal-documents > .portal-empty, .portal-documents > .portal-skeleton { margin: 0 1.5rem 1.5rem; }
+.portal-document-list { border-top: 1px solid var(--portal-border); }
+.portal-document-row { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto auto; align-items: center; gap: .9rem; padding: 1rem 1.5rem; transition: background-color 180ms ease; }
+.portal-document-row + .portal-document-row { border-top: 1px solid var(--portal-border); }
+.portal-document-row:hover { background: var(--portal-surface-soft); }
+.portal-document-icon { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border-radius: 9px; background: var(--portal-gold-soft); color: var(--portal-gold); }
+.portal-document-icon svg { width: 1.1rem; height: 1.1rem; }
+.portal-document-copy { display: grid; min-width: 0; gap: .2rem; }
+.portal-document-copy strong { overflow: hidden; color: var(--portal-ink); font-size: .78rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.portal-document-copy span { color: var(--portal-muted); font-size: .66rem; text-transform: capitalize; }
+.portal-document-meta { display: grid; justify-items: end; gap: .25rem; }
+.portal-document-meta time { color: var(--portal-muted); font-size: .64rem; }
+.portal-document-status { display: inline-flex; align-items: center; gap: .3rem; color: var(--portal-success); font-size: .65rem; font-weight: 650; }
+.portal-document-status svg { width: .8rem; height: .8rem; }
+.portal-document-error { margin: .8rem 1.5rem 0; color: var(--portal-danger); font-size: .72rem; }
+.portal-documents-trust { display: flex; align-items: center; gap: .4rem; border-top: 1px solid var(--portal-border); background: var(--portal-surface-soft); padding: .8rem 1.5rem; color: var(--portal-muted); font-size: .66rem; }
+.portal-documents-trust svg { width: .85rem; height: .85rem; color: var(--portal-gold); }
+
 .portal-action {
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
 }
@@ -701,6 +731,13 @@
   .portal-proposal-actions { align-items: stretch; flex-direction: column; padding: 1rem 1.2rem; }
   .portal-proposal-actions a { width: 100%; }
   .portal-proposal-history summary, .portal-proposal-history ol { padding-inline: 1.2rem; }
+  .portal-documents-heading { padding: 1.2rem; }
+  .portal-documents-heading h2 { font-size: 1.4rem; }
+  .portal-documents > .portal-empty, .portal-documents > .portal-skeleton { margin-inline: 1.2rem; }
+  .portal-document-row { grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .7rem; padding: 1rem 1.2rem; }
+  .portal-document-meta { grid-column: 2; justify-items: start; }
+  .portal-document-action { grid-column: 3; grid-row: 1 / span 2; }
+  .portal-documents-trust { padding-inline: 1.2rem; }
   .portal-form-actions { position: sticky; bottom: 0; z-index: 10; margin-inline: -.25rem; border-top: 1px solid var(--portal-border); background: color-mix(in srgb, var(--portal-surface) 94%, transparent); padding: .8rem .25rem max(.8rem, env(safe-area-inset-bottom)); backdrop-filter: blur(14px); }
   .portal-milestones { padding: 1.15rem; }
   .portal-milestones-heading { margin-bottom: 1.2rem; }
