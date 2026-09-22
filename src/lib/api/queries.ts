@@ -84,10 +84,10 @@ export const condominiumQuery = (id: EntityId) =>
     queryFn: () => coreApi.condominiums.get(id),
   });
 
-export const reservationsListQuery = () =>
+export const reservationsListQuery = (propertyId?: EntityId) =>
   queryOptions({
-    queryKey: ["reservations", "list"],
-    queryFn: () => coreApi.reservations.list(),
+    queryKey: ["reservations", "list", propertyId ?? null],
+    queryFn: () => coreApi.reservations.list(propertyId ? { propertyId } : undefined),
   });
 
 export const reservationQuery = (id: EntityId) =>
