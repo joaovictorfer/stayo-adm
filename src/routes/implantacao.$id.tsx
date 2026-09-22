@@ -274,6 +274,7 @@ function ImplementationDetailPage() {
                   </div>
 
                   <CommercialTermsPanel implementationId={implementation.id} />
+                  <ContractConditionsPanel implementationId={implementation.id} />
                 </div>
 
                 <aside className="space-y-10">
@@ -311,7 +312,6 @@ function ImplementationDetailPage() {
                 <details>
                   <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Configurações operacionais</summary>
                   <div className="mt-4 grid gap-4">
-                    <ContractConditionsPanel implementationId={implementation.id} />
                     <InitialChargesPanel implementationId={implementation.id} />
                   </div>
                 </details>

@@ -80,6 +80,19 @@ function money(value: number | null): string {
   }).format(value);
 }
 
+function administration(value: number | null): string {
+  if (value === null || value === undefined) return "Não informado";
+  return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value)}%`;
+}
+
+function cleaning(value: string | null): string {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return "Não informado";
+  if (normalized === "stayo") return "Stayo";
+  if (normalized === "proprietario" || normalized === "proprietário") return "Proprietário";
+  return value?.trim() || "Não informado";
+}
+
 function textValue(value: string | null, fallback = "Não informado"): string {
   return value?.trim() || fallback;
 }
@@ -151,7 +164,7 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
 
   return (
     <div
-      className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm"
+      className="rounded-[var(--radius-card)] border bg-white p-4"
       style={{ borderColor: "var(--stayo-border)" }}
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -162,9 +175,7 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
           >
             Condições contratuais
           </p>
-          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Regras específicas desta implantação
-          </p>
+          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Resumo operacional vigente</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
@@ -299,11 +310,11 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
       ) : query.isError ? (
         <p className="text-sm text-destructive">Não foi possível carregar as condições contratuais.</p>
       ) : (
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Condition label="Administração" value={money(conditions?.administration_fee ?? null)} />
-          <Condition label="Limpeza" value={textValue(conditions?.cleaning_responsibility ?? null)} />
+        <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <Condition label="Administração" value={administration(conditions?.administration_fee ?? null)} />
+          <Condition label="Limpeza" value={cleaning(conditions?.cleaning_responsibility ?? null)} />
           <Condition label="Repasse" value={textValue(conditions?.payout_rule ?? null)} />
-          <Condition label="Manutenção" value={money(conditions?.maintenance_limit ?? null)} />
+          <Condition label="Manutenção" value={conditions?.maintenance_limit == null ? "Não informado" : `Até ${money(conditions.maintenance_limit)} sem autorização`} />
           <Condition
             label="Exclusividade"
             value={conditions?.exclusivity === null || conditions?.exclusivity === undefined ? "Não informado" : conditions.exclusivity ? "Sim" : "Não"}
@@ -316,7 +327,7 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
             label="Aviso prévio"
             value={conditions?.notice_period_days == null ? "Não informado" : `${conditions.notice_period_days} dias`}
           />
-        </div>
+        </dl>
       )}
     </div>
   );
@@ -324,13 +335,9 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
 
 function Condition({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0">
-      <p className="text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--stayo-ink-muted)" }}>
-        {label}
-      </p>
-      <p className="mt-1 truncate text-sm font-medium" style={{ color: "var(--stayo-ink)" }} title={value}>
-        {value}
-      </p>
+    <div className="grid min-w-0 gap-1 py-2.5 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-baseline">
+      <dt className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>{label}</dt>
+      <dd className="text-sm font-semibold sm:text-right" style={{ color: "var(--stayo-ink)" }}>{value}</dd>
     </div>
   );
 }
