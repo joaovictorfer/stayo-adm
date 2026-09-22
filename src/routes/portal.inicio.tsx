@@ -18,6 +18,10 @@ import {
   Eye,
   BadgeCheck,
   History,
+  FileCheck2,
+  FileImage,
+  ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -26,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Button } from "../components/ui/button";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
+import type { Attachment } from "../lib/api/attachments";
 import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
@@ -401,6 +406,25 @@ function OwnerProposal({
   );
 }
 
+const documentCategoryLabels: Record<string, string> = {
+  contract: "Contrato",
+  proposal: "Proposta",
+  identity: "Identificação",
+  property: "Imóvel",
+  regulation: "Regularização",
+  banking: "Dados para repasse",
+  inspection: "Vistoria",
+  other: "Documento",
+};
+
+function documentType(attachment: Attachment): string {
+  return documentCategoryLabels[attachment.category.toLowerCase()] ?? attachment.category.replace(/[_-]/g, " ");
+}
+
+function DocumentIcon({ attachment }: { attachment: Attachment }) {
+  return attachment.mimeType.startsWith("image/") ? <FileImage aria-hidden="true" /> : <FileCheck2 aria-hidden="true" />;
+}
+
 function propertyName(implementation: ImplementationProject | undefined): string {
   if (!implementation) return "Seu imóvel";
   if (implementation.nickname) return implementation.nickname;
@@ -750,46 +774,51 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </TabsContent>
 
         <TabsContent value="documentos" className="tab-content-anim space-y-6">
-          <section>
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl"
-                   style={{ backgroundColor: "var(--portal-gold-soft)", color: "var(--portal-gold)" }}
-              >
-                <FileText className="h-5 w-5" />
-              </div>
+          <section className="portal-documents" aria-labelledby="portal-documents-title">
+            <div className="portal-documents-heading">
+              <div className="portal-documents-heading-icon"><ShieldCheck aria-hidden="true" /></div>
               <div>
-                <h2 className="text-base font-semibold">Seus documentos</h2>
-                <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                  Arquivos importantes reunidos em um só lugar.
-                </p>
+                <p className="portal-milestones-eyebrow">Pasta segura</p>
+                <h2 id="portal-documents-title">Seus documentos</h2>
+                <p>Arquivos importantes liberados pela equipe Stayo, organizados para uma consulta simples e segura.</p>
               </div>
             </div>
-            <div>
-              {attachmentsQ.isPending ? (
-                <LoadingBlock />
-              ) : (attachmentsQ.data ?? []).length === 0 ? (
-                 <PortalEmptyState icon={<FileText />} title="Sua pasta está pronta" description="Os documentos liberados pela equipe Stayo aparecerão aqui, organizados para você." />
-              ) : (
-                <ul className="portal-card divide-y divide-[var(--portal-border)]">
-                  {(attachmentsQ.data ?? []).map((att) => (
-                    <li key={att.id} className="flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
-                      <span className="min-w-0 truncate text-sm font-medium">{att.filename}</span>
-                       <Button
-                        type="button"
-                        onClick={() => download.mutate(att.storagePath)}
-                        disabled={download.isPending}
-                         variant="ghost"
-                         size="sm"
-                         className="portal-action shrink-0 text-[var(--portal-navy)] hover:bg-[var(--portal-surface-soft)]"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        Baixar
-                       </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {attachmentsQ.isPending ? (
+              <PortalSkeleton rows={3} />
+            ) : attachmentsQ.isError ? (
+              <PortalEmptyState icon={<FileText />} title="Não foi possível abrir sua pasta agora" description="Seus documentos continuam protegidos. Tente novamente em alguns instantes." />
+            ) : (attachmentsQ.data ?? []).length === 0 ? (
+              <PortalEmptyState icon={<FileText />} title="Sua pasta está pronta" description="Ainda não há documentos liberados para você. Quando a equipe Stayo disponibilizar contratos, propostas ou outros arquivos, eles aparecerão aqui com data e status." />
+            ) : (
+              <ul className="portal-document-list">
+                {(attachmentsQ.data ?? []).map((attachment) => (
+                  <li key={attachment.id} className="portal-document-row">
+                    <span className="portal-document-icon"><DocumentIcon attachment={attachment} /></span>
+                    <div className="portal-document-copy">
+                      <strong>{attachment.filename}</strong>
+                      <span>{documentType(attachment)} · {attachment.mimeType === "application/pdf" ? "PDF" : attachment.mimeType.startsWith("image/") ? "Imagem" : "Arquivo"}</span>
+                    </div>
+                    <div className="portal-document-meta">
+                      <span className="portal-document-status"><CheckCircle2 aria-hidden="true" /> Disponível</span>
+                      <time dateTime={attachment.createdAt}>{new Intl.DateTimeFormat("pt-BR").format(new Date(attachment.createdAt))}</time>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => download.mutate(attachment.storagePath)}
+                      disabled={download.isPending}
+                      variant="outline"
+                      size="sm"
+                      className="portal-action portal-document-action shrink-0 border-[var(--portal-border)] text-[var(--portal-navy)] hover:bg-[var(--portal-surface-soft)]"
+                    >
+                      {attachment.mimeType.startsWith("image/") || attachment.mimeType === "application/pdf" ? <ExternalLink className="h-3.5 w-3.5" /> : <Download className="h-3.5 w-3.5" />}
+                      {download.isPending ? "Abrindo..." : "Abrir"}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {download.isError && <p className="portal-document-error" role="alert">Não conseguimos abrir este arquivo agora. Tente novamente em alguns instantes.</p>}
+            <p className="portal-documents-trust"><LockKeyhole aria-hidden="true" /> Somente documentos liberados para você aparecem nesta área.</p>
           </section>
         </TabsContent>
       </Tabs>
