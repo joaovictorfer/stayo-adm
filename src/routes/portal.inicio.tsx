@@ -13,13 +13,16 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
-import { ownerQuery, ownerTasksQuery } from "../lib/api/queries";
+import { implementationsListQuery, ownerQuery, ownerTasksQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
+import { statusLabels } from "../lib/implementation-status";
 import type { OwnerTaskStatus } from "../types/admin";
+import type { ImplementationProject, ImplementationStatus } from "../types/core";
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
@@ -40,6 +43,92 @@ const ownerTaskStatusLabels: Record<OwnerTaskStatus, string> = {
   done: "Resolvida",
   dismissed: "Dispensada",
 };
+
+const stageMessages: Record<ImplementationStatus, string> = {
+  prospect: "Estamos conhecendo seu imóvel e organizando os primeiros passos.",
+  proposta: "Estamos preparando as condições para iniciarmos esta parceria.",
+  aguardando_aprovacao: "Sua proposta está pronta para análise e aprovação.",
+  aprovado: "A proposta foi aprovada e agora vamos organizar a preparação do imóvel.",
+  planejamento: "Estamos coordenando os detalhes para começar a preparação do imóvel.",
+  em_implantacao: "Seu imóvel está sendo preparado para receber os primeiros hóspedes.",
+  validacao: "Estamos revisando os últimos detalhes antes de colocar o imóvel em operação.",
+  pronto_para_operacao: "Seu imóvel está pronto para começar a receber hóspedes.",
+  ativo: "Seu imóvel está em operação e sendo acompanhado pela equipe Stayo.",
+  pausado: "A preparação está pausada; avisaremos assim que houver uma nova atualização.",
+  nao_convertido: "A equipe Stayo está revisando os próximos passos desta implantação.",
+  cancelado: "Esta implantação foi encerrada. Fale com a equipe Stayo se precisar de ajuda.",
+};
+
+function propertyName(implementation: ImplementationProject | undefined): string {
+  if (!implementation) return "Seu imóvel";
+  if (implementation.nickname) return implementation.nickname;
+  return [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Seu imóvel";
+}
+
+function PortalHero({
+  firstName,
+  implementation,
+  onSignOut,
+}: {
+  firstName: string;
+  implementation: ImplementationProject | undefined;
+  onSignOut: () => void;
+}) {
+  const status = implementation?.status ?? "prospect";
+  const image = implementation?.coverImage?.startsWith("http")
+    ? implementation.coverImage
+    : portalPropertyFallback;
+
+  return (
+    <header className="portal-property-hero">
+      <img
+        src={image}
+        alt={implementation ? `Vista de ${propertyName(implementation)}` : "Imóvel acompanhado pela Stayo"}
+        width={1600}
+        height={700}
+        className="portal-property-hero-image"
+      />
+      <div className="portal-property-hero-overlay" />
+      <div className="portal-property-hero-content">
+        <div className="flex items-start justify-between gap-4">
+          <div className="portal-property-brand">
+            <img src="/favicon.ico" alt="" aria-hidden="true" className="h-8 w-8 object-contain sm:h-9 sm:w-9" />
+            <div>
+              <span className="block text-base font-semibold leading-none text-[var(--portal-hero-foreground)]">STAYO</span>
+              <span className="mt-1 block text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--portal-hero-muted)]">Portal do proprietário</span>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={onSignOut}
+            variant="outline"
+            size="sm"
+            className="portal-hero-signout portal-action shrink-0 rounded-full"
+            aria-label="Sair da conta"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Sair</span>
+          </Button>
+        </div>
+
+        <div className="portal-property-hero-copy">
+          <div className="portal-property-status">
+            <span className="portal-property-status-dot" />
+            {statusLabels[status]}
+          </div>
+          <p className="portal-property-greeting">Olá, {firstName}.</p>
+          <h1 className="portal-property-title">{propertyName(implementation)}</h1>
+          <p className="portal-property-moment">{stageMessages[status]}</p>
+          {implementation?.completionDateEstimate && (
+            <p className="portal-property-estimate">
+              Previsão · {new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(new Date(`${implementation.completionDateEstimate}T12:00:00`))}
+            </p>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
 
 const StyleInjection = () => (
   <style>{`
@@ -123,7 +212,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <StyleInjection />
-      <PortalShell framed={false}>{children}</PortalShell>
+      <PortalShell framed={false} showBrand={false}>{children}</PortalShell>
     </>
   );
 }
@@ -175,6 +264,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const tabsListRef = useRef<HTMLDivElement>(null);
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
+  const implementationsQ = useQuery(implementationsListQuery());
   const attachmentsQ = useQuery({
     queryKey: ["owner-attachments", ownerId],
     queryFn: () => listOwnerAttachments(ownerId),
@@ -186,33 +276,11 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
+  const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
 
   return (
     <div className="space-y-2">
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border-b border-[var(--portal-border)] pb-7 sm:pb-9">
-        <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--portal-gold)]">
-            Área do proprietário
-          </p>
-          <h1 className="text-3xl leading-tight text-[var(--portal-navy)] sm:text-4xl" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Olá, <span className="italic">{firstName}</span>.
-          </h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--portal-muted)] sm:text-base">
-            Seu espaço para acompanhar cada etapa do imóvel com clareza e tranquilidade.
-          </p>
-        </div>
-        <Button
-          type="button"
-          onClick={onSignOut}
-          variant="outline"
-          size="sm"
-          className="portal-action shrink-0 rounded-full border-[var(--portal-border)] bg-[var(--portal-surface)] text-[var(--portal-muted)] hover:bg-[var(--portal-surface-soft)] hover:text-[var(--portal-navy)]"
-          aria-label="Sair da conta"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Sair</span>
-        </Button>
-      </header>
+      <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
 
       <Tabs
         value={activeTab}

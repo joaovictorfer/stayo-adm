@@ -23,18 +23,20 @@ export function PortalShell({
   footer = "Cuidamos de cada etapa para você acompanhar tudo com tranquilidade.",
   width = "wide",
   framed = true,
+  showBrand = true,
 }: {
   children: ReactNode;
   context?: string;
   footer?: string;
   width?: "compact" | "medium" | "wide";
   framed?: boolean;
+  showBrand?: boolean;
 }) {
   const widths = { compact: "max-w-md", medium: "max-w-2xl", wide: "max-w-5xl" };
   return (
     <div className="stayo-owner-theme min-h-screen bg-[var(--portal-bg)] px-4 py-5 text-[var(--portal-ink)] sm:px-7 sm:py-8">
       <div className={cn("mx-auto w-full", widths[width])}>
-        <div className="mb-6 px-1 sm:mb-8"><PortalBrand {...(context ? { context } : {})} /></div>
+        {showBrand && <div className="mb-6 px-1 sm:mb-8"><PortalBrand {...(context ? { context } : {})} /></div>}
         <main className={cn(framed && "portal-shell-surface")}>{children}</main>
         <p className="mx-auto mt-6 max-w-lg text-center text-xs leading-5 text-[var(--portal-muted)]">{footer}</p>
       </div>
