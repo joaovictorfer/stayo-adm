@@ -761,7 +761,8 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
 
   useEffect(() => {
-    if (!portalModules.includes(activeTab as OwnerPortalModule)) setActiveTab("visao-geral");
+    const activeModule = activeTab === "dados" ? "profile" : activeTab;
+    if (!portalModules.includes(activeModule as OwnerPortalModule)) setActiveTab("visao-geral");
   }, [activeTab, portalModules]);
 
   return (
