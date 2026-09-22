@@ -56,10 +56,10 @@ function OwnerOnboardingPortalPage() {
     return (
       <Shell>
         <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Link inválido
+          Este acesso não está disponível
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Este link de cadastro não existe. Fale com quem enviou o link para receber um novo.
+          Não conseguimos reconhecer este link. Peça um novo acesso à equipe Stayo e continue de onde parou.
         </p>
       </Shell>
     );
@@ -70,10 +70,10 @@ function OwnerOnboardingPortalPage() {
     return (
       <Shell>
         <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          {status === "expirado" ? "Link expirado" : "Link revogado"}
+          {status === "expirado" ? "Este acesso venceu" : "Este acesso foi encerrado"}
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Fale com quem enviou o link para receber um novo.
+          Seus dados continuam protegidos. Peça um novo link à equipe Stayo para continuar.
         </p>
       </Shell>
     );
@@ -130,7 +130,7 @@ function OwnerOnboardingForm({
         ownerOnboardingSubmissionQuery(implementationId).queryKey,
         submission,
       );
-      toast.success("Cadastro enviado", { description: "Recebemos seus dados com segurança." });
+      toast.success("Tudo certo", { description: "Recebemos seu cadastro com segurança." });
     },
     onError: () => toast.error("Não foi possível enviar agora", { description: "Seus dados continuam na tela. Confira sua conexão e tente novamente." }),
   });
@@ -150,7 +150,7 @@ function OwnerOnboardingForm({
       <Shell>
         <div className="portal-form-success" role="status">
           <CheckCircle2 aria-hidden="true" />
-          <div><h1>Cadastro recebido</h1><p>Obrigado, {submissionQ.data.fullName}! Seus dados foram enviados com segurança para validação. A equipe Stayo avisará se precisar confirmar algo.</p></div>
+          <div><h1>Recebemos seu cadastro</h1><p>Obrigado, {submissionQ.data.fullName}! Agora nossa equipe vai conferir as informações com cuidado. Se precisarmos de algo, avisaremos você.</p></div>
         </div>
         <CreateOwnerAccountPanel token={token} defaultEmail={submissionQ.data.email} />
       </Shell>
@@ -165,7 +165,7 @@ function OwnerOnboardingForm({
       invalidMessage: "Preencha seu nome e confira o CPF ou CNPJ para continuar.",
       content: (
         <div className="portal-form-section">
-          <div className="portal-form-guidance"><ShieldCheck aria-hidden="true" /><p>Precisamos destas informações para identificar você com segurança.</p></div>
+          <div className="portal-form-guidance"><ShieldCheck aria-hidden="true" /><p>Vamos começar pelo básico para manter seu cadastro seguro.</p></div>
           <TextField label="Seu nome completo" placeholder="Como aparece no documento" autoComplete="name" value={form.fullName} onChange={set("fullName")} onBlur={touch("fullName")} error={fieldError("fullName")} maxLength={120} />
           <TextField label="CPF ou CNPJ" placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" value={form.document ?? ""} onChange={(value) => set("document")(formatBrazilianDocument(value))} onBlur={touch("document")} error={fieldError("document")} maxLength={18} hint="Usamos este dado somente para seu cadastro e documentos." />
         </div>
@@ -178,7 +178,7 @@ function OwnerOnboardingForm({
       invalidMessage: "Confira o e-mail e informe um telefone com DDD.",
       content: (
         <div className="portal-form-section">
-          <p className="portal-form-copy">Como você prefere receber atualizações da equipe Stayo?</p>
+          <p className="portal-form-copy">Conte como podemos falar com você sobre os próximos passos.</p>
           <TextField label="Seu melhor e-mail" type="email" placeholder="voce@exemplo.com" autoComplete="email" value={form.email} onChange={set("email")} onBlur={touch("email")} error={fieldError("email")} maxLength={255} />
           <TextField label="WhatsApp ou telefone" placeholder="(11) 99999-9999" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(value) => set("phone")(formatBrazilianPhone(value))} onBlur={touch("phone")} error={fieldError("phone")} maxLength={15} hint="Inclua o DDD. Podemos usar este número para avisos importantes." />
         </div>
@@ -189,7 +189,7 @@ function OwnerOnboardingForm({
       label: "Pagamento",
       content: (
         <div className="portal-form-section">
-          <div className="portal-form-guidance"><LockKeyhole aria-hidden="true" /><p>Informe uma chave Pix para futuros repasses. Este dado recebe acesso restrito.</p></div>
+          <div className="portal-form-guidance"><LockKeyhole aria-hidden="true" /><p>Sua chave Pix será usada nos futuros repasses e ficará visível apenas para a equipe autorizada.</p></div>
           <TextField
             label="Chave Pix para repasses"
             placeholder="CPF, CNPJ, telefone, e-mail ou chave aleatória"
@@ -216,7 +216,7 @@ function OwnerOnboardingForm({
         Vamos concluir seu cadastro
       </h1>
       <p className="mb-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-        São três etapas curtas. Confira com calma — seus dados serão enviados somente no final.
+        São três etapas rápidas. Você pode conferir tudo com calma antes de enviar.
       </p>
       <Wizard
         steps={steps}
@@ -250,7 +250,7 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
   if (!isSupabaseConfigured()) {
     return (
       <p className="mt-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Criar uma conta para acompanhar depois ainda não está disponível.
+        Por enquanto, continue usando o link enviado pela equipe Stayo para acompanhar seu imóvel.
       </p>
     );
   }
@@ -260,14 +260,14 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
       <p className="mt-4 text-sm" style={{ color: "var(--stayo-forest)" }}>
         {createAccount.data.account ? (
           <>
-            Conta criada e vinculada! Você já pode{" "}
+             Sua conta está pronta! Agora você pode{" "}
             <a href="/portal/login" className="underline">
-              entrar
+               acessar o portal
             </a>{" "}
-            com este e-mail e senha para acompanhar depois.
+             com este e-mail e senha sempre que quiser.
           </>
         ) : (
-          "Conta criada — confirme seu e-mail para poder entrar depois."
+           "Sua conta foi criada. Confirme o e-mail recebido para acessar o portal."
         )}
       </p>
     );
@@ -276,10 +276,10 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
   return (
     <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--stayo-border)" }}>
       <h2 className="mb-1 text-sm" style={{ fontFamily: "var(--stayo-font-display)" }}>
-        Quer acompanhar depois?
+         Quer acessar quando precisar?
       </h2>
       <p className="mb-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Crie uma senha para entrar de novo mais tarde, sem depender de um link.
+         Crie uma senha e volte ao portal quando quiser, sem precisar procurar este link.
       </p>
       <form
         className="flex flex-col gap-3"
@@ -292,7 +292,7 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
         <TextField label="Senha" type="password" value={password} onChange={setPassword} />
         {createAccount.isError && (
           <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-            Não foi possível criar a conta. Tente novamente.
+            Não conseguimos criar sua conta agora. Confira os dados e tente novamente.
           </span>
         )}
         <Button
@@ -300,7 +300,7 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
           disabled={createAccount.isPending}
           className="portal-action rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
         >
-          {createAccount.isPending ? "Criando..." : "Criar conta"}
+          {createAccount.isPending ? "Preparando sua conta..." : "Criar meu acesso"}
         </Button>
       </form>
     </div>
