@@ -1089,18 +1089,16 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
     id,
     title,
     description,
-    defaultOpen = false,
     children,
   }: {
     id: string;
     title: string;
     description?: string;
-    defaultOpen?: boolean;
     children: React.ReactNode;
   }) {
     const isEditing = editingSection === id;
     return (
-      <details open={isEditing || undefined} defaultOpen={defaultOpen} className="group overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+      <details open={isEditing || undefined} className="group overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{title}</h2>
@@ -1158,7 +1156,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         </div>
       </div>
 
-      <Section id="identificacao" title="Identificação e endereço" description="Dados básicos do imóvel e localização" defaultOpen>
+      <Section id="identificacao" title="Identificação e endereço" description="Dados básicos do imóvel e localização">
         {editingSection === "identificacao" ? (
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
