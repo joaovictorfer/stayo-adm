@@ -1,5 +1,7 @@
 import { type ReactNode, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 export interface WizardStep {
   id: string;
   label: string;
@@ -66,24 +68,23 @@ export function Wizard({
 
       <div className="flex items-center gap-3">
         {!isFirst && (
-          <button
+          <Button
             type="button"
             onClick={() => setIndex((i) => i - 1)}
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+            variant="outline"
+            className="portal-action rounded-xl border-[var(--portal-border)] text-[var(--portal-navy)]"
           >
             Voltar
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="button"
           disabled={step.isValid === false || submitting}
           onClick={() => (isLast ? onComplete() : setIndex((i) => i + 1))}
-          className="ml-auto rounded-[var(--radius-control)] px-4 py-2 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-white hover:bg-[var(--portal-navy-strong)]"
         >
           {isLast ? (submitting ? "Salvando..." : completeLabel) : "Continuar"}
-        </button>
+        </Button>
       </div>
     </div>
   );
