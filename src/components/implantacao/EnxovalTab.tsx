@@ -126,7 +126,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
         existing_qty: Number(formData.existing_qty) || 0,
         priority: formData.priority as "baixa" | "media" | "alta",
         responsible: formData.responsible.trim() || null,
-        status: formData.status,
+        status: formData.status as "pendente" | "comprado" | "entregue" | "instalado" | "nao_aplicavel",
         blocks_readiness: formData.blocks_readiness,
         notes: formData.notes.trim() || null,
         updated_at: new Date().toISOString(),
