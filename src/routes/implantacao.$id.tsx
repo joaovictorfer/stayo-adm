@@ -80,7 +80,7 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "proprietario" | "imovel" | "enxoval" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<"resumo" | "proprietario" | "imovel" | "enxoval" | "itens_faltantes" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -200,7 +200,7 @@ function ImplementationDetailPage() {
           <IndicatorCards items={items} loading={itemsQuery.isPending} />
 
           <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "proprietario", "imovel", "enxoval", "checklist", "proposta"] as const).map((t) => (
+            {(["resumo", "proprietario", "imovel", "enxoval", "itens_faltantes", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -219,8 +219,10 @@ function ImplementationDetailPage() {
                   : t === "imovel"
                     ? "Imóvel"
                     : t === "enxoval"
-                      ? "Enxoval"
-                      : t === "checklist"
+                       ? "Enxoval"
+                       : t === "itens_faltantes"
+                         ? "Itens faltantes"
+                       : t === "checklist"
                         ? "Checklist"
                         : "Proposta"}
               </button>
@@ -340,7 +342,9 @@ function ImplementationDetailPage() {
           ) : tab === "imovel" ? (
             <PropertyTab implementation={implementation} />
           ) : tab === "enxoval" ? (
-            <EnxovalTab implementationId={implementation.id} />
+            <EnxovalTab implementationId={implementation.id} mode="inventory" />
+          ) : tab === "itens_faltantes" ? (
+            <EnxovalTab implementationId={implementation.id} mode="missing" />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
