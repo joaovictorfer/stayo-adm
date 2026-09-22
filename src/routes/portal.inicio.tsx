@@ -38,7 +38,7 @@ import { toast } from "sonner";
 import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
-import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
+import { OwnerWelcomeOverlay, PortalEmptyState, PortalShell, PortalSkeleton, useOwnerWelcomeState } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
 import type { Attachment } from "../lib/api/attachments";
 import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery, propertyQuery, reservationsListQuery } from "../lib/api/queries";
@@ -759,6 +759,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
+  const welcome = useOwnerWelcomeState();
 
   useEffect(() => {
     const activeModule = activeTab === "dados" ? "profile" : activeTab;
@@ -767,6 +768,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
 
   return (
     <div className="space-y-2">
+      {welcome.showWelcome && welcome.ready && (
+        <OwnerWelcomeOverlay
+          firstName={firstName}
+          propertyName={propertyName(implementation)}
+          onStart={() => welcome.dismiss()}
+        />
+      )}
       <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
       <PortalPhaseIndicator phase={portalPhase} />
       {portalPhase === "ready" && implementation && <ReadyTransition implementation={implementation} />}
