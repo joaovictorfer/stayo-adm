@@ -71,7 +71,7 @@ function PortalHero({
   onSignOut,
 }: {
   firstName: string;
-  implementation?: ImplementationProject;
+  implementation: ImplementationProject | undefined;
   onSignOut: () => void;
 }) {
   const status = implementation?.status ?? "prospect";
