@@ -223,7 +223,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         className="mt-5 w-full sm:mt-7"
       >
         <div 
-          className="sticky top-2 z-20 -mx-1 mb-7 rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
+          className="sticky top-2 z-20 mb-7 max-w-full overflow-hidden rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
         >
           <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
             <TabsTrigger value="visao-geral" className="stayo-tab snap-start">
