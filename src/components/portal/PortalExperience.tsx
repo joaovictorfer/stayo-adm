@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export function PortalBrand({ context = "Portal do proprietário" }: { context?: string }) {
   return (
@@ -68,11 +69,15 @@ export function PortalEmptyState({
   icon,
   title,
   description,
+  nextStep,
+  action,
   positive = false,
 }: {
   icon?: ReactNode;
   title: string;
   description: string;
+  nextStep?: string;
+  action?: { label: string; onClick: () => void };
   positive?: boolean;
 }) {
   return (
@@ -80,9 +85,15 @@ export function PortalEmptyState({
       <div className={cn("portal-empty-icon", positive && "portal-empty-icon-success")}>
         {icon ?? (positive ? <CheckCircle2 /> : <Sparkles />)}
       </div>
-      <div>
+       <div className="min-w-0 flex-1">
         <h3 className="text-base font-semibold text-[var(--portal-navy)]">{title}</h3>
         <p className="mt-1 max-w-lg text-sm leading-6 text-[var(--portal-muted)]">{description}</p>
+         {nextStep && <p className="portal-empty-next">{nextStep}</p>}
+         {action && (
+           <Button type="button" onClick={action.onClick} variant="outline" size="sm" className="portal-action portal-empty-action border-[var(--portal-border)] text-[var(--portal-navy)] hover:bg-[var(--portal-surface)]">
+             {action.label}<ArrowRight className="h-3.5 w-3.5" />
+           </Button>
+         )}
       </div>
     </div>
   );
