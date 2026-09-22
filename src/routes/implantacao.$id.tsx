@@ -872,7 +872,7 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
   );
 }
 
-function Metric({ label, value, detail, color, className = "" }: { label: string; value: string; detail: string; color?: string; className?: string }) {
+function Metric({ label, value, detail, color, className = "" }: { label: string; value: string; detail: string; color?: string | undefined; className?: string }) {
   return (
     <div className={`border-r p-4 text-center last:border-r-0 sm:p-5 ${className}`} style={{ borderColor: "var(--stayo-border)" }}>
       <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
