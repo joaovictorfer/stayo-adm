@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
@@ -12,6 +13,7 @@ import {
   ownerQuery,
 } from "../lib/api/queries";
 import { createOwnerAccountAndLink, isSupabaseConfigured } from "../lib/auth/owner-session";
+import { formatBrazilianDocument, formatBrazilianPhone, ownerOnboardingFormSchema, validateOwnerField, type OwnerFormField } from "../lib/owner-form-validation";
 import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
 import type { OwnerOnboardingSubmissionInput } from "../types/owner-onboarding";
 
@@ -98,6 +100,7 @@ function OwnerOnboardingForm({
     phone: "",
     pixKey: null,
   });
+  const [touched, setTouched] = useState<Partial<Record<OwnerFormField, boolean>>>({});
 
   useEffect(() => {
     const owner = ownerQ.data;
@@ -111,7 +114,15 @@ function OwnerOnboardingForm({
   }, [ownerQ.data, submissionQ.data]);
 
   const submit = useMutation({
-    mutationFn: () => adminApi.ownerOnboarding.submit(implementationId, token, form),
+    mutationFn: () => {
+      const validated = ownerOnboardingFormSchema.parse(form);
+      return adminApi.ownerOnboarding.submit(implementationId, token, {
+        ...validated,
+        document: validated.document.replace(/\D/g, ""),
+        phone: `+55${validated.phone.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "")}`,
+        pixKey: validated.pixKey || null,
+      });
+    },
     onSuccess: (submission) => {
       queryClient.setQueryData(
         ownerOnboardingSubmissionQuery(implementationId).queryKey,
@@ -125,16 +136,18 @@ function OwnerOnboardingForm({
     (value: string): void =>
       setForm((f) => ({ ...f, [key]: value || null }));
 
+  const fieldError = (field: OwnerFormField) => touched[field]
+    ? validateOwnerField(field, form[field])
+    : undefined;
+  const touch = (field: OwnerFormField) => () => setTouched((current) => ({ ...current, [field]: true }));
+
   if (submissionQ.data) {
     return (
       <Shell>
-        <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Cadastro recebido
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Obrigado, {submissionQ.data.fullName}! Já recebemos seus dados. A equipe Stayo entra em
-          contato para os próximos passos da implantação.
-        </p>
+        <div className="portal-form-success" role="status">
+          <CheckCircle2 aria-hidden="true" />
+          <div><h1>Cadastro recebido</h1><p>Obrigado, {submissionQ.data.fullName}! Seus dados foram enviados com segurança para validação. A equipe Stayo avisará se precisar confirmar algo.</p></div>
+        </div>
         <CreateOwnerAccountPanel token={token} defaultEmail={submissionQ.data.email} />
       </Shell>
     );
@@ -144,25 +157,26 @@ function OwnerOnboardingForm({
     {
       id: "identificacao",
       label: "Identificação",
-      isValid: form.fullName.trim() !== "",
+      isValid: !validateOwnerField("fullName", form.fullName) && !validateOwnerField("document", form.document),
+      invalidMessage: "Preencha seu nome e confira o CPF ou CNPJ para continuar.",
       content: (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Confirme seus dados para a implantação do seu imóvel na Stayo.
-          </p>
-          <TextField label="Nome completo" value={form.fullName} onChange={set("fullName")} />
-          <TextField label="CPF ou CNPJ" value={form.document ?? ""} onChange={set("document")} />
+        <div className="portal-form-section">
+          <div className="portal-form-guidance"><ShieldCheck aria-hidden="true" /><p>Precisamos destas informações para identificar você com segurança.</p></div>
+          <TextField label="Seu nome completo" placeholder="Como aparece no documento" autoComplete="name" value={form.fullName} onChange={set("fullName")} onBlur={touch("fullName")} error={fieldError("fullName")} maxLength={120} />
+          <TextField label="CPF ou CNPJ" placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" value={form.document ?? ""} onChange={(value) => set("document")(formatBrazilianDocument(value))} onBlur={touch("document")} error={fieldError("document")} maxLength={18} hint="Usamos este dado somente para seu cadastro e documentos." />
         </div>
       ),
     },
     {
       id: "contato",
       label: "Contato",
-      isValid: form.email.trim() !== "" && form.phone.trim() !== "",
+      isValid: !validateOwnerField("email", form.email) && !validateOwnerField("phone", form.phone),
+      invalidMessage: "Confira o e-mail e informe um telefone com DDD.",
       content: (
-        <div className="flex flex-col gap-3">
-          <TextField label="E-mail" type="email" value={form.email} onChange={set("email")} />
-          <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
+        <div className="portal-form-section">
+          <p className="portal-form-copy">Como você prefere receber atualizações da equipe Stayo?</p>
+          <TextField label="Seu melhor e-mail" type="email" placeholder="voce@exemplo.com" autoComplete="email" value={form.email} onChange={set("email")} onBlur={touch("email")} error={fieldError("email")} maxLength={255} />
+          <TextField label="WhatsApp ou telefone" placeholder="(11) 99999-9999" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(value) => set("phone")(formatBrazilianPhone(value))} onBlur={touch("phone")} error={fieldError("phone")} maxLength={15} hint="Inclua o DDD. Podemos usar este número para avisos importantes." />
         </div>
       ),
     },
@@ -170,15 +184,21 @@ function OwnerOnboardingForm({
       id: "pagamento",
       label: "Pagamento",
       content: (
-        <div className="flex flex-col gap-3">
+        <div className="portal-form-section">
+          <div className="portal-form-guidance"><LockKeyhole aria-hidden="true" /><p>Informe uma chave Pix para futuros repasses. Este dado recebe acesso restrito.</p></div>
           <TextField
-            label="Chave Pix (para repasses futuros)"
+            label="Chave Pix para repasses"
+            placeholder="CPF, CNPJ, telefone, e-mail ou chave aleatória"
             value={form.pixKey ?? ""}
             onChange={set("pixKey")}
+            onBlur={touch("pixKey")}
+            error={fieldError("pixKey")}
+            maxLength={255}
+            hint="A equipe Stayo confirmará os dados bancários antes do primeiro repasse."
           />
           {submit.isError && (
             <span className="text-sm" style={{ color: "var(--stayo-danger)" }} role="alert">
-              Não foi possível enviar. Tente novamente.
+              Não conseguimos enviar agora. Seus dados continuam nesta tela; confira sua conexão e tente novamente.
             </span>
           )}
         </div>
@@ -189,14 +209,14 @@ function OwnerOnboardingForm({
   return (
     <Shell>
       <h1 className="mb-1 text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-        Complete seu cadastro
+        Vamos concluir seu cadastro
       </h1>
       <p className="mb-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-        Leva menos de um minuto.
+        São três etapas curtas. Confira com calma — seus dados serão enviados somente no final.
       </p>
       <Wizard
         steps={steps}
-        completeLabel="Enviar"
+        completeLabel="Enviar cadastro"
         submitting={submit.isPending}
         onComplete={() => submit.mutate()}
       />
@@ -269,14 +289,13 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
             Não foi possível criar a conta. Tente novamente.
           </span>
         )}
-        <button
+        <Button
           type="submit"
           disabled={createAccount.isPending}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          className="portal-action rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
         >
           {createAccount.isPending ? "Criando..." : "Criar conta"}
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -286,12 +305,26 @@ function TextField({
   label,
   value,
   onChange,
+  onBlur,
   type = "text",
+  placeholder,
+  hint,
+  error,
+  inputMode,
+  autoComplete,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   type?: string;
+  placeholder?: string;
+  hint?: string;
+  error?: string | undefined;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
+  maxLength?: number;
 }) {
   return (
     <label className="block text-sm">
@@ -302,8 +335,16 @@ function TextField({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="portal-input w-full rounded-xl px-3 py-2.5 text-sm"
+        onBlur={onBlur}
+        placeholder={placeholder}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error || hint ? `${label.replace(/\s/g, "-").toLowerCase()}-help` : undefined}
+        className="portal-input w-full rounded-xl px-3 py-2.5 text-sm placeholder:text-[var(--portal-muted)]/60"
       />
+      {(error || hint) && <span id={`${label.replace(/\s/g, "-").toLowerCase()}-help`} className={`mt-1.5 block text-xs ${error ? "text-[var(--portal-danger)]" : "text-[var(--portal-muted)]"}`}>{error ?? hint}</span>}
     </label>
   );
 }

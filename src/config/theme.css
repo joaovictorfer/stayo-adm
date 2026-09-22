@@ -582,6 +582,15 @@
 }
 .portal-input:hover { border-color: color-mix(in srgb, var(--portal-navy) 30%, var(--portal-border)); }
 .portal-input:focus { border-color: var(--portal-navy); box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-navy) 12%, transparent); outline: none; }
+.portal-input[aria-invalid="true"] { border-color: var(--portal-danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-danger) 10%, transparent); }
+.portal-form-section { display: grid; gap: 1rem; }
+.portal-form-copy { color: var(--portal-muted); font-size: .82rem; line-height: 1.55; }
+.portal-form-guidance { display: flex; align-items: flex-start; gap: .65rem; border-radius: 10px; background: var(--portal-surface-soft); padding: .85rem; color: var(--portal-muted); font-size: .76rem; line-height: 1.5; }
+.portal-form-guidance svg { width: 1rem; height: 1rem; flex: 0 0 auto; margin-top: .1rem; color: var(--portal-gold); }
+.portal-form-success { display: flex; align-items: flex-start; gap: .8rem; border: 1px solid color-mix(in srgb, var(--portal-success) 24%, var(--portal-border)); border-radius: 12px; background: color-mix(in srgb, var(--portal-success) 8%, var(--portal-surface)); padding: 1rem; }
+.portal-form-success > svg { width: 1.35rem; height: 1.35rem; flex: 0 0 auto; color: var(--portal-success); }
+.portal-form-success h1 { color: var(--portal-navy); font-family: var(--stayo-font-display); font-size: 1.15rem; font-weight: 600; }
+.portal-form-success p { margin-top: .3rem; color: var(--portal-muted); font-size: .78rem; line-height: 1.55; }
 
 .portal-empty {
   display: flex;
@@ -646,6 +655,7 @@
   .portal-profile-checklist li { grid-template-columns: 1.8rem minmax(0, 1fr); }
   .portal-profile-step-status { grid-column: 2; }
   .portal-profile-save-note { padding-inline: 1.2rem; }
+  .portal-form-actions { position: sticky; bottom: 0; z-index: 10; margin-inline: -.25rem; border-top: 1px solid var(--portal-border); background: color-mix(in srgb, var(--portal-surface) 94%, transparent); padding: .8rem .25rem max(.8rem, env(safe-area-inset-bottom)); backdrop-filter: blur(14px); }
   .portal-milestones { padding: 1.15rem; }
   .portal-milestones-heading { margin-bottom: 1.2rem; }
   .portal-milestones-list { display: block; }
