@@ -24,6 +24,13 @@ import {
   ShieldCheck,
   BellRing,
   CircleCheckBig,
+  CalendarRange,
+  House,
+  ClipboardCheck,
+  Wrench,
+  WalletCards,
+  BedDouble,
+  TrendingUp,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -34,9 +41,10 @@ import { Button } from "../components/ui/button";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
 import type { Attachment } from "../lib/api/attachments";
-import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery } from "../lib/api/queries";
+import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery, propertyQuery, reservationsListQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
+import { getOwnerPortalModules, getOwnerPortalPhase, type OwnerPortalModule, type OwnerPortalPhase } from "../lib/owner-portal-lifecycle";
 import type { OwnerTaskStatus } from "../types/admin";
 import type { CommercialTerm } from "../types/admin";
 import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
@@ -426,6 +434,84 @@ function documentType(attachment: Attachment): string {
 
 function DocumentIcon({ attachment }: { attachment: Attachment }) {
   return attachment.mimeType.startsWith("image/") ? <FileImage aria-hidden="true" /> : <FileCheck2 aria-hidden="true" />;
+}
+
+const portalModuleLabels: Record<OwnerPortalModule, string> = {
+  overview: "Visão geral",
+  implementation: "Minha implantação",
+  profile: "Meus dados",
+  proposal: "Proposta",
+  reservations: "Reservas",
+  calendar: "Calendário",
+  property: "Meu imóvel",
+  inspections: "Vistorias",
+  maintenance: "Manutenções",
+  finance: "Financeiro",
+  documents: "Documentos",
+};
+
+function PortalPhaseIndicator({ phase }: { phase: OwnerPortalPhase }) {
+  const activeIndex = phase === "implementation" ? 0 : phase === "ready" ? 1 : 2;
+  const labels = ["Implantação", "Pronto para operar", "Em operação"];
+  return (
+    <div className="portal-phase-indicator" aria-label={`Momento atual: ${labels[activeIndex]}`}>
+      {labels.map((label, index) => (
+        <div key={label} className={index < activeIndex ? "is-complete" : index === activeIndex ? "is-current" : "is-future"}>
+          <span>{index < activeIndex ? <CheckCircle2 aria-hidden="true" /> : index + 1}</span>
+          <strong>{label}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReadyTransition({ implementation }: { implementation: ImplementationProject }) {
+  return (
+    <section className="portal-transition-banner">
+      <span className="portal-transition-icon"><Sparkles aria-hidden="true" /></span>
+      <div>
+        <p className="portal-milestones-eyebrow">Um novo momento começa</p>
+        <h2>Seu imóvel está pronto para começar a receber hóspedes.</h2>
+        <p>Estamos concluindo a passagem para a operação. Você continuará usando este mesmo portal e verá novas áreas surgirem por aqui.</p>
+      </div>
+      <dl>
+        <div><dt>Ativação</dt><dd>{formatPortalDate(implementation.completionDateEstimate)}</dd></div>
+        <div><dt>Próximo passo</dt><dd>Concluir a ativação operacional</dd></div>
+      </dl>
+    </section>
+  );
+}
+
+function OperationalOverview({ reservationCount }: { reservationCount: number }) {
+  const indicators = [
+    { label: "Reservas", value: reservationCount > 0 ? String(reservationCount) : "Sem dados", icon: BedDouble },
+    { label: "Ocupação", value: "Aguardando dados", icon: CalendarRange },
+    { label: "Receita do mês", value: "Aguardando dados", icon: TrendingUp },
+    { label: "Próximo repasse", value: "Aguardando dados", icon: WalletCards },
+  ];
+  return (
+    <div className="portal-operation-overview">
+      <section className="portal-operation-welcome">
+        <div><p className="portal-milestones-eyebrow">Seu imóvel em operação</p><h2>Acompanhamento que continua com você</h2><p>Agora, além do histórico da implantação, este espaço reúne o dia a dia do seu imóvel conforme os dados oficiais ficam disponíveis.</p></div>
+        <BadgeCheck aria-hidden="true" />
+      </section>
+      <div className="portal-operation-metrics">
+        {indicators.map(({ label, value, icon: Icon }) => <div key={label}><Icon aria-hidden="true" /><span>{label}</span><strong>{value}</strong></div>)}
+      </div>
+      <PortalEmptyState positive icon={<CircleCheckBig />} title="Operação acompanhada de perto" description="Os primeiros indicadores aparecerão aqui assim que houver movimentação oficial do imóvel." nextStep="Você não precisa fazer nada agora. A equipe Stayo mantém esta área atualizada para você." />
+    </div>
+  );
+}
+
+function OperationalPlaceholder({ module }: { module: Exclude<OwnerPortalModule, "overview" | "implementation" | "profile" | "proposal" | "documents" | "reservations"> }) {
+  const content = {
+    calendar: { icon: <CalendarRange />, title: "Seu calendário estará aqui", description: "Datas ocupadas e disponibilidade aparecerão conforme as reservas forem confirmadas." },
+    property: { icon: <House />, title: "Tudo sobre o seu imóvel", description: "As informações oficiais do imóvel serão organizadas aqui para consulta." },
+    inspections: { icon: <ClipboardCheck />, title: "Nenhuma vistoria liberada", description: "Quando houver uma vistoria disponível para você, ela aparecerá aqui com seu status." },
+    maintenance: { icon: <Wrench />, title: "Nenhuma manutenção para acompanhar", description: "Ocorrências compartilhadas com você ficarão reunidas nesta área." },
+    finance: { icon: <WalletCards />, title: "Seu financeiro está sendo preparado", description: "Repasses, demonstrativos e documentos financeiros aparecerão aqui quando houver dados oficiais." },
+  }[module];
+  return <PortalEmptyState icon={content.icon} title={content.title} description={content.description} nextStep="Esta área faz parte do mesmo portal e será atualizada automaticamente." />;
 }
 
 function propertyName(implementation: ImplementationProject | undefined): string {
