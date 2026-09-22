@@ -759,6 +759,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
+  const welcome = useOwnerWelcomeState();
 
   useEffect(() => {
     const activeModule = activeTab === "dados" ? "profile" : activeTab;
