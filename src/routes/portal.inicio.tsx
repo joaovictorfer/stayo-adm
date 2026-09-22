@@ -26,6 +26,7 @@ import {
   CircleCheckBig,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -658,7 +659,11 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   });
   const download = useMutation({
     mutationFn: (storagePath: string) => getAttachmentSignedUrl(storagePath),
-    onSuccess: (url) => window.open(url, "_blank", "noopener,noreferrer"),
+    onSuccess: (url) => {
+      window.open(url, "_blank", "noopener,noreferrer");
+      toast.success("Documento aberto", { description: "O arquivo foi aberto em uma nova aba." });
+    },
+    onError: () => toast.error("Não foi possível abrir o documento", { description: "Tente novamente em alguns instantes." }),
   });
   
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
@@ -801,7 +806,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
             ) : (
               <ul className="portal-document-list">
                 {(attachmentsQ.data ?? []).map((attachment) => (
-                  <li key={attachment.id} className="portal-document-row">
+                  <li key={attachment.id} className="portal-document-row portal-interactive-row">
                     <span className="portal-document-icon"><DocumentIcon attachment={attachment} /></span>
                     <div className="portal-document-copy">
                       <strong>{attachment.filename}</strong>

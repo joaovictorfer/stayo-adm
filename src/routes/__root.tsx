@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AdminShell } from "../components/layout/AdminShell";
+import { Toaster } from "../components/ui/sonner";
 import { useAuthSession } from "../lib/auth/session";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -116,6 +117,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster position="top-center" richColors closeButton />
         <Scripts />
       </body>
     </html>

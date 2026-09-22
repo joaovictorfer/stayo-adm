@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
@@ -129,7 +130,9 @@ function OwnerOnboardingForm({
         ownerOnboardingSubmissionQuery(implementationId).queryKey,
         submission,
       );
+      toast.success("Cadastro enviado", { description: "Recebemos seus dados com segurança." });
     },
+    onError: () => toast.error("Não foi possível enviar agora", { description: "Seus dados continuam na tela. Confira sua conexão e tente novamente." }),
   });
 
   const set =
@@ -240,6 +243,8 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
 
   const createAccount = useMutation({
     mutationFn: () => createOwnerAccountAndLink(email, password, token),
+    onSuccess: () => toast.success("Conta criada", { description: "Agora você poderá acompanhar tudo com seu e-mail e senha." }),
+    onError: () => toast.error("Não foi possível criar a conta", { description: "Confira os dados e tente novamente." }),
   });
 
   if (!isSupabaseConfigured()) {
