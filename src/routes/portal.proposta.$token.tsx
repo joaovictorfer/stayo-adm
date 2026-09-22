@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { FileSignature } from "lucide-react";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
@@ -107,6 +108,8 @@ function ProposalView({
       a.click();
       URL.revokeObjectURL(url);
     },
+    onSuccess: () => toast.success("Proposta baixada", { description: "O PDF está disponível nos downloads do seu dispositivo." }),
+    onError: () => toast.error("Não foi possível gerar o PDF", { description: "Tente novamente em alguns instantes." }),
   });
 
   const accept = useMutation({
@@ -139,7 +142,9 @@ function ProposalView({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["proposals"] });
       await queryClient.invalidateQueries({ queryKey: ["initial-charges", implementationId] });
+      toast.success("Proposta aceita", { description: "Sua confirmação foi registrada com sucesso." });
     },
+    onError: () => toast.error("Não foi possível registrar o aceite", { description: "Nada foi alterado. Confira sua conexão e tente novamente." }),
   });
 
   if (proposalQ.isPending || implementationQ.isPending) {
@@ -170,7 +175,7 @@ function ProposalView({
       </h1>
 
       <ul
-        className="mt-4 divide-y rounded-[var(--radius-card)] border"
+        className="portal-interactive-card mt-4 divide-y rounded-[var(--radius-card)] border"
         style={{ borderColor: "var(--stayo-border)" }}
       >
         {proposal.items.map((item, i) => (
@@ -206,7 +211,7 @@ function ProposalView({
 
       <div className="mt-6">
         {proposal.acceptedAt ? (
-          <div className="flex flex-col gap-3">
+          <div className="portal-success-reveal flex flex-col gap-3">
             <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
               Proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
               {new Date(proposal.acceptedAt).toLocaleString("pt-BR")}.
