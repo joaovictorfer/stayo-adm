@@ -9,10 +9,13 @@ import {
   Key,
   User,
   FileSignature,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Button } from "../components/ui/button";
+import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
 import { ownerQuery, ownerTasksQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
@@ -24,8 +27,6 @@ export const Route = createFileRoute("/portal/inicio")({
   }),
   component: OwnerHomePage,
 });
-
-const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
 
 const ownerTaskKindLabels: Record<string, string> = {
   banking_data: "Dado bancário",
@@ -45,7 +46,7 @@ const StyleInjection = () => (
     .stayo-tab {
       flex: 1 0 auto;
       min-height: 42px;
-      color: var(--stayo-ink-muted);
+      color: var(--portal-muted);
       border: none !important;
       transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
       border-radius: 10px !important;
@@ -60,21 +61,21 @@ const StyleInjection = () => (
       -webkit-tap-highlight-color: transparent;
     }
     .stayo-tab:hover {
-      color: var(--stayo-ink);
-      background-color: color-mix(in srgb, var(--stayo-surface) 78%, var(--stayo-bg)) !important;
+      color: var(--portal-navy);
+      background-color: var(--portal-surface) !important;
     }
     .stayo-tab:active {
       transform: scale(0.985);
     }
     .stayo-tab:focus-visible {
-      outline: 2px solid var(--stayo-forest);
-      outline-offset: 1px;
+      outline: 2px solid var(--portal-gold);
+      outline-offset: 2px;
     }
     .stayo-tab[data-state="active"] {
-      color: var(--stayo-ink) !important;
+      color: var(--portal-navy) !important;
       font-weight: 600 !important;
-      background: var(--stayo-surface) !important;
-      box-shadow: 0 1px 2px color-mix(in srgb, var(--stayo-ink) 8%, transparent), 0 0 0 1px var(--stayo-border) !important;
+      background: var(--portal-surface) !important;
+      box-shadow: 0 5px 18px color-mix(in srgb, var(--portal-navy) 10%, transparent), 0 0 0 1px var(--portal-border) !important;
     }
     .hide-scrollbar::-webkit-scrollbar {
       display: none;
@@ -118,59 +119,17 @@ const StyleInjection = () => (
   `}</style>
 );
 
-function Brand() {
-  return (
-    <div className="flex items-center gap-3">
-      <span
-        className="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm"
-        style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-      >
-        S
-      </span>
-      <div>
-        <span className="block text-lg tracking-tight" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Stayo
-        </span>
-        <span className="block text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--stayo-ink-muted)" }}>
-          Portal do proprietário
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <StyleInjection />
-      <div
-        className="min-h-screen px-4 py-6 sm:px-6 sm:py-10"
-        style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-ink)", fontFamily: "var(--stayo-font-ui)" }}
-      >
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-6 px-1 sm:mb-8">
-            <Brand />
-          </div>
-          <main className="rounded-3xl border p-5 shadow-[0_20px_60px_rgba(32,48,40,0.06)] sm:p-8" style={surface}>
-            {children}
-          </main>
-          <p className="mt-6 text-center text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Um espaço simples para acompanhar cada etapa do seu imóvel.
-          </p>
-        </div>
-      </div>
+      <PortalShell framed={false}>{children}</PortalShell>
     </>
   );
 }
 
 function LoadingBlock() {
-  return (
-    <div className="space-y-3" aria-label="Carregando">
-      <div className="h-4 w-2/3 animate-pulse rounded-full bg-black/[0.07]" />
-      <div className="h-3 w-full animate-pulse rounded-full bg-black/[0.05]" />
-      <div className="h-3 w-4/5 animate-pulse rounded-full bg-black/[0.05]" />
-    </div>
-  );
+  return <PortalSkeleton />;
 }
 
 function OwnerHomePage() {
@@ -199,12 +158,7 @@ function OwnerHomePage() {
   if (auth.status !== "authenticated" || !auth.account) {
     return (
       <Shell>
-        <div className="flex flex-col items-center py-8 text-center">
-          <div className="mb-4 h-10 w-10 animate-pulse rounded-full" style={{ backgroundColor: "var(--stayo-border)" }} />
-          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Estamos preparando seu espaço...
-          </p>
-        </div>
+        <PortalSkeleton rows={2} />
       </Shell>
     );
   }
@@ -231,30 +185,29 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
 
   return (
     <div className="space-y-2">
-      <header className="flex items-start justify-between gap-4 pb-2">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border-b border-[var(--portal-border)] pb-7 sm:pb-9">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em]"
-             style={{ color: "var(--stayo-forest)" }}
-          >
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--portal-gold)]">
             Área do proprietário
           </p>
-          <h1 className="text-2xl leading-tight sm:text-3xl" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Olá, {firstName}
+          <h1 className="text-3xl leading-tight text-[var(--portal-navy)] sm:text-4xl" style={{ fontFamily: "var(--stayo-font-display)" }}>
+            Olá, <span className="italic">{firstName}</span>.
           </h1>
-          <p className="mt-1.5 max-w-sm text-sm leading-relaxed" style={{ color: "var(--stayo-ink-muted)" }}>
-            Acompanhe com tranquilidade cada detalhe da sua implantação.
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--portal-muted)] sm:text-base">
+            Seu espaço para acompanhar cada etapa do imóvel com clareza e tranquilidade.
           </p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={onSignOut}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 active:scale-[0.98]"
-          style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+          variant="outline"
+          size="sm"
+          className="portal-action shrink-0 rounded-full border-[var(--portal-border)] bg-[var(--portal-surface)] text-[var(--portal-muted)] hover:bg-[var(--portal-surface-soft)] hover:text-[var(--portal-navy)]"
           aria-label="Sair da conta"
         >
           <LogOut className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Sair</span>
-        </button>
+        </Button>
       </header>
 
       <Tabs
@@ -267,11 +220,10 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
           });
         }}
-        className="mt-4 w-full sm:mt-6"
+        className="mt-5 w-full sm:mt-7"
       >
         <div 
-          className="sticky top-2 z-20 -mx-1 mb-6 rounded-[14px] border p-1.5 shadow-[var(--shadow-soft)] backdrop-blur-xl sm:top-4 sm:mb-8"
-          style={{ backgroundColor: "color-mix(in srgb, var(--stayo-bg) 82%, transparent)", borderColor: "var(--stayo-border)" }}
+          className="sticky top-2 z-20 -mx-1 mb-7 rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
         >
           <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
             <TabsTrigger value="visao-geral" className="stayo-tab snap-start">
@@ -295,43 +247,32 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
           <section>
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl"
-                   style={{ backgroundColor: "rgba(47, 91, 70, 0.1)", color: "var(--stayo-forest)" }}
-              >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]">
                 <ClipboardList className="h-5 w-5" />
               </div>
               <div>
                 <h2 className="text-base font-semibold">Precisamos de você</h2>
-                <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                  Tarefas essenciais para o andamento do seu projeto.
+                <p className="text-xs text-[var(--portal-muted)]">
+                  Tudo o que depende de você, reunido com clareza.
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border p-4 sm:p-5"
-                 style={{ ...surface, boxShadow: "0 8px 24px rgba(32,48,40,0.04)" }}
-            >
+            <div>
               {tasksQ.isPending ? (
                 <LoadingBlock />
               ) : pending.length === 0 ? (
-                <div className="flex items-center gap-3 py-2">
-                  <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: "var(--stayo-success)" }} />
-                  <p className="text-sm leading-6" style={{ color: "var(--stayo-ink-muted)" }}>
-                    Está tudo em dia por aqui. Avisaremos caso surja alguma novidade.
-                  </p>
-                </div>
+                <PortalEmptyState positive title="Tudo em dia por aqui" description="Você não tem nenhuma ação pendente agora. Quando precisarmos de algo, avisaremos por aqui." />
               ) : (
-                <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                <ul className="portal-card divide-y divide-[var(--portal-border)]">
                   {pending.map((task) => (
                     <li key={task.id} className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1">
                       <div>
                         <p className="text-sm font-medium">{task.title}</p>
-                        <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                        <p className="mt-1 text-xs text-[var(--portal-muted)]">
                           {ownerTaskKindLabels[task.kind] ?? task.kind} · {ownerTaskStatusLabels[task.status]}
                         </p>
                       </div>
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full"
-                            style={{ backgroundColor: "var(--stayo-warning)" }}
-                      />
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--stayo-gold)]" />
                     </li>
                   ))}
                 </ul>
@@ -341,34 +282,20 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </TabsContent>
 
         <TabsContent value="implantacao" className="tab-content-anim space-y-6">
-          <div className="rounded-2xl border p-6 sm:p-8" style={{ ...surface, boxShadow: "0 8px 24px rgba(32,48,40,0.04)" }}>
-            <div className="flex flex-col items-center justify-center py-6 text-center sm:py-10">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-                   style={{ backgroundColor: "rgba(47, 91, 70, 0.06)", color: "var(--stayo-forest)" }}
-              >
-                <Key className="h-8 w-8" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-lg font-semibold" style={{ color: "var(--stayo-ink)" }}>
-                Preparo do móvel
-              </h3>
-              <p className="mt-2 max-w-sm text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                Seu projeto está em fase de estruturação. Em breve, os marcos e checklists de implantação estarão disponíveis para acompanhamento aqui.
-              </p>
-            </div>
-          </div>
+           <PortalEmptyState icon={<Key />} title="Estamos preparando seu imóvel" description="Assim que os próximos marcos estiverem definidos, você poderá acompanhar cada avanço nesta área." />
         </TabsContent>
 
         <TabsContent value="dados" className="tab-content-anim space-y-6">
-          <div className="rounded-2xl border p-6 sm:p-8" style={{ ...surface, boxShadow: "0 8px 24px rgba(32,48,40,0.04)" }}>
+           <div className="portal-card">
              <div className="mb-6 flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full"
-                     style={{ backgroundColor: "rgba(47, 91, 70, 0.1)", color: "var(--stayo-forest)" }}
+                     style={{ backgroundColor: "var(--portal-gold-soft)", color: "var(--portal-gold)" }}
                 >
                   <User className="h-6 w-6" strokeWidth={1.75} />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold" style={{ color: "var(--stayo-ink)" }}>Seus dados</h3>
-                  <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Informações cadastrais e de conta.</p>
+                   <p className="text-xs text-[var(--portal-muted)]">Informações cadastrais e de contato.</p>
                 </div>
              </div>
              
@@ -377,8 +304,8 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                  <dt className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--stayo-ink-muted)" }}>
                    Nome completo
                  </dt>
-                 <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                   {ownerQ.data?.name || "Não informado"}
+                  <dd className="text-sm font-medium text-[var(--portal-ink)]">
+                    {ownerQ.data?.name || "Vamos completar juntos"}
                  </dd>
                </div>
                <div>
@@ -386,7 +313,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                    E-mail
                  </dt>
                  <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                   {ownerQ.data?.email || "Não informado"}
+                    {ownerQ.data?.email || "Vamos completar juntos"}
                  </dd>
                </div>
                <div>
@@ -394,7 +321,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                    Telefone
                  </dt>
                  <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                   {ownerQ.data?.phone || "Não informado"}
+                    {ownerQ.data?.phone || "Vamos completar juntos"}
                  </dd>
                </div>
                <div>
@@ -402,7 +329,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                    Documento principal
                  </dt>
                  <dd className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                   {ownerQ.data?.document || "Não informado"}
+                    {ownerQ.data?.document || "Vamos completar juntos"}
                  </dd>
                </div>
              </dl>
@@ -410,28 +337,14 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </TabsContent>
 
         <TabsContent value="proposta" className="tab-content-anim space-y-6">
-          <div className="rounded-2xl border p-6 sm:p-8" style={{ ...surface, boxShadow: "0 8px 24px rgba(32,48,40,0.04)" }}>
-            <div className="flex flex-col items-center justify-center py-6 text-center sm:py-10">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-                   style={{ backgroundColor: "rgba(47, 91, 70, 0.06)", color: "var(--stayo-forest)" }}
-              >
-                <FileSignature className="h-8 w-8" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-lg font-semibold" style={{ color: "var(--stayo-ink)" }}>
-                Propostas e Condições
-              </h3>
-              <p className="mt-2 max-w-sm text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                Nenhuma proposta comercial recente está pendente de assinatura associada ao seu perfil no momento.
-              </p>
-            </div>
-          </div>
+           <PortalEmptyState icon={<FileSignature />} title="Nenhuma proposta aguardando você" description="Quando houver uma proposta pronta para leitura ou aceite, ela ficará disponível aqui." />
         </TabsContent>
 
         <TabsContent value="documentos" className="tab-content-anim space-y-6">
           <section>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl"
-                   style={{ backgroundColor: "rgba(47, 91, 70, 0.1)", color: "var(--stayo-forest)" }}
+                   style={{ backgroundColor: "var(--portal-gold-soft)", color: "var(--portal-gold)" }}
               >
                 <FileText className="h-5 w-5" />
               </div>
@@ -442,30 +355,27 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border p-4 sm:p-5"
-                 style={{ ...surface, boxShadow: "0 8px 24px rgba(32,48,40,0.04)" }}
-            >
+            <div>
               {attachmentsQ.isPending ? (
                 <LoadingBlock />
               ) : (attachmentsQ.data ?? []).length === 0 ? (
-                <div className="py-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                  Seus documentos aparecerão aqui quando estiverem disponíveis.
-                </div>
+                 <PortalEmptyState icon={<FileText />} title="Sua pasta está pronta" description="Os documentos liberados pela equipe Stayo aparecerão aqui, organizados para você." />
               ) : (
-                <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                <ul className="portal-card divide-y divide-[var(--portal-border)]">
                   {(attachmentsQ.data ?? []).map((att) => (
                     <li key={att.id} className="flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
                       <span className="min-w-0 truncate text-sm font-medium">{att.filename}</span>
-                      <button
+                       <Button
                         type="button"
                         onClick={() => download.mutate(att.storagePath)}
                         disabled={download.isPending}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition hover:bg-black/[0.05] focus-visible:outline-none focus-visible:ring-2 active:scale-[0.97] disabled:opacity-50"
-                        style={{ color: "var(--stayo-forest)" }}
+                         variant="ghost"
+                         size="sm"
+                         className="portal-action shrink-0 text-[var(--portal-navy)] hover:bg-[var(--portal-surface-soft)]"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Baixar
-                      </button>
+                       </Button>
                     </li>
                   ))}
                 </ul>

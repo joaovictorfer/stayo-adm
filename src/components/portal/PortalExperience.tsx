@@ -34,7 +34,7 @@ export function PortalShell({
   return (
     <div className="stayo-owner-theme min-h-screen bg-[var(--portal-bg)] px-4 py-5 text-[var(--portal-ink)] sm:px-7 sm:py-8">
       <div className={cn("mx-auto w-full", widths[width])}>
-        <div className="mb-6 px-1 sm:mb-8"><PortalBrand context={context} /></div>
+        <div className="mb-6 px-1 sm:mb-8"><PortalBrand {...(context ? { context } : {})} /></div>
         <main className={cn(framed && "portal-shell-surface")}>{children}</main>
         <p className="mx-auto mt-6 max-w-lg text-center text-xs leading-5 text-[var(--portal-muted)]">{footer}</p>
       </div>
