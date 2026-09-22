@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AlertCircle, Check, CheckCircle2, Copy, ExternalLink, ListChecks, Send, Share2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Copy, ExternalLink, ListChecks, LockKeyhole, Pencil, Send, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
@@ -1026,11 +1026,12 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [postalCode, setPostalCode] = useState("");
   const [addressDraft, setAddressDraft] = useState(implementation.address ?? "");
+  const [cityDraft, setCityDraft] = useState(implementation.city ?? "");
   const [notesDraft, setNotesDraft] = useState(implementation.notes ?? "");
   const [addressLookupMessage, setAddressLookupMessage] = useState("");
 
   const updateImplementation = useMutation({
-    mutationFn: (input: { address?: string | null; notes?: string | null }) =>
+    mutationFn: (input: { address?: string | null; city?: string | null; postalCode?: string | null; notes?: string | null }) =>
       coreApi.implementations.update(implementation.id, input),
     onSuccess: async () => {
       setEditingSection(null);
@@ -1077,6 +1078,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
 
       const addressParts = [data.logradouro, data.bairro, data.localidade, data.uf].filter(Boolean);
       setAddressDraft(addressParts.join(", "));
+      setCityDraft(data.localidade ?? "");
       setAddressLookupMessage("Endereço encontrado. Revise e salve a seção.");
     } catch {
       setAddressLookupMessage("Não foi possível consultar o CEP agora.");
@@ -1096,23 +1098,25 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
   }) {
     const isEditing = editingSection === id;
     return (
-      <details open className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+      <details open={isEditing || undefined} className="group overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{title}</h2>
             {description && <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{description}</p>}
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={(event) => {
               event.preventDefault();
               setEditingSection(isEditing ? null : id);
             }}
-            className="shrink-0 rounded-[var(--radius-control)] border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-slate-50"
-            style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-forest)" }}
+            className="shrink-0"
           >
+            <Pencil />
             {isEditing ? "Fechar edição" : "Editar seção"}
-          </button>
+          </Button>
         </summary>
         <div className="border-t px-4 py-4" style={{ borderColor: "var(--stayo-border)" }}>
           {children}
@@ -1127,8 +1131,8 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         {implementation.coverImage ? (
           <img src={implementation.coverImage} alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`} className="h-48 w-full object-cover sm:h-60" />
         ) : (
-          <div className="flex h-48 items-end bg-[linear-gradient(135deg,#0B3150_0%,#123F68_58%,#d6b36a_160%)] p-5 sm:h-60">
-            <span className="text-sm text-white/75">Sem foto de capa cadastrada</span>
+          <div className="flex h-48 items-end bg-[linear-gradient(135deg,var(--stayo-forest-strong),var(--stayo-forest),var(--stayo-gold))] p-5 sm:h-60">
+            <span className="text-sm text-[var(--stayo-on-dark-muted)]">Imagem institucional · nenhuma capa cadastrada</span>
           </div>
         )}
         <div className="flex flex-col gap-3 bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
@@ -1139,7 +1143,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
               {[implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Condomínio e unidade não informados"}
             </p>
           </div>
-          <div className="min-w-44 rounded-lg bg-slate-50 p-3">
+          <div className="min-w-44 rounded-[var(--radius-control)] bg-[var(--stayo-bg)] p-3">
             <div className="flex items-center justify-between gap-3 text-xs">
               <span style={{ color: "var(--stayo-ink-muted)" }}>Preenchimento</span>
               <strong style={{ color: "var(--stayo-forest)" }}>{completionPercent}%</strong>
@@ -1164,7 +1168,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <label className="flex-1 text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
                 Buscar endereço por CEP
-                <input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} placeholder="00000-000" className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+                <input value={postalCode} onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, "").slice(0, 8).replace(/^(\d{5})(\d)/, "$1-$2"))} inputMode="numeric" placeholder="00000-000" className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
               </label>
               <button type="button" onClick={() => void searchPostalCode()} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>Buscar CEP</button>
             </div>
@@ -1173,7 +1177,11 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
               Endereço
               <input value={addressDraft} onChange={(event) => setAddressDraft(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
             </label>
-            <button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ address: addressDraft })} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</button>
+            <label className="block text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+              Cidade
+              <input value={cityDraft} onChange={(event) => setCityDraft(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+            </label>
+            <Button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ address: addressDraft, city: cityDraft, postalCode: postalCode || implementation.postalCode })}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</Button>
           </div>
         ) : (
           <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1195,19 +1203,19 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
       </Section>
 
       <Section id="ambientes" title="Ambientes e camas" description="Organização dos ambientes e lugares de dormir">
-        <div className="rounded-lg border border-dashed bg-slate-50 p-4" style={{ borderColor: "var(--stayo-border)" }}>
+        <div className="rounded-[var(--radius-control)] border border-dashed bg-[var(--stayo-bg)] p-4" style={{ borderColor: "var(--stayo-border)" }}>
           <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{implementation.bedrooms ?? "Não informado"} quarto(s) cadastrado(s)</p>
           <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Detalhamento de ambientes, camas e capacidades por cômodo ainda não informado nesta implantação.</p>
         </div>
       </Section>
 
       <Section id="acessos" title="Acessos e Wi-Fi" description="Informações operacionais de entrada e conectividade">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] bg-[var(--stayo-bg)] p-4">
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>Dados de acesso e Wi-Fi</p>
             <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Ainda não informados</p>
           </div>
-          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800">Privado · somente operação</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium" style={{ borderColor: "var(--stayo-gold)", backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}><LockKeyhole className="size-3" />Privado · somente operação</span>
         </div>
       </Section>
 
@@ -1215,7 +1223,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         {editingSection === "observacoes" ? (
           <div className="space-y-3">
             <textarea value={notesDraft} onChange={(event) => setNotesDraft(event.target.value)} rows={5} placeholder="Adicione observações internas sobre o imóvel" className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
-            <button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ notes: notesDraft })} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</button>
+            <Button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ notes: notesDraft })}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</Button>
           </div>
         ) : (
           <p className="whitespace-pre-wrap text-sm" style={{ color: implementation.notes ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{implementation.notes || "Nenhuma observação interna cadastrada."}</p>
