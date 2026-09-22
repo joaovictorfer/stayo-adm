@@ -94,10 +94,10 @@ export function Wizard({
           }}
           className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
         >
-          {isLast ? (submitting ? "Salvando..." : completeLabel) : "Continuar"}
+          {isLast ? (submitting ? "Enviando com segurança..." : completeLabel) : "Continuar"}
         </Button>
       </div>
-      {visited.includes(index) && <p className="text-right text-[11px] text-[var(--portal-success)]">Etapa revisada</p>}
+      {visited.includes(index) && <p className="text-right text-[11px] text-[var(--portal-success)]">Tudo certo nesta etapa</p>}
     </div>
   );
 }

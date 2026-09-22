@@ -49,16 +49,16 @@ export const Route = createFileRoute("/portal/inicio")({
 });
 
 const ownerTaskKindLabels: Record<string, string> = {
-  banking_data: "Dado bancário",
+  banking_data: "Dados para repasse",
   wifi_info: "Wi-Fi",
   regulation_document: "Documento de regularização",
-  custom: "Outro",
+  custom: "Informação adicional",
 };
 
 const ownerTaskStatusLabels: Record<OwnerTaskStatus, string> = {
   pending: "Pendente",
   done: "Resolvida",
-  dismissed: "Dispensada",
+  dismissed: "Não necessária",
 };
 
 const stageMessages: Record<ImplementationStatus, string> = {
@@ -188,7 +188,7 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
             <span className="portal-journey-panel-icon is-complete"><CheckCircle2 aria-hidden="true" /></span>
             <div>
               <h2 id="completed-steps-title">O que já foi feito</h2>
-              <p>Cada avanço concluído fica registrado aqui.</p>
+              <p>Veja tudo o que já avançamos juntos.</p>
             </div>
           </div>
           {completed.length > 0 ? (
@@ -210,7 +210,7 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
             <span className="portal-journey-panel-icon"><ArrowRight aria-hidden="true" /></span>
             <div>
               <h2 id="next-steps-title">Próximos passos</h2>
-              <p>O caminho previsto a partir do momento atual.</p>
+              <p>O que estamos preparando a partir de agora.</p>
             </div>
           </div>
           {nextSteps.length > 0 ? (
@@ -236,7 +236,7 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
           ? "A equipe Stayo está acompanhando esta situação e compartilhará a próxima atualização por aqui."
           : isComplete
             ? "Seu imóvel concluiu a implantação e agora segue acompanhado pela operação Stayo."
-            : `Neste momento, nosso foco é ${(currentMilestone?.label ?? statusLabels[implementation.status]).toLocaleLowerCase("pt-BR")}. Atualizaremos esta página conforme cada marco for concluído.`}
+             : `Agora, nosso foco é ${(currentMilestone?.label ?? statusLabels[implementation.status]).toLocaleLowerCase("pt-BR")}. Esta página será atualizada a cada novo avanço.`}
       </p>
     </div>
   );
@@ -280,8 +280,8 @@ function OwnerDataJourney({
       <div className="portal-profile-intro">
         <div>
           <p className="portal-milestones-eyebrow">Seu cadastro</p>
-          <h2 id="profile-journey-title">Vamos completar juntos</h2>
-          <p>Você pode acompanhar cada etapa com tranquilidade. Seus dados são tratados com cuidado pela equipe Stayo.</p>
+          <h2 id="profile-journey-title">Seu cadastro, passo a passo</h2>
+          <p>Complete no seu ritmo. A equipe Stayo cuida das suas informações com atenção e segurança.</p>
         </div>
         <div className="portal-profile-progress" aria-label={`${percent}% do cadastro concluído`}>
           <strong>{percent}%</strong>
@@ -298,16 +298,16 @@ function OwnerDataJourney({
           <div>
             <span>Próximo passo</span>
             <strong>{nextStep.label}</strong>
-            <p>{nextStep.description}. Leva apenas alguns minutos.</p>
+            <p>{nextStep.description}. É rápido e você pode conferir tudo antes de enviar.</p>
           </div>
           <Button type="button" onClick={onReviewPending} className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">
-            Ver o que falta <ArrowRight className="h-4 w-4" />
+             Continuar cadastro <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       ) : (
         <div className="portal-profile-success" role="status">
           <CheckCircle2 aria-hidden="true" />
-          <div><strong>Cadastro completo</strong><p>Recebemos as informações necessárias. Avisaremos se precisarmos confirmar algo.</p></div>
+          <div><strong>Cadastro em dia</strong><p>Já temos as informações necessárias. Se precisarmos confirmar algo, falaremos com você.</p></div>
         </div>
       )}
 
@@ -323,7 +323,7 @@ function OwnerDataJourney({
         ))}
       </ol>
 
-      <p className="portal-profile-save-note"><CheckCircle2 aria-hidden="true" /> As informações já enviadas ficam salvas com segurança.</p>
+      <p className="portal-profile-save-note"><CheckCircle2 aria-hidden="true" /> Tudo o que você já enviou está guardado com segurança.</p>
     </section>
   );
 }
@@ -355,18 +355,18 @@ function OwnerProposal({
       <div className="portal-proposal-heading">
         <div>
           <p className="portal-milestones-eyebrow">Proposta comercial</p>
-          <h2 id="owner-proposal-title">Uma parceria pensada para o seu imóvel</h2>
-          <p>Confira os principais valores e condições com calma. A equipe Stayo está disponível para esclarecer qualquer ponto.</p>
+          <h2 id="owner-proposal-title">Uma proposta pensada para o seu imóvel</h2>
+          <p>Confira valores e condições no seu tempo. Se surgir qualquer dúvida, estamos por perto.</p>
         </div>
         <span className={`portal-proposal-status${proposal.acceptedAt ? " is-accepted" : ""}`}>
           {proposal.acceptedAt ? <BadgeCheck aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
-          {proposal.acceptedAt ? "Aceita" : "Aguardando você"}
+          {proposal.acceptedAt ? "Aceita" : "Pronta para você"}
         </span>
       </div>
 
       <div className="portal-proposal-summary">
         <div className="portal-proposal-total">
-          <span>Investimento apresentado</span>
+          <span>Valor da proposta</span>
           <strong>{portalCurrency.format(proposal.total)}</strong>
           <small>Versão {proposal.version} · {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.createdAt))}</small>
         </div>
@@ -383,12 +383,12 @@ function OwnerProposal({
       <div className="portal-proposal-actions">
         {proposalUrl ? (
           <Button asChild className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">
-            <a href={proposalUrl}><Eye className="h-4 w-4" /> Visualizar proposta</a>
+            <a href={proposalUrl}><Eye className="h-4 w-4" /> Ver proposta completa</a>
           </Button>
         ) : (
           <p>O documento está sendo preparado para visualização. Avisaremos assim que estiver disponível.</p>
         )}
-        {!proposal.acceptedAt && proposalUrl && <span>O aceite fica disponível dentro da proposta.</span>}
+        {!proposal.acceptedAt && proposalUrl && <span>Você poderá confirmar o aceite depois de conferir todos os detalhes.</span>}
         {proposal.acceptedAt && <span>Aceita em {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.acceptedAt))}.</span>}
       </div>
 

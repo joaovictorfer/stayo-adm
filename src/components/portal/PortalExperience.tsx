@@ -21,7 +21,7 @@ export function PortalBrand({ context = "Portal do proprietário" }: { context?:
 export function PortalShell({
   children,
   context,
-  footer = "Cuidamos de cada etapa para você acompanhar tudo com tranquilidade.",
+  footer = "Você acompanha cada etapa. A Stayo cuida dos detalhes.",
   width = "wide",
   framed = true,
   showBrand = true,
@@ -47,7 +47,7 @@ export function PortalShell({
 
 export function PortalSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="portal-card space-y-5" aria-label="Carregando conteúdo" aria-busy="true">
+    <div className="portal-card space-y-5" aria-label="Preparando suas informações" aria-busy="true">
       <div className="flex items-center gap-4">
         <div className="portal-skeleton h-11 w-11 rounded-xl" />
         <div className="flex-1 space-y-2">
@@ -60,7 +60,7 @@ export function PortalSkeleton({ rows = 3 }: { rows?: number }) {
           <div key={index} className={cn("portal-skeleton h-3 rounded-full", index === rows - 1 ? "w-3/4" : "w-full")} />
         ))}
       </div>
-      <span className="sr-only">Preparando suas informações</span>
+      <span className="sr-only">Só um instante, estamos preparando tudo para você.</span>
     </div>
   );
 }

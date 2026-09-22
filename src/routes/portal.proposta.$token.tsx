@@ -33,7 +33,7 @@ const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell width="medium" context="Proposta comercial" footer="Leia com calma. Se precisar, a equipe Stayo está por perto.">
+    <PortalShell width="medium" context="Proposta comercial" footer="Leia no seu tempo. Se surgir qualquer dúvida, conte com a equipe Stayo.">
       <div className="p-5 sm:p-8">{children}</div>
     </PortalShell>
   );
@@ -55,11 +55,10 @@ function ProposalPortalPage() {
     return (
       <Shell>
         <h1 className="text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>
-          Link inválido
+          Esta proposta não está disponível
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Este link de proposta não existe ou expirou. Fale com quem enviou o link para receber um
-          novo.
+          Este link pode ter vencido ou sido substituído. Peça um novo acesso à equipe Stayo.
         </p>
       </Shell>
     );
@@ -108,7 +107,7 @@ function ProposalView({
       a.click();
       URL.revokeObjectURL(url);
     },
-    onSuccess: () => toast.success("Proposta baixada", { description: "O PDF está disponível nos downloads do seu dispositivo." }),
+    onSuccess: () => toast.success("Proposta salva", { description: "O PDF está nos downloads do seu dispositivo." }),
     onError: () => toast.error("Não foi possível gerar o PDF", { description: "Tente novamente em alguns instantes." }),
   });
 
@@ -142,7 +141,7 @@ function ProposalView({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["proposals"] });
       await queryClient.invalidateQueries({ queryKey: ["initial-charges", implementationId] });
-      toast.success("Proposta aceita", { description: "Sua confirmação foi registrada com sucesso." });
+      toast.success("Proposta aceita", { description: "Obrigado! Sua confirmação já foi registrada." });
     },
     onError: () => toast.error("Não foi possível registrar o aceite", { description: "Nada foi alterado. Confira sua conexão e tente novamente." }),
   });
@@ -206,14 +205,14 @@ function ProposalView({
         variant="outline"
         className="portal-action mt-4 h-11 w-full rounded-xl border-[var(--portal-border)] text-[var(--portal-navy)] hover:bg-[var(--portal-surface-soft)]"
       >
-        {downloadPdf.isPending ? "Gerando PDF..." : "Baixar PDF desta proposta"}
+        {downloadPdf.isPending ? "Preparando seu PDF..." : "Baixar proposta em PDF"}
       </Button>
 
       <div className="mt-6">
         {proposal.acceptedAt ? (
           <div className="portal-success-reveal flex flex-col gap-3">
             <p className="text-sm" style={{ color: "var(--stayo-success)" }}>
-              Proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
+              Tudo certo: proposta aceita{proposal.acceptedName ? ` por ${proposal.acceptedName}` : ""} em{" "}
               {new Date(proposal.acceptedAt).toLocaleString("pt-BR")}.
             </p>
             {charge ? (
@@ -244,7 +243,7 @@ function ProposalView({
         ) : (
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              Seu nome completo
+              Confirme seu nome completo
               <input
                 value={acceptedName}
                 onChange={(e) => setAcceptedName(e.target.value)}
@@ -262,7 +261,7 @@ function ProposalView({
                 onChange={(e) => setAgreed(e.target.checked)}
                 className="mt-0.5"
               />
-              Li e concordo com a proposta apresentada.
+              Li a proposta e estou de acordo com as condições apresentadas.
             </label>
             <Button
               type="button"
@@ -270,11 +269,10 @@ function ProposalView({
               disabled={accept.isPending || !canAccept}
               className="portal-action h-11 w-full rounded-xl bg-[var(--portal-navy)] text-white hover:bg-[var(--portal-navy-strong)]"
             >
-              {accept.isPending ? "Enviando..." : "Aceitar proposta"}
+              {accept.isPending ? "Registrando seu aceite..." : "Confirmar aceite"}
             </Button>
             <p className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-              Este aceite registra sua concordância comercial com esta proposta — não substitui a
-              assinatura do contrato de prestação de serviço.
+              Esta confirmação registra seu aceite comercial. O contrato será tratado separadamente pela equipe Stayo.
             </p>
           </div>
         )}
