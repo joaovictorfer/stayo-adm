@@ -10,7 +10,7 @@ import {
   User,
   FileSignature,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
@@ -43,16 +43,15 @@ const ownerTaskStatusLabels: Record<OwnerTaskStatus, string> = {
 const StyleInjection = () => (
   <style>{`
     .stayo-tab {
-      position: relative;
+      flex: 1 0 auto;
+      min-height: 42px;
       color: var(--stayo-ink-muted);
       border: none !important;
-      transition: color 0.25s ease, background-color 0.25s ease;
-      border-radius: 10px 10px 0 0 !important;
-      padding: 0.8rem 0.65rem;
-      margin: 0 0.1rem;
+      transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+      border-radius: 10px !important;
+      padding: 0.65rem 1rem;
       font-weight: 500;
       font-size: 0.875rem;
-      letter-spacing: 0.01em;
       line-height: 1.25rem;
       white-space: nowrap;
       background: transparent !important;
@@ -60,40 +59,22 @@ const StyleInjection = () => (
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .stayo-tab::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 10px;
-      right: 10px;
-      height: 2.5px;
-      border-radius: 999px 999px 0 0;
-      background: linear-gradient(90deg, var(--stayo-forest), rgba(47, 91, 70, 0.55));
-      box-shadow: 0 1px 6px rgba(47, 91, 70, 0.35);
-      transform: scaleX(0);
-      opacity: 0;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
-      transform-origin: center;
-    }
     .stayo-tab:hover {
       color: var(--stayo-ink);
-      background-color: rgba(47, 91, 70, 0.06) !important;
+      background-color: color-mix(in srgb, var(--stayo-surface) 78%, var(--stayo-bg)) !important;
     }
     .stayo-tab:active {
-      transform: translateY(0.5px);
+      transform: scale(0.985);
     }
     .stayo-tab:focus-visible {
       outline: 2px solid var(--stayo-forest);
-      outline-offset: 2px;
+      outline-offset: 1px;
     }
     .stayo-tab[data-state="active"] {
-      color: var(--stayo-forest) !important;
-      font-weight: 600;
-      background: linear-gradient(to bottom, rgba(47, 91, 70, 0.10), rgba(47, 91, 70, 0.03)) !important;
-    }
-    .stayo-tab[data-state="active"]::after {
-      transform: scaleX(1);
-      opacity: 1;
+      color: var(--stayo-ink) !important;
+      font-weight: 600 !important;
+      background: var(--stayo-surface) !important;
+      box-shadow: 0 1px 2px color-mix(in srgb, var(--stayo-ink) 8%, transparent), 0 0 0 1px var(--stayo-border) !important;
     }
     .hide-scrollbar::-webkit-scrollbar {
       display: none;
@@ -103,18 +84,17 @@ const StyleInjection = () => (
       scrollbar-width: none;
     }
     .tab-content-anim {
-      animation: tabFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: tabFadeIn 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
       opacity: 0;
       will-change: opacity, transform;
     }
     @keyframes tabFadeIn {
-      0% { opacity: 0; transform: translateY(8px) scale(0.998); }
-      60% { opacity: 1; }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     @media (prefers-reduced-motion: reduce) {
       .tab-content-anim { animation: none; opacity: 1; }
-      .stayo-tab, .stayo-tab::after { transition: none; }
+      .stayo-tab { transition: none; }
     }
     /* Fade mask for horizontal scrolling clear feedback on mobile */
     .scroll-mask {
@@ -129,8 +109,9 @@ const StyleInjection = () => (
     }
     @media (max-width: 639px) {
       .stayo-tab {
-        font-size: 0.925rem;
-        padding: 0.9rem 0.7rem;
+        flex-basis: auto;
+        font-size: 0.875rem;
+        padding: 0.68rem 0.9rem;
         min-height: 44px;
       }
     }
@@ -232,6 +213,8 @@ function OwnerHomePage() {
 }
 
 function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
+  const [activeTab, setActiveTab] = useState("visao-geral");
+  const tabsListRef = useRef<HTMLDivElement>(null);
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
   const attachmentsQ = useQuery({
@@ -274,25 +257,36 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </button>
       </header>
 
-      <Tabs defaultValue="visao-geral" className="mt-4 w-full sm:mt-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          setActiveTab(value);
+          requestAnimationFrame(() => {
+            tabsListRef.current
+              ?.querySelector<HTMLElement>('[data-state="active"]')
+              ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+          });
+        }}
+        className="mt-4 w-full sm:mt-6"
+      >
         <div 
-          className="sticky top-[-1px] z-20 -mx-5 mb-6 border-b px-5 pb-0 pt-3 shadow-[0_8px_24px_-16px_rgba(32,48,40,0.25)] backdrop-blur-md transition-all sm:-mx-8 sm:mb-8 sm:px-8 sm:pt-4"
-          style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
+          className="sticky top-2 z-20 -mx-1 mb-6 rounded-[14px] border p-1.5 shadow-[var(--shadow-soft)] backdrop-blur-xl sm:top-4 sm:mb-8"
+          style={{ backgroundColor: "color-mix(in srgb, var(--stayo-bg) 82%, transparent)", borderColor: "var(--stayo-border)" }}
         >
-          <TabsList className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0 sm:gap-2">
-            <TabsTrigger value="visao-geral" className="stayo-tab snap-start scroll-ml-5 sm:scroll-ml-8">
+          <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
+            <TabsTrigger value="visao-geral" className="stayo-tab snap-start">
               Visão geral
             </TabsTrigger>
-            <TabsTrigger value="implantacao" className="stayo-tab snap-start scroll-ml-5 sm:scroll-ml-8">
+            <TabsTrigger value="implantacao" className="stayo-tab snap-start">
               Minha implantação
             </TabsTrigger>
-            <TabsTrigger value="dados" className="stayo-tab snap-start scroll-ml-5 sm:scroll-ml-8">
+            <TabsTrigger value="dados" className="stayo-tab snap-start">
               Meus dados
             </TabsTrigger>
-            <TabsTrigger value="proposta" className="stayo-tab snap-start scroll-ml-5 sm:scroll-ml-8">
+            <TabsTrigger value="proposta" className="stayo-tab snap-start">
               Proposta
             </TabsTrigger>
-            <TabsTrigger value="documentos" className="stayo-tab snap-start scroll-ml-5 sm:scroll-ml-8">
+            <TabsTrigger value="documentos" className="stayo-tab snap-start">
               Documentos
             </TabsTrigger>
           </TabsList>
