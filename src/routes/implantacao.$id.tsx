@@ -1089,7 +1089,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
               <button type="button" onClick={() => void searchPostalCode()} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>Buscar CEP</button>
             </div>
             {addressLookupMessage && <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{addressLookupMessage}</p>}
-            <label className="block text-xs font-medium" style={{ color: "var(--stayo-ink-muted) }}>
+            <label className="block text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
               Endereço
               <input value={addressDraft} onChange={(event) => setAddressDraft(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
             </label>
