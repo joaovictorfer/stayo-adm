@@ -46,34 +46,54 @@ const StyleInjection = () => (
       position: relative;
       color: var(--stayo-ink-muted);
       border: none !important;
-      transition: color 0.3s ease;
-      border-radius: 0 !important;
-      padding: 0.75rem 0.25rem;
+      transition: color 0.25s ease, background-color 0.25s ease;
+      border-radius: 10px 10px 0 0 !important;
+      padding: 0.8rem 0.65rem;
+      margin: 0 0.1rem;
       font-weight: 500;
+      font-size: 0.875rem;
+      letter-spacing: 0.01em;
+      line-height: 1.25rem;
       white-space: nowrap;
       background: transparent !important;
       box-shadow: none !important;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .stayo-tab::after {
       content: '';
       position: absolute;
-      bottom: 0px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background-color: var(--stayo-forest);
+      bottom: -1px;
+      left: 10px;
+      right: 10px;
+      height: 2.5px;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(90deg, var(--stayo-forest), rgba(47, 91, 70, 0.55));
+      box-shadow: 0 1px 6px rgba(47, 91, 70, 0.35);
       transform: scaleX(0);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
       transform-origin: center;
     }
     .stayo-tab:hover {
       color: var(--stayo-ink);
+      background-color: rgba(47, 91, 70, 0.06) !important;
+    }
+    .stayo-tab:active {
+      transform: translateY(0.5px);
+    }
+    .stayo-tab:focus-visible {
+      outline: 2px solid var(--stayo-forest);
+      outline-offset: 2px;
     }
     .stayo-tab[data-state="active"] {
       color: var(--stayo-forest) !important;
+      font-weight: 600;
+      background: linear-gradient(to bottom, rgba(47, 91, 70, 0.10), rgba(47, 91, 70, 0.03)) !important;
     }
     .stayo-tab[data-state="active"]::after {
       transform: scaleX(1);
+      opacity: 1;
     }
     .hide-scrollbar::-webkit-scrollbar {
       display: none;
@@ -83,22 +103,35 @@ const StyleInjection = () => (
       scrollbar-width: none;
     }
     .tab-content-anim {
-      animation: tabFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: tabFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       opacity: 0;
+      will-change: opacity, transform;
     }
     @keyframes tabFadeIn {
-      0% { opacity: 0; transform: translateY(6px); }
-      100% { opacity: 1; transform: translateY(0); }
+      0% { opacity: 0; transform: translateY(8px) scale(0.998); }
+      60% { opacity: 1; }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tab-content-anim { animation: none; opacity: 1; }
+      .stayo-tab, .stayo-tab::after { transition: none; }
     }
     /* Fade mask for horizontal scrolling clear feedback on mobile */
     .scroll-mask {
-      mask-image: linear-gradient(to right, black 85%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      mask-image: linear-gradient(to right, black 82%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, black 82%, transparent 100%);
     }
     @media (min-width: 640px) {
       .scroll-mask {
         mask-image: none;
         -webkit-mask-image: none;
+      }
+    }
+    @media (max-width: 639px) {
+      .stayo-tab {
+        font-size: 0.925rem;
+        padding: 0.9rem 0.7rem;
+        min-height: 44px;
       }
     }
   `}</style>
@@ -243,10 +276,10 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
 
       <Tabs defaultValue="visao-geral" className="mt-4 w-full sm:mt-6">
         <div 
-          className="sticky top-[-1px] z-20 -mx-5 mb-6 border-b px-5 pb-0 pt-3 transition-all sm:-mx-8 sm:mb-8 sm:px-8 sm:pt-4"
+          className="sticky top-[-1px] z-20 -mx-5 mb-6 border-b px-5 pb-0 pt-3 shadow-[0_8px_24px_-16px_rgba(32,48,40,0.25)] backdrop-blur-md transition-all sm:-mx-8 sm:mb-8 sm:px-8 sm:pt-4"
           style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
         >
-          <TabsList className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-smooth justify-start gap-5 overflow-x-auto overflow-y-hidden bg-transparent p-0 sm:gap-8">
+          <TabsList className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0 sm:gap-2">
             <TabsTrigger value="visao-geral" className="stayo-tab snap-start scroll-ml-5 sm:scroll-ml-8">
               Visão geral
             </TabsTrigger>
