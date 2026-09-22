@@ -88,6 +88,14 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   );
   const filledItems = draft.filter((item) => item.description.trim() !== "");
   const total = draft.reduce((sum, item) => sum + proposalItemTotal(item), 0);
+  const administrationTerm = recurringTerms.find((term) =>
+    term.chargeType === "percentage" && term.label.toLocaleLowerCase("pt-BR").includes("administra"),
+  );
+  const conditionsSummary = administrationTerm
+    ? `Administração ${administrationTerm.value}%${recurringTerms.length > 1 ? " + demais condições" : ""}`
+    : recurringTerms.length > 0
+      ? `${recurringTerms.length} condições definidas`
+      : "Condições ainda não definidas";
 
   const save = useMutation({
     mutationFn: async () => {
@@ -273,7 +281,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       <div className="grid gap-3">
         <ProposalSection
           title="Serviços e valores"
-          summary={`${filledItems.length} ${filledItems.length === 1 ? "item" : "itens"} · ${currency.format(total)}`}
+          summary={currency.format(total)}
           description="Itens que compõem o valor desta proposta."
           open={openSection === "services"}
           onToggle={() => setOpenSection(openSection === "services" ? null : "services")}
@@ -305,7 +313,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
         <ProposalSection
           title="Condições comerciais"
-          summary={recurringTerms.length > 0 ? `${recurringTerms.length} condição${recurringTerms.length === 1 ? "" : "ões"} recorrente${recurringTerms.length === 1 ? "" : "s"}` : "Nenhuma condição cadastrada"}
+          summary={conditionsSummary}
           description="Taxas, repasses e demais regras aplicadas à implantação."
           open={openSection === "conditions"}
           onToggle={() => setOpenSection(openSection === "conditions" ? null : "conditions")}
@@ -326,7 +334,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
         <ProposalSection
           title="Responsabilidades"
-          summary={`${filledItems.length} incluso${filledItems.length === 1 ? "" : "s"} na proposta`}
+          summary={`${filledItems.length} ${filledItems.length === 1 ? "item definido" : "itens definidos"}`}
           description="Serviços e entregas considerados no escopo comercial."
           open={openSection === "responsibilities"}
           onToggle={() => setOpenSection(openSection === "responsibilities" ? null : "responsibilities")}
@@ -342,7 +350,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
         <ProposalSection
           title="Prazo e pagamento"
-          summary={implementationQ.data?.startDateEstimate ? `Início estimado em ${implementationQ.data.startDateEstimate}` : "Datas ainda não informadas"}
+          summary={implementationQ.data?.completionDateEstimate ? `Até ${new Date(implementationQ.data.completionDateEstimate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}` : "Prazo a definir"}
           description="Prazos conhecidos e orientação para a negociação."
           open={openSection === "schedule"}
           onToggle={() => setOpenSection(openSection === "schedule" ? null : "schedule")}
@@ -359,7 +367,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
         <ProposalSection
           title="Termos"
-          summary="Regras de versionamento e composição"
+          summary="Padrão Stayo"
           description="Informações importantes para leitura da proposta."
           open={openSection === "terms"}
           onToggle={() => setOpenSection(openSection === "terms" ? null : "terms")}
@@ -425,10 +433,9 @@ function ActionButton({ children, onClick, disabled }: { children: ReactNode; on
 
 function ProposalSection({ title, summary, description, open, onToggle, onEdit, children }: { title: string; summary: string; description: string; open: boolean; onToggle: () => void; onEdit?: () => void; children: ReactNode }) {
   return <section className="overflow-hidden rounded-[var(--radius-card)] border" style={surface}>
-    <button type="button" onClick={onToggle} className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-[var(--stayo-forest-soft)]/30">
+    <button type="button" onClick={onToggle} className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-[var(--stayo-bg)]">
+      <span className="min-w-0 flex-1"><span className="block text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{title}</span><span className="mt-1 block text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{summary}</span></span>
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}><ChevronDown size={16} className={open ? "rotate-180 transition-transform" : "transition-transform"} /></span>
-      <span className="min-w-0 flex-1"><span className="block text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{title}</span><span className="mt-1 block truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{summary}</span></span>
-      <span className="hidden text-xs sm:block" style={{ color: "var(--stayo-ink-muted)" }}>{open ? "Fechar" : "Abrir"}</span>
     </button>
     {open && <div className="border-t px-4 pb-4 pt-4" style={{ borderColor: "var(--stayo-border)" }}><p className="mb-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{description}</p>{children}{onEdit && <button type="button" onClick={onEdit} className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium underline" style={{ color: "var(--stayo-forest)" }}><Settings2 size={13} />Editar bloco</button>}</div>}
   </section>;
