@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, ExternalLink, ListChecks, Share2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Copy, ExternalLink, ListChecks, Send, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
@@ -29,6 +29,7 @@ import {
   initialChargesQuery,
   ownerOnboardingLinkQuery,
   ownerOnboardingSubmissionQuery,
+  ownerQuery,
 } from "../lib/api/queries";
 import { coreConversionService, isCoreConversionEnabled } from "../lib/core-conversion";
 import { formatMoney } from "../lib/format";
@@ -79,7 +80,7 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "imovel" | "enxoval" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<"resumo" | "proprietario" | "imovel" | "enxoval" | "checklist" | "proposta">("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -180,7 +181,7 @@ function ImplementationDetailPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => document.getElementById("portal-owner-panel")?.scrollIntoView({ behavior: "smooth" })}>
+                <Button variant="outline" size="sm" onClick={() => setTab("proprietario")}>
                   <ExternalLink /> Portal
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => void shareWorkspace()}>
@@ -199,7 +200,7 @@ function ImplementationDetailPage() {
           <IndicatorCards items={items} loading={itemsQuery.isPending} />
 
           <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "imovel", "enxoval", "checklist", "proposta"] as const).map((t) => (
+            {(["resumo", "proprietario", "imovel", "enxoval", "checklist", "proposta"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -213,6 +214,8 @@ function ImplementationDetailPage() {
               >
                 {t === "resumo"
                   ? "Resumo"
+                  : t === "proprietario"
+                    ? "Proprietário"
                   : t === "imovel"
                     ? "Imóvel"
                     : t === "enxoval"
@@ -307,7 +310,6 @@ function ImplementationDetailPage() {
                   <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Configurações operacionais</summary>
                   <div className="mt-4 grid gap-4">
                     <ContractConditionsPanel implementationId={implementation.id} />
-                    <div id="portal-owner-panel"><OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} /></div>
                     <InitialChargesPanel implementationId={implementation.id} />
                   </div>
                 </details>
@@ -333,6 +335,8 @@ function ImplementationDetailPage() {
               </details>
 
             </div>
+          ) : tab === "proprietario" ? (
+            <OwnerTab implementation={implementation} />
           ) : tab === "imovel" ? (
             <PropertyTab implementation={implementation} />
           ) : tab === "enxoval" ? (
@@ -498,6 +502,107 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
   );
 }
 
+function OwnerTab({ implementation }: { implementation: ImplementationProject }) {
+  const owner = useQuery({
+    ...ownerQuery(implementation.ownerId ?? ""),
+    enabled: Boolean(implementation.ownerId),
+  });
+  const submission = useQuery(ownerOnboardingSubmissionQuery(implementation.id));
+  const ownerData = owner.data;
+  const submitted = submission.data;
+
+  const normalize = (value: string | null | undefined) =>
+    value?.replace(/\D/g, "").toLowerCase().trim() ?? "";
+  const confirmations = submitted
+    ? [
+        { label: "Nome", current: ownerData?.name ?? implementation.ownerName, received: submitted.fullName },
+        { label: "Telefone", current: ownerData?.phone ?? implementation.ownerPhone, received: submitted.phone },
+        { label: "E-mail", current: ownerData?.email, received: submitted.email },
+        { label: "CPF/CNPJ", current: ownerData?.document, received: submitted.document },
+      ].filter(({ current, received }) => received && normalize(current) !== normalize(received))
+    : [];
+
+  const registration = [
+    { label: "Dados pessoais", complete: Boolean(submitted?.fullName && submitted.document) },
+    { label: "Endereço", complete: false },
+    { label: "Dados bancários", complete: Boolean(submitted?.pixKey) },
+    { label: "Contrato", complete: false },
+    { label: "Documentos", complete: false },
+  ];
+  const completedCount = registration.filter((item) => item.complete).length;
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+      <div className="space-y-4">
+        <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <SummaryHeading>Proprietário vinculado</SummaryHeading>
+              {implementation.ownerId ? (
+                <LinkedField to="/proprietarios/$id" id={implementation.ownerId} label={ownerData?.name ?? implementation.ownerName} />
+              ) : (
+                <p className="font-semibold" style={{ color: "var(--stayo-ink)" }}>{implementation.ownerName || "Proprietário ainda não vinculado"}</p>
+              )}
+            </div>
+            {implementation.ownerId && <Tag label="Principal" tone="neutral" />}
+          </div>
+          <dl className="mt-4 grid gap-x-8 border-t sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
+            <SummaryRow label="Telefone" value={ownerData?.phone ?? implementation.ownerPhone} />
+            <SummaryRow label="E-mail" value={ownerData?.email} />
+            <SummaryRow label="Participação" value="Proprietário principal" />
+          </dl>
+        </section>
+
+        <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
+          <div className="flex items-center justify-between gap-4">
+            <SummaryHeading>Status do cadastro</SummaryHeading>
+            <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>{completedCount} de {registration.length}</span>
+          </div>
+          <Progress value={(completedCount / registration.length) * 100} className="mb-5 h-1.5" />
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {registration.map((item) => (
+              <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
+                {item.complete ? <CheckCircle2 className="size-4 text-[var(--stayo-success)]" /> : <span className="size-4 rounded-full border" style={{ borderColor: "var(--stayo-border-strong)" }} />}
+                <span style={{ color: item.complete ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{item.label}</span>
+                <span className="ml-auto text-xs" style={{ color: item.complete ? "var(--stayo-success)" : "var(--stayo-ink-muted)" }}>{item.complete ? "Completo" : "Pendente"}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
+          <SummaryHeading>Precisamos confirmar</SummaryHeading>
+          {submission.isPending ? (
+            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Verificando dados enviados...</p>
+          ) : confirmations.length === 0 ? (
+            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+              <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
+              Nenhum dado enviado pelo proprietário aguarda revisão.
+            </div>
+          ) : (
+            <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+              {confirmations.map((item) => (
+                <li key={item.label} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center">
+                  <AlertCircle className="size-4 shrink-0 text-[var(--stayo-warning)]" />
+                  <div className="min-w-0 flex-1 text-sm">
+                    <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>{item.label} alterado pelo proprietário</p>
+                    <p className="truncate" style={{ color: "var(--stayo-ink-muted)" }}>Recebido: {item.received}</p>
+                  </div>
+                  {implementation.ownerId && <Button asChild variant="outline" size="sm"><Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>Revisar cadastro</Link></Button>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <div id="portal-owner-panel">
+        <OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} compact />
+      </div>
+    </div>
+  );
+}
+
 const invitationStatusLabels: Record<OwnerOnboardingLinkStatus, string> = {
   ativo: "Ativo",
   expirado: "Expirado",
@@ -521,9 +626,11 @@ const invitationStatusTone: Record<OwnerOnboardingLinkStatus, "neutral" | "dange
 function OwnerPortalPanel({
   implementationId,
   ownerId,
+  compact = false,
 }: {
   implementationId: EntityId;
   ownerId: EntityId | null;
+  compact?: boolean;
 }) {
   const queryClient = useQueryClient();
   const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
@@ -573,7 +680,7 @@ function OwnerPortalPanel({
         className="mb-3 text-sm"
         style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
       >
-        Cadastro do proprietário
+        {compact ? "Portal do Proprietário" : "Cadastro do proprietário"}
       </h2>
 
       {submissionQuery.data ? (
@@ -588,9 +695,9 @@ function OwnerPortalPanel({
       ) : (
         <>
           <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim
-            que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser
-            gerado.
+             {compact
+               ? "Gerencie o acesso do proprietário ao acompanhamento da implantação."
+               : "Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser gerado."}
           </p>
 
           {link && status && (
@@ -637,11 +744,12 @@ function OwnerPortalPanel({
                 className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
                 style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
               >
-                {createLink.isPending
+                 <Send size={14} />
+                 {createLink.isPending
                   ? "Gerando..."
                   : link
-                    ? "Gerar novo convite"
-                    : "Gerar convite para o proprietário"}
+                     ? "Enviar novo acesso"
+                     : "Enviar acesso"}
               </button>
             </div>
           )}
