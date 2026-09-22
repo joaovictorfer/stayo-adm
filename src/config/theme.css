@@ -81,3 +81,122 @@
 :root[data-theme="dark"] .stayo-admin-theme {
   --stayo-forest-soft: #123F68;
 }
+
+/* Portal do Proprietário — experiência clara, acolhedora e independente do Admin. */
+.stayo-owner-theme {
+  --portal-bg: #f8f7f3;
+  --portal-surface: #ffffff;
+  --portal-surface-soft: #f5f3ed;
+  --portal-navy: #0b3150;
+  --portal-navy-strong: #0a2945;
+  --portal-ink: #17232f;
+  --portal-muted: #687580;
+  --portal-border: #e4e2db;
+  --portal-gold: #b39456;
+  --portal-gold-soft: #f5efe3;
+  --portal-success: #477c32;
+  --portal-danger: #9a4037;
+  --stayo-bg: var(--portal-bg);
+  --stayo-surface: var(--portal-surface);
+  --stayo-ink: var(--portal-ink);
+  --stayo-ink-muted: var(--portal-muted);
+  --stayo-border: var(--portal-border);
+  --stayo-forest: var(--portal-navy);
+  --stayo-forest-strong: var(--portal-navy-strong);
+  --stayo-forest-soft: #e9eef2;
+  --stayo-gold: var(--portal-gold);
+  --stayo-gold-soft: var(--portal-gold-soft);
+  color-scheme: light;
+  font-family: var(--stayo-font-ui);
+}
+
+.portal-shell-surface {
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 16px;
+  background: var(--portal-surface);
+  box-shadow: 0 18px 55px color-mix(in srgb, var(--portal-navy) 8%, transparent);
+}
+
+.portal-card {
+  border: 1px solid var(--portal-border);
+  border-radius: 12px;
+  background: var(--portal-surface);
+  padding: 1.25rem;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--portal-navy) 5%, transparent);
+  transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+
+.portal-card-interactive:hover {
+  border-color: color-mix(in srgb, var(--portal-gold) 42%, var(--portal-border));
+  box-shadow: 0 12px 34px color-mix(in srgb, var(--portal-navy) 9%, transparent);
+  transform: translateY(-1px);
+}
+
+.portal-action {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
+}
+
+.portal-action:hover { box-shadow: 0 8px 20px color-mix(in srgb, var(--portal-navy) 12%, transparent); }
+.portal-action:active { transform: scale(.98); }
+.portal-action:focus-visible { outline: 2px solid var(--portal-gold); outline-offset: 3px; }
+.portal-action:disabled { cursor: wait; opacity: .58; box-shadow: none; }
+
+.portal-input {
+  border: 1px solid var(--portal-border);
+  background: var(--portal-surface);
+  color: var(--portal-ink);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+.portal-input:hover { border-color: color-mix(in srgb, var(--portal-navy) 30%, var(--portal-border)); }
+.portal-input:focus { border-color: var(--portal-navy); box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-navy) 12%, transparent); outline: none; }
+
+.portal-empty {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 112px;
+  border: 1px solid var(--portal-border);
+  border-radius: 12px;
+  background: var(--portal-surface-soft);
+  padding: 1.25rem;
+}
+.portal-empty-icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--portal-gold-soft);
+  color: var(--portal-gold);
+}
+.portal-empty-icon svg { width: 1.25rem; height: 1.25rem; }
+.portal-empty-icon-success { background: color-mix(in srgb, var(--portal-success) 10%, white); color: var(--portal-success); }
+
+.portal-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--portal-surface-soft);
+}
+.portal-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, white 75%, transparent), transparent);
+  animation: portal-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes portal-shimmer { to { transform: translateX(100%); } }
+
+@media (max-width: 639px) {
+  .portal-shell-surface { border-radius: 14px; }
+  .portal-card { padding: 1rem; }
+  .portal-empty { align-items: flex-start; padding: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-card, .portal-action, .portal-input { transition: none; }
+  .portal-card-interactive:hover { transform: none; }
+  .portal-skeleton::after { animation: none; }
+}
