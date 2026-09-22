@@ -224,14 +224,13 @@ export function EnxovalTab({ implementationId, mode = "inventory" }: EnxovalTabP
   }, {});
 
   // Itens Faltantes derivados automaticamente da diferença do enxoval + status
-  const isMissing = (item: SupplyItem) =>
-    item.status === "cancelado"
-      ? false
-      : item.module === "faltante" || item.existing_qty < item.required_qty;
-
   const isResolved = (item: SupplyItem) =>
-    item.existing_qty >= item.required_qty &&
-    (item.status === "instalado" || item.status === "comprado" || item.status === "entregue");
+    item.status === "instalado" || item.status === "nao_aplicavel" ||
+    (item.module === "enxoval" && item.existing_qty >= item.required_qty);
+
+  const isMissing = (item: SupplyItem) => !isResolved(item) && (
+    item.module === "faltante" || item.existing_qty < item.required_qty
+  );
 
   const missingItems = items.filter(isMissing);
 
@@ -258,8 +257,7 @@ export function EnxovalTab({ implementationId, mode = "inventory" }: EnxovalTabP
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cabeçalho de Métricas e Ações */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {mode === "inventory" && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border bg-white p-4 shadow-sm">
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total de Itens</p>
           <div className="mt-2 flex items-baseline justify-between">
@@ -291,7 +289,7 @@ export function EnxovalTab({ implementationId, mode = "inventory" }: EnxovalTabP
             <span className="text-xs text-slate-500">concluído</span>
           </div>
         </div>
-      </div>
+      </div>}
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-3">
         <div>
