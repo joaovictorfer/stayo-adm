@@ -1,8 +1,20 @@
 import type { ReactNode } from "react";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  FileSignature,
+  FileText,
+  ShieldCheck,
+  Sparkles,
+  User,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
 
 export function PortalBrand({ context = "Portal do proprietário" }: { context?: string }) {
   return (
