@@ -1375,35 +1375,35 @@ function Checklist({
   const completedItems = items.filter(i => i.status === "concluido").length;
   const pendingItems = items.filter(i => i.status !== "concluido");
   const blockersPending = pendingItems.filter(i => i.blocker).length;
-  const nextAction = pendingItems.sort((a,b) => a.order - b.order)[0];
+  const nextAction = [...pendingItems].sort((a, b) => Number(b.blocker) - Number(a.blocker) || a.order - b.order)[0];
   const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Painel de status geral */}
-      <div className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>Progresso Geral</h2>
-            <div className="flex items-center gap-3 mt-2">
-               <Progress value={progressPercent} className="w-32 lg:w-48 h-2" />
-               <span className="text-[11px] font-medium" style={{ color: "var(--stayo-ink-muted)" }}>{progressPercent}% ({completedItems}/{totalItems})</span>
+      <div className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+        <div className="grid divide-y sm:grid-cols-[1fr_auto_1.4fr] sm:divide-x sm:divide-y-0" style={{ borderColor: "var(--stayo-border)" }}>
+          <div className="p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Progresso geral</p>
+            <div className="mt-2 flex items-center gap-3">
+              <strong className="text-xl" style={{ color: "var(--stayo-forest)" }}>{progressPercent}%</strong>
+              <div className="min-w-0 flex-1"><Progress value={progressPercent} className="h-2" /></div>
+              <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{completedItems}/{totalItems}</span>
             </div>
           </div>
-          <div className="flex flex-wrap gap-6">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>Bloqueadores</span>
-              <span className={`text-sm font-semibold mt-1 ${blockersPending > 0 ? 'text-red-600' : 'text-slate-600'}`}>{blockersPending} pendente(s)</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>Próxima ação</span>
-              <span className="text-sm font-medium mt-1 truncate max-w-[200px] sm:max-w-[300px]" style={{ color: "var(--stayo-ink)" }} title={nextAction ? nextAction.title : "Tudo concluído"}>{nextAction ? nextAction.title : "Tudo concluído"}</span>
-            </div>
+          <div className="min-w-36 p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Bloqueadores</p>
+            <p className="mt-2 text-sm font-semibold" style={{ color: blockersPending > 0 ? "var(--stayo-danger)" : "var(--stayo-ink)" }}>{blockersPending} pendente{blockersPending === 1 ? "" : "s"}</p>
+          </div>
+          <div className="min-w-0 p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Próxima ação</p>
+            <p className="mt-2 truncate text-sm font-semibold" style={{ color: "var(--stayo-ink)" }} title={nextAction?.title ?? "Tudo concluído"}>{nextAction?.title ?? "Tudo concluído"}</p>
+            {nextAction && <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{nextAction.phase} · {nextAction.blocker ? "Bloqueador" : itemStatusLabels[nextAction.status]}</p>}
           </div>
         </div>
       </div>
 
-      <Accordion type="multiple" className="w-full space-y-4">
+      <Accordion type="single" collapsible className="w-full space-y-3">
         {[...groups.entries()].map(([phase, categories]) => {
           const phaseItems = Array.from(categories.values()).flat();
           const phaseTotal = phaseItems.length;
@@ -1411,7 +1411,7 @@ function Checklist({
           
           return (
             <AccordionItem key={phase} value={phase} className="rounded-[var(--radius-card)] border bg-white overflow-hidden shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
-              <AccordionTrigger className="px-4 py-3 hover:no-underline border-b bg-slate-50/50" style={{ borderColor: "var(--stayo-border)" }}>
+              <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=open]:border-b data-[state=open]:bg-[var(--stayo-bg)]" style={{ borderColor: "var(--stayo-border)" }}>
                 <div className="flex items-center justify-between w-full pr-4">
                   <span className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{phase}</span>
                   <span className="text-[11px] font-medium rounded-full bg-slate-200/60 px-2.5 py-0.5" style={{ color: "var(--stayo-ink)" }}>
@@ -1433,6 +1433,9 @@ function Checklist({
                         <li key={item.id} className="flex flex-col gap-2 px-4 py-3">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <span className="flex size-5 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: item.status === "concluido" ? "var(--stayo-success)" : "var(--stayo-border)", backgroundColor: item.status === "concluido" ? "var(--stayo-success)" : "transparent", color: "var(--stayo-surface)" }}>
+                                {item.status === "concluido" && <Check className="size-3" />}
+                              </span>
                               <select
                                 value={item.status}
                                 onChange={(e) =>
@@ -1459,14 +1462,14 @@ function Checklist({
                               </span>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap sm:justify-end">
-                              {(item as any).dueDate && (
-                                <span className="text-[10px] rounded bg-slate-100 px-2 py-1 text-slate-600">
-                                  🗓 {new Date((item as any).dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                              {item.dueDate && (
+                                <span className="rounded bg-[var(--stayo-bg)] px-2 py-1 text-[10px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                                  Prazo: {new Date(item.dueDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
                                 </span>
                               )}
-                              {(item as any).responsibleUserId && (
-                                <span className="text-[10px] rounded bg-slate-100 px-2 py-1 text-slate-600 truncate max-w-[120px]" title={(item as any).responsibleUserId}>
-                                  👤 {(item as any).responsibleUserId.split('-')[0]}
+                              {item.responsibleUserId && (
+                                <span className="max-w-[160px] truncate rounded bg-[var(--stayo-bg)] px-2 py-1 text-[10px]" style={{ color: "var(--stayo-ink-muted)" }} title={item.responsibleUserId}>
+                                  Responsável: {item.responsibleUserId}
                                 </span>
                               )}
                               {item.mandatory && <Tag label="Obrigatório" />}
