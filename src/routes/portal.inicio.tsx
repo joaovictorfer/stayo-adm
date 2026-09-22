@@ -24,6 +24,13 @@ import {
   ShieldCheck,
   BellRing,
   CircleCheckBig,
+  CalendarRange,
+  House,
+  ClipboardCheck,
+  Wrench,
+  WalletCards,
+  BedDouble,
+  TrendingUp,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -34,9 +41,10 @@ import { Button } from "../components/ui/button";
 import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
 import type { Attachment } from "../lib/api/attachments";
-import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery } from "../lib/api/queries";
+import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery, propertyQuery, reservationsListQuery } from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
+import { getOwnerPortalModules, getOwnerPortalPhase, type OwnerPortalModule, type OwnerPortalPhase } from "../lib/owner-portal-lifecycle";
 import type { OwnerTaskStatus } from "../types/admin";
 import type { CommercialTerm } from "../types/admin";
 import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
@@ -428,6 +436,84 @@ function DocumentIcon({ attachment }: { attachment: Attachment }) {
   return attachment.mimeType.startsWith("image/") ? <FileImage aria-hidden="true" /> : <FileCheck2 aria-hidden="true" />;
 }
 
+const portalModuleLabels: Record<OwnerPortalModule, string> = {
+  overview: "Visão geral",
+  implementation: "Minha implantação",
+  profile: "Meus dados",
+  proposal: "Proposta",
+  reservations: "Reservas",
+  calendar: "Calendário",
+  property: "Meu imóvel",
+  inspections: "Vistorias",
+  maintenance: "Manutenções",
+  finance: "Financeiro",
+  documents: "Documentos",
+};
+
+function PortalPhaseIndicator({ phase }: { phase: OwnerPortalPhase }) {
+  const activeIndex = phase === "implementation" ? 0 : phase === "ready" ? 1 : 2;
+  const labels = ["Implantação", "Pronto para operar", "Em operação"];
+  return (
+    <div className="portal-phase-indicator" aria-label={`Momento atual: ${labels[activeIndex]}`}>
+      {labels.map((label, index) => (
+        <div key={label} className={index < activeIndex ? "is-complete" : index === activeIndex ? "is-current" : "is-future"}>
+          <span>{index < activeIndex ? <CheckCircle2 aria-hidden="true" /> : index + 1}</span>
+          <strong>{label}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReadyTransition({ implementation }: { implementation: ImplementationProject }) {
+  return (
+    <section className="portal-transition-banner">
+      <span className="portal-transition-icon"><Sparkles aria-hidden="true" /></span>
+      <div>
+        <p className="portal-milestones-eyebrow">Um novo momento começa</p>
+        <h2>Seu imóvel está pronto para começar a receber hóspedes.</h2>
+        <p>Estamos concluindo a passagem para a operação. Você continuará usando este mesmo portal e verá novas áreas surgirem por aqui.</p>
+      </div>
+      <dl>
+        <div><dt>Ativação</dt><dd>{formatPortalDate(implementation.completionDateEstimate)}</dd></div>
+        <div><dt>Próximo passo</dt><dd>Concluir a ativação operacional</dd></div>
+      </dl>
+    </section>
+  );
+}
+
+function OperationalOverview({ reservationCount }: { reservationCount: number }) {
+  const indicators = [
+    { label: "Reservas", value: reservationCount > 0 ? String(reservationCount) : "Sem dados", icon: BedDouble },
+    { label: "Ocupação", value: "Aguardando dados", icon: CalendarRange },
+    { label: "Receita do mês", value: "Aguardando dados", icon: TrendingUp },
+    { label: "Próximo repasse", value: "Aguardando dados", icon: WalletCards },
+  ];
+  return (
+    <div className="portal-operation-overview">
+      <section className="portal-operation-welcome">
+        <div><p className="portal-milestones-eyebrow">Seu imóvel em operação</p><h2>Acompanhamento que continua com você</h2><p>Agora, além do histórico da implantação, este espaço reúne o dia a dia do seu imóvel conforme os dados oficiais ficam disponíveis.</p></div>
+        <BadgeCheck aria-hidden="true" />
+      </section>
+      <div className="portal-operation-metrics">
+        {indicators.map(({ label, value, icon: Icon }) => <div key={label}><Icon aria-hidden="true" /><span>{label}</span><strong>{value}</strong></div>)}
+      </div>
+      <PortalEmptyState positive icon={<CircleCheckBig />} title="Operação acompanhada de perto" description="Os primeiros indicadores aparecerão aqui assim que houver movimentação oficial do imóvel." nextStep="Você não precisa fazer nada agora. A equipe Stayo mantém esta área atualizada para você." />
+    </div>
+  );
+}
+
+function OperationalPlaceholder({ module }: { module: Exclude<OwnerPortalModule, "overview" | "implementation" | "profile" | "proposal" | "documents" | "reservations"> }) {
+  const content = {
+    calendar: { icon: <CalendarRange />, title: "Seu calendário estará aqui", description: "Datas ocupadas e disponibilidade aparecerão conforme as reservas forem confirmadas." },
+    property: { icon: <House />, title: "Tudo sobre o seu imóvel", description: "As informações oficiais do imóvel serão organizadas aqui para consulta." },
+    inspections: { icon: <ClipboardCheck />, title: "Nenhuma vistoria liberada", description: "Quando houver uma vistoria disponível para você, ela aparecerá aqui com seu status." },
+    maintenance: { icon: <Wrench />, title: "Nenhuma manutenção para acompanhar", description: "Ocorrências compartilhadas com você ficarão reunidas nesta área." },
+    finance: { icon: <WalletCards />, title: "Seu financeiro está sendo preparado", description: "Repasses, demonstrativos e documentos financeiros aparecerão aqui quando houver dados oficiais." },
+  }[module];
+  return <PortalEmptyState icon={content.icon} title={content.title} description={content.description} nextStep="Esta área faz parte do mesmo portal e será atualizada automaticamente." />;
+}
+
 function propertyName(implementation: ImplementationProject | undefined): string {
   if (!implementation) return "Seu imóvel";
   if (implementation.nickname) return implementation.nickname;
@@ -635,6 +721,11 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
   const implementationsQ = useQuery(implementationsListQuery());
   const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
+  const portalPhase = getOwnerPortalPhase(implementation);
+  const portalModules = getOwnerPortalModules(portalPhase);
+  const corePropertyId = portalPhase === "operation" ? implementation?.corePropertyId ?? null : null;
+  const propertyQ = useQuery({ ...propertyQuery(corePropertyId ?? ""), enabled: Boolean(corePropertyId) });
+  const reservationsQ = useQuery({ ...reservationsListQuery(corePropertyId ?? undefined), enabled: Boolean(corePropertyId) });
   const submissionQ = useQuery({
     ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
     enabled: Boolean(implementation?.id),
@@ -669,9 +760,16 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
 
+  useEffect(() => {
+    const activeModule = activeTab === "dados" ? "profile" : activeTab;
+    if (!portalModules.includes(activeModule as OwnerPortalModule)) setActiveTab("visao-geral");
+  }, [activeTab, portalModules]);
+
   return (
     <div className="space-y-2">
       <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
+      <PortalPhaseIndicator phase={portalPhase} />
+      {portalPhase === "ready" && implementation && <ReadyTransition implementation={implementation} />}
 
       <Tabs
         value={activeTab}
@@ -689,25 +787,18 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           className="sticky top-2 z-20 mb-7 max-w-full overflow-hidden rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
         >
           <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
-            <TabsTrigger value="visao-geral" className="stayo-tab snap-start">
-              Visão geral
-            </TabsTrigger>
-            <TabsTrigger value="implantacao" className="stayo-tab snap-start">
-              Minha implantação
-            </TabsTrigger>
-            <TabsTrigger value="dados" className="stayo-tab snap-start">
-              Meus dados
-            </TabsTrigger>
-            <TabsTrigger value="proposta" className="stayo-tab snap-start">
-              Proposta
-            </TabsTrigger>
-            <TabsTrigger value="documentos" className="stayo-tab snap-start">
-              Documentos
-            </TabsTrigger>
+            {portalModules.map((module) => (
+              <TabsTrigger key={module} value={module === "profile" ? "dados" : module} className="stayo-tab snap-start">
+                {portalModuleLabels[module]}
+              </TabsTrigger>
+            ))}
           </TabsList>
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
+          {portalPhase === "operation" && (
+            <OperationalOverview reservationCount={reservationsQ.data?.data.filter((reservation) => reservation.propertyId === corePropertyId).length ?? 0} />
+          )}
           <section>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]">
@@ -750,6 +841,34 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
             <PortalEmptyState icon={<BellRing />} title="Nenhuma novidade por enquanto" description="Seu acompanhamento está em dia e não há novas atualizações públicas neste momento." nextStep="Assim que uma etapa avançar ou houver algo importante, você verá a atualização aqui." action={{ label: "Ver minha implantação", onClick: () => setActiveTab("implantacao") }} />
           </section>
         </TabsContent>
+
+        {portalPhase === "operation" && (
+          <>
+            <TabsContent value="reservations" className="tab-content-anim space-y-6">
+              {reservationsQ.isPending ? <PortalSkeleton rows={4} /> : reservationsQ.isError ? (
+                <PortalEmptyState icon={<BedDouble />} title="Não conseguimos consultar as reservas agora" description="Nada foi perdido. Esta área voltará a carregar assim que a conexão for restabelecida." nextStep="Tente novamente em alguns instantes." />
+              ) : (reservationsQ.data?.data ?? []).filter((reservation) => reservation.propertyId === corePropertyId).length === 0 ? (
+                <PortalEmptyState icon={<BedDouble />} title="As próximas reservas aparecerão aqui" description="Ainda não há reservas oficiais para mostrar neste imóvel." nextStep="Quando uma reserva for confirmada, você verá datas, canal, status e valores permitidos nesta área." />
+              ) : (
+                <section className="portal-operational-list" aria-labelledby="owner-reservations-title">
+                  <div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Operação</p><h2 id="owner-reservations-title">Reservas do imóvel</h2><p>Informações essenciais, sem expor dados privados dos hóspedes.</p></div>
+                  <ul>{(reservationsQ.data?.data ?? []).filter((reservation) => reservation.propertyId === corePropertyId).map((reservation) => (
+                    <li key={reservation.id}><div><strong>{new Intl.DateTimeFormat("pt-BR").format(new Date(reservation.checkin))} — {new Intl.DateTimeFormat("pt-BR").format(new Date(reservation.checkout))}</strong><span>{reservation.channel ?? reservation.source ?? "Canal não informado"} · {reservation.status}</span></div><span>{reservation.amount == null ? "Valor não disponível" : portalCurrency.format(reservation.amount)}</span></li>
+                  ))}</ul>
+                </section>
+              )}
+            </TabsContent>
+            <TabsContent value="calendar" className="tab-content-anim space-y-6"><OperationalPlaceholder module="calendar" /></TabsContent>
+            <TabsContent value="property" className="tab-content-anim space-y-6">
+              {propertyQ.isPending ? <PortalSkeleton rows={4} /> : propertyQ.data ? (
+                <section className="portal-operational-list"><div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Meu imóvel</p><h2>{propertyQ.data.name}</h2><p>{[propertyQ.data.condominiumName, propertyQ.data.unit, propertyQ.data.city].filter(Boolean).join(" · ")}</p></div><dl className="portal-property-facts"><div><dt>Status</dt><dd>{propertyQ.data.status}</dd></div><div><dt>Capacidade</dt><dd>{propertyQ.data.capacity ? `${propertyQ.data.capacity} hóspedes` : "A confirmar"}</dd></div><div><dt>Check-in</dt><dd>{propertyQ.data.checkinTime ?? "A confirmar"}</dd></div><div><dt>Check-out</dt><dd>{propertyQ.data.checkoutTime ?? "A confirmar"}</dd></div></dl></section>
+              ) : <OperationalPlaceholder module="property" />}
+            </TabsContent>
+            <TabsContent value="inspections" className="tab-content-anim space-y-6"><OperationalPlaceholder module="inspections" /></TabsContent>
+            <TabsContent value="maintenance" className="tab-content-anim space-y-6"><OperationalPlaceholder module="maintenance" /></TabsContent>
+            <TabsContent value="finance" className="tab-content-anim space-y-6"><OperationalPlaceholder module="finance" /></TabsContent>
+          </>
+        )}
 
         <TabsContent value="implantacao" className="tab-content-anim space-y-6">
           {implementationsQ.isPending ? (
