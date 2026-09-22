@@ -565,6 +565,44 @@
 .portal-profile-save-note { display: flex; align-items: center; gap: .45rem; border-top: 1px solid var(--portal-border); background: var(--portal-surface-soft); padding: .85rem 1.5rem; color: var(--portal-muted); font-size: .68rem; }
 .portal-profile-save-note svg { width: .9rem; height: .9rem; color: var(--portal-success); }
 
+.portal-proposal-showcase {
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 14px;
+  background: var(--portal-surface);
+  box-shadow: 0 14px 40px color-mix(in srgb, var(--portal-navy) 7%, transparent);
+}
+.portal-proposal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; padding: 1.5rem; }
+.portal-proposal-heading h2 { margin-top: .3rem; color: var(--portal-navy); font-family: var(--stayo-font-display); font-size: 1.7rem; font-weight: 600; line-height: 1.2; }
+.portal-proposal-heading p:last-child { margin-top: .55rem; max-width: 38rem; color: var(--portal-muted); font-size: .78rem; line-height: 1.55; }
+.portal-proposal-status { display: inline-flex; flex: 0 0 auto; align-items: center; gap: .4rem; border-radius: 999px; background: var(--portal-gold-soft); padding: .45rem .7rem; color: var(--portal-gold); font-size: .68rem; font-weight: 650; }
+.portal-proposal-status.is-accepted { background: color-mix(in srgb, var(--portal-success) 10%, var(--portal-surface)); color: var(--portal-success); }
+.portal-proposal-status svg { width: .9rem; height: .9rem; }
+.portal-proposal-summary { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); border-block: 1px solid var(--portal-border); }
+.portal-proposal-total { display: flex; flex-direction: column; justify-content: center; padding: 1.5rem; background: var(--portal-navy); color: var(--portal-hero-foreground); }
+.portal-proposal-total > span { color: var(--portal-hero-muted); font-size: .68rem; font-weight: 600; text-transform: uppercase; }
+.portal-proposal-total strong { margin-top: .45rem; font-family: var(--stayo-font-display); font-size: 2rem; font-weight: 600; }
+.portal-proposal-total small { margin-top: .55rem; color: var(--portal-hero-muted); font-size: .68rem; }
+.portal-proposal-terms { padding: 1.5rem; }
+.portal-proposal-terms > span { color: var(--portal-gold); font-size: .65rem; font-weight: 700; text-transform: uppercase; }
+.portal-proposal-terms ul { display: grid; gap: .55rem; margin-top: .85rem; }
+.portal-proposal-terms li { display: flex; align-items: baseline; justify-content: space-between; gap: .8rem; }
+.portal-proposal-terms strong { color: var(--portal-ink); font-size: .75rem; font-weight: 550; }
+.portal-proposal-terms li span { color: var(--portal-navy); font-size: .75rem; font-weight: 650; text-align: right; }
+.portal-proposal-terms p { margin-top: .8rem; color: var(--portal-muted); font-size: .75rem; line-height: 1.5; }
+.portal-proposal-actions { display: flex; align-items: center; gap: .85rem; padding: 1.1rem 1.5rem; }
+.portal-proposal-actions > span, .portal-proposal-actions > p { color: var(--portal-muted); font-size: .7rem; line-height: 1.45; }
+.portal-proposal-history { border-top: 1px solid var(--portal-border); }
+.portal-proposal-history summary { display: flex; cursor: pointer; align-items: center; gap: .55rem; padding: 1rem 1.5rem; color: var(--portal-navy); font-size: .75rem; font-weight: 650; list-style: none; }
+.portal-proposal-history summary::-webkit-details-marker { display: none; }
+.portal-proposal-history summary svg { width: 1rem; height: 1rem; color: var(--portal-gold); }
+.portal-proposal-history summary span { margin-left: auto; color: var(--portal-muted); }
+.portal-proposal-history ol { padding: 0 1.5rem 1rem; }
+.portal-proposal-history li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--portal-border); padding: .8rem 0; font-size: .72rem; }
+.portal-proposal-history li div { display: grid; gap: .15rem; }
+.portal-proposal-history li strong { color: var(--portal-ink); }
+.portal-proposal-history li span { color: var(--portal-muted); }
+
 .portal-action {
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
 }
@@ -655,6 +693,14 @@
   .portal-profile-checklist li { grid-template-columns: 1.8rem minmax(0, 1fr); }
   .portal-profile-step-status { grid-column: 2; }
   .portal-profile-save-note { padding-inline: 1.2rem; }
+  .portal-proposal-heading { display: grid; padding: 1.2rem; }
+  .portal-proposal-heading h2 { font-size: 1.45rem; }
+  .portal-proposal-status { justify-self: start; }
+  .portal-proposal-summary { grid-template-columns: 1fr; }
+  .portal-proposal-total, .portal-proposal-terms { padding: 1.2rem; }
+  .portal-proposal-actions { align-items: stretch; flex-direction: column; padding: 1rem 1.2rem; }
+  .portal-proposal-actions a { width: 100%; }
+  .portal-proposal-history summary, .portal-proposal-history ol { padding-inline: 1.2rem; }
   .portal-form-actions { position: sticky; bottom: 0; z-index: 10; margin-inline: -.25rem; border-top: 1px solid var(--portal-border); background: color-mix(in srgb, var(--portal-surface) 94%, transparent); padding: .8rem .25rem max(.8rem, env(safe-area-inset-bottom)); backdrop-filter: blur(14px); }
   .portal-milestones { padding: 1.15rem; }
   .portal-milestones-heading { margin-bottom: 1.2rem; }
