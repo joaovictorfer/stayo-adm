@@ -8,6 +8,7 @@ export interface WizardStep {
   content: ReactNode;
   /** Se retornar false, o botão "Continuar" fica desabilitado nesta etapa. */
   isValid?: boolean;
+  invalidMessage?: string;
 }
 
 /**
@@ -27,6 +28,7 @@ export function Wizard({
   submitting?: boolean;
 }) {
   const [index, setIndex] = useState(0);
+  const [visited, setVisited] = useState<number[]>([]);
   const step = steps[index];
   const isLast = index === steps.length - 1;
   const isFirst = index === 0;
@@ -34,7 +36,7 @@ export function Wizard({
   if (!step) return null;
 
   return (
-    <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col gap-4">
       <div>
         <div
           className="flex items-center justify-between text-xs"
@@ -66,7 +68,10 @@ export function Wizard({
 
       <div className="flex-1">{step.content}</div>
 
-      <div className="flex items-center gap-3">
+      {step.isValid === false && step.invalidMessage && (
+        <p className="text-xs text-[var(--portal-danger)]" role="status">{step.invalidMessage}</p>
+      )}
+      <div className="portal-form-actions flex items-center gap-3">
         {!isFirst && (
           <Button
             type="button"
@@ -80,12 +85,19 @@ export function Wizard({
         <Button
           type="button"
           disabled={step.isValid === false || submitting}
-          onClick={() => (isLast ? onComplete() : setIndex((i) => i + 1))}
-          className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-white hover:bg-[var(--portal-navy-strong)]"
+          onClick={() => {
+            if (isLast) onComplete();
+            else {
+              setVisited((current) => current.includes(index) ? current : [...current, index]);
+              setIndex((i) => i + 1);
+            }
+          }}
+          className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
         >
           {isLast ? (submitting ? "Salvando..." : completeLabel) : "Continuar"}
         </Button>
       </div>
+      {visited.includes(index) && <p className="text-right text-[11px] text-[var(--portal-success)]">Etapa revisada</p>}
     </div>
   );
 }
