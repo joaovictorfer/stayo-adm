@@ -224,7 +224,7 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
           ? "A equipe Stayo está acompanhando esta situação e compartilhará a próxima atualização por aqui."
           : isComplete
             ? "Seu imóvel concluiu a implantação e agora segue acompanhado pela operação Stayo."
-            : `Neste momento, nosso foco é ${currentMilestone.label.toLocaleLowerCase("pt-BR")}. Atualizaremos esta página conforme cada marco for concluído.`}
+            : `Neste momento, nosso foco é ${(currentMilestone?.label ?? statusLabels[implementation.status]).toLocaleLowerCase("pt-BR")}. Atualizaremos esta página conforme cada marco for concluído.`}
       </p>
     </div>
   );
