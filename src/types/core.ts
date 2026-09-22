@@ -118,6 +118,8 @@ export interface ImplementationProject {
   ownerPhone: string | null;
   /** Apelido interno do pré-imóvel, ex: "Cobertura vista mar". */
   nickname: string | null;
+  /** Imagem de capa própria da implantação; fallbacks são resolvidos pela apresentação. */
+  coverImage: string | null;
   condominiumName: string | null;
   unit: string | null;
   address: string | null;

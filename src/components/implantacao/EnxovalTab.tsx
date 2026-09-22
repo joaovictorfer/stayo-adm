@@ -118,7 +118,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
     mutationFn: async () => {
       const payload = {
         implementation_id: implementationId,
-        module: "enxoval",
+        module: "enxoval" as const,
         name: formData.name.trim(),
         room: formData.room.trim() || "Geral",
         size: formData.size.trim() || null,
