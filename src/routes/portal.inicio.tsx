@@ -768,6 +768,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
 
   return (
     <div className="space-y-2">
+      {welcome.showWelcome && welcome.ready && (
+        <OwnerWelcomeOverlay
+          firstName={firstName}
+          propertyName={propertyName(implementation)}
+          onStart={() => welcome.dismiss()}
+        />
+      )}
       <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
       <PortalPhaseIndicator phase={portalPhase} />
       {portalPhase === "ready" && implementation && <ReadyTransition implementation={implementation} />}
