@@ -31,7 +31,6 @@ import {
   Package,
   Filter,
   Home,
-  ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,6 +55,7 @@ interface SupplyItem {
 
 interface EnxovalTabProps {
   implementationId: string;
+  mode?: "inventory" | "missing";
 }
 
 type FilterType = "todos" | "bloqueadores" | "comprar" | "resolvidos";
@@ -76,15 +76,15 @@ const priorityLabels: Record<string, { label: string; class: string }> = {
   urgente: { label: "Urgente", class: "bg-red-50 text-red-700 border-red-200" },
 };
 
-export function EnxovalTab({ implementationId }: EnxovalTabProps) {
+export function EnxovalTab({ implementationId, mode = "inventory" }: EnxovalTabProps) {
   const queryClient = useQueryClient();
-  const [viewMode, setViewMode] = useState<"ambientes" | "faltantes">("ambientes");
   const [filter, setFilter] = useState<FilterType>("todos");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SupplyItem | null>(null);
 
   // State do formulário
   const [formData, setFormData] = useState({
+    module: "enxoval" as "enxoval" | "faltante",
     name: "",
     room: "",
     size: "",
@@ -118,7 +118,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
     mutationFn: async () => {
       const payload = {
         implementation_id: implementationId,
-        module: "enxoval" as const,
+        module: formData.module,
         name: formData.name.trim(),
         room: formData.room.trim() || "Geral",
         size: formData.size.trim() || null,
@@ -173,9 +173,10 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
     },
   });
 
-  const handleOpenAdd = () => {
+  const handleOpenAdd = (module: "enxoval" | "faltante" = mode === "missing" ? "faltante" : "enxoval") => {
     setEditingItem(null);
     setFormData({
+      module,
       name: "",
       room: "",
       size: "",
@@ -193,6 +194,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
   const handleOpenEdit = (item: SupplyItem) => {
     setEditingItem(item);
     setFormData({
+      module: item.module === "faltante" ? "faltante" : "enxoval",
       name: item.name,
       room: item.room || "",
       size: item.size || "",
@@ -213,7 +215,8 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
   };
 
   // Agrupamento por ambiente
-  const roomGroups = items.reduce<Record<string, SupplyItem[]>>((acc, item) => {
+  const inventoryItems = items.filter((item) => item.module === "enxoval");
+  const roomGroups = inventoryItems.reduce<Record<string, SupplyItem[]>>((acc, item) => {
     const roomName = item.room || "Geral";
     if (!acc[roomName]) acc[roomName] = [];
     acc[roomName].push(item);
@@ -224,7 +227,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
   const isMissing = (item: SupplyItem) =>
     item.status === "cancelado"
       ? false
-      : item.existing_qty < item.required_qty || item.status !== "instalado";
+      : item.module === "faltante" || item.existing_qty < item.required_qty;
 
   const isResolved = (item: SupplyItem) =>
     item.existing_qty >= item.required_qty &&
@@ -247,9 +250,9 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
   });
 
   // Métricas rápidas
-  const totalItemsCount = items.length;
-  const totalRequiredQty = items.reduce((acc, i) => acc + i.required_qty, 0);
-  const totalExistingQty = items.reduce((acc, i) => acc + i.existing_qty, 0);
+  const totalItemsCount = inventoryItems.length;
+  const totalRequiredQty = inventoryItems.reduce((acc, i) => acc + i.required_qty, 0);
+  const totalExistingQty = inventoryItems.reduce((acc, i) => acc + i.existing_qty, 0);
   const blockerCount = items.filter((i) => i.blocks_readiness && i.existing_qty < i.required_qty).length;
   const progressPercent = totalRequiredQty > 0 ? Math.round((totalExistingQty / totalRequiredQty) * 100) : 0;
 
@@ -290,43 +293,19 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
         </div>
       </div>
 
-      {/* Barra de Navegação Interna da Aba e Ações */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-3">
-        <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1">
-          <button
-            type="button"
-            onClick={() => setViewMode("ambientes")}
-            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${ 
-              viewMode === "ambientes"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Home className="h-3.5 w-3.5" />
-            Inventário por Ambiente
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("faltantes")}
-            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${ 
-              viewMode === "faltantes"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <ShoppingBag className="h-3.5 w-3.5" />
-            Itens Faltantes ({missingItems.length})
-          </button>
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">{mode === "inventory" ? "Inventário necessário por ambiente" : "Itens faltantes"}</h2>
+          <p className="mt-1 text-xs text-slate-500">{mode === "inventory" ? "Informe o necessário e o que o imóvel já possui." : "Lista automática do enxoval, somada aos itens manuais."}</p>
         </div>
-
-        <Button onClick={handleOpenAdd} size="sm" className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white">
+        <Button onClick={() => handleOpenAdd()} size="sm" className="gap-1.5">
           <Plus className="h-4 w-4" />
-          Novo Item de Enxoval
+          {mode === "inventory" ? "Adicionar item" : "Adicionar item manual"}
         </Button>
       </div>
 
       {/* CONTEÚDO 1: INVENTÁRIO POR AMBIENTE */}
-      {viewMode === "ambientes" && (
+      {mode === "inventory" && (
         <div className="space-y-6">
           {isLoading ? (
             <div className="py-12 text-center text-sm text-slate-500">Carregando itens de enxoval...</div>
@@ -335,7 +314,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
               <Package className="mx-auto h-8 w-8 text-slate-400" />
               <p className="mt-2 text-sm font-medium text-slate-700">Nenhum item cadastrado no enxoval.</p>
               <p className="text-xs text-slate-500 mt-1">Clique em "Novo Item de Enxoval" para adicionar itens aos ambientes.</p>
-              <Button onClick={handleOpenAdd} size="sm" className="mt-4 gap-1 bg-emerald-700 text-white">
+               <Button onClick={() => handleOpenAdd("enxoval")} size="sm" className="mt-4 gap-1">
                 <Plus className="h-4 w-4" /> Adicionar primeiro item
               </Button>
             </div>
@@ -390,11 +369,10 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-4">
-                            <div className="text-xs text-right">
-                              <span className="text-slate-500 block">Quantidade</span>
-                              <span className="font-semibold text-slate-800">
-                                {item.existing_qty} de {item.required_qty}
-                              </span>
+                             <div className="text-xs text-right">
+                               <span className="text-slate-500 block">Inventário</span>
+                               <span className="font-semibold text-slate-800">Necessário {item.required_qty} · possui {item.existing_qty}</span>
+                               <span className="block text-[11px] text-slate-500">{item.existing_qty >= item.required_qty ? "Completo" : `Falta ${item.required_qty - item.existing_qty}`}</span>
                             </div>
 
                             <div className="text-xs text-right min-w-[90px]">
@@ -447,7 +425,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
       )}
 
       {/* CONTEÚDO 2: ITENS FALTANTES E FILTROS */}
-      {viewMode === "faltantes" && (
+      {mode === "missing" && (
         <div className="space-y-4">
           {/* Filtros */}
           <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-slate-50 p-3 text-xs">
@@ -456,9 +434,9 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
             </div>
             {(
               [
-                { key: "todos", label: "Todos faltantes" },
+                 { key: "todos", label: "Todos" },
                 { key: "bloqueadores", label: "Bloqueadores" },
-                { key: "comprar", label: "Comprar / Em Compras" },
+                 { key: "comprar", label: "Comprar" },
                 { key: "resolvidos", label: "Resolvidos" },
               ] as const
             ).map((f) => (
@@ -563,9 +541,9 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[540px]">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Editar Item de Enxoval" : "Novo Item de Enxoval"}</DialogTitle>
+             <DialogTitle>{editingItem ? "Editar item" : formData.module === "faltante" ? "Adicionar item manual" : "Novo item de enxoval"}</DialogTitle>
             <DialogDescription>
-              Preencha os dados do enxoval para vincular ao ambiente correspondente.
+               {formData.module === "faltante" ? "Inclua somente uma falta que não nasce do inventário." : "Preencha o necessário e o que já existe no ambiente."}
             </DialogDescription>
           </DialogHeader>
 
@@ -665,11 +643,10 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 >
                   <option value="pendente">Pendente</option>
-                  <option value="em_compras">Em compras</option>
                   <option value="comprado">Comprado</option>
                   <option value="entregue">Entregue</option>
                   <option value="instalado">Instalado / Concluído</option>
-                  <option value="cancelado">Cancelado</option>
+                   <option value="nao_aplicavel">Não aplicável</option>
                 </select>
               </div>
 
