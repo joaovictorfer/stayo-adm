@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
+import { Button } from "../components/ui/button";
 import { proposalsStore } from "../lib/api/local-store";
 import {
   adminApi,
@@ -29,16 +31,9 @@ const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen px-4 py-6 sm:flex sm:items-center sm:justify-center sm:py-10" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-ink)", fontFamily: "var(--stayo-font-ui)" }}>
-      <div className="w-full max-w-lg">
-        <div className="mb-6 flex items-center gap-3 px-1">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>S</span>
-          <div><span className="block text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>Stayo</span><span className="block text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--stayo-ink-muted)" }}>Proposta comercial</span></div>
-        </div>
-        <div className="rounded-3xl border p-5 shadow-[0_20px_60px_rgba(32,48,40,0.06)] sm:p-7" style={surface}>{children}</div>
-        <p className="mt-5 text-center text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Leia com calma. Estamos à disposição para ajudar.</p>
-      </div>
-    </div>
+    <PortalShell width="medium" context="Proposta comercial" footer="Leia com calma. Se precisar, a equipe Stayo está por perto.">
+      <div className="p-5 sm:p-8">{children}</div>
+    </PortalShell>
   );
 }
 
@@ -49,9 +44,7 @@ function ProposalPortalPage() {
   if (linkQuery.isPending) {
     return (
       <Shell>
-        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Carregando...
-        </p>
+        <PortalSkeleton />
       </Shell>
     );
   }
@@ -151,9 +144,7 @@ function ProposalView({
   if (proposalQ.isPending || implementationQ.isPending) {
     return (
       <Shell>
-        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Carregando...
-        </p>
+        <PortalSkeleton rows={4} />
       </Shell>
     );
   }
@@ -207,15 +198,15 @@ function ProposalView({
         </span>
       </div>
 
-      <button
+      <Button
         type="button"
         onClick={() => downloadPdf.mutate()}
         disabled={downloadPdf.isPending}
-        className="mt-3 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-        style={{ ...surface, color: "var(--stayo-forest)" }}
+        variant="outline"
+        className="portal-action mt-4 h-11 w-full rounded-xl border-[var(--portal-border)] text-[var(--portal-navy)] hover:bg-[var(--portal-surface-soft)]"
       >
         {downloadPdf.isPending ? "Gerando PDF..." : "Baixar PDF desta proposta"}
-      </button>
+      </Button>
 
       <div className="mt-6">
         {proposal.acceptedAt ? (
@@ -272,15 +263,14 @@ function ProposalView({
               />
               Li e concordo com a proposta apresentada.
             </label>
-            <button
+            <Button
               type="button"
               onClick={() => accept.mutate()}
               disabled={accept.isPending || !canAccept}
-              className="w-full rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
-              style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              className="portal-action h-11 w-full rounded-xl bg-[var(--portal-navy)] text-white hover:bg-[var(--portal-navy-strong)]"
             >
               {accept.isPending ? "Enviando..." : "Aceitar proposta"}
-            </button>
+            </Button>
             <p className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
               Este aceite registra sua concordância comercial com esta proposta — não substitui a
               assinatura do contrato de prestação de serviço.

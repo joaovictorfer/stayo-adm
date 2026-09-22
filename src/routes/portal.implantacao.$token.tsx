@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
+import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import {
   adminApi,
   implementationQuery,
@@ -28,16 +29,9 @@ const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--s
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen px-4 py-6 sm:flex sm:items-center sm:justify-center sm:py-10" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-ink)", fontFamily: "var(--stayo-font-ui)" }}>
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex items-center gap-3 px-1">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>S</span>
-          <div><span className="block text-lg" style={{ fontFamily: "var(--stayo-font-display)" }}>Stayo</span><span className="block text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--stayo-ink-muted)" }}>Cadastro do proprietário</span></div>
-        </div>
-        <div className="rounded-3xl border p-5 shadow-[0_20px_60px_rgba(32,48,40,0.06)] sm:p-7" style={surface}>{children}</div>
-        <p className="mt-5 text-center text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Seus dados são tratados com cuidado pela equipe Stayo.</p>
-      </div>
-    </div>
+    <PortalShell width="compact" context="Cadastro do proprietário" footer="Seus dados são tratados com cuidado pela equipe Stayo.">
+      <div className="p-5 sm:p-7">{children}</div>
+    </PortalShell>
   );
 }
 
@@ -49,9 +43,7 @@ function OwnerOnboardingPortalPage() {
   if (linkQuery.isPending) {
     return (
       <Shell>
-        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-          Carregando...
-        </p>
+        <PortalSkeleton />
       </Shell>
     );
   }
@@ -310,8 +302,7 @@ function TextField({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-        style={{ ...surface, color: "var(--stayo-ink)" }}
+        className="portal-input w-full rounded-xl px-3 py-2.5 text-sm"
       />
     </label>
   );
