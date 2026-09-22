@@ -262,6 +262,141 @@
   transform: translateY(-1px);
 }
 
+.portal-milestones {
+  border: 1px solid var(--portal-border);
+  border-radius: 14px;
+  background: var(--portal-surface);
+  padding: 1.5rem;
+  box-shadow: 0 10px 34px color-mix(in srgb, var(--portal-navy) 6%, transparent);
+}
+
+.portal-milestones-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.portal-milestones-heading h2 {
+  margin-top: .2rem;
+  color: var(--portal-navy);
+  font-family: var(--stayo-font-display);
+  font-size: 1.65rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.portal-milestones-eyebrow,
+.portal-milestone-state {
+  color: var(--portal-gold);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.portal-milestones-summary {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--portal-gold-soft);
+  padding: .4rem .7rem;
+  color: var(--portal-navy);
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+.portal-milestones-summary.is-blocked {
+  background: color-mix(in srgb, var(--portal-danger) 9%, var(--portal-surface));
+  color: var(--portal-danger);
+}
+
+.portal-milestones-list {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-milestone {
+  min-width: 0;
+}
+
+.portal-milestone-track {
+  position: relative;
+  height: 2rem;
+}
+
+.portal-milestone-line {
+  position: absolute;
+  top: .72rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--portal-border);
+  transition: background-color 350ms ease;
+}
+
+.portal-milestone:first-child .portal-milestone-line { left: 50%; width: 50%; }
+.portal-milestone:last-child .portal-milestone-line { width: 50%; }
+.portal-milestone.is-done .portal-milestone-line,
+.portal-milestone.is-current .portal-milestone-line { background: color-mix(in srgb, var(--portal-gold) 62%, var(--portal-border)); }
+
+.portal-milestone-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-inline: auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--portal-surface);
+  color: var(--portal-border);
+  transition: color 250ms ease, transform 250ms ease, box-shadow 250ms ease;
+}
+
+.portal-milestone-marker svg { width: 1.25rem; height: 1.25rem; stroke-width: 1.75; }
+.portal-milestone.is-done .portal-milestone-marker { color: var(--portal-success); }
+.portal-milestone.is-current .portal-milestone-marker {
+  color: var(--portal-gold);
+  transform: scale(1.08);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--portal-gold) 13%, transparent);
+  animation: portal-milestone-arrive 480ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.portal-milestone.is-blocked .portal-milestone-marker { color: var(--portal-danger); }
+
+.portal-milestone-copy {
+  padding: .45rem .45rem 0;
+  text-align: center;
+}
+
+.portal-milestone-copy h3 {
+  margin-top: .25rem;
+  color: var(--portal-ink);
+  font-size: .76rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.portal-milestone-copy p {
+  margin-top: .4rem;
+  color: var(--portal-muted);
+  font-size: .65rem;
+  line-height: 1.45;
+}
+
+.portal-milestone.is-future .portal-milestone-state { color: var(--portal-muted); }
+.portal-milestone.is-future .portal-milestone-copy { opacity: .66; }
+.portal-milestone.is-blocked .portal-milestone-state,
+.portal-milestone.is-blocked .portal-milestone-copy h3 { color: var(--portal-danger); }
+
+@keyframes portal-milestone-arrive {
+  from { opacity: .45; transform: scale(.72); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+
 .portal-action {
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
 }
@@ -328,6 +463,18 @@
     background: linear-gradient(180deg, color-mix(in srgb, var(--portal-navy-strong) 76%, transparent) 0%, color-mix(in srgb, var(--portal-navy-strong) 50%, transparent) 38%, color-mix(in srgb, var(--portal-navy-strong) 96%, transparent) 100%);
   }
   .portal-property-hero-image { object-position: 64% center; }
+  .portal-milestones { padding: 1.15rem; }
+  .portal-milestones-heading { margin-bottom: 1.2rem; }
+  .portal-milestones-list { display: block; }
+  .portal-milestone { display: grid; grid-template-columns: 2rem minmax(0, 1fr); }
+  .portal-milestone-track { height: 100%; min-height: 4.5rem; }
+  .portal-milestone-line { top: 0; left: .72rem; width: 2px; height: 100%; }
+  .portal-milestone:first-child .portal-milestone-line { top: .75rem; left: .72rem; width: 2px; height: calc(100% - .75rem); }
+  .portal-milestone:last-child .portal-milestone-line { width: 2px; height: .75rem; }
+  .portal-milestone-marker { margin-inline: 0; }
+  .portal-milestone-copy { padding: 0 0 1.15rem .6rem; text-align: left; }
+  .portal-milestone-copy h3 { font-size: .88rem; }
+  .portal-milestone-copy p { margin-top: .25rem; font-size: .72rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -335,4 +482,5 @@
   .portal-card-interactive:hover { transform: none; }
   .portal-skeleton::after { animation: none; }
   .portal-property-hero-image, .portal-property-hero-copy { animation: none; }
+  .portal-milestone.is-current .portal-milestone-marker { animation: none; }
 }

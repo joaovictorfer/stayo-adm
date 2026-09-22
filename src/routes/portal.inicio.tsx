@@ -10,6 +10,8 @@ import {
   User,
   FileSignature,
   Sparkles,
+  Circle,
+  LockKeyhole,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -58,6 +60,73 @@ const stageMessages: Record<ImplementationStatus, string> = {
   nao_convertido: "A equipe Stayo está revisando os próximos passos desta implantação.",
   cancelado: "Esta implantação foi encerrada. Fale com a equipe Stayo se precisar de ajuda.",
 };
+
+const ownerMilestones = [
+  { label: "Proposta", description: "Condições apresentadas e aprovação da parceria." },
+  { label: "Planejamento", description: "Organização das etapas, responsáveis e previsão." },
+  { label: "Preparação do imóvel", description: "Ajustes necessários para receber os primeiros hóspedes." },
+  { label: "Configuração", description: "Cadastro e configuração da operação do imóvel." },
+  { label: "Validação", description: "Revisão final dos padrões de qualidade Stayo." },
+  { label: "Pronto para operar", description: "Imóvel liberado para começar a receber hóspedes." },
+] as const;
+
+function ownerMilestoneIndex(status: ImplementationStatus): number {
+  if (["prospect", "proposta", "aguardando_aprovacao"].includes(status)) return 0;
+  if (["aprovado", "planejamento"].includes(status)) return 1;
+  if (status === "em_implantacao") return 2;
+  if (status === "validacao") return 4;
+  if (["pronto_para_operacao", "ativo"].includes(status)) return 5;
+  return 0;
+}
+
+function OwnerMilestones({ status }: { status: ImplementationStatus }) {
+  const activeIndex = ownerMilestoneIndex(status);
+  const isComplete = status === "ativo";
+  const isBlocked = ["pausado", "nao_convertido", "cancelado"].includes(status);
+
+  return (
+    <section className="portal-milestones" aria-labelledby="owner-milestones-title">
+      <div className="portal-milestones-heading">
+        <div>
+          <p className="portal-milestones-eyebrow">Acompanhamento</p>
+          <h2 id="owner-milestones-title">Próximos marcos</h2>
+        </div>
+        <span className={`portal-milestones-summary${isBlocked ? " is-blocked" : ""}`}>
+          {isBlocked ? statusLabels[status] : isComplete ? "Etapas concluídas" : `${activeIndex + 1} de ${ownerMilestones.length}`}
+        </span>
+      </div>
+
+      <ol className="portal-milestones-list">
+        {ownerMilestones.map((milestone, index) => {
+          const state = isBlocked && index === activeIndex
+            ? "blocked"
+            : isComplete || index < activeIndex
+              ? "done"
+              : index === activeIndex
+                ? "current"
+                : "future";
+          const stateLabel = state === "done" ? "Concluída" : state === "current" ? "Etapa atual" : state === "blocked" ? "Bloqueada" : "Próxima etapa";
+
+          return (
+            <li key={milestone.label} className={`portal-milestone is-${state}`} title={milestone.description}>
+              <div className="portal-milestone-track" aria-hidden="true">
+                <span className="portal-milestone-line" />
+                <span className="portal-milestone-marker">
+                  {state === "done" ? <CheckCircle2 /> : state === "blocked" ? <LockKeyhole /> : <Circle />}
+                </span>
+              </div>
+              <div className="portal-milestone-copy">
+                <span className="portal-milestone-state">{stateLabel}</span>
+                <h3>{milestone.label}</h3>
+                <p>{milestone.description}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
 
 function propertyName(implementation: ImplementationProject | undefined): string {
   if (!implementation) return "Seu imóvel";
@@ -354,7 +423,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         </TabsContent>
 
         <TabsContent value="implantacao" className="tab-content-anim space-y-6">
-           <PortalEmptyState icon={<Key />} title="Estamos preparando seu imóvel" description="Assim que os próximos marcos estiverem definidos, você poderá acompanhar cada avanço nesta área." />
+          {implementationsQ.isPending ? (
+            <PortalSkeleton rows={4} />
+          ) : implementation ? (
+            <OwnerMilestones status={implementation.status} />
+          ) : (
+            <PortalEmptyState icon={<Key />} title="Estamos preparando seu imóvel" description="Assim que os próximos marcos estiverem definidos, você poderá acompanhar cada avanço nesta área." />
+          )}
         </TabsContent>
 
         <TabsContent value="dados" className="tab-content-anim space-y-6">
