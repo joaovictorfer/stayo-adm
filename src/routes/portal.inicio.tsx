@@ -721,6 +721,11 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
   const implementationsQ = useQuery(implementationsListQuery());
   const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
+  const portalPhase = getOwnerPortalPhase(implementation);
+  const portalModules = getOwnerPortalModules(portalPhase);
+  const corePropertyId = portalPhase === "operation" ? implementation?.corePropertyId ?? null : null;
+  const propertyQ = useQuery({ ...propertyQuery(corePropertyId ?? ""), enabled: Boolean(corePropertyId) });
+  const reservationsQ = useQuery({ ...reservationsListQuery(corePropertyId ?? undefined), enabled: Boolean(corePropertyId) });
   const submissionQ = useQuery({
     ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
     enabled: Boolean(implementation?.id),
@@ -755,9 +760,15 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
 
+  useEffect(() => {
+    if (!portalModules.includes(activeTab as OwnerPortalModule)) setActiveTab("visao-geral");
+  }, [activeTab, portalModules]);
+
   return (
     <div className="space-y-2">
       <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
+      <PortalPhaseIndicator phase={portalPhase} />
+      {portalPhase === "ready" && implementation && <ReadyTransition implementation={implementation} />}
 
       <Tabs
         value={activeTab}
@@ -775,25 +786,18 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           className="sticky top-2 z-20 mb-7 max-w-full overflow-hidden rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
         >
           <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
-            <TabsTrigger value="visao-geral" className="stayo-tab snap-start">
-              Visão geral
-            </TabsTrigger>
-            <TabsTrigger value="implantacao" className="stayo-tab snap-start">
-              Minha implantação
-            </TabsTrigger>
-            <TabsTrigger value="dados" className="stayo-tab snap-start">
-              Meus dados
-            </TabsTrigger>
-            <TabsTrigger value="proposta" className="stayo-tab snap-start">
-              Proposta
-            </TabsTrigger>
-            <TabsTrigger value="documentos" className="stayo-tab snap-start">
-              Documentos
-            </TabsTrigger>
+            {portalModules.map((module) => (
+              <TabsTrigger key={module} value={module === "profile" ? "dados" : module} className="stayo-tab snap-start">
+                {portalModuleLabels[module]}
+              </TabsTrigger>
+            ))}
           </TabsList>
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
+          {portalPhase === "operation" && (
+            <OperationalOverview reservationCount={reservationsQ.data?.data.filter((reservation) => reservation.propertyId === corePropertyId).length ?? 0} />
+          )}
           <section>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]">
@@ -836,6 +840,34 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
             <PortalEmptyState icon={<BellRing />} title="Nenhuma novidade por enquanto" description="Seu acompanhamento está em dia e não há novas atualizações públicas neste momento." nextStep="Assim que uma etapa avançar ou houver algo importante, você verá a atualização aqui." action={{ label: "Ver minha implantação", onClick: () => setActiveTab("implantacao") }} />
           </section>
         </TabsContent>
+
+        {portalPhase === "operation" && (
+          <>
+            <TabsContent value="reservations" className="tab-content-anim space-y-6">
+              {reservationsQ.isPending ? <PortalSkeleton rows={4} /> : reservationsQ.isError ? (
+                <PortalEmptyState icon={<BedDouble />} title="Não conseguimos consultar as reservas agora" description="Nada foi perdido. Esta área voltará a carregar assim que a conexão for restabelecida." nextStep="Tente novamente em alguns instantes." />
+              ) : (reservationsQ.data?.data ?? []).filter((reservation) => reservation.propertyId === corePropertyId).length === 0 ? (
+                <PortalEmptyState icon={<BedDouble />} title="As próximas reservas aparecerão aqui" description="Ainda não há reservas oficiais para mostrar neste imóvel." nextStep="Quando uma reserva for confirmada, você verá datas, canal, status e valores permitidos nesta área." />
+              ) : (
+                <section className="portal-operational-list" aria-labelledby="owner-reservations-title">
+                  <div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Operação</p><h2 id="owner-reservations-title">Reservas do imóvel</h2><p>Informações essenciais, sem expor dados privados dos hóspedes.</p></div>
+                  <ul>{(reservationsQ.data?.data ?? []).filter((reservation) => reservation.propertyId === corePropertyId).map((reservation) => (
+                    <li key={reservation.id}><div><strong>{new Intl.DateTimeFormat("pt-BR").format(new Date(reservation.checkin))} — {new Intl.DateTimeFormat("pt-BR").format(new Date(reservation.checkout))}</strong><span>{reservation.channel ?? reservation.source ?? "Canal não informado"} · {reservation.status}</span></div><span>{reservation.amount == null ? "Valor não disponível" : portalCurrency.format(reservation.amount)}</span></li>
+                  ))}</ul>
+                </section>
+              )}
+            </TabsContent>
+            <TabsContent value="calendar" className="tab-content-anim space-y-6"><OperationalPlaceholder module="calendar" /></TabsContent>
+            <TabsContent value="property" className="tab-content-anim space-y-6">
+              {propertyQ.isPending ? <PortalSkeleton rows={4} /> : propertyQ.data ? (
+                <section className="portal-operational-list"><div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Meu imóvel</p><h2>{propertyQ.data.name}</h2><p>{[propertyQ.data.condominiumName, propertyQ.data.unit, propertyQ.data.city].filter(Boolean).join(" · ")}</p></div><dl className="portal-property-facts"><div><dt>Status</dt><dd>{propertyQ.data.status}</dd></div><div><dt>Capacidade</dt><dd>{propertyQ.data.capacity ? `${propertyQ.data.capacity} hóspedes` : "A confirmar"}</dd></div><div><dt>Check-in</dt><dd>{propertyQ.data.checkinTime ?? "A confirmar"}</dd></div><div><dt>Check-out</dt><dd>{propertyQ.data.checkoutTime ?? "A confirmar"}</dd></div></dl></section>
+              ) : <OperationalPlaceholder module="property" />}
+            </TabsContent>
+            <TabsContent value="inspections" className="tab-content-anim space-y-6"><OperationalPlaceholder module="inspections" /></TabsContent>
+            <TabsContent value="maintenance" className="tab-content-anim space-y-6"><OperationalPlaceholder module="maintenance" /></TabsContent>
+            <TabsContent value="finance" className="tab-content-anim space-y-6"><OperationalPlaceholder module="finance" /></TabsContent>
+          </>
+        )}
 
         <TabsContent value="implantacao" className="tab-content-anim space-y-6">
           {implementationsQ.isPending ? (
