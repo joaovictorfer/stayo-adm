@@ -12,6 +12,9 @@ import {
   Sparkles,
   Circle,
   LockKeyhole,
+  CalendarDays,
+  ArrowRight,
+  Clock3,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -125,6 +128,105 @@ function OwnerMilestones({ status }: { status: ImplementationStatus }) {
         })}
       </ol>
     </section>
+  );
+}
+
+function formatPortalDate(value: string | null): string {
+  if (!value) return "A definir com você";
+  const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "A definir com você";
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+}
+
+function ImplementationJourney({ implementation }: { implementation: ImplementationProject }) {
+  const activeIndex = ownerMilestoneIndex(implementation.status);
+  const isComplete = implementation.status === "ativo";
+  const isBlocked = ["pausado", "nao_convertido", "cancelado"].includes(implementation.status);
+  const completed = isComplete ? ownerMilestones : ownerMilestones.slice(0, activeIndex);
+  const nextSteps = isComplete ? [] : ownerMilestones.slice(activeIndex, Math.min(activeIndex + 3, ownerMilestones.length));
+  const currentMilestone = ownerMilestones[activeIndex];
+
+  return (
+    <div className="portal-implementation-journey">
+      <section className={`portal-current-stage${isBlocked ? " is-blocked" : ""}`}>
+        <div className="portal-current-stage-copy">
+          <p className="portal-milestones-eyebrow">Etapa atual</p>
+          <h2>{statusLabels[implementation.status]}</h2>
+          <p>{stageMessages[implementation.status]}</p>
+        </div>
+        <div className="portal-current-stage-dates" aria-label="Datas previstas da implantação">
+          <div>
+            <CalendarDays aria-hidden="true" />
+            <span>Início estimado</span>
+            <strong>{formatPortalDate(implementation.startDateEstimate)}</strong>
+          </div>
+          <div>
+            <Clock3 aria-hidden="true" />
+            <span>Previsão de conclusão</span>
+            <strong>{formatPortalDate(implementation.completionDateEstimate)}</strong>
+          </div>
+        </div>
+      </section>
+
+      <OwnerMilestones status={implementation.status} />
+
+      <div className="portal-journey-columns">
+        <section className="portal-journey-panel" aria-labelledby="completed-steps-title">
+          <div className="portal-journey-panel-heading">
+            <span className="portal-journey-panel-icon is-complete"><CheckCircle2 aria-hidden="true" /></span>
+            <div>
+              <h2 id="completed-steps-title">O que já foi feito</h2>
+              <p>Cada avanço concluído fica registrado aqui.</p>
+            </div>
+          </div>
+          {completed.length > 0 ? (
+            <ul className="portal-journey-list">
+              {completed.map((milestone) => (
+                <li key={milestone.label}>
+                  <CheckCircle2 aria-hidden="true" />
+                  <div><strong>{milestone.label}</strong><span>{milestone.description}</span></div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="portal-journey-note">Estamos organizando o primeiro marco. Você verá cada avanço por aqui.</p>
+          )}
+        </section>
+
+        <section className="portal-journey-panel" aria-labelledby="next-steps-title">
+          <div className="portal-journey-panel-heading">
+            <span className="portal-journey-panel-icon"><ArrowRight aria-hidden="true" /></span>
+            <div>
+              <h2 id="next-steps-title">Próximos passos</h2>
+              <p>O caminho previsto a partir do momento atual.</p>
+            </div>
+          </div>
+          {nextSteps.length > 0 ? (
+            <ol className="portal-journey-list is-next">
+              {nextSteps.map((milestone, index) => (
+                <li key={milestone.label}>
+                  <span className="portal-journey-number">{index + 1}</span>
+                  <div>
+                    <strong>{milestone.label}{index === 0 && !isBlocked ? " · agora" : ""}</strong>
+                    <span>{index === 0 && isBlocked ? stageMessages[implementation.status] : milestone.description}</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="portal-journey-note">A implantação foi concluída. O acompanhamento continua na área do seu imóvel.</p>
+          )}
+        </section>
+      </div>
+
+      <p className="portal-journey-context">
+        {isBlocked
+          ? "A equipe Stayo está acompanhando esta situação e compartilhará a próxima atualização por aqui."
+          : isComplete
+            ? "Seu imóvel concluiu a implantação e agora segue acompanhado pela operação Stayo."
+            : `Neste momento, nosso foco é ${currentMilestone.label.toLocaleLowerCase("pt-BR")}. Atualizaremos esta página conforme cada marco for concluído.`}
+      </p>
+    </div>
   );
 }
 
@@ -426,7 +528,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           {implementationsQ.isPending ? (
             <PortalSkeleton rows={4} />
           ) : implementation ? (
-            <OwnerMilestones status={implementation.status} />
+            <ImplementationJourney implementation={implementation} />
           ) : (
             <PortalEmptyState icon={<Key />} title="Estamos preparando seu imóvel" description="Assim que os próximos marcos estiverem definidos, você poderá acompanhar cada avanço nesta área." />
           )}

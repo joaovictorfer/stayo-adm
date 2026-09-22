@@ -397,6 +397,112 @@
   to { opacity: 1; transform: scale(1.08); }
 }
 
+.portal-implementation-journey {
+  display: grid;
+  gap: 1rem;
+}
+
+.portal-current-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--portal-gold) 34%, var(--portal-border));
+  border-radius: 14px;
+  background: var(--portal-navy);
+  color: var(--portal-hero-foreground);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--portal-navy) 13%, transparent);
+}
+
+.portal-current-stage.is-blocked { background: color-mix(in srgb, var(--portal-danger) 80%, var(--portal-navy)); }
+.portal-current-stage-copy { padding: 1.6rem; }
+.portal-current-stage-copy .portal-milestones-eyebrow { color: var(--portal-gold-soft); }
+.portal-current-stage-copy h2 {
+  margin-top: .35rem;
+  font-family: var(--stayo-font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.portal-current-stage-copy > p:last-child {
+  margin-top: .7rem;
+  max-width: 37rem;
+  color: var(--portal-hero-muted);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+.portal-current-stage-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-left: 1px solid color-mix(in srgb, var(--portal-hero-foreground) 14%, transparent);
+  background: color-mix(in srgb, var(--portal-navy-strong) 55%, transparent);
+}
+.portal-current-stage-dates > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: .35rem;
+  padding: 1.25rem;
+}
+.portal-current-stage-dates > div + div { border-left: 1px solid color-mix(in srgb, var(--portal-hero-foreground) 12%, transparent); }
+.portal-current-stage-dates svg { width: 1rem; height: 1rem; color: var(--portal-gold); }
+.portal-current-stage-dates span { color: var(--portal-hero-muted); font-size: .65rem; font-weight: 600; text-transform: uppercase; }
+.portal-current-stage-dates strong { font-size: .78rem; font-weight: 600; line-height: 1.4; }
+
+.portal-journey-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.portal-journey-panel {
+  border: 1px solid var(--portal-border);
+  border-radius: 14px;
+  background: var(--portal-surface);
+  padding: 1.3rem;
+}
+.portal-journey-panel-heading { display: flex; align-items: flex-start; gap: .8rem; }
+.portal-journey-panel-heading h2 { color: var(--portal-navy); font-size: .92rem; font-weight: 650; }
+.portal-journey-panel-heading p { margin-top: .2rem; color: var(--portal-muted); font-size: .72rem; line-height: 1.45; }
+.portal-journey-panel-icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--portal-gold-soft);
+  color: var(--portal-gold);
+}
+.portal-journey-panel-icon.is-complete { background: color-mix(in srgb, var(--portal-success) 10%, var(--portal-surface)); color: var(--portal-success); }
+.portal-journey-panel-icon svg { width: 1rem; height: 1rem; }
+.portal-journey-list { display: grid; gap: .8rem; margin-top: 1.1rem; }
+.portal-journey-list li { display: flex; align-items: flex-start; gap: .65rem; }
+.portal-journey-list li > svg { width: 1rem; height: 1rem; flex: 0 0 auto; margin-top: .1rem; color: var(--portal-success); }
+.portal-journey-list li div { display: grid; gap: .16rem; }
+.portal-journey-list strong { color: var(--portal-ink); font-size: .76rem; font-weight: 650; }
+.portal-journey-list span { color: var(--portal-muted); font-size: .68rem; line-height: 1.45; }
+.portal-journey-number {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--portal-gold-soft);
+  color: var(--portal-navy) !important;
+  font-size: .62rem !important;
+  font-weight: 700;
+}
+.portal-journey-note { margin-top: 1.1rem; color: var(--portal-muted); font-size: .76rem; line-height: 1.55; }
+.portal-journey-context {
+  border-left: 2px solid var(--portal-gold);
+  padding: .15rem 0 .15rem 1rem;
+  color: var(--portal-muted);
+  font-size: .76rem;
+  line-height: 1.55;
+}
+
 .portal-action {
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 120ms ease;
 }
@@ -463,6 +569,12 @@
     background: linear-gradient(180deg, color-mix(in srgb, var(--portal-navy-strong) 76%, transparent) 0%, color-mix(in srgb, var(--portal-navy-strong) 50%, transparent) 38%, color-mix(in srgb, var(--portal-navy-strong) 96%, transparent) 100%);
   }
   .portal-property-hero-image { object-position: 64% center; }
+  .portal-current-stage { grid-template-columns: 1fr; }
+  .portal-current-stage-copy { padding: 1.25rem; }
+  .portal-current-stage-copy h2 { font-size: 1.55rem; }
+  .portal-current-stage-dates { border-top: 1px solid color-mix(in srgb, var(--portal-hero-foreground) 14%, transparent); border-left: 0; }
+  .portal-current-stage-dates > div { padding: 1rem; }
+  .portal-journey-columns { grid-template-columns: 1fr; }
   .portal-milestones { padding: 1.15rem; }
   .portal-milestones-heading { margin-bottom: 1.2rem; }
   .portal-milestones-list { display: block; }
