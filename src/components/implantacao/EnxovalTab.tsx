@@ -124,7 +124,7 @@ export function EnxovalTab({ implementationId }: EnxovalTabProps) {
         size: formData.size.trim() || null,
         required_qty: Number(formData.required_qty) || 0,
         existing_qty: Number(formData.existing_qty) || 0,
-        priority: formData.priority,
+        priority: formData.priority as "baixa" | "media" | "alta",
         responsible: formData.responsible.trim() || null,
         status: formData.status,
         blocks_readiness: formData.blocks_readiness,
