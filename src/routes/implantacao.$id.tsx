@@ -89,6 +89,18 @@ function ImplementationDetailPage() {
   const readiness = computeReadiness(items);
   const pendingItems = items.filter((item) => item.status !== "concluido");
   const propertyName = implementation?.nickname || implementation?.condominiumName || "Novo imóvel";
+  const missingPropertyFields = implementation
+    ? [
+        implementation.nickname,
+        implementation.condominiumName,
+        implementation.unit,
+        implementation.address,
+        implementation.city,
+        implementation.propertyType,
+        implementation.bedrooms,
+        implementation.capacity,
+      ].filter((value) => value === null || value === undefined || value === "").length
+    : 0;
 
   const shareWorkspace = async () => {
     if (typeof window === "undefined") return;
@@ -246,6 +258,14 @@ function ImplementationDetailPage() {
                         <p style={{ color: "var(--stayo-ink-muted)" }}>{implementation.ownerPhone || "Telefone não informado"}</p>
                       </div>
                     </section>
+                    <section>
+                      <SummaryHeading>Implantação</SummaryHeading>
+                      <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                        <SummaryRow label="Etapa" value={statusLabels[implementation.status]} />
+                        <SummaryRow label="Responsável" value={implementation.responsibleUserId} />
+                        <SummaryRow label="Previsão" value={implementation.completionDateEstimate} />
+                      </dl>
+                    </section>
                   </div>
 
                   <CommercialTermsPanel implementationId={implementation.id} />
@@ -254,8 +274,18 @@ function ImplementationDetailPage() {
                 <aside className="space-y-10">
                   <section>
                     <SummaryHeading>Pendências</SummaryHeading>
-                    {pendingItems.length === 0 ? <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Nenhuma pendência aberta.</p> : (
+                    {pendingItems.length === 0 && missingPropertyFields === 0 ? <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Nenhuma pendência aberta.</p> : (
                       <ul className="space-y-4">
+                        {missingPropertyFields > 0 && (
+                          <li className="border-l-2 border-[var(--stayo-gold)] pl-3">
+                            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+                              {missingPropertyFields} {missingPropertyFields === 1 ? "informação ainda precisa" : "informações ainda precisam"} ser completada{missingPropertyFields === 1 ? "" : "s"}
+                            </p>
+                            <button type="button" onClick={() => setTab("imovel")} className="mt-1 text-xs underline" style={{ color: "var(--stayo-forest)" }}>
+                              Completar dados do imóvel
+                            </button>
+                          </li>
+                        )}
                         {pendingItems.slice(0, 5).map((item) => (
                           <li key={item.id} className="border-l-2 pl-3" style={{ borderColor: item.blocker ? "var(--stayo-danger)" : "var(--stayo-border)" }}>
                             <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{item.title}</p>
@@ -348,11 +378,12 @@ function SummaryHeading({ children }: { children: string }) {
 }
 
 function SummaryRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
   return (
     <div className="flex items-start justify-between gap-4 py-3 text-sm">
       <dt style={{ color: "var(--stayo-ink-muted)" }}>{label}</dt>
-      <dd className="text-right font-semibold" style={{ color: value ? "var(--stayo-forest)" : "var(--stayo-ink-muted)" }}>
-        {value || "Não informado"}
+      <dd className="text-right font-semibold" style={{ color: "var(--stayo-forest)" }}>
+        {value}
       </dd>
     </div>
   );
