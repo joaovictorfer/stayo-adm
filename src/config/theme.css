@@ -1994,7 +1994,9 @@ a.admin-data-row:hover,
   border: 1px solid transparent;
   text-align: left;
 }
-.portal-person-option > span { flex: 1; }
+.portal-person-option > span {
+  flex: 1;
+}
 .portal-person-option.is-selected {
   border-color: color-mix(in srgb, var(--portal-gold) 60%, var(--portal-border));
   background: color-mix(in srgb, var(--portal-gold) 9%, var(--portal-surface));

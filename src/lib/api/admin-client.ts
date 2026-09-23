@@ -912,24 +912,28 @@ function ownerOnboardingFromDraft(
 ): OwnerOnboardingSubmission {
   const text = (key: string) => (typeof value[key] === "string" ? (value[key] as string) : "");
   const rawPeople = Array.isArray(value["people"]) ? value["people"] : [];
-  const people: OwnerOnboardingPerson[] = rawPeople.flatMap((candidate): OwnerOnboardingPerson[] => {
-    if (!candidate || typeof candidate !== "object") return [];
-    const person = candidate as Record<string, unknown>;
-    const personText = (key: string) =>
-      typeof person[key] === "string" ? (person[key] as string) : "";
-    const role: OwnerOnboardingPerson["role"] =
-      person["role"] === "coproprietario" || person["role"] === "proponente"
-        ? person["role"]
-        : "proprietario";
-    return [{
-      role,
-      personType: person["personType"] === "pj" ? ("pj" as const) : ("pf" as const),
-      fullName: personText("fullName"),
-      document: personText("document"),
-      email: personText("email"),
-      phone: personText("phone"),
-    }];
-  });
+  const people: OwnerOnboardingPerson[] = rawPeople.flatMap(
+    (candidate): OwnerOnboardingPerson[] => {
+      if (!candidate || typeof candidate !== "object") return [];
+      const person = candidate as Record<string, unknown>;
+      const personText = (key: string) =>
+        typeof person[key] === "string" ? (person[key] as string) : "";
+      const role: OwnerOnboardingPerson["role"] =
+        person["role"] === "coproprietario" || person["role"] === "proponente"
+          ? person["role"]
+          : "proprietario";
+      return [
+        {
+          role,
+          personType: person["personType"] === "pj" ? ("pj" as const) : ("pf" as const),
+          fullName: personText("fullName"),
+          document: personText("document"),
+          email: personText("email"),
+          phone: personText("phone"),
+        },
+      ];
+    },
+  );
   const primary = {
     role: "proprietario" as const,
     personType: value["personType"] === "pj" ? ("pj" as const) : ("pf" as const),

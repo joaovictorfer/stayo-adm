@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, CheckCircle2, LockKeyhole, Plus, ShieldCheck, Sparkles, Trash2, UserRound } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  LockKeyhole,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
@@ -38,7 +47,10 @@ export const Route = createFileRoute("/portal/implantacao/$token")({
       { title: "Cadastro do proprietário — Stayo" },
       { name: "description", content: "Complete seu cadastro para a implantação do seu imóvel." },
       { property: "og:title", content: "Cadastro do proprietário — Stayo" },
-      { property: "og:description", content: "Complete seu cadastro para a implantação do seu imóvel." },
+      {
+        property: "og:description",
+        content: "Complete seu cadastro para a implantação do seu imóvel.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -150,14 +162,16 @@ function OwnerOnboardingForm({
         phone: ownerQ.data?.phone ?? "",
         accountHolder: ownerQ.data?.name ?? "",
         holderTaxId: ownerQ.data?.document ?? "",
-        people: [{
-          role: "proprietario",
-          personType: "pf",
-          fullName: ownerQ.data?.name ?? "",
-          document: ownerQ.data?.document ?? "",
-          email: ownerQ.data?.email ?? "",
-          phone: ownerQ.data?.phone ?? "",
-        }],
+        people: [
+          {
+            role: "proprietario",
+            personType: "pf",
+            fullName: ownerQ.data?.name ?? "",
+            document: ownerQ.data?.document ?? "",
+            email: ownerQ.data?.email ?? "",
+            phone: ownerQ.data?.phone ?? "",
+          },
+        ],
       }));
   }, [draftQ.data, ownerQ.data]);
 
@@ -199,7 +213,16 @@ function OwnerOnboardingForm({
     setTouched((current) => ({ ...current, [field]: true }));
   const people = form.people.length
     ? form.people
-    : [{ role: "proprietario" as const, personType: form.personType, fullName: form.fullName, document: form.document, email: form.email, phone: form.phone }];
+    : [
+        {
+          role: "proprietario" as const,
+          personType: form.personType,
+          fullName: form.fullName,
+          document: form.document,
+          email: form.email,
+          phone: form.phone,
+        },
+      ];
   const [selectedHolder, setSelectedHolder] = useState(0);
   const [manualHolder, setManualHolder] = useState(false);
   const [manualPix, setManualPix] = useState(false);
@@ -211,17 +234,38 @@ function OwnerOnboardingForm({
       );
       const primary = nextPeople[0];
       return primary
-        ? { ...current, people: nextPeople, personType: primary.personType, fullName: primary.fullName, document: primary.document, email: primary.email || current.email, phone: primary.phone || current.phone }
+        ? {
+            ...current,
+            people: nextPeople,
+            personType: primary.personType,
+            fullName: primary.fullName,
+            document: primary.document,
+            email: primary.email || current.email,
+            phone: primary.phone || current.phone,
+          }
         : current;
     });
   };
   const addPerson = () =>
     setForm((current) => ({
       ...current,
-      people: [...current.people, { role: "coproprietario", personType: "pf", fullName: "", document: "", email: "", phone: "" }],
+      people: [
+        ...current.people,
+        {
+          role: "coproprietario",
+          personType: "pf",
+          fullName: "",
+          document: "",
+          email: "",
+          phone: "",
+        },
+      ],
     }));
   const removePerson = (index: number) => {
-    setForm((current) => ({ ...current, people: current.people.filter((_, personIndex) => personIndex !== index) }));
+    setForm((current) => ({
+      ...current,
+      people: current.people.filter((_, personIndex) => personIndex !== index),
+    }));
     setSelectedHolder(0);
   };
   const usePersonAsHolder = (index: number) => {
@@ -235,7 +279,9 @@ function OwnerOnboardingForm({
       const suggestion = suggestPixKey(person, form.pixType);
       if (suggestion) set("pixKey", suggestion);
     }
-    toast.success("Titular selecionado", { description: "Os dados cadastrais foram preenchidos no repasse." });
+    toast.success("Titular selecionado", {
+      description: "Os dados cadastrais foram preenchidos no repasse.",
+    });
   };
 
   useEffect(() => {
@@ -247,7 +293,8 @@ function OwnerOnboardingForm({
   useEffect(() => {
     if (!form.holderTaxId || manualHolder) return;
     const holderIndex = people.findIndex(
-      (person) => formatBrazilianDocument(person.document) === formatBrazilianDocument(form.holderTaxId),
+      (person) =>
+        formatBrazilianDocument(person.document) === formatBrazilianDocument(form.holderTaxId),
     );
     if (holderIndex >= 0 && holderIndex !== selectedHolder) setSelectedHolder(holderIndex);
   }, [form.holderTaxId, manualHolder, people, selectedHolder]);
@@ -307,10 +354,22 @@ function OwnerOnboardingForm({
         <Section icon={<ShieldCheck />} text="Primeiro, confirme quem é o titular do imóvel.">
           <div className="space-y-3">
             {people.map((person, index) => (
-              <PersonEditor key={index} person={person} index={index} canRemove={index > 0} onChange={(patch) => updatePerson(index, patch)} onRemove={() => removePerson(index)} />
+              <PersonEditor
+                key={index}
+                person={person}
+                index={index}
+                canRemove={index > 0}
+                onChange={(patch) => updatePerson(index, patch)}
+                onRemove={() => removePerson(index)}
+              />
             ))}
           </div>
-          <Button type="button" variant="outline" className="portal-add-person w-full" onClick={addPerson}>
+          <Button
+            type="button"
+            variant="outline"
+            className="portal-add-person w-full"
+            onClick={addPerson}
+          >
             <Plus className="size-4" /> Adicionar proprietário ou proponente
           </Button>
         </Section>
@@ -457,21 +516,63 @@ function OwnerOnboardingForm({
             options={[...ACCOUNT_TYPES]}
           />
           <div className="portal-smart-field">
-            <div className="portal-smart-field-head"><span>Titular da conta</span><Sparkles className="size-4" /></div>
+            <div className="portal-smart-field-head">
+              <span>Titular da conta</span>
+              <Sparkles className="size-4" />
+            </div>
             {people.length > 1 && !manualHolder ? (
               <div className="grid gap-2">
                 {people.map((person, index) => (
-                  <button key={index} type="button" className={`portal-person-option ${selectedHolder === index ? "is-selected" : ""}`} onClick={() => usePersonAsHolder(index)}>
-                    <UserRound className="size-4" /><span><strong>{person.fullName || `Pessoa ${index + 1}`}</strong><small>{formatBrazilianDocument(person.document) || "Documento pendente"}</small></span>{selectedHolder === index && <Check className="size-4" />}
+                  <button
+                    key={index}
+                    type="button"
+                    className={`portal-person-option ${selectedHolder === index ? "is-selected" : ""}`}
+                    onClick={() => usePersonAsHolder(index)}
+                  >
+                    <UserRound className="size-4" />
+                    <span>
+                      <strong>{person.fullName || `Pessoa ${index + 1}`}</strong>
+                      <small>
+                        {formatBrazilianDocument(person.document) || "Documento pendente"}
+                      </small>
+                    </span>
+                    {selectedHolder === index && <Check className="size-4" />}
                   </button>
                 ))}
               </div>
             ) : !manualHolder && selectedPerson ? (
-              <div className="portal-person-summary"><UserRound className="size-5" /><div><strong>{selectedPerson.fullName}</strong><span>{formatBrazilianDocument(selectedPerson.document)}</span></div></div>
+              <div className="portal-person-summary">
+                <UserRound className="size-5" />
+                <div>
+                  <strong>{selectedPerson.fullName}</strong>
+                  <span>{formatBrazilianDocument(selectedPerson.document)}</span>
+                </div>
+              </div>
             ) : (
-              <div className="space-y-3"><TextField label="Titular" value={form.accountHolder} onChange={(value) => set("accountHolder", value)} error={error("accountHolder")} /><TextField label="CPF/CNPJ do titular" value={formatBrazilianDocument(form.holderTaxId)} onChange={(value) => set("holderTaxId", formatBrazilianDocument(value))} error={error("holderTaxId")} /></div>
+              <div className="space-y-3">
+                <TextField
+                  label="Titular"
+                  value={form.accountHolder}
+                  onChange={(value) => set("accountHolder", value)}
+                  error={error("accountHolder")}
+                />
+                <TextField
+                  label="CPF/CNPJ do titular"
+                  value={formatBrazilianDocument(form.holderTaxId)}
+                  onChange={(value) => set("holderTaxId", formatBrazilianDocument(value))}
+                  error={error("holderTaxId")}
+                />
+              </div>
             )}
-            <Button type="button" variant="ghost" size="sm" className="portal-inline-action" onClick={() => setManualHolder((value) => !value)}>{manualHolder ? "Usar proprietário cadastrado" : "Alterar titular da conta"}</Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="portal-inline-action"
+              onClick={() => setManualHolder((value) => !value)}
+            >
+              {manualHolder ? "Usar proprietário cadastrado" : "Alterar titular da conta"}
+            </Button>
           </div>
           <Choice
             label="Tipo da chave Pix"
@@ -480,13 +581,39 @@ function OwnerOnboardingForm({
               const type = value as OwnerOnboardingSubmissionInput["pixType"];
               set("pixType", type);
               setManualPix(type === "random");
-              if (selectedPerson && type !== "random") set("pixKey", suggestPixKey(selectedPerson, type));
+              if (selectedPerson && type !== "random")
+                set("pixKey", suggestPixKey(selectedPerson, type));
             }}
             options={[...PIX_KEY_TYPES]}
           />
           <div className="portal-smart-field">
-            {!manualPix && form.pixType !== "random" ? <div className="portal-pix-suggestion"><Sparkles className="size-4" /><span><small>Chave sugerida pelos dados do titular</small><strong>{form.pixKey || "Dado ainda não informado"}</strong></span></div> : <TextField label="Chave Pix" value={form.pixKey} onChange={(value) => set("pixKey", value)} error={error("pixKey")} />}
-            {form.pixType !== "random" && <Button type="button" variant="ghost" size="sm" className="portal-inline-action" onClick={() => setManualPix((value) => !value)}>{manualPix ? "Usar sugestão inteligente" : "Alterar chave Pix"}</Button>}
+            {!manualPix && form.pixType !== "random" ? (
+              <div className="portal-pix-suggestion">
+                <Sparkles className="size-4" />
+                <span>
+                  <small>Chave sugerida pelos dados do titular</small>
+                  <strong>{form.pixKey || "Dado ainda não informado"}</strong>
+                </span>
+              </div>
+            ) : (
+              <TextField
+                label="Chave Pix"
+                value={form.pixKey}
+                onChange={(value) => set("pixKey", value)}
+                error={error("pixKey")}
+              />
+            )}
+            {form.pixType !== "random" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="portal-inline-action"
+                onClick={() => setManualPix((value) => !value)}
+              >
+                {manualPix ? "Usar sugestão inteligente" : "Alterar chave Pix"}
+              </Button>
+            )}
           </div>
         </Section>
       ),
@@ -497,7 +624,13 @@ function OwnerOnboardingForm({
       isValid: ownerOnboardingFormSchema.safeParse(form).success,
       content: (
         <Section text="Revise os dados antes de confirmar. Você continuará com acesso após o envio.">
-          <Review label={people.length > 1 ? "Proprietários e proponentes" : "Titular"} value={people.map((person) => person.fullName).filter(Boolean).join(" · ")} />
+          <Review
+            label={people.length > 1 ? "Proprietários e proponentes" : "Titular"}
+            value={people
+              .map((person) => person.fullName)
+              .filter(Boolean)
+              .join(" · ")}
+          />
           <Review label="Contato" value={`${form.email} · ${formatBrazilianPhone(form.phone)}`} />
           <Review
             label="Endereço"
@@ -611,18 +744,79 @@ function PersonEditor({
   onRemove: () => void;
 }) {
   const nameError = person.fullName ? validateOwnerField("fullName", person.fullName) : undefined;
-  const documentError = person.document ? validateOwnerField("document", person.document) : undefined;
+  const documentError = person.document
+    ? validateOwnerField("document", person.document)
+    : undefined;
   return (
     <div className="portal-person-card">
       <div className="portal-person-card-head">
-        <div><span>{index === 0 ? "Proprietário principal" : `Pessoa ${index + 1}`}</span><small>{index === 0 ? "Responsável principal pelo cadastro" : "Coproprietário ou proponente"}</small></div>
-        {canRemove && <Button type="button" variant="ghost" size="icon" aria-label="Remover pessoa" onClick={onRemove}><Trash2 className="size-4" /></Button>}
+        <div>
+          <span>{index === 0 ? "Proprietário principal" : `Pessoa ${index + 1}`}</span>
+          <small>
+            {index === 0 ? "Responsável principal pelo cadastro" : "Coproprietário ou proponente"}
+          </small>
+        </div>
+        {canRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Remover pessoa"
+            onClick={onRemove}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </div>
-      {canRemove && <Choice label="Participação" value={person.role} onChange={(value) => onChange({ role: value as OwnerOnboardingPerson["role"] })} options={[{ value: "coproprietario", label: "Coproprietário" }, { value: "proponente", label: "Proponente" }]} />}
-      <Choice label="Tipo de pessoa" value={person.personType} onChange={(value) => onChange({ personType: value as OwnerOnboardingPerson["personType"] })} options={[{ value: "pf", label: "Pessoa física" }, { value: "pj", label: "Pessoa jurídica" }]} />
-      <TextField label={person.personType === "pf" ? "Nome completo" : "Razão social"} value={person.fullName} onChange={(value) => onChange({ fullName: value })} error={nameError} />
-      <TextField label={person.personType === "pf" ? "CPF" : "CNPJ"} value={formatBrazilianDocument(person.document)} onChange={(value) => onChange({ document: formatBrazilianDocument(value) })} error={documentError} inputMode="numeric" />
-      {canRemove && <div className="grid gap-3 sm:grid-cols-2"><TextField label="E-mail (opcional)" type="email" value={person.email} onChange={(value) => onChange({ email: value })} /><TextField label="Telefone (opcional)" value={formatBrazilianPhone(person.phone)} onChange={(value) => onChange({ phone: formatBrazilianPhone(value) })} inputMode="tel" /></div>}
+      {canRemove && (
+        <Choice
+          label="Participação"
+          value={person.role}
+          onChange={(value) => onChange({ role: value as OwnerOnboardingPerson["role"] })}
+          options={[
+            { value: "coproprietario", label: "Coproprietário" },
+            { value: "proponente", label: "Proponente" },
+          ]}
+        />
+      )}
+      <Choice
+        label="Tipo de pessoa"
+        value={person.personType}
+        onChange={(value) => onChange({ personType: value as OwnerOnboardingPerson["personType"] })}
+        options={[
+          { value: "pf", label: "Pessoa física" },
+          { value: "pj", label: "Pessoa jurídica" },
+        ]}
+      />
+      <TextField
+        label={person.personType === "pf" ? "Nome completo" : "Razão social"}
+        value={person.fullName}
+        onChange={(value) => onChange({ fullName: value })}
+        error={nameError}
+      />
+      <TextField
+        label={person.personType === "pf" ? "CPF" : "CNPJ"}
+        value={formatBrazilianDocument(person.document)}
+        onChange={(value) => onChange({ document: formatBrazilianDocument(value) })}
+        error={documentError}
+        inputMode="numeric"
+      />
+      {canRemove && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextField
+            label="E-mail (opcional)"
+            type="email"
+            value={person.email}
+            onChange={(value) => onChange({ email: value })}
+          />
+          <TextField
+            label="Telefone (opcional)"
+            value={formatBrazilianPhone(person.phone)}
+            onChange={(value) => onChange({ phone: formatBrazilianPhone(value) })}
+            inputMode="tel"
+          />
+        </div>
+      )}
     </div>
   );
 }

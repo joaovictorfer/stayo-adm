@@ -160,8 +160,18 @@ export const ownerOnboardingFormSchema = z.object({
         personType: z.enum(["pf", "pj"]),
         fullName: requiredName,
         document: documentSchema,
-        email: z.string().refine((value) => !value || emailSchema.safeParse(value).success, "Digite um e-mail válido."),
-        phone: z.string().refine((value) => !value || phoneSchema.safeParse(value).success, "Digite um telefone com DDD."),
+        email: z
+          .string()
+          .refine(
+            (value) => !value || emailSchema.safeParse(value).success,
+            "Digite um e-mail válido.",
+          ),
+        phone: z
+          .string()
+          .refine(
+            (value) => !value || phoneSchema.safeParse(value).success,
+            "Digite um telefone com DDD.",
+          ),
       }),
     )
     .min(1)
