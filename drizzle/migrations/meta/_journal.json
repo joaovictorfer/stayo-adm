@@ -8,6 +8,13 @@
       "when": 1790124991044,
       "tag": "0000_validate_owner_onboarding_submission",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790125182558,
+      "tag": "0001_strengthen_owner_onboarding_draft_validation",
+      "breakpoints": true
     }
   ]
 }

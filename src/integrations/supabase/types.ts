@@ -989,6 +989,9 @@ export type Database = {
       owner_payout_accounts: {
         Row: {
           account_holder: string | null
+          account_number: string | null
+          account_type: string | null
+          bank_branch: string | null
           bank_name: string | null
           created_at: string
           holder_tax_id: string | null
@@ -1001,6 +1004,9 @@ export type Database = {
         }
         Insert: {
           account_holder?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          bank_branch?: string | null
           bank_name?: string | null
           created_at?: string
           holder_tax_id?: string | null
@@ -1013,6 +1019,9 @@ export type Database = {
         }
         Update: {
           account_holder?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          bank_branch?: string | null
           bank_name?: string | null
           created_at?: string
           holder_tax_id?: string | null
