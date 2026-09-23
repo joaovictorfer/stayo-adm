@@ -34,3 +34,9 @@
 
 - [x] Corrigir o carregamento e reconstruir o Painel do Proprietário com experiência profissional
 - [x] Compactar o workspace da implantação e reduzir barra superior, respiros e blocos verticais
+- [ ] Estruturar o Portal do Proprietário por imóvel com seletor persistente
+- [ ] Adicionar dados detalhados e acesso do imóvel ao cadastro e ao painel administrativo
+- [ ] Implementar linha do tempo automática e publicações manuais por implantação
+- [ ] Implementar vistorias públicas com documentos por imóvel
+- [ ] Otimizar carregamento por aba e validar segurança, desktop e celular
+
