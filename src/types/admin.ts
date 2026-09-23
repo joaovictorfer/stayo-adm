@@ -50,11 +50,21 @@ export interface OwnerRecordInput {
   document?: string | null;
 }
 
+/**
+ * Cadastro mestre de condomínio. O `id` é a chave futura de integração
+ * com o Guia Stayo — informações ricas (regras, áreas comuns etc.)
+ * pertencem ao Guia, não aqui.
+ */
 export interface AdminCondominium {
   id: EntityId;
   name: string;
   address: string | null;
+  neighborhood: string | null;
   city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  hasConcierge: boolean;
+  conciergePhone: string | null;
   status: "pending" | "complete";
   coverImage: string | null;
   createdAt: string;
@@ -62,8 +72,23 @@ export interface AdminCondominium {
 }
 
 export type AdminCondominiumInput = Pick<AdminCondominium, "name" | "address" | "city"> & {
+  neighborhood?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  hasConcierge?: boolean;
+  conciergePhone?: string | null;
   coverImage?: string | null;
 };
+
+/** Regra única de completude do cadastro (espelhada no trigger do banco). */
+export function computeCondominiumStatus(
+  c: Pick<AdminCondominium, "name" | "address" | "city" | "hasConcierge" | "conciergePhone">,
+): "pending" | "complete" {
+  const filled = (v: string | null | undefined) => !!v && v.trim() !== "";
+  return filled(c.name) && filled(c.address) && filled(c.city) && (!c.hasConcierge || filled(c.conciergePhone))
+    ? "complete"
+    : "pending";
+}
 
 /**
  * Tipo de cobrança de uma condição comercial — nunca hardcodar um valor
