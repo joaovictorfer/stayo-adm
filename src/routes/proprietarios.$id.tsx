@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Building2, Calendar, ClipboardList, FileText, Globe2, Wallet } from "lucide-react";
+import { Building2, ClipboardList, FileText, Globe2, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,8 +11,7 @@ import {
   NotFoundPanel,
   PageHeader,
 } from "../components/data/ListStates";
-import { IndicatorCard } from "../components/patterns/IndicatorCard";
-import { AdminActionButton, AdminAttentionCard, AdminEmptyState, AdminPageHeader, AdminSection, AdminStatCard, AdminStatusBadge } from "../components/admin/AdminPrimitives";
+import { AdminActionButton, AdminAttentionCard, AdminEmptyState, AdminPageHeader, AdminSection, AdminStatCard } from "../components/admin/AdminPrimitives";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
@@ -195,59 +194,6 @@ function OwnerDetailPage() {
             <TabsContent value="portal"><AdminSection title="Portal do proprietário">{implementations.length ? <div className="space-y-2">{implementations.map((item) => <div key={item.id} className="flex items-center justify-between rounded-lg border bg-white p-3"><div><p className="font-medium">{item.propertyName}</p><p className="text-xs text-[var(--admin-muted)]">Gerencie o acesso no workspace da implantação.</p></div><AdminActionButton asChild><Link to="/implantacao/$id" params={{ id: item.id }}>Gerenciar portal</Link></AdminActionButton></div>)}</div> : <AdminEmptyState title="Portal ainda não disponível" description="Ele será liberado com a primeira implantação." />}</AdminSection></TabsContent>
             <TabsContent value="historico" className="space-y-4"><AdminSection title="Histórico"><Timeline entries={timeline} /></AdminSection><OwnerTasksPanel ownerId={id} /><OwnerNotesPanel ownerId={id} /><details className="rounded-lg border bg-white p-4"><summary className="cursor-pointer text-sm font-medium">Detalhes técnicos</summary><dl className="mt-3 grid gap-2 text-xs text-[var(--admin-muted)]"><Field label="ID interno" value={owner.id} /><Field label="Criado em" value={owner.createdAt} /><Field label="Atualizado em" value={owner.updatedAt} />{owner.coreOwnerId && <Field label="Core ID" value={owner.coreOwnerId} />}</dl></details></TabsContent>
           </Tabs>
-          <div className="hidden rounded-[var(--radius-card)] border p-4" style={surface}>
-            <h2
-              className="mb-3 text-sm"
-              style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-            >
-              Próximas reservas
-            </h2>
-            {reservationsQuery.isPending ? (
-              <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                Carregando...
-              </p>
-            ) : upcomingReservations.length === 0 ? (
-              <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                Nenhuma reserva futura nos imóveis deste proprietário.
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-1.5 text-sm">
-                {upcomingReservations.map((r) => {
-                  const property = properties.find((p) => p.id === r.propertyId);
-                  return (
-                    <li key={r.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <LinkedField
-                        to="/reservas/$id"
-                        id={r.id}
-                        label={property?.name ?? r.propertyId}
-                      />
-                      <span style={{ color: "var(--stayo-ink-muted)" }}>
-                        {r.checkin} → {r.checkout}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-
-          <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-            <h2
-              className="mb-3 text-sm"
-              style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-            >
-              Linha do tempo
-            </h2>
-            {contractsQuery.isPending || invoicesQuery.isPending || reservationsQuery.isPending ? (
-              <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                Carregando...
-              </p>
-            ) : (
-              <Timeline entries={timeline} />
-            )}
-          </div>
-
-          </div>
         </div>
       )}
     </>
