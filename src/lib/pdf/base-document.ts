@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFImage, type PDFFont, type PDFPage } from "pdf-lib";
 
-import officialLogo from "@/assets/stayo-logo-green.png.asset.json";
+import officialLogo from "../../assets/stayo-logo-green.png.asset.json";
 
 export const PDF_STYLES = {
   pageSize: [595.28, 841.89] as [number, number],
