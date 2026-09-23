@@ -727,51 +727,58 @@ function OwnerOnboardingForm({
 
   return (
     <Shell>
-      <h1 className="mb-1 text-lg font-semibold">Vamos concluir seu cadastro</h1>
-      <p className="mb-4 text-sm text-[var(--portal-muted)]">
-        São cinco etapas curtas. Suas alterações são salvas automaticamente.
-      </p>
       <div
-        className="mb-4 flex items-center gap-2 text-xs text-[var(--portal-muted)]"
-        role="status"
-      >
-        <span
-          className={`size-2 rounded-full ${
-            autoSaveState === "error"
-              ? "bg-[var(--portal-danger)]"
-              : autoSaveState === "saving"
-                ? "animate-pulse bg-[var(--portal-gold)]"
-                : "bg-[var(--portal-success)]"
-          }`}
-        />
-        {autoSaveState === "saving"
-          ? "Salvando alterações…"
-          : autoSaveState === "error"
-            ? "Não foi possível salvar agora. Tentaremos novamente."
-            : autoSaveState === "saved"
-              ? "Alterações salvas"
-              : "Salvamento automático ativo"}
-      </div>
-      <Wizard
-        steps={steps}
-        initialStep={currentStep - 1}
-        onStepChange={(index) => {
-          const nextStep = index + 1;
-          setCurrentStep(nextStep);
-          void persistDraft(formRef.current, nextStep);
+        onBlurCapture={() => void persistDraft(formRef.current, stepRef.current)}
+        onFocusCapture={() => {
+          if (autoSaveState === "error") void persistDraft(formRef.current, stepRef.current);
         }}
-        completeLabel="Confirmar e enviar cadastro"
-        submitting={save.isPending}
-        onComplete={() => save.mutate({ submit: true, step: 5 })}
-      />
-      <Button
-        variant="ghost"
-        className="mt-3 w-full"
-        disabled={save.isPending}
-        onClick={() => save.mutate({ submit: false, step: currentStep })}
       >
-        Salvar e continuar depois
-      </Button>
+        <h1 className="mb-1 text-lg font-semibold">Vamos concluir seu cadastro</h1>
+        <p className="mb-4 text-sm text-[var(--portal-muted)]">
+          São cinco etapas curtas. Suas alterações são salvas automaticamente.
+        </p>
+        <div
+          className="mb-4 flex items-center gap-2 text-xs text-[var(--portal-muted)]"
+          role="status"
+        >
+          <span
+            className={`size-2 rounded-full ${
+              autoSaveState === "error"
+                ? "bg-[var(--portal-danger)]"
+                : autoSaveState === "saving"
+                  ? "animate-pulse bg-[var(--portal-gold)]"
+                  : "bg-[var(--portal-success)]"
+            }`}
+          />
+          {autoSaveState === "saving"
+            ? "Salvando alterações…"
+            : autoSaveState === "error"
+              ? "Não foi possível salvar agora. Tentaremos novamente."
+              : autoSaveState === "saved"
+                ? "Alterações salvas"
+                : "Salvamento automático ativo"}
+        </div>
+        <Wizard
+          steps={steps}
+          initialStep={currentStep - 1}
+          onStepChange={(index) => {
+            const nextStep = index + 1;
+            setCurrentStep(nextStep);
+            void persistDraft(formRef.current, nextStep);
+          }}
+          completeLabel="Confirmar e enviar cadastro"
+          submitting={save.isPending}
+          onComplete={() => save.mutate({ submit: true, step: 5 })}
+        />
+        <Button
+          variant="ghost"
+          className="mt-3 w-full"
+          disabled={save.isPending}
+          onClick={() => save.mutate({ submit: false, step: currentStep })}
+        >
+          Salvar e continuar depois
+        </Button>
+      </div>
     </Shell>
   );
 }

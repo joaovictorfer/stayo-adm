@@ -771,9 +771,14 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
         >
           <div className="flex items-center justify-between gap-4">
             <SummaryHeading>Status do cadastro</SummaryHeading>
-            <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>
-              {registration.percentage}%
-            </span>
+            <div className="flex items-center gap-2">
+              {submitted && !submitted.submittedAt && (
+                <Tag label="Cadastro em andamento" tone="gold" />
+              )}
+              <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>
+                {registration.percentage}%
+              </span>
+            </div>
           </div>
           <Progress value={registration.percentage} className="mb-5 h-1.5" />
           <ul className="grid gap-2 sm:grid-cols-2">
