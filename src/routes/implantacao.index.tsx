@@ -552,8 +552,7 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
   const condominiumOptions = (condominiumsQuery.data ?? []).slice(0, 5);
   const exactMatch = condominiumOptions.some(
     (item) =>
-      item.name.toLocaleLowerCase("pt-BR").trim() ===
-      condoQuery.toLocaleLowerCase("pt-BR").trim(),
+      item.name.toLocaleLowerCase("pt-BR").trim() === condoQuery.toLocaleLowerCase("pt-BR").trim(),
   );
 
   const steps: WizardStep[] = [
