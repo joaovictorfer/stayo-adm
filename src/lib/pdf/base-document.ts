@@ -1,4 +1,6 @@
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFImage, type PDFFont, type PDFPage } from "pdf-lib";
+
+import officialLogo from "@/assets/stayo-logo-green.png.asset.json";
 
 export const PDF_STYLES = {
   pageSize: [595.28, 841.89] as [number, number],
@@ -23,6 +25,7 @@ export class StayoPdfBuilder {
   doc: PDFDocument;
   fontRegular!: PDFFont;
   fontBold!: PDFFont;
+  officialLogo?: PDFImage;
   currentPage!: PDFPage;
   y: number = 0;
   pages: PDFPage[] = [];
@@ -40,6 +43,16 @@ export class StayoPdfBuilder {
     const builder = new StayoPdfBuilder(doc, title, date);
     builder.fontRegular = await doc.embedFont(StandardFonts.Helvetica);
     builder.fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+    if (typeof window !== "undefined") {
+      try {
+        const response = await fetch(officialLogo.url);
+        if (response.ok) {
+          builder.officialLogo = await doc.embedPng(await response.arrayBuffer());
+        }
+      } catch {
+        // O texto de marca permanece como fallback quando a imagem não estiver disponível.
+      }
+    }
     return builder;
   }
 
@@ -64,13 +77,23 @@ export class StayoPdfBuilder {
   }
 
   drawHeader() {
-    this.currentPage.drawText("STAYO", {
-      x: PDF_STYLES.margin,
-      y: this.y,
-      size: 16,
-      font: this.fontBold,
-      color: PDF_STYLES.colors.forest,
-    });
+    if (this.officialLogo) {
+      const dims = this.officialLogo.scaleToFit(76, 48);
+      this.currentPage.drawImage(this.officialLogo, {
+        x: PDF_STYLES.margin,
+        y: this.y - 15,
+        width: dims.width,
+        height: dims.height,
+      });
+    } else {
+      this.currentPage.drawText("STAYO", {
+        x: PDF_STYLES.margin,
+        y: this.y,
+        size: 16,
+        font: this.fontBold,
+        color: PDF_STYLES.colors.forest,
+      });
+    }
 
     const dateStr = this.primaryDate.toLocaleDateString("pt-BR");
     
@@ -128,8 +151,19 @@ export class StayoPdfBuilder {
 
     this.y = contentStartY;
 
-    this.text("STAYO", { size: 24, font: "bold", color: PDF_STYLES.colors.forest });
-    this.spacer(24);
+    if (this.officialLogo) {
+      const dims = this.officialLogo.scaleToFit(170, 108);
+      this.currentPage.drawImage(this.officialLogo, {
+        x: PDF_STYLES.margin,
+        y: this.y - dims.height,
+        width: dims.width,
+        height: dims.height,
+      });
+      this.y -= dims.height + 24;
+    } else {
+      this.text("STAYO", { size: 24, font: "bold", color: PDF_STYLES.colors.forest });
+      this.spacer(24);
+    }
     this.text(title, { size: 20, font: "bold", color: PDF_STYLES.colors.ink });
     if (subtitle) {
       this.spacer(8);
