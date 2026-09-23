@@ -11,7 +11,13 @@ import {
   inputFromForm,
   type CondominiumFormValues,
 } from "@/components/condominios/CondominiumForm";
-import { ErrorRows, ListSkeleton, PageHeader, Panel, SearchInput } from "@/components/data/ListStates";
+import {
+  ErrorRows,
+  ListSkeleton,
+  PageHeader,
+  Panel,
+  SearchInput,
+} from "@/components/data/ListStates";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -57,16 +63,23 @@ function CondominiumsPage() {
     const term = q.trim().toLocaleLowerCase("pt-BR");
     if (!term) return data;
     const digits = term.replace(/\D/g, "");
-    return data.filter((c) =>
-      [c.name, c.city, c.neighborhood].some((v) => v?.toLocaleLowerCase("pt-BR").includes(term)) ||
-      (digits.length > 0 && (c.conciergePhone ?? "").replace(/\D/g, "").includes(digits)),
+    return data.filter(
+      (c) =>
+        [c.name, c.city, c.neighborhood].some((v) =>
+          v?.toLocaleLowerCase("pt-BR").includes(term),
+        ) ||
+        (digits.length > 0 && (c.conciergePhone ?? "").replace(/\D/g, "").includes(digits)),
     );
   }, [query.data, q]);
 
   return (
     <>
       <PageHeader title="Condomínios" count={query.isSuccess ? rows.length : undefined}>
-        <SearchInput value={q} onChange={setQ} placeholder="Buscar nome, cidade, bairro, telefone" />
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder="Buscar nome, cidade, bairro, telefone"
+        />
         <Button onClick={() => setOpen(true)}>
           <Plus className="size-4" /> Novo condomínio
         </Button>
@@ -187,9 +200,7 @@ function NewCondominiumDialog({
       <DialogContent className="w-[calc(100vw-1.5rem)] max-w-lg">
         <DialogHeader>
           <DialogTitle>Novo condomínio</DialogTitle>
-          <DialogDescription>
-            Endereço e cidade podem ser completados depois.
-          </DialogDescription>
+          <DialogDescription>Endereço e cidade podem ser completados depois.</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(e) => {

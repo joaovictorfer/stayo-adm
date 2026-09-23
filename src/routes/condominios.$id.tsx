@@ -137,7 +137,8 @@ function ReadView({ condo }: { condo: AdminCondominium }) {
     ["UF", condo.state],
     ["Possui portaria", condo.hasConcierge ? "Sim" : "Não"],
   ];
-  if (condo.hasConcierge) items.push(["Telefone/WhatsApp da portaria", condo.conciergePhone, missingPhone]);
+  if (condo.hasConcierge)
+    items.push(["Telefone/WhatsApp da portaria", condo.conciergePhone, missingPhone]);
   return (
     <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
       {items.map(([label, value, pending]) => (
@@ -185,10 +186,16 @@ function LinkedApartments({ condominiumId }: { condominiumId: string }) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-[var(--admin-text)]">
-                    {i.nickname || [i.tower && `Torre ${i.tower}`, i.unit && `Unidade ${i.unit}`].filter(Boolean).join(" · ") || i.code}
+                    {i.nickname ||
+                      [i.tower && `Torre ${i.tower}`, i.unit && `Unidade ${i.unit}`]
+                        .filter(Boolean)
+                        .join(" · ") ||
+                      i.code}
                   </p>
                   <p className="truncate text-xs text-[var(--admin-muted)]">
-                    {[i.code, i.tower && `Torre ${i.tower}`, i.unit && `Un. ${i.unit}`].filter(Boolean).join(" · ")}
+                    {[i.code, i.tower && `Torre ${i.tower}`, i.unit && `Un. ${i.unit}`]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
                 <AdminStatusBadge>{statusLabels[i.status] ?? i.status}</AdminStatusBadge>

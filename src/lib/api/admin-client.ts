@@ -285,7 +285,9 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
-  const normalizeLocalCondo = (c: Partial<AdminCondominium> & AdminCondominium): AdminCondominium => ({
+  const normalizeLocalCondo = (
+    c: Partial<AdminCondominium> & AdminCondominium,
+  ): AdminCondominium => ({
     ...c,
     neighborhood: c.neighborhood ?? null,
     state: c.state ?? null,
@@ -338,11 +340,15 @@ export function createLocalAdminApiClient(): AdminApiClient {
       if (patch.state !== undefined) merged.state = trimOrNull(patch.state);
       if (patch.postalCode !== undefined) merged.postalCode = trimOrNull(patch.postalCode);
       if (patch.hasConcierge !== undefined) merged.hasConcierge = patch.hasConcierge;
-      if (patch.conciergePhone !== undefined) merged.conciergePhone = trimOrNull(patch.conciergePhone);
+      if (patch.conciergePhone !== undefined)
+        merged.conciergePhone = trimOrNull(patch.conciergePhone);
       if (!merged.hasConcierge) merged.conciergePhone = null;
       if (patch.coverImage !== undefined) merged.coverImage = patch.coverImage;
       merged.status = computeCondominiumStatus(merged);
-      write(ADMIN_CONDOMINIUMS_KEY, rows.map((item) => (item.id === id ? merged : item)));
+      write(
+        ADMIN_CONDOMINIUMS_KEY,
+        rows.map((item) => (item.id === id ? merged : item)),
+      );
       return merged;
     },
   };
@@ -1278,7 +1284,9 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return condominiumFromRow(data);
     },
     update: async (id, patch) => {
-      const update: { [k: string]: unknown; updated_at: string } = { updated_at: new Date().toISOString() };
+      const update: { [k: string]: unknown; updated_at: string } = {
+        updated_at: new Date().toISOString(),
+      };
       if (patch.name !== undefined) update["name"] = patch.name.trim();
       if (patch.address !== undefined) update["address"] = clean(patch.address);
       if (patch.neighborhood !== undefined) update["neighborhood"] = clean(patch.neighborhood);
@@ -1286,7 +1294,8 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       if (patch.state !== undefined) update["state"] = clean(patch.state);
       if (patch.postalCode !== undefined) update["postal_code"] = clean(patch.postalCode);
       if (patch.hasConcierge !== undefined) update["has_concierge"] = patch.hasConcierge;
-      if (patch.conciergePhone !== undefined) update["concierge_phone"] = clean(patch.conciergePhone);
+      if (patch.conciergePhone !== undefined)
+        update["concierge_phone"] = clean(patch.conciergePhone);
       if (patch.hasConcierge === false) update["concierge_phone"] = null;
       if (patch.coverImage !== undefined) update["cover_image"] = patch.coverImage;
       // status é recalculado pelo trigger admin_condominiums_compute_status

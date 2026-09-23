@@ -85,7 +85,10 @@ export function computeCondominiumStatus(
   c: Pick<AdminCondominium, "name" | "address" | "city" | "hasConcierge" | "conciergePhone">,
 ): "pending" | "complete" {
   const filled = (v: string | null | undefined) => !!v && v.trim() !== "";
-  return filled(c.name) && filled(c.address) && filled(c.city) && (!c.hasConcierge || filled(c.conciergePhone))
+  return filled(c.name) &&
+    filled(c.address) &&
+    filled(c.city) &&
+    (!c.hasConcierge || filled(c.conciergePhone))
     ? "complete"
     : "pending";
 }
