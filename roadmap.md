@@ -26,3 +26,4 @@
 - [x] Corrigir a finalização atômica do cadastro público no banco
 - [x] Restaurar agência, conta e tipo de conta ao reabrir o cadastro público
 - [x] Isolar o salvamento público de sessões administrativas expiradas e revelar erros de validação
+- [x] Reparar links públicos ligados a implantações ausentes no Cloud e validar o envio real
