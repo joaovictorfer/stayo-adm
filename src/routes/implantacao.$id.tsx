@@ -958,6 +958,9 @@ function OwnerPortalPanel({
     }
   };
 
+  const previewUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/portal/previa/${implementationId}` : "";
+
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
       <h2
@@ -966,6 +969,43 @@ function OwnerPortalPanel({
       >
         {compact ? "Portal do Proprietário" : "Cadastro do proprietário"}
       </h2>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border p-3">
+        <div className="mr-auto">
+          <p className="text-xs font-medium" style={{ color: "var(--stayo-ink)" }}>
+            Visualizar o portal do proprietário
+          </p>
+          <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Abra o portal exatamente como o proprietário vê esta implantação.
+          </p>
+        </div>
+        <Link
+          to="/portal/previa/$id"
+          params={{ id: implementationId }}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
+          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+        >
+          <ExternalLink size={14} />
+          Abrir visualização
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (!previewUrl) return;
+            void navigator.clipboard
+              .writeText(previewUrl)
+              .then(() => toast.success("Link da visualização copiado"))
+              .catch(() => toast.error("Não foi possível copiar o link"));
+          }}
+          className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+        >
+          <Copy size={14} />
+          Copiar link
+        </button>
+      </div>
+
 
       {submissionQuery.data ? (
         <div className="grid gap-3 sm:grid-cols-2">
