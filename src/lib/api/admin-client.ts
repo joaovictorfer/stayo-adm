@@ -32,6 +32,7 @@ import type {
   AdminCondominium,
   AdminCondominiumInput,
 } from "../../types/admin";
+import { computeCondominiumStatus } from "../../types/admin";
 import type {
   OwnerOnboardingLink,
   OwnerOnboardingPerson,
@@ -1277,17 +1278,17 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return condominiumFromRow(data);
     },
     update: async (id, patch) => {
-      const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (patch.name !== undefined) update.name = patch.name.trim();
-      if (patch.address !== undefined) update.address = clean(patch.address);
-      if (patch.neighborhood !== undefined) update.neighborhood = clean(patch.neighborhood);
-      if (patch.city !== undefined) update.city = clean(patch.city);
-      if (patch.state !== undefined) update.state = clean(patch.state);
-      if (patch.postalCode !== undefined) update.postal_code = clean(patch.postalCode);
-      if (patch.hasConcierge !== undefined) update.has_concierge = patch.hasConcierge;
-      if (patch.conciergePhone !== undefined) update.concierge_phone = clean(patch.conciergePhone);
-      if (patch.hasConcierge === false) update.concierge_phone = null;
-      if (patch.coverImage !== undefined) update.cover_image = patch.coverImage;
+      const update: { [k: string]: unknown; updated_at: string } = { updated_at: new Date().toISOString() };
+      if (patch.name !== undefined) update["name"] = patch.name.trim();
+      if (patch.address !== undefined) update["address"] = clean(patch.address);
+      if (patch.neighborhood !== undefined) update["neighborhood"] = clean(patch.neighborhood);
+      if (patch.city !== undefined) update["city"] = clean(patch.city);
+      if (patch.state !== undefined) update["state"] = clean(patch.state);
+      if (patch.postalCode !== undefined) update["postal_code"] = clean(patch.postalCode);
+      if (patch.hasConcierge !== undefined) update["has_concierge"] = patch.hasConcierge;
+      if (patch.conciergePhone !== undefined) update["concierge_phone"] = clean(patch.conciergePhone);
+      if (patch.hasConcierge === false) update["concierge_phone"] = null;
+      if (patch.coverImage !== undefined) update["cover_image"] = patch.coverImage;
       // status é recalculado pelo trigger admin_condominiums_compute_status
       const { data, error } = await client()
         .from("admin_condominiums")
