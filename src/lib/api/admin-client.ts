@@ -1374,14 +1374,14 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return data ? ownerOnboardingSubmissionFromRow(data) : null;
     },
     getDraft: async (token) => {
-      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", {
+      const { data, error } = await client().rpc("owner_onboarding_draft_resolve_v2", {
         p_token: token,
       });
       if (error) throw error;
       return data ? ownerOnboardingFromDraft(data as Record<string, unknown>) : null;
     },
     saveDraft: async (token, input, currentStep, submit = false) => {
-      const { data, error } = await client().rpc("owner_onboarding_draft_save", {
+      const { data, error } = await client().rpc("owner_onboarding_draft_save_v2", {
         p_token: token,
         p_submit: submit,
         p_data: {

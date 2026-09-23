@@ -9,6 +9,7 @@ import {
   normalizeName,
   normalizePhone,
   ownerAdminEditSchema,
+  suggestPixKey,
 } from "./owner-form-validation";
 
 describe("documentos brasileiros", () => {
@@ -37,6 +38,23 @@ describe("documentos brasileiros", () => {
       expect(isValidCnpj(value)).toBe(false);
     },
   );
+});
+
+describe("sugestões inteligentes para repasse", () => {
+  const person = {
+    personType: "pf" as const,
+    fullName: "João Victor",
+    document: "094.860.164-70",
+    email: " JOAO@EXEMPLO.COM ",
+    phone: "(54) 99999-1234",
+  };
+
+  it("sugere dados cadastrais conforme o tipo de chave Pix", () => {
+    expect(suggestPixKey(person, "cpf")).toBe("09486016470");
+    expect(suggestPixKey(person, "phone")).toBe("5554999991234");
+    expect(suggestPixKey(person, "email")).toBe("joao@exemplo.com");
+    expect(suggestPixKey(person, "random")).toBe("");
+  });
 });
 
 describe("normalização por tipo", () => {

@@ -2,6 +2,13 @@ import { z } from "zod";
 
 export type OwnerPersonType = "pf" | "pj";
 export type PixKeyType = "cpf" | "cnpj" | "phone" | "email" | "random";
+export type SmartPayoutPerson = {
+  personType: OwnerPersonType;
+  fullName: string;
+  document: string;
+  email: string;
+  phone: string;
+};
 
 export const normalizeDocument = (value: string | null | undefined): string =>
   value?.replace(/\D/g, "") ?? "";
@@ -146,6 +153,19 @@ export const ownerOnboardingFormSchema = z.object({
     .min(1, "Informe a chave Pix.")
     .max(255, "A chave Pix deve ter até 255 caracteres."),
   isPrimary: z.boolean(),
+  people: z
+    .array(
+      z.object({
+        role: z.enum(["proprietario", "coproprietario", "proponente"]),
+        personType: z.enum(["pf", "pj"]),
+        fullName: requiredName,
+        document: documentSchema,
+        email: z.string().refine((value) => !value || emailSchema.safeParse(value).success, "Digite um e-mail válido."),
+        phone: z.string().refine((value) => !value || phoneSchema.safeParse(value).success, "Digite um telefone com DDD."),
+      }),
+    )
+    .min(1)
+    .max(10),
 });
 
 export const ownerAdminEditSchema = z.object({
@@ -182,7 +202,21 @@ export function normalizeOwnerSubmission(input: z.output<typeof ownerOnboardingF
     accountNumber: input.accountNumber.trim(),
     holderTaxId: normalizeDocument(input.holderTaxId),
     pixKey,
+    people: input.people.map((person) => ({
+      ...person,
+      fullName: person.fullName.trim().replace(/\s+/g, " "),
+      document: normalizeDocument(person.document),
+      email: normalizeEmail(person.email),
+      phone: normalizePhone(person.phone),
+    })),
   };
+}
+
+export function suggestPixKey(person: SmartPayoutPerson, type: PixKeyType): string {
+  if (type === "cpf" || type === "cnpj") return normalizeDocument(person.document);
+  if (type === "phone") return normalizePhone(person.phone);
+  if (type === "email") return normalizeEmail(person.email);
+  return "";
 }
 
 export function maskDocument(value: string | null | undefined): string {
