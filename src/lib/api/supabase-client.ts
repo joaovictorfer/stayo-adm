@@ -29,6 +29,7 @@ export function isSupabaseConfigured(): boolean {
 }
 
 let cached: SupabaseClient | null = null;
+let publicCached: SupabaseClient | null = null;
 
 /** Retorna `null` quando o Supabase ainda não está configurado — nunca lança. */
 export function getSupabaseBrowserClient(): SupabaseClient | null {
@@ -40,4 +41,26 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
     supabaseAnonKey() as string,
   );
   return cached;
+}
+
+/**
+ * Client anônimo para links públicos protegidos pelo próprio token.
+ * Não reutiliza nem tenta atualizar a sessão administrativa do navegador.
+ */
+export function getSupabasePublicBrowserClient(): SupabaseClient | null {
+  if (!isSupabaseConfigured()) return null;
+  if (publicCached) return publicCached;
+
+  publicCached = createClient(
+    import.meta.env["VITE_SUPABASE_URL"] as string,
+    supabaseAnonKey() as string,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    },
+  );
+  return publicCached;
 }
