@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_condominiums: {
+        Row: {
+          address: string | null
+          city: string | null
+          cover_image: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          cover_image?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          cover_image?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_profiles: {
         Row: {
           active: boolean
@@ -515,6 +551,7 @@ export type Database = {
           city: string | null
           code: string
           completion_date_estimate: string | null
+          condominium_id: string | null
           condominium_name: string | null
           core_owner_id: string | null
           core_property_id: string | null
@@ -530,6 +567,7 @@ export type Database = {
           responsible_user_id: string | null
           start_date_estimate: string | null
           status: Database["public"]["Enums"]["implementation_status"]
+          tower: string | null
           unit: string | null
           updated_at: string
         }
@@ -540,6 +578,7 @@ export type Database = {
           city?: string | null
           code: string
           completion_date_estimate?: string | null
+          condominium_id?: string | null
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
@@ -555,6 +594,7 @@ export type Database = {
           responsible_user_id?: string | null
           start_date_estimate?: string | null
           status?: Database["public"]["Enums"]["implementation_status"]
+          tower?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -565,6 +605,7 @@ export type Database = {
           city?: string | null
           code?: string
           completion_date_estimate?: string | null
+          condominium_id?: string | null
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
@@ -580,10 +621,18 @@ export type Database = {
           responsible_user_id?: string | null
           start_date_estimate?: string | null
           status?: Database["public"]["Enums"]["implementation_status"]
+          tower?: string | null
           unit?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "implementation_projects_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: false
+            referencedRelation: "admin_condominiums"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "implementation_projects_owner_id_fkey"
             columns: ["owner_id"]
@@ -606,6 +655,7 @@ export type Database = {
           implementation_id: string
           notes: string | null
           number: string | null
+          parking_box: string | null
           parking_spots: number | null
           postal_code: string | null
           property_type: string | null
@@ -628,6 +678,7 @@ export type Database = {
           implementation_id: string
           notes?: string | null
           number?: string | null
+          parking_box?: string | null
           parking_spots?: number | null
           postal_code?: string | null
           property_type?: string | null
@@ -650,6 +701,7 @@ export type Database = {
           implementation_id?: string
           notes?: string | null
           number?: string | null
+          parking_box?: string | null
           parking_spots?: number | null
           postal_code?: string | null
           property_type?: string | null
@@ -1592,6 +1644,42 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_implementation: {
+        Args: { p_data: Json }
+        Returns: {
+          address: string | null
+          bedrooms: number | null
+          capacity: number | null
+          city: string | null
+          code: string
+          completion_date_estimate: string | null
+          condominium_id: string | null
+          condominium_name: string | null
+          core_owner_id: string | null
+          core_property_id: string | null
+          cover_image: string | null
+          created_at: string
+          id: string
+          nickname: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string | null
+          postal_code: string | null
+          property_type: string | null
+          responsible_user_id: string | null
+          start_date_estimate: string | null
+          status: Database["public"]["Enums"]["implementation_status"]
+          tower: string | null
+          unit: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "implementation_projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       current_admin_role: {
         Args: never
