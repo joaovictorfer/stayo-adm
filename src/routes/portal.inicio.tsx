@@ -834,18 +834,25 @@ function PortalHero({
               </span>
             </div>
           </div>
-          <Button
-            type="button"
-            onClick={onSignOut}
-            variant="outline"
-            size="sm"
-            className="portal-hero-signout portal-action shrink-0 rounded-full"
-            aria-label="Sair da conta"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Sair</span>
-          </Button>
+          {preview ? (
+            <span className="portal-hero-signout portal-action shrink-0 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-[var(--portal-hero-muted)]">
+              Pré-visualização
+            </span>
+          ) : (
+            <Button
+              type="button"
+              onClick={onSignOut}
+              variant="outline"
+              size="sm"
+              className="portal-hero-signout portal-action shrink-0 rounded-full"
+              aria-label="Sair da conta"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          )}
         </div>
+
 
         <div className="portal-property-hero-copy">
           <div className="portal-property-status">
