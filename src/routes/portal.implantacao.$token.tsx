@@ -433,7 +433,11 @@ function OwnerOnboardingForm({
       hasInlineErrors: identityFields.some((field) => !!error(field)),
       invalidMessage: "Confira os dados desta etapa.",
       content: (
-        <Section title="Dados de identificação" icon={<ShieldCheck />} text="Primeiro, confirme quem é o titular do imóvel.">
+        <Section
+          title="Dados de identificação"
+          icon={<ShieldCheck />}
+          text="Primeiro, confirme quem é o titular do imóvel."
+        >
           <div className="space-y-3">
             {people.map((person, index) => (
               <PersonEditor
@@ -464,7 +468,10 @@ function OwnerOnboardingForm({
       hasInlineErrors: contactFields.some((field) => !!error(field)),
       invalidMessage: "Confira os dados desta etapa.",
       content: (
-        <Section title="Seus dados de contato" text="Informe como a equipe Stayo pode falar com você.">
+        <Section
+          title="Seus dados de contato"
+          text="Informe como a equipe Stayo pode falar com você."
+        >
           <TextField
             label="E-mail"
             type="email"
@@ -498,7 +505,10 @@ function OwnerOnboardingForm({
       hasInlineErrors: addressFields.some((field) => !!error(field)),
       invalidMessage: "Complete o endereço para continuar.",
       content: (
-        <Section title="Endereço residencial" text="Buscamos o CEP automaticamente; se não encontrarmos, você pode preencher manualmente.">
+        <Section
+          title="Endereço residencial"
+          text="Buscamos o CEP automaticamente; se não encontrarmos, você pode preencher manualmente."
+        >
           <TextField
             label="CEP"
             value={formatBrazilianPostalCode(form.postalCode)}
@@ -706,7 +716,10 @@ function OwnerOnboardingForm({
       label: "Revisão",
       isValid: ownerOnboardingFormSchema.safeParse(form).success,
       content: (
-        <Section title="Revise e confirme" text="Revise os dados antes de confirmar. Você continuará com acesso após o envio.">
+        <Section
+          title="Revise e confirme"
+          text="Revise os dados antes de confirmar. Você continuará com acesso após o envio."
+        >
           <Review
             label={people.length > 1 ? "Proprietários e proponentes" : "Titular"}
             value={people
@@ -744,13 +757,29 @@ function OwnerOnboardingForm({
             <StayoLogo variant="white" className="h-auto w-24" />
             <div className={`portal-autosave is-${autoSaveState}`} role="status">
               {autoSaveState === "saved" ? <CheckCircle2 /> : <Cloud />}
-              <span>{autoSaveState === "saving" ? "Salvando…" : autoSaveState === "error" ? "Tentaremos novamente" : autoSaveState === "saved" ? "Tudo salvo" : "Salvamento ativo"}</span>
+              <span>
+                {autoSaveState === "saving"
+                  ? "Salvando…"
+                  : autoSaveState === "error"
+                    ? "Tentaremos novamente"
+                    : autoSaveState === "saved"
+                      ? "Tudo salvo"
+                      : "Salvamento ativo"}
+              </span>
             </div>
           </div>
           <p className="portal-onboarding-eyebrow">Cadastro seguro do proprietário</p>
           <h1>Vamos preparar seus dados</h1>
-          <p className="portal-onboarding-lead">Uma etapa por vez. Você pode sair e continuar depois.</p>
-          <div className="portal-onboarding-progress" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={5}>
+          <p className="portal-onboarding-lead">
+            Uma etapa por vez. Você pode sair e continuar depois.
+          </p>
+          <div
+            className="portal-onboarding-progress"
+            role="progressbar"
+            aria-valuenow={currentStep}
+            aria-valuemin={1}
+            aria-valuemax={5}
+          >
             {steps.map((step, index) => (
               <div key={step.id} className={index + 1 <= currentStep ? "is-active" : ""}>
                 <span />
@@ -787,7 +816,10 @@ function OwnerOnboardingForm({
           >
             Salvar e continuar depois
           </Button>
-          <div className="portal-onboarding-trust"><ShieldCheck /><span>Seus dados são protegidos e acessíveis apenas à equipe autorizada.</span></div>
+          <div className="portal-onboarding-trust">
+            <ShieldCheck />
+            <span>Seus dados são protegidos e acessíveis apenas à equipe autorizada.</span>
+          </div>
         </main>
       </div>
     </Shell>
@@ -855,7 +887,9 @@ function Section({
 }) {
   return (
     <div className="portal-form-section">
-      <div className="portal-form-title"><span>{title}</span></div>
+      <div className="portal-form-title">
+        <span>{title}</span>
+      </div>
       <div className="portal-form-guidance">
         {icon}
         <p>{text}</p>
@@ -978,8 +1012,16 @@ function Choice({
       <legend>{label}</legend>
       <div className={`portal-choice-grid portal-choice-grid-${Math.min(options.length, 3)}`}>
         {options.map((option) => (
-          <Button key={option.value} type="button" variant="outline" className={value === option.value ? "is-selected" : ""} onClick={() => onChange(option.value)} aria-pressed={value === option.value}>
-            {value === option.value && <Check className="size-3.5" />}{option.label}
+          <Button
+            key={option.value}
+            type="button"
+            variant="outline"
+            className={value === option.value ? "is-selected" : ""}
+            onClick={() => onChange(option.value)}
+            aria-pressed={value === option.value}
+          >
+            {value === option.value && <Check className="size-3.5" />}
+            {option.label}
           </Button>
         ))}
       </div>

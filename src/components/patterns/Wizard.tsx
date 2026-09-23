@@ -54,34 +54,36 @@ export function Wizard({
 
   return (
     <div className="flex h-full flex-col gap-4">
-      {!hideProgress && <div>
-        <div
-          className="flex items-center justify-between text-xs"
-          style={{ color: "var(--stayo-ink-muted)" }}
-        >
-          <span>
-            Etapa {index + 1} de {steps.length}
-          </span>
-          <span>{step.label}</span>
+      {!hideProgress && (
+        <div>
+          <div
+            className="flex items-center justify-between text-xs"
+            style={{ color: "var(--stayo-ink-muted)" }}
+          >
+            <span>
+              Etapa {index + 1} de {steps.length}
+            </span>
+            <span>{step.label}</span>
+          </div>
+          <div
+            className="mt-2 flex gap-1"
+            role="progressbar"
+            aria-valuenow={index + 1}
+            aria-valuemin={1}
+            aria-valuemax={steps.length}
+          >
+            {steps.map((s, i) => (
+              <span
+                key={s.id}
+                className="h-1 flex-1 rounded-full"
+                style={{
+                  backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
+                }}
+              />
+            ))}
+          </div>
         </div>
-        <div
-          className="mt-2 flex gap-1"
-          role="progressbar"
-          aria-valuenow={index + 1}
-          aria-valuemin={1}
-          aria-valuemax={steps.length}
-        >
-          {steps.map((s, i) => (
-            <span
-              key={s.id}
-              className="h-1 flex-1 rounded-full"
-              style={{
-                backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
-              }}
-            />
-          ))}
-        </div>
-      </div>}
+      )}
 
       <div className="flex-1">{step.content}</div>
 
@@ -113,8 +115,17 @@ export function Wizard({
           }}
           className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
         >
-          {isLast ? (submitting ? "Enviando com segurança..." : completeLabel) : (
-            <>Continuar para {steps[index + 1]?.label}<ArrowRight className="size-4" /></>
+          {isLast ? (
+            submitting ? (
+              "Enviando com segurança..."
+            ) : (
+              completeLabel
+            )
+          ) : (
+            <>
+              Continuar para {steps[index + 1]?.label}
+              <ArrowRight className="size-4" />
+            </>
           )}
         </Button>
       </div>
