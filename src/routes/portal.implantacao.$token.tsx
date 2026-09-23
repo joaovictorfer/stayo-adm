@@ -211,18 +211,22 @@ function OwnerOnboardingForm({
     touched[field] ? validateOwnerField(field, form[field]) : undefined;
   const touch = (field: OwnerFormField) => () =>
     setTouched((current) => ({ ...current, [field]: true }));
-  const people = form.people.length
-    ? form.people
-    : [
-        {
-          role: "proprietario" as const,
-          personType: form.personType,
-          fullName: form.fullName,
-          document: form.document,
-          email: form.email,
-          phone: form.phone,
-        },
-      ];
+  const people = useMemo(
+    () =>
+      form.people.length
+        ? form.people
+        : [
+            {
+              role: "proprietario" as const,
+              personType: form.personType,
+              fullName: form.fullName,
+              document: form.document,
+              email: form.email,
+              phone: form.phone,
+            },
+          ],
+    [form.people, form.personType, form.fullName, form.document, form.email, form.phone],
+  );
   const [selectedHolder, setSelectedHolder] = useState(0);
   const [manualHolder, setManualHolder] = useState(false);
   const [manualPix, setManualPix] = useState(false);
@@ -268,7 +272,7 @@ function OwnerOnboardingForm({
     }));
     setSelectedHolder(0);
   };
-  const usePersonAsHolder = (index: number) => {
+  const selectPersonAsHolder = (index: number) => {
     const person = people[index];
     if (!person) return;
     setSelectedHolder(index);
@@ -527,7 +531,7 @@ function OwnerOnboardingForm({
                     key={index}
                     type="button"
                     className={`portal-person-option ${selectedHolder === index ? "is-selected" : ""}`}
-                    onClick={() => usePersonAsHolder(index)}
+                        onClick={() => selectPersonAsHolder(index)}
                   >
                     <UserRound className="size-4" />
                     <span>
