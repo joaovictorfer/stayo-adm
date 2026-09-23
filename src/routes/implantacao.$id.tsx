@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
 import { Progress } from "../components/ui/progress";
 import { Button } from "../components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../components/ui/alert-dialog";
+import { toast } from "sonner";
 
 import {
   DetailSkeleton,
@@ -45,6 +47,7 @@ import {
   statusLabels,
 } from "../lib/implementation-status";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
+import { formatBrazilianPhone, maskDocument, maskPixKey, normalizeDocument, normalizeEmail, normalizeName, normalizePhone } from "../lib/owner-form-validation";
 import type { ChargeType, InitialChargeStatus } from "../types/admin";
 import type {
   EntityId,
@@ -54,6 +57,7 @@ import type {
 } from "../types/core";
 import {
   type OwnerOnboardingLinkStatus,
+  computeOwnerRegistration,
   ownerOnboardingLinkStatus,
 } from "../types/owner-onboarding";
 
@@ -515,25 +519,15 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
   const ownerData = owner.data;
   const submitted = submission.data;
 
-  const normalize = (value: string | null | undefined) =>
-    value?.replace(/\D/g, "").toLowerCase().trim() ?? "";
   const confirmations = submitted
     ? [
-        { label: "Nome", current: ownerData?.name ?? implementation.ownerName, received: submitted.fullName },
-        { label: "Telefone", current: ownerData?.phone ?? implementation.ownerPhone, received: submitted.phone },
-        { label: "E-mail", current: ownerData?.email, received: submitted.email },
-        { label: "CPF/CNPJ", current: ownerData?.document, received: submitted.document },
-      ].filter(({ current, received }) => received && normalize(current) !== normalize(received))
+        { label: "Nome", current: ownerData?.name ?? implementation.ownerName, received: submitted.fullName, normalize: normalizeName },
+        { label: "Telefone", current: ownerData?.phone ?? implementation.ownerPhone, received: submitted.phone, normalize: normalizePhone },
+        { label: "E-mail", current: ownerData?.email, received: submitted.email, normalize: normalizeEmail },
+        { label: "CPF/CNPJ", current: ownerData?.document, received: submitted.document, normalize: normalizeDocument },
+      ].filter(({ current, received, normalize }) => received && normalize(current) !== normalize(received))
     : [];
-
-  const registration = [
-    { label: "Dados pessoais", complete: Boolean(submitted?.fullName && submitted.document) },
-    { label: "Endereço", complete: false },
-    { label: "Dados bancários", complete: Boolean(submitted?.pixKey) },
-    { label: "Contrato", complete: false },
-    { label: "Documentos", complete: false },
-  ];
-  const completedCount = registration.filter((item) => item.complete).length;
+  const registration = computeOwnerRegistration({ submission: submitted, hasDivergences: confirmations.length > 0 });
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
@@ -551,7 +545,7 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
             {implementation.ownerId && <Tag label="Principal" tone="neutral" />}
           </div>
           <dl className="mt-4 grid gap-x-8 border-t sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
-            <SummaryRow label="Telefone" value={ownerData?.phone ?? implementation.ownerPhone} />
+             <SummaryRow label="Telefone" value={formatBrazilianPhone(ownerData?.phone ?? implementation.ownerPhone ?? "")} />
             <SummaryRow label="E-mail" value={ownerData?.email} />
             <SummaryRow label="Participação" value="Proprietário principal" />
           </dl>
@@ -560,18 +554,19 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
         <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
           <div className="flex items-center justify-between gap-4">
             <SummaryHeading>Status do cadastro</SummaryHeading>
-            <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>{completedCount} de {registration.length}</span>
+             <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>{registration.percentage}%</span>
           </div>
-          <Progress value={(completedCount / registration.length) * 100} className="mb-5 h-1.5" />
+           <Progress value={registration.percentage} className="mb-5 h-1.5" />
           <ul className="grid gap-2 sm:grid-cols-2">
-            {registration.map((item) => (
-              <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
-                {item.complete ? <CheckCircle2 className="size-4 text-[var(--stayo-success)]" /> : <span className="size-4 rounded-full border" style={{ borderColor: "var(--stayo-border-strong)" }} />}
-                <span style={{ color: item.complete ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{item.label}</span>
-                <span className="ml-auto text-xs" style={{ color: item.complete ? "var(--stayo-success)" : "var(--stayo-ink-muted)" }}>{item.complete ? "Completo" : "Pendente"}</span>
+             {registration.groups.map((item) => (
+               <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
+                 {item.state === "complete" ? <CheckCircle2 className="size-4 text-[var(--stayo-success)]" /> : <span className="size-4 rounded-full border" style={{ borderColor: "var(--stayo-border-strong)" }} />}
+                 <span style={{ color: item.state === "complete" ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{item.label}</span>
+                 <span className="ml-auto text-xs" style={{ color: item.state === "complete" ? "var(--stayo-success)" : "var(--stayo-ink-muted)" }}>{item.state === "complete" ? "Completo" : item.state === "review" ? "Aguardando revisão" : "Incompleto"}</span>
               </li>
             ))}
           </ul>
+           {registration.nextAction && implementation.ownerId && <Button asChild className="mt-4" size="sm"><Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>Resolver agora</Link></Button>}
         </section>
 
         <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
@@ -650,7 +645,9 @@ function OwnerPortalPanel({
     onSuccess: async ({ token }) => {
       setFreshToken(token);
       await invalidateLink();
+      toast.success("Novo acesso criado", { description: "O acesso anterior foi invalidado." });
     },
+    onError: () => toast.error("Não foi possível gerar o acesso"),
   });
 
   const revokeLink = useMutation({
@@ -658,7 +655,9 @@ function OwnerPortalPanel({
     onSuccess: async () => {
       setFreshToken(null);
       await invalidateLink();
+      toast.success("Acesso revogado");
     },
+    onError: () => toast.error("Não foi possível revogar o acesso"),
   });
 
   const link = linkQuery.data;
@@ -673,6 +672,7 @@ function OwnerPortalPanel({
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast.success("Link copiado");
     } catch {
       // Clipboard indisponível (ex: contexto não seguro) — link já está visível pra copiar manualmente.
     }
@@ -690,10 +690,10 @@ function OwnerPortalPanel({
       {submissionQuery.data ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nome completo" value={submissionQuery.data.fullName} />
-          <Field label="Documento" value={submissionQuery.data.document} />
+          <Field label="Documento" value={maskDocument(submissionQuery.data.document)} />
           <Field label="E-mail" value={submissionQuery.data.email} />
           <Field label="Telefone" value={submissionQuery.data.phone} />
-          <Field label="Chave Pix" value={submissionQuery.data.pixKey} />
+          <Field label="Chave Pix" value={maskPixKey(submissionQuery.data.pixKey)} />
           <Field label="Recebido em" value={submissionQuery.data.submittedAt} />
         </div>
       ) : (
@@ -719,8 +719,10 @@ function OwnerPortalPanel({
             </div>
           )}
 
-          {url && (
-            <div className="mb-2 flex flex-wrap items-center gap-2">
+           {url && (
+             <details className="mb-3 rounded-lg border p-3">
+               <summary className="cursor-pointer text-xs font-medium">Mostrar link deste dispositivo</summary>
+             <div className="mt-2 flex flex-wrap items-center gap-2">
               <code
                 className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
                 style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
@@ -736,8 +738,9 @@ function OwnerPortalPanel({
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 {copied ? "Copiado" : "Copiar"}
               </button>
-            </div>
+             </div></details>
           )}
+           {status === "ativo" && !url && <p className="mb-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">Acesso ativo. O link original não está disponível neste dispositivo.</p>}
 
           {(!url || status !== "ativo") && (
             <div className="flex flex-wrap gap-2">
@@ -757,17 +760,9 @@ function OwnerPortalPanel({
               </button>
             </div>
           )}
-          {status === "ativo" && link && (
+           {status === "ativo" && link && (
             <div className="mt-2">
-              <button
-                type="button"
-                onClick={() => revokeLink.mutate(link.id)}
-                disabled={revokeLink.isPending}
-                className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-                style={{ ...surface, color: "var(--stayo-danger)" }}
-              >
-                {revokeLink.isPending ? "Revogando..." : "Revogar"}
-              </button>
+               <AlertDialog><AlertDialogTrigger asChild><button type="button" disabled={revokeLink.isPending} className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60" style={{ ...surface, color: "var(--stayo-danger)" }}>Revogar</button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Revogar acesso do proprietário?</AlertDialogTitle><AlertDialogDescription>O link deixará de funcionar imediatamente. Um novo acesso poderá ser criado depois.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>Confirmar revogação</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
             </div>
           )}
         </>
