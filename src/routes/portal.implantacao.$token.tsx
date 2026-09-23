@@ -234,6 +234,12 @@ function OwnerOnboardingForm({
     toast.success("Titular selecionado", { description: "Os dados cadastrais foram preenchidos no repasse." });
   };
 
+  useEffect(() => {
+    if (!form.accountNumber || manualHolder || !selectedPerson) return;
+    if (!form.accountHolder) set("accountHolder", selectedPerson.fullName);
+    if (!form.holderTaxId) set("holderTaxId", selectedPerson.document);
+  }, [form.accountNumber, form.accountHolder, form.holderTaxId, manualHolder, selectedPerson]);
+
   if (submissionQ.data?.submittedAt)
     return (
       <Shell>
@@ -275,7 +281,14 @@ function OwnerOnboardingForm({
     {
       id: "identificacao",
       label: "Identificação",
-      isValid: valid(identityFields),
+      isValid:
+        valid(identityFields) &&
+        people.every(
+          (person) =>
+            !!person.fullName &&
+            !validateOwnerField("fullName", person.fullName) &&
+            !validateOwnerField("document", person.document),
+        ),
       hasInlineErrors: identityFields.some((field) => !!error(field)),
       invalidMessage: "Confira os dados desta etapa.",
       content: (
@@ -303,14 +316,21 @@ function OwnerOnboardingForm({
             label="E-mail"
             type="email"
             value={form.email}
-            onChange={(value) => set("email", value)}
+            onChange={(value) => {
+              set("email", value);
+              updatePerson(0, { email: value });
+            }}
             onBlur={touch("email")}
             error={error("email")}
           />
           <TextField
             label="WhatsApp ou telefone"
             value={formatBrazilianPhone(form.phone)}
-            onChange={(value) => set("phone", formatBrazilianPhone(value))}
+            onChange={(value) => {
+              const phone = formatBrazilianPhone(value);
+              set("phone", phone);
+              updatePerson(0, { phone });
+            }}
             onBlur={touch("phone")}
             error={error("phone")}
             inputMode="tel"
@@ -562,6 +582,35 @@ function Review({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border border-[var(--portal-border)] p-3">
       <span className="text-xs text-[var(--portal-muted)]">{label}</span>
       <p className="mt-1 text-sm font-medium">{value}</p>
+    </div>
+  );
+}
+function PersonEditor({
+  person,
+  index,
+  canRemove,
+  onChange,
+  onRemove,
+}: {
+  person: OwnerOnboardingPerson;
+  index: number;
+  canRemove: boolean;
+  onChange: (patch: Partial<OwnerOnboardingPerson>) => void;
+  onRemove: () => void;
+}) {
+  const nameError = person.fullName ? validateOwnerField("fullName", person.fullName) : undefined;
+  const documentError = person.document ? validateOwnerField("document", person.document) : undefined;
+  return (
+    <div className="portal-person-card">
+      <div className="portal-person-card-head">
+        <div><span>{index === 0 ? "Proprietário principal" : `Pessoa ${index + 1}`}</span><small>{index === 0 ? "Responsável principal pelo cadastro" : "Coproprietário ou proponente"}</small></div>
+        {canRemove && <Button type="button" variant="ghost" size="icon" aria-label="Remover pessoa" onClick={onRemove}><Trash2 className="size-4" /></Button>}
+      </div>
+      {canRemove && <Choice label="Participação" value={person.role} onChange={(value) => onChange({ role: value as OwnerOnboardingPerson["role"] })} options={[{ value: "coproprietario", label: "Coproprietário" }, { value: "proponente", label: "Proponente" }]} />}
+      <Choice label="Tipo de pessoa" value={person.personType} onChange={(value) => onChange({ personType: value as OwnerOnboardingPerson["personType"] })} options={[{ value: "pf", label: "Pessoa física" }, { value: "pj", label: "Pessoa jurídica" }]} />
+      <TextField label={person.personType === "pf" ? "Nome completo" : "Razão social"} value={person.fullName} onChange={(value) => onChange({ fullName: value })} error={nameError} />
+      <TextField label={person.personType === "pf" ? "CPF" : "CNPJ"} value={formatBrazilianDocument(person.document)} onChange={(value) => onChange({ document: formatBrazilianDocument(value) })} error={documentError} inputMode="numeric" />
+      {canRemove && <div className="grid gap-3 sm:grid-cols-2"><TextField label="E-mail (opcional)" type="email" value={person.email} onChange={(value) => onChange({ email: value })} /><TextField label="Telefone (opcional)" value={formatBrazilianPhone(person.phone)} onChange={(value) => onChange({ phone: formatBrazilianPhone(value) })} inputMode="tel" /></div>}
     </div>
   );
 }
