@@ -14,15 +14,15 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { StayoLogo } from "@/components/brand/StayoLogo";
 
 
 export function PortalBrand({ context = "Portal do proprietário" }: { context?: string }) {
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <img src="/favicon.ico" alt="Stayo" className="h-11 w-11 shrink-0 object-contain" />
+    <div className="flex min-w-0 items-center gap-4">
+      <StayoLogo className="h-auto w-28 shrink-0" />
       <div className="min-w-0">
-        <span className="block text-xl font-semibold leading-none text-[var(--portal-navy)]">STAYO</span>
-        <span className="mt-1 block truncate text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--portal-muted)]">
+        <span className="block truncate text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--portal-muted)]">
           {context}
         </span>
       </div>
@@ -198,11 +198,8 @@ export function OwnerWelcomeOverlay({
       <div className="portal-welcome-card">
         <div className="portal-welcome-hero">
           <div className="portal-welcome-brand">
-            <img src="/favicon.ico" alt="Stayo" className="h-10 w-10 object-contain" />
+            <StayoLogo variant="white" className="h-auto w-28" />
             <div>
-              <span className="block text-lg font-semibold leading-none text-[var(--portal-hero-foreground)]">
-                STAYO
-              </span>
               <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--portal-hero-muted)]">
                 Portal do proprietário
               </span>

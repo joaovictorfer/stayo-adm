@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { StayoLogo } from "@/components/brand/StayoLogo";
 import { cn } from "@/lib/utils";
 import { navigation, navigationGroups, type NavItem } from "../../config/navigation";
 import { isSupabaseConfigured } from "../../lib/api/supabase-client";
@@ -331,16 +332,11 @@ function AccountMenu() {
 
 function Brand() {
   return (
-    <div className="flex min-h-20 items-center gap-3 border-b border-[var(--admin-sidebar-hover)] px-4">
-      <img src="/favicon.ico" alt="Stayo" className="h-9 w-9 object-contain" />
-      <div>
-        <span className="block text-base font-semibold leading-none text-[var(--admin-sidebar-text)]">
-          STAYO
-        </span>
-        <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-sidebar-muted)]">
-          Centro de Controle
-        </span>
-      </div>
+    <div className="flex min-h-24 flex-col items-start justify-center border-b border-[var(--admin-sidebar-hover)] px-4 py-3">
+      <StayoLogo variant="white" className="h-auto w-28" />
+      <span className="mt-2 block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-sidebar-muted)]">
+        Centro de Controle
+      </span>
     </div>
   );
 }

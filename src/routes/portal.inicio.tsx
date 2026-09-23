@@ -33,6 +33,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { StayoLogo } from "@/components/brand/StayoLogo";
 import { toast } from "sonner";
 
 import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg";
@@ -547,9 +548,8 @@ function PortalHero({
       <div className="portal-property-hero-content">
         <div className="flex items-start justify-between gap-4">
           <div className="portal-property-brand">
-            <img src="/favicon.ico" alt="" aria-hidden="true" className="h-8 w-8 object-contain sm:h-9 sm:w-9" />
+            <StayoLogo variant="white" className="h-auto w-24 sm:w-28" />
             <div>
-              <span className="block text-base font-semibold leading-none text-[var(--portal-hero-foreground)]">STAYO</span>
               <span className="mt-1 block text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--portal-hero-muted)]">Portal do proprietário</span>
             </div>
           </div>
