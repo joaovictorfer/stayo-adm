@@ -857,7 +857,7 @@ function ownerOnboardingFromDraft(value: Record<string, unknown>, implementation
   const text = (key: string) => typeof value[key] === "string" ? value[key] as string : "";
   return {
     implementationId: implementationId || text("implementationId"),
-    personType: value.personType === "pj" ? "pj" : "pf",
+    personType: value["personType"] === "pj" ? "pj" : "pf",
     fullName: text("legalName") || text("fullName"),
     document: text("taxId") || text("document"),
     email: text("email"),
@@ -865,11 +865,11 @@ function ownerOnboardingFromDraft(value: Record<string, unknown>, implementation
     postalCode: text("postalCode"), street: text("street"), number: text("number"),
     complement: text("complement") || null, district: text("district"), city: text("city"), state: text("state"),
     bankName: text("bankName"), bankBranch: text("bankBranch"), accountNumber: text("accountNumber"),
-    accountType: value.accountType === "savings" || value.accountType === "payment" ? value.accountType : "checking",
+    accountType: value["accountType"] === "savings" || value["accountType"] === "payment" ? value["accountType"] : "checking",
     accountHolder: text("accountHolder"), holderTaxId: text("holderTaxId"),
     pixType: ["cpf", "cnpj", "phone", "email", "random"].includes(text("pixType")) ? text("pixType") as OwnerOnboardingSubmission["pixType"] : "random",
-    pixKey: text("pixKey"), isPrimary: value.isPrimary !== false,
-    currentStep: typeof value.currentStep === "number" ? value.currentStep : 1,
+    pixKey: text("pixKey"), isPrimary: value["isPrimary"] !== false,
+    currentStep: typeof value["currentStep"] === "number" ? value["currentStep"] : 1,
     submittedAt: text("submittedAt") || null,
   };
 }

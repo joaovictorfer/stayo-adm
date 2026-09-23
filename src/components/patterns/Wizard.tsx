@@ -9,6 +9,7 @@ export interface WizardStep {
   /** Se retornar false, o botão "Continuar" fica desabilitado nesta etapa. */
   isValid?: boolean;
   invalidMessage?: string;
+  hasInlineErrors?: boolean;
 }
 
 /**
@@ -68,7 +69,7 @@ export function Wizard({
 
       <div className="flex-1">{step.content}</div>
 
-      {step.isValid === false && step.invalidMessage && (
+      {step.isValid === false && step.invalidMessage && !step.hasInlineErrors && (
         <p className="text-xs text-[var(--portal-danger)]" role="status">{step.invalidMessage}</p>
       )}
       <div className="portal-form-actions flex items-center gap-3">
