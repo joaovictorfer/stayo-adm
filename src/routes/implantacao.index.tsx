@@ -15,7 +15,11 @@ import {
 import { Drawer } from "../components/patterns/Drawer";
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { Button } from "../components/ui/button";
-import { AdminActionButton, AdminStatusBadge, AdminFilterBar } from "@/components/admin/AdminPrimitives";
+import {
+  AdminActionButton,
+  AdminStatusBadge,
+  AdminFilterBar,
+} from "@/components/admin/AdminPrimitives";
 import {
   CLEANING_RESPONSIBILITY_LABELS,
   DEFAULT_QUICK_IMPLEMENTATION_CONDITIONS,
@@ -131,10 +135,7 @@ function ImplementationsPage() {
   return (
     <>
       <PageHeader title="Implantações" count={query.isSuccess ? rows.length : undefined}>
-        <AdminActionButton
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-        >
+        <AdminActionButton type="button" onClick={() => setDrawerOpen(true)}>
           Nova implantação
         </AdminActionButton>
       </PageHeader>
@@ -227,10 +228,18 @@ function ImplementationsPage() {
                   <span className="text-[var(--admin-muted)]">
                     {[i.condominiumName, i.unit].filter(Boolean).join(" · ") || "—"}
                   </span>
-                  <AdminStatusBadge tone={i.status === "ativo" ? "success" : i.status === "cancelado" ? "danger" : "info"}>{statusLabels[i.status]}</AdminStatusBadge>
-                  <span className="text-[var(--admin-muted)]">
-                    {i.startDateEstimate ?? "—"}
-                  </span>
+                  <AdminStatusBadge
+                    tone={
+                      i.status === "ativo"
+                        ? "success"
+                        : i.status === "cancelado"
+                          ? "danger"
+                          : "info"
+                    }
+                  >
+                    {statusLabels[i.status]}
+                  </AdminStatusBadge>
+                  <span className="text-[var(--admin-muted)]">{i.startDateEstimate ?? "—"}</span>
                 </Link>
               </li>
             ))}
@@ -281,17 +290,22 @@ function PipelineView({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{r.code}</span>
-                      {readiness && readiness.state !== "apta" && readiness.state !== "nao_avaliada" && (
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[10px]"
-                          style={{
-                            backgroundColor: "var(--stayo-gold-soft)",
-                            color: readiness.state === "bloqueada" ? "var(--stayo-danger)" : "var(--stayo-warning)",
-                          }}
-                        >
-                          {readinessLabels[readiness.state]}
-                        </span>
-                      )}
+                      {readiness &&
+                        readiness.state !== "apta" &&
+                        readiness.state !== "nao_avaliada" && (
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[10px]"
+                            style={{
+                              backgroundColor: "var(--stayo-gold-soft)",
+                              color:
+                                readiness.state === "bloqueada"
+                                  ? "var(--stayo-danger)"
+                                  : "var(--stayo-warning)",
+                            }}
+                          >
+                            {readinessLabels[readiness.state]}
+                          </span>
+                        )}
                     </div>
                     <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
                       {r.ownerName || "—"}
@@ -336,12 +350,15 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
   useEffect(() => {
     if (!open) return;
     const administrationDefault = defaultsQuery.data?.find(
-      (term) => term.chargeType === "percentage" && term.label.toLocaleLowerCase("pt-BR").includes("admin"),
+      (term) =>
+        term.chargeType === "percentage" && term.label.toLocaleLowerCase("pt-BR").includes("admin"),
     );
     setForm((current) => ({
       ...current,
       responsibleUserId: current.responsibleUserId || auth.profile?.id || "",
-      administrationFee: administrationDefault ? String(administrationDefault.value) : current.administrationFee,
+      administrationFee: administrationDefault
+        ? String(administrationDefault.value)
+        : current.administrationFee,
     }));
   }, [auth.profile?.id, defaultsQuery.data, open]);
 
@@ -384,7 +401,9 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
 
       const clonedTerms = await adminApi.commercialTerms.cloneDefaults(created.id);
       const administrationTerm = clonedTerms.find(
-        (term) => term.chargeType === "percentage" && term.label.toLocaleLowerCase("pt-BR").includes("admin"),
+        (term) =>
+          term.chargeType === "percentage" &&
+          term.label.toLocaleLowerCase("pt-BR").includes("admin"),
       );
       if (administrationTerm && administrationTerm.value !== Number(input.administrationFee)) {
         await adminApi.commercialTerms.update(administrationTerm.id, {
@@ -436,8 +455,22 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
             Dados principais do proprietário e responsável.
           </p>
           <TextField label="Nome" value={form.name} onChange={set("name")} required />
-           <TextField label="WhatsApp" value={form.phone} onChange={(value) => set("phone")(formatBrazilianPhone(value))} inputMode="tel" required />
-           <TextField label="Responsável interno" value={auth.profile?.fullName && form.responsibleUserId === auth.profile.id ? auth.profile.fullName : form.responsibleUserId} onChange={set("responsibleUserId")} />
+          <TextField
+            label="WhatsApp"
+            value={form.phone}
+            onChange={(value) => set("phone")(formatBrazilianPhone(value))}
+            inputMode="tel"
+            required
+          />
+          <TextField
+            label="Responsável interno"
+            value={
+              auth.profile?.fullName && form.responsibleUserId === auth.profile.id
+                ? auth.profile.fullName
+                : form.responsibleUserId
+            }
+            onChange={set("responsibleUserId")}
+          />
         </div>
       ),
     },
@@ -468,31 +501,107 @@ function NewImplementationDrawer({ open, onClose }: { open: boolean; onClose: ()
             <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
               Condições padrão Stayo já aplicadas. Altere somente se houver exceção.
             </p>
-            <Button type="button" variant="outline" size="sm" onClick={() => setEditingConditions((value) => !value)} className="shrink-0 gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingConditions((value) => !value)}
+              className="shrink-0 gap-1.5"
+            >
               <Pencil className="size-3.5" />
               {editingConditions ? "Fechar" : "Alterar exceções"}
             </Button>
           </div>
           {!editingConditions ? (
-            <div className="divide-y rounded-[var(--radius-card)] border bg-white px-4" style={{ borderColor: "var(--stayo-border)" }}>
-              <ConditionSummary label="Taxa de administração" value={`${form.administrationFee}%`} />
+            <div
+              className="divide-y rounded-[var(--radius-card)] border bg-white px-4"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
+              <ConditionSummary
+                label="Taxa de administração"
+                value={`${form.administrationFee}%`}
+              />
               <ConditionSummary label="Taxa de limpeza" value={cleaningResponsibilityText(form)} />
               <ConditionSummary label="Forma de repasse" value={form.payoutRule} />
-              <ConditionSummary label="Manutenção sem autorização" value={`Até ${formatCurrencyInput(form.maintenanceLimit)}`} />
+              <ConditionSummary
+                label="Manutenção sem autorização"
+                value={`Até ${formatCurrencyInput(form.maintenanceLimit)}`}
+              />
               <ConditionSummary label="Exclusividade" value={form.exclusivity ? "Sim" : "Não"} />
               <ConditionSummary label="Vigência" value={`${form.durationMonths} meses`} />
               <ConditionSummary label="Aviso prévio" value={`${form.noticePeriodDays} dias`} />
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <TextField label="Taxa de administração (%)" value={form.administrationFee} onChange={set("administrationFee")} type="number" inputMode="decimal" />
-              <SelectField label="Taxa de limpeza" value={form.cleaningResponsibility} onChange={(value) => setForm((current) => ({ ...current, cleaningResponsibility: value as CleaningResponsibility }))} options={Object.entries(CLEANING_RESPONSIBILITY_LABELS).map(([value, label]) => ({ value, label }))} />
-              {form.cleaningResponsibility === "custom" && <div className="sm:col-span-2"><TextField label="Responsabilidade personalizada" value={form.customCleaningResponsibility} onChange={set("customCleaningResponsibility")} /></div>}
-              <div className="sm:col-span-2"><TextField label="Forma de repasse" value={form.payoutRule} onChange={set("payoutRule")} /></div>
-              <TextField label="Limite de manutenção sem autorização (R$)" value={form.maintenanceLimit} onChange={set("maintenanceLimit")} type="number" inputMode="decimal" />
-              <SelectField label="Exclusividade" value={form.exclusivity ? "yes" : "no"} onChange={(value) => setForm((current) => ({ ...current, exclusivity: value === "yes" }))} options={[{ value: "yes", label: "Sim" }, { value: "no", label: "Não" }]} />
-              <TextField label="Vigência (meses)" value={form.durationMonths} onChange={set("durationMonths")} type="number" inputMode="numeric" />
-              <TextField label="Aviso prévio (dias)" value={form.noticePeriodDays} onChange={set("noticePeriodDays")} type="number" inputMode="numeric" />
+              <TextField
+                label="Taxa de administração (%)"
+                value={form.administrationFee}
+                onChange={set("administrationFee")}
+                type="number"
+                inputMode="decimal"
+              />
+              <SelectField
+                label="Taxa de limpeza"
+                value={form.cleaningResponsibility}
+                onChange={(value) =>
+                  setForm((current) => ({
+                    ...current,
+                    cleaningResponsibility: value as CleaningResponsibility,
+                  }))
+                }
+                options={Object.entries(CLEANING_RESPONSIBILITY_LABELS).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              />
+              {form.cleaningResponsibility === "custom" && (
+                <div className="sm:col-span-2">
+                  <TextField
+                    label="Responsabilidade personalizada"
+                    value={form.customCleaningResponsibility}
+                    onChange={set("customCleaningResponsibility")}
+                  />
+                </div>
+              )}
+              <div className="sm:col-span-2">
+                <TextField
+                  label="Forma de repasse"
+                  value={form.payoutRule}
+                  onChange={set("payoutRule")}
+                />
+              </div>
+              <TextField
+                label="Limite de manutenção sem autorização (R$)"
+                value={form.maintenanceLimit}
+                onChange={set("maintenanceLimit")}
+                type="number"
+                inputMode="decimal"
+              />
+              <SelectField
+                label="Exclusividade"
+                value={form.exclusivity ? "yes" : "no"}
+                onChange={(value) =>
+                  setForm((current) => ({ ...current, exclusivity: value === "yes" }))
+                }
+                options={[
+                  { value: "yes", label: "Sim" },
+                  { value: "no", label: "Não" },
+                ]}
+              />
+              <TextField
+                label="Vigência (meses)"
+                value={form.durationMonths}
+                onChange={set("durationMonths")}
+                type="number"
+                inputMode="numeric"
+              />
+              <TextField
+                label="Aviso prévio (dias)"
+                value={form.noticePeriodDays}
+                onChange={set("noticePeriodDays")}
+                type="number"
+                inputMode="numeric"
+              />
             </div>
           )}
           {mutation.isError && (
@@ -559,26 +668,58 @@ function TextField({
   );
 }
 
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ ...surface, color: "var(--stayo-ink)" }}>
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      <span className="mb-1 block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+        style={{ ...surface, color: "var(--stayo-ink)" }}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
     </label>
   );
 }
 
 function ConditionSummary({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-start justify-between gap-4 py-2.5 text-sm"><span style={{ color: "var(--stayo-ink-muted)" }}>{label}</span><strong className="text-right font-medium" style={{ color: "var(--stayo-ink)" }}>{value}</strong></div>;
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 text-sm">
+      <span style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
+      <strong className="text-right font-medium" style={{ color: "var(--stayo-ink)" }}>
+        {value}
+      </strong>
+    </div>
+  );
 }
 
 function formatBrazilianPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "").slice(0, 11);
+  const digits = value
+    .replace(/\D/g, "")
+    .replace(/^55(?=\d{10,11}$)/, "")
+    .slice(0, 11);
   if (digits.length <= 2) return digits.length ? `(${digits}` : "";
   if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  if (digits.length <= 10)
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 

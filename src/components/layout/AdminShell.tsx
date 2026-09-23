@@ -107,60 +107,73 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
         const groupItems = group.itemIds
           .map((id) => navigation.find((item) => item.id === id))
           .filter((item): item is NavItem => Boolean(item));
-        return <div key={group.id} className="space-y-1">
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-sidebar-muted)]/70">
-            {group.label}
-          </p>
-          {groupItems.map((item) => {
-        const active = isActive(pathname, item.path);
-        if (!item.children) {
-          return (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              onClick={onNavigate}
-              className={cn("flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]", active && "bg-[var(--admin-sidebar-active)] text-[var(--admin-sidebar-text)] shadow-sm")}
-            >
-              <Icon name={item.icon} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        }
-        const expanded = open[item.id] ?? active;
         return (
-          <div key={item.id}>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen((s) => ({ ...s, [item.id]: !expanded }))}
-              className={cn("h-auto w-full justify-start gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] font-normal text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]", active && "text-[var(--admin-sidebar-text)]")}
-            >
-              <Icon name={item.icon} />
-              <span className="flex-1 text-left">{item.label}</span>
-              <ChevronDown
-                size={16}
-                className={cn("transition-transform", expanded && "rotate-180")}
-              />
-            </Button>
-            {expanded && (
-              <div className="ml-5 mt-1 flex flex-col gap-0.5 border-l border-[var(--admin-sidebar-hover)] pl-2">
-                {item.children.map((child) => (
+          <div key={group.id} className="space-y-1">
+            <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-sidebar-muted)]/70">
+              {group.label}
+            </p>
+            {groupItems.map((item) => {
+              const active = isActive(pathname, item.path);
+              if (!item.children) {
+                return (
                   <NavLink
-                    key={child.id}
-                    to={child.path}
+                    key={item.id}
+                    to={item.path}
                     onClick={onNavigate}
-                    className={cn("flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-1.5 text-xs text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]", pathname === child.path && "bg-[var(--admin-sidebar-active)] text-[var(--admin-sidebar-text)]")}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
+                      active &&
+                        "bg-[var(--admin-sidebar-active)] text-[var(--admin-sidebar-text)] shadow-sm",
+                    )}
                   >
-                    <Icon name={child.icon} />
-                    <span>{child.label}</span>
+                    <Icon name={item.icon} />
+                    <span>{item.label}</span>
                   </NavLink>
-                ))}
-              </div>
-            )}
+                );
+              }
+              const expanded = open[item.id] ?? active;
+              return (
+                <div key={item.id}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setOpen((s) => ({ ...s, [item.id]: !expanded }))}
+                    className={cn(
+                      "h-auto w-full justify-start gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] font-normal text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
+                      active && "text-[var(--admin-sidebar-text)]",
+                    )}
+                  >
+                    <Icon name={item.icon} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    <ChevronDown
+                      size={16}
+                      className={cn("transition-transform", expanded && "rotate-180")}
+                    />
+                  </Button>
+                  {expanded && (
+                    <div className="ml-5 mt-1 flex flex-col gap-0.5 border-l border-[var(--admin-sidebar-hover)] pl-2">
+                      {item.children.map((child) => (
+                        <NavLink
+                          key={child.id}
+                          to={child.path}
+                          onClick={onNavigate}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-1.5 text-xs text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
+                            pathname === child.path &&
+                              "bg-[var(--admin-sidebar-active)] text-[var(--admin-sidebar-text)]",
+                          )}
+                        >
+                          <Icon name={child.icon} />
+                          <span>{child.label}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         );
-      })}
-        </div>;
       })}
     </nav>
   );
@@ -187,7 +200,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--admin-sidebar-strong)_60%,transparent)] backdrop-blur-sm" onClick={() => setDrawer(false)} />
+          <div
+            className="absolute inset-0 bg-[color-mix(in_srgb,var(--admin-sidebar-strong)_60%,transparent)] backdrop-blur-sm"
+            onClick={() => setDrawer(false)}
+          />
           <div className="absolute left-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-[var(--admin-sidebar)] text-[var(--admin-sidebar-text)] shadow-2xl">
             <div className="flex items-center justify-between">
               <Brand />
@@ -226,9 +242,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <span className="hidden text-[var(--admin-muted)] sm:inline">Centro de Controle</span>
             {section && (
               <>
-                <span className="mx-2 hidden text-[var(--admin-border)] sm:inline">
-                  /
-                </span>
+                <span className="mx-2 hidden text-[var(--admin-border)] sm:inline">/</span>
                 <span className="font-medium text-[var(--admin-text)]">{section.label}</span>
               </>
             )}
@@ -242,9 +256,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 placeholder="Buscar imóvel, reserva, módulo..."
                 className="w-44 bg-transparent text-[var(--admin-text)] outline-none placeholder:text-[var(--admin-muted)] lg:w-56"
               />
-              <kbd
-                className="rounded border border-[var(--admin-border)] px-1.5 py-0.5 text-[10px] text-[var(--admin-muted)]"
-              >
+              <kbd className="rounded border border-[var(--admin-border)] px-1.5 py-0.5 text-[10px] text-[var(--admin-muted)]">
                 ⌘K
               </kbd>
             </label>
@@ -282,14 +294,25 @@ function AccountMenu() {
   if (!isSupabaseConfigured() || auth.status !== "authenticated") return null;
 
   const name = auth.profile?.fullName ?? auth.session?.user.email ?? "Usuário";
-  const role = auth.profile ? adminRoleLabels[auth.profile.role] ?? auth.profile.role : "Conta Stayo";
-  const initials = name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+  const role = auth.profile
+    ? (adminRoleLabels[auth.profile.role] ?? auth.profile.role)
+    : "Conta Stayo";
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 
   return (
     <div className="hidden items-center gap-2 sm:flex">
-      <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--admin-info-soft)] text-[11px] font-semibold text-[var(--admin-primary)]">{initials || <UserRound size={15} />}</span>
+      <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--admin-info-soft)] text-[11px] font-semibold text-[var(--admin-primary)]">
+        {initials || <UserRound size={15} />}
+      </span>
       <span className="hidden min-w-0 lg:block">
-        <strong className="block max-w-40 truncate text-xs font-semibold text-[var(--admin-text)]">{name}</strong>
+        <strong className="block max-w-40 truncate text-xs font-semibold text-[var(--admin-text)]">
+          {name}
+        </strong>
         <small className="block text-[10px] text-[var(--admin-muted)]">{role}</small>
       </span>
       <Button
@@ -311,8 +334,12 @@ function Brand() {
     <div className="flex min-h-20 items-center gap-3 border-b border-[var(--admin-sidebar-hover)] px-4">
       <img src="/favicon.ico" alt="Stayo" className="h-9 w-9 object-contain" />
       <div>
-        <span className="block text-base font-semibold leading-none text-[var(--admin-sidebar-text)]">STAYO</span>
-        <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-sidebar-muted)]">Centro de Controle</span>
+        <span className="block text-base font-semibold leading-none text-[var(--admin-sidebar-text)]">
+          STAYO
+        </span>
+        <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-sidebar-muted)]">
+          Centro de Controle
+        </span>
       </div>
     </div>
   );
@@ -320,8 +347,37 @@ function Brand() {
 
 function SidebarAccount() {
   const auth = useAuthSession();
-  const name = auth.status === "authenticated" ? auth.profile?.fullName ?? auth.session?.user.email ?? "Equipe Stayo" : "Equipe Stayo";
-  const role = auth.status === "authenticated" && auth.profile ? adminRoleLabels[auth.profile.role] ?? auth.profile.role : "Admin";
-  const initials = useMemo(() => name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join(""), [name]);
-  return <div className="border-t border-[var(--admin-sidebar-hover)] p-3"><div className="flex items-center gap-3 rounded-[var(--admin-radius)] px-2 py-2"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--admin-sidebar-hover)] text-xs font-semibold text-[var(--admin-sidebar-text)]">{initials || <UserRound size={16} />}</span><span className="min-w-0"><strong className="block truncate text-xs font-semibold text-[var(--admin-sidebar-text)]">{name}</strong><small className="block text-[10px] text-[var(--admin-sidebar-muted)]">{role}</small></span></div></div>;
+  const name =
+    auth.status === "authenticated"
+      ? (auth.profile?.fullName ?? auth.session?.user.email ?? "Equipe Stayo")
+      : "Equipe Stayo";
+  const role =
+    auth.status === "authenticated" && auth.profile
+      ? (adminRoleLabels[auth.profile.role] ?? auth.profile.role)
+      : "Admin";
+  const initials = useMemo(
+    () =>
+      name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join(""),
+    [name],
+  );
+  return (
+    <div className="border-t border-[var(--admin-sidebar-hover)] p-3">
+      <div className="flex items-center gap-3 rounded-[var(--admin-radius)] px-2 py-2">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--admin-sidebar-hover)] text-xs font-semibold text-[var(--admin-sidebar-text)]">
+          {initials || <UserRound size={16} />}
+        </span>
+        <span className="min-w-0">
+          <strong className="block truncate text-xs font-semibold text-[var(--admin-sidebar-text)]">
+            {name}
+          </strong>
+          <small className="block text-[10px] text-[var(--admin-sidebar-muted)]">{role}</small>
+        </span>
+      </div>
+    </div>
+  );
 }

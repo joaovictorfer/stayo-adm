@@ -78,19 +78,24 @@ function ReservationsPage() {
           <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((r) => (
               <li key={r.id}>
-                <Link
-                  to="/reservas/$id"
-                  params={{ id: r.id }}
-                  className="admin-data-row flex-wrap"
-                >
-                  <span className="min-w-44 flex-1"><strong className="block text-sm">{r.externalId ?? r.id}</strong><small className="block text-[var(--admin-muted)]">{r.propertyName ?? r.propertyId}</small></span>
+                <Link to="/reservas/$id" params={{ id: r.id }} className="admin-data-row flex-wrap">
+                  <span className="min-w-44 flex-1">
+                    <strong className="block text-sm">{r.externalId ?? r.id}</strong>
+                    <small className="block text-[var(--admin-muted)]">
+                      {r.propertyName ?? r.propertyId}
+                    </small>
+                  </span>
                   {r.channel && (
                     <span className="text-xs text-[var(--admin-muted)]">{r.channel}</span>
                   )}
                   <span className="text-xs text-[var(--admin-muted)]">
                     {r.checkin} → {r.checkout}
                   </span>
-                  <AdminStatusBadge tone={r.status.toLowerCase().includes("cancel") ? "danger" : "info"}>{r.status}</AdminStatusBadge>
+                  <AdminStatusBadge
+                    tone={r.status.toLowerCase().includes("cancel") ? "danger" : "info"}
+                  >
+                    {r.status}
+                  </AdminStatusBadge>
                 </Link>
               </li>
             ))}

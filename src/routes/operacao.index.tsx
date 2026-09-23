@@ -78,10 +78,7 @@ function OperationPage() {
       <PageHeader title="Operação">
         <PeriodFilter value={view} onChange={setView} options={viewOptions} />
         <PeriodFilter value={period} onChange={setPeriod} options={periodOptions} />
-        <AdminActionButton
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-        >
+        <AdminActionButton type="button" onClick={() => setDrawerOpen(true)}>
           Nova rotina
         </AdminActionButton>
       </PageHeader>
@@ -116,14 +113,19 @@ function OperationPage() {
           <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((t) => (
               <li key={t.id}>
-                <Link
-                  to="/operacao/$id"
-                  params={{ id: t.id }}
-                  className="admin-data-row flex-wrap"
-                >
-                  <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{t.title}</strong><small className="block truncate text-[var(--admin-muted)]">{t.propertyName ?? t.propertyId ?? "Imóvel não informado"}</small></span>
-                  <span className="text-xs text-[var(--admin-muted)]">{t.dueDate ?? "Sem data"}</span>
-                  <AdminStatusBadge tone={t.priority === "alta" ? "danger" : "neutral"}>{t.status}</AdminStatusBadge>
+                <Link to="/operacao/$id" params={{ id: t.id }} className="admin-data-row flex-wrap">
+                  <span className="min-w-0 flex-1">
+                    <strong className="block truncate text-sm">{t.title}</strong>
+                    <small className="block truncate text-[var(--admin-muted)]">
+                      {t.propertyName ?? t.propertyId ?? "Imóvel não informado"}
+                    </small>
+                  </span>
+                  <span className="text-xs text-[var(--admin-muted)]">
+                    {t.dueDate ?? "Sem data"}
+                  </span>
+                  <AdminStatusBadge tone={t.priority === "alta" ? "danger" : "neutral"}>
+                    {t.status}
+                  </AdminStatusBadge>
                 </Link>
               </li>
             ))}

@@ -23,11 +23,7 @@ export function PageHeader({
 }
 
 export function Panel({ children }: { children: ReactNode }) {
-  return (
-    <div className="admin-panel">
-      {children}
-    </div>
-  );
+  return <div className="admin-panel">{children}</div>;
 }
 
 export function SearchInput({
@@ -42,7 +38,12 @@ export function SearchInput({
   return (
     <label className="admin-search-field w-full sm:w-72">
       <Search aria-hidden="true" />
-      <input type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
     </label>
   );
 }
@@ -89,12 +90,25 @@ export function ListSkeleton({ rows = 6 }: { rows?: number }) {
 }
 
 export function EmptyRows({ message }: { message: string }) {
-  return <AdminEmptyState icon={Inbox} title={message} description="A lista será atualizada assim que houver informações disponíveis." />;
+  return (
+    <AdminEmptyState
+      icon={Inbox}
+      title={message}
+      description="A lista será atualizada assim que houver informações disponíveis."
+    />
+  );
 }
 
 export function ErrorRows({ onRetry }: { onRetry: () => void }) {
   return (
-    <div role="alert"><AdminEmptyState icon={AlertCircle} title="Não foi possível carregar os dados" description="Tente novamente em alguns instantes." action={<Button onClick={onRetry}>Tentar novamente</Button>} /></div>
+    <div role="alert">
+      <AdminEmptyState
+        icon={AlertCircle}
+        title="Não foi possível carregar os dados"
+        description="Tente novamente em alguns instantes."
+        action={<Button onClick={onRetry}>Tentar novamente</Button>}
+      />
+    </div>
   );
 }
 
@@ -114,9 +128,7 @@ export function DetailSkeleton() {
 export function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="admin-panel p-4">
-      <p className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-        {label}
-      </p>
+      <p className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">{label}</p>
       <div className="mt-1 break-words text-sm text-[var(--admin-text)]">
         {value === null || value === undefined || value === "" ? "—" : value}
       </div>

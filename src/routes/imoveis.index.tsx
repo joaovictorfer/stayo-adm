@@ -58,13 +58,19 @@ function PropertiesPage() {
           <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((p) => (
               <li key={p.id}>
-                <Link
-                  to="/imoveis/$id"
-                  params={{ id: p.id }}
-                  className="admin-data-row"
-                >
-                  <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{p.name}</strong><small className="block text-[var(--admin-muted)]">{p.externalCode}{p.condominiumName ? ` · ${p.condominiumName}` : ""}</small></span>
-                  <AdminStatusBadge tone={p.status.toLowerCase() === "ativo" ? "success" : "neutral"}>{p.status}</AdminStatusBadge>
+                <Link to="/imoveis/$id" params={{ id: p.id }} className="admin-data-row">
+                  <span className="min-w-0 flex-1">
+                    <strong className="block truncate text-sm">{p.name}</strong>
+                    <small className="block text-[var(--admin-muted)]">
+                      {p.externalCode}
+                      {p.condominiumName ? ` · ${p.condominiumName}` : ""}
+                    </small>
+                  </span>
+                  <AdminStatusBadge
+                    tone={p.status.toLowerCase() === "ativo" ? "success" : "neutral"}
+                  >
+                    {p.status}
+                  </AdminStatusBadge>
                 </Link>
               </li>
             ))}

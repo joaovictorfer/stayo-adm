@@ -59,11 +59,7 @@ function OwnersPage() {
           <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((o) => (
               <li key={o.id}>
-                <Link
-                  to="/proprietarios/$id"
-                  params={{ id: o.id }}
-                  className="admin-data-row"
-                >
+                <Link to="/proprietarios/$id" params={{ id: o.id }} className="admin-data-row">
                   <span className="min-w-0 flex-1 font-medium">{o.name}</span>
                   <span className="text-sm text-[var(--admin-muted)]">
                     {o.phone ?? o.email ?? "—"}
