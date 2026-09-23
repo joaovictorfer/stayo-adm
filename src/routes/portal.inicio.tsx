@@ -798,10 +798,12 @@ function PortalHero({
   firstName,
   implementation,
   onSignOut,
+  preview = false,
 }: {
   firstName: string;
   implementation: ImplementationProject | undefined;
   onSignOut: () => void;
+  preview?: boolean;
 }) {
   const status = implementation?.status ?? "prospect";
   const image = implementation?.coverImage?.startsWith("http")
@@ -832,17 +834,23 @@ function PortalHero({
               </span>
             </div>
           </div>
-          <Button
-            type="button"
-            onClick={onSignOut}
-            variant="outline"
-            size="sm"
-            className="portal-hero-signout portal-action shrink-0 rounded-full"
-            aria-label="Sair da conta"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Sair</span>
-          </Button>
+          {preview ? (
+            <span className="portal-hero-signout portal-action shrink-0 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-[var(--portal-hero-muted)]">
+              Pré-visualização
+            </span>
+          ) : (
+            <Button
+              type="button"
+              onClick={onSignOut}
+              variant="outline"
+              size="sm"
+              className="portal-hero-signout portal-action shrink-0 rounded-full"
+              aria-label="Sair da conta"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          )}
         </div>
 
         <div className="portal-property-hero-copy">
@@ -1338,25 +1346,41 @@ function OwnerHomePage() {
   );
 }
 
-function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
+export function OwnerHomeContent({
+  ownerId,
+  onSignOut,
+  preview = false,
+  previewImplementationId,
+}: {
+  ownerId: string;
+  onSignOut: () => void;
+  preview?: boolean;
+  previewImplementationId?: string;
+}) {
   const [activeTab, setActiveTab] = useState("visao-geral");
   const [selectedImplementationId, setSelectedImplementationId] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : (window.localStorage.getItem("stayo-owner-property") ?? ""),
+    previewImplementationId
+      ? previewImplementationId
+      : typeof window === "undefined"
+        ? ""
+        : (window.localStorage.getItem("stayo-owner-property") ?? ""),
   );
   const tabsListRef = useRef<HTMLDivElement>(null);
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
   const implementationsQ = useQuery({
-    queryKey: ["owner-portal", "implementations", ownerId],
+    queryKey: ["owner-portal", "implementations", ownerId, previewImplementationId ?? "all"],
     queryFn: listOwnerImplementations,
     staleTime: 30_000,
   });
-  const ownerImplementations = implementationsQ.data ?? [];
+  const allImplementations = implementationsQ.data ?? [];
+  const ownerImplementations = previewImplementationId
+    ? allImplementations.filter((item) => item.id === previewImplementationId)
+    : allImplementations;
   const implementation =
     ownerImplementations.find((item) => item.id === selectedImplementationId) ??
     ownerImplementations[0];
+
   const portalPhase = getOwnerPortalPhase(implementation);
   const portalModules = getOwnerPortalModules(portalPhase);
   const corePropertyId =
@@ -1442,14 +1466,20 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
 
   return (
     <div className="portal-dashboard">
-      {welcome.showWelcome && welcome.ready && (
+      {welcome.showWelcome && welcome.ready && !preview && (
         <OwnerWelcomeOverlay
           firstName={firstName}
           propertyName={propertyName(implementation)}
           onStart={() => welcome.dismiss()}
         />
       )}
-      <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
+      <PortalHero
+        firstName={firstName}
+        implementation={implementation}
+        onSignOut={onSignOut}
+        preview={preview}
+      />
+
       {ownerImplementations.length > 1 && (
         <PropertySwitcher
           implementations={ownerImplementations}
