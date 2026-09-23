@@ -798,10 +798,12 @@ function PortalHero({
   firstName,
   implementation,
   onSignOut,
+  preview = false,
 }: {
   firstName: string;
   implementation: ImplementationProject | undefined;
   onSignOut: () => void;
+  preview?: boolean;
 }) {
   const status = implementation?.status ?? "prospect";
   const image = implementation?.coverImage?.startsWith("http")
