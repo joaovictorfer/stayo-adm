@@ -18,6 +18,12 @@ export interface NavItem {
   children?: NavItem[];
 }
 
+export interface NavGroup {
+  id: string;
+  label: string;
+  itemIds: string[];
+}
+
 export const navigation: NavItem[] = [
   {
     id: "dashboard",
@@ -171,4 +177,19 @@ export const navigation: NavItem[] = [
       },
     ],
   },
+];
+
+/** Agrupamento puramente visual. Rotas e permissões continuam definidas nos itens acima. */
+export const navigationGroups: NavGroup[] = [
+  { id: "overview", label: "Visão geral", itemIds: ["dashboard"] },
+  { id: "portfolio", label: "Portfólio", itemIds: ["properties", "owners", "condominiums"] },
+  { id: "commercial", label: "Comercial", itemIds: ["implementation", "contracts"] },
+  {
+    id: "operations",
+    label: "Operação",
+    itemIds: ["operations", "reservations", "guests", "inspections", "providers"],
+  },
+  { id: "intelligence", label: "Inteligência", itemIds: ["messages", "bi"] },
+  { id: "management", label: "Gestão", itemIds: ["financial", "products", "guide"] },
+  { id: "system", label: "Sistema", itemIds: ["settings"] },
 ];
