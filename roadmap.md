@@ -33,3 +33,4 @@
 - [x] Refinar o workspace da implantação com navegação focada, microinterações e visual navy/verde
 
 - [x] Corrigir o carregamento e reconstruir o Painel do Proprietário com experiência profissional
+- [x] Compactar o workspace da implantação e reduzir barra superior, respiros e blocos verticais

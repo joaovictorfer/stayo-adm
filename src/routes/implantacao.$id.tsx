@@ -289,8 +289,8 @@ function ImplementationDetailPage() {
 
           {tab === "resumo" ? (
             <div className="implementation-summary">
-              <div className="grid gap-10 lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)]">
-                <div className="min-w-0 space-y-10">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)]">
+                <div className="min-w-0 space-y-6">
                   <section>
                     <p className="implementation-section-label">Recomendação</p>
                     <div className="implementation-next-action">
@@ -304,21 +304,21 @@ function ImplementationDetailPage() {
                         {nextItem?.title ?? "Tudo em dia por enquanto"}
                       </h2>
                       <p
-                        className="mt-3 max-w-2xl text-sm leading-relaxed"
+                        className="mt-2 max-w-2xl text-sm leading-relaxed"
                         style={{ color: "var(--stayo-ink-muted)" }}
                       >
                         {nextItem?.description ||
                           "Revise o progresso e acompanhe as próximas etapas da implantação."}
                       </p>
                       {nextItem && (
-                        <Button size="sm" className="mt-5" onClick={() => setTab("checklist")}>
+                        <Button size="sm" className="mt-3" onClick={() => setTab("checklist")}>
                           <ListChecks /> Resolver agora <ChevronRight />
                         </Button>
                       )}
                     </div>
                   </section>
 
-                  <div className="grid gap-10 sm:grid-cols-2">
+                  <div className="grid gap-6 sm:grid-cols-2">
                     <section>
                       <SummaryHeading>Imóvel</SummaryHeading>
                       <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
@@ -379,7 +379,7 @@ function ImplementationDetailPage() {
                   <ContractConditionsPanel implementationId={implementation.id} />
                 </div>
 
-                <aside className="space-y-10">
+                <aside className="space-y-6">
                   <section>
                     <SummaryHeading>Pendências</SummaryHeading>
                     {pendingItems.length === 0 && missingPropertyFields === 0 ? (
@@ -445,7 +445,7 @@ function ImplementationDetailPage() {
                 </aside>
               </div>
 
-              <div className="mt-10 border-t pt-6" style={{ borderColor: "var(--stayo-border)" }}>
+              <div className="mt-6 border-t pt-4" style={{ borderColor: "var(--stayo-border)" }}>
                 <details>
                   <summary
                     className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]"
