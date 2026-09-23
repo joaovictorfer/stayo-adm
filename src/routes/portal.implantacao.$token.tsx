@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { OwnerOnboardingJourney } from "../components/portal/OwnerOnboardingJourney";
+import { OwnerJourney } from "../components/portal/OwnerJourney";
 import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { ownerOnboardingLinkByTokenQuery } from "../lib/api/queries";
 import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
@@ -78,7 +78,7 @@ function OwnerJourneyPortalPage() {
 
   return (
     <Shell>
-      <OwnerOnboardingJourney implementationId={linkQuery.data.implementationId} token={token} />
+      <OwnerJourney implementationId={linkQuery.data.implementationId} token={token} />
     </Shell>
   );
 }
