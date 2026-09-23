@@ -527,7 +527,7 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
         { label: "CPF/CNPJ", current: ownerData?.document, received: submitted.document, normalize: normalizeDocument },
       ].filter(({ current, received, normalize }) => received && normalize(current) !== normalize(received))
     : [];
-  const registration = computeOwnerRegistration({ submission: submitted, hasDivergences: confirmations.length > 0 });
+  const registration = computeOwnerRegistration({ submission: submitted ?? null, hasDivergences: confirmations.length > 0 });
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
@@ -705,7 +705,8 @@ function OwnerPortalPanel({
           </p>
 
           {link && status && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+             <div className="mb-3 grid gap-2 text-xs sm:grid-cols-2">
+               <div className="flex flex-wrap items-center gap-2">
               <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
               <span style={{ color: "var(--stayo-ink-muted)" }}>
                 {status === "ativo"
@@ -716,6 +717,8 @@ function OwnerPortalPanel({
                       ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
                       : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
               </span>
+               </div>
+               <span style={{ color: "var(--stayo-ink-muted)" }}>Último acesso: {link.lastAccessAt ? new Date(link.lastAccessAt).toLocaleString("pt-BR") : "Ainda não acessado"}</span>
             </div>
           )}
 
@@ -738,6 +741,8 @@ function OwnerPortalPanel({
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 {copied ? "Copiado" : "Copiar"}
               </button>
+              <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"><ExternalLink size={14} />Abrir</button>
+              <a href={`https://wa.me/?text=${encodeURIComponent(`Acesse seu portal Stayo: ${url}`)}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"><Share2 size={14} />Enviar</a>
              </div></details>
           )}
            {status === "ativo" && !url && <p className="mb-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">Acesso ativo. O link original não está disponível neste dispositivo.</p>}

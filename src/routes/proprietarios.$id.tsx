@@ -9,7 +9,6 @@ import {
   ErrorRows,
   Field,
   NotFoundPanel,
-  PageHeader,
 } from "../components/data/ListStates";
 import { AdminActionButton, AdminAttentionCard, AdminEmptyState, AdminPageHeader, AdminSection, AdminStatCard } from "../components/admin/AdminPrimitives";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -93,13 +92,6 @@ function OwnerDetailPage() {
     () => (reservationsQuery.data?.data ?? []).filter((r) => propertyIds.has(r.propertyId)),
     [reservationsQuery.data, propertyIds],
   );
-  const upcomingReservations = useMemo(() => {
-    const now = Date.now();
-    return reservations
-      .filter((r) => Date.parse(r.checkin) >= now)
-      .sort((a, b) => Date.parse(a.checkin) - Date.parse(b.checkin));
-  }, [reservations]);
-
   const totalPayouts = payouts.reduce((sum, p) => sum + (p.amount ?? 0), 0);
   const pendingInvoices = invoices.filter((i) => !i.paidAt);
   const totalPendingInvoices = pendingInvoices.reduce((sum, i) => sum + i.total, 0);
