@@ -15,6 +15,13 @@
       "when": 1790125182558,
       "tag": "0001_strengthen_owner_onboarding_draft_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790127037015,
+      "tag": "0002_add_onboarding_people_and_smart_payout",
+      "breakpoints": true
     }
   ]
 }
