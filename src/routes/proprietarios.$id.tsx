@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Calendar, FileText, Wallet } from "lucide-react";
+import { Building2, Calendar, ClipboardList, FileText, Globe2, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +12,8 @@ import {
   PageHeader,
 } from "../components/data/ListStates";
 import { IndicatorCard } from "../components/patterns/IndicatorCard";
+import { AdminActionButton, AdminAttentionCard, AdminEmptyState, AdminPageHeader, AdminSection, AdminStatCard, AdminStatusBadge } from "../components/admin/AdminPrimitives";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -28,6 +30,7 @@ import {
   ownerNoteQuery,
   ownerQuery,
   ownerTasksQuery,
+  implementationsListQuery,
   payoutsListQuery,
   propertiesListQuery,
   reservationsListQuery,
@@ -36,7 +39,7 @@ import {
 import { formatMoney } from "../lib/format";
 import type { OwnerLifecycleStatus, OwnerRecord, OwnerTaskStatus } from "../types/admin";
 import type { Contract, Reservation, ServiceInvoice } from "../types/core";
-import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, normalizeOwnerSubmission, ownerAdminEditSchema } from "../lib/owner-form-validation";
+import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, ownerAdminEditSchema } from "../lib/owner-form-validation";
 
 const lifecycleLabels: Record<OwnerLifecycleStatus, string> = {
   prospect: "Prospect",
@@ -66,7 +69,9 @@ function OwnerDetailPage() {
   const payoutsQuery = useQuery(payoutsListQuery());
   const invoicesQuery = useQuery(serviceInvoicesListQuery());
   const reservationsQuery = useQuery(reservationsListQuery());
+  const implementationsQuery = useQuery(implementationsListQuery());
   const owner = query.data;
+  const implementations = useMemo(() => (implementationsQuery.data?.data ?? []).filter((item) => item.ownerId === id), [implementationsQuery.data, id]);
 
   const properties = useMemo(
     () => (propertiesQuery.data?.data ?? []).filter((p) => p.ownerId === id),
@@ -107,15 +112,7 @@ function OwnerDetailPage() {
 
   return (
     <>
-      <PageHeader title={owner?.name ?? "Proprietário"}>
-        <Link
-          to="/proprietarios"
-          className="text-sm underline"
-          style={{ color: "var(--stayo-ink-muted)" }}
-        >
-          Voltar para proprietários
-        </Link>
-      </PageHeader>
+      <AdminPageHeader eyebrow="Proprietário" title={owner?.name ?? "Proprietário"} description="Relacionamento, cadastro e operação em uma visão única." actions={<AdminActionButton asChild><Link to="/proprietarios">Voltar para proprietários</Link></AdminActionButton>} />
 
       {query.isPending ? (
         <DetailSkeleton />
@@ -124,39 +121,24 @@ function OwnerDetailPage() {
       ) : !owner ? (
         <NotFoundPanel message="Proprietário não encontrado" />
       ) : (
-        <div className="flex flex-col gap-4">
-          <OwnerContactPanel owner={owner} />
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="ID" value={owner.id} />
-            <Field label="Criado em" value={owner.createdAt} />
-            <Field label="Atualizado em" value={owner.updatedAt} />
+        <div className="flex flex-col gap-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <AdminStatCard icon={Building2} label="Imóveis" value={properties.length} />
+            <AdminStatCard icon={ClipboardList} label="Implantações" value={implementations.length} />
+            <AdminStatCard icon={FileText} label="Cadastro" value={owner.document && owner.email && owner.phone ? "Completo" : "Incompleto"} tone={owner.document && owner.email && owner.phone ? "success" : "warning"} />
+            <AdminStatCard icon={Globe2} label="Portal" value={implementations.length ? "Disponível" : "Não iniciado"} />
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <IndicatorCard
-              icon={Wallet}
-              label="Total repassado"
-              value={payoutsQuery.isPending ? "…" : (formatMoney(totalPayouts) ?? "—")}
-            />
-            <IndicatorCard
-              icon={FileText}
-              label="Faturas pendentes"
-              value={
-                invoicesQuery.isPending
-                  ? "…"
-                  : `${pendingInvoices.length} · ${formatMoney(totalPendingInvoices) ?? "—"}`
-              }
-              tone={pendingInvoices.length > 0 ? "warning" : "neutral"}
-            />
-            <IndicatorCard
-              icon={Calendar}
-              label="Próximas reservas"
-              value={reservationsQuery.isPending ? "…" : upcomingReservations.length}
-            />
-          </div>
-
-          <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+          {(!owner.document || !owner.email || !owner.phone) && <AdminAttentionCard title="Cadastro requer atenção" description="Complete os dados principais antes de formalizar contratos e repasses." action={<AdminActionButton onClick={() => document.getElementById("owner-contact")?.scrollIntoView({ behavior: "smooth" })}>Resolver agora</AdminActionButton>} />}
+          <Tabs defaultValue="resumo">
+            <TabsList className="h-auto w-full justify-start overflow-x-auto bg-white p-1">
+              {[["resumo","Resumo"],["imoveis","Imóveis"],["implantacoes","Implantações"],["contratos","Contratos"],["financeiro","Financeiro"],["documentos","Documentos"],["portal","Portal"],["historico","Histórico"]].map(([value,label]) => <TabsTrigger key={value} value={value}>{label}</TabsTrigger>)}
+            </TabsList>
+            <TabsContent value="resumo" className="space-y-4">
+              <AdminSection title="Dados principais"><div id="owner-contact"><OwnerContactPanel owner={owner} /></div></AdminSection>
+              <AdminSection title="Próxima ação">{owner.document && owner.email && owner.phone ? <AdminEmptyState title="Nenhuma ação imediata" description="Os dados principais estão completos." /> : <AdminAttentionCard title="Complete o cadastro" description="Confirme contato e CPF/CNPJ do proprietário." />}</AdminSection>
+              <AdminSection title="Atividade recente"><Timeline entries={timeline.slice(0, 5)} /></AdminSection>
+            </TabsContent>
+            <TabsContent value="imoveis"><AdminSection title="Imóveis vinculados"><div className="rounded-[var(--radius-card)] border p-4" style={surface}>
             <h2
               className="mb-3 text-sm"
               style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
@@ -180,9 +162,9 @@ function OwnerDetailPage() {
                 ))}
               </ul>
             )}
-          </div>
-
-          <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+          </div></AdminSection></TabsContent>
+            <TabsContent value="implantacoes"><AdminSection title="Implantações">{implementations.length ? <ul className="space-y-2">{implementations.map((item) => <li key={item.id}><LinkedField to="/implantacao/$id" id={item.id} label={`${item.code} · ${item.propertyName}`} /></li>)}</ul> : <AdminEmptyState title="Nenhuma implantação" description="Ainda não há implantação vinculada." />}</AdminSection></TabsContent>
+            <TabsContent value="contratos"><AdminSection title="Contratos"><div className="rounded-[var(--radius-card)] border p-4" style={surface}>
             <h2
               className="mb-3 text-sm"
               style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
@@ -207,9 +189,13 @@ function OwnerDetailPage() {
                 ))}
               </ul>
             )}
-          </div>
-
-          <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
+          </div></AdminSection></TabsContent>
+            <TabsContent value="financeiro" className="space-y-4"><AdminSection title="Resumo financeiro"><div className="grid gap-3 sm:grid-cols-2"><AdminStatCard icon={Wallet} label="Total repassado" value={payoutsQuery.isPending ? "…" : formatMoney(totalPayouts) ?? "—"} /><AdminStatCard icon={FileText} label="Faturas pendentes" value={`${pendingInvoices.length} · ${formatMoney(totalPendingInvoices) ?? "—"}`} tone={pendingInvoices.length ? "warning" : "neutral"} /></div></AdminSection></TabsContent>
+            <TabsContent value="documentos"><OwnerAttachmentsPanel ownerId={id} /></TabsContent>
+            <TabsContent value="portal"><AdminSection title="Portal do proprietário">{implementations.length ? <div className="space-y-2">{implementations.map((item) => <div key={item.id} className="flex items-center justify-between rounded-lg border bg-white p-3"><div><p className="font-medium">{item.propertyName}</p><p className="text-xs text-[var(--admin-muted)]">Gerencie o acesso no workspace da implantação.</p></div><AdminActionButton asChild><Link to="/implantacao/$id" params={{ id: item.id }}>Gerenciar portal</Link></AdminActionButton></div>)}</div> : <AdminEmptyState title="Portal ainda não disponível" description="Ele será liberado com a primeira implantação." />}</AdminSection></TabsContent>
+            <TabsContent value="historico" className="space-y-4"><AdminSection title="Histórico"><Timeline entries={timeline} /></AdminSection><OwnerTasksPanel ownerId={id} /><OwnerNotesPanel ownerId={id} /><details className="rounded-lg border bg-white p-4"><summary className="cursor-pointer text-sm font-medium">Detalhes técnicos</summary><dl className="mt-3 grid gap-2 text-xs text-[var(--admin-muted)]"><Field label="ID interno" value={owner.id} /><Field label="Criado em" value={owner.createdAt} /><Field label="Atualizado em" value={owner.updatedAt} />{owner.coreOwnerId && <Field label="Core ID" value={owner.coreOwnerId} />}</dl></details></TabsContent>
+          </Tabs>
+          <div className="hidden rounded-[var(--radius-card)] border p-4" style={surface}>
             <h2
               className="mb-3 text-sm"
               style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
@@ -261,11 +247,7 @@ function OwnerDetailPage() {
             )}
           </div>
 
-          <OwnerTasksPanel ownerId={id} />
-
-          <OwnerAttachmentsPanel ownerId={id} />
-
-          <OwnerNotesPanel ownerId={id} />
+          </div>
         </div>
       )}
     </>
