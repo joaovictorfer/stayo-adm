@@ -24,6 +24,7 @@ export interface Attachment {
   ownerId: string;
   implementationId: string | null;
   ownerTaskId: string | null;
+  inspectionId: string | null;
   storagePath: string;
   category: string;
   mimeType: string;
@@ -38,6 +39,7 @@ interface AttachmentRow {
   owner_id: string;
   implementation_id: string | null;
   owner_task_id: string | null;
+  inspection_id: string | null;
   storage_path: string;
   category: string;
   mime_type: string;
@@ -53,6 +55,7 @@ function attachmentFromRow(row: AttachmentRow): Attachment {
     ownerId: row.owner_id,
     implementationId: row.implementation_id,
     ownerTaskId: row.owner_task_id,
+    inspectionId: row.inspection_id,
     storagePath: row.storage_path,
     category: row.category,
     mimeType: row.mime_type,

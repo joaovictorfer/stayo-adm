@@ -17,6 +17,8 @@ export type OwnerPortalModule =
 const implementationModules: OwnerPortalModule[] = [
   "overview",
   "implementation",
+  "property",
+  "inspections",
   "profile",
   "proposal",
   "documents",
