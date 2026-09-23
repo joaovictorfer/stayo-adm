@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CheckCircle2,
@@ -151,35 +151,107 @@ function OwnerOnboardingForm({
   const ownerQ = useQuery({ ...ownerQuery(ownerId ?? ""), enabled: !!ownerId });
   const [form, setForm] = useState<OwnerOnboardingSubmissionInput>(emptyForm);
   const [touched, setTouched] = useState<Partial<Record<OwnerFormField, boolean>>>({});
+  const [currentStep, setCurrentStep] = useState(1);
+  const [autoSaveState, setAutoSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hydrated = useRef(false);
+  const formRef = useRef(form);
+  const stepRef = useRef(currentStep);
+  const lastSaved = useRef("");
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    if (draftQ.data) setForm({ ...emptyForm, ...draftQ.data });
-    else if (ownerQ.data)
-      setForm((current) => ({
-        ...current,
-        fullName: ownerQ.data?.name ?? "",
-        email: ownerQ.data?.email ?? "",
-        phone: ownerQ.data?.phone ?? "",
-        accountHolder: ownerQ.data?.name ?? "",
-        holderTaxId: ownerQ.data?.document ?? "",
-        people: [
-          {
-            role: "proprietario",
-            personType: "pf",
-            fullName: ownerQ.data?.name ?? "",
-            document: ownerQ.data?.document ?? "",
-            email: ownerQ.data?.email ?? "",
-            phone: ownerQ.data?.phone ?? "",
-          },
-        ],
-      }));
-  }, [draftQ.data, ownerQ.data]);
+    if (hydrated.current || draftQ.isPending || (ownerId && ownerQ.isPending)) return;
+    const initialForm = draftQ.data
+      ? { ...emptyForm, ...draftQ.data }
+      : ownerQ.data
+        ? {
+            ...emptyForm,
+            fullName: ownerQ.data.name ?? "",
+            email: ownerQ.data.email ?? "",
+            phone: ownerQ.data.phone ?? "",
+            accountHolder: ownerQ.data.name ?? "",
+            holderTaxId: ownerQ.data.document ?? "",
+            people: [
+              {
+                role: "proprietario" as const,
+                personType: "pf" as const,
+                fullName: ownerQ.data.name ?? "",
+                document: ownerQ.data.document ?? "",
+                email: ownerQ.data.email ?? "",
+                phone: ownerQ.data.phone ?? "",
+              },
+            ],
+          }
+        : emptyForm;
+    setForm(initialForm);
+    formRef.current = initialForm;
+    const restoredStep = Math.max(1, Math.min(5, draftQ.data?.currentStep ?? 1));
+    setCurrentStep(restoredStep);
+    stepRef.current = restoredStep;
+    lastSaved.current = JSON.stringify(initialForm);
+    hydrated.current = true;
+  }, [draftQ.data, draftQ.isPending, ownerId, ownerQ.data, ownerQ.isPending]);
+
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  useEffect(() => {
+    stepRef.current = currentStep;
+  }, [currentStep]);
+
+  const persistDraft = useCallback(
+    (snapshot: OwnerOnboardingSubmissionInput, step: number) => {
+      const signature = JSON.stringify(snapshot);
+      if (!hydrated.current || signature === lastSaved.current) return saveQueue.current;
+      setAutoSaveState("saving");
+      saveQueue.current = saveQueue.current
+        .catch(() => undefined)
+        .then(async () => {
+          const saved = await adminApi.ownerOnboarding.saveDraft(token, snapshot, step, false);
+          lastSaved.current = signature;
+          queryClient.setQueryData(["owner-onboarding-draft", token], saved);
+          queryClient.setQueryData(
+            ownerOnboardingSubmissionQuery(implementationId).queryKey,
+            saved,
+          );
+          setAutoSaveState("saved");
+        })
+        .catch(() => {
+          setAutoSaveState("error");
+        });
+      return saveQueue.current;
+    },
+    [implementationId, queryClient, token],
+  );
+
+  useEffect(() => {
+    if (!hydrated.current || submissionQ.data?.submittedAt) return;
+    const timer = window.setTimeout(() => void persistDraft(form, currentStep), 900);
+    return () => window.clearTimeout(timer);
+  }, [currentStep, form, persistDraft, submissionQ.data?.submittedAt]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === "hidden")
+        void persistDraft(formRef.current, stepRef.current);
+    };
+    const flushOnExit = () => void persistDraft(formRef.current, stepRef.current);
+    document.addEventListener("visibilitychange", flush);
+    window.addEventListener("pagehide", flushOnExit);
+    return () => {
+      document.removeEventListener("visibilitychange", flush);
+      window.removeEventListener("pagehide", flushOnExit);
+      flushOnExit();
+    };
+  }, [persistDraft]);
 
   const valid = (keys: OwnerFormField[]) =>
     keys.every((key) => !validateOwnerField(key, form[key]));
   const save = useMutation({
-    mutationFn: ({ submit, step }: { submit: boolean; step: number }) => {
+    mutationFn: async ({ submit, step }: { submit: boolean; step: number }) => {
       const parsed = ownerOnboardingFormSchema.parse(form);
+      await saveQueue.current;
       return adminApi.ownerOnboarding.saveDraft(
         token,
         normalizeOwnerSubmission(parsed),
@@ -194,6 +266,8 @@ function OwnerOnboardingForm({
           ownerOnboardingSubmissionQuery(implementationId).queryKey,
           submission,
         );
+      lastSaved.current = JSON.stringify(form);
+      setAutoSaveState("saved");
       toast.success(variables.submit ? "Recebemos seu cadastro" : "Dados salvos", {
         description: "Suas informações foram guardadas com segurança.",
       });
@@ -653,24 +727,58 @@ function OwnerOnboardingForm({
 
   return (
     <Shell>
-      <h1 className="mb-1 text-lg font-semibold">Vamos concluir seu cadastro</h1>
-      <p className="mb-4 text-sm text-[var(--portal-muted)]">
-        São cinco etapas curtas. Você pode salvar e continuar depois.
-      </p>
-      <Wizard
-        steps={steps}
-        completeLabel="Confirmar e enviar cadastro"
-        submitting={save.isPending}
-        onComplete={() => save.mutate({ submit: true, step: 5 })}
-      />
-      <Button
-        variant="ghost"
-        className="mt-3 w-full"
-        disabled={save.isPending}
-        onClick={() => save.mutate({ submit: false, step: 1 })}
+      <div
+        onBlurCapture={() => void persistDraft(formRef.current, stepRef.current)}
+        onFocusCapture={() => {
+          if (autoSaveState === "error") void persistDraft(formRef.current, stepRef.current);
+        }}
       >
-        Salvar e continuar depois
-      </Button>
+        <h1 className="mb-1 text-lg font-semibold">Vamos concluir seu cadastro</h1>
+        <p className="mb-4 text-sm text-[var(--portal-muted)]">
+          São cinco etapas curtas. Suas alterações são salvas automaticamente.
+        </p>
+        <div
+          className="mb-4 flex items-center gap-2 text-xs text-[var(--portal-muted)]"
+          role="status"
+        >
+          <span
+            className={`size-2 rounded-full ${
+              autoSaveState === "error"
+                ? "bg-[var(--portal-danger)]"
+                : autoSaveState === "saving"
+                  ? "animate-pulse bg-[var(--portal-gold)]"
+                  : "bg-[var(--portal-success)]"
+            }`}
+          />
+          {autoSaveState === "saving"
+            ? "Salvando alterações…"
+            : autoSaveState === "error"
+              ? "Não foi possível salvar agora. Tentaremos novamente."
+              : autoSaveState === "saved"
+                ? "Alterações salvas"
+                : "Salvamento automático ativo"}
+        </div>
+        <Wizard
+          steps={steps}
+          initialStep={currentStep - 1}
+          onStepChange={(index) => {
+            const nextStep = index + 1;
+            setCurrentStep(nextStep);
+            void persistDraft(formRef.current, nextStep);
+          }}
+          completeLabel="Confirmar e enviar cadastro"
+          submitting={save.isPending}
+          onComplete={() => save.mutate({ submit: true, step: 5 })}
+        />
+        <Button
+          variant="ghost"
+          className="mt-3 w-full"
+          disabled={save.isPending}
+          onClick={() => save.mutate({ submit: false, step: currentStep })}
+        >
+          Salvar e continuar depois
+        </Button>
+      </div>
     </Shell>
   );
 }

@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -20,19 +20,32 @@ export interface WizardStep {
 export function Wizard({
   steps,
   onComplete,
+  onStepChange,
+  initialStep = 0,
   completeLabel = "Salvar",
   submitting = false,
 }: {
   steps: WizardStep[];
   onComplete: () => void;
+  onStepChange?: (step: number) => void;
+  initialStep?: number;
   completeLabel?: string;
   submitting?: boolean;
 }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(initialStep);
   const [visited, setVisited] = useState<number[]>([]);
   const step = steps[index];
   const isLast = index === steps.length - 1;
   const isFirst = index === 0;
+
+  useEffect(() => {
+    setIndex(Math.max(0, Math.min(initialStep, steps.length - 1)));
+  }, [initialStep, steps.length]);
+
+  const moveTo = (next: number) => {
+    setIndex(next);
+    onStepChange?.(next);
+  };
 
   if (!step) return null;
 
@@ -78,7 +91,7 @@ export function Wizard({
         {!isFirst && (
           <Button
             type="button"
-            onClick={() => setIndex((i) => i - 1)}
+            onClick={() => moveTo(index - 1)}
             variant="outline"
             className="portal-action rounded-xl border-[var(--portal-border)] text-[var(--portal-navy)]"
           >
@@ -92,7 +105,7 @@ export function Wizard({
             if (isLast) onComplete();
             else {
               setVisited((current) => (current.includes(index) ? current : [...current, index]));
-              setIndex((i) => i + 1);
+              moveTo(index + 1);
             }
           }}
           className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
