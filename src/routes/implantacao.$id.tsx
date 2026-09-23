@@ -49,6 +49,7 @@ import {
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
+import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -515,7 +516,7 @@ function ImplementationDetailPage() {
           ) : tab === "imovel" ? (
             <PropertyTab implementation={implementation} />
           ) : tab === "enxoval" ? (
-            <EnxovalTab implementationId={implementation.id} mode="inventory" />
+            <SupplySheet implementationId={implementation.id} />
           ) : tab === "itens_faltantes" ? (
             <EnxovalTab implementationId={implementation.id} mode="missing" />
           ) : tab === "checklist" ? (

@@ -6,7 +6,7 @@
  * etapa e anexos alimentam a linha do tempo por trigger no banco.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -318,8 +318,8 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
             ) : null}
 
             {grouped.map(([room, rows]) => (
-              <>
-                <tr key={`group-${room}`} className="bg-slate-50/60">
+              <Fragment key={`group-${room}`}>
+                <tr className="bg-slate-50/60">
                   <td colSpan={8} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     {room} · {rows.length} {rows.length === 1 ? "item" : "itens"}
                   </td>
@@ -335,7 +335,7 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
                     onOpenPayment={() => setPayItem(item)}
                   />
                 ))}
-              </>
+              </Fragment>
             ))}
 
             {/* Linha de digitação */}
