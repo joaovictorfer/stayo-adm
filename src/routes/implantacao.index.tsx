@@ -1,7 +1,15 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ImagePlus, Pencil, Plus, Trash2 } from "lucide-react";
+
+import fallbackCover from "../assets/owner-portal-property-fallback.jpg";
+import {
+  clearImplementationIntakeDraft,
+  readImplementationIntakeDraft,
+  saveImplementationIntakeDraft,
+} from "../lib/api/implementation-intake-draft";
+import { uploadImplementationCover } from "../lib/api/implementation-covers";
 
 import {
   EmptyRows,
