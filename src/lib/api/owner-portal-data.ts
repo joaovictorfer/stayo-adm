@@ -62,6 +62,8 @@ export async function listOwnerImplementations(): Promise<ImplementationProject[
     code: row.code,
     status: row.status as ImplementationStatus,
     ownerId: row.owner_id,
+    ownerName: null,
+    ownerPhone: null,
     nickname: row.nickname,
     condominiumName: row.condominium_name,
     unit: row.unit,

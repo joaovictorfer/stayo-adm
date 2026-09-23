@@ -965,11 +965,21 @@ function OwnerHomePage() {
 
 function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
   const [activeTab, setActiveTab] = useState("visao-geral");
+  const [selectedImplementationId, setSelectedImplementationId] = useState(() =>
+    typeof window === "undefined" ? "" : (window.localStorage.getItem("stayo-owner-property") ?? ""),
+  );
   const tabsListRef = useRef<HTMLDivElement>(null);
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
-  const implementationsQ = useQuery(implementationsListQuery());
-  const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
+  const implementationsQ = useQuery({
+    queryKey: ["owner-portal", "implementations", ownerId],
+    queryFn: listOwnerImplementations,
+    staleTime: 30_000,
+  });
+  const ownerImplementations = implementationsQ.data ?? [];
+  const implementation =
+    ownerImplementations.find((item) => item.id === selectedImplementationId) ??
+    ownerImplementations[0];
   const portalPhase = getOwnerPortalPhase(implementation);
   const portalModules = getOwnerPortalModules(portalPhase);
   const corePropertyId =
@@ -1004,6 +1014,24 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
     queryKey: ["owner-attachments", ownerId],
     queryFn: () => listOwnerAttachments(ownerId),
   });
+  const propertyDetailsQ = useQuery({
+    queryKey: ["owner-portal", "property-details", implementation?.id],
+    queryFn: () => getPropertyDetails(implementation?.id ?? ""),
+    enabled: Boolean(implementation?.id) && activeTab === "property",
+  });
+  const timelineQ = useQuery({
+    queryKey: ["owner-portal", "timeline", implementation?.id],
+    queryFn: () => listPortalTimeline(implementation?.id ?? ""),
+    enabled:
+      Boolean(implementation?.id) &&
+      (activeTab === "implantacao" || activeTab === "visao-geral"),
+    staleTime: 20_000,
+  });
+  const inspectionsQ = useQuery({
+    queryKey: ["owner-portal", "inspections", implementation?.id],
+    queryFn: () => listPortalInspections(implementation?.id ?? ""),
+    enabled: Boolean(implementation?.id) && activeTab === "inspections",
+  });
   const download = useMutation({
     mutationFn: (storagePath: string) => getAttachmentSignedUrl(storagePath),
     onSuccess: (url) => {
@@ -1025,6 +1053,17 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
     if (!portalModules.includes(activeModule as OwnerPortalModule)) setActiveTab("visao-geral");
   }, [activeTab, portalModules]);
 
+  useEffect(() => {
+    if (!implementation?.id || selectedImplementationId === implementation.id) return;
+    setSelectedImplementationId(implementation.id);
+  }, [implementation?.id, selectedImplementationId]);
+
+  const selectImplementation = (id: string) => {
+    setSelectedImplementationId(id);
+    window.localStorage.setItem("stayo-owner-property", id);
+    setActiveTab("visao-geral");
+  };
+
   return (
     <div className="portal-dashboard">
       {welcome.showWelcome && welcome.ready && (
@@ -1035,6 +1074,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         />
       )}
       <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
+      {ownerImplementations.length > 1 && (
+        <PropertySwitcher
+          implementations={ownerImplementations}
+          selectedId={implementation?.id ?? ""}
+          onSelect={selectImplementation}
+        />
+      )}
       <PortalPhaseIndicator phase={portalPhase} />
       {portalPhase === "ready" && implementation && (
         <ReadyTransition implementation={implementation} />
@@ -1136,21 +1182,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                 </p>
               </div>
             </div>
-            <PortalEmptyState
-              icon={<BellRing />}
-              title="Nenhuma novidade por enquanto"
-              description="Seu acompanhamento está em dia e não há novas atualizações públicas neste momento."
-              nextStep="Assim que uma etapa avançar ou houver algo importante, você verá a atualização aqui."
-              action={{
-                label: "Ver minha implantação",
-                onClick: () => setActiveTab("implantacao"),
-              }}
-            />
+            <PortalTimeline events={timelineQ.data ?? []} loading={timelineQ.isPending} compact />
           </section>
         </TabsContent>
 
-        {portalPhase === "operation" && (
-          <>
+        <>
+          {portalPhase === "operation" && (
+            <>
             <TabsContent value="reservations" className="tab-content-anim space-y-6">
               {reservationsQ.isPending ? (
                 <PortalSkeleton rows={4} />
@@ -1214,64 +1252,43 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
             <TabsContent value="calendar" className="tab-content-anim space-y-6">
               <OperationalPlaceholder module="calendar" />
             </TabsContent>
-            <TabsContent value="property" className="tab-content-anim space-y-6">
-              {propertyQ.isPending ? (
-                <PortalSkeleton rows={4} />
-              ) : propertyQ.data ? (
-                <section className="portal-operational-list">
-                  <div className="portal-operational-heading">
-                    <p className="portal-milestones-eyebrow">Meu imóvel</p>
-                    <h2>{propertyQ.data.name}</h2>
-                    <p>
-                      {[propertyQ.data.condominiumName, propertyQ.data.unit, propertyQ.data.city]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                  <dl className="portal-property-facts">
-                    <div>
-                      <dt>Status</dt>
-                      <dd>{propertyQ.data.status}</dd>
-                    </div>
-                    <div>
-                      <dt>Capacidade</dt>
-                      <dd>
-                        {propertyQ.data.capacity
-                          ? `${propertyQ.data.capacity} hóspedes`
-                          : "A confirmar"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Check-in</dt>
-                      <dd>{propertyQ.data.checkinTime ?? "A confirmar"}</dd>
-                    </div>
-                    <div>
-                      <dt>Check-out</dt>
-                      <dd>{propertyQ.data.checkoutTime ?? "A confirmar"}</dd>
-                    </div>
-                  </dl>
-                </section>
-              ) : (
-                <OperationalPlaceholder module="property" />
-              )}
-            </TabsContent>
-            <TabsContent value="inspections" className="tab-content-anim space-y-6">
-              <OperationalPlaceholder module="inspections" />
-            </TabsContent>
             <TabsContent value="maintenance" className="tab-content-anim space-y-6">
               <OperationalPlaceholder module="maintenance" />
             </TabsContent>
             <TabsContent value="finance" className="tab-content-anim space-y-6">
               <OperationalPlaceholder module="finance" />
             </TabsContent>
-          </>
-        )}
+            </>
+          )}
+          <TabsContent value="property" className="tab-content-anim space-y-6">
+            {implementation && (
+              <PropertyDetailsPanel
+                implementation={implementation}
+                details={propertyDetailsQ.data ?? null}
+                loading={propertyDetailsQ.isPending}
+              />
+            )}
+          </TabsContent>
+          <TabsContent value="inspections" className="tab-content-anim space-y-6">
+            <InspectionsPanel
+              inspections={inspectionsQ.data ?? []}
+              attachments={(attachmentsQ.data ?? []).filter(
+                (attachment) => attachment.implementationId === implementation?.id,
+              )}
+              loading={inspectionsQ.isPending || attachmentsQ.isPending}
+              onOpen={(path) => download.mutate(path)}
+            />
+          </TabsContent>
+        </>
 
         <TabsContent value="implantacao" className="tab-content-anim space-y-6">
           {implementationsQ.isPending ? (
             <PortalSkeleton rows={4} />
           ) : implementation ? (
-            <ImplementationJourney implementation={implementation} />
+            <>
+              <ImplementationJourney implementation={implementation} />
+              <PortalTimeline events={timelineQ.data ?? []} loading={timelineQ.isPending} />
+            </>
           ) : (
             <PortalEmptyState
               icon={<Key />}
