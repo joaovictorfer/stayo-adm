@@ -882,6 +882,56 @@ export type Database = {
           },
         ]
       }
+      owner_onboarding_people: {
+        Row: {
+          created_at: string
+          document: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          implementation_id: string
+          person_type: string
+          phone: string | null
+          position: number
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          implementation_id: string
+          person_type?: string
+          phone?: string | null
+          position?: number
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          implementation_id?: string
+          person_type?: string
+          phone?: string | null
+          position?: number
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_onboarding_people_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_onboarding_profiles: {
         Row: {
           city: string | null
@@ -1460,7 +1510,15 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      owner_onboarding_draft_resolve_v2: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       owner_onboarding_draft_save: {
+        Args: { p_data: Json; p_submit?: boolean; p_token: string }
+        Returns: Json
+      }
+      owner_onboarding_draft_save_v2: {
         Args: { p_data: Json; p_submit?: boolean; p_token: string }
         Returns: Json
       }

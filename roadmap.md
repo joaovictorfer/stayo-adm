@@ -9,14 +9,13 @@
 - [x] Refazer Dashboard orientado a ação com dados existentes
 - [x] Padronizar listagens prioritárias do Admin
 - [x] Validar lint dos arquivos alterados, testes, build, desktop e mobile
-- [ ] Corrigir CPF/CNPJ e centralizar normalização do proprietário
-- [ ] Evoluir onboarding público para cinco etapas e persistência validada
-- [ ] Calcular completude real do cadastro
-- [ ] Refinar aba Proprietário e gestão do Portal
-- [ ] Redesenhar ficha principal do proprietário
-- [ ] Validar migration, testes, lint, build e fluxos responsivos
-- [ ] Permitir múltiplos proprietários/proponentes no cadastro público
-- [ ] Tornar titular, CPF/CNPJ e chave Pix inteligentes a partir dos proprietários cadastrados
-- [ ] Refinar microinterações e visual do cadastro do proprietário
-- [ ] Validar persistência, testes, build e experiência mobile do novo fluxo
-
+- [x] Corrigir CPF/CNPJ e centralizar normalização do proprietário
+- [x] Evoluir onboarding público para cinco etapas e persistência validada
+- [x] Calcular completude real do cadastro
+- [x] Refinar aba Proprietário e gestão do Portal
+- [x] Redesenhar ficha principal do proprietário
+- [x] Validar migration, testes, lint, build e fluxos responsivos
+- [x] Permitir múltiplos proprietários/proponentes no cadastro público
+- [x] Tornar titular, CPF/CNPJ e chave Pix inteligentes a partir dos proprietários cadastrados
+- [x] Refinar microinterações e visual do cadastro do proprietário
+- [x] Validar persistência, testes, build e experiência mobile do novo fluxo

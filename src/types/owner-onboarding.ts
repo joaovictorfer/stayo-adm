@@ -27,6 +27,16 @@ export function ownerOnboardingLinkStatus(
 
 export type OwnerPersonType = "pf" | "pj";
 export type OwnerPixType = "cpf" | "cnpj" | "phone" | "email" | "random";
+export type OwnerPersonRole = "proprietario" | "coproprietario" | "proponente";
+
+export interface OwnerOnboardingPerson {
+  role: OwnerPersonRole;
+  personType: OwnerPersonType;
+  fullName: string;
+  document: string;
+  email: string;
+  phone: string;
+}
 
 export interface OwnerOnboardingSubmission {
   implementationId: EntityId;
@@ -51,6 +61,7 @@ export interface OwnerOnboardingSubmission {
   pixType: OwnerPixType;
   pixKey: string;
   isPrimary: boolean;
+  people: OwnerOnboardingPerson[];
   currentStep: number;
   submittedAt: string | null;
 }
