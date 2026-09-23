@@ -830,7 +830,10 @@ function ownerOnboardingErrorMessage(cause: unknown): string {
   const message =
     cause instanceof Error
       ? cause.message.toLocaleLowerCase("pt-BR")
-      : cause && typeof cause === "object" && "message" in cause && typeof cause.message === "string"
+      : cause &&
+          typeof cause === "object" &&
+          "message" in cause &&
+          typeof cause.message === "string"
         ? cause.message.toLocaleLowerCase("pt-BR")
         : "";
   if (message.includes("acesso inválido"))
