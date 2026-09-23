@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   AlertCircle,
+  ArrowLeft,
   Check,
   CheckCircle2,
+  ChevronRight,
   Copy,
   ExternalLink,
   ListChecks,
@@ -40,7 +42,6 @@ import {
   ErrorRows,
   Field,
   NotFoundPanel,
-  PageHeader,
   Panel,
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
@@ -171,16 +172,23 @@ function ImplementationDetailPage() {
   });
 
   return (
-    <>
-      <PageHeader title={implementation?.code ?? "Implantação"}>
+    <div className="implementation-workspace">
+      <header className="implementation-mobile-heading">
         <Link
           to="/implantacao"
-          className="text-sm underline"
-          style={{ color: "var(--stayo-ink-muted)" }}
+          className="implementation-back-button"
+          aria-label="Voltar para implantações"
         >
-          Voltar para implantações
+          <ArrowLeft aria-hidden="true" />
         </Link>
-      </PageHeader>
+        <div>
+          <span>Implantação</span>
+          <strong>{implementation?.code ?? "Carregando"}</strong>
+        </div>
+        <Link to="/implantacao" className="implementation-back-link">
+          Ver todas
+        </Link>
+      </header>
 
       {query.isPending ? (
         <DetailSkeleton />
@@ -189,12 +197,9 @@ function ImplementationDetailPage() {
       ) : !implementation ? (
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
-        <div className="flex flex-col gap-5">
-          <section
-            className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
-            style={{ borderColor: "var(--stayo-border)" }}
-          >
-            <div className="relative h-24 overflow-hidden sm:h-28">
+        <div className="implementation-workspace-stack">
+          <section className="implementation-identity">
+            <div className="implementation-cover">
               {implementation.coverImage ? (
                 <img
                   src={implementation.coverImage}
@@ -202,41 +207,36 @@ function ImplementationDetailPage() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               ) : (
-                <div className="absolute inset-0 bg-[linear-gradient(120deg,var(--stayo-forest-strong),var(--stayo-forest))]" />
+                <div className="absolute inset-0 bg-[var(--stayo-forest)]" />
               )}
-              <div className="absolute inset-0 bg-[linear-gradient(to_top,var(--stayo-forest),transparent)] opacity-80" />
+              <div className="implementation-cover-overlay" />
             </div>
-            <div className="relative grid gap-5 px-5 pb-5 sm:px-8 sm:pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div className="-mt-7 min-w-0">
-                <div
-                  className="mb-4 h-14 w-14 border-4 border-white bg-[var(--stayo-bg)] shadow-md sm:h-16 sm:w-16"
-                  aria-hidden="true"
-                />
-                <h1
-                  className="text-2xl font-semibold leading-tight sm:text-3xl"
-                  style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-forest)" }}
-                >
-                  {propertyName}
-                </h1>
-                <div
-                  className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium"
-                  style={{ color: "var(--stayo-ink-muted)" }}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--stayo-gold)]" />
+            <div className="implementation-identity-body">
+              <div className="implementation-identity-copy">
+                <div className="implementation-property-mark" aria-hidden="true" />
+                <h1 className="implementation-property-name">{propertyName}</h1>
+                <div className="implementation-identity-meta">
+                  <span className="implementation-status-pill">
+                    <span aria-hidden="true" />
                     {statusLabels[implementation.status]}
                   </span>
-                  <span aria-hidden="true">·</span>
                   <span>Proprietário: {implementation.ownerName || "Não informado"}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{implementation.code}</span>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => setTab("proprietario")}>
+              <div className="implementation-actions">
+                <Button
+                  className="implementation-primary-action"
+                  size="sm"
+                  onClick={() => setTab("proprietario")}
+                >
                   <ExternalLink /> Portal
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => void shareWorkspace()}>
+                <Button
+                  className="implementation-secondary-action"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void shareWorkspace()}
+                >
                   <Share2 /> Compartilhar
                 </Button>
               </div>
@@ -251,10 +251,7 @@ function ImplementationDetailPage() {
 
           <IndicatorCards items={items} loading={itemsQuery.isPending} />
 
-          <div
-            className="flex flex-wrap gap-2 border-b"
-            style={{ borderColor: "var(--stayo-border)" }}
-          >
+          <nav className="implementation-tabs" aria-label="Seções da implantação">
             {(
               [
                 "resumo",
@@ -270,12 +267,8 @@ function ImplementationDetailPage() {
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className="px-3 py-2 text-sm font-medium transition-colors"
-                style={{
-                  color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  borderBottom:
-                    tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
-                }}
+                className={tab === t ? "is-active" : undefined}
+                aria-current={tab === t ? "page" : undefined}
               >
                 {t === "resumo"
                   ? "Resumo"
@@ -292,20 +285,15 @@ function ImplementationDetailPage() {
                             : "Proposta"}
               </button>
             ))}
-          </div>
+          </nav>
 
           {tab === "resumo" ? (
-            <div
-              className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-8"
-              style={{ borderColor: "var(--stayo-border)" }}
-            >
+            <div className="implementation-summary">
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)]">
                 <div className="min-w-0 space-y-10">
                   <section>
-                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--stayo-gold)]">
-                      Próxima ação recomendada
-                    </p>
-                    <div className="border-l-2 border-[var(--stayo-forest)] bg-[var(--stayo-bg)] p-5 sm:p-7">
+                    <p className="implementation-section-label">Recomendação</p>
+                    <div className="implementation-next-action">
                       <h2
                         className="text-xl font-semibold leading-snug sm:text-2xl"
                         style={{
@@ -324,7 +312,7 @@ function ImplementationDetailPage() {
                       </p>
                       {nextItem && (
                         <Button size="sm" className="mt-5" onClick={() => setTab("checklist")}>
-                          <ListChecks /> Resolver agora
+                          <ListChecks /> Resolver agora <ChevronRight />
                         </Button>
                       )}
                     </div>
@@ -532,7 +520,7 @@ function ImplementationDetailPage() {
           )}
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -1260,22 +1248,24 @@ function StatusStepper({
 }) {
   const currentIndex = mainStatusFlow.indexOf(status);
   const isAlternate = alternateStatuses.includes(status);
+  const visibleIndex = currentIndex >= 0 ? currentIndex : 0;
+  const nextStatus = mainStatusFlow[visibleIndex + 1];
 
   return (
-    <div
-      className="border-y bg-white px-4 py-4 sm:px-6"
-      style={{ borderColor: "var(--stayo-border)" }}
-    >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
-          Status da implantação
-        </p>
+    <section className="implementation-stepper">
+      <div className="implementation-stepper-heading">
+        <div>
+          <p>Status da implantação</p>
+          <span>
+            Etapa {visibleIndex + 1} de {mainStatusFlow.length}
+          </span>
+        </div>
         <select
           value={status}
           onChange={(e) => onChange(e.target.value as ImplementationStatus)}
           disabled={pending}
-          className="rounded-[var(--radius-control)] border px-2 py-1 text-xs outline-none disabled:opacity-60"
-          style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+          className="implementation-status-select"
+          aria-label="Alterar status da implantação"
         >
           {[...mainStatusFlow, ...alternateStatuses].map((s) => (
             <option key={s} value={s}>
@@ -1285,7 +1275,7 @@ function StatusStepper({
         </select>
       </div>
 
-      <ol className="flex flex-col gap-3 md:flex-row md:gap-1.5">
+      <ol className="implementation-step-segments" aria-label="Progresso das etapas">
         {mainStatusFlow.map((s, index) => {
           let state: "done" | "current" | "future" | "blocked" = "future";
 
@@ -1296,41 +1286,21 @@ function StatusStepper({
             else if (index === currentIndex) state = "current";
           }
 
-          const color =
-            state === "done"
-              ? "var(--stayo-forest)"
-              : state === "current"
-                ? "var(--stayo-forest)"
-                : state === "blocked"
-                  ? "var(--stayo-danger)"
-                  : "var(--stayo-border)";
-
-          const opacity = state === "done" ? 0.55 : state === "blocked" ? 0.4 : 1;
-          const isCurrent = state === "current";
-
           return (
             <li
               key={s}
-              className="flex md:flex-1 flex-row md:flex-col items-center md:items-start gap-3 md:gap-2 min-w-0"
+              className={`is-${state}`}
+              aria-label={`${statusLabels[s]}: ${state === "current" ? "etapa atual" : state === "done" ? "concluída" : "futura"}`}
             >
-              <span
-                className="h-1.5 w-8 shrink-0 rounded-full transition-colors md:h-0.5 md:w-full"
-                title={state === "blocked" ? "Bloqueado / Alternativo" : ""}
-                style={{ backgroundColor: color, opacity }}
-              />
-              <span
-                className="text-[11px] leading-tight md:pr-1 md:text-[9px] lg:text-[10px]"
-                style={{
-                  color: isCurrent ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  fontWeight: isCurrent ? 600 : 400,
-                }}
-              >
-                {statusLabels[s]}
-              </span>
+              <span />
             </li>
           );
         })}
       </ol>
+      <p className="implementation-current-stage">
+        <strong>{statusLabels[status]}</strong>
+        {nextStatus && !isAlternate && <span>Próxima: {statusLabels[nextStatus]}</span>}
+      </p>
 
       {isAlternate && (
         <p
@@ -1340,7 +1310,7 @@ function StatusStepper({
           Fora da linha principal (bloqueado): {statusLabels[status]}
         </p>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -1350,10 +1320,7 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
   const pending = items.filter((item) => item.status !== "concluido").length;
 
   return (
-    <div
-      className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border bg-white sm:grid-cols-3"
-      style={{ borderColor: "var(--stayo-border)" }}
-    >
+    <div className="implementation-metrics">
       <Metric
         label="Progresso"
         value={loading ? "—" : `${progress.percent}%`}
@@ -1389,10 +1356,7 @@ function Metric({
   className?: string;
 }) {
   return (
-    <div
-      className={`border-r p-4 text-center last:border-r-0 sm:p-5 ${className}`}
-      style={{ borderColor: "var(--stayo-border)" }}
-    >
+    <div className={`implementation-metric ${className}`}>
       <p
         className="text-[10px] font-semibold uppercase tracking-[0.14em]"
         style={{ color: "var(--stayo-ink-muted)" }}
