@@ -867,6 +867,165 @@ function PortalHero({
   );
 }
 
+function PropertySwitcher({
+  implementations,
+  selectedId,
+  onSelect,
+}: {
+  implementations: ImplementationProject[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <section className="portal-property-switcher" aria-label="Selecionar imóvel">
+      <span className="portal-property-switcher-icon"><Building2 aria-hidden="true" /></span>
+      <div>
+        <small>Imóvel acompanhado</small>
+        <strong>{implementations.length} imóveis no seu portal</strong>
+      </div>
+      <label>
+        <span className="sr-only">Selecionar imóvel</span>
+        <select value={selectedId} onChange={(event) => onSelect(event.target.value)}>
+          {implementations.map((item) => (
+            <option key={item.id} value={item.id}>
+              {propertyName(item)}{item.city ? ` · ${item.city}` : ""}
+            </option>
+          ))}
+        </select>
+        <ChevronDown aria-hidden="true" />
+      </label>
+    </section>
+  );
+}
+
+function PortalTimeline({
+  events,
+  loading,
+  compact = false,
+}: {
+  events: PortalTimelineEvent[];
+  loading: boolean;
+  compact?: boolean;
+}) {
+  if (loading) return <PortalSkeleton rows={compact ? 2 : 4} />;
+  if (events.length === 0)
+    return (
+      <PortalEmptyState
+        icon={<History />}
+        title="A primeira atualização está sendo preparada"
+        description="Orçamentos, etapas, previsões e vistorias aparecerão aqui em ordem cronológica."
+        nextStep="A equipe Stayo publica somente informações relevantes para você."
+      />
+    );
+  const visible = compact ? events.slice(0, 3) : events;
+  const kindLabels: Record<PortalTimelineEvent["kind"], string> = {
+    update: "Atualização",
+    budget: "Orçamento",
+    stage: "Etapa",
+    forecast: "Previsão",
+    inspection: "Vistoria",
+    document: "Documento",
+  };
+  return (
+    <section className="portal-timeline" aria-labelledby={`timeline-${compact ? "summary" : "full"}`}>
+      {!compact && (
+        <div className="portal-timeline-heading">
+          <div><p className="portal-milestones-eyebrow">Histórico do imóvel</p><h2 id="timeline-full">Linha do tempo</h2></div>
+          <span>{events.length} atualizações</span>
+        </div>
+      )}
+      <ol>
+        {visible.map((event) => (
+          <li key={event.id}>
+            <span className={`portal-timeline-marker is-${event.kind}`} aria-hidden="true" />
+            <div>
+              <div className="portal-timeline-meta">
+                <span>{kindLabels[event.kind]}</span>
+                <time dateTime={event.date}>{formatPortalDate(event.date)}</time>
+              </div>
+              <h3>{event.title}</h3>
+              {event.description && <p>{event.description}</p>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+const emptyPropertyDetails: PropertyDetailsInput = {
+  postalCode: null, street: null, number: null, complement: null, district: null, city: null,
+  state: null, propertyType: null, bedrooms: null, suites: null, bathrooms: null,
+  parkingSpots: null, accessType: null, accessNotes: null, accessCode: null,
+  wifiNetwork: null, wifiPassword: null, notes: null,
+};
+
+function PropertyDetailsPanel({
+  implementation,
+  details,
+  loading,
+}: {
+  implementation: ImplementationProject;
+  details: PropertyDetails | null;
+  loading: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [showSecrets, setShowSecrets] = useState(false);
+  const [draft, setDraft] = useState<PropertyDetailsInput>(emptyPropertyDetails);
+  useEffect(() => {
+    setDraft(details ? { ...details } : { ...emptyPropertyDetails });
+  }, [details, implementation.id]);
+  const save = useMutation({
+    mutationFn: () => savePropertyDetails(implementation.id, draft),
+    onSuccess: () => { setEditing(false); toast.success("Dados do imóvel atualizados"); },
+    onError: () => toast.error("Não foi possível salvar os dados do imóvel"),
+  });
+  if (loading) return <PortalSkeleton rows={5} />;
+  const address = [details?.street ?? implementation.address, details?.number, details?.complement,
+    details?.district, details?.city ?? implementation.city, details?.state].filter(Boolean).join(", ");
+  const field = (key: keyof PropertyDetailsInput, label: string, type: "text" | "number" = "text") => (
+    <label className="portal-property-field"><span>{label}</span><input type={type} value={draft[key] ?? ""}
+      onChange={(event) => setDraft((current) => ({ ...current, [key]: type === "number" ? (event.target.value ? Number(event.target.value) : null) : (event.target.value || null) }))} /></label>
+  );
+  return (
+    <section className="portal-property-details">
+      <div className="portal-property-details-heading">
+        <div><p className="portal-milestones-eyebrow">Ficha compartilhada</p><h2>{propertyName(implementation)}</h2><p>Você e a equipe Stayo podem manter estes dados atualizados.</p></div>
+        <Button variant={editing ? "ghost" : "outline"} size="sm" onClick={() => setEditing((value) => !value)}>{editing ? "Cancelar" : "Editar dados"}</Button>
+      </div>
+      {editing ? (
+        <div className="portal-property-form">
+          <div className="portal-property-form-grid">{field("postalCode", "CEP")}{field("street", "Endereço")}{field("number", "Número")}{field("complement", "Complemento")}{field("district", "Bairro")}{field("city", "Cidade")}{field("state", "UF")}{field("propertyType", "Tipo de imóvel")}{field("bedrooms", "Quartos", "number")}{field("suites", "Suítes", "number")}{field("bathrooms", "Banheiros", "number")}{field("parkingSpots", "Vagas", "number")}</div>
+          <div className="portal-property-form-grid">
+            <label className="portal-property-field"><span>Forma de acesso</span><select value={draft.accessType ?? ""} onChange={(event) => setDraft((current) => ({ ...current, accessType: (event.target.value || null) as PropertyDetailsInput["accessType"] }))}><option value="">Selecione</option><option value="key">Chave</option><option value="lock">Fechadura digital</option><option value="concierge">Portaria</option><option value="other">Outro</option></select></label>
+            {field("accessNotes", "Orientações de acesso")}{field("accessCode", "Senha da fechadura")}{field("wifiNetwork", "Rede Wi-Fi")}{field("wifiPassword", "Senha do Wi-Fi")}
+          </div>
+          <div className="portal-property-form-actions"><Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando…" : "Salvar alterações"}</Button></div>
+        </div>
+      ) : (
+        <div className="portal-property-sections">
+          <div><span className="portal-property-section-icon"><MapPin /></span><h3>Endereço</h3><p>{address || "Endereço ainda não informado"}</p></div>
+          <div><span className="portal-property-section-icon"><House /></span><h3>Características</h3><p>{[details?.propertyType ?? implementation.propertyType, details?.bedrooms ? `${details.bedrooms} quartos` : null, details?.bathrooms ? `${details.bathrooms} banheiros` : null].filter(Boolean).join(" · ") || "Características ainda não informadas"}</p></div>
+          <div><span className="portal-property-section-icon"><DoorOpen /></span><h3>Acesso</h3><p>{details?.accessNotes || "Forma de acesso ainda não informada"}</p>{details?.accessCode && <SecretValue label="Senha da fechadura" value={details.accessCode} visible={showSecrets} />}</div>
+          <div><span className="portal-property-section-icon"><Wifi /></span><h3>Wi-Fi</h3><p>{details?.wifiNetwork || "Rede ainda não informada"}</p>{details?.wifiPassword && <SecretValue label="Senha" value={details.wifiPassword} visible={showSecrets} />}</div>
+          {(details?.accessCode || details?.wifiPassword) && <Button variant="ghost" size="sm" onClick={() => setShowSecrets((value) => !value)}>{showSecrets ? "Ocultar senhas" : "Mostrar senhas"}</Button>}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SecretValue({ label, value, visible }: { label: string; value: string; visible: boolean }) {
+  return <small>{label}: <strong>{visible ? value : "••••••••"}</strong></small>;
+}
+
+function InspectionsPanel({ inspections, attachments, loading, onOpen }: { inspections: PortalInspection[]; attachments: Attachment[]; loading: boolean; onOpen: (path: string) => void }) {
+  if (loading) return <PortalSkeleton rows={4} />;
+  if (inspections.length === 0) return <OperationalPlaceholder module="inspections" />;
+  const status = { scheduled: "Agendada", in_progress: "Em andamento", completed: "Concluída", cancelled: "Cancelada" };
+  return <section className="portal-inspections"><div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Acompanhamento técnico</p><h2>Vistorias do imóvel</h2><p>Resumos e documentos liberados pela equipe.</p></div><div className="portal-inspection-list">{inspections.map((inspection) => { const files = attachments.filter((item) => item.inspectionId === inspection.id); return <article key={inspection.id}><div className="portal-inspection-head"><span><ClipboardCheck /></span><div><small>{inspection.type.replace(/_/g, " ")}</small><h3>{status[inspection.status]}</h3></div><time>{formatPortalDate(inspection.completedAt ?? inspection.scheduledFor)}</time></div>{inspection.publicNotes && <p>{inspection.publicNotes}</p>}{files.length > 0 && <div className="portal-inspection-files">{files.map((file) => <Button key={file.id} variant="outline" size="sm" onClick={() => onOpen(file.storagePath)}><FileText /> {file.filename}</Button>)}</div>}</article>; })}</div></section>;
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <PortalShell framed={false} showBrand={false}>
