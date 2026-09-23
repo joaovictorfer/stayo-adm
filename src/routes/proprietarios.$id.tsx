@@ -610,7 +610,10 @@ function OwnerContactPanel({
             </button>
           )}
           {draft?.street && (
-            <div className="sm:col-span-2 border-t pt-3" style={{ borderColor: "var(--stayo-border)" }}>
+            <div
+              className="sm:col-span-2 border-t pt-3"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
               <Field
                 label="Endereço informado no portal"
                 value={`${draft.street}${draft.number ? `, ${draft.number}` : ""}${draft.city ? ` · ${draft.city}/${draft.state}` : ""}`}
@@ -618,7 +621,10 @@ function OwnerContactPanel({
             </div>
           )}
           {(draft?.bankName || draft?.accountHolder || draft?.pixKey) && (
-            <div className="grid gap-3 border-t pt-3 sm:col-span-2 sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
+            <div
+              className="grid gap-3 border-t pt-3 sm:col-span-2 sm:grid-cols-2"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
               <Field label="Banco para repasse" value={draft.bankName} />
               <Field label="Titular da conta" value={draft.accountHolder} />
               <Field

@@ -152,9 +152,7 @@ function OwnerOnboardingForm({
   const [form, setForm] = useState<OwnerOnboardingSubmissionInput>(emptyForm);
   const [touched, setTouched] = useState<Partial<Record<OwnerFormField, boolean>>>({});
   const [currentStep, setCurrentStep] = useState(1);
-  const [autoSaveState, setAutoSaveState] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle",
-  );
+  const [autoSaveState, setAutoSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydrated = useRef(false);
   const formRef = useRef(form);
   const stepRef = useRef(currentStep);
@@ -733,7 +731,10 @@ function OwnerOnboardingForm({
       <p className="mb-4 text-sm text-[var(--portal-muted)]">
         São cinco etapas curtas. Suas alterações são salvas automaticamente.
       </p>
-      <div className="mb-4 flex items-center gap-2 text-xs text-[var(--portal-muted)]" role="status">
+      <div
+        className="mb-4 flex items-center gap-2 text-xs text-[var(--portal-muted)]"
+        role="status"
+      >
         <span
           className={`size-2 rounded-full ${
             autoSaveState === "error"
