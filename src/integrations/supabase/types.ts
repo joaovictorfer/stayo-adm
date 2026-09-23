@@ -1686,6 +1686,14 @@ export type Database = {
           revoked_at: string
         }[]
       }
+      owner_property_details_resolve_by_token: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      owner_property_details_save_by_token: {
+        Args: { p_data: Json; p_token: string }
+        Returns: Json
+      }
       proposal_accept_by_token: {
         Args: { p_accepted_name: string; p_token: string }
         Returns: {

@@ -71,6 +71,13 @@
       "when": 1790136033631,
       "tag": "0009_owner_portal_shared_property_access",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790136259467,
+      "tag": "0010_owner_onboarding_property_details",
+      "breakpoints": true
     }
   ]
 }
