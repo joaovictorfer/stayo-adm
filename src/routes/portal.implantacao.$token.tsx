@@ -608,6 +608,24 @@ function OwnerOnboardingForm({
               error={error("state")}
             />
           </div>
+          <div className="portal-smart-field">
+            <div className="portal-smart-field-head">
+              <span>Dados do imóvel</span>
+              <Sparkles className="size-4" />
+            </div>
+            <p className="mb-3 text-xs text-[var(--portal-muted)]">
+              Opcional agora. Essas informações já alimentam a ficha do seu imóvel e podem ser
+              atualizadas depois.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField label="Tipo do imóvel" value={form.propertyType} onChange={(value) => set("propertyType", value)} />
+              <Choice label="Forma de acesso" value={form.propertyAccessType ?? ""} onChange={(value) => set("propertyAccessType", (value || null) as OwnerOnboardingSubmissionInput["propertyAccessType"])} options={[{ value: "key", label: "Chave" }, { value: "lock", label: "Fechadura" }, { value: "concierge", label: "Portaria" }, { value: "other", label: "Outro" }]} />
+              <TextField label="Rede Wi-Fi" value={form.propertyWifiNetwork} onChange={(value) => set("propertyWifiNetwork", value)} />
+              <TextField label="Senha do Wi-Fi" value={form.propertyWifiPassword} onChange={(value) => set("propertyWifiPassword", value)} />
+              {form.propertyAccessType === "lock" && <TextField label="Senha da fechadura" value={form.propertyAccessCode} onChange={(value) => set("propertyAccessCode", value)} />}
+              <TextField label="Orientações de acesso" value={form.propertyAccessNotes} onChange={(value) => set("propertyAccessNotes", value)} />
+            </div>
+          </div>
         </Section>
       ),
     },
