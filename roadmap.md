@@ -15,4 +15,8 @@
 - [ ] Refinar aba Proprietário e gestão do Portal
 - [ ] Redesenhar ficha principal do proprietário
 - [ ] Validar migration, testes, lint, build e fluxos responsivos
+- [ ] Permitir múltiplos proprietários/proponentes no cadastro público
+- [ ] Tornar titular, CPF/CNPJ e chave Pix inteligentes a partir dos proprietários cadastrados
+- [ ] Refinar microinterações e visual do cadastro do proprietário
+- [ ] Validar persistência, testes, build e experiência mobile do novo fluxo
 
