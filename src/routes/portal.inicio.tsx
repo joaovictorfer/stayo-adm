@@ -31,6 +31,8 @@ import {
   WalletCards,
   BedDouble,
   TrendingUp,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { StayoLogo } from "@/components/brand/StayoLogo";
@@ -39,20 +41,56 @@ import { toast } from "sonner";
 import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
-import { OwnerWelcomeOverlay, PortalEmptyState, PortalShell, PortalSkeleton, useOwnerWelcomeState } from "../components/portal/PortalExperience";
+import {
+  OwnerWelcomeOverlay,
+  PortalEmptyState,
+  PortalShell,
+  PortalSkeleton,
+  useOwnerWelcomeState,
+} from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
 import type { Attachment } from "../lib/api/attachments";
-import { commercialTermsQuery, implementationsListQuery, ownerOnboardingSubmissionQuery, ownerQuery, ownerTasksQuery, proposalsByImplementationQuery, proposalShareLinkQuery, propertyQuery, reservationsListQuery } from "../lib/api/queries";
+import {
+  commercialTermsQuery,
+  implementationsListQuery,
+  ownerOnboardingSubmissionQuery,
+  ownerQuery,
+  ownerTasksQuery,
+  proposalsByImplementationQuery,
+  proposalShareLinkQuery,
+  propertyQuery,
+  reservationsListQuery,
+} from "../lib/api/queries";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
-import { getOwnerPortalModules, getOwnerPortalPhase, type OwnerPortalModule, type OwnerPortalPhase } from "../lib/owner-portal-lifecycle";
+import {
+  getOwnerPortalModules,
+  getOwnerPortalPhase,
+  type OwnerPortalModule,
+  type OwnerPortalPhase,
+} from "../lib/owner-portal-lifecycle";
 import type { OwnerTaskStatus } from "../types/admin";
 import type { CommercialTerm } from "../types/admin";
 import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
-    meta: [{ title: "Minha conta — Portal do Proprietário Stayo" }],
+    meta: [
+      { title: "Meu imóvel — Portal do Proprietário Stayo" },
+      {
+        name: "description",
+        content:
+          "Acompanhe sua implantação, documentos e operação no Portal do Proprietário Stayo.",
+      },
+      { property: "og:title", content: "Meu imóvel — Portal do Proprietário Stayo" },
+      {
+        property: "og:description",
+        content:
+          "Acompanhe sua implantação, documentos e operação no Portal do Proprietário Stayo.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: OwnerHomePage,
 });
@@ -88,7 +126,10 @@ const stageMessages: Record<ImplementationStatus, string> = {
 const ownerMilestones = [
   { label: "Proposta", description: "Condições apresentadas e aprovação da parceria." },
   { label: "Planejamento", description: "Organização das etapas, responsáveis e previsão." },
-  { label: "Preparação do imóvel", description: "Ajustes necessários para receber os primeiros hóspedes." },
+  {
+    label: "Preparação do imóvel",
+    description: "Ajustes necessários para receber os primeiros hóspedes.",
+  },
   { label: "Configuração", description: "Cadastro e configuração da operação do imóvel." },
   { label: "Validação", description: "Revisão final dos padrões de qualidade Stayo." },
   { label: "Pronto para operar", description: "Imóvel liberado para começar a receber hóspedes." },
@@ -116,27 +157,49 @@ function OwnerMilestones({ status }: { status: ImplementationStatus }) {
           <h2 id="owner-milestones-title">Próximos marcos</h2>
         </div>
         <span className={`portal-milestones-summary${isBlocked ? " is-blocked" : ""}`}>
-          {isBlocked ? statusLabels[status] : isComplete ? "Etapas concluídas" : `${activeIndex + 1} de ${ownerMilestones.length}`}
+          {isBlocked
+            ? statusLabels[status]
+            : isComplete
+              ? "Etapas concluídas"
+              : `${activeIndex + 1} de ${ownerMilestones.length}`}
         </span>
       </div>
 
       <ol className="portal-milestones-list">
         {ownerMilestones.map((milestone, index) => {
-          const state = isBlocked && index === activeIndex
-            ? "blocked"
-            : isComplete || index < activeIndex
-              ? "done"
-              : index === activeIndex
-                ? "current"
-                : "future";
-          const stateLabel = state === "done" ? "Concluída" : state === "current" ? "Etapa atual" : state === "blocked" ? "Bloqueada" : "Próxima etapa";
+          const state =
+            isBlocked && index === activeIndex
+              ? "blocked"
+              : isComplete || index < activeIndex
+                ? "done"
+                : index === activeIndex
+                  ? "current"
+                  : "future";
+          const stateLabel =
+            state === "done"
+              ? "Concluída"
+              : state === "current"
+                ? "Etapa atual"
+                : state === "blocked"
+                  ? "Bloqueada"
+                  : "Próxima etapa";
 
           return (
-            <li key={milestone.label} className={`portal-milestone is-${state}`} title={milestone.description}>
+            <li
+              key={milestone.label}
+              className={`portal-milestone is-${state}`}
+              title={milestone.description}
+            >
               <div className="portal-milestone-track" aria-hidden="true">
                 <span className="portal-milestone-line" />
                 <span className="portal-milestone-marker">
-                  {state === "done" ? <CheckCircle2 /> : state === "blocked" ? <LockKeyhole /> : <Circle />}
+                  {state === "done" ? (
+                    <CheckCircle2 />
+                  ) : state === "blocked" ? (
+                    <LockKeyhole />
+                  ) : (
+                    <Circle />
+                  )}
                 </span>
               </div>
               <div className="portal-milestone-copy">
@@ -156,7 +219,11 @@ function formatPortalDate(value: string | null): string {
   if (!value) return "A definir com você";
   const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return "A definir com você";
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
 function ImplementationJourney({ implementation }: { implementation: ImplementationProject }) {
@@ -164,7 +231,9 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
   const isComplete = implementation.status === "ativo";
   const isBlocked = ["pausado", "nao_convertido", "cancelado"].includes(implementation.status);
   const completed = isComplete ? ownerMilestones : ownerMilestones.slice(0, activeIndex);
-  const nextSteps = isComplete ? [] : ownerMilestones.slice(activeIndex, Math.min(activeIndex + 3, ownerMilestones.length));
+  const nextSteps = isComplete
+    ? []
+    : ownerMilestones.slice(activeIndex, Math.min(activeIndex + 3, ownerMilestones.length));
   const currentMilestone = ownerMilestones[activeIndex];
 
   return (
@@ -194,7 +263,9 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
       <div className="portal-journey-columns">
         <section className="portal-journey-panel" aria-labelledby="completed-steps-title">
           <div className="portal-journey-panel-heading">
-            <span className="portal-journey-panel-icon is-complete"><CheckCircle2 aria-hidden="true" /></span>
+            <span className="portal-journey-panel-icon is-complete">
+              <CheckCircle2 aria-hidden="true" />
+            </span>
             <div>
               <h2 id="completed-steps-title">O que já foi feito</h2>
               <p>Veja tudo o que já avançamos juntos.</p>
@@ -205,18 +276,25 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
               {completed.map((milestone) => (
                 <li key={milestone.label}>
                   <CheckCircle2 aria-hidden="true" />
-                  <div><strong>{milestone.label}</strong><span>{milestone.description}</span></div>
+                  <div>
+                    <strong>{milestone.label}</strong>
+                    <span>{milestone.description}</span>
+                  </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="portal-journey-note">Estamos organizando o primeiro marco. Você verá cada avanço por aqui.</p>
+            <p className="portal-journey-note">
+              Estamos organizando o primeiro marco. Você verá cada avanço por aqui.
+            </p>
           )}
         </section>
 
         <section className="portal-journey-panel" aria-labelledby="next-steps-title">
           <div className="portal-journey-panel-heading">
-            <span className="portal-journey-panel-icon"><ArrowRight aria-hidden="true" /></span>
+            <span className="portal-journey-panel-icon">
+              <ArrowRight aria-hidden="true" />
+            </span>
             <div>
               <h2 id="next-steps-title">Próximos passos</h2>
               <p>O que estamos preparando a partir de agora.</p>
@@ -228,14 +306,23 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
                 <li key={milestone.label}>
                   <span className="portal-journey-number">{index + 1}</span>
                   <div>
-                    <strong>{milestone.label}{index === 0 && !isBlocked ? " · agora" : ""}</strong>
-                    <span>{index === 0 && isBlocked ? stageMessages[implementation.status] : milestone.description}</span>
+                    <strong>
+                      {milestone.label}
+                      {index === 0 && !isBlocked ? " · agora" : ""}
+                    </strong>
+                    <span>
+                      {index === 0 && isBlocked
+                        ? stageMessages[implementation.status]
+                        : milestone.description}
+                    </span>
                   </div>
                 </li>
               ))}
             </ol>
           ) : (
-            <p className="portal-journey-note">A implantação foi concluída. O acompanhamento continua na área do seu imóvel.</p>
+            <p className="portal-journey-note">
+              A implantação foi concluída. O acompanhamento continua na área do seu imóvel.
+            </p>
           )}
         </section>
       </div>
@@ -245,7 +332,7 @@ function ImplementationJourney({ implementation }: { implementation: Implementat
           ? "A equipe Stayo está acompanhando esta situação e compartilhará a próxima atualização por aqui."
           : isComplete
             ? "Seu imóvel concluiu a implantação e agora segue acompanhado pela operação Stayo."
-             : `Agora, nosso foco é ${(currentMilestone?.label ?? statusLabels[implementation.status]).toLocaleLowerCase("pt-BR")}. Esta página será atualizada a cada novo avanço.`}
+            : `Agora, nosso foco é ${(currentMilestone?.label ?? statusLabels[implementation.status]).toLocaleLowerCase("pt-BR")}. Esta página será atualizada a cada novo avanço.`}
       </p>
     </div>
   );
@@ -275,10 +362,26 @@ function OwnerDataJourney({
   onReviewPending: () => void;
 }) {
   const steps: ProfileStep[] = [
-    { label: "Identificação", description: "Nome completo e documento principal", complete: Boolean(name && document) },
-    { label: "Contato", description: "E-mail e telefone para falarmos com você", complete: Boolean(email && phone) },
-    { label: "Conta para repasse", description: "Dados necessários para futuros repasses", complete: hasPaymentData },
-    { label: "Documentos", description: "Arquivos solicitados pela equipe Stayo", complete: hasDocuments },
+    {
+      label: "Identificação",
+      description: "Nome completo e documento principal",
+      complete: Boolean(name && document),
+    },
+    {
+      label: "Contato",
+      description: "E-mail e telefone para falarmos com você",
+      complete: Boolean(email && phone),
+    },
+    {
+      label: "Conta para repasse",
+      description: "Dados necessários para futuros repasses",
+      complete: hasPaymentData,
+    },
+    {
+      label: "Documentos",
+      description: "Arquivos solicitados pela equipe Stayo",
+      complete: hasDocuments,
+    },
   ];
   const completed = steps.filter((step) => step.complete).length;
   const percent = Math.round((completed / steps.length) * 100);
@@ -290,11 +393,16 @@ function OwnerDataJourney({
         <div>
           <p className="portal-milestones-eyebrow">Seu cadastro</p>
           <h2 id="profile-journey-title">Seu cadastro, passo a passo</h2>
-          <p>Complete no seu ritmo. A equipe Stayo cuida das suas informações com atenção e segurança.</p>
+          <p>
+            Complete no seu ritmo. A equipe Stayo cuida das suas informações com atenção e
+            segurança.
+          </p>
         </div>
         <div className="portal-profile-progress" aria-label={`${percent}% do cadastro concluído`}>
           <strong>{percent}%</strong>
-          <span>{completed} de {steps.length} etapas</span>
+          <span>
+            {completed} de {steps.length} etapas
+          </span>
         </div>
       </div>
 
@@ -309,30 +417,60 @@ function OwnerDataJourney({
             <strong>{nextStep.label}</strong>
             <p>{nextStep.description}. É rápido e você pode conferir tudo antes de enviar.</p>
           </div>
-          <Button type="button" onClick={onReviewPending} className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">
-             Continuar cadastro <ArrowRight className="h-4 w-4" />
+          <Button
+            type="button"
+            onClick={onReviewPending}
+            className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
+          >
+            Continuar cadastro <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       ) : (
         <div className="portal-profile-success" role="status">
           <CheckCircle2 aria-hidden="true" />
-          <div><strong>Cadastro em dia</strong><p>Já temos as informações necessárias. Se precisarmos confirmar algo, falaremos com você.</p></div>
+          <div>
+            <strong>Cadastro em dia</strong>
+            <p>
+              Já temos as informações necessárias. Se precisarmos confirmar algo, falaremos com
+              você.
+            </p>
+          </div>
         </div>
       )}
 
       <ol className="portal-profile-checklist">
         {steps.map((step, index) => (
-          <li key={step.label} className={step.complete ? "is-complete" : nextStep?.label === step.label ? "is-current" : "is-pending"}>
+          <li
+            key={step.label}
+            className={
+              step.complete
+                ? "is-complete"
+                : nextStep?.label === step.label
+                  ? "is-current"
+                  : "is-pending"
+            }
+          >
             <span className="portal-profile-step-marker">
               {step.complete ? <CheckCircle2 aria-hidden="true" /> : index + 1}
             </span>
-            <div><strong>{step.label}</strong><p>{step.description}</p></div>
-            <span className="portal-profile-step-status">{step.complete ? "Concluído" : nextStep?.label === step.label ? "Próximo" : "Aguardando"}</span>
+            <div>
+              <strong>{step.label}</strong>
+              <p>{step.description}</p>
+            </div>
+            <span className="portal-profile-step-status">
+              {step.complete
+                ? "Concluído"
+                : nextStep?.label === step.label
+                  ? "Próximo"
+                  : "Aguardando"}
+            </span>
           </li>
         ))}
       </ol>
 
-      <p className="portal-profile-save-note"><CheckCircle2 aria-hidden="true" /> Tudo o que você já enviou está guardado com segurança.</p>
+      <p className="portal-profile-save-note">
+        <CheckCircle2 aria-hidden="true" /> Tudo o que você já enviou está guardado com segurança.
+      </p>
     </section>
   );
 }
@@ -341,7 +479,8 @@ const portalCurrency = new Intl.NumberFormat("pt-BR", { style: "currency", curre
 
 function describeCommercialTerm(term: CommercialTerm): string {
   if (term.chargeType === "percentage") return `${term.value}%`;
-  if (["fixed_once", "per_reservation", "monthly"].includes(term.chargeType)) return portalCurrency.format(term.value);
+  if (["fixed_once", "per_reservation", "monthly"].includes(term.chargeType))
+    return portalCurrency.format(term.value);
   if (term.chargeType === "optional") return "Opcional";
   return term.notes || "Incluído";
 }
@@ -365,7 +504,9 @@ function OwnerProposal({
         <div>
           <p className="portal-milestones-eyebrow">Proposta comercial</p>
           <h2 id="owner-proposal-title">Uma proposta pensada para o seu imóvel</h2>
-          <p>Confira valores e condições no seu tempo. Se surgir qualquer dúvida, estamos por perto.</p>
+          <p>
+            Confira valores e condições no seu tempo. Se surgir qualquer dúvida, estamos por perto.
+          </p>
         </div>
         <span className={`portal-proposal-status${proposal.acceptedAt ? " is-accepted" : ""}`}>
           {proposal.acceptedAt ? <BadgeCheck aria-hidden="true" /> : <Clock3 aria-hidden="true" />}
@@ -377,12 +518,22 @@ function OwnerProposal({
         <div className="portal-proposal-total">
           <span>Valor da proposta</span>
           <strong>{portalCurrency.format(proposal.total)}</strong>
-          <small>Versão {proposal.version} · {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.createdAt))}</small>
+          <small>
+            Versão {proposal.version} ·{" "}
+            {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.createdAt))}
+          </small>
         </div>
         <div className="portal-proposal-terms">
           <span>Condições principais</span>
           {terms.length > 0 ? (
-            <ul>{terms.slice(0, 4).map((term) => <li key={term.id}><strong>{term.label}</strong><span>{describeCommercialTerm(term)}</span></li>)}</ul>
+            <ul>
+              {terms.slice(0, 4).map((term) => (
+                <li key={term.id}>
+                  <strong>{term.label}</strong>
+                  <span>{describeCommercialTerm(term)}</span>
+                </li>
+              ))}
+            </ul>
           ) : (
             <p>As condições completas estão organizadas no documento da proposta.</p>
           )}
@@ -391,23 +542,44 @@ function OwnerProposal({
 
       <div className="portal-proposal-actions">
         {proposalUrl ? (
-          <Button asChild className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">
-            <a href={proposalUrl}><Eye className="h-4 w-4" /> Ver proposta completa</a>
+          <Button
+            asChild
+            className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
+          >
+            <a href={proposalUrl}>
+              <Eye className="h-4 w-4" /> Ver proposta completa
+            </a>
           </Button>
         ) : (
-          <p>O documento está sendo preparado para visualização. Avisaremos assim que estiver disponível.</p>
+          <p>
+            O documento está sendo preparado para visualização. Avisaremos assim que estiver
+            disponível.
+          </p>
         )}
-        {!proposal.acceptedAt && proposalUrl && <span>Você poderá confirmar o aceite depois de conferir todos os detalhes.</span>}
-        {proposal.acceptedAt && <span>Aceita em {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.acceptedAt))}.</span>}
+        {!proposal.acceptedAt && proposalUrl && (
+          <span>Você poderá confirmar o aceite depois de conferir todos os detalhes.</span>
+        )}
+        {proposal.acceptedAt && (
+          <span>
+            Aceita em {new Intl.DateTimeFormat("pt-BR").format(new Date(proposal.acceptedAt))}.
+          </span>
+        )}
       </div>
 
       {versions.length > 1 && (
         <details className="portal-proposal-history">
-          <summary><History aria-hidden="true" /> Histórico de versões <span>{versions.length}</span></summary>
+          <summary>
+            <History aria-hidden="true" /> Histórico de versões <span>{versions.length}</span>
+          </summary>
           <ol>
             {versions.map((version) => (
               <li key={version.id}>
-                <div><strong>Versão {version.version}</strong><span>{new Intl.DateTimeFormat("pt-BR").format(new Date(version.createdAt))}</span></div>
+                <div>
+                  <strong>Versão {version.version}</strong>
+                  <span>
+                    {new Intl.DateTimeFormat("pt-BR").format(new Date(version.createdAt))}
+                  </span>
+                </div>
                 <span>{portalCurrency.format(version.total)}</span>
               </li>
             ))}
@@ -430,11 +602,18 @@ const documentCategoryLabels: Record<string, string> = {
 };
 
 function documentType(attachment: Attachment): string {
-  return documentCategoryLabels[attachment.category.toLowerCase()] ?? attachment.category.replace(/[_-]/g, " ");
+  return (
+    documentCategoryLabels[attachment.category.toLowerCase()] ??
+    attachment.category.replace(/[_-]/g, " ")
+  );
 }
 
 function DocumentIcon({ attachment }: { attachment: Attachment }) {
-  return attachment.mimeType.startsWith("image/") ? <FileImage aria-hidden="true" /> : <FileCheck2 aria-hidden="true" />;
+  return attachment.mimeType.startsWith("image/") ? (
+    <FileImage aria-hidden="true" />
+  ) : (
+    <FileCheck2 aria-hidden="true" />
+  );
 }
 
 const portalModuleLabels: Record<OwnerPortalModule, string> = {
@@ -457,7 +636,12 @@ function PortalPhaseIndicator({ phase }: { phase: OwnerPortalPhase }) {
   return (
     <div className="portal-phase-indicator" aria-label={`Momento atual: ${labels[activeIndex]}`}>
       {labels.map((label, index) => (
-        <div key={label} className={index < activeIndex ? "is-complete" : index === activeIndex ? "is-current" : "is-future"}>
+        <div
+          key={label}
+          className={
+            index < activeIndex ? "is-complete" : index === activeIndex ? "is-current" : "is-future"
+          }
+        >
           <span>{index < activeIndex ? <CheckCircle2 aria-hidden="true" /> : index + 1}</span>
           <strong>{label}</strong>
         </div>
@@ -469,15 +653,26 @@ function PortalPhaseIndicator({ phase }: { phase: OwnerPortalPhase }) {
 function ReadyTransition({ implementation }: { implementation: ImplementationProject }) {
   return (
     <section className="portal-transition-banner">
-      <span className="portal-transition-icon"><Sparkles aria-hidden="true" /></span>
+      <span className="portal-transition-icon">
+        <Sparkles aria-hidden="true" />
+      </span>
       <div>
         <p className="portal-milestones-eyebrow">Um novo momento começa</p>
         <h2>Seu imóvel está pronto para começar a receber hóspedes.</h2>
-        <p>Estamos concluindo a passagem para a operação. Você continuará usando este mesmo portal e verá novas áreas surgirem por aqui.</p>
+        <p>
+          Estamos concluindo a passagem para a operação. Você continuará usando este mesmo portal e
+          verá novas áreas surgirem por aqui.
+        </p>
       </div>
       <dl>
-        <div><dt>Ativação</dt><dd>{formatPortalDate(implementation.completionDateEstimate)}</dd></div>
-        <div><dt>Próximo passo</dt><dd>Concluir a ativação operacional</dd></div>
+        <div>
+          <dt>Ativação</dt>
+          <dd>{formatPortalDate(implementation.completionDateEstimate)}</dd>
+        </div>
+        <div>
+          <dt>Próximo passo</dt>
+          <dd>Concluir a ativação operacional</dd>
+        </div>
       </dl>
     </section>
   );
@@ -485,7 +680,11 @@ function ReadyTransition({ implementation }: { implementation: ImplementationPro
 
 function OperationalOverview({ reservationCount }: { reservationCount: number }) {
   const indicators = [
-    { label: "Reservas", value: reservationCount > 0 ? String(reservationCount) : "Sem dados", icon: BedDouble },
+    {
+      label: "Reservas",
+      value: reservationCount > 0 ? String(reservationCount) : "Sem dados",
+      icon: BedDouble,
+    },
     { label: "Ocupação", value: "Aguardando dados", icon: CalendarRange },
     { label: "Receita do mês", value: "Aguardando dados", icon: TrendingUp },
     { label: "Próximo repasse", value: "Aguardando dados", icon: WalletCards },
@@ -493,32 +692,91 @@ function OperationalOverview({ reservationCount }: { reservationCount: number })
   return (
     <div className="portal-operation-overview">
       <section className="portal-operation-welcome">
-        <div><p className="portal-milestones-eyebrow">Seu imóvel em operação</p><h2>Acompanhamento que continua com você</h2><p>Agora, além do histórico da implantação, este espaço reúne o dia a dia do seu imóvel conforme os dados oficiais ficam disponíveis.</p></div>
+        <div>
+          <p className="portal-milestones-eyebrow">Seu imóvel em operação</p>
+          <h2>Acompanhamento que continua com você</h2>
+          <p>
+            Agora, além do histórico da implantação, este espaço reúne o dia a dia do seu imóvel
+            conforme os dados oficiais ficam disponíveis.
+          </p>
+        </div>
         <BadgeCheck aria-hidden="true" />
       </section>
       <div className="portal-operation-metrics">
-        {indicators.map(({ label, value, icon: Icon }) => <div key={label}><Icon aria-hidden="true" /><span>{label}</span><strong>{value}</strong></div>)}
+        {indicators.map(({ label, value, icon: Icon }) => (
+          <div key={label}>
+            <Icon aria-hidden="true" />
+            <span>{label}</span>
+            <strong>{value}</strong>
+          </div>
+        ))}
       </div>
-      <PortalEmptyState positive icon={<CircleCheckBig />} title="Operação acompanhada de perto" description="Os primeiros indicadores aparecerão aqui assim que houver movimentação oficial do imóvel." nextStep="Você não precisa fazer nada agora. A equipe Stayo mantém esta área atualizada para você." />
+      <PortalEmptyState
+        positive
+        icon={<CircleCheckBig />}
+        title="Operação acompanhada de perto"
+        description="Os primeiros indicadores aparecerão aqui assim que houver movimentação oficial do imóvel."
+        nextStep="Você não precisa fazer nada agora. A equipe Stayo mantém esta área atualizada para você."
+      />
     </div>
   );
 }
 
-function OperationalPlaceholder({ module }: { module: Exclude<OwnerPortalModule, "overview" | "implementation" | "profile" | "proposal" | "documents" | "reservations"> }) {
+function OperationalPlaceholder({
+  module,
+}: {
+  module: Exclude<
+    OwnerPortalModule,
+    "overview" | "implementation" | "profile" | "proposal" | "documents" | "reservations"
+  >;
+}) {
   const content = {
-    calendar: { icon: <CalendarRange />, title: "Seu calendário estará aqui", description: "Datas ocupadas e disponibilidade aparecerão conforme as reservas forem confirmadas." },
-    property: { icon: <House />, title: "Tudo sobre o seu imóvel", description: "As informações oficiais do imóvel serão organizadas aqui para consulta." },
-    inspections: { icon: <ClipboardCheck />, title: "Nenhuma vistoria liberada", description: "Quando houver uma vistoria disponível para você, ela aparecerá aqui com seu status." },
-    maintenance: { icon: <Wrench />, title: "Nenhuma manutenção para acompanhar", description: "Ocorrências compartilhadas com você ficarão reunidas nesta área." },
-    finance: { icon: <WalletCards />, title: "Seu financeiro está sendo preparado", description: "Repasses, demonstrativos e documentos financeiros aparecerão aqui quando houver dados oficiais." },
+    calendar: {
+      icon: <CalendarRange />,
+      title: "Seu calendário estará aqui",
+      description:
+        "Datas ocupadas e disponibilidade aparecerão conforme as reservas forem confirmadas.",
+    },
+    property: {
+      icon: <House />,
+      title: "Tudo sobre o seu imóvel",
+      description: "As informações oficiais do imóvel serão organizadas aqui para consulta.",
+    },
+    inspections: {
+      icon: <ClipboardCheck />,
+      title: "Nenhuma vistoria liberada",
+      description:
+        "Quando houver uma vistoria disponível para você, ela aparecerá aqui com seu status.",
+    },
+    maintenance: {
+      icon: <Wrench />,
+      title: "Nenhuma manutenção para acompanhar",
+      description: "Ocorrências compartilhadas com você ficarão reunidas nesta área.",
+    },
+    finance: {
+      icon: <WalletCards />,
+      title: "Seu financeiro está sendo preparado",
+      description:
+        "Repasses, demonstrativos e documentos financeiros aparecerão aqui quando houver dados oficiais.",
+    },
   }[module];
-  return <PortalEmptyState icon={content.icon} title={content.title} description={content.description} nextStep="Esta área faz parte do mesmo portal e será atualizada automaticamente." />;
+  return (
+    <PortalEmptyState
+      icon={content.icon}
+      title={content.title}
+      description={content.description}
+      nextStep="Esta área faz parte do mesmo portal e será atualizada automaticamente."
+    />
+  );
 }
 
 function propertyName(implementation: ImplementationProject | undefined): string {
   if (!implementation) return "Seu imóvel";
   if (implementation.nickname) return implementation.nickname;
-  return [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Seu imóvel";
+  return (
+    [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") ||
+    "Seu imóvel"
+  );
 }
 
 function PortalHero({
@@ -539,7 +797,11 @@ function PortalHero({
     <header className="portal-property-hero">
       <img
         src={image}
-        alt={implementation ? `Vista de ${propertyName(implementation)}` : "Imóvel acompanhado pela Stayo"}
+        alt={
+          implementation
+            ? `Vista de ${propertyName(implementation)}`
+            : "Imóvel acompanhado pela Stayo"
+        }
         width={1600}
         height={700}
         className="portal-property-hero-image"
@@ -550,7 +812,9 @@ function PortalHero({
           <div className="portal-property-brand">
             <StayoLogo variant="white" className="h-auto w-24 sm:w-28" />
             <div>
-              <span className="mt-1 block text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--portal-hero-muted)]">Portal do proprietário</span>
+              <span className="mt-1 block text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--portal-hero-muted)]">
+                Portal do proprietário
+              </span>
             </div>
           </div>
           <Button
@@ -576,7 +840,10 @@ function PortalHero({
           <p className="portal-property-moment">{stageMessages[status]}</p>
           {implementation?.completionDateEstimate && (
             <p className="portal-property-estimate">
-              Previsão · {new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(new Date(`${implementation.completionDateEstimate}T12:00:00`))}
+              Previsão ·{" "}
+              {new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(
+                new Date(`${implementation.completionDateEstimate}T12:00:00`),
+              )}
             </p>
           )}
         </div>
@@ -585,95 +852,56 @@ function PortalHero({
   );
 }
 
-const StyleInjection = () => (
-  <style>{`
-    .stayo-tab {
-      flex: 1 0 auto;
-      min-height: 42px;
-      color: var(--portal-muted);
-      border: none !important;
-      transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-      border-radius: 10px !important;
-      padding: 0.65rem 1rem;
-      font-weight: 500;
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      white-space: nowrap;
-      background: transparent !important;
-      box-shadow: none !important;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .stayo-tab:hover {
-      color: var(--portal-navy);
-      background-color: var(--portal-surface) !important;
-    }
-    .stayo-tab:active {
-      transform: scale(0.985);
-    }
-    .stayo-tab:focus-visible {
-      outline: 2px solid var(--portal-gold);
-      outline-offset: 2px;
-    }
-    .stayo-tab[data-state="active"] {
-      color: var(--portal-navy) !important;
-      font-weight: 600 !important;
-      background: var(--portal-surface) !important;
-      box-shadow: 0 5px 18px color-mix(in srgb, var(--portal-navy) 10%, transparent), 0 0 0 1px var(--portal-border) !important;
-    }
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .tab-content-anim {
-      animation: tabFadeIn 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
-      will-change: opacity, transform;
-    }
-    @keyframes tabFadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .tab-content-anim { animation: none; opacity: 1; }
-      .stayo-tab { transition: none; }
-    }
-    /* Fade mask for horizontal scrolling clear feedback on mobile */
-    .scroll-mask {
-      mask-image: linear-gradient(to right, black 82%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 82%, transparent 100%);
-    }
-    @media (min-width: 640px) {
-      .scroll-mask {
-        mask-image: none;
-        -webkit-mask-image: none;
-      }
-    }
-    @media (max-width: 639px) {
-      .stayo-tab {
-        flex-basis: auto;
-        font-size: 0.875rem;
-        padding: 0.68rem 0.9rem;
-        min-height: 44px;
-      }
-    }
-  `}</style>
-);
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <StyleInjection />
-      <PortalShell framed={false} showBrand={false}>{children}</PortalShell>
-    </>
+    <PortalShell framed={false} showBrand={false}>
+      {children}
+    </PortalShell>
   );
 }
 
 function LoadingBlock() {
   return <PortalSkeleton />;
+}
+
+function PortalAccessState({
+  kind,
+  onRetry,
+  onSignOut,
+}: {
+  kind: "unlinked" | "error";
+  onRetry: () => void;
+  onSignOut: () => void;
+}) {
+  const connectionError = kind === "error";
+  return (
+    <div className="portal-access-state">
+      <div className="portal-access-brand">
+        <StayoLogo className="h-auto w-28" />
+        <span>Portal do proprietário</span>
+      </div>
+      <div className="portal-access-icon">{connectionError ? <WifiOff /> : <Key />}</div>
+      <p className="portal-milestones-eyebrow">Seu acesso</p>
+      <h1>
+        {connectionError
+          ? "Não conseguimos abrir seu portal agora"
+          : "Seu acesso precisa ser concluído"}
+      </h1>
+      <p>
+        {connectionError
+          ? "Sua conta está segura. Verifique sua conexão e tente novamente."
+          : "A conta existe, mas ainda não encontramos o vínculo com o seu imóvel. Entre novamente pelo link enviado pela Stayo ou fale com a nossa equipe."}
+      </p>
+      <div className="portal-access-actions">
+        <Button type="button" onClick={onRetry} className="portal-action">
+          <RefreshCw /> Tentar novamente
+        </Button>
+        <Button type="button" onClick={onSignOut} variant="outline" className="portal-action">
+          <LogOut /> Sair da conta
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function OwnerHomePage() {
@@ -699,13 +927,19 @@ function OwnerHomePage() {
     );
   }
 
-  if (auth.status !== "authenticated" || !auth.account) {
+  if (auth.status === "unlinked" || auth.status === "error") {
     return (
       <Shell>
-        <PortalSkeleton rows={2} />
+        <PortalAccessState
+          kind={auth.status}
+          onRetry={auth.retry}
+          onSignOut={() => signOut.mutate()}
+        />
       </Shell>
     );
   }
+
+  if (auth.status !== "authenticated" || !auth.account) return null;
 
   return (
     <Shell>
@@ -723,9 +957,16 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   const implementation = implementationsQ.data?.data.find((item) => item.ownerId === ownerId);
   const portalPhase = getOwnerPortalPhase(implementation);
   const portalModules = getOwnerPortalModules(portalPhase);
-  const corePropertyId = portalPhase === "operation" ? implementation?.corePropertyId ?? null : null;
-  const propertyQ = useQuery({ ...propertyQuery(corePropertyId ?? ""), enabled: Boolean(corePropertyId) });
-  const reservationsQ = useQuery({ ...reservationsListQuery(corePropertyId ?? undefined), enabled: Boolean(corePropertyId) });
+  const corePropertyId =
+    portalPhase === "operation" ? (implementation?.corePropertyId ?? null) : null;
+  const propertyQ = useQuery({
+    ...propertyQuery(corePropertyId ?? ""),
+    enabled: Boolean(corePropertyId),
+  });
+  const reservationsQ = useQuery({
+    ...reservationsListQuery(corePropertyId ?? undefined),
+    enabled: Boolean(corePropertyId),
+  });
   const submissionQ = useQuery({
     ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
     enabled: Boolean(implementation?.id),
@@ -754,9 +995,12 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
       window.open(url, "_blank", "noopener,noreferrer");
       toast.success("Documento aberto", { description: "O arquivo foi aberto em uma nova aba." });
     },
-    onError: () => toast.error("Não foi possível abrir o documento", { description: "Tente novamente em alguns instantes." }),
+    onError: () =>
+      toast.error("Não foi possível abrir o documento", {
+        description: "Tente novamente em alguns instantes.",
+      }),
   });
-  
+
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
   const welcome = useOwnerWelcomeState();
@@ -767,7 +1011,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   }, [activeTab, portalModules]);
 
   return (
-    <div className="space-y-2">
+    <div className="portal-dashboard">
       {welcome.showWelcome && welcome.ready && (
         <OwnerWelcomeOverlay
           firstName={firstName}
@@ -777,7 +1021,9 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
       )}
       <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
       <PortalPhaseIndicator phase={portalPhase} />
-      {portalPhase === "ready" && implementation && <ReadyTransition implementation={implementation} />}
+      {portalPhase === "ready" && implementation && (
+        <ReadyTransition implementation={implementation} />
+      )}
 
       <Tabs
         value={activeTab}
@@ -789,14 +1035,20 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
           });
         }}
-        className="mt-5 w-full sm:mt-7"
+        className="portal-dashboard-tabs"
       >
-        <div 
-          className="sticky top-2 z-20 mb-7 max-w-full overflow-hidden rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
-        >
-          <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
+        <div className="portal-nav-wrap">
+          <TabsList
+            ref={tabsListRef}
+            aria-label="Navegação do Portal"
+            className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0"
+          >
             {portalModules.map((module) => (
-              <TabsTrigger key={module} value={module === "profile" ? "dados" : module} className="stayo-tab snap-start">
+              <TabsTrigger
+                key={module}
+                value={module === "profile" ? "dados" : module}
+                className="stayo-tab snap-start"
+              >
                 {portalModuleLabels[module]}
               </TabsTrigger>
             ))}
@@ -805,7 +1057,13 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
           {portalPhase === "operation" && (
-            <OperationalOverview reservationCount={reservationsQ.data?.data.filter((reservation) => reservation.propertyId === corePropertyId).length ?? 0} />
+            <OperationalOverview
+              reservationCount={
+                reservationsQ.data?.data.filter(
+                  (reservation) => reservation.propertyId === corePropertyId,
+                ).length ?? 0
+              }
+            />
           )}
           <section>
             <div className="mb-4 flex items-center gap-3">
@@ -823,15 +1081,25 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               {tasksQ.isPending ? (
                 <LoadingBlock />
               ) : pending.length === 0 ? (
-                <PortalEmptyState positive icon={<CircleCheckBig />} title="Tudo em dia por aqui" description="Você não tem nenhuma ação pendente agora." nextStep="Quando precisarmos de alguma informação ou confirmação, ela aparecerá nesta área." />
+                <PortalEmptyState
+                  positive
+                  icon={<CircleCheckBig />}
+                  title="Tudo em dia por aqui"
+                  description="Você não tem nenhuma ação pendente agora."
+                  nextStep="Quando precisarmos de alguma informação ou confirmação, ela aparecerá nesta área."
+                />
               ) : (
                 <ul className="portal-card divide-y divide-[var(--portal-border)]">
                   {pending.map((task) => (
-                    <li key={task.id} className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1">
+                    <li
+                      key={task.id}
+                      className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1"
+                    >
                       <div>
                         <p className="text-sm font-medium">{task.title}</p>
                         <p className="mt-1 text-xs text-[var(--portal-muted)]">
-                          {ownerTaskKindLabels[task.kind] ?? task.kind} · {ownerTaskStatusLabels[task.status]}
+                          {ownerTaskKindLabels[task.kind] ?? task.kind} ·{" "}
+                          {ownerTaskStatusLabels[task.status]}
                         </p>
                       </div>
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--stayo-gold)]" />
@@ -843,38 +1111,144 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           </section>
           <section>
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]"><BellRing className="h-5 w-5" /></div>
-              <div><h2 className="text-base font-semibold">Atualizações</h2><p className="text-xs text-[var(--portal-muted)]">Novidades compartilhadas pela equipe Stayo.</p></div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]">
+                <BellRing className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold">Atualizações</h2>
+                <p className="text-xs text-[var(--portal-muted)]">
+                  Novidades compartilhadas pela equipe Stayo.
+                </p>
+              </div>
             </div>
-            <PortalEmptyState icon={<BellRing />} title="Nenhuma novidade por enquanto" description="Seu acompanhamento está em dia e não há novas atualizações públicas neste momento." nextStep="Assim que uma etapa avançar ou houver algo importante, você verá a atualização aqui." action={{ label: "Ver minha implantação", onClick: () => setActiveTab("implantacao") }} />
+            <PortalEmptyState
+              icon={<BellRing />}
+              title="Nenhuma novidade por enquanto"
+              description="Seu acompanhamento está em dia e não há novas atualizações públicas neste momento."
+              nextStep="Assim que uma etapa avançar ou houver algo importante, você verá a atualização aqui."
+              action={{
+                label: "Ver minha implantação",
+                onClick: () => setActiveTab("implantacao"),
+              }}
+            />
           </section>
         </TabsContent>
 
         {portalPhase === "operation" && (
           <>
             <TabsContent value="reservations" className="tab-content-anim space-y-6">
-              {reservationsQ.isPending ? <PortalSkeleton rows={4} /> : reservationsQ.isError ? (
-                <PortalEmptyState icon={<BedDouble />} title="Não conseguimos consultar as reservas agora" description="Nada foi perdido. Esta área voltará a carregar assim que a conexão for restabelecida." nextStep="Tente novamente em alguns instantes." />
-              ) : (reservationsQ.data?.data ?? []).filter((reservation) => reservation.propertyId === corePropertyId).length === 0 ? (
-                <PortalEmptyState icon={<BedDouble />} title="As próximas reservas aparecerão aqui" description="Ainda não há reservas oficiais para mostrar neste imóvel." nextStep="Quando uma reserva for confirmada, você verá datas, canal, status e valores permitidos nesta área." />
+              {reservationsQ.isPending ? (
+                <PortalSkeleton rows={4} />
+              ) : reservationsQ.isError ? (
+                <PortalEmptyState
+                  icon={<BedDouble />}
+                  title="Não conseguimos consultar as reservas agora"
+                  description="Nada foi perdido. Esta área voltará a carregar assim que a conexão for restabelecida."
+                  nextStep="Tente novamente em alguns instantes."
+                />
+              ) : (reservationsQ.data?.data ?? []).filter(
+                  (reservation) => reservation.propertyId === corePropertyId,
+                ).length === 0 ? (
+                <PortalEmptyState
+                  icon={<BedDouble />}
+                  title="As próximas reservas aparecerão aqui"
+                  description="Ainda não há reservas oficiais para mostrar neste imóvel."
+                  nextStep="Quando uma reserva for confirmada, você verá datas, canal, status e valores permitidos nesta área."
+                />
               ) : (
-                <section className="portal-operational-list" aria-labelledby="owner-reservations-title">
-                  <div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Operação</p><h2 id="owner-reservations-title">Reservas do imóvel</h2><p>Informações essenciais, sem expor dados privados dos hóspedes.</p></div>
-                  <ul>{(reservationsQ.data?.data ?? []).filter((reservation) => reservation.propertyId === corePropertyId).map((reservation) => (
-                    <li key={reservation.id}><div><strong>{new Intl.DateTimeFormat("pt-BR").format(new Date(reservation.checkin))} — {new Intl.DateTimeFormat("pt-BR").format(new Date(reservation.checkout))}</strong><span>{reservation.channel ?? reservation.source ?? "Canal não informado"} · {reservation.status}</span></div><span>{reservation.amount == null ? "Valor não disponível" : portalCurrency.format(reservation.amount)}</span></li>
-                  ))}</ul>
+                <section
+                  className="portal-operational-list"
+                  aria-labelledby="owner-reservations-title"
+                >
+                  <div className="portal-operational-heading">
+                    <p className="portal-milestones-eyebrow">Operação</p>
+                    <h2 id="owner-reservations-title">Reservas do imóvel</h2>
+                    <p>Informações essenciais, sem expor dados privados dos hóspedes.</p>
+                  </div>
+                  <ul>
+                    {(reservationsQ.data?.data ?? [])
+                      .filter((reservation) => reservation.propertyId === corePropertyId)
+                      .map((reservation) => (
+                        <li key={reservation.id}>
+                          <div>
+                            <strong>
+                              {new Intl.DateTimeFormat("pt-BR").format(
+                                new Date(reservation.checkin),
+                              )}{" "}
+                              —{" "}
+                              {new Intl.DateTimeFormat("pt-BR").format(
+                                new Date(reservation.checkout),
+                              )}
+                            </strong>
+                            <span>
+                              {reservation.channel ?? reservation.source ?? "Canal não informado"} ·{" "}
+                              {reservation.status}
+                            </span>
+                          </div>
+                          <span>
+                            {reservation.amount == null
+                              ? "Valor não disponível"
+                              : portalCurrency.format(reservation.amount)}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
                 </section>
               )}
             </TabsContent>
-            <TabsContent value="calendar" className="tab-content-anim space-y-6"><OperationalPlaceholder module="calendar" /></TabsContent>
-            <TabsContent value="property" className="tab-content-anim space-y-6">
-              {propertyQ.isPending ? <PortalSkeleton rows={4} /> : propertyQ.data ? (
-                <section className="portal-operational-list"><div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Meu imóvel</p><h2>{propertyQ.data.name}</h2><p>{[propertyQ.data.condominiumName, propertyQ.data.unit, propertyQ.data.city].filter(Boolean).join(" · ")}</p></div><dl className="portal-property-facts"><div><dt>Status</dt><dd>{propertyQ.data.status}</dd></div><div><dt>Capacidade</dt><dd>{propertyQ.data.capacity ? `${propertyQ.data.capacity} hóspedes` : "A confirmar"}</dd></div><div><dt>Check-in</dt><dd>{propertyQ.data.checkinTime ?? "A confirmar"}</dd></div><div><dt>Check-out</dt><dd>{propertyQ.data.checkoutTime ?? "A confirmar"}</dd></div></dl></section>
-              ) : <OperationalPlaceholder module="property" />}
+            <TabsContent value="calendar" className="tab-content-anim space-y-6">
+              <OperationalPlaceholder module="calendar" />
             </TabsContent>
-            <TabsContent value="inspections" className="tab-content-anim space-y-6"><OperationalPlaceholder module="inspections" /></TabsContent>
-            <TabsContent value="maintenance" className="tab-content-anim space-y-6"><OperationalPlaceholder module="maintenance" /></TabsContent>
-            <TabsContent value="finance" className="tab-content-anim space-y-6"><OperationalPlaceholder module="finance" /></TabsContent>
+            <TabsContent value="property" className="tab-content-anim space-y-6">
+              {propertyQ.isPending ? (
+                <PortalSkeleton rows={4} />
+              ) : propertyQ.data ? (
+                <section className="portal-operational-list">
+                  <div className="portal-operational-heading">
+                    <p className="portal-milestones-eyebrow">Meu imóvel</p>
+                    <h2>{propertyQ.data.name}</h2>
+                    <p>
+                      {[propertyQ.data.condominiumName, propertyQ.data.unit, propertyQ.data.city]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <dl className="portal-property-facts">
+                    <div>
+                      <dt>Status</dt>
+                      <dd>{propertyQ.data.status}</dd>
+                    </div>
+                    <div>
+                      <dt>Capacidade</dt>
+                      <dd>
+                        {propertyQ.data.capacity
+                          ? `${propertyQ.data.capacity} hóspedes`
+                          : "A confirmar"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Check-in</dt>
+                      <dd>{propertyQ.data.checkinTime ?? "A confirmar"}</dd>
+                    </div>
+                    <div>
+                      <dt>Check-out</dt>
+                      <dd>{propertyQ.data.checkoutTime ?? "A confirmar"}</dd>
+                    </div>
+                  </dl>
+                </section>
+              ) : (
+                <OperationalPlaceholder module="property" />
+              )}
+            </TabsContent>
+            <TabsContent value="inspections" className="tab-content-anim space-y-6">
+              <OperationalPlaceholder module="inspections" />
+            </TabsContent>
+            <TabsContent value="maintenance" className="tab-content-anim space-y-6">
+              <OperationalPlaceholder module="maintenance" />
+            </TabsContent>
+            <TabsContent value="finance" className="tab-content-anim space-y-6">
+              <OperationalPlaceholder module="finance" />
+            </TabsContent>
           </>
         )}
 
@@ -884,7 +1258,12 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           ) : implementation ? (
             <ImplementationJourney implementation={implementation} />
           ) : (
-            <PortalEmptyState icon={<Key />} title="Estamos preparando seu acompanhamento" description="Os dados adicionais do seu imóvel ainda estão sendo organizados pela equipe Stayo." nextStep="Assim que os próximos marcos forem definidos, você acompanhará cada avanço nesta área." />
+            <PortalEmptyState
+              icon={<Key />}
+              title="Estamos preparando seu acompanhamento"
+              description="Os dados adicionais do seu imóvel ainda estão sendo organizados pela equipe Stayo."
+              nextStep="Assim que os próximos marcos forem definidos, você acompanhará cada avanço nesta área."
+            />
           )}
         </TabsContent>
 
@@ -908,40 +1287,86 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
           {proposalsQ.isPending || commercialTermsQ.isPending || proposalLinkQ.isPending ? (
             <PortalSkeleton rows={4} />
           ) : currentProposal ? (
-            <OwnerProposal proposal={currentProposal} versions={proposalVersions} terms={commercialTermsQ.data ?? []} shareToken={proposalLinkQ.data?.token} />
+            <OwnerProposal
+              proposal={currentProposal}
+              versions={proposalVersions}
+              terms={commercialTermsQ.data ?? []}
+              shareToken={proposalLinkQ.data?.token}
+            />
           ) : (
-            <PortalEmptyState icon={<FileSignature />} title="Sua proposta está sendo preparada" description="A equipe Stayo está organizando os detalhes comerciais do seu imóvel." nextStep="Assim que estiver pronta, você poderá visualizar, baixar e aceitar a proposta por aqui." action={{ label: "Acompanhar implantação", onClick: () => setActiveTab("implantacao") }} />
+            <PortalEmptyState
+              icon={<FileSignature />}
+              title="Sua proposta está sendo preparada"
+              description="A equipe Stayo está organizando os detalhes comerciais do seu imóvel."
+              nextStep="Assim que estiver pronta, você poderá visualizar, baixar e aceitar a proposta por aqui."
+              action={{
+                label: "Acompanhar implantação",
+                onClick: () => setActiveTab("implantacao"),
+              }}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="documentos" className="tab-content-anim space-y-6">
           <section className="portal-documents" aria-labelledby="portal-documents-title">
             <div className="portal-documents-heading">
-              <div className="portal-documents-heading-icon"><ShieldCheck aria-hidden="true" /></div>
+              <div className="portal-documents-heading-icon">
+                <ShieldCheck aria-hidden="true" />
+              </div>
               <div>
                 <p className="portal-milestones-eyebrow">Pasta segura</p>
                 <h2 id="portal-documents-title">Seus documentos</h2>
-                <p>Arquivos importantes liberados pela equipe Stayo, organizados para uma consulta simples e segura.</p>
+                <p>
+                  Arquivos importantes liberados pela equipe Stayo, organizados para uma consulta
+                  simples e segura.
+                </p>
               </div>
             </div>
             {attachmentsQ.isPending ? (
               <PortalSkeleton rows={3} />
             ) : attachmentsQ.isError ? (
-              <PortalEmptyState icon={<FileText />} title="Não foi possível abrir sua pasta agora" description="Seus documentos continuam protegidos." nextStep="Tente novamente em alguns instantes. Se o problema continuar, fale com a equipe Stayo." />
+              <PortalEmptyState
+                icon={<FileText />}
+                title="Não foi possível abrir sua pasta agora"
+                description="Seus documentos continuam protegidos."
+                nextStep="Tente novamente em alguns instantes. Se o problema continuar, fale com a equipe Stayo."
+              />
             ) : (attachmentsQ.data ?? []).length === 0 ? (
-              <PortalEmptyState icon={<FileText />} title="Sua pasta está pronta" description="Ainda não há documentos liberados para você." nextStep="Contratos, propostas e outros arquivos aparecerão aqui com data e status quando forem disponibilizados." action={{ label: "Ver minhas pendências", onClick: () => setActiveTab("visao-geral") }} />
+              <PortalEmptyState
+                icon={<FileText />}
+                title="Sua pasta está pronta"
+                description="Ainda não há documentos liberados para você."
+                nextStep="Contratos, propostas e outros arquivos aparecerão aqui com data e status quando forem disponibilizados."
+                action={{
+                  label: "Ver minhas pendências",
+                  onClick: () => setActiveTab("visao-geral"),
+                }}
+              />
             ) : (
               <ul className="portal-document-list">
                 {(attachmentsQ.data ?? []).map((attachment) => (
                   <li key={attachment.id} className="portal-document-row portal-interactive-row">
-                    <span className="portal-document-icon"><DocumentIcon attachment={attachment} /></span>
+                    <span className="portal-document-icon">
+                      <DocumentIcon attachment={attachment} />
+                    </span>
                     <div className="portal-document-copy">
                       <strong>{attachment.filename}</strong>
-                      <span>{documentType(attachment)} · {attachment.mimeType === "application/pdf" ? "PDF" : attachment.mimeType.startsWith("image/") ? "Imagem" : "Arquivo"}</span>
+                      <span>
+                        {documentType(attachment)} ·{" "}
+                        {attachment.mimeType === "application/pdf"
+                          ? "PDF"
+                          : attachment.mimeType.startsWith("image/")
+                            ? "Imagem"
+                            : "Arquivo"}
+                      </span>
                     </div>
                     <div className="portal-document-meta">
-                      <span className="portal-document-status"><CheckCircle2 aria-hidden="true" /> Disponível</span>
-                      <time dateTime={attachment.createdAt}>{new Intl.DateTimeFormat("pt-BR").format(new Date(attachment.createdAt))}</time>
+                      <span className="portal-document-status">
+                        <CheckCircle2 aria-hidden="true" /> Disponível
+                      </span>
+                      <time dateTime={attachment.createdAt}>
+                        {new Intl.DateTimeFormat("pt-BR").format(new Date(attachment.createdAt))}
+                      </time>
                     </div>
                     <Button
                       type="button"
@@ -951,15 +1376,27 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
                       size="sm"
                       className="portal-action portal-document-action shrink-0 border-[var(--portal-border)] text-[var(--portal-navy)] hover:bg-[var(--portal-surface-soft)]"
                     >
-                      {attachment.mimeType.startsWith("image/") || attachment.mimeType === "application/pdf" ? <ExternalLink className="h-3.5 w-3.5" /> : <Download className="h-3.5 w-3.5" />}
+                      {attachment.mimeType.startsWith("image/") ||
+                      attachment.mimeType === "application/pdf" ? (
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5" />
+                      )}
                       {download.isPending ? "Abrindo..." : "Abrir"}
                     </Button>
                   </li>
                 ))}
               </ul>
             )}
-            {download.isError && <p className="portal-document-error" role="alert">Não conseguimos abrir este arquivo agora. Tente novamente em alguns instantes.</p>}
-            <p className="portal-documents-trust"><LockKeyhole aria-hidden="true" /> Somente documentos liberados para você aparecem nesta área.</p>
+            {download.isError && (
+              <p className="portal-document-error" role="alert">
+                Não conseguimos abrir este arquivo agora. Tente novamente em alguns instantes.
+              </p>
+            )}
+            <p className="portal-documents-trust">
+              <LockKeyhole aria-hidden="true" /> Somente documentos liberados para você aparecem
+              nesta área.
+            </p>
           </section>
         </TabsContent>
       </Tabs>

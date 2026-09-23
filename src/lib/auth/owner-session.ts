@@ -107,28 +107,35 @@ export async function getCurrentOwnerSession(): Promise<Session | null> {
 }
 
 /** A própria conta do proprietário logado — RLS só deixa ver `id = auth.uid()`. */
-export async function getOwnerPortalAccount(): Promise<OwnerPortalAccount | null> {
+export async function getOwnerPortalAccount(userId?: string): Promise<OwnerPortalAccount | null> {
   const client = getSupabaseBrowserClient();
   if (!client) return null;
+  const verifiedUserId = userId ?? (await client.auth.getUser()).data.user?.id;
+  if (!verifiedUserId) return null;
   const { data, error } = await client
     .from("owner_portal_accounts")
     .select()
+    .eq("id", verifiedUserId)
     .maybeSingle<OwnerPortalAccountRow>();
   if (error) throw error;
   return data ? accountFromRow(data) : null;
 }
 
 export interface OwnerAuthState {
-  status: "loading" | "not_required" | "authenticated" | "unauthenticated";
+  status: "loading" | "not_required" | "authenticated" | "unauthenticated" | "unlinked" | "error";
   session: Session | null;
   account: OwnerPortalAccount | null;
+  message?: string;
+  retry: () => void;
 }
 
 export function useOwnerSession(): OwnerAuthState {
+  const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<OwnerAuthState>({
     status: isSupabaseConfigured() ? "loading" : "not_required",
     session: null,
     account: null,
+    retry: () => setAttempt((value) => value + 1),
   });
 
   useEffect(() => {
@@ -137,24 +144,53 @@ export function useOwnerSession(): OwnerAuthState {
     const client = getSupabaseBrowserClient();
     if (!client) return;
 
+    const retry = () => setAttempt((value) => value + 1);
     const apply = async (session: Session | null) => {
       if (!session) {
-        if (!cancelled) setState({ status: "unauthenticated", session: null, account: null });
+        if (!cancelled)
+          setState({ status: "unauthenticated", session: null, account: null, retry });
         return;
       }
-      const account = await getOwnerPortalAccount().catch(() => null);
-      if (!cancelled) setState({ status: "authenticated", session, account });
+      try {
+        const account = await getOwnerPortalAccount(session.user.id);
+        if (cancelled) return;
+        if (!account) {
+          setState({
+            status: "unlinked",
+            session,
+            account: null,
+            message: "Esta conta ainda não está vinculada a um proprietário.",
+            retry,
+          });
+          return;
+        }
+        setState({ status: "authenticated", session, account, retry });
+      } catch {
+        if (!cancelled) {
+          setState({
+            status: "error",
+            session,
+            account: null,
+            message: "Não foi possível confirmar seu acesso agora.",
+            retry,
+          });
+        }
+      }
     };
 
     void getCurrentOwnerSession().then(apply);
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => void apply(session));
+    } = client.auth.onAuthStateChange((_event, session) => {
+      // A leitura do vínculo usa o mesmo client e precisa rodar depois que o
+      // callback interno do Auth liberar seu lock.
+      window.setTimeout(() => void apply(session), 0);
+    });
     return () => {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [attempt]);
 
   return state;
 }

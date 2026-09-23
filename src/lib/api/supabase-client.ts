@@ -12,6 +12,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "../../integrations/supabase/client";
 
 /**
  * O Lovable Cloud gera `VITE_SUPABASE_PUBLISHABLE_KEY` (formato novo de chave
@@ -34,12 +35,7 @@ let publicCached: SupabaseClient | null = null;
 /** Retorna `null` quando o Supabase ainda não está configurado — nunca lança. */
 export function getSupabaseBrowserClient(): SupabaseClient | null {
   if (!isSupabaseConfigured()) return null;
-  if (cached) return cached;
-
-  cached = createClient(
-    import.meta.env["VITE_SUPABASE_URL"] as string,
-    supabaseAnonKey() as string,
-  );
+  if (!cached) cached = supabase;
   return cached;
 }
 
