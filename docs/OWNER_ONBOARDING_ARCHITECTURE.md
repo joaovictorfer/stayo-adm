@@ -1,93 +1,131 @@
-# Onboarding do Proprietário — arquitetura do convite (Fase 8, promovido na Fase 16)
+# Jornada do Proprietário — proposta, cadastro, imóvel e acesso
 
-Cobre o **auto-cadastro do proprietário**: o formulário público que ele
-preenche (nome, documento, e-mail, telefone, chave Pix) a partir de um link
-gerado pelo time interno. Não confundir com o **portal de acompanhamento**
-(`docs/OWNER_PORTAL.md`), que é uma tela diferente, com outro tipo de link.
+A entrada do proprietário na STAYO é uma **jornada única**, iniciada pelo
+convite de onboarding gerado pelo time interno. O mesmo acesso conduz quatro
+macroetapas:
 
-## Onde vive
+1. **Proposta** — leitura e aceite da versão comercial vinculada ao convite;
+2. **Seus dados** — identificação, contato, endereço e dados de repasse;
+3. **Seu imóvel** — dados iniciais que alimentam a implantação administrativa;
+4. **Seu acesso** — criação da conta do Portal do Proprietário.
 
-`adminApi.ownerOnboarding` em `src/lib/api/admin-client.ts` — mesmo padrão
-local+Supabase do resto do `AdminApiClient`
-(`createDefaultAdminApiClient()` escolhe sozinho). Até a Fase 15 vivia em
-`ownerOnboardingStore` (`local-store.ts`), sempre local, porque o caminho
-público exigia RLS incompatível com um visitante anônimo — ver a seção
-"O caminho público" abaixo para como isso foi resolvido.
+A rota pública principal é `src/routes/portal.implantacao.$token.tsx`; a UI da
+jornada vive em `src/components/portal/OwnerJourney.tsx`.
 
-## O convite (`OwnerOnboardingLink`)
+O Portal do Proprietário autenticado continua sendo outra experiência, após a
+conclusão desta jornada. Ver `docs/OWNER_PORTAL.md`.
 
-Tipo em `src/types/owner-onboarding.ts`. Regras, implementadas nos dois
-adapters de `adminApi.ownerOnboarding`:
+## Convite e segurança
 
-- **Token nunca em texto puro.** Só o hash SHA-256 (`src/lib/api/token-hash.ts`,
-  `hashToken()`, via Web Crypto `crypto.subtle.digest`) é persistido. O valor
-  bruto só existe transiente, no componente React, logo após a criação —
-  nunca é lido de volta depois. No banco (migration `0004`), a coluna
-  `token_hash` guarda exatamente esse hash.
-- **Expira em 7 dias** por padrão (`expiresAt`).
-- **Gerar um novo convite revoga automaticamente qualquer um ainda ativo**
-  da mesma implantação — nunca existem dois links válidos ao mesmo tempo.
-- **Revogável a qualquer momento** pelo time interno.
-- `ownerOnboardingLinkStatus()` (função pura, mesmo arquivo de tipos) deriva
-  o status exibido (`ativo`/`expirado`/`revogado`/`usado`) a partir de
-  `expiresAt`/`revokedAt`/`usedAt` — nunca um campo `status` solto que possa
-  ficar dessincronizado dos timestamps.
+`adminApi.ownerOnboarding`, em `src/lib/api/admin-client.ts`, administra os
+convites e os envios. O token do convite nunca é persistido em texto puro:
+somente o hash SHA-256 (`token_hash`) fica no banco. O valor bruto só é
+mostrado ao time no momento da criação e enviado ao proprietário na URL.
 
-## O envio do formulário (`OwnerOnboardingSubmission`)
+Regras preservadas:
 
-Tabela `owner_onboarding_submissions` (migration
-`0007_owner_onboarding_submissions.sql`), `implementation_id unique` — um
-envio por implantação. Ao enviar, marca o convite como `usedAt` —
-um convite usado nunca aceita um segundo envio.
+- expiração padrão em 7 dias;
+- gerar novo convite revoga o anterior ainda ativo da mesma implantação;
+- revogação manual disponível ao time interno;
+- status derivado por timestamps (`expiresAt`, `revokedAt`, `usedAt`), sem
+  campo de status duplicado;
+- rota pública resolve o convite por RPC `security definer`, sem expor a
+  tabela nem o hash ao navegador.
 
-## O caminho público — por que precisou de funções `security definer`
+## Proposta obrigatória antes do cadastro
 
-`getLink`/`createLink`/`revoke`/`getSubmission` são chamados só pela tela
-autenticada do time interno — leitura/escrita direta sob RLS, igual a
-qualquer outra vertical de `AdminApiClient`.
+A migration `supabase/migrations/0016_owner_journey_proposal.sql` adiciona
+`proposal_id` a `owner_portal_invitations`.
 
-`findByToken`/`submit`, porém, são chamados por `portal.implantacao.$token.tsx`
-— uma rota **pública, sem sessão autenticada**. As RLS de
-`owner_portal_invitations`/`owner_onboarding_submissions` exigem papel do
-time interno (`has_admin_role(...)`), então um visitante anônimo nunca
-conseguiria ler ou escrever essas tabelas diretamente — é exatamente esse
-descompasso que travou a promoção deste vertical até a Fase 15.
+Na criação do convite, um trigger vincula a **versão mais recente existente
+naquele instante**. A partir daí o convite fica congelado naquela versão:
+criar uma v2 depois não faz um link enviado para a v1 passar a mostrar a v2.
+Também é possível persistir explicitamente `proposal_id`; o trigger rejeita
+uma proposta de outra implantação.
 
-A solução (migration `0007`): duas funções Postgres `security definer`
-(rodam com privilégio elevado, mas só fazem exatamente o que a validação
-client-side já fazia):
+As RPCs públicas da jornada são:
 
-- `owner_onboarding_resolve_token(token)` — hash do token (mesmo SHA-256
-  hex minúsculo do cliente) e devolve só os campos públicos do convite
-  (`implementation_id`, `expires_at`, `used_at`, `revoked_at`) — nunca o
-  `token_hash` nem qualquer outra coluna.
-- `owner_onboarding_submit(token, ...)` — revalida tudo server-side
-  (convite existe, não revogado, não usado, não expirado) antes de gravar
-  o envio e marcar o convite como usado, atomicamente (`for update` trava
-  a linha, então duas tentativas simultâneas com o mesmo token nunca
-  conseguem duplicar o envio).
+- `owner_journey_resolve_proposal(token)` — devolve somente a versão exata da
+  proposta, termos comerciais e resumo contratual necessário à apresentação;
+- `owner_journey_accept_proposal(token, accepted_name)` — registra o primeiro
+  aceite de forma idempotente e atômica.
 
-Ambas com `grant execute ... to anon, authenticated` — só a função é
-exposta ao público, nunca a tabela. Testado de ponta a ponta contra um
-projeto Supabase real (ver `docs/LOCALSTORAGE_MIGRATION.md` §"Validação
-contra um projeto Supabase real"): token válido, token já usado, convite
-revogado e convite expirado — os quatro casos rejeitam/aceitam
-corretamente.
+O aceite comercial mantém os efeitos do fluxo anterior: grava o evento
+`proposal.accepted` em auditoria e, quando houver termos `fixed_once`, cria a
+cobrança inicial de forma idempotente por `proposal_id`.
 
-## UI
+Sem proposta vinculada a jornada **não inventa condições nem libera as etapas
+seguintes**. A UI informa que a proposta ainda está em preparação.
 
-- Time interno: painel "Cadastro do proprietário" em `implantacao.$id.tsx`
-  (gera link, mostra status, revoga, mostra os dados recebidos assim que
-  chegam).
-- Proprietário: `src/routes/portal.implantacao.$token.tsx` — resolve o
-  token por hash (`findByToken`), nunca por busca direta do valor puro;
-  mostra mensagem específica para link expirado/revogado (não um genérico
-  "link inválido").
+## Etapa 2 — dados do proprietário
 
-## O que falta para produção real
+Reaproveita o contrato existente de `OwnerOnboardingSubmissionInput` e suas
+validações. Inclui:
 
-Owner Auth de verdade (§23 do plano de produção): depois do envio do
-formulário, o proprietário ainda não cria uma conta com senha vinculada a
-`auth.users` — hoje o acesso continua sendo só pelo link/token. Ver
-`docs/AUTH_AND_ROLES.md` para o estado da autenticação do time interno
-(que existe) e o que falta para a do proprietário (que não existe ainda).
+- PF/PJ, nome/razão social e CPF/CNPJ;
+- coproprietários/proponentes adicionais;
+- e-mail e telefone;
+- endereço residencial;
+- banco, agência, conta, titular e chave Pix.
+
+O autosave continua ativo. A nova UI grava códigos de progresso de macroetapa
+(`20` para proprietário, `30` para imóvel e `40` para acesso) para não
+confundir rascunhos antigos, que usavam etapas `1..5`.
+
+## Etapa 3 — dados iniciais do imóvel
+
+O imóvel saiu de dentro da antiga etapa de endereço e ganhou uma macroetapa
+própria. O formulário recebe, quando disponível, os dados já conhecidos pela
+implantação e permite confirmar/completar:
+
+- CEP, endereço, número/unidade, bairro, cidade e UF;
+- tipo do imóvel;
+- dormitórios, suítes, banheiros e vagas;
+- forma e orientações de acesso;
+- rede e senha de Wi-Fi;
+- código de fechadura, quando aplicável.
+
+**Regra de produto e segurança:** informações enviadas pelo proprietário
+alimentam a implantação administrativa. Elas não são automaticamente
+publicadas no Guia do Hóspede. Senhas, códigos e demais dados sensíveis
+continuam sujeitos a revisão, minimização e acesso restrito.
+
+## Etapa 4 — criação do acesso
+
+Após o envio do cadastro, a última macroetapa usa
+`createOwnerAccountAndLink()` (`src/lib/auth/owner-session.ts`) para criar ou
+reutilizar a conta Supabase Auth e vinculá-la ao proprietário comprovado pelo
+mesmo convite.
+
+Não existe criação de conta solta: `owner_account_link` valida token, e-mail,
+submissão e proprietário antes de criar o vínculo em
+`owner_portal_accounts`. Quando a configuração exige confirmação de e-mail, a
+jornada mostra esse estado antes do primeiro login.
+
+## Persistência pública do onboarding
+
+`owner_onboarding_submissions` mantém um envio por implantação. O caminho
+público é protegido pelas RPCs introduzidas a partir da migration `0007`; o
+visitante anônimo não recebe acesso direto às tabelas protegidas por RLS.
+
+O envio final continua atômico: valida o convite e os dados no servidor,
+grava o cadastro e marca o convite como usado. O link usado pode continuar a
+ser resolvido para exibir o estado final e concluir o vínculo da conta, mas
+não aceita um segundo envio do formulário.
+
+## Compatibilidade
+
+A rota antiga de proposta (`/portal/proposta/$token`) permanece como caminho
+legado de visualização/aceite por token próprio. A jornada oficial para novos
+proprietários é o convite único `/portal/implantacao/$token`.
+
+Convites antigos sem uma proposta persistida podem permanecer com
+`proposal_id = null`; nesses casos a primeira etapa fica bloqueada até uma
+nova jornada ser preparada, em vez de apresentar dados não versionados.
+
+## Implantação da migration
+
+A migration `0016_owner_journey_proposal.sql` deve ser aplicada de forma
+controlada somente depois da revisão do schema remoto e dos testes de banco.
+O arquivo versionado no GitHub é a fonte canônica da mudança estrutural; a UI
+não deve executar DDL nem usar Lovable para aplicar schema.
