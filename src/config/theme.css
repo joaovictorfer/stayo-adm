@@ -200,7 +200,11 @@
 .implementation-cover-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, color-mix(in srgb, var(--admin-primary) 90%, transparent), transparent);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--admin-primary) 90%, transparent),
+    transparent
+  );
 }
 .implementation-identity-body {
   position: relative;
@@ -326,7 +330,9 @@
   height: 0.38rem;
   border-radius: 999px;
   background: var(--admin-border);
-  transition: background-color 220ms ease, transform 220ms ease;
+  transition:
+    background-color 220ms ease,
+    transform 220ms ease;
 }
 .implementation-step-segments li.is-done span {
   background: color-mix(in srgb, var(--implementation-green) 58%, white);
@@ -377,7 +383,9 @@
   border-bottom: 1px solid var(--admin-border);
   scrollbar-width: none;
 }
-.implementation-tabs::-webkit-scrollbar { display: none; }
+.implementation-tabs::-webkit-scrollbar {
+  display: none;
+}
 .implementation-tabs button {
   flex: 0 0 auto;
   border-bottom: 2px solid transparent;
@@ -409,12 +417,16 @@
   text-transform: uppercase;
 }
 .implementation-next-action {
-  border: 1px solid color-mix(in srgb, var(--implementation-green) 22%, var(--implementation-border));
+  border: 1px solid
+    color-mix(in srgb, var(--implementation-green) 22%, var(--implementation-border));
   border-left: 3px solid var(--implementation-green);
   border-radius: var(--admin-radius);
   background: var(--implementation-green-soft);
   padding: clamp(1.2rem, 3vw, 1.75rem);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 .implementation-next-action:hover {
   border-color: color-mix(in srgb, var(--implementation-green) 42%, var(--implementation-border));
@@ -422,13 +434,25 @@
   transform: translateY(-1px);
 }
 @keyframes implementation-content-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @media (max-width: 639px) {
-  .implementation-workspace-stack { gap: 0.75rem; }
-  .implementation-back-link { display: none; }
-  .implementation-cover { height: 5.5rem; }
+  .implementation-workspace-stack {
+    gap: 0.75rem;
+  }
+  .implementation-back-link {
+    display: none;
+  }
+  .implementation-cover {
+    height: 5.5rem;
+  }
   .implementation-identity-body {
     grid-template-columns: 1fr;
     padding: 0 1rem 1rem;
@@ -438,24 +462,42 @@
     height: 3.75rem;
     margin-top: -1.9rem;
   }
-  .implementation-actions { justify-content: stretch; }
-  .implementation-actions button { flex: 1; }
-  .implementation-stepper { padding: 0.9rem 1rem; }
+  .implementation-actions {
+    justify-content: stretch;
+  }
+  .implementation-actions button {
+    flex: 1;
+  }
+  .implementation-stepper {
+    padding: 0.9rem 1rem;
+  }
   .implementation-stepper-heading > div {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.15rem;
   }
-  .implementation-status-select { max-width: 9.5rem; }
-  .implementation-metric { padding: 0.85rem 0.45rem; }
-  .implementation-metric p:last-child { font-size: 0.58rem; }
-  .implementation-summary { padding: 1rem; }
+  .implementation-status-select {
+    max-width: 9.5rem;
+  }
+  .implementation-metric {
+    padding: 0.85rem 0.45rem;
+  }
+  .implementation-metric p:last-child {
+    font-size: 0.58rem;
+  }
+  .implementation-summary {
+    padding: 1rem;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .implementation-summary { animation: none; }
+  .implementation-summary {
+    animation: none;
+  }
   .implementation-next-action:hover,
   .implementation-primary-action:hover,
-  .implementation-back-button:hover { transform: none; }
+  .implementation-back-button:hover {
+    transform: none;
+  }
 }
 
 .admin-page-header {

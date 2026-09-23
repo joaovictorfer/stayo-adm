@@ -198,9 +198,7 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="implementation-workspace-stack">
-          <section
-            className="implementation-identity"
-          >
+          <section className="implementation-identity">
             <div className="implementation-cover">
               {implementation.coverImage ? (
                 <img
@@ -215,15 +213,8 @@ function ImplementationDetailPage() {
             </div>
             <div className="implementation-identity-body">
               <div className="implementation-identity-copy">
-                <div
-                  className="implementation-property-mark"
-                  aria-hidden="true"
-                />
-                <h1
-                  className="implementation-property-name"
-                >
-                  {propertyName}
-                </h1>
+                <div className="implementation-property-mark" aria-hidden="true" />
+                <h1 className="implementation-property-name">{propertyName}</h1>
                 <div className="implementation-identity-meta">
                   <span className="implementation-status-pill">
                     <span aria-hidden="true" />
@@ -233,10 +224,19 @@ function ImplementationDetailPage() {
                 </div>
               </div>
               <div className="implementation-actions">
-                <Button className="implementation-primary-action" size="sm" onClick={() => setTab("proprietario")}>
+                <Button
+                  className="implementation-primary-action"
+                  size="sm"
+                  onClick={() => setTab("proprietario")}
+                >
                   <ExternalLink /> Portal
                 </Button>
-                <Button className="implementation-secondary-action" variant="outline" size="sm" onClick={() => void shareWorkspace()}>
+                <Button
+                  className="implementation-secondary-action"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void shareWorkspace()}
+                >
                   <Share2 /> Compartilhar
                 </Button>
               </div>
@@ -292,9 +292,7 @@ function ImplementationDetailPage() {
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)]">
                 <div className="min-w-0 space-y-10">
                   <section>
-                    <p className="implementation-section-label">
-                      Recomendação
-                    </p>
+                    <p className="implementation-section-label">Recomendação</p>
                     <div className="implementation-next-action">
                       <h2
                         className="text-xl font-semibold leading-snug sm:text-2xl"
@@ -1257,10 +1255,10 @@ function StatusStepper({
     <section className="implementation-stepper">
       <div className="implementation-stepper-heading">
         <div>
-          <p>
-          Status da implantação
-          </p>
-          <span>Etapa {visibleIndex + 1} de {mainStatusFlow.length}</span>
+          <p>Status da implantação</p>
+          <span>
+            Etapa {visibleIndex + 1} de {mainStatusFlow.length}
+          </span>
         </div>
         <select
           value={status}
@@ -1358,9 +1356,7 @@ function Metric({
   className?: string;
 }) {
   return (
-    <div
-      className={`implementation-metric ${className}`}
-    >
+    <div className={`implementation-metric ${className}`}>
       <p
         className="text-[10px] font-semibold uppercase tracking-[0.14em]"
         style={{ color: "var(--stayo-ink-muted)" }}
