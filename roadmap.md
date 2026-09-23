@@ -14,8 +14,8 @@
 - [x] Calcular completude real do cadastro
 - [x] Refinar aba Proprietário e gestão do Portal
 - [x] Redesenhar ficha principal do proprietário
-- [ ] Validar migration, testes, lint, build e fluxos responsivos
+- [x] Validar migration, testes, lint, build e fluxos responsivos
 - [x] Permitir múltiplos proprietários/proponentes no cadastro público
 - [x] Tornar titular, CPF/CNPJ e chave Pix inteligentes a partir dos proprietários cadastrados
 - [x] Refinar microinterações e visual do cadastro do proprietário
-- [ ] Validar persistência, testes, build e experiência mobile do novo fluxo
+- [x] Validar persistência, testes, build e experiência mobile do novo fluxo
