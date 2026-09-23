@@ -1347,25 +1347,41 @@ function OwnerHomePage() {
   );
 }
 
-function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
+export function OwnerHomeContent({
+  ownerId,
+  onSignOut,
+  preview = false,
+  previewImplementationId,
+}: {
+  ownerId: string;
+  onSignOut: () => void;
+  preview?: boolean;
+  previewImplementationId?: string;
+}) {
   const [activeTab, setActiveTab] = useState("visao-geral");
   const [selectedImplementationId, setSelectedImplementationId] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : (window.localStorage.getItem("stayo-owner-property") ?? ""),
+    previewImplementationId
+      ? previewImplementationId
+      : typeof window === "undefined"
+        ? ""
+        : (window.localStorage.getItem("stayo-owner-property") ?? ""),
   );
   const tabsListRef = useRef<HTMLDivElement>(null);
   const ownerQ = useQuery(ownerQuery(ownerId));
   const tasksQ = useQuery(ownerTasksQuery(ownerId));
   const implementationsQ = useQuery({
-    queryKey: ["owner-portal", "implementations", ownerId],
+    queryKey: ["owner-portal", "implementations", ownerId, previewImplementationId ?? "all"],
     queryFn: listOwnerImplementations,
     staleTime: 30_000,
   });
-  const ownerImplementations = implementationsQ.data ?? [];
+  const allImplementations = implementationsQ.data ?? [];
+  const ownerImplementations = previewImplementationId
+    ? allImplementations.filter((item) => item.id === previewImplementationId)
+    : allImplementations;
   const implementation =
     ownerImplementations.find((item) => item.id === selectedImplementationId) ??
     ownerImplementations[0];
+
   const portalPhase = getOwnerPortalPhase(implementation);
   const portalModules = getOwnerPortalModules(portalPhase);
   const corePropertyId =
