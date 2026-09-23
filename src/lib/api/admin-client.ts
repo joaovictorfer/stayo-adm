@@ -45,7 +45,11 @@ import {
   normalizePhone,
   ownerAdminEditSchema,
 } from "../owner-form-validation";
-import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
+import {
+  getSupabaseBrowserClient,
+  getSupabasePublicBrowserClient,
+  isSupabaseConfigured,
+} from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
 export interface AdminApiClient {
@@ -983,6 +987,11 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     if (!c) throw new Error("Supabase não configurado");
     return c;
   };
+  const publicClient = () => {
+    const c = getSupabasePublicBrowserClient();
+    if (!c) throw new Error("Supabase não configurado");
+    return c;
+  };
 
   const audit: AdminApiClient["audit"] = {
     log: async (input) => {
@@ -1439,14 +1448,14 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return data ? ownerOnboardingSubmissionFromRow(data) : null;
     },
     getDraft: async (token) => {
-      const { data, error } = await client().rpc("owner_onboarding_draft_resolve_v2", {
+      const { data, error } = await publicClient().rpc("owner_onboarding_draft_resolve_v2", {
         p_token: token,
       });
       if (error) throw error;
       return data ? ownerOnboardingFromDraft(data as Record<string, unknown>) : null;
     },
     saveDraft: async (token, input, currentStep, submit = false) => {
-      const { data, error } = await client().rpc("owner_onboarding_draft_save_v2", {
+      const { data, error } = await publicClient().rpc("owner_onboarding_draft_save_v2", {
         p_token: token,
         p_submit: submit,
         p_data: {
@@ -1469,7 +1478,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     // actor_id = auth.uid()) — o registro do envio em si já é o rastro
     // desse evento.
     findByToken: async (token) => {
-      const { data, error } = await client()
+      const { data, error } = await publicClient()
         .rpc("owner_onboarding_resolve_token", { p_token: token })
         .maybeSingle<{
           implementation_id: string;

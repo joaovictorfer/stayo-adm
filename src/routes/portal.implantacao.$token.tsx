@@ -827,7 +827,12 @@ function OwnerOnboardingForm({
 }
 
 function ownerOnboardingErrorMessage(cause: unknown): string {
-  const message = cause instanceof Error ? cause.message.toLocaleLowerCase("pt-BR") : "";
+  const message =
+    cause instanceof Error
+      ? cause.message.toLocaleLowerCase("pt-BR")
+      : cause && typeof cause === "object" && "message" in cause && typeof cause.message === "string"
+        ? cause.message.toLocaleLowerCase("pt-BR")
+        : "";
   if (message.includes("acesso inválido"))
     return "Este acesso expirou ou foi encerrado. Solicite um novo link à equipe Stayo.";
   if (message.includes("cpf") || message.includes("cnpj") || message.includes("documento"))
@@ -839,6 +844,10 @@ function ownerOnboardingErrorMessage(cause: unknown): string {
     return "Confira o e-mail informado antes de enviar.";
   if (message.includes("repasse") || message.includes("pix") || message.includes("conta"))
     return "Confira os dados bancários e a chave Pix antes de enviar.";
+  if (message.includes("cadastro incompleto"))
+    return "Há um dado obrigatório ainda incompleto. Volte às etapas e confira os campos destacados.";
+  if (message.includes("proprietário") || message.includes("proponente"))
+    return "Confira os dados de cada proprietário ou proponente antes de enviar.";
   return "Seus dados continuam nesta tela. Tente novamente em alguns instantes.";
 }
 
