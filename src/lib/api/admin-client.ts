@@ -223,7 +223,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const all = read<OwnerRecord>(OWNER_RECORDS_KEY);
       const target = all.find((o) => o.id === id);
       if (!target) throw new Error("Proprietário não encontrado");
-      const updated: OwnerRecord = { ...target, ...patch, updatedAt: new Date().toISOString() };
+      const updated: OwnerRecord = { ...target, ...normalizeOwnerPatch(patch), updatedAt: new Date().toISOString() };
       write(
         OWNER_RECORDS_KEY,
         all.map((o) => (o.id === id ? updated : o)),
@@ -962,13 +962,14 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return ownerFromRow(data);
     },
     update: async (id, patch) => {
+      const normalized = normalizeOwnerPatch(patch);
       const { data, error } = await client()
         .from("owner_records")
         .update({
-          name: patch.name,
-          phone: patch.phone,
-          email: patch.email,
-          document: patch.document,
+          name: normalized.name,
+          phone: normalized.phone,
+          email: normalized.email,
+          document: normalized.document,
           lifecycle_status: patch.lifecycleStatus,
           core_owner_id: patch.coreOwnerId,
         })

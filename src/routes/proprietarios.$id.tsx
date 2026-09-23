@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Calendar, FileText, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   DetailSkeleton,
@@ -35,6 +36,7 @@ import {
 import { formatMoney } from "../lib/format";
 import type { OwnerLifecycleStatus, OwnerRecord, OwnerTaskStatus } from "../types/admin";
 import type { Contract, Reservation, ServiceInvoice } from "../types/core";
+import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, normalizeOwnerSubmission, ownerAdminEditSchema } from "../lib/owner-form-validation";
 
 const lifecycleLabels: Record<OwnerLifecycleStatus, string> = {
   prospect: "Prospect",
@@ -325,6 +327,8 @@ function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
     email: owner.email ?? "",
     document: owner.document ?? "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showSensitive, setShowSensitive] = useState(false);
 
   useEffect(() => {
     setForm({
@@ -342,17 +346,22 @@ function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
     ]);
 
   const save = useMutation({
-    mutationFn: () =>
-      adminApi.owners.update(owner.id, {
-        name: form.name.trim(),
-        phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
-        document: form.document.trim() || null,
-      }),
+    mutationFn: () => {
+      const result = ownerAdminEditSchema.safeParse(form);
+      if (!result.success) {
+        const nextErrors = Object.fromEntries(result.error.issues.map((issue) => [String(issue.path[0]), issue.message]));
+        setErrors(nextErrors);
+        throw new Error("Confira os campos destacados.");
+      }
+      setErrors({});
+      return adminApi.owners.update(owner.id, result.data);
+    },
     onSuccess: async () => {
       await invalidate();
       setEditing(false);
+      toast.success("Cadastro salvo", { description: "Os dados do proprietário foram atualizados." });
     },
+    onError: (error) => toast.error("Não foi possível salvar", { description: error.message }),
   });
 
   const changeLifecycle = useMutation({
@@ -403,21 +412,25 @@ function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
             label="Nome"
             value={form.name}
             onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+            error={errors["name"]}
           />
           <ContactField
             label="Telefone"
-            value={form.phone}
-            onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+            value={formatBrazilianPhone(form.phone)}
+            onChange={(v) => setForm((f) => ({ ...f, phone: formatBrazilianPhone(v) }))}
+            error={errors["phone"]}
           />
           <ContactField
             label="E-mail"
             value={form.email}
             onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+            error={errors["email"]}
           />
           <ContactField
             label="CPF/CNPJ"
-            value={form.document}
-            onChange={(v) => setForm((f) => ({ ...f, document: v }))}
+            value={formatBrazilianDocument(form.document)}
+            onChange={(v) => setForm((f) => ({ ...f, document: formatBrazilianDocument(v) }))}
+            error={errors["document"]}
           />
           <div className="flex items-center gap-2 sm:col-span-2">
             <button
@@ -442,9 +455,10 @@ function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nome" value={owner.name} />
-          <Field label="Telefone" value={owner.phone} />
+          <Field label="Telefone" value={owner.phone ? formatBrazilianPhone(owner.phone) : null} />
           <Field label="E-mail" value={owner.email} />
-          <Field label="CPF/CNPJ" value={owner.document} />
+          <Field label="CPF/CNPJ" value={showSensitive ? formatBrazilianDocument(owner.document ?? "") : maskDocument(owner.document)} />
+          {owner.document && <button type="button" className="text-left text-xs underline" onClick={() => setShowSensitive((value) => !value)}>{showSensitive ? "Ocultar dados" : "Mostrar dados"}</button>}
         </div>
       )}
     </div>
@@ -455,10 +469,12 @@ function ContactField({
   label,
   value,
   onChange,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  error?: string | undefined;
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
@@ -471,6 +487,7 @@ function ContactField({
         className="rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
         style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
       />
+      {error && <span className="text-xs text-[var(--admin-danger)]" role="alert">{error}</span>}
     </label>
   );
 }
