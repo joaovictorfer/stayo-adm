@@ -144,7 +144,8 @@ export function useOwnerSession(): OwnerAuthState {
     const retry = () => setAttempt((value) => value + 1);
     const apply = async (session: Session | null) => {
       if (!session) {
-        if (!cancelled) setState({ status: "unauthenticated", session: null, account: null, retry });
+        if (!cancelled)
+          setState({ status: "unauthenticated", session: null, account: null, retry });
         return;
       }
       try {
