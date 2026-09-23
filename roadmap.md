@@ -9,3 +9,10 @@
 - [x] Refazer Dashboard orientado a ação com dados existentes
 - [x] Padronizar listagens prioritárias do Admin
 - [x] Validar lint dos arquivos alterados, testes, build, desktop e mobile
+- [ ] Corrigir CPF/CNPJ e centralizar normalização do proprietário
+- [ ] Evoluir onboarding público para cinco etapas e persistência validada
+- [ ] Calcular completude real do cadastro
+- [ ] Refinar aba Proprietário e gestão do Portal
+- [ ] Redesenhar ficha principal do proprietário
+- [ ] Validar migration, testes, lint, build e fluxos responsivos
+
