@@ -907,11 +907,23 @@ function ownerOnboardingSubmissionFromRow(
     people: [primary],
     currentStep: 5,
     submittedAt: row.submitted_at,
-    propertyPostalCode: "", propertyStreet: "", propertyNumber: "", propertyComplement: null,
-    propertyDistrict: "", propertyCity: "", propertyState: "", propertyType: "",
-    propertyBedrooms: null, propertySuites: null, propertyBathrooms: null, propertyParkingSpots: null,
-    propertyAccessType: null, propertyAccessNotes: "", propertyAccessCode: "",
-    propertyWifiNetwork: "", propertyWifiPassword: "",
+    propertyPostalCode: "",
+    propertyStreet: "",
+    propertyNumber: "",
+    propertyComplement: null,
+    propertyDistrict: "",
+    propertyCity: "",
+    propertyState: "",
+    propertyType: "",
+    propertyBedrooms: null,
+    propertySuites: null,
+    propertyBathrooms: null,
+    propertyParkingSpots: null,
+    propertyAccessType: null,
+    propertyAccessNotes: "",
+    propertyAccessCode: "",
+    propertyWifiNetwork: "",
+    propertyWifiPassword: "",
   };
 }
 
@@ -973,11 +985,16 @@ function ownerOnboardingFromDraft(
     propertyCity: text("propertyCity"),
     propertyState: text("propertyState"),
     propertyType: text("propertyType"),
-    propertyBedrooms: typeof value["propertyBedrooms"] === "number" ? value["propertyBedrooms"] : null,
+    propertyBedrooms:
+      typeof value["propertyBedrooms"] === "number" ? value["propertyBedrooms"] : null,
     propertySuites: typeof value["propertySuites"] === "number" ? value["propertySuites"] : null,
-    propertyBathrooms: typeof value["propertyBathrooms"] === "number" ? value["propertyBathrooms"] : null,
-    propertyParkingSpots: typeof value["propertyParkingSpots"] === "number" ? value["propertyParkingSpots"] : null,
-    propertyAccessType: ["key", "lock", "concierge", "other"].includes(text("propertyAccessType")) ? text("propertyAccessType") as OwnerOnboardingSubmission["propertyAccessType"] : null,
+    propertyBathrooms:
+      typeof value["propertyBathrooms"] === "number" ? value["propertyBathrooms"] : null,
+    propertyParkingSpots:
+      typeof value["propertyParkingSpots"] === "number" ? value["propertyParkingSpots"] : null,
+    propertyAccessType: ["key", "lock", "concierge", "other"].includes(text("propertyAccessType"))
+      ? (text("propertyAccessType") as OwnerOnboardingSubmission["propertyAccessType"])
+      : null,
     propertyAccessNotes: text("propertyAccessNotes"),
     propertyAccessCode: text("propertyAccessCode"),
     propertyWifiNetwork: text("propertyWifiNetwork"),

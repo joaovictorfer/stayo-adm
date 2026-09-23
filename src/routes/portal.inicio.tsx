@@ -878,7 +878,9 @@ function PropertySwitcher({
 }) {
   return (
     <section className="portal-property-switcher" aria-label="Selecionar imóvel">
-      <span className="portal-property-switcher-icon"><Building2 aria-hidden="true" /></span>
+      <span className="portal-property-switcher-icon">
+        <Building2 aria-hidden="true" />
+      </span>
       <div>
         <small>Imóvel acompanhado</small>
         <strong>{implementations.length} imóveis no seu portal</strong>
@@ -888,7 +890,8 @@ function PropertySwitcher({
         <select value={selectedId} onChange={(event) => onSelect(event.target.value)}>
           {implementations.map((item) => (
             <option key={item.id} value={item.id}>
-              {propertyName(item)}{item.city ? ` · ${item.city}` : ""}
+              {propertyName(item)}
+              {item.city ? ` · ${item.city}` : ""}
             </option>
           ))}
         </select>
@@ -927,10 +930,16 @@ function PortalTimeline({
     document: "Documento",
   };
   return (
-    <section className="portal-timeline" aria-labelledby={`timeline-${compact ? "summary" : "full"}`}>
+    <section
+      className="portal-timeline"
+      aria-labelledby={`timeline-${compact ? "summary" : "full"}`}
+    >
       {!compact && (
         <div className="portal-timeline-heading">
-          <div><p className="portal-milestones-eyebrow">Histórico do imóvel</p><h2 id="timeline-full">Linha do tempo</h2></div>
+          <div>
+            <p className="portal-milestones-eyebrow">Histórico do imóvel</p>
+            <h2 id="timeline-full">Linha do tempo</h2>
+          </div>
           <span>{events.length} atualizações</span>
         </div>
       )}
@@ -954,10 +963,24 @@ function PortalTimeline({
 }
 
 const emptyPropertyDetails: PropertyDetailsInput = {
-  postalCode: null, street: null, number: null, complement: null, district: null, city: null,
-  state: null, propertyType: null, bedrooms: null, suites: null, bathrooms: null,
-  parkingSpots: null, accessType: null, accessNotes: null, accessCode: null,
-  wifiNetwork: null, wifiPassword: null, notes: null,
+  postalCode: null,
+  street: null,
+  number: null,
+  complement: null,
+  district: null,
+  city: null,
+  state: null,
+  propertyType: null,
+  bedrooms: null,
+  suites: null,
+  bathrooms: null,
+  parkingSpots: null,
+  accessType: null,
+  accessNotes: null,
+  accessCode: null,
+  wifiNetwork: null,
+  wifiPassword: null,
+  notes: null,
 };
 
 function PropertyDetailsPanel({
@@ -977,53 +1000,246 @@ function PropertyDetailsPanel({
   }, [details, implementation.id]);
   const save = useMutation({
     mutationFn: () => savePropertyDetails(implementation.id, draft),
-    onSuccess: () => { setEditing(false); toast.success("Dados do imóvel atualizados"); },
+    onSuccess: () => {
+      setEditing(false);
+      toast.success("Dados do imóvel atualizados");
+    },
     onError: () => toast.error("Não foi possível salvar os dados do imóvel"),
   });
   if (loading) return <PortalSkeleton rows={5} />;
-  const address = [details?.street ?? implementation.address, details?.number, details?.complement,
-    details?.district, details?.city ?? implementation.city, details?.state].filter(Boolean).join(", ");
-  const field = (key: keyof PropertyDetailsInput, label: string, type: "text" | "number" = "text") => (
-    <label className="portal-property-field"><span>{label}</span><input type={type} value={draft[key] ?? ""}
-      onChange={(event) => setDraft((current) => ({ ...current, [key]: type === "number" ? (event.target.value ? Number(event.target.value) : null) : (event.target.value || null) }))} /></label>
+  const address = [
+    details?.street ?? implementation.address,
+    details?.number,
+    details?.complement,
+    details?.district,
+    details?.city ?? implementation.city,
+    details?.state,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const field = (
+    key: keyof PropertyDetailsInput,
+    label: string,
+    type: "text" | "number" = "text",
+  ) => (
+    <label className="portal-property-field">
+      <span>{label}</span>
+      <input
+        type={type}
+        value={draft[key] ?? ""}
+        onChange={(event) =>
+          setDraft((current) => ({
+            ...current,
+            [key]:
+              type === "number"
+                ? event.target.value
+                  ? Number(event.target.value)
+                  : null
+                : event.target.value || null,
+          }))
+        }
+      />
+    </label>
   );
   return (
     <section className="portal-property-details">
       <div className="portal-property-details-heading">
-        <div><p className="portal-milestones-eyebrow">Ficha compartilhada</p><h2>{propertyName(implementation)}</h2><p>Você e a equipe Stayo podem manter estes dados atualizados.</p></div>
-        <Button variant={editing ? "ghost" : "outline"} size="sm" onClick={() => setEditing((value) => !value)}>{editing ? "Cancelar" : "Editar dados"}</Button>
+        <div>
+          <p className="portal-milestones-eyebrow">Ficha compartilhada</p>
+          <h2>{propertyName(implementation)}</h2>
+          <p>Você e a equipe Stayo podem manter estes dados atualizados.</p>
+        </div>
+        <Button
+          variant={editing ? "ghost" : "outline"}
+          size="sm"
+          onClick={() => setEditing((value) => !value)}
+        >
+          {editing ? "Cancelar" : "Editar dados"}
+        </Button>
       </div>
       {editing ? (
         <div className="portal-property-form">
-          <div className="portal-property-form-grid">{field("postalCode", "CEP")}{field("street", "Endereço")}{field("number", "Número")}{field("complement", "Complemento")}{field("district", "Bairro")}{field("city", "Cidade")}{field("state", "UF")}{field("propertyType", "Tipo de imóvel")}{field("bedrooms", "Quartos", "number")}{field("suites", "Suítes", "number")}{field("bathrooms", "Banheiros", "number")}{field("parkingSpots", "Vagas", "number")}</div>
           <div className="portal-property-form-grid">
-            <label className="portal-property-field"><span>Forma de acesso</span><select value={draft.accessType ?? ""} onChange={(event) => setDraft((current) => ({ ...current, accessType: (event.target.value || null) as PropertyDetailsInput["accessType"] }))}><option value="">Selecione</option><option value="key">Chave</option><option value="lock">Fechadura digital</option><option value="concierge">Portaria</option><option value="other">Outro</option></select></label>
-            {field("accessNotes", "Orientações de acesso")}{field("accessCode", "Senha da fechadura")}{field("wifiNetwork", "Rede Wi-Fi")}{field("wifiPassword", "Senha do Wi-Fi")}
+            {field("postalCode", "CEP")}
+            {field("street", "Endereço")}
+            {field("number", "Número")}
+            {field("complement", "Complemento")}
+            {field("district", "Bairro")}
+            {field("city", "Cidade")}
+            {field("state", "UF")}
+            {field("propertyType", "Tipo de imóvel")}
+            {field("bedrooms", "Quartos", "number")}
+            {field("suites", "Suítes", "number")}
+            {field("bathrooms", "Banheiros", "number")}
+            {field("parkingSpots", "Vagas", "number")}
           </div>
-          <div className="portal-property-form-actions"><Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Salvando…" : "Salvar alterações"}</Button></div>
+          <div className="portal-property-form-grid">
+            <label className="portal-property-field">
+              <span>Forma de acesso</span>
+              <select
+                value={draft.accessType ?? ""}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    accessType: (event.target.value || null) as PropertyDetailsInput["accessType"],
+                  }))
+                }
+              >
+                <option value="">Selecione</option>
+                <option value="key">Chave</option>
+                <option value="lock">Fechadura digital</option>
+                <option value="concierge">Portaria</option>
+                <option value="other">Outro</option>
+              </select>
+            </label>
+            {field("accessNotes", "Orientações de acesso")}
+            {field("accessCode", "Senha da fechadura")}
+            {field("wifiNetwork", "Rede Wi-Fi")}
+            {field("wifiPassword", "Senha do Wi-Fi")}
+          </div>
+          <div className="portal-property-form-actions">
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              {save.isPending ? "Salvando…" : "Salvar alterações"}
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="portal-property-sections">
-          <div><span className="portal-property-section-icon"><MapPin /></span><h3>Endereço</h3><p>{address || "Endereço ainda não informado"}</p></div>
-          <div><span className="portal-property-section-icon"><House /></span><h3>Características</h3><p>{[details?.propertyType ?? implementation.propertyType, details?.bedrooms ? `${details.bedrooms} quartos` : null, details?.bathrooms ? `${details.bathrooms} banheiros` : null].filter(Boolean).join(" · ") || "Características ainda não informadas"}</p></div>
-          <div><span className="portal-property-section-icon"><DoorOpen /></span><h3>Acesso</h3><p>{details?.accessNotes || "Forma de acesso ainda não informada"}</p>{details?.accessCode && <SecretValue label="Senha da fechadura" value={details.accessCode} visible={showSecrets} />}</div>
-          <div><span className="portal-property-section-icon"><Wifi /></span><h3>Wi-Fi</h3><p>{details?.wifiNetwork || "Rede ainda não informada"}</p>{details?.wifiPassword && <SecretValue label="Senha" value={details.wifiPassword} visible={showSecrets} />}</div>
-          {(details?.accessCode || details?.wifiPassword) && <Button variant="ghost" size="sm" onClick={() => setShowSecrets((value) => !value)}>{showSecrets ? "Ocultar senhas" : "Mostrar senhas"}</Button>}
+          <div>
+            <span className="portal-property-section-icon">
+              <MapPin />
+            </span>
+            <h3>Endereço</h3>
+            <p>{address || "Endereço ainda não informado"}</p>
+          </div>
+          <div>
+            <span className="portal-property-section-icon">
+              <House />
+            </span>
+            <h3>Características</h3>
+            <p>
+              {[
+                details?.propertyType ?? implementation.propertyType,
+                details?.bedrooms ? `${details.bedrooms} quartos` : null,
+                details?.bathrooms ? `${details.bathrooms} banheiros` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "Características ainda não informadas"}
+            </p>
+          </div>
+          <div>
+            <span className="portal-property-section-icon">
+              <DoorOpen />
+            </span>
+            <h3>Acesso</h3>
+            <p>{details?.accessNotes || "Forma de acesso ainda não informada"}</p>
+            {details?.accessCode && (
+              <SecretValue
+                label="Senha da fechadura"
+                value={details.accessCode}
+                visible={showSecrets}
+              />
+            )}
+          </div>
+          <div>
+            <span className="portal-property-section-icon">
+              <Wifi />
+            </span>
+            <h3>Wi-Fi</h3>
+            <p>{details?.wifiNetwork || "Rede ainda não informada"}</p>
+            {details?.wifiPassword && (
+              <SecretValue label="Senha" value={details.wifiPassword} visible={showSecrets} />
+            )}
+          </div>
+          {(details?.accessCode || details?.wifiPassword) && (
+            <Button variant="ghost" size="sm" onClick={() => setShowSecrets((value) => !value)}>
+              {showSecrets ? "Ocultar senhas" : "Mostrar senhas"}
+            </Button>
+          )}
         </div>
       )}
     </section>
   );
 }
 
-function SecretValue({ label, value, visible }: { label: string; value: string; visible: boolean }) {
-  return <small>{label}: <strong>{visible ? value : "••••••••"}</strong></small>;
+function SecretValue({
+  label,
+  value,
+  visible,
+}: {
+  label: string;
+  value: string;
+  visible: boolean;
+}) {
+  return (
+    <small>
+      {label}: <strong>{visible ? value : "••••••••"}</strong>
+    </small>
+  );
 }
 
-function InspectionsPanel({ inspections, attachments, loading, onOpen }: { inspections: PortalInspection[]; attachments: Attachment[]; loading: boolean; onOpen: (path: string) => void }) {
+function InspectionsPanel({
+  inspections,
+  attachments,
+  loading,
+  onOpen,
+}: {
+  inspections: PortalInspection[];
+  attachments: Attachment[];
+  loading: boolean;
+  onOpen: (path: string) => void;
+}) {
   if (loading) return <PortalSkeleton rows={4} />;
   if (inspections.length === 0) return <OperationalPlaceholder module="inspections" />;
-  const status = { scheduled: "Agendada", in_progress: "Em andamento", completed: "Concluída", cancelled: "Cancelada" };
-  return <section className="portal-inspections"><div className="portal-operational-heading"><p className="portal-milestones-eyebrow">Acompanhamento técnico</p><h2>Vistorias do imóvel</h2><p>Resumos e documentos liberados pela equipe.</p></div><div className="portal-inspection-list">{inspections.map((inspection) => { const files = attachments.filter((item) => item.inspectionId === inspection.id); return <article key={inspection.id}><div className="portal-inspection-head"><span><ClipboardCheck /></span><div><small>{inspection.type.replace(/_/g, " ")}</small><h3>{status[inspection.status]}</h3></div><time>{formatPortalDate(inspection.completedAt ?? inspection.scheduledFor)}</time></div>{inspection.publicNotes && <p>{inspection.publicNotes}</p>}{files.length > 0 && <div className="portal-inspection-files">{files.map((file) => <Button key={file.id} variant="outline" size="sm" onClick={() => onOpen(file.storagePath)}><FileText /> {file.filename}</Button>)}</div>}</article>; })}</div></section>;
+  const status = {
+    scheduled: "Agendada",
+    in_progress: "Em andamento",
+    completed: "Concluída",
+    cancelled: "Cancelada",
+  };
+  return (
+    <section className="portal-inspections">
+      <div className="portal-operational-heading">
+        <p className="portal-milestones-eyebrow">Acompanhamento técnico</p>
+        <h2>Vistorias do imóvel</h2>
+        <p>Resumos e documentos liberados pela equipe.</p>
+      </div>
+      <div className="portal-inspection-list">
+        {inspections.map((inspection) => {
+          const files = attachments.filter((item) => item.inspectionId === inspection.id);
+          return (
+            <article key={inspection.id}>
+              <div className="portal-inspection-head">
+                <span>
+                  <ClipboardCheck />
+                </span>
+                <div>
+                  <small>{inspection.type.replace(/_/g, " ")}</small>
+                  <h3>{status[inspection.status]}</h3>
+                </div>
+                <time>{formatPortalDate(inspection.completedAt ?? inspection.scheduledFor)}</time>
+              </div>
+              {inspection.publicNotes && <p>{inspection.publicNotes}</p>}
+              {files.length > 0 && (
+                <div className="portal-inspection-files">
+                  {files.map((file) => (
+                    <Button
+                      key={file.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpen(file.storagePath)}
+                    >
+                      <FileText /> {file.filename}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -1125,7 +1341,9 @@ function OwnerHomePage() {
 function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: () => void }) {
   const [activeTab, setActiveTab] = useState("visao-geral");
   const [selectedImplementationId, setSelectedImplementationId] = useState(() =>
-    typeof window === "undefined" ? "" : (window.localStorage.getItem("stayo-owner-property") ?? ""),
+    typeof window === "undefined"
+      ? ""
+      : (window.localStorage.getItem("stayo-owner-property") ?? ""),
   );
   const tabsListRef = useRef<HTMLDivElement>(null);
   const ownerQ = useQuery(ownerQuery(ownerId));
@@ -1182,8 +1400,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
     queryKey: ["owner-portal", "timeline", implementation?.id],
     queryFn: () => listPortalTimeline(implementation?.id ?? ""),
     enabled:
-      Boolean(implementation?.id) &&
-      (activeTab === "implantacao" || activeTab === "visao-geral"),
+      Boolean(implementation?.id) && (activeTab === "implantacao" || activeTab === "visao-geral"),
     staleTime: 20_000,
   });
   const inspectionsQ = useQuery({
@@ -1348,75 +1565,75 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
         <>
           {portalPhase === "operation" && (
             <>
-            <TabsContent value="reservations" className="tab-content-anim space-y-6">
-              {reservationsQ.isPending ? (
-                <PortalSkeleton rows={4} />
-              ) : reservationsQ.isError ? (
-                <PortalEmptyState
-                  icon={<BedDouble />}
-                  title="Não conseguimos consultar as reservas agora"
-                  description="Nada foi perdido. Esta área voltará a carregar assim que a conexão for restabelecida."
-                  nextStep="Tente novamente em alguns instantes."
-                />
-              ) : (reservationsQ.data?.data ?? []).filter(
-                  (reservation) => reservation.propertyId === corePropertyId,
-                ).length === 0 ? (
-                <PortalEmptyState
-                  icon={<BedDouble />}
-                  title="As próximas reservas aparecerão aqui"
-                  description="Ainda não há reservas oficiais para mostrar neste imóvel."
-                  nextStep="Quando uma reserva for confirmada, você verá datas, canal, status e valores permitidos nesta área."
-                />
-              ) : (
-                <section
-                  className="portal-operational-list"
-                  aria-labelledby="owner-reservations-title"
-                >
-                  <div className="portal-operational-heading">
-                    <p className="portal-milestones-eyebrow">Operação</p>
-                    <h2 id="owner-reservations-title">Reservas do imóvel</h2>
-                    <p>Informações essenciais, sem expor dados privados dos hóspedes.</p>
-                  </div>
-                  <ul>
-                    {(reservationsQ.data?.data ?? [])
-                      .filter((reservation) => reservation.propertyId === corePropertyId)
-                      .map((reservation) => (
-                        <li key={reservation.id}>
-                          <div>
-                            <strong>
-                              {new Intl.DateTimeFormat("pt-BR").format(
-                                new Date(reservation.checkin),
-                              )}{" "}
-                              —{" "}
-                              {new Intl.DateTimeFormat("pt-BR").format(
-                                new Date(reservation.checkout),
-                              )}
-                            </strong>
+              <TabsContent value="reservations" className="tab-content-anim space-y-6">
+                {reservationsQ.isPending ? (
+                  <PortalSkeleton rows={4} />
+                ) : reservationsQ.isError ? (
+                  <PortalEmptyState
+                    icon={<BedDouble />}
+                    title="Não conseguimos consultar as reservas agora"
+                    description="Nada foi perdido. Esta área voltará a carregar assim que a conexão for restabelecida."
+                    nextStep="Tente novamente em alguns instantes."
+                  />
+                ) : (reservationsQ.data?.data ?? []).filter(
+                    (reservation) => reservation.propertyId === corePropertyId,
+                  ).length === 0 ? (
+                  <PortalEmptyState
+                    icon={<BedDouble />}
+                    title="As próximas reservas aparecerão aqui"
+                    description="Ainda não há reservas oficiais para mostrar neste imóvel."
+                    nextStep="Quando uma reserva for confirmada, você verá datas, canal, status e valores permitidos nesta área."
+                  />
+                ) : (
+                  <section
+                    className="portal-operational-list"
+                    aria-labelledby="owner-reservations-title"
+                  >
+                    <div className="portal-operational-heading">
+                      <p className="portal-milestones-eyebrow">Operação</p>
+                      <h2 id="owner-reservations-title">Reservas do imóvel</h2>
+                      <p>Informações essenciais, sem expor dados privados dos hóspedes.</p>
+                    </div>
+                    <ul>
+                      {(reservationsQ.data?.data ?? [])
+                        .filter((reservation) => reservation.propertyId === corePropertyId)
+                        .map((reservation) => (
+                          <li key={reservation.id}>
+                            <div>
+                              <strong>
+                                {new Intl.DateTimeFormat("pt-BR").format(
+                                  new Date(reservation.checkin),
+                                )}{" "}
+                                —{" "}
+                                {new Intl.DateTimeFormat("pt-BR").format(
+                                  new Date(reservation.checkout),
+                                )}
+                              </strong>
+                              <span>
+                                {reservation.channel ?? reservation.source ?? "Canal não informado"}{" "}
+                                · {reservation.status}
+                              </span>
+                            </div>
                             <span>
-                              {reservation.channel ?? reservation.source ?? "Canal não informado"} ·{" "}
-                              {reservation.status}
+                              {reservation.amount == null
+                                ? "Valor não disponível"
+                                : portalCurrency.format(reservation.amount)}
                             </span>
-                          </div>
-                          <span>
-                            {reservation.amount == null
-                              ? "Valor não disponível"
-                              : portalCurrency.format(reservation.amount)}
-                          </span>
-                        </li>
-                      ))}
-                  </ul>
-                </section>
-              )}
-            </TabsContent>
-            <TabsContent value="calendar" className="tab-content-anim space-y-6">
-              <OperationalPlaceholder module="calendar" />
-            </TabsContent>
-            <TabsContent value="maintenance" className="tab-content-anim space-y-6">
-              <OperationalPlaceholder module="maintenance" />
-            </TabsContent>
-            <TabsContent value="finance" className="tab-content-anim space-y-6">
-              <OperationalPlaceholder module="finance" />
-            </TabsContent>
+                          </li>
+                        ))}
+                    </ul>
+                  </section>
+                )}
+              </TabsContent>
+              <TabsContent value="calendar" className="tab-content-anim space-y-6">
+                <OperationalPlaceholder module="calendar" />
+              </TabsContent>
+              <TabsContent value="maintenance" className="tab-content-anim space-y-6">
+                <OperationalPlaceholder module="maintenance" />
+              </TabsContent>
+              <TabsContent value="finance" className="tab-content-anim space-y-6">
+                <OperationalPlaceholder module="finance" />
+              </TabsContent>
             </>
           )}
           <TabsContent value="property" className="tab-content-anim space-y-6">

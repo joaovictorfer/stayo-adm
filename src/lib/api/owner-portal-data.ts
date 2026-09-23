@@ -111,7 +111,9 @@ function detailsFromRow(row: Record<string, unknown>): PropertyDetails {
   };
 }
 
-export async function getPropertyDetails(implementationId: string): Promise<PropertyDetails | null> {
+export async function getPropertyDetails(
+  implementationId: string,
+): Promise<PropertyDetails | null> {
   const { data, error } = await client()
     .from("implementation_property_details")
     .select("*")
@@ -202,9 +204,13 @@ export async function listPortalTimeline(implementationId: string): Promise<Port
         .single(),
     ]);
 
-  const firstError = [updatesResult, itemsResult, proposalsResult, inspectionsResult, projectResult].find(
-    (result) => result.error,
-  )?.error;
+  const firstError = [
+    updatesResult,
+    itemsResult,
+    proposalsResult,
+    inspectionsResult,
+    projectResult,
+  ].find((result) => result.error)?.error;
   if (firstError) throw firstError;
 
   const events: PortalTimelineEvent[] = (updatesResult.data ?? []).map((row) => ({
@@ -231,7 +237,9 @@ export async function listPortalTimeline(implementationId: string): Promise<Port
     events.push({
       id: `proposal-${proposal.id}`,
       title: `Proposta comercial · versão ${proposal.version}`,
-      description: proposal.accepted_at ? "Proposta aceita." : "Proposta disponibilizada para análise.",
+      description: proposal.accepted_at
+        ? "Proposta aceita."
+        : "Proposta disponibilizada para análise.",
       date: proposal.accepted_at ?? proposal.created_at,
       kind: "budget",
       source: "automatic",
@@ -280,13 +288,15 @@ export async function createTimelineUpdate(input: {
   kind: PortalTimelineEvent["kind"];
   ownerVisible: boolean;
 }): Promise<void> {
-  const { error } = await client().from("implementation_timeline_updates").insert({
-    implementation_id: input.implementationId,
-    title: input.title,
-    description: input.description || null,
-    kind: input.kind,
-    owner_visible: input.ownerVisible,
-  });
+  const { error } = await client()
+    .from("implementation_timeline_updates")
+    .insert({
+      implementation_id: input.implementationId,
+      title: input.title,
+      description: input.description || null,
+      kind: input.kind,
+      owner_visible: input.ownerVisible,
+    });
   if (error) throw error;
 }
 
@@ -297,12 +307,14 @@ export async function createInspection(input: {
   publicNotes: string;
   ownerVisible: boolean;
 }): Promise<void> {
-  const { error } = await client().from("implementation_inspections").insert({
-    implementation_id: input.implementationId,
-    type: input.type,
-    scheduled_for: input.scheduledFor,
-    public_notes: input.publicNotes || null,
-    owner_visible: input.ownerVisible,
-  });
+  const { error } = await client()
+    .from("implementation_inspections")
+    .insert({
+      implementation_id: input.implementationId,
+      type: input.type,
+      scheduled_for: input.scheduledFor,
+      public_notes: input.publicNotes || null,
+      owner_visible: input.ownerVisible,
+    });
   if (error) throw error;
 }

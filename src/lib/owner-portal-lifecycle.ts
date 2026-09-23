@@ -40,7 +40,8 @@ export function getOwnerPortalPhase(
   implementation: Pick<ImplementationProject, "status" | "corePropertyId"> | undefined,
 ): OwnerPortalPhase {
   if (implementation?.status === "ativo" && implementation.corePropertyId) return "operation";
-  if (implementation?.status === "pronto_para_operacao" || implementation?.status === "ativo") return "ready";
+  if (implementation?.status === "pronto_para_operacao" || implementation?.status === "ativo")
+    return "ready";
   return "implementation";
 }
 

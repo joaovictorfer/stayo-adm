@@ -1427,35 +1427,69 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
   }, [detailsQ.data]);
 
   const saveSharedDetails = useMutation({
-    mutationFn: () => savePropertyDetails(implementation.id, {
-      postalCode: detailsQ.data?.postalCode ?? implementation.postalCode,
-      street: detailsQ.data?.street ?? implementation.address,
-      number: detailsQ.data?.number ?? null,
-      complement: detailsQ.data?.complement ?? null,
-      district: detailsQ.data?.district ?? null,
-      city: detailsQ.data?.city ?? implementation.city,
-      state: detailsQ.data?.state ?? null,
-      propertyType: detailsQ.data?.propertyType ?? implementation.propertyType,
-      bedrooms: detailsQ.data?.bedrooms ?? implementation.bedrooms,
-      suites: detailsQ.data?.suites ?? null,
-      bathrooms: detailsQ.data?.bathrooms ?? null,
-      parkingSpots: detailsQ.data?.parkingSpots ?? null,
-      accessType, accessNotes: accessNotes || null, accessCode: accessCode || null,
-      wifiNetwork: wifiNetwork || null, wifiPassword: wifiPassword || null,
-      notes: detailsQ.data?.notes ?? null,
-    }),
+    mutationFn: () =>
+      savePropertyDetails(implementation.id, {
+        postalCode: detailsQ.data?.postalCode ?? implementation.postalCode,
+        street: detailsQ.data?.street ?? implementation.address,
+        number: detailsQ.data?.number ?? null,
+        complement: detailsQ.data?.complement ?? null,
+        district: detailsQ.data?.district ?? null,
+        city: detailsQ.data?.city ?? implementation.city,
+        state: detailsQ.data?.state ?? null,
+        propertyType: detailsQ.data?.propertyType ?? implementation.propertyType,
+        bedrooms: detailsQ.data?.bedrooms ?? implementation.bedrooms,
+        suites: detailsQ.data?.suites ?? null,
+        bathrooms: detailsQ.data?.bathrooms ?? null,
+        parkingSpots: detailsQ.data?.parkingSpots ?? null,
+        accessType,
+        accessNotes: accessNotes || null,
+        accessCode: accessCode || null,
+        wifiNetwork: wifiNetwork || null,
+        wifiPassword: wifiPassword || null,
+        notes: detailsQ.data?.notes ?? null,
+      }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["implementation-property-details", implementation.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["implementation-property-details", implementation.id],
+      });
       toast.success("Acesso e Wi-Fi atualizados");
     },
   });
   const publishUpdate = useMutation({
-    mutationFn: () => createTimelineUpdate({ implementationId: implementation.id, title: timelineTitle, description: timelineDescription, kind: "update", ownerVisible: true }),
-    onSuccess: async () => { setTimelineTitle(""); setTimelineDescription(""); await queryClient.invalidateQueries({ queryKey: ["implementation-timeline", implementation.id] }); toast.success("Atualização publicada no portal"); },
+    mutationFn: () =>
+      createTimelineUpdate({
+        implementationId: implementation.id,
+        title: timelineTitle,
+        description: timelineDescription,
+        kind: "update",
+        ownerVisible: true,
+      }),
+    onSuccess: async () => {
+      setTimelineTitle("");
+      setTimelineDescription("");
+      await queryClient.invalidateQueries({
+        queryKey: ["implementation-timeline", implementation.id],
+      });
+      toast.success("Atualização publicada no portal");
+    },
   });
   const scheduleInspection = useMutation({
-    mutationFn: () => createInspection({ implementationId: implementation.id, type: "implantacao", scheduledFor: inspectionDate ? new Date(inspectionDate).toISOString() : null, publicNotes: inspectionNotes, ownerVisible: true }),
-    onSuccess: async () => { setInspectionDate(""); setInspectionNotes(""); await queryClient.invalidateQueries({ queryKey: ["implementation-inspections", implementation.id] }); toast.success("Vistoria adicionada ao portal"); },
+    mutationFn: () =>
+      createInspection({
+        implementationId: implementation.id,
+        type: "implantacao",
+        scheduledFor: inspectionDate ? new Date(inspectionDate).toISOString() : null,
+        publicNotes: inspectionNotes,
+        ownerVisible: true,
+      }),
+    onSuccess: async () => {
+      setInspectionDate("");
+      setInspectionNotes("");
+      await queryClient.invalidateQueries({
+        queryKey: ["implementation-inspections", implementation.id],
+      });
+      toast.success("Vistoria adicionada ao portal");
+    },
   });
 
   const updateImplementation = useMutation({
@@ -1759,35 +1793,153 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
       >
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">Forma de acesso<select value={accessType ?? ""} onChange={(event) => setAccessType((event.target.value || null) as PropertyDetailsInput["accessType"])} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"><option value="">Selecione</option><option value="key">Chave</option><option value="lock">Fechadura digital</option><option value="concierge">Portaria</option><option value="other">Outro</option></select></label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">Orientações<input value={accessNotes} onChange={(event) => setAccessNotes(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]" /></label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">Senha da fechadura<input value={accessCode} onChange={(event) => setAccessCode(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]" /></label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">Rede Wi-Fi<input value={wifiNetwork} onChange={(event) => setWifiNetwork(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]" /></label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">Senha do Wi-Fi<input value={wifiPassword} onChange={(event) => setWifiPassword(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]" /></label>
+            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+              Forma de acesso
+              <select
+                value={accessType ?? ""}
+                onChange={(event) =>
+                  setAccessType((event.target.value || null) as PropertyDetailsInput["accessType"])
+                }
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+              >
+                <option value="">Selecione</option>
+                <option value="key">Chave</option>
+                <option value="lock">Fechadura digital</option>
+                <option value="concierge">Portaria</option>
+                <option value="other">Outro</option>
+              </select>
+            </label>
+            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+              Orientações
+              <input
+                value={accessNotes}
+                onChange={(event) => setAccessNotes(event.target.value)}
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+              />
+            </label>
+            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+              Senha da fechadura
+              <input
+                value={accessCode}
+                onChange={(event) => setAccessCode(event.target.value)}
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+              />
+            </label>
+            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+              Rede Wi-Fi
+              <input
+                value={wifiNetwork}
+                onChange={(event) => setWifiNetwork(event.target.value)}
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+              />
+            </label>
+            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+              Senha do Wi-Fi
+              <input
+                value={wifiPassword}
+                onChange={(event) => setWifiPassword(event.target.value)}
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+              />
+            </label>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--stayo-gold)] bg-[var(--stayo-gold-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--stayo-warning)]"><LockKeyhole className="size-3" /> Protegido · compartilhado com o proprietário</span>
-            <Button size="sm" onClick={() => saveSharedDetails.mutate()} disabled={saveSharedDetails.isPending}>{saveSharedDetails.isPending ? "Salvando…" : "Salvar acesso"}</Button>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--stayo-gold)] bg-[var(--stayo-gold-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--stayo-warning)]">
+              <LockKeyhole className="size-3" /> Protegido · compartilhado com o proprietário
+            </span>
+            <Button
+              size="sm"
+              onClick={() => saveSharedDetails.mutate()}
+              disabled={saveSharedDetails.isPending}
+            >
+              {saveSharedDetails.isPending ? "Salvando…" : "Salvar acesso"}
+            </Button>
           </div>
         </div>
       </Section>
 
-      <Section id="timeline-publica" title="Linha do tempo pública" description="Atualizações visíveis no Portal do Proprietário">
+      <Section
+        id="timeline-publica"
+        title="Linha do tempo pública"
+        description="Atualizações visíveis no Portal do Proprietário"
+      >
         <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
-          <input value={timelineTitle} onChange={(event) => setTimelineTitle(event.target.value)} placeholder="Título da atualização" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" />
-          <input value={timelineDescription} onChange={(event) => setTimelineDescription(event.target.value)} placeholder="Mensagem para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" />
-          <Button size="sm" onClick={() => publishUpdate.mutate()} disabled={!timelineTitle.trim() || publishUpdate.isPending}><Megaphone /> Publicar</Button>
+          <input
+            value={timelineTitle}
+            onChange={(event) => setTimelineTitle(event.target.value)}
+            placeholder="Título da atualização"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          />
+          <input
+            value={timelineDescription}
+            onChange={(event) => setTimelineDescription(event.target.value)}
+            placeholder="Mensagem para o proprietário"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          />
+          <Button
+            size="sm"
+            onClick={() => publishUpdate.mutate()}
+            disabled={!timelineTitle.trim() || publishUpdate.isPending}
+          >
+            <Megaphone /> Publicar
+          </Button>
         </div>
-        <div className="mt-4 space-y-2">{(timelineQ.data ?? []).slice(0, 5).map((event) => <div key={event.id} className="flex items-start justify-between gap-3 border-t border-[var(--stayo-border)] pt-3 text-sm"><div><strong>{event.title}</strong>{event.description && <p className="text-xs text-[var(--stayo-ink-muted)]">{event.description}</p>}</div><span className="shrink-0 text-xs text-[var(--stayo-ink-muted)]">{new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}</span></div>)}</div>
+        <div className="mt-4 space-y-2">
+          {(timelineQ.data ?? []).slice(0, 5).map((event) => (
+            <div
+              key={event.id}
+              className="flex items-start justify-between gap-3 border-t border-[var(--stayo-border)] pt-3 text-sm"
+            >
+              <div>
+                <strong>{event.title}</strong>
+                {event.description && (
+                  <p className="text-xs text-[var(--stayo-ink-muted)]">{event.description}</p>
+                )}
+              </div>
+              <span className="shrink-0 text-xs text-[var(--stayo-ink-muted)]">
+                {new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}
+              </span>
+            </div>
+          ))}
+        </div>
       </Section>
 
-      <Section id="vistorias" title="Vistorias" description="Agendamento e resumo liberados no portal">
+      <Section
+        id="vistorias"
+        title="Vistorias"
+        description="Agendamento e resumo liberados no portal"
+      >
         <div className="grid gap-3 sm:grid-cols-[13rem_1fr_auto]">
-          <input type="datetime-local" value={inspectionDate} onChange={(event) => setInspectionDate(event.target.value)} className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" />
-          <input value={inspectionNotes} onChange={(event) => setInspectionNotes(event.target.value)} placeholder="Resumo para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" />
-          <Button size="sm" onClick={() => scheduleInspection.mutate()} disabled={!inspectionDate || scheduleInspection.isPending}><CalendarPlus /> Agendar</Button>
+          <input
+            type="datetime-local"
+            value={inspectionDate}
+            onChange={(event) => setInspectionDate(event.target.value)}
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          />
+          <input
+            value={inspectionNotes}
+            onChange={(event) => setInspectionNotes(event.target.value)}
+            placeholder="Resumo para o proprietário"
+            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          />
+          <Button
+            size="sm"
+            onClick={() => scheduleInspection.mutate()}
+            disabled={!inspectionDate || scheduleInspection.isPending}
+          >
+            <CalendarPlus /> Agendar
+          </Button>
         </div>
-        <div className="mt-4 space-y-2">{(inspectionsQ.data ?? []).map((inspection) => <div key={inspection.id} className="flex items-center justify-between border-t border-[var(--stayo-border)] pt-3 text-sm"><span>{inspection.publicNotes || "Vistoria do imóvel"}</span><strong>{inspection.status === "completed" ? "Concluída" : "Agendada"}</strong></div>)}</div>
+        <div className="mt-4 space-y-2">
+          {(inspectionsQ.data ?? []).map((inspection) => (
+            <div
+              key={inspection.id}
+              className="flex items-center justify-between border-t border-[var(--stayo-border)] pt-3 text-sm"
+            >
+              <span>{inspection.publicNotes || "Vistoria do imóvel"}</span>
+              <strong>{inspection.status === "completed" ? "Concluída" : "Agendada"}</strong>
+            </div>
+          ))}
+        </div>
       </Section>
 
       <Section

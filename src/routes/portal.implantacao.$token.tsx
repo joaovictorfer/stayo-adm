@@ -618,12 +618,49 @@ function OwnerOnboardingForm({
               atualizadas depois.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <TextField label="Tipo do imóvel" value={form.propertyType} onChange={(value) => set("propertyType", value)} />
-              <Choice label="Forma de acesso" value={form.propertyAccessType ?? ""} onChange={(value) => set("propertyAccessType", (value || null) as OwnerOnboardingSubmissionInput["propertyAccessType"])} options={[{ value: "key", label: "Chave" }, { value: "lock", label: "Fechadura" }, { value: "concierge", label: "Portaria" }, { value: "other", label: "Outro" }]} />
-              <TextField label="Rede Wi-Fi" value={form.propertyWifiNetwork} onChange={(value) => set("propertyWifiNetwork", value)} />
-              <TextField label="Senha do Wi-Fi" value={form.propertyWifiPassword} onChange={(value) => set("propertyWifiPassword", value)} />
-              {form.propertyAccessType === "lock" && <TextField label="Senha da fechadura" value={form.propertyAccessCode} onChange={(value) => set("propertyAccessCode", value)} />}
-              <TextField label="Orientações de acesso" value={form.propertyAccessNotes} onChange={(value) => set("propertyAccessNotes", value)} />
+              <TextField
+                label="Tipo do imóvel"
+                value={form.propertyType}
+                onChange={(value) => set("propertyType", value)}
+              />
+              <Choice
+                label="Forma de acesso"
+                value={form.propertyAccessType ?? ""}
+                onChange={(value) =>
+                  set(
+                    "propertyAccessType",
+                    (value || null) as OwnerOnboardingSubmissionInput["propertyAccessType"],
+                  )
+                }
+                options={[
+                  { value: "key", label: "Chave" },
+                  { value: "lock", label: "Fechadura" },
+                  { value: "concierge", label: "Portaria" },
+                  { value: "other", label: "Outro" },
+                ]}
+              />
+              <TextField
+                label="Rede Wi-Fi"
+                value={form.propertyWifiNetwork}
+                onChange={(value) => set("propertyWifiNetwork", value)}
+              />
+              <TextField
+                label="Senha do Wi-Fi"
+                value={form.propertyWifiPassword}
+                onChange={(value) => set("propertyWifiPassword", value)}
+              />
+              {form.propertyAccessType === "lock" && (
+                <TextField
+                  label="Senha da fechadura"
+                  value={form.propertyAccessCode}
+                  onChange={(value) => set("propertyAccessCode", value)}
+                />
+              )}
+              <TextField
+                label="Orientações de acesso"
+                value={form.propertyAccessNotes}
+                onChange={(value) => set("propertyAccessNotes", value)}
+              />
             </div>
           </div>
         </Section>
@@ -1166,7 +1203,10 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message.toLocaleLowerCase("pt-BR") : "";
-      if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
+      if (
+        message.includes("invalid login credentials") ||
+        message.includes("invalid credentials")
+      ) {
         toast.error("Este e-mail já possui acesso. Informe a senha criada anteriormente.");
       } else if (message.includes("email not confirmed")) {
         toast.error("Confirme o e-mail recebido antes de entrar.");
