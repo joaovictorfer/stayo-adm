@@ -43,6 +43,13 @@
       "when": 1790130700985,
       "tag": "0005_restore_complete_owner_onboarding_draft",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790132942912,
+      "tag": "0006_repair_owner_onboarding_missing_implementation",
+      "breakpoints": true
     }
   ]
 }
