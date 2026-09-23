@@ -1,8 +1,5 @@
 import { getSupabaseBrowserClient } from "./supabase-client";
-import type {
-  CoreApiClient,
-  Page,
-} from "./core-client";
+import type { CoreApiClient, Page } from "./core-client";
 import type {
   ImplementationItem,
   ImplementationProject,
@@ -77,14 +74,21 @@ const projectSelection = "*,owner_records(name,phone)";
 export function createCloudImplementationApi(): ImplementationApi {
   return {
     list: async (params): Promise<Page<ImplementationProject>> => {
-      let query = client().from("implementation_projects").select(projectSelection).order("created_at", { ascending: false });
+      let query = client()
+        .from("implementation_projects")
+        .select(projectSelection)
+        .order("created_at", { ascending: false });
       if (params?.status) query = query.eq("status", params.status as ImplementationStatus);
       const { data, error } = await query;
       if (error) throw error;
       return { data: (data ?? []).map((row) => projectFromRow(row)), nextCursor: null };
     },
     get: async (id) => {
-      const { data, error } = await client().from("implementation_projects").select(projectSelection).eq("id", id).maybeSingle();
+      const { data, error } = await client()
+        .from("implementation_projects")
+        .select(projectSelection)
+        .eq("id", id)
+        .maybeSingle();
       if (error) throw error;
       return data ? projectFromRow(data) : null;
     },
@@ -94,7 +98,13 @@ export function createCloudImplementationApi(): ImplementationApi {
       });
       if (error) throw error;
       const created = data as unknown as Record<string, unknown>;
-      const owner = input.ownerId ? await client().from("owner_records").select("name,phone").eq("id", input.ownerId).maybeSingle() : null;
+      const owner = input.ownerId
+        ? await client()
+            .from("owner_records")
+            .select("name,phone")
+            .eq("id", input.ownerId)
+            .maybeSingle()
+        : null;
       return projectFromRow({ ...created, owner_records: owner?.data ?? null });
     },
     update: async (id, patch) => {
@@ -119,33 +129,52 @@ export function createCloudImplementationApi(): ImplementationApi {
         core_property_id: patch.corePropertyId,
         core_owner_id: patch.coreOwnerId,
       };
-      const clean = Object.fromEntries(Object.entries(row).filter(([, value]) => value !== undefined));
-      const { data, error } = await client().from("implementation_projects").update(clean).eq("id", id).select(projectSelection).single();
+      const clean = Object.fromEntries(
+        Object.entries(row).filter(([, value]) => value !== undefined),
+      );
+      const { data, error } = await client()
+        .from("implementation_projects")
+        .update(clean)
+        .eq("id", id)
+        .select(projectSelection)
+        .single();
       if (error) throw error;
       return projectFromRow(data);
     },
     items: async (implementationId) => {
-      const { data, error } = await client().from("implementation_items").select("*").eq("implementation_id", implementationId).order("display_order");
+      const { data, error } = await client()
+        .from("implementation_items")
+        .select("*")
+        .eq("implementation_id", implementationId)
+        .order("display_order");
       if (error) throw error;
       return (data ?? []).map((row) => itemFromRow(row));
     },
     generateChecklist: async (implementationId) => {
       const current = await createCloudImplementationApi().items(implementationId);
       if (current.length > 0) return current;
-      const { data: templates, error } = await client().from("checklist_templates").select("*").order("display_order");
+      const { data: templates, error } = await client()
+        .from("checklist_templates")
+        .select("*")
+        .order("display_order");
       if (error) throw error;
       if (!templates?.length) return [];
-      const { data, error: insertError } = await client().from("implementation_items").insert(templates.map((template) => ({
-        implementation_id: implementationId,
-        category: template.category,
-        phase: template.phase,
-        title: template.title,
-        description: template.description,
-        display_order: template.display_order,
-        mandatory: template.mandatory,
-        blocker: template.blocker,
-        owner_visible: template.owner_visible,
-      }))).select("*");
+      const { data, error: insertError } = await client()
+        .from("implementation_items")
+        .insert(
+          templates.map((template) => ({
+            implementation_id: implementationId,
+            category: template.category,
+            phase: template.phase,
+            title: template.title,
+            description: template.description,
+            display_order: template.display_order,
+            mandatory: template.mandatory,
+            blocker: template.blocker,
+            owner_visible: template.owner_visible,
+          })),
+        )
+        .select("*");
       if (insertError) throw insertError;
       return (data ?? []).map((row) => itemFromRow(row));
     },
@@ -169,8 +198,15 @@ export function createCloudImplementationApi(): ImplementationApi {
         readiness_override_by: patch.readinessOverrideBy,
         readiness_override_at: patch.readinessOverrideAt,
       };
-      const clean = Object.fromEntries(Object.entries(row).filter(([, value]) => value !== undefined));
-      const { data, error } = await client().from("implementation_items").update(clean).eq("id", itemId).select("*").single();
+      const clean = Object.fromEntries(
+        Object.entries(row).filter(([, value]) => value !== undefined),
+      );
+      const { data, error } = await client()
+        .from("implementation_items")
+        .update(clean)
+        .eq("id", itemId)
+        .select("*")
+        .single();
       if (error) throw error;
       return itemFromRow(data);
     },
