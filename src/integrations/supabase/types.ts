@@ -806,12 +806,19 @@ export type Database = {
           module: Database["public"]["Enums"]["supply_module"]
           name: string
           notes: string | null
+          payee_name: string | null
+          payment_target: string
+          pix_hidden: boolean
+          pix_key: string | null
           priority: Database["public"]["Enums"]["supply_priority"]
+          procurement_stage: string
           required_qty: number
           responsible: string | null
           room: string | null
           size: string | null
           status: Database["public"]["Enums"]["supply_status"]
+          supplier: string | null
+          unit_cost: number | null
           updated_at: string
         }
         Insert: {
@@ -824,12 +831,19 @@ export type Database = {
           module: Database["public"]["Enums"]["supply_module"]
           name: string
           notes?: string | null
+          payee_name?: string | null
+          payment_target?: string
+          pix_hidden?: boolean
+          pix_key?: string | null
           priority?: Database["public"]["Enums"]["supply_priority"]
+          procurement_stage?: string
           required_qty?: number
           responsible?: string | null
           room?: string | null
           size?: string | null
           status?: Database["public"]["Enums"]["supply_status"]
+          supplier?: string | null
+          unit_cost?: number | null
           updated_at?: string
         }
         Update: {
@@ -842,12 +856,19 @@ export type Database = {
           module?: Database["public"]["Enums"]["supply_module"]
           name?: string
           notes?: string | null
+          payee_name?: string | null
+          payment_target?: string
+          pix_hidden?: boolean
+          pix_key?: string | null
           priority?: Database["public"]["Enums"]["supply_priority"]
+          procurement_stage?: string
           required_qty?: number
           responsible?: string | null
           room?: string | null
           size?: string | null
           status?: Database["public"]["Enums"]["supply_status"]
+          supplier?: string | null
+          unit_cost?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1573,6 +1594,96 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_catalog_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          room: string | null
+          size: string | null
+          supplier: string | null
+          unit_cost: number | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          room?: string | null
+          size?: string | null
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          room?: string | null
+          size?: string | null
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
+      supply_item_documents: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          implementation_id: string
+          kind: string
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+          supply_item_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          implementation_id: string
+          kind?: string
+          mime_type: string
+          size_bytes?: number
+          storage_path: string
+          supply_item_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          implementation_id?: string
+          kind?: string
+          mime_type?: string
+          size_bytes?: number
+          storage_path?: string
+          supply_item_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_item_documents_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_item_documents_supply_item_id_fkey"
+            columns: ["supply_item_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_supply_items"
             referencedColumns: ["id"]
           },
         ]
