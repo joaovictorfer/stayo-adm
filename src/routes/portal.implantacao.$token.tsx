@@ -531,7 +531,7 @@ function OwnerOnboardingForm({
                     key={index}
                     type="button"
                     className={`portal-person-option ${selectedHolder === index ? "is-selected" : ""}`}
-                        onClick={() => selectPersonAsHolder(index)}
+                    onClick={() => selectPersonAsHolder(index)}
                   >
                     <UserRound className="size-4" />
                     <span>
