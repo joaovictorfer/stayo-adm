@@ -1,1552 +1,1543 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
       admin_profiles: {
         Row: {
-          active: boolean
-          created_at: string
-          full_name: string
-          id: string
-          role: Database["public"]["Enums"]["admin_role"]
-          updated_at: string
-        }
+          active: boolean;
+          created_at: string;
+          full_name: string;
+          id: string;
+          role: Database["public"]["Enums"]["admin_role"];
+          updated_at: string;
+        };
         Insert: {
-          active?: boolean
-          created_at?: string
-          full_name: string
-          id: string
-          role?: Database["public"]["Enums"]["admin_role"]
-          updated_at?: string
-        }
+          active?: boolean;
+          created_at?: string;
+          full_name: string;
+          id: string;
+          role?: Database["public"]["Enums"]["admin_role"];
+          updated_at?: string;
+        };
         Update: {
-          active?: boolean
-          created_at?: string
-          full_name?: string
-          id?: string
-          role?: Database["public"]["Enums"]["admin_role"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          active?: boolean;
+          created_at?: string;
+          full_name?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["admin_role"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       attachments: {
         Row: {
-          category: string
-          created_at: string
-          filename: string
-          id: string
-          implementation_id: string | null
-          mime_type: string
-          owner_id: string
-          owner_task_id: string | null
-          size_bytes: number
-          storage_path: string
-          uploaded_by: string | null
-        }
+          category: string;
+          created_at: string;
+          filename: string;
+          id: string;
+          implementation_id: string | null;
+          mime_type: string;
+          owner_id: string;
+          owner_task_id: string | null;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_by: string | null;
+        };
         Insert: {
-          category: string
-          created_at?: string
-          filename: string
-          id?: string
-          implementation_id?: string | null
-          mime_type: string
-          owner_id: string
-          owner_task_id?: string | null
-          size_bytes: number
-          storage_path: string
-          uploaded_by?: string | null
-        }
+          category: string;
+          created_at?: string;
+          filename: string;
+          id?: string;
+          implementation_id?: string | null;
+          mime_type: string;
+          owner_id: string;
+          owner_task_id?: string | null;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_by?: string | null;
+        };
         Update: {
-          category?: string
-          created_at?: string
-          filename?: string
-          id?: string
-          implementation_id?: string | null
-          mime_type?: string
-          owner_id?: string
-          owner_task_id?: string | null
-          size_bytes?: number
-          storage_path?: string
-          uploaded_by?: string | null
-        }
+          category?: string;
+          created_at?: string;
+          filename?: string;
+          id?: string;
+          implementation_id?: string | null;
+          mime_type?: string;
+          owner_id?: string;
+          owner_task_id?: string | null;
+          size_bytes?: number;
+          storage_path?: string;
+          uploaded_by?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "attachments_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "attachments_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "attachments_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "attachments_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "attachments_owner_task_id_fkey"
-            columns: ["owner_task_id"]
-            isOneToOne: false
-            referencedRelation: "owner_tasks"
-            referencedColumns: ["id"]
+            foreignKeyName: "attachments_owner_task_id_fkey";
+            columns: ["owner_task_id"];
+            isOneToOne: false;
+            referencedRelation: "owner_tasks";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       audit_logs: {
         Row: {
-          actor_id: string | null
-          created_at: string
-          entity_id: string | null
-          entity_type: string
-          event: string
-          id: string
-          metadata: Json
-          request_id: string | null
-        }
+          actor_id: string | null;
+          created_at: string;
+          entity_id: string | null;
+          entity_type: string;
+          event: string;
+          id: string;
+          metadata: Json;
+          request_id: string | null;
+        };
         Insert: {
-          actor_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type: string
-          event: string
-          id?: string
-          metadata?: Json
-          request_id?: string | null
-        }
+          actor_id?: string | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type: string;
+          event: string;
+          id?: string;
+          metadata?: Json;
+          request_id?: string | null;
+        };
         Update: {
-          actor_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string
-          event?: string
-          id?: string
-          metadata?: Json
-          request_id?: string | null
-        }
-        Relationships: []
-      }
+          actor_id?: string | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          event?: string;
+          id?: string;
+          metadata?: Json;
+          request_id?: string | null;
+        };
+        Relationships: [];
+      };
       checklist_templates: {
         Row: {
-          blocker: boolean
-          category: string
-          description: string | null
-          display_order: number
-          id: string
-          mandatory: boolean
-          owner_visible: boolean
-          phase: string
-          title: string
-        }
+          blocker: boolean;
+          category: string;
+          description: string | null;
+          display_order: number;
+          id: string;
+          mandatory: boolean;
+          owner_visible: boolean;
+          phase: string;
+          title: string;
+        };
         Insert: {
-          blocker?: boolean
-          category: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          mandatory?: boolean
-          owner_visible?: boolean
-          phase: string
-          title: string
-        }
+          blocker?: boolean;
+          category: string;
+          description?: string | null;
+          display_order?: number;
+          id?: string;
+          mandatory?: boolean;
+          owner_visible?: boolean;
+          phase: string;
+          title: string;
+        };
         Update: {
-          blocker?: boolean
-          category?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          mandatory?: boolean
-          owner_visible?: boolean
-          phase?: string
-          title?: string
-        }
-        Relationships: []
-      }
+          blocker?: boolean;
+          category?: string;
+          description?: string | null;
+          display_order?: number;
+          id?: string;
+          mandatory?: boolean;
+          owner_visible?: boolean;
+          phase?: string;
+          title?: string;
+        };
+        Relationships: [];
+      };
       commercial_term_defaults: {
         Row: {
-          charge_type: Database["public"]["Enums"]["charge_type"]
-          display_order: number
-          id: string
-          label: string
-          notes: string | null
-          optional: boolean
-          value: number
-        }
+          charge_type: Database["public"]["Enums"]["charge_type"];
+          display_order: number;
+          id: string;
+          label: string;
+          notes: string | null;
+          optional: boolean;
+          value: number;
+        };
         Insert: {
-          charge_type: Database["public"]["Enums"]["charge_type"]
-          display_order?: number
-          id?: string
-          label: string
-          notes?: string | null
-          optional?: boolean
-          value?: number
-        }
+          charge_type: Database["public"]["Enums"]["charge_type"];
+          display_order?: number;
+          id?: string;
+          label: string;
+          notes?: string | null;
+          optional?: boolean;
+          value?: number;
+        };
         Update: {
-          charge_type?: Database["public"]["Enums"]["charge_type"]
-          display_order?: number
-          id?: string
-          label?: string
-          notes?: string | null
-          optional?: boolean
-          value?: number
-        }
-        Relationships: []
-      }
+          charge_type?: Database["public"]["Enums"]["charge_type"];
+          display_order?: number;
+          id?: string;
+          label?: string;
+          notes?: string | null;
+          optional?: boolean;
+          value?: number;
+        };
+        Relationships: [];
+      };
       commercial_terms: {
         Row: {
-          charge_type: Database["public"]["Enums"]["charge_type"]
-          display_order: number
-          id: string
-          implementation_id: string
-          label: string
-          notes: string | null
-          optional: boolean
-          value: number
-        }
+          charge_type: Database["public"]["Enums"]["charge_type"];
+          display_order: number;
+          id: string;
+          implementation_id: string;
+          label: string;
+          notes: string | null;
+          optional: boolean;
+          value: number;
+        };
         Insert: {
-          charge_type: Database["public"]["Enums"]["charge_type"]
-          display_order?: number
-          id?: string
-          implementation_id: string
-          label: string
-          notes?: string | null
-          optional?: boolean
-          value?: number
-        }
+          charge_type: Database["public"]["Enums"]["charge_type"];
+          display_order?: number;
+          id?: string;
+          implementation_id: string;
+          label: string;
+          notes?: string | null;
+          optional?: boolean;
+          value?: number;
+        };
         Update: {
-          charge_type?: Database["public"]["Enums"]["charge_type"]
-          display_order?: number
-          id?: string
-          implementation_id?: string
-          label?: string
-          notes?: string | null
-          optional?: boolean
-          value?: number
-        }
-        Relationships: []
-      }
+          charge_type?: Database["public"]["Enums"]["charge_type"];
+          display_order?: number;
+          id?: string;
+          implementation_id?: string;
+          label?: string;
+          notes?: string | null;
+          optional?: boolean;
+          value?: number;
+        };
+        Relationships: [];
+      };
       implementation_contract_conditions: {
         Row: {
-          administration_fee: number | null
-          cleaning_responsibility: string | null
-          duration_months: number | null
-          exclusivity: boolean | null
-          implementation_id: string
-          maintenance_limit: number | null
-          notice_period_days: number | null
-          payout_rule: string | null
-          updated_at: string
-        }
+          administration_fee: number | null;
+          cleaning_responsibility: string | null;
+          duration_months: number | null;
+          exclusivity: boolean | null;
+          implementation_id: string;
+          maintenance_limit: number | null;
+          notice_period_days: number | null;
+          payout_rule: string | null;
+          updated_at: string;
+        };
         Insert: {
-          administration_fee?: number | null
-          cleaning_responsibility?: string | null
-          duration_months?: number | null
-          exclusivity?: boolean | null
-          implementation_id: string
-          maintenance_limit?: number | null
-          notice_period_days?: number | null
-          payout_rule?: string | null
-          updated_at?: string
-        }
+          administration_fee?: number | null;
+          cleaning_responsibility?: string | null;
+          duration_months?: number | null;
+          exclusivity?: boolean | null;
+          implementation_id: string;
+          maintenance_limit?: number | null;
+          notice_period_days?: number | null;
+          payout_rule?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          administration_fee?: number | null
-          cleaning_responsibility?: string | null
-          duration_months?: number | null
-          exclusivity?: boolean | null
-          implementation_id?: string
-          maintenance_limit?: number | null
-          notice_period_days?: number | null
-          payout_rule?: string | null
-          updated_at?: string
-        }
+          administration_fee?: number | null;
+          cleaning_responsibility?: string | null;
+          duration_months?: number | null;
+          exclusivity?: boolean | null;
+          implementation_id?: string;
+          maintenance_limit?: number | null;
+          notice_period_days?: number | null;
+          payout_rule?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_contract_conditions_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: true
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_contract_conditions_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: true;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_field_confirmations: {
         Row: {
-          field_key: string
-          id: string
-          implementation_id: string
-          note: string | null
-          state: Database["public"]["Enums"]["owner_field_state"]
-          updated_at: string
-          updated_by: string | null
-          value_snapshot: string | null
-        }
+          field_key: string;
+          id: string;
+          implementation_id: string;
+          note: string | null;
+          state: Database["public"]["Enums"]["owner_field_state"];
+          updated_at: string;
+          updated_by: string | null;
+          value_snapshot: string | null;
+        };
         Insert: {
-          field_key: string
-          id?: string
-          implementation_id: string
-          note?: string | null
-          state?: Database["public"]["Enums"]["owner_field_state"]
-          updated_at?: string
-          updated_by?: string | null
-          value_snapshot?: string | null
-        }
+          field_key: string;
+          id?: string;
+          implementation_id: string;
+          note?: string | null;
+          state?: Database["public"]["Enums"]["owner_field_state"];
+          updated_at?: string;
+          updated_by?: string | null;
+          value_snapshot?: string | null;
+        };
         Update: {
-          field_key?: string
-          id?: string
-          implementation_id?: string
-          note?: string | null
-          state?: Database["public"]["Enums"]["owner_field_state"]
-          updated_at?: string
-          updated_by?: string | null
-          value_snapshot?: string | null
-        }
+          field_key?: string;
+          id?: string;
+          implementation_id?: string;
+          note?: string | null;
+          state?: Database["public"]["Enums"]["owner_field_state"];
+          updated_at?: string;
+          updated_by?: string | null;
+          value_snapshot?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_field_confirmations_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_field_confirmations_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_items: {
         Row: {
-          blocker: boolean
-          category: string
-          completed_at: string | null
-          completed_by: string | null
-          description: string | null
-          display_order: number
-          due_date: string | null
-          id: string
-          implementation_id: string
-          mandatory: boolean
-          observation: string | null
-          owner_visible: boolean
-          phase: string
-          readiness_override_at: string | null
-          readiness_override_by: string | null
-          readiness_override_reason: string | null
-          responsible_user_id: string | null
-          status: Database["public"]["Enums"]["implementation_item_status"]
-          title: string
-        }
+          blocker: boolean;
+          category: string;
+          completed_at: string | null;
+          completed_by: string | null;
+          description: string | null;
+          display_order: number;
+          due_date: string | null;
+          id: string;
+          implementation_id: string;
+          mandatory: boolean;
+          observation: string | null;
+          owner_visible: boolean;
+          phase: string;
+          readiness_override_at: string | null;
+          readiness_override_by: string | null;
+          readiness_override_reason: string | null;
+          responsible_user_id: string | null;
+          status: Database["public"]["Enums"]["implementation_item_status"];
+          title: string;
+        };
         Insert: {
-          blocker?: boolean
-          category: string
-          completed_at?: string | null
-          completed_by?: string | null
-          description?: string | null
-          display_order?: number
-          due_date?: string | null
-          id?: string
-          implementation_id: string
-          mandatory?: boolean
-          observation?: string | null
-          owner_visible?: boolean
-          phase: string
-          readiness_override_at?: string | null
-          readiness_override_by?: string | null
-          readiness_override_reason?: string | null
-          responsible_user_id?: string | null
-          status?: Database["public"]["Enums"]["implementation_item_status"]
-          title: string
-        }
+          blocker?: boolean;
+          category: string;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          description?: string | null;
+          display_order?: number;
+          due_date?: string | null;
+          id?: string;
+          implementation_id: string;
+          mandatory?: boolean;
+          observation?: string | null;
+          owner_visible?: boolean;
+          phase: string;
+          readiness_override_at?: string | null;
+          readiness_override_by?: string | null;
+          readiness_override_reason?: string | null;
+          responsible_user_id?: string | null;
+          status?: Database["public"]["Enums"]["implementation_item_status"];
+          title: string;
+        };
         Update: {
-          blocker?: boolean
-          category?: string
-          completed_at?: string | null
-          completed_by?: string | null
-          description?: string | null
-          display_order?: number
-          due_date?: string | null
-          id?: string
-          implementation_id?: string
-          mandatory?: boolean
-          observation?: string | null
-          owner_visible?: boolean
-          phase?: string
-          readiness_override_at?: string | null
-          readiness_override_by?: string | null
-          readiness_override_reason?: string | null
-          responsible_user_id?: string | null
-          status?: Database["public"]["Enums"]["implementation_item_status"]
-          title?: string
-        }
+          blocker?: boolean;
+          category?: string;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          description?: string | null;
+          display_order?: number;
+          due_date?: string | null;
+          id?: string;
+          implementation_id?: string;
+          mandatory?: boolean;
+          observation?: string | null;
+          owner_visible?: boolean;
+          phase?: string;
+          readiness_override_at?: string | null;
+          readiness_override_by?: string | null;
+          readiness_override_reason?: string | null;
+          responsible_user_id?: string | null;
+          status?: Database["public"]["Enums"]["implementation_item_status"];
+          title?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_items_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_items_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_owners: {
         Row: {
-          address: string | null
-          created_at: string
-          display_order: number
-          id: string
-          implementation_id: string
-          owner_id: string
-          role: string
-          share_percent: number | null
-        }
+          address: string | null;
+          created_at: string;
+          display_order: number;
+          id: string;
+          implementation_id: string;
+          owner_id: string;
+          role: string;
+          share_percent: number | null;
+        };
         Insert: {
-          address?: string | null
-          created_at?: string
-          display_order?: number
-          id?: string
-          implementation_id: string
-          owner_id: string
-          role?: string
-          share_percent?: number | null
-        }
+          address?: string | null;
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          implementation_id: string;
+          owner_id: string;
+          role?: string;
+          share_percent?: number | null;
+        };
         Update: {
-          address?: string | null
-          created_at?: string
-          display_order?: number
-          id?: string
-          implementation_id?: string
-          owner_id?: string
-          role?: string
-          share_percent?: number | null
-        }
+          address?: string | null;
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          implementation_id?: string;
+          owner_id?: string;
+          role?: string;
+          share_percent?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_owners_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_owners_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "implementation_owners_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_owners_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_projects: {
         Row: {
-          address: string | null
-          bedrooms: number | null
-          capacity: number | null
-          city: string | null
-          code: string
-          completion_date_estimate: string | null
-          condominium_name: string | null
-          core_owner_id: string | null
-          core_property_id: string | null
-          cover_image: string | null
-          created_at: string
-          id: string
-          nickname: string | null
-          notes: string | null
-          origin: string | null
-          owner_id: string | null
-          postal_code: string | null
-          property_type: string | null
-          responsible_user_id: string | null
-          start_date_estimate: string | null
-          status: Database["public"]["Enums"]["implementation_status"]
-          unit: string | null
-          updated_at: string
-        }
+          address: string | null;
+          bedrooms: number | null;
+          capacity: number | null;
+          city: string | null;
+          code: string;
+          completion_date_estimate: string | null;
+          condominium_name: string | null;
+          core_owner_id: string | null;
+          core_property_id: string | null;
+          cover_image: string | null;
+          created_at: string;
+          id: string;
+          nickname: string | null;
+          notes: string | null;
+          origin: string | null;
+          owner_id: string | null;
+          postal_code: string | null;
+          property_type: string | null;
+          responsible_user_id: string | null;
+          start_date_estimate: string | null;
+          status: Database["public"]["Enums"]["implementation_status"];
+          unit: string | null;
+          updated_at: string;
+        };
         Insert: {
-          address?: string | null
-          bedrooms?: number | null
-          capacity?: number | null
-          city?: string | null
-          code: string
-          completion_date_estimate?: string | null
-          condominium_name?: string | null
-          core_owner_id?: string | null
-          core_property_id?: string | null
-          cover_image?: string | null
-          created_at?: string
-          id?: string
-          nickname?: string | null
-          notes?: string | null
-          origin?: string | null
-          owner_id?: string | null
-          postal_code?: string | null
-          property_type?: string | null
-          responsible_user_id?: string | null
-          start_date_estimate?: string | null
-          status?: Database["public"]["Enums"]["implementation_status"]
-          unit?: string | null
-          updated_at?: string
-        }
+          address?: string | null;
+          bedrooms?: number | null;
+          capacity?: number | null;
+          city?: string | null;
+          code: string;
+          completion_date_estimate?: string | null;
+          condominium_name?: string | null;
+          core_owner_id?: string | null;
+          core_property_id?: string | null;
+          cover_image?: string | null;
+          created_at?: string;
+          id?: string;
+          nickname?: string | null;
+          notes?: string | null;
+          origin?: string | null;
+          owner_id?: string | null;
+          postal_code?: string | null;
+          property_type?: string | null;
+          responsible_user_id?: string | null;
+          start_date_estimate?: string | null;
+          status?: Database["public"]["Enums"]["implementation_status"];
+          unit?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          address?: string | null
-          bedrooms?: number | null
-          capacity?: number | null
-          city?: string | null
-          code?: string
-          completion_date_estimate?: string | null
-          condominium_name?: string | null
-          core_owner_id?: string | null
-          core_property_id?: string | null
-          cover_image?: string | null
-          created_at?: string
-          id?: string
-          nickname?: string | null
-          notes?: string | null
-          origin?: string | null
-          owner_id?: string | null
-          postal_code?: string | null
-          property_type?: string | null
-          responsible_user_id?: string | null
-          start_date_estimate?: string | null
-          status?: Database["public"]["Enums"]["implementation_status"]
-          unit?: string | null
-          updated_at?: string
-        }
+          address?: string | null;
+          bedrooms?: number | null;
+          capacity?: number | null;
+          city?: string | null;
+          code?: string;
+          completion_date_estimate?: string | null;
+          condominium_name?: string | null;
+          core_owner_id?: string | null;
+          core_property_id?: string | null;
+          cover_image?: string | null;
+          created_at?: string;
+          id?: string;
+          nickname?: string | null;
+          notes?: string | null;
+          origin?: string | null;
+          owner_id?: string | null;
+          postal_code?: string | null;
+          property_type?: string | null;
+          responsible_user_id?: string | null;
+          start_date_estimate?: string | null;
+          status?: Database["public"]["Enums"]["implementation_status"];
+          unit?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_projects_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_projects_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_property_details: {
         Row: {
-          access_notes: string | null
-          bathrooms: number | null
-          bedrooms: number | null
-          city: string | null
-          complement: string | null
-          district: string | null
-          implementation_id: string
-          notes: string | null
-          number: string | null
-          parking_spots: number | null
-          postal_code: string | null
-          property_type: string | null
-          state: string | null
-          street: string | null
-          suites: number | null
-          updated_at: string
-          wifi_network: string | null
-          wifi_password: string | null
-        }
+          access_notes: string | null;
+          bathrooms: number | null;
+          bedrooms: number | null;
+          city: string | null;
+          complement: string | null;
+          district: string | null;
+          implementation_id: string;
+          notes: string | null;
+          number: string | null;
+          parking_spots: number | null;
+          postal_code: string | null;
+          property_type: string | null;
+          state: string | null;
+          street: string | null;
+          suites: number | null;
+          updated_at: string;
+          wifi_network: string | null;
+          wifi_password: string | null;
+        };
         Insert: {
-          access_notes?: string | null
-          bathrooms?: number | null
-          bedrooms?: number | null
-          city?: string | null
-          complement?: string | null
-          district?: string | null
-          implementation_id: string
-          notes?: string | null
-          number?: string | null
-          parking_spots?: number | null
-          postal_code?: string | null
-          property_type?: string | null
-          state?: string | null
-          street?: string | null
-          suites?: number | null
-          updated_at?: string
-          wifi_network?: string | null
-          wifi_password?: string | null
-        }
+          access_notes?: string | null;
+          bathrooms?: number | null;
+          bedrooms?: number | null;
+          city?: string | null;
+          complement?: string | null;
+          district?: string | null;
+          implementation_id: string;
+          notes?: string | null;
+          number?: string | null;
+          parking_spots?: number | null;
+          postal_code?: string | null;
+          property_type?: string | null;
+          state?: string | null;
+          street?: string | null;
+          suites?: number | null;
+          updated_at?: string;
+          wifi_network?: string | null;
+          wifi_password?: string | null;
+        };
         Update: {
-          access_notes?: string | null
-          bathrooms?: number | null
-          bedrooms?: number | null
-          city?: string | null
-          complement?: string | null
-          district?: string | null
-          implementation_id?: string
-          notes?: string | null
-          number?: string | null
-          parking_spots?: number | null
-          postal_code?: string | null
-          property_type?: string | null
-          state?: string | null
-          street?: string | null
-          suites?: number | null
-          updated_at?: string
-          wifi_network?: string | null
-          wifi_password?: string | null
-        }
+          access_notes?: string | null;
+          bathrooms?: number | null;
+          bedrooms?: number | null;
+          city?: string | null;
+          complement?: string | null;
+          district?: string | null;
+          implementation_id?: string;
+          notes?: string | null;
+          number?: string | null;
+          parking_spots?: number | null;
+          postal_code?: string | null;
+          property_type?: string | null;
+          state?: string | null;
+          street?: string | null;
+          suites?: number | null;
+          updated_at?: string;
+          wifi_network?: string | null;
+          wifi_password?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_property_details_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: true
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_property_details_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: true;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_proposal_settings: {
         Row: {
-          implementation_id: string
-          payment_notes: string | null
-          updated_at: string
-          validity_days: number
-        }
+          implementation_id: string;
+          payment_notes: string | null;
+          updated_at: string;
+          validity_days: number;
+        };
         Insert: {
-          implementation_id: string
-          payment_notes?: string | null
-          updated_at?: string
-          validity_days?: number
-        }
+          implementation_id: string;
+          payment_notes?: string | null;
+          updated_at?: string;
+          validity_days?: number;
+        };
         Update: {
-          implementation_id?: string
-          payment_notes?: string | null
-          updated_at?: string
-          validity_days?: number
-        }
+          implementation_id?: string;
+          payment_notes?: string | null;
+          updated_at?: string;
+          validity_days?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_proposal_settings_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: true
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_proposal_settings_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: true;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_rooms: {
         Row: {
-          beds: string | null
-          capacity: number | null
-          created_at: string
-          display_order: number
-          id: string
-          implementation_id: string
-          kind: string
-          name: string
-          notes: string | null
-        }
+          beds: string | null;
+          capacity: number | null;
+          created_at: string;
+          display_order: number;
+          id: string;
+          implementation_id: string;
+          kind: string;
+          name: string;
+          notes: string | null;
+        };
         Insert: {
-          beds?: string | null
-          capacity?: number | null
-          created_at?: string
-          display_order?: number
-          id?: string
-          implementation_id: string
-          kind?: string
-          name: string
-          notes?: string | null
-        }
+          beds?: string | null;
+          capacity?: number | null;
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          implementation_id: string;
+          kind?: string;
+          name: string;
+          notes?: string | null;
+        };
         Update: {
-          beds?: string | null
-          capacity?: number | null
-          created_at?: string
-          display_order?: number
-          id?: string
-          implementation_id?: string
-          kind?: string
-          name?: string
-          notes?: string | null
-        }
+          beds?: string | null;
+          capacity?: number | null;
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          implementation_id?: string;
+          kind?: string;
+          name?: string;
+          notes?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_rooms_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_rooms_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_supply_items: {
         Row: {
-          blocks_readiness: boolean
-          created_at: string
-          display_order: number
-          existing_qty: number
-          id: string
-          implementation_id: string
-          module: Database["public"]["Enums"]["supply_module"]
-          name: string
-          notes: string | null
-          priority: Database["public"]["Enums"]["supply_priority"]
-          required_qty: number
-          responsible: string | null
-          room: string | null
-          size: string | null
-          status: Database["public"]["Enums"]["supply_status"]
-          updated_at: string
-        }
+          blocks_readiness: boolean;
+          created_at: string;
+          display_order: number;
+          existing_qty: number;
+          id: string;
+          implementation_id: string;
+          module: Database["public"]["Enums"]["supply_module"];
+          name: string;
+          notes: string | null;
+          priority: Database["public"]["Enums"]["supply_priority"];
+          required_qty: number;
+          responsible: string | null;
+          room: string | null;
+          size: string | null;
+          status: Database["public"]["Enums"]["supply_status"];
+          updated_at: string;
+        };
         Insert: {
-          blocks_readiness?: boolean
-          created_at?: string
-          display_order?: number
-          existing_qty?: number
-          id?: string
-          implementation_id: string
-          module: Database["public"]["Enums"]["supply_module"]
-          name: string
-          notes?: string | null
-          priority?: Database["public"]["Enums"]["supply_priority"]
-          required_qty?: number
-          responsible?: string | null
-          room?: string | null
-          size?: string | null
-          status?: Database["public"]["Enums"]["supply_status"]
-          updated_at?: string
-        }
+          blocks_readiness?: boolean;
+          created_at?: string;
+          display_order?: number;
+          existing_qty?: number;
+          id?: string;
+          implementation_id: string;
+          module: Database["public"]["Enums"]["supply_module"];
+          name: string;
+          notes?: string | null;
+          priority?: Database["public"]["Enums"]["supply_priority"];
+          required_qty?: number;
+          responsible?: string | null;
+          room?: string | null;
+          size?: string | null;
+          status?: Database["public"]["Enums"]["supply_status"];
+          updated_at?: string;
+        };
         Update: {
-          blocks_readiness?: boolean
-          created_at?: string
-          display_order?: number
-          existing_qty?: number
-          id?: string
-          implementation_id?: string
-          module?: Database["public"]["Enums"]["supply_module"]
-          name?: string
-          notes?: string | null
-          priority?: Database["public"]["Enums"]["supply_priority"]
-          required_qty?: number
-          responsible?: string | null
-          room?: string | null
-          size?: string | null
-          status?: Database["public"]["Enums"]["supply_status"]
-          updated_at?: string
-        }
+          blocks_readiness?: boolean;
+          created_at?: string;
+          display_order?: number;
+          existing_qty?: number;
+          id?: string;
+          implementation_id?: string;
+          module?: Database["public"]["Enums"]["supply_module"];
+          name?: string;
+          notes?: string | null;
+          priority?: Database["public"]["Enums"]["supply_priority"];
+          required_qty?: number;
+          responsible?: string | null;
+          room?: string | null;
+          size?: string | null;
+          status?: Database["public"]["Enums"]["supply_status"];
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "implementation_supply_items_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "implementation_supply_items_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       implementation_templates: {
         Row: {
-          created_at: string
-          id: string
-          name: string
-          notes: string | null
-          payload: Json
-        }
+          created_at: string;
+          id: string;
+          name: string;
+          notes: string | null;
+          payload: Json;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          notes?: string | null
-          payload?: Json
-        }
+          created_at?: string;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          payload?: Json;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          notes?: string | null
-          payload?: Json
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          payload?: Json;
+        };
+        Relationships: [];
+      };
       initial_charges: {
         Row: {
-          amount: number
-          code: string
-          created_at: string
-          due_at: string | null
-          id: string
-          implementation_id: string
-          items: Json
-          notes: string | null
-          owner_id: string | null
-          paid_at: string | null
-          payment_reference: string | null
-          proposal_id: string
-          status: Database["public"]["Enums"]["initial_charge_status"]
-        }
+          amount: number;
+          code: string;
+          created_at: string;
+          due_at: string | null;
+          id: string;
+          implementation_id: string;
+          items: Json;
+          notes: string | null;
+          owner_id: string | null;
+          paid_at: string | null;
+          payment_reference: string | null;
+          proposal_id: string;
+          status: Database["public"]["Enums"]["initial_charge_status"];
+        };
         Insert: {
-          amount?: number
-          code: string
-          created_at?: string
-          due_at?: string | null
-          id?: string
-          implementation_id: string
-          items?: Json
-          notes?: string | null
-          owner_id?: string | null
-          paid_at?: string | null
-          payment_reference?: string | null
-          proposal_id: string
-          status?: Database["public"]["Enums"]["initial_charge_status"]
-        }
+          amount?: number;
+          code: string;
+          created_at?: string;
+          due_at?: string | null;
+          id?: string;
+          implementation_id: string;
+          items?: Json;
+          notes?: string | null;
+          owner_id?: string | null;
+          paid_at?: string | null;
+          payment_reference?: string | null;
+          proposal_id: string;
+          status?: Database["public"]["Enums"]["initial_charge_status"];
+        };
         Update: {
-          amount?: number
-          code?: string
-          created_at?: string
-          due_at?: string | null
-          id?: string
-          implementation_id?: string
-          items?: Json
-          notes?: string | null
-          owner_id?: string | null
-          paid_at?: string | null
-          payment_reference?: string | null
-          proposal_id?: string
-          status?: Database["public"]["Enums"]["initial_charge_status"]
-        }
-        Relationships: []
-      }
+          amount?: number;
+          code?: string;
+          created_at?: string;
+          due_at?: string | null;
+          id?: string;
+          implementation_id?: string;
+          items?: Json;
+          notes?: string | null;
+          owner_id?: string | null;
+          paid_at?: string | null;
+          payment_reference?: string | null;
+          proposal_id?: string;
+          status?: Database["public"]["Enums"]["initial_charge_status"];
+        };
+        Relationships: [];
+      };
       outbound_messages: {
         Row: {
-          body: string
-          created_at: string
-          destination: string
-          error: string | null
-          failed_at: string | null
-          id: string
-          implementation_id: string
-          owner_id: string | null
-          provider_message_id: string | null
-          sent_at: string | null
-          status: Database["public"]["Enums"]["outbound_message_status"]
-          template: string
-        }
+          body: string;
+          created_at: string;
+          destination: string;
+          error: string | null;
+          failed_at: string | null;
+          id: string;
+          implementation_id: string;
+          owner_id: string | null;
+          provider_message_id: string | null;
+          sent_at: string | null;
+          status: Database["public"]["Enums"]["outbound_message_status"];
+          template: string;
+        };
         Insert: {
-          body: string
-          created_at?: string
-          destination: string
-          error?: string | null
-          failed_at?: string | null
-          id?: string
-          implementation_id: string
-          owner_id?: string | null
-          provider_message_id?: string | null
-          sent_at?: string | null
-          status?: Database["public"]["Enums"]["outbound_message_status"]
-          template: string
-        }
+          body: string;
+          created_at?: string;
+          destination: string;
+          error?: string | null;
+          failed_at?: string | null;
+          id?: string;
+          implementation_id: string;
+          owner_id?: string | null;
+          provider_message_id?: string | null;
+          sent_at?: string | null;
+          status?: Database["public"]["Enums"]["outbound_message_status"];
+          template: string;
+        };
         Update: {
-          body?: string
-          created_at?: string
-          destination?: string
-          error?: string | null
-          failed_at?: string | null
-          id?: string
-          implementation_id?: string
-          owner_id?: string | null
-          provider_message_id?: string | null
-          sent_at?: string | null
-          status?: Database["public"]["Enums"]["outbound_message_status"]
-          template?: string
-        }
-        Relationships: []
-      }
+          body?: string;
+          created_at?: string;
+          destination?: string;
+          error?: string | null;
+          failed_at?: string | null;
+          id?: string;
+          implementation_id?: string;
+          owner_id?: string | null;
+          provider_message_id?: string | null;
+          sent_at?: string | null;
+          status?: Database["public"]["Enums"]["outbound_message_status"];
+          template?: string;
+        };
+        Relationships: [];
+      };
       owner_notes: {
         Row: {
-          content: string
-          owner_id: string
-          updated_at: string
-        }
+          content: string;
+          owner_id: string;
+          updated_at: string;
+        };
         Insert: {
-          content?: string
-          owner_id: string
-          updated_at?: string
-        }
+          content?: string;
+          owner_id: string;
+          updated_at?: string;
+        };
         Update: {
-          content?: string
-          owner_id?: string
-          updated_at?: string
-        }
+          content?: string;
+          owner_id?: string;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "owner_notes_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: true
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_notes_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: true;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       owner_onboarding_profiles: {
         Row: {
-          city: string | null
-          complement: string | null
-          created_at: string
-          current_step: number
-          district: string | null
-          email: string | null
-          implementation_id: string
-          legal_name: string | null
-          number: string | null
-          person_type: string | null
-          phone: string | null
-          postal_code: string | null
-          state: string | null
-          street: string | null
-          submitted_at: string | null
-          tax_id: string | null
-          trade_name: string | null
-          updated_at: string
-        }
+          city: string | null;
+          complement: string | null;
+          created_at: string;
+          current_step: number;
+          district: string | null;
+          email: string | null;
+          implementation_id: string;
+          legal_name: string | null;
+          number: string | null;
+          person_type: string | null;
+          phone: string | null;
+          postal_code: string | null;
+          state: string | null;
+          street: string | null;
+          submitted_at: string | null;
+          tax_id: string | null;
+          trade_name: string | null;
+          updated_at: string;
+        };
         Insert: {
-          city?: string | null
-          complement?: string | null
-          created_at?: string
-          current_step?: number
-          district?: string | null
-          email?: string | null
-          implementation_id: string
-          legal_name?: string | null
-          number?: string | null
-          person_type?: string | null
-          phone?: string | null
-          postal_code?: string | null
-          state?: string | null
-          street?: string | null
-          submitted_at?: string | null
-          tax_id?: string | null
-          trade_name?: string | null
-          updated_at?: string
-        }
+          city?: string | null;
+          complement?: string | null;
+          created_at?: string;
+          current_step?: number;
+          district?: string | null;
+          email?: string | null;
+          implementation_id: string;
+          legal_name?: string | null;
+          number?: string | null;
+          person_type?: string | null;
+          phone?: string | null;
+          postal_code?: string | null;
+          state?: string | null;
+          street?: string | null;
+          submitted_at?: string | null;
+          tax_id?: string | null;
+          trade_name?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          city?: string | null
-          complement?: string | null
-          created_at?: string
-          current_step?: number
-          district?: string | null
-          email?: string | null
-          implementation_id?: string
-          legal_name?: string | null
-          number?: string | null
-          person_type?: string | null
-          phone?: string | null
-          postal_code?: string | null
-          state?: string | null
-          street?: string | null
-          submitted_at?: string | null
-          tax_id?: string | null
-          trade_name?: string | null
-          updated_at?: string
-        }
+          city?: string | null;
+          complement?: string | null;
+          created_at?: string;
+          current_step?: number;
+          district?: string | null;
+          email?: string | null;
+          implementation_id?: string;
+          legal_name?: string | null;
+          number?: string | null;
+          person_type?: string | null;
+          phone?: string | null;
+          postal_code?: string | null;
+          state?: string | null;
+          street?: string | null;
+          submitted_at?: string | null;
+          tax_id?: string | null;
+          trade_name?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "owner_onboarding_profiles_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: true
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_onboarding_profiles_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: true;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       owner_onboarding_submissions: {
         Row: {
-          document: string | null
-          email: string
-          full_name: string
-          id: string
-          implementation_id: string
-          phone: string
-          pix_key: string | null
-          submitted_at: string
-        }
+          document: string | null;
+          email: string;
+          full_name: string;
+          id: string;
+          implementation_id: string;
+          phone: string;
+          pix_key: string | null;
+          submitted_at: string;
+        };
         Insert: {
-          document?: string | null
-          email: string
-          full_name: string
-          id?: string
-          implementation_id: string
-          phone: string
-          pix_key?: string | null
-          submitted_at?: string
-        }
+          document?: string | null;
+          email: string;
+          full_name: string;
+          id?: string;
+          implementation_id: string;
+          phone: string;
+          pix_key?: string | null;
+          submitted_at?: string;
+        };
         Update: {
-          document?: string | null
-          email?: string
-          full_name?: string
-          id?: string
-          implementation_id?: string
-          phone?: string
-          pix_key?: string | null
-          submitted_at?: string
-        }
-        Relationships: []
-      }
+          document?: string | null;
+          email?: string;
+          full_name?: string;
+          id?: string;
+          implementation_id?: string;
+          phone?: string;
+          pix_key?: string | null;
+          submitted_at?: string;
+        };
+        Relationships: [];
+      };
       owner_payout_accounts: {
         Row: {
-          account_holder: string | null
-          bank_name: string | null
-          created_at: string
-          holder_tax_id: string | null
-          id: string
-          implementation_id: string
-          is_primary: boolean
-          pix_key: string | null
-          pix_type: string | null
-          updated_at: string
-        }
+          account_holder: string | null;
+          account_number: string | null;
+          account_type: string | null;
+          bank_branch: string | null;
+          bank_name: string | null;
+          created_at: string;
+          holder_tax_id: string | null;
+          id: string;
+          implementation_id: string;
+          is_primary: boolean;
+          pix_key: string | null;
+          pix_type: string | null;
+          updated_at: string;
+        };
         Insert: {
-          account_holder?: string | null
-          bank_name?: string | null
-          created_at?: string
-          holder_tax_id?: string | null
-          id?: string
-          implementation_id: string
-          is_primary?: boolean
-          pix_key?: string | null
-          pix_type?: string | null
-          updated_at?: string
-        }
+          account_holder?: string | null;
+          account_number?: string | null;
+          account_type?: string | null;
+          bank_branch?: string | null;
+          bank_name?: string | null;
+          created_at?: string;
+          holder_tax_id?: string | null;
+          id?: string;
+          implementation_id: string;
+          is_primary?: boolean;
+          pix_key?: string | null;
+          pix_type?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          account_holder?: string | null
-          bank_name?: string | null
-          created_at?: string
-          holder_tax_id?: string | null
-          id?: string
-          implementation_id?: string
-          is_primary?: boolean
-          pix_key?: string | null
-          pix_type?: string | null
-          updated_at?: string
-        }
+          account_holder?: string | null;
+          account_number?: string | null;
+          account_type?: string | null;
+          bank_branch?: string | null;
+          bank_name?: string | null;
+          created_at?: string;
+          holder_tax_id?: string | null;
+          id?: string;
+          implementation_id?: string;
+          is_primary?: boolean;
+          pix_key?: string | null;
+          pix_type?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "owner_payout_accounts_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: true
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_payout_accounts_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: true;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       owner_portal_accounts: {
         Row: {
-          created_at: string
-          id: string
-          owner_id: string
-        }
+          created_at: string;
+          id: string;
+          owner_id: string;
+        };
         Insert: {
-          created_at?: string
-          id: string
-          owner_id: string
-        }
+          created_at?: string;
+          id: string;
+          owner_id: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          owner_id?: string
-        }
+          created_at?: string;
+          id?: string;
+          owner_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "owner_portal_accounts_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: true
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_portal_accounts_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: true;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       owner_portal_invitations: {
         Row: {
-          created_at: string
-          created_by: string | null
-          expires_at: string
-          id: string
-          implementation_id: string
-          last_access_at: string | null
-          owner_id: string | null
-          public_snapshot: Json | null
-          revoked_at: string | null
-          token_hash: string
-          used_at: string | null
-        }
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          id: string;
+          implementation_id: string;
+          last_access_at: string | null;
+          owner_id: string | null;
+          public_snapshot: Json | null;
+          revoked_at: string | null;
+          token_hash: string;
+          used_at: string | null;
+        };
         Insert: {
-          created_at?: string
-          created_by?: string | null
-          expires_at: string
-          id?: string
-          implementation_id: string
-          last_access_at?: string | null
-          owner_id?: string | null
-          public_snapshot?: Json | null
-          revoked_at?: string | null
-          token_hash: string
-          used_at?: string | null
-        }
+          created_at?: string;
+          created_by?: string | null;
+          expires_at: string;
+          id?: string;
+          implementation_id: string;
+          last_access_at?: string | null;
+          owner_id?: string | null;
+          public_snapshot?: Json | null;
+          revoked_at?: string | null;
+          token_hash: string;
+          used_at?: string | null;
+        };
         Update: {
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string
-          id?: string
-          implementation_id?: string
-          last_access_at?: string | null
-          owner_id?: string | null
-          public_snapshot?: Json | null
-          revoked_at?: string | null
-          token_hash?: string
-          used_at?: string | null
-        }
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          implementation_id?: string;
+          last_access_at?: string | null;
+          owner_id?: string | null;
+          public_snapshot?: Json | null;
+          revoked_at?: string | null;
+          token_hash?: string;
+          used_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "owner_portal_invitations_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_portal_invitations_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       owner_records: {
         Row: {
-          core_owner_id: string | null
-          created_at: string
-          document: string | null
-          email: string | null
-          id: string
-          lifecycle_status: string
-          name: string
-          phone: string | null
-          updated_at: string
-        }
+          core_owner_id: string | null;
+          created_at: string;
+          document: string | null;
+          email: string | null;
+          id: string;
+          lifecycle_status: string;
+          name: string;
+          phone: string | null;
+          updated_at: string;
+        };
         Insert: {
-          core_owner_id?: string | null
-          created_at?: string
-          document?: string | null
-          email?: string | null
-          id?: string
-          lifecycle_status?: string
-          name: string
-          phone?: string | null
-          updated_at?: string
-        }
+          core_owner_id?: string | null;
+          created_at?: string;
+          document?: string | null;
+          email?: string | null;
+          id?: string;
+          lifecycle_status?: string;
+          name: string;
+          phone?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          core_owner_id?: string | null
-          created_at?: string
-          document?: string | null
-          email?: string | null
-          id?: string
-          lifecycle_status?: string
-          name?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          core_owner_id?: string | null;
+          created_at?: string;
+          document?: string | null;
+          email?: string | null;
+          id?: string;
+          lifecycle_status?: string;
+          name?: string;
+          phone?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       owner_tasks: {
         Row: {
-          completed_at: string | null
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          implementation_id: string | null
-          kind: string
-          owner_id: string
-          status: Database["public"]["Enums"]["owner_task_status"]
-          title: string
-        }
+          completed_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          id: string;
+          implementation_id: string | null;
+          kind: string;
+          owner_id: string;
+          status: Database["public"]["Enums"]["owner_task_status"];
+          title: string;
+        };
         Insert: {
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          implementation_id?: string | null
-          kind: string
-          owner_id: string
-          status?: Database["public"]["Enums"]["owner_task_status"]
-          title: string
-        }
+          completed_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          implementation_id?: string | null;
+          kind: string;
+          owner_id: string;
+          status?: Database["public"]["Enums"]["owner_task_status"];
+          title: string;
+        };
         Update: {
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          implementation_id?: string | null
-          kind?: string
-          owner_id?: string
-          status?: Database["public"]["Enums"]["owner_task_status"]
-          title?: string
-        }
+          completed_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          implementation_id?: string | null;
+          kind?: string;
+          owner_id?: string;
+          status?: Database["public"]["Enums"]["owner_task_status"];
+          title?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "owner_tasks_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_tasks_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "owner_tasks_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owner_records"
-            referencedColumns: ["id"]
+            foreignKeyName: "owner_tasks_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "owner_records";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       portal_content_blocks: {
         Row: {
-          created_at: string
-          display_order: number
-          draft_body: string
-          draft_title: string
-          id: string
-          kind: Database["public"]["Enums"]["portal_block_kind"]
-          published_at: string | null
-          published_body: string | null
-          published_title: string | null
-          updated_at: string
-        }
+          created_at: string;
+          display_order: number;
+          draft_body: string;
+          draft_title: string;
+          id: string;
+          kind: Database["public"]["Enums"]["portal_block_kind"];
+          published_at: string | null;
+          published_body: string | null;
+          published_title: string | null;
+          updated_at: string;
+        };
         Insert: {
-          created_at?: string
-          display_order?: number
-          draft_body?: string
-          draft_title?: string
-          id?: string
-          kind?: Database["public"]["Enums"]["portal_block_kind"]
-          published_at?: string | null
-          published_body?: string | null
-          published_title?: string | null
-          updated_at?: string
-        }
+          created_at?: string;
+          display_order?: number;
+          draft_body?: string;
+          draft_title?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["portal_block_kind"];
+          published_at?: string | null;
+          published_body?: string | null;
+          published_title?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          created_at?: string
-          display_order?: number
-          draft_body?: string
-          draft_title?: string
-          id?: string
-          kind?: Database["public"]["Enums"]["portal_block_kind"]
-          published_at?: string | null
-          published_body?: string | null
-          published_title?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          display_order?: number;
+          draft_body?: string;
+          draft_title?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["portal_block_kind"];
+          published_at?: string | null;
+          published_body?: string | null;
+          published_title?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       proposal_content_blocks: {
         Row: {
-          body: string
-          created_at: string
-          display_order: number
-          id: string
-          implementation_id: string
-          title: string
-          visibility: Database["public"]["Enums"]["proposal_block_visibility"]
-        }
+          body: string;
+          created_at: string;
+          display_order: number;
+          id: string;
+          implementation_id: string;
+          title: string;
+          visibility: Database["public"]["Enums"]["proposal_block_visibility"];
+        };
         Insert: {
-          body?: string
-          created_at?: string
-          display_order?: number
-          id?: string
-          implementation_id: string
-          title: string
-          visibility?: Database["public"]["Enums"]["proposal_block_visibility"]
-        }
+          body?: string;
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          implementation_id: string;
+          title: string;
+          visibility?: Database["public"]["Enums"]["proposal_block_visibility"];
+        };
         Update: {
-          body?: string
-          created_at?: string
-          display_order?: number
-          id?: string
-          implementation_id?: string
-          title?: string
-          visibility?: Database["public"]["Enums"]["proposal_block_visibility"]
-        }
+          body?: string;
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          implementation_id?: string;
+          title?: string;
+          visibility?: Database["public"]["Enums"]["proposal_block_visibility"];
+        };
         Relationships: [
           {
-            foreignKeyName: "proposal_content_blocks_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "proposal_content_blocks_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       proposal_share_links: {
         Row: {
-          created_at: string
-          implementation_id: string
-          proposal_id: string
-          token_hash: string
-        }
+          created_at: string;
+          implementation_id: string;
+          proposal_id: string;
+          token_hash: string;
+        };
         Insert: {
-          created_at?: string
-          implementation_id: string
-          proposal_id: string
-          token_hash: string
-        }
+          created_at?: string;
+          implementation_id: string;
+          proposal_id: string;
+          token_hash: string;
+        };
         Update: {
-          created_at?: string
-          implementation_id?: string
-          proposal_id?: string
-          token_hash?: string
-        }
+          created_at?: string;
+          implementation_id?: string;
+          proposal_id?: string;
+          token_hash?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "proposal_share_links_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "proposal_share_links_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "proposal_share_links_proposal_id_fkey"
-            columns: ["proposal_id"]
-            isOneToOne: true
-            referencedRelation: "proposals"
-            referencedColumns: ["id"]
+            foreignKeyName: "proposal_share_links_proposal_id_fkey";
+            columns: ["proposal_id"];
+            isOneToOne: true;
+            referencedRelation: "proposals";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       proposals: {
         Row: {
-          accepted_at: string | null
-          accepted_name: string | null
-          created_at: string
-          id: string
-          implementation_id: string
-          items: Json
-          total: number
-          version: number
-        }
+          accepted_at: string | null;
+          accepted_name: string | null;
+          created_at: string;
+          id: string;
+          implementation_id: string;
+          items: Json;
+          total: number;
+          version: number;
+        };
         Insert: {
-          accepted_at?: string | null
-          accepted_name?: string | null
-          created_at?: string
-          id?: string
-          implementation_id: string
-          items: Json
-          total: number
-          version: number
-        }
+          accepted_at?: string | null;
+          accepted_name?: string | null;
+          created_at?: string;
+          id?: string;
+          implementation_id: string;
+          items: Json;
+          total: number;
+          version: number;
+        };
         Update: {
-          accepted_at?: string | null
-          accepted_name?: string | null
-          created_at?: string
-          id?: string
-          implementation_id?: string
-          items?: Json
-          total?: number
-          version?: number
-        }
+          accepted_at?: string | null;
+          accepted_name?: string | null;
+          created_at?: string;
+          id?: string;
+          implementation_id?: string;
+          items?: Json;
+          total?: number;
+          version?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "proposals_implementation_id_fkey"
-            columns: ["implementation_id"]
-            isOneToOne: false
-            referencedRelation: "implementation_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "proposals_implementation_id_fkey";
+            columns: ["implementation_id"];
+            isOneToOne: false;
+            referencedRelation: "implementation_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       supply_template_items: {
         Row: {
-          display_order: number
-          id: string
-          name: string
-          required_qty: number
-          room: string | null
-          size: string | null
-          template_id: string
-        }
+          display_order: number;
+          id: string;
+          name: string;
+          required_qty: number;
+          room: string | null;
+          size: string | null;
+          template_id: string;
+        };
         Insert: {
-          display_order?: number
-          id?: string
-          name: string
-          required_qty?: number
-          room?: string | null
-          size?: string | null
-          template_id: string
-        }
+          display_order?: number;
+          id?: string;
+          name: string;
+          required_qty?: number;
+          room?: string | null;
+          size?: string | null;
+          template_id: string;
+        };
         Update: {
-          display_order?: number
-          id?: string
-          name?: string
-          required_qty?: number
-          room?: string | null
-          size?: string | null
-          template_id?: string
-        }
+          display_order?: number;
+          id?: string;
+          name?: string;
+          required_qty?: number;
+          room?: string | null;
+          size?: string | null;
+          template_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "supply_template_items_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "supply_templates"
-            referencedColumns: ["id"]
+            foreignKeyName: "supply_template_items_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "supply_templates";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       supply_templates: {
         Row: {
-          created_at: string
-          id: string
-          module: Database["public"]["Enums"]["supply_module"]
-          name: string
-          notes: string | null
-        }
+          created_at: string;
+          id: string;
+          module: Database["public"]["Enums"]["supply_module"];
+          name: string;
+          notes: string | null;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          module?: Database["public"]["Enums"]["supply_module"]
-          name: string
-          notes?: string | null
-        }
+          created_at?: string;
+          id?: string;
+          module?: Database["public"]["Enums"]["supply_module"];
+          name: string;
+          notes?: string | null;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          module?: Database["public"]["Enums"]["supply_module"]
-          name?: string
-          notes?: string | null
-        }
-        Relationships: []
-      }
-    }
+          created_at?: string;
+          id?: string;
+          module?: Database["public"]["Enums"]["supply_module"];
+          name?: string;
+          notes?: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      admin_profiles_is_empty: { Args: never; Returns: boolean }
+      admin_profiles_is_empty: { Args: never; Returns: boolean };
       current_admin_role: {
-        Args: never
-        Returns: Database["public"]["Enums"]["admin_role"]
-      }
+        Args: never;
+        Returns: Database["public"]["Enums"]["admin_role"];
+      };
       has_admin_role: {
-        Args: { roles: Database["public"]["Enums"]["admin_role"][] }
-        Returns: boolean
-      }
+        Args: { roles: Database["public"]["Enums"]["admin_role"][] };
+        Returns: boolean;
+      };
+      is_valid_brazilian_document: {
+        Args: { p_value: string };
+        Returns: boolean;
+      };
       owner_account_link: {
-        Args: { p_token: string }
+        Args: { p_token: string };
         Returns: {
-          created_at: string
-          id: string
-          owner_id: string
-        }
+          created_at: string;
+          id: string;
+          owner_id: string;
+        };
         SetofOptions: {
-          from: "*"
-          to: "owner_portal_accounts"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+          from: "*";
+          to: "owner_portal_accounts";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       owner_onboarding_draft_resolve: {
-        Args: { p_token: string }
-        Returns: Json
-      }
+        Args: { p_token: string };
+        Returns: Json;
+      };
       owner_onboarding_draft_save: {
-        Args: { p_data: Json; p_submit?: boolean; p_token: string }
-        Returns: Json
-      }
+        Args: { p_data: Json; p_submit?: boolean; p_token: string };
+        Returns: Json;
+      };
       owner_onboarding_resolve_token: {
-        Args: { p_token: string }
+        Args: { p_token: string };
         Returns: {
-          expires_at: string
-          implementation_id: string
-          revoked_at: string
-          used_at: string
-        }[]
-      }
+          expires_at: string;
+          implementation_id: string;
+          revoked_at: string;
+          used_at: string;
+        }[];
+      };
       owner_onboarding_submit: {
         Args: {
-          p_document: string
-          p_email: string
-          p_full_name: string
-          p_phone: string
-          p_pix_key: string
-          p_token: string
-        }
+          p_document: string;
+          p_email: string;
+          p_full_name: string;
+          p_phone: string;
+          p_pix_key: string;
+          p_token: string;
+        };
         Returns: {
-          document: string | null
-          email: string
-          full_name: string
-          id: string
-          implementation_id: string
-          phone: string
-          pix_key: string | null
-          submitted_at: string
-        }
+          document: string | null;
+          email: string;
+          full_name: string;
+          id: string;
+          implementation_id: string;
+          phone: string;
+          pix_key: string | null;
+          submitted_at: string;
+        };
         SetofOptions: {
-          from: "*"
-          to: "owner_onboarding_submissions"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+          from: "*";
+          to: "owner_onboarding_submissions";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       owner_portal_accept_proposal: {
-        Args: { p_accepted_name: string; p_token: string }
-        Returns: Json
-      }
+        Args: { p_accepted_name: string; p_token: string };
+        Returns: Json;
+      };
       owner_portal_resolve: {
-        Args: { p_token: string }
+        Args: { p_token: string };
         Returns: {
-          expires_at: string
-          public_snapshot: Json
-          revoked_at: string
-        }[]
-      }
+          expires_at: string;
+          public_snapshot: Json;
+          revoked_at: string;
+        }[];
+      };
       proposal_accept_by_token: {
-        Args: { p_accepted_name: string; p_token: string }
+        Args: { p_accepted_name: string; p_token: string };
         Returns: {
-          accepted_at: string
-          accepted_name: string
-          created_at: string
-          implementation_id: string
-          items: Json
-          proposal_id: string
-          total: number
-          version: number
-        }[]
-      }
+          accepted_at: string;
+          accepted_name: string;
+          created_at: string;
+          implementation_id: string;
+          items: Json;
+          proposal_id: string;
+          total: number;
+          version: number;
+        }[];
+      };
       proposal_resolve_by_token: {
-        Args: { p_token: string }
+        Args: { p_token: string };
         Returns: {
-          accepted_at: string
-          accepted_name: string
-          created_at: string
-          implementation_id: string
-          items: Json
-          proposal_id: string
-          total: number
-          version: number
-        }[]
-      }
-    }
+          accepted_at: string;
+          accepted_name: string;
+          created_at: string;
+          implementation_id: string;
+          items: Json;
+          proposal_id: string;
+          total: number;
+          version: number;
+        }[];
+      };
+    };
     Enums: {
-      admin_role:
-        | "super_admin"
-        | "admin"
-        | "commercial"
-        | "operations"
-        | "finance"
-        | "viewer"
+      admin_role: "super_admin" | "admin" | "commercial" | "operations" | "finance" | "viewer";
       charge_type:
-        | "percentage"
-        | "fixed_once"
-        | "per_reservation"
-        | "monthly"
-        | "optional"
-        | "informational"
+        "percentage" | "fixed_once" | "per_reservation" | "monthly" | "optional" | "informational";
       implementation_item_status:
-        | "pendente"
-        | "em_andamento"
-        | "concluido"
-        | "bloqueado"
-        | "nao_aplicavel"
-        | "pulado"
+        "pendente" | "em_andamento" | "concluido" | "bloqueado" | "nao_aplicavel" | "pulado";
       implementation_status:
         | "prospect"
         | "proposta"
@@ -1559,172 +1550,143 @@ export type Database = {
         | "ativo"
         | "pausado"
         | "nao_convertido"
-        | "cancelado"
-      initial_charge_status:
-        | "draft"
-        | "issued"
-        | "pending"
-        | "paid"
-        | "cancelled"
-        | "overdue"
-      outbound_message_status:
-        | "draft"
-        | "queued"
-        | "sent"
-        | "failed"
-        | "cancelled"
+        | "cancelado";
+      initial_charge_status: "draft" | "issued" | "pending" | "paid" | "cancelled" | "overdue";
+      outbound_message_status: "draft" | "queued" | "sent" | "failed" | "cancelled";
       owner_field_state:
         | "not_informed"
         | "prefilled_by_stayo"
         | "confirmed_by_owner"
         | "changed_by_owner"
-        | "reviewed_by_stayo"
-      owner_task_status: "pending" | "done" | "dismissed"
-      portal_block_kind: "hero" | "destaque" | "passo" | "faq" | "rodape"
-      proposal_block_visibility: "interno" | "proposta" | "portal"
-      supply_module: "enxoval" | "faltante"
-      supply_priority: "baixa" | "media" | "alta"
-      supply_status:
-        | "pendente"
-        | "comprado"
-        | "entregue"
-        | "instalado"
-        | "nao_aplicavel"
-    }
+        | "reviewed_by_stayo";
+      owner_task_status: "pending" | "done" | "dismissed";
+      portal_block_kind: "hero" | "destaque" | "passo" | "faq" | "rodape";
+      proposal_block_visibility: "interno" | "proposta" | "portal";
+      supply_module: "enxoval" | "faltante";
+      supply_priority: "baixa" | "media" | "alta";
+      supply_status: "pendente" | "comprado" | "entregue" | "instalado" | "nao_aplicavel";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
     Enums: {
-      admin_role: [
-        "super_admin",
-        "admin",
-        "commercial",
-        "operations",
-        "finance",
-        "viewer",
-      ],
+      admin_role: ["super_admin", "admin", "commercial", "operations", "finance", "viewer"],
       charge_type: [
         "percentage",
         "fixed_once",
@@ -1755,21 +1717,8 @@ export const Constants = {
         "nao_convertido",
         "cancelado",
       ],
-      initial_charge_status: [
-        "draft",
-        "issued",
-        "pending",
-        "paid",
-        "cancelled",
-        "overdue",
-      ],
-      outbound_message_status: [
-        "draft",
-        "queued",
-        "sent",
-        "failed",
-        "cancelled",
-      ],
+      initial_charge_status: ["draft", "issued", "pending", "paid", "cancelled", "overdue"],
+      outbound_message_status: ["draft", "queued", "sent", "failed", "cancelled"],
       owner_field_state: [
         "not_informed",
         "prefilled_by_stayo",
@@ -1782,13 +1731,7 @@ export const Constants = {
       proposal_block_visibility: ["interno", "proposta", "portal"],
       supply_module: ["enxoval", "faltante"],
       supply_priority: ["baixa", "media", "alta"],
-      supply_status: [
-        "pendente",
-        "comprado",
-        "entregue",
-        "instalado",
-        "nao_aplicavel",
-      ],
+      supply_status: ["pendente", "comprado", "entregue", "instalado", "nao_aplicavel"],
     },
   },
-} as const
+} as const;

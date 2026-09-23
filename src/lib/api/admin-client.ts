@@ -37,6 +37,13 @@ import type {
 } from "../../types/owner-onboarding";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
+import {
+  normalizeDocument,
+  normalizeEmail,
+  normalizeName,
+  normalizePhone,
+  ownerAdminEditSchema,
+} from "../owner-form-validation";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -119,6 +126,13 @@ export interface AdminApiClient {
      */
     findByToken(token: string): Promise<OwnerOnboardingLink | null>;
     getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
+    getDraft(token: string): Promise<OwnerOnboardingSubmission | null>;
+    saveDraft(
+      token: string,
+      input: OwnerOnboardingSubmissionInput,
+      currentStep: number,
+      submit?: boolean,
+    ): Promise<OwnerOnboardingSubmission>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
       implementationId: string,
@@ -126,6 +140,31 @@ export interface AdminApiClient {
       input: OwnerOnboardingSubmissionInput,
     ): Promise<OwnerOnboardingSubmission>;
   };
+}
+
+function normalizeOwnerPatch<T extends Partial<Omit<OwnerRecord, "id" | "createdAt">>>(
+  patch: T,
+): T {
+  const candidate = {
+    name: patch.name ?? "Nome temporário",
+    phone: patch.phone ?? "",
+    email: patch.email ?? "",
+    document: patch.document ?? "",
+  };
+  const validated = ownerAdminEditSchema.parse(candidate);
+  return {
+    ...patch,
+    ...(patch.name !== undefined ? { name: validated.name.trim().replace(/\s+/g, " ") } : {}),
+    ...(patch.phone !== undefined
+      ? { phone: validated.phone ? normalizePhone(validated.phone) : null }
+      : {}),
+    ...(patch.email !== undefined
+      ? { email: validated.email ? normalizeEmail(validated.email) : null }
+      : {}),
+    ...(patch.document !== undefined
+      ? { document: validated.document ? normalizeDocument(validated.document) : null }
+      : {}),
+  } as T;
 }
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
@@ -203,7 +242,11 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const all = read<OwnerRecord>(OWNER_RECORDS_KEY);
       const target = all.find((o) => o.id === id);
       if (!target) throw new Error("Proprietário não encontrado");
-      const updated: OwnerRecord = { ...target, ...patch, updatedAt: new Date().toISOString() };
+      const updated: OwnerRecord = {
+        ...target,
+        ...normalizeOwnerPatch(patch),
+        updatedAt: new Date().toISOString(),
+      };
       write(
         OWNER_RECORDS_KEY,
         all.map((o) => (o.id === id ? updated : o)),
@@ -496,6 +539,25 @@ export function createLocalAdminApiClient(): AdminApiClient {
       read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
         (s) => s.implementationId === implementationId,
       ) ?? null,
+    getDraft: async (token) => {
+      const link = await ownerOnboarding.findByToken(token);
+      return link ? ownerOnboarding.getSubmission(link.implementationId) : null;
+    },
+    saveDraft: async (token, input, currentStep, submit = false) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link) throw new Error("Convite não encontrado");
+      const submission: OwnerOnboardingSubmission = {
+        implementationId: link.implementationId,
+        ...input,
+        currentStep,
+        submittedAt: submit ? new Date().toISOString() : null,
+      };
+      const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter(
+        (item) => item.implementationId !== link.implementationId,
+      );
+      write(OWNER_ONBOARDING_SUBMISSIONS_KEY, [...others, submission]);
+      return submission;
+    },
     submit: async (implementationId, _token, input) => {
       const activeLink = await ownerOnboarding.getLink(implementationId);
       if (activeLink && !activeLink.usedAt) {
@@ -510,6 +572,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const submission: OwnerOnboardingSubmission = {
         implementationId,
         ...input,
+        currentStep: 5,
         submittedAt: new Date().toISOString(),
       };
       const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter(
@@ -807,12 +870,67 @@ function ownerOnboardingSubmissionFromRow(
 ): OwnerOnboardingSubmission {
   return {
     implementationId: row.implementation_id,
+    personType: "pf",
     fullName: row.full_name,
-    document: row.document,
+    document: row.document ?? "",
     email: row.email,
     phone: row.phone,
-    pixKey: row.pix_key,
+    postalCode: "",
+    street: "",
+    number: "",
+    complement: null,
+    district: "",
+    city: "",
+    state: "",
+    bankName: "",
+    bankBranch: "",
+    accountNumber: "",
+    accountType: "checking",
+    accountHolder: row.full_name,
+    holderTaxId: row.document ?? "",
+    pixType: "random",
+    pixKey: row.pix_key ?? "",
+    isPrimary: true,
+    currentStep: 5,
     submittedAt: row.submitted_at,
+  };
+}
+
+function ownerOnboardingFromDraft(
+  value: Record<string, unknown>,
+  implementationId = "",
+): OwnerOnboardingSubmission {
+  const text = (key: string) => (typeof value[key] === "string" ? (value[key] as string) : "");
+  return {
+    implementationId: implementationId || text("implementationId"),
+    personType: value["personType"] === "pj" ? "pj" : "pf",
+    fullName: text("legalName") || text("fullName"),
+    document: text("taxId") || text("document"),
+    email: text("email"),
+    phone: text("phone"),
+    postalCode: text("postalCode"),
+    street: text("street"),
+    number: text("number"),
+    complement: text("complement") || null,
+    district: text("district"),
+    city: text("city"),
+    state: text("state"),
+    bankName: text("bankName"),
+    bankBranch: text("bankBranch"),
+    accountNumber: text("accountNumber"),
+    accountType:
+      value["accountType"] === "savings" || value["accountType"] === "payment"
+        ? value["accountType"]
+        : "checking",
+    accountHolder: text("accountHolder"),
+    holderTaxId: text("holderTaxId"),
+    pixType: ["cpf", "cnpj", "phone", "email", "random"].includes(text("pixType"))
+      ? (text("pixType") as OwnerOnboardingSubmission["pixType"])
+      : "random",
+    pixKey: text("pixKey"),
+    isPrimary: value["isPrimary"] !== false,
+    currentStep: typeof value["currentStep"] === "number" ? value["currentStep"] : 1,
+    submittedAt: text("submittedAt") || null,
   };
 }
 
@@ -886,13 +1004,14 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return ownerFromRow(data);
     },
     update: async (id, patch) => {
+      const normalized = normalizeOwnerPatch(patch);
       const { data, error } = await client()
         .from("owner_records")
         .update({
-          name: patch.name,
-          phone: patch.phone,
-          email: patch.email,
-          document: patch.document,
+          name: normalized.name,
+          phone: normalized.phone,
+          email: normalized.email,
+          document: normalized.document,
           lifecycle_status: patch.lifecycleStatus,
           core_owner_id: patch.coreOwnerId,
         })
@@ -1231,6 +1350,21 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return link;
     },
     getSubmission: async (implementationId) => {
+      const { data: profile, error: profileError } = await client()
+        .from("owner_onboarding_profiles")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      if (profile) {
+        const { data: payout, error: payoutError } = await client()
+          .from("owner_payout_accounts")
+          .select()
+          .eq("implementation_id", implementationId)
+          .maybeSingle();
+        if (payoutError) throw payoutError;
+        return ownerOnboardingFromDraft({ ...profile, ...(payout ?? {}) }, implementationId);
+      }
       const { data, error } = await client()
         .from("owner_onboarding_submissions")
         .select()
@@ -1238,6 +1372,28 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         .maybeSingle<OwnerOnboardingSubmissionRow>();
       if (error) throw error;
       return data ? ownerOnboardingSubmissionFromRow(data) : null;
+    },
+    getDraft: async (token) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", {
+        p_token: token,
+      });
+      if (error) throw error;
+      return data ? ownerOnboardingFromDraft(data as Record<string, unknown>) : null;
+    },
+    saveDraft: async (token, input, currentStep, submit = false) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_save", {
+        p_token: token,
+        p_submit: submit,
+        p_data: {
+          ...input,
+          legalName: input.fullName,
+          taxId: input.document,
+          currentStep,
+          confirmed: submit,
+        },
+      });
+      if (error) throw error;
+      return ownerOnboardingFromDraft(data as Record<string, unknown>);
     },
     // findByToken/submit são chamados pelo portal público, sem sessão
     // autenticada — nunca tocam a tabela direto sob RLS (que exige papel
@@ -1272,18 +1428,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       };
     },
     submit: async (_implementationId, token, input) => {
-      const { data, error } = await client()
-        .rpc("owner_onboarding_submit", {
-          p_token: token,
-          p_full_name: input.fullName,
-          p_document: input.document,
-          p_email: input.email,
-          p_phone: input.phone,
-          p_pix_key: input.pixKey,
-        })
-        .single<OwnerOnboardingSubmissionRow>();
-      if (error) throw error;
-      return ownerOnboardingSubmissionFromRow(data);
+      return ownerOnboarding.saveDraft(token, input, 5, true);
     },
   };
 

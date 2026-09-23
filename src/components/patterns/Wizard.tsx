@@ -9,6 +9,7 @@ export interface WizardStep {
   /** Se retornar false, o botão "Continuar" fica desabilitado nesta etapa. */
   isValid?: boolean;
   invalidMessage?: string;
+  hasInlineErrors?: boolean;
 }
 
 /**
@@ -36,7 +37,7 @@ export function Wizard({
   if (!step) return null;
 
   return (
-      <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-4">
       <div>
         <div
           className="flex items-center justify-between text-xs"
@@ -68,8 +69,10 @@ export function Wizard({
 
       <div className="flex-1">{step.content}</div>
 
-      {step.isValid === false && step.invalidMessage && (
-        <p className="text-xs text-[var(--portal-danger)]" role="status">{step.invalidMessage}</p>
+      {step.isValid === false && step.invalidMessage && !step.hasInlineErrors && (
+        <p className="text-xs text-[var(--portal-danger)]" role="status">
+          {step.invalidMessage}
+        </p>
       )}
       <div className="portal-form-actions flex items-center gap-3">
         {!isFirst && (
@@ -88,7 +91,7 @@ export function Wizard({
           onClick={() => {
             if (isLast) onComplete();
             else {
-              setVisited((current) => current.includes(index) ? current : [...current, index]);
+              setVisited((current) => (current.includes(index) ? current : [...current, index]));
               setIndex((i) => i + 1);
             }
           }}
@@ -97,7 +100,11 @@ export function Wizard({
           {isLast ? (submitting ? "Enviando com segurança..." : completeLabel) : "Continuar"}
         </Button>
       </div>
-      {visited.includes(index) && <p className="text-right text-[11px] text-[var(--portal-success)]">Tudo certo nesta etapa</p>}
+      {visited.includes(index) && (
+        <p className="text-right text-[11px] text-[var(--portal-success)]">
+          Tudo certo nesta etapa
+        </p>
+      )}
     </div>
   );
 }
