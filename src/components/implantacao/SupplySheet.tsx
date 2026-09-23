@@ -28,15 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Download,
-  FileText,
-  Loader2,
-  Paperclip,
-  Plus,
-  Trash2,
-  Wallet,
-} from "lucide-react";
+import { Download, FileText, Loader2, Paperclip, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 export const STAYO_PIX_KEY = "67.217.149/0001-06";
@@ -45,7 +37,11 @@ const STAGES = [
   { value: "em_analise", label: "Em análise", class: "bg-slate-100 text-slate-700" },
   { value: "proposta", label: "Proposta", class: "bg-blue-100 text-blue-800" },
   { value: "fechamento", label: "Fechamento", class: "bg-amber-100 text-amber-800" },
-  { value: "aguardando_servico", label: "Aguardando serviço", class: "bg-indigo-100 text-indigo-800" },
+  {
+    value: "aguardando_servico",
+    label: "Aguardando serviço",
+    class: "bg-indigo-100 text-indigo-800",
+  },
   { value: "concluido", label: "Concluído", class: "bg-emerald-100 text-emerald-800" },
 ] as const;
 
@@ -220,7 +216,8 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
       setDraft((prev) => ({ room: prev.room, name: "", qty: "1", supplier: "" }));
       invalidate();
     },
-    onError: (error: unknown) => toast.error(messageOf(error, "Não foi possível adicionar o item.")),
+    onError: (error: unknown) =>
+      toast.error(messageOf(error, "Não foi possível adicionar o item.")),
   });
 
   const updateMutation = useMutation({
@@ -232,7 +229,8 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
       if (error) throw error;
     },
     onSuccess: invalidate,
-    onError: (error: unknown) => toast.error(messageOf(error, "Não foi possível salvar a alteração.")),
+    onError: (error: unknown) =>
+      toast.error(messageOf(error, "Não foi possível salvar a alteração.")),
   });
 
   const deleteMutation = useMutation({
@@ -286,7 +284,8 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
         <div>
           <h2 className="text-sm font-semibold text-slate-900">Planilha de enxoval</h2>
           <p className="text-xs text-slate-500">
-            Digite ambiente, item, quantidade e fornecedor. Itens já cadastrados aparecem como sugestão.
+            Digite ambiente, item, quantidade e fornecedor. Itens já cadastrados aparecem como
+            sugestão.
           </p>
         </div>
         <Badge variant="outline" className="text-[11px]">
@@ -320,7 +319,10 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
             {grouped.map(([room, rows]) => (
               <Fragment key={`group-${room}`}>
                 <tr className="bg-slate-50/60">
-                  <td colSpan={8} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <td
+                    colSpan={8}
+                    className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500"
+                  >
                     {room} · {rows.length} {rows.length === 1 ? "item" : "itens"}
                   </td>
                 </tr>
@@ -441,7 +443,9 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
           item={docsItem}
           onClose={() => setDocsItem(null)}
           onChanged={() => {
-            void queryClient.invalidateQueries({ queryKey: ["supply_docs_count", implementationId] });
+            void queryClient.invalidateQueries({
+              queryKey: ["supply_docs_count", implementationId],
+            });
           }}
         />
       ) : null}
@@ -496,7 +500,9 @@ function SheetRow({
           list="supply-rooms"
           value={room}
           onChange={(event) => setRoom(event.target.value)}
-          onBlur={() => room.trim() !== (item.room ?? "") && onPatch({ room: room.trim() || "Geral" })}
+          onBlur={() =>
+            room.trim() !== (item.room ?? "") && onPatch({ room: room.trim() || "Geral" })
+          }
           className="h-8 border-transparent bg-transparent text-sm focus-visible:border-input focus-visible:bg-white"
         />
       </td>
@@ -527,13 +533,17 @@ function SheetRow({
           placeholder="—"
           onChange={(event) => setSupplier(event.target.value)}
           onBlur={() =>
-            supplier.trim() !== (item.supplier ?? "") && onPatch({ supplier: supplier.trim() || null })
+            supplier.trim() !== (item.supplier ?? "") &&
+            onPatch({ supplier: supplier.trim() || null })
           }
           className="h-8 border-transparent bg-transparent text-sm focus-visible:border-input focus-visible:bg-white"
         />
       </td>
       <td className="px-2 py-1">
-        <Select value={item.procurement_stage} onValueChange={(value) => onPatch({ procurement_stage: value })}>
+        <Select
+          value={item.procurement_stage}
+          onValueChange={(value) => onPatch({ procurement_stage: value })}
+        >
           <SelectTrigger className={`h-8 border-transparent text-xs ${stage.class}`}>
             <SelectValue />
           </SelectTrigger>
@@ -547,13 +557,23 @@ function SheetRow({
         </Select>
       </td>
       <td className="px-2 py-1">
-        <Button variant="ghost" size="sm" className="h-8 w-full justify-start gap-1.5 text-xs" onClick={onOpenPayment}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-full justify-start gap-1.5 text-xs"
+          onClick={onOpenPayment}
+        >
           <Wallet className="h-3.5 w-3.5" />
           {item.payment_target === "stayo" ? "Stayo" : item.payee_name || "Terceiro"}
         </Button>
       </td>
       <td className="px-2 py-1">
-        <Button variant="ghost" size="sm" className="h-8 w-full justify-start gap-1.5 text-xs" onClick={onOpenDocs}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-full justify-start gap-1.5 text-xs"
+          onClick={onOpenDocs}
+        >
           <Paperclip className="h-3.5 w-3.5" />
           {docCount > 0 ? `${docCount}` : "Anexar"}
         </Button>
@@ -608,7 +628,9 @@ function PaymentDialog({
                     : "border-slate-200 hover:border-slate-300"
                 }`}
               >
-                <span className="font-medium text-slate-900">{value === "stayo" ? "Stayo" : "Terceiro"}</span>
+                <span className="font-medium text-slate-900">
+                  {value === "stayo" ? "Stayo" : "Terceiro"}
+                </span>
                 <span className="mt-0.5 block text-[11px] text-slate-500">
                   {value === "stayo" ? "Pix no CNPJ da Stayo" : "Fornecedor recebe direto"}
                 </span>
@@ -625,7 +647,11 @@ function PaymentDialog({
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Quem recebe</Label>
-                <Input value={payee} onChange={(event) => setPayee(event.target.value)} placeholder="Nome do fornecedor" />
+                <Input
+                  value={payee}
+                  onChange={(event) => setPayee(event.target.value)}
+                  placeholder="Nome do fornecedor"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Chave Pix</Label>
@@ -704,7 +730,9 @@ function DocumentsDialog({
     setUploading(true);
     try {
       const path = `${implementationId}/${item.id}/${crypto.randomUUID()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("supply-documents").upload(path, file);
+      const { error: uploadError } = await supabase.storage
+        .from("supply-documents")
+        .upload(path, file);
       if (uploadError) throw uploadError;
       const { error } = await supabase.from("supply_item_documents").insert([
         {
@@ -781,8 +809,17 @@ function DocumentsDialog({
               if (file) void handleUpload(file);
             }}
           />
-          <Button size="sm" className="gap-1.5" disabled={uploading} onClick={() => inputRef.current?.click()}>
-            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+          <Button
+            size="sm"
+            className="gap-1.5"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Plus className="h-3.5 w-3.5" />
+            )}
             Anexar arquivo
           </Button>
         </div>
@@ -809,7 +846,12 @@ function DocumentsDialog({
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => void handleDownload(doc)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => void handleDownload(doc)}
+                  >
                     <Download className="h-3.5 w-3.5" />
                   </Button>
                   <Button
