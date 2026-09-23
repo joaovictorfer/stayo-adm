@@ -22,6 +22,13 @@
       "when": 1790127037015,
       "tag": "0002_add_onboarding_people_and_smart_payout",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790127363779,
+      "tag": "0003_fix_owner_onboarding_state_length",
+      "breakpoints": true
     }
   ]
 }
