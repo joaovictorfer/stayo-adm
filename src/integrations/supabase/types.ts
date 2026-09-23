@@ -1429,6 +1429,10 @@ export type Database = {
         Args: { roles: Database["public"]["Enums"]["admin_role"][] }
         Returns: boolean
       }
+      is_valid_brazilian_document: {
+        Args: { p_value: string }
+        Returns: boolean
+      }
       owner_account_link: {
         Args: { p_token: string }
         Returns: {
