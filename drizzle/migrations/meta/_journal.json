@@ -64,6 +64,13 @@
       "when": 1790136012311,
       "tag": "0008_owner_portal_property_journey",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790136033631,
+      "tag": "0009_owner_portal_shared_property_access",
+      "breakpoints": true
     }
   ]
 }
