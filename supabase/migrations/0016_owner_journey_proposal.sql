@@ -43,6 +43,14 @@ begin
     where proposal.implementation_id = new.implementation_id
     order by proposal.version desc, proposal.created_at desc
     limit 1;
+
+    -- A jornada começa obrigatoriamente pela proposta. Portanto um NOVO
+    -- convite nunca pode nascer sem versão comercial congelada. Convites
+    -- legados anteriores a esta migration continuam compatíveis e podem
+    -- permanecer nulos até serem substituídos por um novo acesso.
+    if new.proposal_id is null then
+      raise exception 'crie e salve uma proposta antes de gerar o acesso do proprietário';
+    end if;
   else
     select proposal.implementation_id into v_implementation_id
     from public.proposals as proposal
