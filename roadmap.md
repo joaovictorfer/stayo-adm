@@ -32,4 +32,4 @@
 
 - [x] Refinar o workspace da implantação com navegação focada, microinterações e visual navy/verde
 
-- [ ] Corrigir o carregamento e reconstruir o Painel do Proprietário com experiência profissional
+- [x] Corrigir o carregamento e reconstruir o Painel do Proprietário com experiência profissional

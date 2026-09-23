@@ -31,6 +31,8 @@ import {
   WalletCards,
   BedDouble,
   TrendingUp,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { StayoLogo } from "@/components/brand/StayoLogo";
@@ -52,7 +54,14 @@ import type { ImplementationProject, ImplementationStatus, Proposal } from "../t
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
-    meta: [{ title: "Minha conta — Portal do Proprietário Stayo" }],
+    meta: [
+      { title: "Meu imóvel — Portal do Proprietário Stayo" },
+      { name: "description", content: "Acompanhe sua implantação, documentos e operação no Portal do Proprietário Stayo." },
+      { property: "og:title", content: "Meu imóvel — Portal do Proprietário Stayo" },
+      { property: "og:description", content: "Acompanhe sua implantação, documentos e operação no Portal do Proprietário Stayo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: OwnerHomePage,
 });
@@ -585,95 +594,39 @@ function PortalHero({
   );
 }
 
-const StyleInjection = () => (
-  <style>{`
-    .stayo-tab {
-      flex: 1 0 auto;
-      min-height: 42px;
-      color: var(--portal-muted);
-      border: none !important;
-      transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-      border-radius: 10px !important;
-      padding: 0.65rem 1rem;
-      font-weight: 500;
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      white-space: nowrap;
-      background: transparent !important;
-      box-shadow: none !important;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .stayo-tab:hover {
-      color: var(--portal-navy);
-      background-color: var(--portal-surface) !important;
-    }
-    .stayo-tab:active {
-      transform: scale(0.985);
-    }
-    .stayo-tab:focus-visible {
-      outline: 2px solid var(--portal-gold);
-      outline-offset: 2px;
-    }
-    .stayo-tab[data-state="active"] {
-      color: var(--portal-navy) !important;
-      font-weight: 600 !important;
-      background: var(--portal-surface) !important;
-      box-shadow: 0 5px 18px color-mix(in srgb, var(--portal-navy) 10%, transparent), 0 0 0 1px var(--portal-border) !important;
-    }
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .tab-content-anim {
-      animation: tabFadeIn 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
-      will-change: opacity, transform;
-    }
-    @keyframes tabFadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .tab-content-anim { animation: none; opacity: 1; }
-      .stayo-tab { transition: none; }
-    }
-    /* Fade mask for horizontal scrolling clear feedback on mobile */
-    .scroll-mask {
-      mask-image: linear-gradient(to right, black 82%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 82%, transparent 100%);
-    }
-    @media (min-width: 640px) {
-      .scroll-mask {
-        mask-image: none;
-        -webkit-mask-image: none;
-      }
-    }
-    @media (max-width: 639px) {
-      .stayo-tab {
-        flex-basis: auto;
-        font-size: 0.875rem;
-        padding: 0.68rem 0.9rem;
-        min-height: 44px;
-      }
-    }
-  `}</style>
-);
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <StyleInjection />
-      <PortalShell framed={false} showBrand={false}>{children}</PortalShell>
-    </>
+    <PortalShell framed={false} showBrand={false}>{children}</PortalShell>
   );
 }
 
 function LoadingBlock() {
   return <PortalSkeleton />;
+}
+
+function PortalAccessState({
+  kind,
+  onRetry,
+  onSignOut,
+}: {
+  kind: "unlinked" | "error";
+  onRetry: () => void;
+  onSignOut: () => void;
+}) {
+  const connectionError = kind === "error";
+  return (
+    <div className="portal-access-state">
+      <div className="portal-access-brand"><StayoLogo className="h-auto w-28" /><span>Portal do proprietário</span></div>
+      <div className="portal-access-icon">{connectionError ? <WifiOff /> : <Key />}</div>
+      <p className="portal-milestones-eyebrow">Seu acesso</p>
+      <h1>{connectionError ? "Não conseguimos abrir seu portal agora" : "Seu acesso precisa ser concluído"}</h1>
+      <p>{connectionError ? "Sua conta está segura. Verifique sua conexão e tente novamente." : "A conta existe, mas ainda não encontramos o vínculo com o seu imóvel. Entre novamente pelo link enviado pela Stayo ou fale com a nossa equipe."}</p>
+      <div className="portal-access-actions">
+        <Button type="button" onClick={onRetry} className="portal-action"><RefreshCw /> Tentar novamente</Button>
+        <Button type="button" onClick={onSignOut} variant="outline" className="portal-action"><LogOut /> Sair da conta</Button>
+      </div>
+    </div>
+  );
 }
 
 function OwnerHomePage() {
@@ -699,13 +652,15 @@ function OwnerHomePage() {
     );
   }
 
-  if (auth.status !== "authenticated" || !auth.account) {
+  if (auth.status === "unlinked" || auth.status === "error") {
     return (
       <Shell>
-        <PortalSkeleton rows={2} />
+        <PortalAccessState kind={auth.status} onRetry={auth.retry} onSignOut={() => signOut.mutate()} />
       </Shell>
     );
   }
+
+  if (auth.status !== "authenticated" || !auth.account) return null;
 
   return (
     <Shell>
@@ -767,7 +722,7 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
   }, [activeTab, portalModules]);
 
   return (
-    <div className="space-y-2">
+    <div className="portal-dashboard">
       {welcome.showWelcome && welcome.ready && (
         <OwnerWelcomeOverlay
           firstName={firstName}
@@ -789,10 +744,10 @@ function OwnerHomeContent({ ownerId, onSignOut }: { ownerId: string; onSignOut: 
               ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
           });
         }}
-        className="mt-5 w-full sm:mt-7"
+        className="portal-dashboard-tabs"
       >
         <div 
-          className="sticky top-2 z-20 mb-7 max-w-full overflow-hidden rounded-[14px] border border-[var(--portal-border)] bg-[color-mix(in_srgb,var(--portal-bg)_88%,transparent)] p-1.5 shadow-[0_8px_26px_color-mix(in_srgb,var(--portal-navy)_7%,transparent)] backdrop-blur-xl sm:top-4 sm:mb-9"
+          className="portal-nav-wrap"
         >
           <TabsList ref={tabsListRef} aria-label="Navegação do Portal" className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0">
             {portalModules.map((module) => (

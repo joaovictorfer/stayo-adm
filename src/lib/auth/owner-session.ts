@@ -119,16 +119,20 @@ export async function getOwnerPortalAccount(): Promise<OwnerPortalAccount | null
 }
 
 export interface OwnerAuthState {
-  status: "loading" | "not_required" | "authenticated" | "unauthenticated";
+  status: "loading" | "not_required" | "authenticated" | "unauthenticated" | "unlinked" | "error";
   session: Session | null;
   account: OwnerPortalAccount | null;
+  message?: string;
+  retry: () => void;
 }
 
 export function useOwnerSession(): OwnerAuthState {
+  const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<OwnerAuthState>({
     status: isSupabaseConfigured() ? "loading" : "not_required",
     session: null,
     account: null,
+    retry: () => setAttempt((value) => value + 1),
   });
 
   useEffect(() => {
@@ -137,13 +141,37 @@ export function useOwnerSession(): OwnerAuthState {
     const client = getSupabaseBrowserClient();
     if (!client) return;
 
+    const retry = () => setAttempt((value) => value + 1);
     const apply = async (session: Session | null) => {
       if (!session) {
-        if (!cancelled) setState({ status: "unauthenticated", session: null, account: null });
+        if (!cancelled) setState({ status: "unauthenticated", session: null, account: null, retry });
         return;
       }
-      const account = await getOwnerPortalAccount().catch(() => null);
-      if (!cancelled) setState({ status: "authenticated", session, account });
+      try {
+        const account = await getOwnerPortalAccount();
+        if (cancelled) return;
+        if (!account) {
+          setState({
+            status: "unlinked",
+            session,
+            account: null,
+            message: "Esta conta ainda não está vinculada a um proprietário.",
+            retry,
+          });
+          return;
+        }
+        setState({ status: "authenticated", session, account, retry });
+      } catch {
+        if (!cancelled) {
+          setState({
+            status: "error",
+            session,
+            account: null,
+            message: "Não foi possível confirmar seu acesso agora.",
+            retry,
+          });
+        }
+      }
     };
 
     void getCurrentOwnerSession().then(apply);
@@ -154,7 +182,7 @@ export function useOwnerSession(): OwnerAuthState {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [attempt]);
 
   return state;
 }
