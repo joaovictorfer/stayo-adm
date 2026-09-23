@@ -40,3 +40,8 @@
 - [x] Implementar vistorias públicas com documentos por imóvel
 - [x] Otimizar carregamento por aba e validar segurança, desktop e celular
 
+
+- [ ] Corrigir criação da implantação no banco real
+- [ ] Evoluir etapas de proprietário, condomínio, imóvel e condições
+- [ ] Implementar fotos privadas e autosalvamento do rascunho
+- [ ] Validar criação, retomada, desktop e celular
