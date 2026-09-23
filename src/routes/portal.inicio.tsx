@@ -853,7 +853,6 @@ function PortalHero({
           )}
         </div>
 
-
         <div className="portal-property-hero-copy">
           <div className="portal-property-status">
             <span className="portal-property-status-dot" />

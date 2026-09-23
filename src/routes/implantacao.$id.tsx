@@ -959,7 +959,9 @@ function OwnerPortalPanel({
   };
 
   const previewUrl =
-    typeof window !== "undefined" ? `${window.location.origin}/portal/previa/${implementationId}` : "";
+    typeof window !== "undefined"
+      ? `${window.location.origin}/portal/previa/${implementationId}`
+      : "";
 
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
@@ -1005,7 +1007,6 @@ function OwnerPortalPanel({
           Copiar link
         </button>
       </div>
-
 
       {submissionQuery.data ? (
         <div className="grid gap-3 sm:grid-cols-2">

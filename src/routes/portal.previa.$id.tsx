@@ -2,7 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye } from "lucide-react";
 
-import { PortalShell, PortalSkeleton, PortalEmptyState } from "../components/portal/PortalExperience";
+import {
+  PortalShell,
+  PortalSkeleton,
+  PortalEmptyState,
+} from "../components/portal/PortalExperience";
 import { OwnerHomeContent } from "./portal.inicio";
 import { implementationQuery } from "../lib/api/queries";
 
