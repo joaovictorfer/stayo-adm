@@ -1467,14 +1467,20 @@ export function OwnerHomeContent({
 
   return (
     <div className="portal-dashboard">
-      {welcome.showWelcome && welcome.ready && (
+      {welcome.showWelcome && welcome.ready && !preview && (
         <OwnerWelcomeOverlay
           firstName={firstName}
           propertyName={propertyName(implementation)}
           onStart={() => welcome.dismiss()}
         />
       )}
-      <PortalHero firstName={firstName} implementation={implementation} onSignOut={onSignOut} />
+      <PortalHero
+        firstName={firstName}
+        implementation={implementation}
+        onSignOut={onSignOut}
+        preview={preview}
+      />
+
       {ownerImplementations.length > 1 && (
         <PropertySwitcher
           implementations={ownerImplementations}
