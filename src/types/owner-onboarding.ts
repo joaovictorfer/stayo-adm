@@ -1,22 +1,8 @@
 import type { EntityId } from "./core";
 
-/**
- * Convite público para o proprietário se auto-cadastrar durante a
- * implantação — "owner_portal_invitations" do plano (seção 16). Guarda só
- * o hash do token, nunca o valor puro; expira e é revogável.
- *
- * Não existe endpoint no Core para isso ainda — vive em `local-store.ts`
- * até o Stayo Core (ou um projeto Supabase) ganhar esse domínio.
- */
 export interface OwnerOnboardingLink {
   id: EntityId;
   implementationId: EntityId;
-  /**
-   * Preenchido quando o admin já sabe o proprietário no momento de gerar
-   * o convite — é o que permite `owner_account_link` (Fase 17H) vincular
-   * a conta do proprietário sem depender do adapter de
-   * `implementation_projects` (ainda local, ver docs/DATA_PERSISTENCE.md).
-   */
   ownerId: EntityId | null;
   tokenHash: string;
   createdAt: string;
@@ -39,17 +25,67 @@ export function ownerOnboardingLinkStatus(
   return "ativo";
 }
 
+export type OwnerPersonType = "pf" | "pj";
+export type OwnerPixType = "cpf" | "cnpj" | "phone" | "email" | "random";
+
 export interface OwnerOnboardingSubmission {
   implementationId: EntityId;
+  personType: OwnerPersonType;
   fullName: string;
-  document: string | null;
+  document: string;
   email: string;
   phone: string;
-  pixKey: string | null;
-  submittedAt: string;
+  postalCode: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  district: string;
+  city: string;
+  state: string;
+  bankName: string;
+  accountHolder: string;
+  holderTaxId: string;
+  pixType: OwnerPixType;
+  pixKey: string;
+  isPrimary: boolean;
+  currentStep: number;
+  submittedAt: string | null;
 }
 
 export type OwnerOnboardingSubmissionInput = Omit<
   OwnerOnboardingSubmission,
-  "implementationId" | "submittedAt"
+  "implementationId" | "submittedAt" | "currentStep"
 >;
+
+export type OwnerRegistrationState = "complete" | "incomplete" | "review";
+export interface OwnerRegistrationGroup {
+  id: "identity" | "contact" | "address" | "payout" | "contract" | "documents";
+  label: string;
+  state: OwnerRegistrationState;
+}
+
+export function computeOwnerRegistration(input: {
+  submission?: OwnerOnboardingSubmission | null;
+  hasContract?: boolean;
+  documentCount?: number;
+  hasDivergences?: boolean;
+}): { groups: OwnerRegistrationGroup[]; percentage: number; nextAction: string | null } {
+  const submission = input.submission;
+  const submitted = Boolean(submission?.submittedAt);
+  const groups: OwnerRegistrationGroup[] = [
+    { id: "identity", label: "Identificação", state: submission?.fullName && submission.document ? (input.hasDivergences ? "review" : "complete") : "incomplete" },
+    { id: "contact", label: "Contato", state: submission?.email && submission.phone ? (input.hasDivergences ? "review" : "complete") : "incomplete" },
+    { id: "address", label: "Endereço", state: submission?.postalCode && submission.street && submission.number && submission.district && submission.city && submission.state ? (submitted ? "complete" : "review") : "incomplete" },
+    { id: "payout", label: "Dados para repasse", state: submission?.bankName && submission.accountHolder && submission.holderTaxId && submission.pixType && submission.pixKey ? (submitted ? "complete" : "review") : "incomplete" },
+    { id: "contract", label: "Contrato", state: input.hasContract ? "complete" : "incomplete" },
+    { id: "documents", label: "Documentos", state: (input.documentCount ?? 0) > 0 ? "complete" : "incomplete" },
+  ];
+  const complete = groups.filter((group) => group.state === "complete").length;
+  const review = groups.filter((group) => group.state === "review").length;
+  const firstPending = groups.find((group) => group.state !== "complete");
+  return {
+    groups,
+    percentage: Math.round(((complete + review * 0.5) / groups.length) * 100),
+    nextAction: firstPending ? `${firstPending.state === "review" ? "revisar" : "completar"} ${firstPending.label.toLocaleLowerCase("pt-BR")}` : null,
+  };
+}

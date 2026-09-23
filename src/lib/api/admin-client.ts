@@ -119,6 +119,8 @@ export interface AdminApiClient {
      */
     findByToken(token: string): Promise<OwnerOnboardingLink | null>;
     getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
+    getDraft(token: string): Promise<OwnerOnboardingSubmission | null>;
+    saveDraft(token: string, input: OwnerOnboardingSubmissionInput, currentStep: number, submit?: boolean): Promise<OwnerOnboardingSubmission>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
       implementationId: string,
@@ -496,6 +498,23 @@ export function createLocalAdminApiClient(): AdminApiClient {
       read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).find(
         (s) => s.implementationId === implementationId,
       ) ?? null,
+    getDraft: async (token) => {
+      const link = await ownerOnboarding.findByToken(token);
+      return link ? ownerOnboarding.getSubmission(link.implementationId) : null;
+    },
+    saveDraft: async (token, input, currentStep, submit = false) => {
+      const link = await ownerOnboarding.findByToken(token);
+      if (!link) throw new Error("Convite não encontrado");
+      const submission: OwnerOnboardingSubmission = {
+        implementationId: link.implementationId,
+        ...input,
+        currentStep,
+        submittedAt: submit ? new Date().toISOString() : null,
+      };
+      const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter((item) => item.implementationId !== link.implementationId);
+      write(OWNER_ONBOARDING_SUBMISSIONS_KEY, [...others, submission]);
+      return submission;
+    },
     submit: async (implementationId, _token, input) => {
       const activeLink = await ownerOnboarding.getLink(implementationId);
       if (activeLink && !activeLink.usedAt) {
@@ -807,11 +826,25 @@ function ownerOnboardingSubmissionFromRow(
 ): OwnerOnboardingSubmission {
   return {
     implementationId: row.implementation_id,
+    personType: "pf",
     fullName: row.full_name,
-    document: row.document,
+    document: row.document ?? "",
     email: row.email,
     phone: row.phone,
-    pixKey: row.pix_key,
+    postalCode: "",
+    street: "",
+    number: "",
+    complement: null,
+    district: "",
+    city: "",
+    state: "",
+    bankName: "",
+    accountHolder: row.full_name,
+    holderTaxId: row.document ?? "",
+    pixType: "random",
+    pixKey: row.pix_key ?? "",
+    isPrimary: true,
+    currentStep: 5,
     submittedAt: row.submitted_at,
   };
 }
