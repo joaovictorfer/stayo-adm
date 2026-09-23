@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ export function Wizard({
   initialStep = 0,
   completeLabel = "Salvar",
   submitting = false,
+  hideProgress = false,
 }: {
   steps: WizardStep[];
   onComplete: () => void;
@@ -31,6 +33,7 @@ export function Wizard({
   initialStep?: number;
   completeLabel?: string;
   submitting?: boolean;
+  hideProgress?: boolean;
 }) {
   const [index, setIndex] = useState(initialStep);
   const [visited, setVisited] = useState<number[]>([]);
@@ -51,7 +54,7 @@ export function Wizard({
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div>
+      {!hideProgress && <div>
         <div
           className="flex items-center justify-between text-xs"
           style={{ color: "var(--stayo-ink-muted)" }}
@@ -78,7 +81,7 @@ export function Wizard({
             />
           ))}
         </div>
-      </div>
+      </div>}
 
       <div className="flex-1">{step.content}</div>
 
@@ -110,7 +113,9 @@ export function Wizard({
           }}
           className="portal-action ml-auto rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
         >
-          {isLast ? (submitting ? "Enviando com segurança..." : completeLabel) : "Continuar"}
+          {isLast ? (submitting ? "Enviando com segurança..." : completeLabel) : (
+            <>Continuar para {steps[index + 1]?.label}<ArrowRight className="size-4" /></>
+          )}
         </Button>
       </div>
       {visited.includes(index) && (
