@@ -64,6 +64,23 @@ export interface OwnerOnboardingSubmission {
   people: OwnerOnboardingPerson[];
   currentStep: number;
   submittedAt: string | null;
+  propertyPostalCode: string;
+  propertyStreet: string;
+  propertyNumber: string;
+  propertyComplement: string | null;
+  propertyDistrict: string;
+  propertyCity: string;
+  propertyState: string;
+  propertyType: string;
+  propertyBedrooms: number | null;
+  propertySuites: number | null;
+  propertyBathrooms: number | null;
+  propertyParkingSpots: number | null;
+  propertyAccessType: "key" | "lock" | "concierge" | "other" | null;
+  propertyAccessNotes: string;
+  propertyAccessCode: string;
+  propertyWifiNetwork: string;
+  propertyWifiPassword: string;
 }
 
 export type OwnerOnboardingSubmissionInput = Omit<

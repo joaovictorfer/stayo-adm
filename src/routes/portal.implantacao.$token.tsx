@@ -85,6 +85,23 @@ const emptyForm: OwnerOnboardingSubmissionInput = {
   people: [
     { role: "proprietario", personType: "pf", fullName: "", document: "", email: "", phone: "" },
   ],
+  propertyPostalCode: "",
+  propertyStreet: "",
+  propertyNumber: "",
+  propertyComplement: null,
+  propertyDistrict: "",
+  propertyCity: "",
+  propertyState: "",
+  propertyType: "",
+  propertyBedrooms: null,
+  propertySuites: null,
+  propertyBathrooms: null,
+  propertyParkingSpots: null,
+  propertyAccessType: null,
+  propertyAccessNotes: "",
+  propertyAccessCode: "",
+  propertyWifiNetwork: "",
+  propertyWifiPassword: "",
 };
 
 function Shell({ children }: { children: React.ReactNode }) {
