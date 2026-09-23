@@ -1395,13 +1395,36 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         .maybeSingle();
       if (profileError) throw profileError;
       if (profile) {
-        const { data: payout, error: payoutError } = await client()
-          .from("owner_payout_accounts")
-          .select()
-          .eq("implementation_id", implementationId)
-          .maybeSingle();
+        const [{ data: payout, error: payoutError }, { data: people, error: peopleError }] =
+          await Promise.all([
+            client()
+              .from("owner_payout_accounts")
+              .select()
+              .eq("implementation_id", implementationId)
+              .maybeSingle(),
+            client()
+              .from("owner_onboarding_people")
+              .select("role,person_type,full_name,document,email,phone")
+              .eq("implementation_id", implementationId)
+              .order("position", { ascending: true }),
+          ]);
         if (payoutError) throw payoutError;
-        return ownerOnboardingFromDraft({ ...profile, ...(payout ?? {}) }, implementationId);
+        if (peopleError) throw peopleError;
+        return ownerOnboardingFromDraft(
+          {
+            ...profile,
+            ...(payout ?? {}),
+            people: (people ?? []).map((person) => ({
+              role: person.role,
+              personType: person.person_type,
+              fullName: person.full_name,
+              document: person.document,
+              email: person.email,
+              phone: person.phone,
+            })),
+          },
+          implementationId,
+        );
       }
       const { data, error } = await client()
         .from("owner_onboarding_submissions")

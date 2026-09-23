@@ -37,6 +37,10 @@ export const Route = createFileRoute("/portal/implantacao/$token")({
     meta: [
       { title: "Cadastro do proprietário — Stayo" },
       { name: "description", content: "Complete seu cadastro para a implantação do seu imóvel." },
+      { property: "og:title", content: "Cadastro do proprietário — Stayo" },
+      { property: "og:description", content: "Complete seu cadastro para a implantação do seu imóvel." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: OwnerOnboardingPortalPage,
@@ -239,6 +243,14 @@ function OwnerOnboardingForm({
     if (!form.accountHolder) set("accountHolder", selectedPerson.fullName);
     if (!form.holderTaxId) set("holderTaxId", selectedPerson.document);
   }, [form.accountNumber, form.accountHolder, form.holderTaxId, manualHolder, selectedPerson]);
+
+  useEffect(() => {
+    if (!form.holderTaxId || manualHolder) return;
+    const holderIndex = people.findIndex(
+      (person) => formatBrazilianDocument(person.document) === formatBrazilianDocument(form.holderTaxId),
+    );
+    if (holderIndex >= 0 && holderIndex !== selectedHolder) setSelectedHolder(holderIndex);
+  }, [form.holderTaxId, manualHolder, people, selectedHolder]);
 
   if (submissionQ.data?.submittedAt)
     return (
@@ -485,7 +497,7 @@ function OwnerOnboardingForm({
       isValid: ownerOnboardingFormSchema.safeParse(form).success,
       content: (
         <Section text="Revise os dados antes de confirmar. Você continuará com acesso após o envio.">
-          <Review label="Titular" value={form.fullName} />
+          <Review label={people.length > 1 ? "Proprietários e proponentes" : "Titular"} value={people.map((person) => person.fullName).filter(Boolean).join(" · ")} />
           <Review label="Contato" value={`${form.email} · ${formatBrazilianPhone(form.phone)}`} />
           <Review
             label="Endereço"
