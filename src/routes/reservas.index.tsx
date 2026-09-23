@@ -12,6 +12,7 @@ import {
   SelectFilter,
 } from "../components/data/ListStates";
 import { reservationsListQuery } from "../lib/api/queries";
+import { AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 
 export const Route = createFileRoute("/reservas/")({
   head: () => ({
@@ -74,28 +75,27 @@ function ReservationsPage() {
             }
           />
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((r) => (
               <li key={r.id}>
-                <Link
-                  to="/reservas/$id"
-                  params={{ id: r.id }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  <span className="font-medium">{r.externalId ?? r.id}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {r.propertyName ?? r.propertyId}
+                <Link to="/reservas/$id" params={{ id: r.id }} className="admin-data-row flex-wrap">
+                  <span className="min-w-44 flex-1">
+                    <strong className="block text-sm">{r.externalId ?? r.id}</strong>
+                    <small className="block text-[var(--admin-muted)]">
+                      {r.propertyName ?? r.propertyId}
+                    </small>
                   </span>
                   {r.channel && (
-                    <span style={{ color: "var(--stayo-ink-muted)" }}>{r.channel}</span>
+                    <span className="text-xs text-[var(--admin-muted)]">{r.channel}</span>
                   )}
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                  <span className="text-xs text-[var(--admin-muted)]">
                     {r.checkin} → {r.checkout}
                   </span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
+                  <AdminStatusBadge
+                    tone={r.status.toLowerCase().includes("cancel") ? "danger" : "info"}
+                  >
                     {r.status}
-                  </span>
+                  </AdminStatusBadge>
                 </Link>
               </li>
             ))}

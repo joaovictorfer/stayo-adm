@@ -11,6 +11,7 @@ import {
   SearchInput,
 } from "../components/data/ListStates";
 import { propertiesListQuery } from "../lib/api/queries";
+import { AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 
 export const Route = createFileRoute("/imoveis/")({
   head: () => ({
@@ -54,20 +55,22 @@ function PropertiesPage() {
             }
           />
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((p) => (
               <li key={p.id}>
-                <Link
-                  to="/imoveis/$id"
-                  params={{ id: p.id }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  <span className="font-medium">{p.name}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>{p.externalCode}</span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {p.status}
+                <Link to="/imoveis/$id" params={{ id: p.id }} className="admin-data-row">
+                  <span className="min-w-0 flex-1">
+                    <strong className="block truncate text-sm">{p.name}</strong>
+                    <small className="block text-[var(--admin-muted)]">
+                      {p.externalCode}
+                      {p.condominiumName ? ` · ${p.condominiumName}` : ""}
+                    </small>
                   </span>
+                  <AdminStatusBadge
+                    tone={p.status.toLowerCase() === "ativo" ? "success" : "neutral"}
+                  >
+                    {p.status}
+                  </AdminStatusBadge>
                 </Link>
               </li>
             ))}

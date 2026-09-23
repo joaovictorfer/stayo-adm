@@ -56,17 +56,12 @@ function OwnersPage() {
             }
           />
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((o) => (
               <li key={o.id}>
-                <Link
-                  to="/proprietarios/$id"
-                  params={{ id: o.id }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  <span className="font-medium">{o.name}</span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
+                <Link to="/proprietarios/$id" params={{ id: o.id }} className="admin-data-row">
+                  <span className="min-w-0 flex-1 font-medium">{o.name}</span>
+                  <span className="text-sm text-[var(--admin-muted)]">
                     {o.phone ?? o.email ?? "—"}
                   </span>
                 </Link>

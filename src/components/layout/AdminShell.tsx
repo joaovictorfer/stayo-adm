@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import {
   Bell,
   Book,
@@ -28,9 +28,12 @@ import {
   X,
   ChevronDown,
   LogOut,
+  UserRound,
 } from "lucide-react";
 
-import { navigation, type NavItem } from "../../config/navigation";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { navigation, navigationGroups, type NavItem } from "../../config/navigation";
 import { isSupabaseConfigured } from "../../lib/api/supabase-client";
 import { signOut, useAuthSession } from "../../lib/auth/session";
 
@@ -63,7 +66,6 @@ const icons: Record<string, ComponentType<{ size?: number; className?: string }>
 const NavLink = Link as unknown as ComponentType<{
   to: string;
   className?: string;
-  style?: React.CSSProperties | undefined;
   onClick?: (() => void) | undefined;
   children?: ReactNode;
 }>;
@@ -99,68 +101,77 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
     ),
   );
 
-  const itemStyle = (active: boolean) => ({
-    color: active ? "#fdfdfb" : "var(--stayo-ink-muted)",
-    backgroundColor: active ? "var(--stayo-forest)" : "transparent",
-  });
-
   return (
-    <nav
-      className="flex flex-col gap-0.5 p-3 text-sm"
-      style={{ fontFamily: "var(--stayo-font-ui)" }}
-    >
-      {navigation.map((item) => {
-        const active = isActive(pathname, item.path);
-        if (!item.children) {
-          return (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              onClick={onNavigate}
-              className="flex items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2 transition-colors"
-              style={itemStyle(active)}
-            >
-              <Icon name={item.icon} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        }
-        const expanded = open[item.id] ?? active;
+    <nav className="flex flex-col gap-5 px-3 py-4 text-sm" aria-label="Navegação principal">
+      {navigationGroups.map((group) => {
+        const groupItems = group.itemIds
+          .map((id) => navigation.find((item) => item.id === id))
+          .filter((item): item is NavItem => Boolean(item));
         return (
-          <div key={item.id}>
-            <button
-              type="button"
-              onClick={() => setOpen((s) => ({ ...s, [item.id]: !expanded }))}
-              className="flex w-full items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2 transition-colors"
-              style={itemStyle(active && !expanded)}
-            >
-              <Icon name={item.icon} />
-              <span className="flex-1 text-left">{item.label}</span>
-              <ChevronDown
-                size={16}
-                className="transition-transform"
-                style={{ transform: expanded ? "rotate(180deg)" : "none" }}
-              />
-            </button>
-            {expanded && (
-              <div
-                className="ml-5 mt-0.5 flex flex-col gap-0.5 border-l pl-2"
-                style={{ borderColor: "var(--stayo-border)" }}
-              >
-                {item.children.map((child) => (
+          <div key={group.id} className="space-y-1">
+            <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-sidebar-muted)]/70">
+              {group.label}
+            </p>
+            {groupItems.map((item) => {
+              const active = isActive(pathname, item.path);
+              if (!item.children) {
+                return (
                   <NavLink
-                    key={child.id}
-                    to={child.path}
+                    key={item.id}
+                    to={item.path}
                     onClick={onNavigate}
-                    className="flex items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-1.5 transition-colors"
-                    style={itemStyle(pathname === child.path)}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
+                      active &&
+                        "bg-[var(--admin-sidebar-active)] text-[var(--admin-sidebar-text)] shadow-sm",
+                    )}
                   >
-                    <Icon name={child.icon} />
-                    <span>{child.label}</span>
+                    <Icon name={item.icon} />
+                    <span>{item.label}</span>
                   </NavLink>
-                ))}
-              </div>
-            )}
+                );
+              }
+              const expanded = open[item.id] ?? active;
+              return (
+                <div key={item.id}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setOpen((s) => ({ ...s, [item.id]: !expanded }))}
+                    className={cn(
+                      "h-auto w-full justify-start gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] font-normal text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
+                      active && "text-[var(--admin-sidebar-text)]",
+                    )}
+                  >
+                    <Icon name={item.icon} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    <ChevronDown
+                      size={16}
+                      className={cn("transition-transform", expanded && "rotate-180")}
+                    />
+                  </Button>
+                  {expanded && (
+                    <div className="ml-5 mt-1 flex flex-col gap-0.5 border-l border-[var(--admin-sidebar-hover)] pl-2">
+                      {item.children.map((child) => (
+                        <NavLink
+                          key={child.id}
+                          to={child.path}
+                          onClick={onNavigate}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-1.5 text-xs text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
+                            pathname === child.path &&
+                              "bg-[var(--admin-sidebar-active)] text-[var(--admin-sidebar-text)]",
+                          )}
+                        >
+                          <Icon name={child.icon} />
+                          <span>{child.label}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         );
       })}
@@ -178,111 +189,90 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div
-      className="min-h-screen lg:flex stayo-admin-theme"
-      style={{
-        backgroundColor: "var(--stayo-bg)",
-        color: "var(--stayo-ink)",
-        fontFamily: "var(--stayo-font-ui)",
-      }}
-    >
-      <aside
-        className="hidden w-64 shrink-0 border-r lg:flex lg:flex-col"
-        style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
-      >
+    <div className="stayo-admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text)] lg:flex">
+      <aside className="hidden w-64 shrink-0 bg-[var(--admin-sidebar)] text-[var(--admin-sidebar-text)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <Brand />
         <div className="flex-1 overflow-y-auto">
           <SidebarNav pathname={pathname} />
         </div>
+        <SidebarAccount />
       </aside>
 
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0"
-            style={{ backgroundColor: "rgba(20, 23, 19, 0.5)" }}
+            className="absolute inset-0 bg-[color-mix(in_srgb,var(--admin-sidebar-strong)_60%,transparent)] backdrop-blur-sm"
             onClick={() => setDrawer(false)}
           />
-          <div
-            className="absolute left-0 top-0 flex h-full w-72 flex-col border-r"
-            style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
-          >
+          <div className="absolute left-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-[var(--admin-sidebar)] text-[var(--admin-sidebar-text)] shadow-2xl">
             <div className="flex items-center justify-between">
               <Brand />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setDrawer(false)}
-                className="mr-3 rounded-[var(--radius-control)] p-2"
-                style={{ color: "var(--stayo-ink-muted)" }}
+                className="mr-3 text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]"
                 aria-label="Fechar menu"
               >
                 <X size={18} />
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto">
               <SidebarNav pathname={pathname} onNavigate={() => setDrawer(false)} />
             </div>
+            <SidebarAccount />
           </div>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header
-          className="flex items-center gap-3 border-b px-4 py-3"
-          style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
-        >
-          <button
+        <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-[var(--admin-border)] bg-[color-mix(in_srgb,var(--admin-surface)_94%,transparent)] px-4 backdrop-blur-xl lg:px-6">
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setDrawer(true)}
-            className="rounded-[var(--radius-control)] p-2 lg:hidden"
-            style={{ color: "var(--stayo-ink-muted)" }}
+            className="text-[var(--admin-muted)] lg:hidden"
             aria-label="Abrir menu"
           >
             <Menu size={18} />
-          </button>
-          <nav aria-label="Breadcrumb" className="text-sm">
-            <span style={{ color: "var(--stayo-ink-muted)" }}>Stayo Admin</span>
+          </Button>
+          <nav aria-label="Breadcrumb" className="min-w-0 text-sm">
+            <span className="hidden text-[var(--admin-muted)] sm:inline">Centro de Controle</span>
             {section && (
               <>
-                <span className="mx-2" style={{ color: "var(--stayo-border)" }}>
-                  /
-                </span>
-                <span style={{ color: "var(--stayo-ink)" }}>{section.label}</span>
+                <span className="mx-2 hidden text-[var(--admin-border)] sm:inline">/</span>
+                <span className="font-medium text-[var(--admin-text)]">{section.label}</span>
               </>
             )}
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <label
-              className="hidden items-center gap-2 rounded-[var(--radius-control)] border px-3 py-1.5 text-sm sm:flex"
-              style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-bg)" }}
-            >
-              <Search size={15} style={{ color: "var(--stayo-ink-muted)" }} />
+            <label className="hidden items-center gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-1.5 text-sm md:flex">
+              <Search size={15} className="text-[var(--admin-muted)]" />
               <input
                 type="search"
                 placeholder="Buscar imóvel, reserva, módulo..."
-                className="w-48 bg-transparent outline-none placeholder:text-current lg:w-64"
-                style={{ color: "var(--stayo-ink)" }}
+                className="w-44 bg-transparent text-[var(--admin-text)] outline-none placeholder:text-[var(--admin-muted)] lg:w-56"
               />
-              <kbd
-                className="rounded border px-1.5 py-0.5 text-[10px]"
-                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
-              >
+              <kbd className="rounded border border-[var(--admin-border)] px-1.5 py-0.5 text-[10px] text-[var(--admin-muted)]">
                 ⌘K
               </kbd>
             </label>
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon"
               aria-label="Notificações"
-              className="rounded-[var(--radius-control)] border p-2"
-              style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+              className="border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-muted)] shadow-none"
             >
               <Bell size={16} />
-            </button>
+            </Button>
             <AccountMenu />
           </div>
         </header>
-        <main className="min-w-0 flex-1 p-4 lg:p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-6 xl:p-8">{children}</main>
       </div>
     </div>
   );
@@ -303,46 +293,91 @@ function AccountMenu() {
 
   if (!isSupabaseConfigured() || auth.status !== "authenticated") return null;
 
-  const label = auth.profile
-    ? `${auth.profile.fullName} · ${adminRoleLabels[auth.profile.role] ?? auth.profile.role}`
-    : auth.session?.user.email;
+  const name = auth.profile?.fullName ?? auth.session?.user.email ?? "Usuário";
+  const role = auth.profile
+    ? (adminRoleLabels[auth.profile.role] ?? auth.profile.role)
+    : "Conta Stayo";
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 
   return (
     <div className="hidden items-center gap-2 sm:flex">
-      <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        {label}
+      <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--admin-info-soft)] text-[11px] font-semibold text-[var(--admin-primary)]">
+        {initials || <UserRound size={15} />}
       </span>
-      <button
+      <span className="hidden min-w-0 lg:block">
+        <strong className="block max-w-40 truncate text-xs font-semibold text-[var(--admin-text)]">
+          {name}
+        </strong>
+        <small className="block text-[10px] text-[var(--admin-muted)]">{role}</small>
+      </span>
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => void signOut()}
         aria-label="Sair"
-        className="rounded-[var(--radius-control)] border p-2"
-        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+        className="text-[var(--admin-muted)]"
       >
         <LogOut size={16} />
-      </button>
+      </Button>
     </div>
   );
 }
 
 function Brand() {
   return (
-    <div
-      className="flex items-center gap-2 border-b px-4 py-4"
-      style={{ borderColor: "var(--stayo-border)" }}
-    >
-      <span
-        className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-        style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-      >
-        S
-      </span>
-      <span
-        className="text-base"
-        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-      >
-        Stayo Admin
-      </span>
+    <div className="flex min-h-20 items-center gap-3 border-b border-[var(--admin-sidebar-hover)] px-4">
+      <img src="/favicon.ico" alt="Stayo" className="h-9 w-9 object-contain" />
+      <div>
+        <span className="block text-base font-semibold leading-none text-[var(--admin-sidebar-text)]">
+          STAYO
+        </span>
+        <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-sidebar-muted)]">
+          Centro de Controle
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SidebarAccount() {
+  const auth = useAuthSession();
+  const name =
+    auth.status === "authenticated"
+      ? (auth.profile?.fullName ?? auth.session?.user.email ?? "Equipe Stayo")
+      : "Equipe Stayo";
+  const role =
+    auth.status === "authenticated" && auth.profile
+      ? (adminRoleLabels[auth.profile.role] ?? auth.profile.role)
+      : "Admin";
+  const initials = useMemo(
+    () =>
+      name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join(""),
+    [name],
+  );
+  return (
+    <div className="border-t border-[var(--admin-sidebar-hover)] p-3">
+      <div className="flex items-center gap-3 rounded-[var(--admin-radius)] px-2 py-2">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--admin-sidebar-hover)] text-xs font-semibold text-[var(--admin-sidebar-text)]">
+          {initials || <UserRound size={16} />}
+        </span>
+        <span className="min-w-0">
+          <strong className="block truncate text-xs font-semibold text-[var(--admin-sidebar-text)]">
+            {name}
+          </strong>
+          <small className="block text-[10px] text-[var(--admin-sidebar-muted)]">{role}</small>
+        </span>
+      </div>
     </div>
   );
 }

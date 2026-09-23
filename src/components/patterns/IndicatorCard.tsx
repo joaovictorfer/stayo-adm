@@ -1,9 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
-
-const surface = {
-  backgroundColor: "var(--stayo-surface)",
-  borderColor: "var(--stayo-border)",
-};
+import { AdminStatCard } from "@/components/admin/AdminPrimitives";
+import { Button } from "@/components/ui/button";
 
 export function IndicatorCard({
   icon: IconCmp,
@@ -16,34 +13,7 @@ export function IndicatorCard({
   value: ReactNode;
   tone?: "neutral" | "warning" | "danger" | "success";
 }) {
-  const toneColor = {
-    neutral: "var(--stayo-ink)",
-    warning: "var(--stayo-warning)",
-    danger: "var(--stayo-danger)",
-    success: "var(--stayo-success)",
-  }[tone];
-
-  return (
-    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
-          {label}
-        </p>
-        <span
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}
-        >
-          <IconCmp size={15} />
-        </span>
-      </div>
-      <p
-        className="mt-2 text-3xl"
-        style={{ fontFamily: "var(--stayo-font-display)", color: toneColor }}
-      >
-        {value}
-      </p>
-    </div>
-  );
+  return <AdminStatCard icon={IconCmp} label={label} value={value} tone={tone} />;
 }
 
 /** Grupo de botões tipo pílula para filtro de período (7d/14d/30d). */
@@ -57,25 +27,19 @@ export function PeriodFilter<T extends string>({
   options: { value: T; label: string }[];
 }) {
   return (
-    <div
-      className="inline-flex rounded-[var(--radius-control)] border p-0.5 text-sm"
-      style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}
-    >
+    <div className="inline-flex rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-0.5 text-sm">
       {options.map((o) => {
         const active = o.value === value;
         return (
-          <button
+          <Button
             key={o.value}
             type="button"
+            variant="ghost"
             onClick={() => onChange(o.value)}
-            className="rounded-[calc(var(--radius-control)-2px)] px-3 py-1.5 transition-colors"
-            style={{
-              backgroundColor: active ? "var(--stayo-forest)" : "transparent",
-              color: active ? "#fdfdfb" : "var(--stayo-ink-muted)",
-            }}
+            className={`h-7 rounded-[calc(var(--admin-radius)-2px)] px-3 text-xs ${active ? "bg-[var(--admin-primary)] text-[var(--primary-foreground)] hover:bg-[var(--admin-primary-hover)] hover:text-[var(--primary-foreground)]" : "text-[var(--admin-muted)]"}`}
           >
             {o.label}
-          </button>
+          </Button>
         );
       })}
     </div>
