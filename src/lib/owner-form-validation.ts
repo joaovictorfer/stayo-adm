@@ -176,6 +176,23 @@ export const ownerOnboardingFormSchema = z.object({
     )
     .min(1)
     .max(10),
+  propertyPostalCode: z.string().max(12).default(""),
+  propertyStreet: z.string().max(160).default(""),
+  propertyNumber: z.string().max(20).default(""),
+  propertyComplement: z.string().max(100).nullable().default(null),
+  propertyDistrict: z.string().max(100).default(""),
+  propertyCity: z.string().max(100).default(""),
+  propertyState: z.string().max(2).default(""),
+  propertyType: z.string().max(80).default(""),
+  propertyBedrooms: z.number().int().min(0).max(30).nullable().default(null),
+  propertySuites: z.number().int().min(0).max(30).nullable().default(null),
+  propertyBathrooms: z.number().int().min(0).max(30).nullable().default(null),
+  propertyParkingSpots: z.number().int().min(0).max(30).nullable().default(null),
+  propertyAccessType: z.enum(["key", "lock", "concierge", "other"]).nullable().default(null),
+  propertyAccessNotes: z.string().max(500).default(""),
+  propertyAccessCode: z.string().max(120).default(""),
+  propertyWifiNetwork: z.string().max(120).default(""),
+  propertyWifiPassword: z.string().max(120).default(""),
 });
 
 export const ownerAdminEditSchema = z.object({

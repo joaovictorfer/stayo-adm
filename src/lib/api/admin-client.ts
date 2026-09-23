@@ -907,6 +907,23 @@ function ownerOnboardingSubmissionFromRow(
     people: [primary],
     currentStep: 5,
     submittedAt: row.submitted_at,
+    propertyPostalCode: "",
+    propertyStreet: "",
+    propertyNumber: "",
+    propertyComplement: null,
+    propertyDistrict: "",
+    propertyCity: "",
+    propertyState: "",
+    propertyType: "",
+    propertyBedrooms: null,
+    propertySuites: null,
+    propertyBathrooms: null,
+    propertyParkingSpots: null,
+    propertyAccessType: null,
+    propertyAccessNotes: "",
+    propertyAccessCode: "",
+    propertyWifiNetwork: "",
+    propertyWifiPassword: "",
   };
 }
 
@@ -960,6 +977,28 @@ function ownerOnboardingFromDraft(
     district: text("district"),
     city: text("city"),
     state: text("state"),
+    propertyPostalCode: text("propertyPostalCode"),
+    propertyStreet: text("propertyStreet"),
+    propertyNumber: text("propertyNumber"),
+    propertyComplement: text("propertyComplement") || null,
+    propertyDistrict: text("propertyDistrict"),
+    propertyCity: text("propertyCity"),
+    propertyState: text("propertyState"),
+    propertyType: text("propertyType"),
+    propertyBedrooms:
+      typeof value["propertyBedrooms"] === "number" ? value["propertyBedrooms"] : null,
+    propertySuites: typeof value["propertySuites"] === "number" ? value["propertySuites"] : null,
+    propertyBathrooms:
+      typeof value["propertyBathrooms"] === "number" ? value["propertyBathrooms"] : null,
+    propertyParkingSpots:
+      typeof value["propertyParkingSpots"] === "number" ? value["propertyParkingSpots"] : null,
+    propertyAccessType: ["key", "lock", "concierge", "other"].includes(text("propertyAccessType"))
+      ? (text("propertyAccessType") as OwnerOnboardingSubmission["propertyAccessType"])
+      : null,
+    propertyAccessNotes: text("propertyAccessNotes"),
+    propertyAccessCode: text("propertyAccessCode"),
+    propertyWifiNetwork: text("propertyWifiNetwork"),
+    propertyWifiPassword: text("propertyWifiPassword"),
     bankName: text("bankName"),
     bankBranch: text("bankBranch"),
     accountNumber: text("accountNumber"),
@@ -1448,14 +1487,28 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return data ? ownerOnboardingSubmissionFromRow(data) : null;
     },
     getDraft: async (token) => {
-      const { data, error } = await publicClient().rpc("owner_onboarding_draft_resolve_v2", {
-        p_token: token,
-      });
-      if (error) throw error;
-      return data ? ownerOnboardingFromDraft(data as Record<string, unknown>) : null;
+      const supabase = publicClient();
+      const [draftResult, propertyResult] = await Promise.all([
+        supabase.rpc("owner_onboarding_draft_resolve_v2", { p_token: token }),
+        supabase.rpc("owner_property_details_resolve_by_token", { p_token: token }),
+      ]);
+      if (draftResult.error) throw draftResult.error;
+      if (propertyResult.error) throw propertyResult.error;
+      return draftResult.data
+        ? ownerOnboardingFromDraft({
+            ...(draftResult.data as Record<string, unknown>),
+            ...((propertyResult.data as Record<string, unknown> | null) ?? {}),
+          })
+        : null;
     },
     saveDraft: async (token, input, currentStep, submit = false) => {
-      const { data, error } = await publicClient().rpc("owner_onboarding_draft_save_v2", {
+      const supabase = publicClient();
+      const { error: propertyError } = await supabase.rpc("owner_property_details_save_by_token", {
+        p_token: token,
+        p_data: input,
+      });
+      if (propertyError) throw propertyError;
+      const { data, error } = await supabase.rpc("owner_onboarding_draft_save_v2", {
         p_token: token,
         p_submit: submit,
         p_data: {
@@ -1467,7 +1520,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         },
       });
       if (error) throw error;
-      return ownerOnboardingFromDraft(data as Record<string, unknown>);
+      return ownerOnboardingFromDraft({ ...(data as Record<string, unknown>), ...input });
     },
     // findByToken/submit são chamados pelo portal público, sem sessão
     // autenticada — nunca tocam a tabela direto sob RLS (que exige papel
