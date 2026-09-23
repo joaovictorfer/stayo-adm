@@ -19,3 +19,4 @@
 - [x] Tornar titular, CPF/CNPJ e chave Pix inteligentes a partir dos proprietários cadastrados
 - [x] Refinar microinterações e visual do cadastro do proprietário
 - [x] Validar persistência, testes, build e experiência mobile do novo fluxo
+- [x] Corrigir falha ao concluir o cadastro do proprietário e exibir erro específico
