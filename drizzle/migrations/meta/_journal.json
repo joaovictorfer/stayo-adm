@@ -50,6 +50,13 @@
       "when": 1790132942912,
       "tag": "0006_repair_owner_onboarding_missing_implementation",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790134052495,
+      "tag": "0007_repair_owner_account_linking",
+      "breakpoints": true
     }
   ]
 }

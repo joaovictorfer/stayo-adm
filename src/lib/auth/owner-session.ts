@@ -23,6 +23,10 @@ export interface OwnerPortalAccount {
   createdAt: string;
 }
 
+export type OwnerAccountSetupResult =
+  | { status: "linked"; session: Session; account: OwnerPortalAccount }
+  | { status: "confirmation_required"; session: null; account: null };
+
 interface OwnerPortalAccountRow {
   id: string;
   owner_id: string;
@@ -33,33 +37,51 @@ function accountFromRow(row: OwnerPortalAccountRow): OwnerPortalAccount {
   return { id: row.id, ownerId: row.owner_id, createdAt: row.created_at };
 }
 
-/**
- * Cria a conta no Supabase Auth e, na sequência, vincula ao proprietário
- * via o MESMO token do convite. Se o e-mail já tiver conta, `signUp`
- * falha antes de chegar ao vínculo — nunca finge sucesso.
- */
+async function linkCurrentOwnerAccount(token: string): Promise<OwnerPortalAccount> {
+  const client = getSupabaseBrowserClient();
+  if (!client) throw new Error("Supabase não configurado");
+  const { data, error } = await client.rpc("owner_account_link", { p_token: token });
+  if (error) throw error;
+  return accountFromRow(data as OwnerPortalAccountRow);
+}
+
+/** Cria ou reutiliza a conta e conclui o vínculo usando o mesmo convite. */
 export async function createOwnerAccountAndLink(
   email: string,
   password: string,
   token: string,
-): Promise<{ session: Session | null; account: OwnerPortalAccount | null }> {
+): Promise<OwnerAccountSetupResult> {
   const client = getSupabaseBrowserClient();
   if (!client) throw new Error("Supabase não configurado");
 
-  const { data: signUpData, error: signUpError } = await client.auth.signUp({ email, password });
-  if (signUpError) throw signUpError;
+  const normalizedEmail = email.trim().toLowerCase();
+  const { data: signUpData, error: signUpError } = await client.auth.signUp({
+    email: normalizedEmail,
+    password,
+    options: { emailRedirectTo: window.location.href },
+  });
 
-  if (!signUpData.session) {
-    // Supabase pode exigir confirmação de e-mail antes de abrir sessão —
-    // sem sessão, `owner_account_link` (que exige `auth.uid()`) não pode
-    // rodar ainda. A conta existe, mas o vínculo fica para o primeiro
-    // login depois da confirmação.
-    return { session: null, account: null };
+  let session = signUpData.session;
+  if (signUpError) {
+    const repeatedSignup =
+      signUpError.code === "user_already_exists" ||
+      signUpError.message.toLocaleLowerCase("pt-BR").includes("already registered");
+    if (!repeatedSignup) throw signUpError;
+
+    const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    });
+    if (signInError) throw signInError;
+    session = signInData.session;
   }
 
-  const { data, error } = await client.rpc("owner_account_link", { p_token: token });
-  if (error) throw error;
-  return { session: signUpData.session, account: accountFromRow(data as OwnerPortalAccountRow) };
+  if (!session) {
+    return { status: "confirmation_required", session: null, account: null };
+  }
+
+  const account = await linkCurrentOwnerAccount(token);
+  return { status: "linked", session, account };
 }
 
 export async function ownerSignInWithPassword(email: string, password: string): Promise<Session> {
