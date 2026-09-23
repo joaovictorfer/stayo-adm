@@ -37,6 +37,7 @@ import type {
 } from "../../types/owner-onboarding";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
+import { normalizeDocument, normalizeEmail, normalizeName, normalizePhone, ownerAdminEditSchema } from "../owner-form-validation";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -128,6 +129,23 @@ export interface AdminApiClient {
       input: OwnerOnboardingSubmissionInput,
     ): Promise<OwnerOnboardingSubmission>;
   };
+}
+
+function normalizeOwnerPatch<T extends Partial<Omit<OwnerRecord, "id" | "createdAt">>>(patch: T): T {
+  const candidate = {
+    name: patch.name ?? "Nome temporário",
+    phone: patch.phone ?? "",
+    email: patch.email ?? "",
+    document: patch.document ?? "",
+  };
+  const validated = ownerAdminEditSchema.parse(candidate);
+  return {
+    ...patch,
+    ...(patch.name !== undefined ? { name: validated.name.trim().replace(/\s+/g, " ") } : {}),
+    ...(patch.phone !== undefined ? { phone: validated.phone ? normalizePhone(validated.phone) : null } : {}),
+    ...(patch.email !== undefined ? { email: validated.email ? normalizeEmail(validated.email) : null } : {}),
+    ...(patch.document !== undefined ? { document: validated.document ? normalizeDocument(validated.document) : null } : {}),
+  } as T;
 }
 
 // Exportadas para o importador de migração (src/lib/migration/local-to-supabase.ts)
