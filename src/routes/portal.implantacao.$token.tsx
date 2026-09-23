@@ -162,7 +162,7 @@ function OwnerOnboardingForm({
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    if (hydrated.current || draftQ.isPending || ownerQ.isPending) return;
+    if (hydrated.current || draftQ.isPending || (ownerId && ownerQ.isPending)) return;
     const initialForm = draftQ.data
       ? { ...emptyForm, ...draftQ.data }
       : ownerQ.data
@@ -192,7 +192,7 @@ function OwnerOnboardingForm({
     stepRef.current = restoredStep;
     lastSaved.current = JSON.stringify(initialForm);
     hydrated.current = true;
-  }, [draftQ.data, draftQ.isPending, ownerQ.data, ownerQ.isPending]);
+  }, [draftQ.data, draftQ.isPending, ownerId, ownerQ.data, ownerQ.isPending]);
 
   useEffect(() => {
     formRef.current = form;

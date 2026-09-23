@@ -45,6 +45,7 @@ import {
   formatBrazilianDocument,
   formatBrazilianPhone,
   maskDocument,
+  maskPixKey,
   ownerAdminEditSchema,
 } from "../lib/owner-form-validation";
 
@@ -121,7 +122,7 @@ function OwnerDetailPage() {
     <>
       <AdminPageHeader
         eyebrow="Proprietário"
-        title={owner?.name ?? "Proprietário"}
+        title={onboardingDraft?.fullName || owner?.name || "Proprietário"}
         description="Relacionamento, cadastro e operação em uma visão única."
         actions={
           <AdminActionButton asChild>
@@ -157,7 +158,12 @@ function OwnerDetailPage() {
                       ? "Completo"
                       : "Incompleto"
               }
-              tone={onboardingDraft?.submittedAt ? "success" : "warning"}
+              tone={
+                onboardingDraft?.submittedAt ||
+                (!onboardingDraft && owner.document && owner.email && owner.phone)
+                  ? "success"
+                  : "warning"
+              }
             />
             <AdminStatCard
               icon={Globe2}
@@ -609,6 +615,22 @@ function OwnerContactPanel({
                 label="Endereço informado no portal"
                 value={`${draft.street}${draft.number ? `, ${draft.number}` : ""}${draft.city ? ` · ${draft.city}/${draft.state}` : ""}`}
               />
+            </div>
+          )}
+          {(draft?.bankName || draft?.accountHolder || draft?.pixKey) && (
+            <div className="grid gap-3 border-t pt-3 sm:col-span-2 sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
+              <Field label="Banco para repasse" value={draft.bankName} />
+              <Field label="Titular da conta" value={draft.accountHolder} />
+              <Field
+                label="Chave Pix"
+                value={showSensitive ? draft.pixKey : maskPixKey(draft.pixKey)}
+              />
+              {draft.people.length > 1 && (
+                <Field
+                  label="Proprietários e proponentes"
+                  value={`${draft.people.length} pessoas informadas`}
+                />
+              )}
             </div>
           )}
         </div>
