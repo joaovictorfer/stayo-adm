@@ -37,8 +37,6 @@ export interface Property {
   name: string;
   condominiumId: EntityId | null;
   condominiumName: string | null;
-  condominiumId?: EntityId | null;
-  tower?: string | null;
   unit: string | null;
   city: string | null;
   status: string;
@@ -122,7 +120,9 @@ export interface ImplementationProject {
   nickname: string | null;
   /** Imagem de capa própria da implantação; fallbacks são resolvidos pela apresentação. */
   coverImage?: string | null;
+  condominiumId?: EntityId | null;
   condominiumName: string | null;
+  tower?: string | null;
   unit: string | null;
   address: string | null;
   postalCode: string | null;

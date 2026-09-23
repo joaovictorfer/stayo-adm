@@ -29,6 +29,8 @@ import type {
   OwnerTask,
   OwnerTaskInput,
   OwnerTaskStatus,
+  AdminCondominium,
+  AdminCondominiumInput,
 } from "../../types/admin";
 import type {
   OwnerOnboardingLink,
@@ -64,6 +66,11 @@ export interface AdminApiClient {
     update(id: string, patch: Partial<Omit<OwnerRecord, "id" | "createdAt">>): Promise<OwnerRecord>;
     /** Dedupe simples por telefone — usado pelo cadastro rápido da Nova Implantação. */
     findOrCreateByPhone(input: OwnerRecordInput): Promise<OwnerRecord>;
+  };
+  condominiums: {
+    list(query?: string): Promise<AdminCondominium[]>;
+    create(input: AdminCondominiumInput): Promise<AdminCondominium>;
+    update(id: string, patch: Partial<AdminCondominiumInput>): Promise<AdminCondominium>;
   };
   commercialTermDefaults: {
     list(): Promise<CommercialTermDefault[]>;
@@ -183,6 +190,7 @@ export const OUTBOUND_MESSAGES_KEY = "stayo-admin:outbound-messages";
 export const OWNER_ONBOARDING_LINKS_KEY = "stayo-admin:owner-onboarding-links";
 export const OWNER_ONBOARDING_SUBMISSIONS_KEY = "stayo-admin:owner-onboarding-submissions";
 export const OWNER_TASKS_KEY = "stayo-admin:owner-tasks";
+export const ADMIN_CONDOMINIUMS_KEY = "stayo-admin:admin-condominiums";
 
 const DEFAULT_INVITATION_VALIDITY_DAYS = 7;
 
@@ -272,6 +280,44 @@ export function createLocalAdminApiClient(): AdminApiClient {
         : undefined;
       if (existing) return existing;
       return owners.create(input);
+    },
+  };
+
+  const condominiums: AdminApiClient["condominiums"] = {
+    list: (query) => {
+      const term = query?.trim().toLocaleLowerCase("pt-BR");
+      const rows = read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY);
+      return Promise.resolve(
+        term ? rows.filter((item) => item.name.toLocaleLowerCase("pt-BR").includes(term)) : rows,
+      );
+    },
+    create: (input) => {
+      const now = new Date().toISOString();
+      const item: AdminCondominium = {
+        id: newId(),
+        name: input.name.trim(),
+        address: input.address?.trim() || null,
+        city: input.city?.trim() || null,
+        status: input.address?.trim() ? "complete" : "pending",
+        coverImage: input.coverImage ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      write(ADMIN_CONDOMINIUMS_KEY, [...read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY), item]);
+      return Promise.resolve(item);
+    },
+    update: async (id, patch) => {
+      const rows = read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY);
+      const current = rows.find((item) => item.id === id);
+      if (!current) throw new Error("Condomínio não encontrado.");
+      const updated: AdminCondominium = {
+        ...current,
+        ...patch,
+        status: (patch.address ?? current.address) ? "complete" : "pending",
+        updatedAt: new Date().toISOString(),
+      };
+      write(ADMIN_CONDOMINIUMS_KEY, rows.map((item) => (item.id === id ? updated : item)));
+      return updated;
     },
   };
 
@@ -637,6 +683,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
   return {
     audit,
     owners,
+    condominiums,
     commercialTermDefaults,
     commercialTerms,
     outbox,
@@ -1125,6 +1172,68 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     },
   };
 
+  const condominiumFromRow = (row: {
+    id: string;
+    name: string;
+    address: string | null;
+    city: string | null;
+    status: string;
+    cover_image: string | null;
+    created_at: string;
+    updated_at: string;
+  }): AdminCondominium => ({
+    id: row.id,
+    name: row.name,
+    address: row.address,
+    city: row.city,
+    status: row.status === "complete" ? "complete" : "pending",
+    coverImage: row.cover_image,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+
+  const condominiums: AdminApiClient["condominiums"] = {
+    list: async (query) => {
+      let request = client().from("admin_condominiums").select("*").order("name").limit(20);
+      if (query?.trim()) request = request.ilike("name", `%${query.trim()}%`);
+      const { data, error } = await request;
+      if (error) throw error;
+      return (data ?? []).map(condominiumFromRow);
+    },
+    create: async (input) => {
+      const { data, error } = await client()
+        .from("admin_condominiums")
+        .insert({
+          name: input.name.trim(),
+          address: input.address?.trim() || null,
+          city: input.city?.trim() || null,
+          status: input.address?.trim() ? "complete" : "pending",
+          cover_image: input.coverImage ?? null,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return condominiumFromRow(data);
+    },
+    update: async (id, patch) => {
+      const { data, error } = await client()
+        .from("admin_condominiums")
+        .update({
+          name: patch.name?.trim(),
+          address: patch.address?.trim() || null,
+          city: patch.city?.trim() || null,
+          cover_image: patch.coverImage,
+          status: patch.address?.trim() ? "complete" : undefined,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return condominiumFromRow(data);
+    },
+  };
+
   const commercialTermDefaults: AdminApiClient["commercialTermDefaults"] = {
     list: async () => {
       const { data, error } = await client()
@@ -1600,6 +1709,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
   return {
     audit,
     owners,
+    condominiums,
     commercialTermDefaults,
     commercialTerms,
     outbox,

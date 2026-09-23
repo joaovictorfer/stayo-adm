@@ -50,6 +50,21 @@ export interface OwnerRecordInput {
   document?: string | null;
 }
 
+export interface AdminCondominium {
+  id: EntityId;
+  name: string;
+  address: string | null;
+  city: string | null;
+  status: "pending" | "complete";
+  coverImage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AdminCondominiumInput = Pick<AdminCondominium, "name" | "address" | "city"> & {
+  coverImage?: string | null;
+};
+
 /**
  * Tipo de cobrança de uma condição comercial — nunca hardcodar um valor
  * (taxa, preço) no código; isso vive em `commercial_term_defaults`,
