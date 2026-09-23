@@ -13,8 +13,10 @@ import {
   Pencil,
   Send,
   Share2,
+  CalendarPlus,
+  Megaphone,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Accordion,
@@ -74,6 +76,15 @@ import {
   statusLabels,
 } from "../lib/implementation-status";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
+import {
+  createInspection,
+  createTimelineUpdate,
+  getPropertyDetails,
+  listPortalInspections,
+  listPortalTimeline,
+  savePropertyDetails,
+  type PropertyDetailsInput,
+} from "../lib/api/owner-portal-data";
 import {
   formatBrazilianPhone,
   maskDocument,
@@ -1378,12 +1389,74 @@ function Metric({
 
 function PropertyTab({ implementation }: { implementation: ImplementationProject }) {
   const queryClient = useQueryClient();
+  const detailsQ = useQuery({
+    queryKey: ["implementation-property-details", implementation.id],
+    queryFn: () => getPropertyDetails(implementation.id),
+  });
+  const timelineQ = useQuery({
+    queryKey: ["implementation-timeline", implementation.id],
+    queryFn: () => listPortalTimeline(implementation.id),
+  });
+  const inspectionsQ = useQuery({
+    queryKey: ["implementation-inspections", implementation.id],
+    queryFn: () => listPortalInspections(implementation.id),
+  });
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [postalCode, setPostalCode] = useState("");
   const [addressDraft, setAddressDraft] = useState(implementation.address ?? "");
   const [cityDraft, setCityDraft] = useState(implementation.city ?? "");
   const [notesDraft, setNotesDraft] = useState(implementation.notes ?? "");
   const [addressLookupMessage, setAddressLookupMessage] = useState("");
+  const [accessType, setAccessType] = useState<PropertyDetailsInput["accessType"]>(null);
+  const [accessNotes, setAccessNotes] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [wifiNetwork, setWifiNetwork] = useState("");
+  const [wifiPassword, setWifiPassword] = useState("");
+  const [timelineTitle, setTimelineTitle] = useState("");
+  const [timelineDescription, setTimelineDescription] = useState("");
+  const [inspectionDate, setInspectionDate] = useState("");
+  const [inspectionNotes, setInspectionNotes] = useState("");
+
+  useEffect(() => {
+    if (!detailsQ.data) return;
+    setAccessType(detailsQ.data.accessType);
+    setAccessNotes(detailsQ.data.accessNotes ?? "");
+    setAccessCode(detailsQ.data.accessCode ?? "");
+    setWifiNetwork(detailsQ.data.wifiNetwork ?? "");
+    setWifiPassword(detailsQ.data.wifiPassword ?? "");
+  }, [detailsQ.data]);
+
+  const saveSharedDetails = useMutation({
+    mutationFn: () => savePropertyDetails(implementation.id, {
+      postalCode: detailsQ.data?.postalCode ?? implementation.postalCode,
+      street: detailsQ.data?.street ?? implementation.address,
+      number: detailsQ.data?.number ?? null,
+      complement: detailsQ.data?.complement ?? null,
+      district: detailsQ.data?.district ?? null,
+      city: detailsQ.data?.city ?? implementation.city,
+      state: detailsQ.data?.state ?? null,
+      propertyType: detailsQ.data?.propertyType ?? implementation.propertyType,
+      bedrooms: detailsQ.data?.bedrooms ?? implementation.bedrooms,
+      suites: detailsQ.data?.suites ?? null,
+      bathrooms: detailsQ.data?.bathrooms ?? null,
+      parkingSpots: detailsQ.data?.parkingSpots ?? null,
+      accessType, accessNotes: accessNotes || null, accessCode: accessCode || null,
+      wifiNetwork: wifiNetwork || null, wifiPassword: wifiPassword || null,
+      notes: detailsQ.data?.notes ?? null,
+    }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["implementation-property-details", implementation.id] });
+      toast.success("Acesso e Wi-Fi atualizados");
+    },
+  });
+  const publishUpdate = useMutation({
+    mutationFn: () => createTimelineUpdate({ implementationId: implementation.id, title: timelineTitle, description: timelineDescription, kind: "update", ownerVisible: true }),
+    onSuccess: async () => { setTimelineTitle(""); setTimelineDescription(""); await queryClient.invalidateQueries({ queryKey: ["implementation-timeline", implementation.id] }); toast.success("Atualização publicada no portal"); },
+  });
+  const scheduleInspection = useMutation({
+    mutationFn: () => createInspection({ implementationId: implementation.id, type: "implantacao", scheduledFor: inspectionDate ? new Date(inspectionDate).toISOString() : null, publicNotes: inspectionNotes, ownerVisible: true }),
+    onSuccess: async () => { setInspectionDate(""); setInspectionNotes(""); await queryClient.invalidateQueries({ queryKey: ["implementation-inspections", implementation.id] }); toast.success("Vistoria adicionada ao portal"); },
+  });
 
   const updateImplementation = useMutation({
     mutationFn: (input: {

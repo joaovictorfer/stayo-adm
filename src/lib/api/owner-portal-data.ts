@@ -272,3 +272,37 @@ export async function listPortalTimeline(implementationId: string): Promise<Port
   }
   return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
+
+export async function createTimelineUpdate(input: {
+  implementationId: string;
+  title: string;
+  description: string;
+  kind: PortalTimelineEvent["kind"];
+  ownerVisible: boolean;
+}): Promise<void> {
+  const { error } = await client().from("implementation_timeline_updates").insert({
+    implementation_id: input.implementationId,
+    title: input.title,
+    description: input.description || null,
+    kind: input.kind,
+    owner_visible: input.ownerVisible,
+  });
+  if (error) throw error;
+}
+
+export async function createInspection(input: {
+  implementationId: string;
+  type: string;
+  scheduledFor: string | null;
+  publicNotes: string;
+  ownerVisible: boolean;
+}): Promise<void> {
+  const { error } = await client().from("implementation_inspections").insert({
+    implementation_id: input.implementationId,
+    type: input.type,
+    scheduled_for: input.scheduledFor,
+    public_notes: input.publicNotes || null,
+    owner_visible: input.ownerVisible,
+  });
+  if (error) throw error;
+}
