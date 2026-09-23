@@ -12,6 +12,7 @@ import {
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
 import { IndicatorCard, PeriodFilter } from "../components/patterns/IndicatorCard";
+import { AdminActionButton, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 import { coreApi, operationTasksListQuery, propertiesListQuery } from "../lib/api/queries";
 import type { OperationTask } from "../types/core";
 
@@ -77,16 +78,14 @@ function OperationPage() {
       <PageHeader title="Operação">
         <PeriodFilter value={view} onChange={setView} options={viewOptions} />
         <PeriodFilter value={period} onChange={setPeriod} options={periodOptions} />
-        <button
+        <AdminActionButton
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
         >
           Nova rotina
-        </button>
+        </AdminActionButton>
       </PageHeader>
-      <p className="mb-4 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+      <p className="mb-4 text-xs text-[var(--admin-muted)]">
         Pendências operacionais do dia a dia, considerando os próximos {period} dias.
       </p>
 
@@ -114,22 +113,17 @@ function OperationPage() {
         </Panel>
       ) : view === "lista" ? (
         <Panel>
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((t) => (
               <li key={t.id}>
                 <Link
                   to="/operacao/$id"
                   params={{ id: t.id }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
+                  className="admin-data-row flex-wrap"
                 >
-                  <span className="font-medium">{t.title}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {t.propertyName ?? t.propertyId ?? "—"}
-                  </span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {t.dueDate ?? "—"} · {t.status}
-                  </span>
+                  <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{t.title}</strong><small className="block truncate text-[var(--admin-muted)]">{t.propertyName ?? t.propertyId ?? "Imóvel não informado"}</small></span>
+                  <span className="text-xs text-[var(--admin-muted)]">{t.dueDate ?? "Sem data"}</span>
+                  <AdminStatusBadge tone={t.priority === "alta" ? "danger" : "neutral"}>{t.status}</AdminStatusBadge>
                 </Link>
               </li>
             ))}

@@ -15,6 +15,7 @@ import {
 import { Drawer } from "../components/patterns/Drawer";
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { Button } from "../components/ui/button";
+import { AdminActionButton, AdminStatusBadge, AdminFilterBar } from "@/components/admin/AdminPrimitives";
 import {
   CLEANING_RESPONSIBILITY_LABELS,
   DEFAULT_QUICK_IMPLEMENTATION_CONDITIONS,
@@ -130,17 +131,15 @@ function ImplementationsPage() {
   return (
     <>
       <PageHeader title="Implantações" count={query.isSuccess ? rows.length : undefined}>
-        <button
+        <AdminActionButton
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
         >
           Nova implantação
-        </button>
+        </AdminActionButton>
       </PageHeader>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <AdminFilterBar className="mb-4">
         <SelectFilter
           label="Filtrar por status"
           value={status}
@@ -184,26 +183,20 @@ function ImplementationsPage() {
           onChange={setProntidao}
           options={prontidaoOptions}
         />
-        <div
-          className="ml-auto flex rounded-[var(--radius-control)] border p-0.5 text-xs"
-          style={surface}
-        >
+        <div className="ml-auto flex rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-0.5 text-xs">
           {(["lista", "funil"] as const).map((v) => (
-            <button
+            <Button
               key={v}
               type="button"
+              variant="ghost"
               onClick={() => setView(v)}
-              className="rounded-[var(--radius-control)] px-3 py-1.5"
-              style={{
-                backgroundColor: view === v ? "var(--stayo-forest)" : "transparent",
-                color: view === v ? "#fdfdfb" : "var(--stayo-ink-muted)",
-              }}
+              className={`h-7 rounded-[calc(var(--admin-radius)-2px)] px-3 text-xs ${view === v ? "bg-[var(--admin-primary)] text-[var(--primary-foreground)] hover:bg-[var(--admin-primary-hover)] hover:text-[var(--primary-foreground)]" : "text-[var(--admin-muted)]"}`}
             >
               {v === "lista" ? "Lista" : "Funil"}
-            </button>
+            </Button>
           ))}
         </div>
-      </div>
+      </AdminFilterBar>
 
       <NewImplementationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
@@ -221,22 +214,21 @@ function ImplementationsPage() {
         </Panel>
       ) : view === "lista" ? (
         <Panel>
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <ul className="divide-y divide-[var(--admin-border)]">
             {rows.map((i) => (
               <li key={i.id}>
                 <Link
                   to="/implantacao/$id"
                   params={{ id: i.id }}
-                  className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[7rem_1fr_1fr_10rem_7rem]"
-                  style={{ color: "var(--stayo-ink)" }}
+                  className="admin-data-row grid gap-2 text-sm sm:grid-cols-[7rem_1fr_1fr_10rem_7rem]"
                 >
                   <span className="font-medium">{i.code}</span>
                   <span>{i.ownerName || "—"}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                  <span className="text-[var(--admin-muted)]">
                     {[i.condominiumName, i.unit].filter(Boolean).join(" · ") || "—"}
                   </span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>{statusLabels[i.status]}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
+                  <AdminStatusBadge tone={i.status === "ativo" ? "success" : i.status === "cancelado" ? "danger" : "info"}>{statusLabels[i.status]}</AdminStatusBadge>
+                  <span className="text-[var(--admin-muted)]">
                     {i.startDateEstimate ?? "—"}
                   </span>
                 </Link>
