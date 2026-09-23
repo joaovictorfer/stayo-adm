@@ -228,7 +228,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-[var(--admin-border)] bg-[color-mix(in_srgb,var(--admin-surface)_94%,transparent)] px-4 backdrop-blur-xl lg:px-6">
+        <header className="sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-[var(--admin-border)] bg-[color-mix(in_srgb,var(--admin-surface)_94%,transparent)] px-4 backdrop-blur-xl lg:px-5">
           <Button
             type="button"
             variant="ghost"
@@ -273,7 +273,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AccountMenu />
           </div>
         </header>
-        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-6 xl:p-8">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-5 xl:p-6">{children}</main>
       </div>
     </div>
   );
