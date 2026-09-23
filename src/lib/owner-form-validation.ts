@@ -90,6 +90,9 @@ export const ownerOnboardingFormSchema = z.object({
   city: z.string().trim().min(2, "Informe a cidade.").max(100),
   state: z.string().trim().length(2, "Informe a UF.").transform((value) => value.toUpperCase()),
   bankName: z.string().trim().min(2, "Informe o banco.").max(120),
+  bankBranch: z.string().trim().min(1, "Informe a agência.").max(20),
+  accountNumber: z.string().trim().min(1, "Informe a conta.").max(30),
+  accountType: z.enum(["checking", "savings", "payment"]),
   accountHolder: requiredName,
   holderTaxId: documentSchema,
   pixType: z.enum(["cpf", "cnpj", "phone", "email", "random"]),
@@ -126,6 +129,8 @@ export function normalizeOwnerSubmission(input: z.output<typeof ownerOnboardingF
     email: normalizeEmail(input.email),
     phone: normalizePhone(input.phone),
     postalCode: normalizeDocument(input.postalCode),
+    bankBranch: input.bankBranch.trim(),
+    accountNumber: input.accountNumber.trim(),
     holderTaxId: normalizeDocument(input.holderTaxId),
     pixKey,
   };

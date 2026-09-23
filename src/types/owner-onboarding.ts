@@ -43,6 +43,9 @@ export interface OwnerOnboardingSubmission {
   city: string;
   state: string;
   bankName: string;
+  bankBranch: string;
+  accountNumber: string;
+  accountType: "checking" | "savings" | "payment";
   accountHolder: string;
   holderTaxId: string;
   pixType: OwnerPixType;

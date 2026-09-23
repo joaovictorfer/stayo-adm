@@ -529,6 +529,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const submission: OwnerOnboardingSubmission = {
         implementationId,
         ...input,
+        currentStep: 5,
         submittedAt: new Date().toISOString(),
       };
       const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter(
@@ -1264,13 +1265,30 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return link;
     },
     getSubmission: async (implementationId) => {
-      const { data, error } = await client()
-        .from("owner_onboarding_submissions")
-        .select()
-        .eq("implementation_id", implementationId)
-        .maybeSingle<OwnerOnboardingSubmissionRow>();
+      const { data: profile, error: profileError } = await client().from("owner_onboarding_profiles").select().eq("implementation_id", implementationId).maybeSingle();
+      if (profileError) throw profileError;
+      if (profile) {
+        const { data: payout, error: payoutError } = await client().from("owner_payout_accounts").select().eq("implementation_id", implementationId).maybeSingle();
+        if (payoutError) throw payoutError;
+        return ownerOnboardingFromDraft({ ...profile, ...(payout ?? {}) }, implementationId);
+      }
+      const { data, error } = await client().from("owner_onboarding_submissions").select().eq("implementation_id", implementationId).maybeSingle<OwnerOnboardingSubmissionRow>();
       if (error) throw error;
       return data ? ownerOnboardingSubmissionFromRow(data) : null;
+    },
+    getDraft: async (token) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", { p_token: token });
+      if (error) throw error;
+      return data ? ownerOnboardingFromDraft(data as Record<string, unknown>) : null;
+    },
+    saveDraft: async (token, input, currentStep, submit = false) => {
+      const { data, error } = await client().rpc("owner_onboarding_draft_save", {
+        p_token: token,
+        p_submit: submit,
+        p_data: { ...input, legalName: input.fullName, taxId: input.document, currentStep, confirmed: submit },
+      });
+      if (error) throw error;
+      return ownerOnboardingFromDraft(data as Record<string, unknown>);
     },
     // findByToken/submit são chamados pelo portal público, sem sessão
     // autenticada — nunca tocam a tabela direto sob RLS (que exige papel
@@ -1305,18 +1323,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       };
     },
     submit: async (_implementationId, token, input) => {
-      const { data, error } = await client()
-        .rpc("owner_onboarding_submit", {
-          p_token: token,
-          p_full_name: input.fullName,
-          p_document: input.document,
-          p_email: input.email,
-          p_phone: input.phone,
-          p_pix_key: input.pixKey,
-        })
-        .single<OwnerOnboardingSubmissionRow>();
-      if (error) throw error;
-      return ownerOnboardingSubmissionFromRow(data);
+      return ownerOnboarding.saveDraft(token, input, 5, true);
     },
   };
 
