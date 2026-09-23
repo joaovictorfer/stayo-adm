@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Check, CheckCircle2, LockKeyhole, Plus, ShieldCheck, Sparkles, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
@@ -23,11 +23,13 @@ import {
   normalizeOwnerSubmission,
   ownerOnboardingFormSchema,
   validateOwnerField,
+  suggestPixKey,
   type OwnerFormField,
 } from "../lib/owner-form-validation";
 import {
   ownerOnboardingLinkStatus,
   type OwnerOnboardingSubmissionInput,
+  type OwnerOnboardingPerson,
 } from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/portal/implantacao/$token")({
@@ -62,6 +64,9 @@ const emptyForm: OwnerOnboardingSubmissionInput = {
   pixType: "cpf",
   pixKey: "",
   isPrimary: true,
+  people: [
+    { role: "proprietario", personType: "pf", fullName: "", document: "", email: "", phone: "" },
+  ],
 };
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -140,6 +145,15 @@ function OwnerOnboardingForm({
         email: ownerQ.data?.email ?? "",
         phone: ownerQ.data?.phone ?? "",
         accountHolder: ownerQ.data?.name ?? "",
+        holderTaxId: ownerQ.data?.document ?? "",
+        people: [{
+          role: "proprietario",
+          personType: "pf",
+          fullName: ownerQ.data?.name ?? "",
+          document: ownerQ.data?.document ?? "",
+          email: ownerQ.data?.email ?? "",
+          phone: ownerQ.data?.phone ?? "",
+        }],
       }));
   }, [draftQ.data, ownerQ.data]);
 
@@ -179,6 +193,46 @@ function OwnerOnboardingForm({
     touched[field] ? validateOwnerField(field, form[field]) : undefined;
   const touch = (field: OwnerFormField) => () =>
     setTouched((current) => ({ ...current, [field]: true }));
+  const people = form.people.length
+    ? form.people
+    : [{ role: "proprietario" as const, personType: form.personType, fullName: form.fullName, document: form.document, email: form.email, phone: form.phone }];
+  const [selectedHolder, setSelectedHolder] = useState(0);
+  const [manualHolder, setManualHolder] = useState(false);
+  const [manualPix, setManualPix] = useState(false);
+  const selectedPerson = people[selectedHolder] ?? people[0];
+  const updatePerson = (index: number, patch: Partial<OwnerOnboardingPerson>) => {
+    setForm((current) => {
+      const nextPeople = current.people.map((person, personIndex) =>
+        personIndex === index ? { ...person, ...patch } : person,
+      );
+      const primary = nextPeople[0];
+      return primary
+        ? { ...current, people: nextPeople, personType: primary.personType, fullName: primary.fullName, document: primary.document, email: primary.email || current.email, phone: primary.phone || current.phone }
+        : current;
+    });
+  };
+  const addPerson = () =>
+    setForm((current) => ({
+      ...current,
+      people: [...current.people, { role: "coproprietario", personType: "pf", fullName: "", document: "", email: "", phone: "" }],
+    }));
+  const removePerson = (index: number) => {
+    setForm((current) => ({ ...current, people: current.people.filter((_, personIndex) => personIndex !== index) }));
+    setSelectedHolder(0);
+  };
+  const usePersonAsHolder = (index: number) => {
+    const person = people[index];
+    if (!person) return;
+    setSelectedHolder(index);
+    setManualHolder(false);
+    set("accountHolder", person.fullName);
+    set("holderTaxId", person.document);
+    if (form.pixType !== "random") {
+      const suggestion = suggestPixKey(person, form.pixType);
+      if (suggestion) set("pixKey", suggestion);
+    }
+    toast.success("Titular selecionado", { description: "Os dados cadastrais foram preenchidos no repasse." });
+  };
 
   if (submissionQ.data?.submittedAt)
     return (
@@ -226,30 +280,14 @@ function OwnerOnboardingForm({
       invalidMessage: "Confira os dados desta etapa.",
       content: (
         <Section icon={<ShieldCheck />} text="Primeiro, confirme quem é o titular do imóvel.">
-          <Choice
-            label="Tipo de pessoa"
-            value={form.personType}
-            onChange={(value) => set("personType", value as "pf" | "pj")}
-            options={[
-              { value: "pf", label: "Pessoa física" },
-              { value: "pj", label: "Pessoa jurídica" },
-            ]}
-          />
-          <TextField
-            label={form.personType === "pf" ? "Nome completo" : "Razão social"}
-            value={form.fullName}
-            onChange={(value) => set("fullName", value)}
-            onBlur={touch("fullName")}
-            error={error("fullName")}
-          />
-          <TextField
-            label={form.personType === "pf" ? "CPF" : "CNPJ"}
-            value={formatBrazilianDocument(form.document)}
-            onChange={(value) => set("document", formatBrazilianDocument(value))}
-            onBlur={touch("document")}
-            error={error("document")}
-            inputMode="numeric"
-          />
+          <div className="space-y-3">
+            {people.map((person, index) => (
+              <PersonEditor key={index} person={person} index={index} canRemove={index > 0} onChange={(patch) => updatePerson(index, patch)} onRemove={() => removePerson(index)} />
+            ))}
+          </div>
+          <Button type="button" variant="outline" className="portal-add-person w-full" onClick={addPerson}>
+            <Plus className="size-4" /> Adicionar proprietário ou proponente
+          </Button>
         </Section>
       ),
     },
@@ -386,30 +424,38 @@ function OwnerOnboardingForm({
             }
             options={[...ACCOUNT_TYPES]}
           />
-          <TextField
-            label="Titular"
-            value={form.accountHolder}
-            onChange={(value) => set("accountHolder", value)}
-            error={error("accountHolder")}
-          />
-          <TextField
-            label="CPF/CNPJ do titular"
-            value={formatBrazilianDocument(form.holderTaxId)}
-            onChange={(value) => set("holderTaxId", formatBrazilianDocument(value))}
-            error={error("holderTaxId")}
-          />
+          <div className="portal-smart-field">
+            <div className="portal-smart-field-head"><span>Titular da conta</span><Sparkles className="size-4" /></div>
+            {people.length > 1 && !manualHolder ? (
+              <div className="grid gap-2">
+                {people.map((person, index) => (
+                  <button key={index} type="button" className={`portal-person-option ${selectedHolder === index ? "is-selected" : ""}`} onClick={() => usePersonAsHolder(index)}>
+                    <UserRound className="size-4" /><span><strong>{person.fullName || `Pessoa ${index + 1}`}</strong><small>{formatBrazilianDocument(person.document) || "Documento pendente"}</small></span>{selectedHolder === index && <Check className="size-4" />}
+                  </button>
+                ))}
+              </div>
+            ) : !manualHolder && selectedPerson ? (
+              <div className="portal-person-summary"><UserRound className="size-5" /><div><strong>{selectedPerson.fullName}</strong><span>{formatBrazilianDocument(selectedPerson.document)}</span></div></div>
+            ) : (
+              <div className="space-y-3"><TextField label="Titular" value={form.accountHolder} onChange={(value) => set("accountHolder", value)} error={error("accountHolder")} /><TextField label="CPF/CNPJ do titular" value={formatBrazilianDocument(form.holderTaxId)} onChange={(value) => set("holderTaxId", formatBrazilianDocument(value))} error={error("holderTaxId")} /></div>
+            )}
+            <Button type="button" variant="ghost" size="sm" className="portal-inline-action" onClick={() => setManualHolder((value) => !value)}>{manualHolder ? "Usar proprietário cadastrado" : "Alterar titular da conta"}</Button>
+          </div>
           <Choice
             label="Tipo da chave Pix"
             value={form.pixType}
-            onChange={(value) => set("pixType", value as OwnerOnboardingSubmissionInput["pixType"])}
+            onChange={(value) => {
+              const type = value as OwnerOnboardingSubmissionInput["pixType"];
+              set("pixType", type);
+              setManualPix(type === "random");
+              if (selectedPerson && type !== "random") set("pixKey", suggestPixKey(selectedPerson, type));
+            }}
             options={[...PIX_KEY_TYPES]}
           />
-          <TextField
-            label="Chave Pix"
-            value={form.pixKey}
-            onChange={(value) => set("pixKey", value)}
-            error={error("pixKey")}
-          />
+          <div className="portal-smart-field">
+            {!manualPix && form.pixType !== "random" ? <div className="portal-pix-suggestion"><Sparkles className="size-4" /><span><small>Chave sugerida pelos dados do titular</small><strong>{form.pixKey || "Dado ainda não informado"}</strong></span></div> : <TextField label="Chave Pix" value={form.pixKey} onChange={(value) => set("pixKey", value)} error={error("pixKey")} />}
+            {form.pixType !== "random" && <Button type="button" variant="ghost" size="sm" className="portal-inline-action" onClick={() => setManualPix((value) => !value)}>{manualPix ? "Usar sugestão inteligente" : "Alterar chave Pix"}</Button>}
+          </div>
         </Section>
       ),
     },

@@ -868,6 +868,14 @@ interface OwnerOnboardingSubmissionRow {
 function ownerOnboardingSubmissionFromRow(
   row: OwnerOnboardingSubmissionRow,
 ): OwnerOnboardingSubmission {
+  const primary = {
+    role: "proprietario" as const,
+    personType: "pf" as const,
+    fullName: row.full_name,
+    document: row.document ?? "",
+    email: row.email,
+    phone: row.phone,
+  };
   return {
     implementationId: row.implementation_id,
     personType: "pf",
@@ -891,6 +899,7 @@ function ownerOnboardingSubmissionFromRow(
     pixType: "random",
     pixKey: row.pix_key ?? "",
     isPrimary: true,
+    people: [primary],
     currentStep: 5,
     submittedAt: row.submitted_at,
   };
@@ -901,6 +910,32 @@ function ownerOnboardingFromDraft(
   implementationId = "",
 ): OwnerOnboardingSubmission {
   const text = (key: string) => (typeof value[key] === "string" ? (value[key] as string) : "");
+  const rawPeople = Array.isArray(value["people"]) ? value["people"] : [];
+  const people = rawPeople.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const person = candidate as Record<string, unknown>;
+    const personText = (key: string) =>
+      typeof person[key] === "string" ? (person[key] as string) : "";
+    return [{
+      role:
+        person["role"] === "coproprietario" || person["role"] === "proponente"
+          ? person["role"]
+          : ("proprietario" as const),
+      personType: person["personType"] === "pj" ? ("pj" as const) : ("pf" as const),
+      fullName: personText("fullName"),
+      document: personText("document"),
+      email: personText("email"),
+      phone: personText("phone"),
+    }];
+  });
+  const primary = {
+    role: "proprietario" as const,
+    personType: value["personType"] === "pj" ? ("pj" as const) : ("pf" as const),
+    fullName: text("legalName") || text("fullName"),
+    document: text("taxId") || text("document"),
+    email: text("email"),
+    phone: text("phone"),
+  };
   return {
     implementationId: implementationId || text("implementationId"),
     personType: value["personType"] === "pj" ? "pj" : "pf",
@@ -929,6 +964,7 @@ function ownerOnboardingFromDraft(
       : "random",
     pixKey: text("pixKey"),
     isPrimary: value["isPrimary"] !== false,
+    people: people.length ? people : [primary],
     currentStep: typeof value["currentStep"] === "number" ? value["currentStep"] : 1,
     submittedAt: text("submittedAt") || null,
   };
