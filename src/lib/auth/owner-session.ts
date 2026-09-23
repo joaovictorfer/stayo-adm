@@ -177,7 +177,11 @@ export function useOwnerSession(): OwnerAuthState {
     void getCurrentOwnerSession().then(apply);
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => void apply(session));
+    } = client.auth.onAuthStateChange((_event, session) => {
+      // A leitura do vínculo usa o mesmo client e precisa rodar depois que o
+      // callback interno do Auth liberar seu lock.
+      window.setTimeout(() => void apply(session), 0);
+    });
     return () => {
       cancelled = true;
       subscription.unsubscribe();
