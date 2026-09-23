@@ -57,6 +57,13 @@
       "when": 1790134052495,
       "tag": "0007_repair_owner_account_linking",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790136012311,
+      "tag": "0008_owner_portal_property_journey",
+      "breakpoints": true
     }
   ]
 }

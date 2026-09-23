@@ -48,6 +48,7 @@ export type Database = {
           filename: string
           id: string
           implementation_id: string | null
+          inspection_id: string | null
           mime_type: string
           owner_id: string
           owner_task_id: string | null
@@ -61,6 +62,7 @@ export type Database = {
           filename: string
           id?: string
           implementation_id?: string | null
+          inspection_id?: string | null
           mime_type: string
           owner_id: string
           owner_task_id?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           filename?: string
           id?: string
           implementation_id?: string | null
+          inspection_id?: string | null
           mime_type?: string
           owner_id?: string
           owner_task_id?: string | null
@@ -87,6 +90,13 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_inspections"
             referencedColumns: ["id"]
           },
           {
@@ -322,6 +332,59 @@ export type Database = {
           },
         ]
       }
+      implementation_inspections: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          implementation_id: string
+          internal_notes: string | null
+          owner_visible: boolean
+          public_notes: string | null
+          scheduled_for: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id: string
+          internal_notes?: string | null
+          owner_visible?: boolean
+          public_notes?: string | null
+          scheduled_for?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id?: string
+          internal_notes?: string | null
+          owner_visible?: boolean
+          public_notes?: string | null
+          scheduled_for?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_inspections_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_items: {
         Row: {
           blocker: boolean
@@ -532,7 +595,9 @@ export type Database = {
       }
       implementation_property_details: {
         Row: {
+          access_code: string | null
           access_notes: string | null
+          access_type: string | null
           bathrooms: number | null
           bedrooms: number | null
           city: string | null
@@ -552,7 +617,9 @@ export type Database = {
           wifi_password: string | null
         }
         Insert: {
+          access_code?: string | null
           access_notes?: string | null
+          access_type?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
           city?: string | null
@@ -572,7 +639,9 @@ export type Database = {
           wifi_password?: string | null
         }
         Update: {
+          access_code?: string | null
           access_notes?: string | null
+          access_type?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
           city?: string | null
@@ -762,6 +831,50 @@ export type Database = {
           payload?: Json
         }
         Relationships: []
+      }
+      implementation_timeline_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string
+          id: string
+          implementation_id: string
+          kind: string
+          owner_visible: boolean
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string
+          id?: string
+          implementation_id: string
+          kind?: string
+          owner_visible?: boolean
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string
+          id?: string
+          implementation_id?: string
+          kind?: string
+          owner_visible?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_timeline_updates_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       initial_charges: {
         Row: {
@@ -1505,6 +1618,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      owner_can_access_implementation: {
+        Args: { p_implementation_id: string }
+        Returns: boolean
       }
       owner_onboarding_draft_resolve: {
         Args: { p_token: string }
