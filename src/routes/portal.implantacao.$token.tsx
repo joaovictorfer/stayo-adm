@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CheckCircle2,
+  Cloud,
   LockKeyhole,
   Plus,
   ShieldCheck,
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 import { Wizard, type WizardStep } from "../components/patterns/Wizard";
 import { PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
 import { Button } from "../components/ui/button";
+import { StayoLogo } from "../components/brand/StayoLogo";
 import { ACCOUNT_TYPES, BRAZILIAN_BANKS, PIX_KEY_TYPES } from "../config/payment-data";
 import {
   adminApi,
@@ -88,11 +90,13 @@ const emptyForm: OwnerOnboardingSubmissionInput = {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <PortalShell
-      width="compact"
+      width="medium"
       context="Cadastro do proprietário"
       footer="Seus dados são tratados com cuidado pela equipe Stayo."
+      framed={false}
+      showBrand={false}
     >
-      <div className="p-5 sm:p-7">{children}</div>
+      {children}
     </PortalShell>
   );
 }
@@ -429,7 +433,11 @@ function OwnerOnboardingForm({
       hasInlineErrors: identityFields.some((field) => !!error(field)),
       invalidMessage: "Confira os dados desta etapa.",
       content: (
-        <Section icon={<ShieldCheck />} text="Primeiro, confirme quem é o titular do imóvel.">
+        <Section
+          title="Dados de identificação"
+          icon={<ShieldCheck />}
+          text="Primeiro, confirme quem é o titular do imóvel."
+        >
           <div className="space-y-3">
             {people.map((person, index) => (
               <PersonEditor
@@ -460,7 +468,10 @@ function OwnerOnboardingForm({
       hasInlineErrors: contactFields.some((field) => !!error(field)),
       invalidMessage: "Confira os dados desta etapa.",
       content: (
-        <Section text="Informe como a equipe Stayo pode falar com você.">
+        <Section
+          title="Seus dados de contato"
+          text="Informe como a equipe Stayo pode falar com você."
+        >
           <TextField
             label="E-mail"
             type="email"
@@ -494,7 +505,10 @@ function OwnerOnboardingForm({
       hasInlineErrors: addressFields.some((field) => !!error(field)),
       invalidMessage: "Complete o endereço para continuar.",
       content: (
-        <Section text="Buscamos o CEP automaticamente; se não encontrarmos, você pode preencher manualmente.">
+        <Section
+          title="Endereço residencial"
+          text="Buscamos o CEP automaticamente; se não encontrarmos, você pode preencher manualmente."
+        >
           <TextField
             label="CEP"
             value={formatBrazilianPostalCode(form.postalCode)}
@@ -556,6 +570,7 @@ function OwnerOnboardingForm({
       invalidMessage: "Complete os dados de repasse.",
       content: (
         <Section
+          title="Conta para repasse"
           icon={<LockKeyhole />}
           text="Estes dados ficam restritos à equipe autorizada e serão confirmados antes do primeiro repasse."
         >
@@ -701,7 +716,10 @@ function OwnerOnboardingForm({
       label: "Revisão",
       isValid: ownerOnboardingFormSchema.safeParse(form).success,
       content: (
-        <Section text="Revise os dados antes de confirmar. Você continuará com acesso após o envio.">
+        <Section
+          title="Revise e confirme"
+          text="Revise os dados antes de confirmar. Você continuará com acesso após o envio."
+        >
           <Review
             label={people.length > 1 ? "Proprietários e proponentes" : "Titular"}
             value={people
@@ -728,56 +746,81 @@ function OwnerOnboardingForm({
   return (
     <Shell>
       <div
+        className="portal-onboarding"
         onBlurCapture={() => void persistDraft(formRef.current, stepRef.current)}
         onFocusCapture={() => {
           if (autoSaveState === "error") void persistDraft(formRef.current, stepRef.current);
         }}
       >
-        <h1 className="mb-1 text-lg font-semibold">Vamos concluir seu cadastro</h1>
-        <p className="mb-4 text-sm text-[var(--portal-muted)]">
-          São cinco etapas curtas. Suas alterações são salvas automaticamente.
-        </p>
-        <div
-          className="mb-4 flex items-center gap-2 text-xs text-[var(--portal-muted)]"
-          role="status"
-        >
-          <span
-            className={`size-2 rounded-full ${
-              autoSaveState === "error"
-                ? "bg-[var(--portal-danger)]"
-                : autoSaveState === "saving"
-                  ? "animate-pulse bg-[var(--portal-gold)]"
-                  : "bg-[var(--portal-success)]"
-            }`}
-          />
-          {autoSaveState === "saving"
-            ? "Salvando alterações…"
-            : autoSaveState === "error"
-              ? "Não foi possível salvar agora. Tentaremos novamente."
-              : autoSaveState === "saved"
-                ? "Alterações salvas"
-                : "Salvamento automático ativo"}
-        </div>
-        <Wizard
-          steps={steps}
-          initialStep={currentStep - 1}
-          onStepChange={(index) => {
-            const nextStep = index + 1;
-            setCurrentStep(nextStep);
-            void persistDraft(formRef.current, nextStep);
-          }}
-          completeLabel="Confirmar e enviar cadastro"
-          submitting={save.isPending}
-          onComplete={() => save.mutate({ submit: true, step: 5 })}
-        />
-        <Button
-          variant="ghost"
-          className="mt-3 w-full"
-          disabled={save.isPending}
-          onClick={() => save.mutate({ submit: false, step: currentStep })}
-        >
-          Salvar e continuar depois
-        </Button>
+        <header className="portal-onboarding-header">
+          <div className="portal-onboarding-brand-row">
+            <StayoLogo variant="white" className="h-auto w-24" />
+            <div className={`portal-autosave is-${autoSaveState}`} role="status">
+              {autoSaveState === "saved" ? <CheckCircle2 /> : <Cloud />}
+              <span>
+                {autoSaveState === "saving"
+                  ? "Salvando…"
+                  : autoSaveState === "error"
+                    ? "Tentaremos novamente"
+                    : autoSaveState === "saved"
+                      ? "Tudo salvo"
+                      : "Salvamento ativo"}
+              </span>
+            </div>
+          </div>
+          <p className="portal-onboarding-eyebrow">Cadastro seguro do proprietário</p>
+          <h1>Vamos preparar seus dados</h1>
+          <p className="portal-onboarding-lead">
+            Uma etapa por vez. Você pode sair e continuar depois.
+          </p>
+          <div
+            className="portal-onboarding-progress"
+            role="progressbar"
+            aria-valuenow={currentStep}
+            aria-valuemin={1}
+            aria-valuemax={5}
+          >
+            {steps.map((step, index) => (
+              <div key={step.id} className={index + 1 <= currentStep ? "is-active" : ""}>
+                <span />
+                <small>{step.label}</small>
+              </div>
+            ))}
+          </div>
+        </header>
+        <main className="portal-onboarding-main">
+          <div className="portal-onboarding-card">
+            <div className="portal-onboarding-step-meta">
+              <span>Etapa {currentStep} de 5</span>
+              <strong>{steps[currentStep - 1]?.label}</strong>
+            </div>
+            <Wizard
+              steps={steps}
+              initialStep={currentStep - 1}
+              hideProgress
+              onStepChange={(index) => {
+                const nextStep = index + 1;
+                setCurrentStep(nextStep);
+                void persistDraft(formRef.current, nextStep);
+              }}
+              completeLabel="Confirmar e enviar cadastro"
+              submitting={save.isPending}
+              onComplete={() => save.mutate({ submit: true, step: 5 })}
+            />
+          </div>
+          <Button
+            variant="ghost"
+            className="portal-save-later"
+            disabled={save.isPending}
+            onClick={() => save.mutate({ submit: false, step: currentStep })}
+          >
+            Salvar e continuar depois
+          </Button>
+          <div className="portal-onboarding-trust">
+            <ShieldCheck />
+            <span>Seus dados são protegidos e acessíveis apenas à equipe autorizada.</span>
+          </div>
+        </main>
       </div>
     </Shell>
   );
@@ -832,16 +875,21 @@ async function lookupPostalCode(
 }
 
 function Section({
+  title,
   icon,
   text,
   children,
 }: {
+  title: string;
   icon?: React.ReactNode;
   text: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="portal-form-section">
+      <div className="portal-form-title">
+        <span>{title}</span>
+      </div>
       <div className="portal-form-guidance">
         {icon}
         <p>{text}</p>
@@ -960,20 +1008,24 @@ function Choice({
   options: ReadonlyArray<{ value: string; label: string }>;
 }) {
   return (
-    <label className="block text-sm">
-      <span className="mb-1 block text-xs text-[var(--portal-muted)]">{label}</span>
-      <select
-        className="portal-input w-full rounded-xl px-3 py-2.5"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
+    <fieldset className="portal-choice">
+      <legend>{label}</legend>
+      <div className={`portal-choice-grid portal-choice-grid-${Math.min(options.length, 3)}`}>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <Button
+            key={option.value}
+            type="button"
+            variant="outline"
+            className={value === option.value ? "is-selected" : ""}
+            onClick={() => onChange(option.value)}
+            aria-pressed={value === option.value}
+          >
+            {value === option.value && <Check className="size-3.5" />}
             {option.label}
-          </option>
+          </Button>
         ))}
-      </select>
-    </label>
+      </div>
+    </fieldset>
   );
 }
 function TextField({

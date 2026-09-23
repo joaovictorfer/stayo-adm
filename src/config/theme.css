@@ -561,7 +561,212 @@ a.admin-data-row:hover,
   --stayo-gold: var(--portal-gold);
   --stayo-gold-soft: var(--portal-gold-soft);
   color-scheme: light;
-  font-family: var(--stayo-font-ui);
+  font-family: "Manrope", var(--stayo-font-ui);
+}
+
+.portal-onboarding {
+  min-height: 100svh;
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 20px;
+  background: var(--portal-surface);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--portal-navy) 12%, transparent);
+}
+.portal-onboarding-header {
+  position: relative;
+  padding: 1.75rem 2rem 3.4rem;
+  border-radius: 0 0 28px 28px;
+  background: var(--portal-navy);
+  color: var(--portal-hero-foreground);
+}
+.portal-onboarding-header::after {
+  position: absolute;
+  right: 2rem;
+  bottom: 0;
+  width: 5rem;
+  height: 2px;
+  background: var(--portal-gold);
+  content: "";
+}
+.portal-onboarding-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2.2rem;
+}
+.portal-onboarding-eyebrow {
+  color: var(--portal-gold-soft);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.portal-onboarding-header h1 {
+  margin-top: 0.35rem;
+  font-family: "Sora", var(--stayo-font-display);
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+.portal-onboarding-lead {
+  margin-top: 0.55rem;
+  color: var(--portal-hero-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.portal-autosave {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--portal-hero-foreground) 20%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-navy-strong) 72%, transparent);
+  padding: 0.42rem 0.65rem;
+  color: var(--portal-hero-muted);
+  font-size: 0.64rem;
+  font-weight: 650;
+}
+.portal-autosave svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+.portal-autosave.is-saving svg {
+  animation: portal-cloud-pulse 1s ease-in-out infinite;
+}
+.portal-autosave.is-saved {
+  color: var(--portal-gold-soft);
+}
+.portal-autosave.is-error {
+  border-color: color-mix(in srgb, var(--portal-danger) 60%, transparent);
+}
+.portal-onboarding-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 1.7rem;
+}
+.portal-onboarding-progress div {
+  min-width: 0;
+}
+.portal-onboarding-progress span {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-hero-foreground) 20%, transparent);
+  transition:
+    background-color 260ms ease,
+    transform 260ms ease;
+}
+.portal-onboarding-progress .is-active span {
+  background: var(--portal-gold);
+  transform: scaleY(1.3);
+}
+.portal-onboarding-progress small {
+  display: block;
+  overflow: hidden;
+  margin-top: 0.55rem;
+  color: color-mix(in srgb, var(--portal-hero-foreground) 62%, transparent);
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.portal-onboarding-progress .is-active small {
+  color: var(--portal-hero-foreground);
+}
+.portal-onboarding-main {
+  position: relative;
+  z-index: 1;
+  margin-top: -1.7rem;
+  padding: 0 1.25rem 1.5rem;
+}
+.portal-onboarding-card {
+  border: 1px solid var(--portal-border);
+  border-radius: 16px;
+  background: var(--portal-surface);
+  padding: 1.5rem;
+  box-shadow: 0 14px 38px color-mix(in srgb, var(--portal-navy) 9%, transparent);
+  animation: portal-success-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.portal-onboarding-step-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--portal-border);
+  color: var(--portal-muted);
+  font-size: 0.67rem;
+}
+.portal-onboarding-step-meta strong {
+  color: var(--portal-gold);
+  text-transform: uppercase;
+}
+.portal-save-later {
+  display: flex;
+  width: fit-content;
+  margin: 0.65rem auto 0;
+  color: var(--portal-muted);
+  font-size: 0.72rem;
+}
+.portal-onboarding-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  color: var(--portal-muted);
+  font-size: 0.65rem;
+  text-align: center;
+}
+.portal-onboarding-trust svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  color: var(--portal-gold);
+}
+.portal-form-title {
+  color: var(--portal-navy);
+  font-family: "Sora", var(--stayo-font-display);
+  font-size: 1.12rem;
+  font-weight: 600;
+}
+.portal-choice legend {
+  margin-bottom: 0.45rem;
+  color: var(--portal-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.portal-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.portal-choice-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.portal-choice-grid button {
+  min-width: 0;
+  height: 2.65rem;
+  border-color: var(--portal-border);
+  border-radius: 9px;
+  color: var(--portal-muted);
+  font-size: 0.7rem;
+}
+.portal-choice-grid button.is-selected {
+  border-color: var(--portal-gold);
+  background: var(--portal-gold-soft);
+  color: var(--portal-navy);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--portal-gold) 25%, transparent);
+}
+@keyframes portal-cloud-pulse {
+  50% {
+    opacity: 0.45;
+    transform: translateY(-1px);
+  }
 }
 
 .portal-shell-surface {
@@ -1914,7 +2119,7 @@ a.admin-data-row:hover,
 
 .portal-input {
   border: 1px solid var(--portal-border);
-  background: var(--portal-surface);
+  background: var(--portal-surface-soft);
   color: var(--portal-ink);
   transition:
     border-color 180ms ease,
@@ -1926,6 +2131,7 @@ a.admin-data-row:hover,
 }
 .portal-input:focus {
   border-color: var(--portal-navy);
+  background: var(--portal-surface);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-navy) 12%, transparent);
   outline: none;
 }
@@ -1935,7 +2141,7 @@ a.admin-data-row:hover,
 }
 .portal-form-section {
   display: grid;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 .portal-person-card,
 .portal-smart-field {
@@ -2019,7 +2225,8 @@ a.admin-data-row:hover,
   align-items: flex-start;
   gap: 0.65rem;
   border-radius: 10px;
-  background: var(--portal-surface-soft);
+  border: 1px solid color-mix(in srgb, var(--portal-gold) 22%, var(--portal-border));
+  background: color-mix(in srgb, var(--portal-gold) 6%, var(--portal-surface));
   padding: 0.85rem;
   color: var(--portal-muted);
   font-size: 0.76rem;

@@ -22,3 +22,4 @@
 - [x] Corrigir falha ao concluir o cadastro do proprietário e exibir erro específico
 - [x] Salvar automaticamente o cadastro do proprietário enquanto ele preenche
 - [x] Refletir rascunhos do portal nas fichas administrativas em atualização contínua
+- [x] Redesenhar a jornada pública de cadastro com foco por etapa, controles visuais e feedback de autosalvamento
