@@ -18,33 +18,48 @@ export type Database = {
         Row: {
           address: string | null
           city: string | null
+          concierge_phone: string | null
           cover_image: string | null
           created_at: string
           created_by: string | null
+          has_concierge: boolean
           id: string
           name: string
+          neighborhood: string | null
+          postal_code: string | null
+          state: string | null
           status: string
           updated_at: string
         }
         Insert: {
           address?: string | null
           city?: string | null
+          concierge_phone?: string | null
           cover_image?: string | null
           created_at?: string
           created_by?: string | null
+          has_concierge?: boolean
           id?: string
           name: string
+          neighborhood?: string | null
+          postal_code?: string | null
+          state?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           address?: string | null
           city?: string | null
+          concierge_phone?: string | null
           cover_image?: string | null
           created_at?: string
           created_by?: string | null
+          has_concierge?: boolean
           id?: string
           name?: string
+          neighborhood?: string | null
+          postal_code?: string | null
+          state?: string | null
           status?: string
           updated_at?: string
         }

@@ -89,6 +89,19 @@ export const condominiumQuery = (id: EntityId) =>
     queryFn: () => coreApi.condominiums.get(id),
   });
 
+/** Cadastro mestre de condomínios do Admin (admin_condominiums). */
+export const adminCondominiumsListQuery = () =>
+  queryOptions({
+    queryKey: ["admin", "condominiums", "list"],
+    queryFn: () => adminApi.condominiums.list(),
+  });
+
+export const adminCondominiumQuery = (id: EntityId) =>
+  queryOptions({
+    queryKey: ["admin", "condominiums", "detail", id],
+    queryFn: () => adminApi.condominiums.get(id),
+  });
+
 export const reservationsListQuery = (propertyId?: EntityId) =>
   queryOptions({
     queryKey: ["reservations", "list", propertyId ?? null],

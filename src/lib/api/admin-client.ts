@@ -32,6 +32,7 @@ import type {
   AdminCondominium,
   AdminCondominiumInput,
 } from "../../types/admin";
+import { computeCondominiumStatus } from "../../types/admin";
 import type {
   OwnerOnboardingLink,
   OwnerOnboardingPerson,
@@ -69,6 +70,7 @@ export interface AdminApiClient {
   };
   condominiums: {
     list(query?: string): Promise<AdminCondominium[]>;
+    get(id: string): Promise<AdminCondominium | null>;
     create(input: AdminCondominiumInput): Promise<AdminCondominium>;
     update(id: string, patch: Partial<AdminCondominiumInput>): Promise<AdminCondominium>;
   };
@@ -283,41 +285,71 @@ export function createLocalAdminApiClient(): AdminApiClient {
     },
   };
 
+  const normalizeLocalCondo = (
+    c: Partial<AdminCondominium> & AdminCondominium,
+  ): AdminCondominium => ({
+    ...c,
+    neighborhood: c.neighborhood ?? null,
+    state: c.state ?? null,
+    postalCode: c.postalCode ?? null,
+    hasConcierge: !!c.hasConcierge,
+    conciergePhone: c.conciergePhone ?? null,
+  });
+  const readCondos = () => read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY).map(normalizeLocalCondo);
+  const trimOrNull = (v: string | null | undefined) => v?.trim() || null;
+
   const condominiums: AdminApiClient["condominiums"] = {
     list: (query) => {
       const term = query?.trim().toLocaleLowerCase("pt-BR");
-      const rows = read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY);
+      const rows = readCondos().sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
       return Promise.resolve(
         term ? rows.filter((item) => item.name.toLocaleLowerCase("pt-BR").includes(term)) : rows,
       );
     },
+    get: (id) => Promise.resolve(readCondos().find((c) => c.id === id) ?? null),
     create: (input) => {
       const now = new Date().toISOString();
-      const item: AdminCondominium = {
+      const hasConcierge = !!input.hasConcierge;
+      const base = {
         id: newId(),
         name: input.name.trim(),
-        address: input.address?.trim() || null,
-        city: input.city?.trim() || null,
-        status: input.address?.trim() ? "complete" : "pending",
+        address: trimOrNull(input.address),
+        neighborhood: trimOrNull(input.neighborhood),
+        city: trimOrNull(input.city),
+        state: trimOrNull(input.state),
+        postalCode: trimOrNull(input.postalCode),
+        hasConcierge,
+        conciergePhone: hasConcierge ? trimOrNull(input.conciergePhone) : null,
         coverImage: input.coverImage ?? null,
         createdAt: now,
         updatedAt: now,
       };
-      write(ADMIN_CONDOMINIUMS_KEY, [...read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY), item]);
+      const item: AdminCondominium = { ...base, status: computeCondominiumStatus(base) };
+      write(ADMIN_CONDOMINIUMS_KEY, [...readCondos(), item]);
       return Promise.resolve(item);
     },
     update: async (id, patch) => {
-      const rows = read<AdminCondominium>(ADMIN_CONDOMINIUMS_KEY);
+      const rows = readCondos();
       const current = rows.find((item) => item.id === id);
       if (!current) throw new Error("Condomínio não encontrado.");
-      const updated: AdminCondominium = {
-        ...current,
-        ...patch,
-        status: (patch.address ?? current.address) ? "complete" : "pending",
-        updatedAt: new Date().toISOString(),
-      };
-      write(ADMIN_CONDOMINIUMS_KEY, rows.map((item) => (item.id === id ? updated : item)));
-      return updated;
+      const merged: AdminCondominium = { ...current, updatedAt: new Date().toISOString() };
+      if (patch.name !== undefined) merged.name = patch.name.trim();
+      if (patch.address !== undefined) merged.address = trimOrNull(patch.address);
+      if (patch.neighborhood !== undefined) merged.neighborhood = trimOrNull(patch.neighborhood);
+      if (patch.city !== undefined) merged.city = trimOrNull(patch.city);
+      if (patch.state !== undefined) merged.state = trimOrNull(patch.state);
+      if (patch.postalCode !== undefined) merged.postalCode = trimOrNull(patch.postalCode);
+      if (patch.hasConcierge !== undefined) merged.hasConcierge = patch.hasConcierge;
+      if (patch.conciergePhone !== undefined)
+        merged.conciergePhone = trimOrNull(patch.conciergePhone);
+      if (!merged.hasConcierge) merged.conciergePhone = null;
+      if (patch.coverImage !== undefined) merged.coverImage = patch.coverImage;
+      merged.status = computeCondominiumStatus(merged);
+      write(
+        ADMIN_CONDOMINIUMS_KEY,
+        rows.map((item) => (item.id === id ? merged : item)),
+      );
+      return merged;
     },
   };
 
@@ -1176,7 +1208,12 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     id: string;
     name: string;
     address: string | null;
+    neighborhood?: string | null;
     city: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    has_concierge?: boolean | null;
+    concierge_phone?: string | null;
     status: string;
     cover_image: string | null;
     created_at: string;
@@ -1185,30 +1222,61 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
     id: row.id,
     name: row.name,
     address: row.address,
+    neighborhood: row.neighborhood ?? null,
     city: row.city,
+    state: row.state ?? null,
+    postalCode: row.postal_code ?? null,
+    hasConcierge: !!row.has_concierge,
+    conciergePhone: row.concierge_phone ?? null,
     status: row.status === "complete" ? "complete" : "pending",
     coverImage: row.cover_image,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
 
+  const clean = (v: string | null | undefined) => (v === undefined ? undefined : v?.trim() || null);
+
   const condominiums: AdminApiClient["condominiums"] = {
     list: async (query) => {
-      let request = client().from("admin_condominiums").select("*").order("name").limit(20);
+      let request = client().from("admin_condominiums").select("*").order("name").limit(500);
       if (query?.trim()) request = request.ilike("name", `%${query.trim()}%`);
       const { data, error } = await request;
       if (error) throw error;
       return (data ?? []).map(condominiumFromRow);
     },
+    get: async (id) => {
+      const { data, error } = await client()
+        .from("admin_condominiums")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? condominiumFromRow(data) : null;
+    },
     create: async (input) => {
+      const hasConcierge = !!input.hasConcierge;
+      const row = {
+        name: input.name.trim(),
+        address: clean(input.address) ?? null,
+        neighborhood: clean(input.neighborhood) ?? null,
+        city: clean(input.city) ?? null,
+        state: clean(input.state) ?? null,
+        postal_code: clean(input.postalCode) ?? null,
+        has_concierge: hasConcierge,
+        concierge_phone: hasConcierge ? (clean(input.conciergePhone) ?? null) : null,
+        cover_image: input.coverImage ?? null,
+      };
       const { data, error } = await client()
         .from("admin_condominiums")
         .insert({
-          name: input.name.trim(),
-          address: input.address?.trim() || null,
-          city: input.city?.trim() || null,
-          status: input.address?.trim() ? "complete" : "pending",
-          cover_image: input.coverImage ?? null,
+          ...row,
+          status: computeCondominiumStatus({
+            name: row.name,
+            address: row.address,
+            city: row.city,
+            hasConcierge,
+            conciergePhone: row.concierge_phone,
+          }),
         })
         .select("*")
         .single();
@@ -1216,16 +1284,24 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return condominiumFromRow(data);
     },
     update: async (id, patch) => {
+      const update: { [k: string]: unknown; updated_at: string } = {
+        updated_at: new Date().toISOString(),
+      };
+      if (patch.name !== undefined) update["name"] = patch.name.trim();
+      if (patch.address !== undefined) update["address"] = clean(patch.address);
+      if (patch.neighborhood !== undefined) update["neighborhood"] = clean(patch.neighborhood);
+      if (patch.city !== undefined) update["city"] = clean(patch.city);
+      if (patch.state !== undefined) update["state"] = clean(patch.state);
+      if (patch.postalCode !== undefined) update["postal_code"] = clean(patch.postalCode);
+      if (patch.hasConcierge !== undefined) update["has_concierge"] = patch.hasConcierge;
+      if (patch.conciergePhone !== undefined)
+        update["concierge_phone"] = clean(patch.conciergePhone);
+      if (patch.hasConcierge === false) update["concierge_phone"] = null;
+      if (patch.coverImage !== undefined) update["cover_image"] = patch.coverImage;
+      // status é recalculado pelo trigger admin_condominiums_compute_status
       const { data, error } = await client()
         .from("admin_condominiums")
-        .update({
-          name: patch.name?.trim(),
-          address: patch.address?.trim() || null,
-          city: patch.city?.trim() || null,
-          cover_image: patch.coverImage,
-          status: patch.address?.trim() ? "complete" : undefined,
-          updated_at: new Date().toISOString(),
-        })
+        .update(update)
         .eq("id", id)
         .select("*")
         .single();
