@@ -164,6 +164,7 @@ export const ownerOnboardingSubmissionQuery = (implementationId: EntityId) =>
   queryOptions({
     queryKey: ["owner-onboarding", "submission", implementationId],
     queryFn: () => adminApi.ownerOnboarding.getSubmission(implementationId),
+    refetchInterval: 5_000,
   });
 
 export const ownerOnboardingLinkByTokenQuery = (token: string) =>

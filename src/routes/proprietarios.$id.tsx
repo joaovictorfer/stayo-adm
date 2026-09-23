@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Building2, ClipboardList, FileText, Globe2, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -28,6 +28,7 @@ import {
   adminApi,
   contractsListQuery,
   ownerNoteQuery,
+  ownerOnboardingSubmissionQuery,
   ownerQuery,
   ownerTasksQuery,
   implementationsListQuery,
@@ -39,6 +40,7 @@ import {
 import { formatMoney } from "../lib/format";
 import type { OwnerLifecycleStatus, OwnerRecord, OwnerTaskStatus } from "../types/admin";
 import type { Contract, Reservation, ServiceInvoice } from "../types/core";
+import type { OwnerOnboardingSubmission } from "../types/owner-onboarding";
 import {
   formatBrazilianDocument,
   formatBrazilianPhone,
@@ -80,6 +82,10 @@ function OwnerDetailPage() {
     () => (implementationsQuery.data?.data ?? []).filter((item) => item.ownerId === id),
     [implementationsQuery.data, id],
   );
+  const onboardingQueries = useQueries({
+    queries: implementations.map((item) => ownerOnboardingSubmissionQuery(item.id)),
+  });
+  const onboardingDraft = onboardingQueries.find((item) => item.data)?.data ?? null;
 
   const properties = useMemo(
     () => (propertiesQuery.data?.data ?? []).filter((p) => p.ownerId === id),
@@ -142,8 +148,16 @@ function OwnerDetailPage() {
             <AdminStatCard
               icon={FileText}
               label="Cadastro"
-              value={owner.document && owner.email && owner.phone ? "Completo" : "Incompleto"}
-              tone={owner.document && owner.email && owner.phone ? "success" : "warning"}
+              value={
+                onboardingDraft?.submittedAt
+                  ? "Recebido"
+                  : onboardingDraft
+                    ? "Em andamento"
+                    : owner.document && owner.email && owner.phone
+                      ? "Completo"
+                      : "Incompleto"
+              }
+              tone={onboardingDraft?.submittedAt ? "success" : "warning"}
             />
             <AdminStatCard
               icon={Globe2}
@@ -186,7 +200,7 @@ function OwnerDetailPage() {
             <TabsContent value="resumo" className="space-y-4">
               <AdminSection title="Dados principais">
                 <div id="owner-contact">
-                  <OwnerContactPanel owner={owner} />
+                  <OwnerContactPanel owner={owner} draft={onboardingDraft} />
                 </div>
               </AdminSection>
               <AdminSection title="Próxima ação">
@@ -409,7 +423,13 @@ function buildOwnerTimeline(data: {
 }
 
 /** Dados de contato do proprietário — editáveis (cadastro rápido, completado depois). */
-function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
+function OwnerContactPanel({
+  owner,
+  draft,
+}: {
+  owner: OwnerRecord;
+  draft?: OwnerOnboardingSubmission | null;
+}) {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -549,18 +569,32 @@ function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome" value={owner.name} />
-          <Field label="Telefone" value={owner.phone ? formatBrazilianPhone(owner.phone) : null} />
-          <Field label="E-mail" value={owner.email} />
+          {draft && !draft.submittedAt && (
+            <p className="sm:col-span-2 text-xs font-medium text-[var(--admin-warning)]">
+              Cadastro em andamento · dados atualizados automaticamente
+            </p>
+          )}
+          <Field label="Nome" value={draft?.fullName || owner.name} />
+          <Field
+            label="Telefone"
+            value={
+              draft?.phone
+                ? formatBrazilianPhone(draft.phone)
+                : owner.phone
+                  ? formatBrazilianPhone(owner.phone)
+                  : null
+            }
+          />
+          <Field label="E-mail" value={draft?.email || owner.email} />
           <Field
             label="CPF/CNPJ"
             value={
               showSensitive
-                ? formatBrazilianDocument(owner.document ?? "")
-                : maskDocument(owner.document)
+                ? formatBrazilianDocument(draft?.document || owner.document || "")
+                : maskDocument(draft?.document || owner.document)
             }
           />
-          {owner.document && (
+          {(draft?.document || owner.document) && (
             <button
               type="button"
               className="text-left text-xs underline"
@@ -568,6 +602,14 @@ function OwnerContactPanel({ owner }: { owner: OwnerRecord }) {
             >
               {showSensitive ? "Ocultar dados" : "Mostrar dados"}
             </button>
+          )}
+          {draft?.street && (
+            <div className="sm:col-span-2 border-t pt-3" style={{ borderColor: "var(--stayo-border)" }}>
+              <Field
+                label="Endereço informado no portal"
+                value={`${draft.street}${draft.number ? `, ${draft.number}` : ""}${draft.city ? ` · ${draft.city}/${draft.state}` : ""}`}
+              />
+            </div>
           )}
         </div>
       )}
