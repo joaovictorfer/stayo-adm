@@ -29,3 +29,5 @@
 - [x] Reparar links públicos ligados a implantações ausentes no Cloud e validar o envio real
 - [x] Impedir lista vazia de proprietários e concorrência entre autosalvamento e envio final
 - [x] Recuperar conta existente e reparar o vínculo após criar a senha do proprietário
+
+- [ ] Refinar o workspace da implantação com navegação focada, microinterações e visual navy/verde
