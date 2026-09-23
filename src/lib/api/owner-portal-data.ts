@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "./supabase-client";
+import type { ImplementationProject, ImplementationStatus } from "../../types/core";
 
 export interface PropertyDetails {
   implementationId: string;
@@ -48,6 +49,39 @@ function client() {
   const value = getSupabaseBrowserClient();
   if (!value) throw new Error("Portal indisponível");
   return value;
+}
+
+export async function listOwnerImplementations(): Promise<ImplementationProject[]> {
+  const { data, error } = await client()
+    .from("implementation_projects")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    code: row.code,
+    status: row.status as ImplementationStatus,
+    ownerId: row.owner_id,
+    nickname: row.nickname,
+    condominiumName: row.condominium_name,
+    unit: row.unit,
+    address: row.address,
+    postalCode: row.postal_code,
+    city: row.city,
+    propertyType: row.property_type,
+    bedrooms: row.bedrooms,
+    capacity: row.capacity,
+    responsibleUserId: row.responsible_user_id,
+    startDateEstimate: row.start_date_estimate,
+    completionDateEstimate: row.completion_date_estimate,
+    notes: row.notes,
+    origin: row.origin,
+    corePropertyId: row.core_property_id,
+    coreOwnerId: row.core_owner_id,
+    coverImage: row.cover_image,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
 }
 
 function detailsFromRow(row: Record<string, unknown>): PropertyDetails {

@@ -33,6 +33,11 @@ import {
   TrendingUp,
   RefreshCw,
   WifiOff,
+  ChevronDown,
+  MapPin,
+  Wifi,
+  DoorOpen,
+  Building2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { StayoLogo } from "@/components/brand/StayoLogo";
@@ -52,7 +57,6 @@ import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachm
 import type { Attachment } from "../lib/api/attachments";
 import {
   commercialTermsQuery,
-  implementationsListQuery,
   ownerOnboardingSubmissionQuery,
   ownerQuery,
   ownerTasksQuery,
@@ -61,6 +65,17 @@ import {
   propertyQuery,
   reservationsListQuery,
 } from "../lib/api/queries";
+import {
+  getPropertyDetails,
+  listOwnerImplementations,
+  listPortalInspections,
+  listPortalTimeline,
+  savePropertyDetails,
+  type PortalInspection,
+  type PortalTimelineEvent,
+  type PropertyDetails,
+  type PropertyDetailsInput,
+} from "../lib/api/owner-portal-data";
 import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
 import { statusLabels } from "../lib/implementation-status";
 import {
