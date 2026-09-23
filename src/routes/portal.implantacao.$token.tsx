@@ -162,6 +162,8 @@ function OwnerOnboardingForm({
   const stepRef = useRef(currentStep);
   const lastSaved = useRef("");
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const finalizing = useRef(false);
+  const submitted = useRef(false);
 
   useEffect(() => {
     if (hydrated.current || draftQ.isPending || (ownerId && ownerQ.isPending)) return;
@@ -187,6 +189,18 @@ function OwnerOnboardingForm({
             ],
           }
         : emptyForm;
+    if (initialForm.people.length === 0) {
+      initialForm.people = [
+        {
+          role: "proprietario",
+          personType: initialForm.personType,
+          fullName: initialForm.fullName,
+          document: initialForm.document,
+          email: initialForm.email,
+          phone: initialForm.phone,
+        },
+      ];
+    }
     setForm(initialForm);
     formRef.current = initialForm;
     const restoredStep = Math.max(1, Math.min(5, draftQ.data?.currentStep ?? 1));
@@ -207,7 +221,14 @@ function OwnerOnboardingForm({
   const persistDraft = useCallback(
     (snapshot: OwnerOnboardingSubmissionInput, step: number) => {
       const signature = JSON.stringify(snapshot);
-      if (!hydrated.current || signature === lastSaved.current) return saveQueue.current;
+      if (
+        !hydrated.current ||
+        finalizing.current ||
+        submitted.current ||
+        snapshot.people.length === 0 ||
+        signature === lastSaved.current
+      )
+        return saveQueue.current;
       setAutoSaveState("saving");
       saveQueue.current = saveQueue.current
         .catch(() => undefined)
@@ -230,17 +251,20 @@ function OwnerOnboardingForm({
   );
 
   useEffect(() => {
-    if (!hydrated.current || submissionQ.data?.submittedAt) return;
+    if (!hydrated.current || submissionQ.data?.submittedAt || finalizing.current) return;
     const timer = window.setTimeout(() => void persistDraft(form, currentStep), 900);
     return () => window.clearTimeout(timer);
   }, [currentStep, form, persistDraft, submissionQ.data?.submittedAt]);
 
   useEffect(() => {
     const flush = () => {
-      if (document.visibilityState === "hidden")
+      if (document.visibilityState === "hidden" && !finalizing.current && !submitted.current)
         void persistDraft(formRef.current, stepRef.current);
     };
-    const flushOnExit = () => void persistDraft(formRef.current, stepRef.current);
+    const flushOnExit = () => {
+      if (!finalizing.current && !submitted.current)
+        void persistDraft(formRef.current, stepRef.current);
+    };
     document.addEventListener("visibilitychange", flush);
     window.addEventListener("pagehide", flushOnExit);
     return () => {
@@ -254,6 +278,7 @@ function OwnerOnboardingForm({
     keys.every((key) => !validateOwnerField(key, form[key]));
   const save = useMutation({
     mutationFn: async ({ submit, step }: { submit: boolean; step: number }) => {
+      finalizing.current = true;
       const parsed = ownerOnboardingFormSchema.parse(form);
       await saveQueue.current;
       return adminApi.ownerOnboarding.saveDraft(
@@ -272,6 +297,7 @@ function OwnerOnboardingForm({
         );
       lastSaved.current = JSON.stringify(form);
       setAutoSaveState("saved");
+      if (variables.submit) submitted.current = true;
       toast.success(variables.submit ? "Recebemos seu cadastro" : "Dados salvos", {
         description: "Suas informações foram guardadas com segurança.",
       });
@@ -280,6 +306,9 @@ function OwnerOnboardingForm({
       toast.error("Não foi possível concluir o cadastro", {
         description: ownerOnboardingErrorMessage(cause),
       }),
+    onSettled: () => {
+      finalizing.current = false;
+    },
   });
   const set = <K extends keyof OwnerOnboardingSubmissionInput>(
     key: K,
@@ -344,10 +373,13 @@ function OwnerOnboardingForm({
       ],
     }));
   const removePerson = (index: number) => {
-    setForm((current) => ({
-      ...current,
-      people: current.people.filter((_, personIndex) => personIndex !== index),
-    }));
+    setForm((current) => {
+      if (current.people.length <= 1) return current;
+      return {
+        ...current,
+        people: current.people.filter((_, personIndex) => personIndex !== index),
+      };
+    });
     setSelectedHolder(0);
   };
   const selectPersonAsHolder = (index: number) => {
