@@ -198,9 +198,9 @@ function OwnerOnboardingForm({
         description: "Suas informações foram guardadas com segurança.",
       });
     },
-    onError: () =>
-      toast.error("Não foi possível salvar agora", {
-        description: "Seus dados continuam na tela. Tente novamente.",
+    onError: (cause) =>
+      toast.error("Não foi possível concluir o cadastro", {
+        description: ownerOnboardingErrorMessage(cause),
       }),
   });
   const set = <K extends keyof OwnerOnboardingSubmissionInput>(
@@ -673,6 +673,22 @@ function OwnerOnboardingForm({
       </Button>
     </Shell>
   );
+}
+
+function ownerOnboardingErrorMessage(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message.toLocaleLowerCase("pt-BR") : "";
+  if (message.includes("acesso inválido"))
+    return "Este acesso expirou ou foi encerrado. Solicite um novo link à equipe Stayo.";
+  if (message.includes("cpf") || message.includes("cnpj") || message.includes("documento"))
+    return "Confira o CPF ou CNPJ informado antes de enviar.";
+  if (message.includes("endereço") || message.includes("state") || message.includes("estado"))
+    return "Confira o endereço e a UF informados antes de enviar.";
+  if (message.includes("telefone")) return "Confira o telefone e o DDD antes de enviar.";
+  if (message.includes("e-mail") || message.includes("email"))
+    return "Confira o e-mail informado antes de enviar.";
+  if (message.includes("repasse") || message.includes("pix") || message.includes("conta"))
+    return "Confira os dados bancários e a chave Pix antes de enviar.";
+  return "Seus dados continuam nesta tela. Tente novamente em alguns instantes.";
 }
 
 async function lookupPostalCode(
