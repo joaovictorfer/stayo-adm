@@ -29,6 +29,20 @@
       "when": 1790127363779,
       "tag": "0003_fix_owner_onboarding_state_length",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790130585806,
+      "tag": "0004_fix_owner_onboarding_atomic_submission",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790130700985,
+      "tag": "0005_restore_complete_owner_onboarding_draft",
+      "breakpoints": true
     }
   ]
 }
