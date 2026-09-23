@@ -1,0 +1,570 @@
+/*
+ * Implantacao Premium Workspace
+ * Camada visual isolada: nao altera dados, regras, queries ou comportamento.
+ * Mantem a identidade do Stayo Admin e melhora hierarquia, densidade e leitura.
+ */
+
+.implementation-workspace {
+  --implementation-green: #3f765f;
+  --implementation-green-strong: #2f624e;
+  --implementation-green-soft: #eef6f1;
+  --implementation-blue-soft: #edf4f9;
+  --implementation-gold-soft: #fbf5e8;
+  --implementation-border: #e1e7eb;
+  --implementation-card-shadow: 0 1px 2px rgba(11, 49, 80, 0.04),
+    0 10px 30px rgba(11, 49, 80, 0.045);
+  --implementation-card-shadow-hover: 0 14px 36px rgba(11, 49, 80, 0.08);
+  font-family: var(--stayo-font-ui);
+}
+
+.implementation-workspace-stack {
+  gap: 0.9rem;
+}
+
+/* Cabecalho contextual */
+.implementation-mobile-heading {
+  margin-bottom: 0.8rem;
+}
+
+.implementation-mobile-heading span {
+  letter-spacing: 0.08em;
+}
+
+.implementation-mobile-heading strong,
+.implementation-property-name,
+.implementation-current-stage strong {
+  font-family: var(--stayo-font-display);
+}
+
+.implementation-back-button {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.03);
+}
+
+/* Identidade do imovel */
+.implementation-identity {
+  border-color: var(--implementation-border);
+  border-radius: 14px;
+  box-shadow: var(--implementation-card-shadow);
+}
+
+.implementation-cover {
+  height: 8.5rem;
+  background: var(--admin-primary);
+}
+
+.implementation-cover:not(:has(img)) {
+  height: 3rem;
+  background:
+    radial-gradient(circle at 14% 50%, rgba(255, 255, 255, 0.08), transparent 20%),
+    linear-gradient(110deg, #0b3150 0%, #123f68 58%, #1b5677 100%);
+}
+
+.implementation-cover:has(img) .implementation-cover-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(8, 37, 61, 0.72) 0%,
+    rgba(8, 37, 61, 0.2) 48%,
+    rgba(8, 37, 61, 0.04) 100%
+  );
+}
+
+.implementation-cover:not(:has(img)) .implementation-cover-overlay {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+}
+
+.implementation-identity-body {
+  align-items: center;
+  padding: 0 1.4rem 1.15rem;
+}
+
+.implementation-cover:not(:has(img)) + .implementation-identity-body {
+  padding-top: 0.2rem;
+}
+
+.implementation-property-mark {
+  position: relative;
+  display: grid;
+  width: 3.55rem;
+  height: 3.55rem;
+  place-items: center;
+  margin-top: -1.8rem;
+  margin-bottom: 0.65rem;
+  border: 4px solid var(--admin-surface);
+  border-radius: 13px;
+  background: linear-gradient(145deg, #f2f7f4, #e7f1eb);
+  box-shadow: 0 8px 22px rgba(11, 49, 80, 0.12);
+}
+
+.implementation-property-mark::after {
+  content: "ST";
+  color: var(--implementation-green-strong);
+  font-family: var(--stayo-font-display);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.implementation-property-name {
+  color: var(--admin-primary);
+  font-size: clamp(1.45rem, 2.3vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.implementation-identity-meta {
+  gap: 0.55rem 1rem;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.implementation-status-pill {
+  border-color: rgba(63, 118, 95, 0.24);
+  background: var(--implementation-green-soft);
+  padding: 0.3rem 0.62rem;
+  font-weight: 700;
+}
+
+.implementation-actions {
+  gap: 0.6rem;
+}
+
+.implementation-actions button {
+  min-height: 2.35rem;
+  border-radius: 9px;
+  font-weight: 650;
+}
+
+/* Status e metricas funcionam como um unico cockpit */
+.implementation-stepper {
+  position: relative;
+  z-index: 2;
+  border-color: var(--implementation-border);
+  border-radius: 14px 14px 0 0;
+  padding: 1rem 1.15rem 0.95rem;
+  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.025);
+}
+
+.implementation-stepper + .implementation-metrics {
+  margin-top: -0.9rem;
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  box-shadow: var(--implementation-card-shadow);
+}
+
+.implementation-stepper-heading p {
+  color: var(--admin-primary);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.implementation-stepper-heading span {
+  color: var(--implementation-green-strong);
+}
+
+.implementation-status-select {
+  min-width: 10rem;
+  border-radius: 9px;
+  background: #fbfcfd;
+  font-weight: 600;
+}
+
+.implementation-status-select:hover,
+.implementation-status-select:focus {
+  border-color: color-mix(in srgb, var(--admin-primary) 32%, var(--admin-border));
+  box-shadow: 0 0 0 3px rgba(45, 100, 142, 0.08);
+}
+
+.implementation-step-segments {
+  gap: 0.42rem;
+  margin-top: 0.8rem;
+}
+
+.implementation-step-segments li span {
+  height: 0.42rem;
+  background: #e7ecf0;
+}
+
+.implementation-step-segments li.is-done span {
+  background: #87ad9a;
+}
+
+.implementation-step-segments li.is-current span {
+  background: var(--implementation-green-strong);
+  box-shadow: 0 0 0 3px rgba(63, 118, 95, 0.08);
+}
+
+.implementation-current-stage {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+}
+
+.implementation-current-stage strong {
+  font-weight: 700;
+}
+
+.implementation-metrics {
+  border-color: var(--implementation-border);
+  background: #fbfcfd;
+}
+
+.implementation-metric {
+  position: relative;
+  padding: 0.9rem 1rem 0.95rem;
+  background: #fff;
+}
+
+.implementation-metric:nth-child(2) {
+  background: linear-gradient(180deg, #f6faf8 0%, #eef6f1 100%);
+}
+
+.implementation-metric:hover {
+  background: var(--implementation-blue-soft);
+}
+
+.implementation-metric p:first-child {
+  color: var(--admin-muted) !important;
+  font-size: 0.62rem !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.12em !important;
+}
+
+.implementation-metric p:nth-child(2) {
+  margin-top: 0.2rem;
+  font-family: var(--stayo-font-display);
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+}
+
+/* Navegacao das sete areas */
+.implementation-tabs {
+  gap: 0.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--implementation-border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.35rem;
+  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.025);
+}
+
+.implementation-tabs button {
+  min-height: 2.3rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.55rem 0.82rem;
+  color: #667482;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.implementation-tabs button:hover {
+  background: #f3f6f8;
+  color: var(--admin-primary);
+}
+
+.implementation-tabs button.is-active {
+  border: 0;
+  background: var(--admin-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(11, 49, 80, 0.16);
+}
+
+/* Resumo */
+.implementation-summary {
+  border-color: var(--implementation-border);
+  border-radius: 14px;
+  background: #f8fafb;
+  padding: clamp(1rem, 1.8vw, 1.4rem);
+  box-shadow: var(--implementation-card-shadow);
+}
+
+.implementation-section-label {
+  margin-bottom: 0.55rem;
+  color: var(--implementation-green-strong);
+  letter-spacing: 0.1em;
+}
+
+.implementation-next-action {
+  border: 1px solid rgba(63, 118, 95, 0.2);
+  border-left: 4px solid var(--implementation-green);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #f3f9f5 0%, #edf6f1 100%);
+  padding: 1rem 1.15rem;
+}
+
+.implementation-next-action h2 {
+  font-family: var(--stayo-font-display) !important;
+  font-size: 1.18rem !important;
+  letter-spacing: -0.01em;
+}
+
+.implementation-summary > .grid > .min-w-0 > .grid > section,
+.implementation-summary > .grid > aside > section {
+  border: 1px solid var(--implementation-border);
+  border-radius: 11px;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.025);
+}
+
+.implementation-summary > .grid > aside > section {
+  padding: 1rem 1.05rem;
+}
+
+.implementation-summary aside > section + section {
+  margin-top: 0 !important;
+}
+
+.implementation-summary [class*="rounded-[var(--radius-card)]"],
+.implementation-workspace [class*="rounded-[var(--radius-card)]"][class~="bg-white"],
+.implementation-workspace .rounded-lg.border.bg-white {
+  border-color: var(--implementation-border) !important;
+  border-radius: 11px !important;
+  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.03), 0 8px 22px rgba(11, 49, 80, 0.035) !important;
+}
+
+.implementation-workspace [class*="rounded-[var(--radius-card)]"][class~="bg-white"]:hover,
+.implementation-workspace .rounded-lg.border.bg-white:hover {
+  border-color: #d7e0e6 !important;
+}
+
+/* Titulos de bloco */
+.implementation-workspace h2,
+.implementation-workspace h3 {
+  letter-spacing: -0.008em;
+}
+
+.implementation-workspace h2[class*="uppercase"],
+.implementation-workspace h3[class*="uppercase"] {
+  letter-spacing: 0.12em;
+}
+
+/* Inputs e botoes no workspace */
+.implementation-workspace input,
+.implementation-workspace select,
+.implementation-workspace textarea {
+  border-color: #dce3e8;
+  background: #fff;
+}
+
+.implementation-workspace input:focus,
+.implementation-workspace select:focus,
+.implementation-workspace textarea:focus {
+  border-color: #7ba0bc;
+  box-shadow: 0 0 0 3px rgba(45, 100, 142, 0.08);
+}
+
+.implementation-workspace button:not(.is-active) {
+  border-radius: 8px;
+}
+
+/* Owner / Imovel e demais abas: cartoes com leitura mais clara */
+.implementation-tabs + .grid,
+.implementation-tabs + .flex,
+.implementation-tabs + .space-y-4,
+.implementation-tabs + .space-y-6 {
+  animation: implementation-premium-in 220ms ease-out both;
+}
+
+.implementation-workspace .grid > .rounded-lg.border.bg-white.p-4.shadow-sm {
+  min-height: 6.4rem;
+  padding: 1.05rem 1.1rem;
+}
+
+.implementation-workspace .grid > .rounded-lg.border.bg-white.p-4.shadow-sm p:first-child {
+  color: #72808d !important;
+}
+
+.implementation-workspace .grid > .rounded-lg.border.bg-white.p-4.shadow-sm span.text-2xl {
+  font-family: var(--stayo-font-display);
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
+}
+
+/* Enxoval / itens faltantes */
+.implementation-workspace .rounded-lg.border.bg-white.overflow-hidden,
+.implementation-workspace .rounded-lg.border.bg-white.shadow-sm.overflow-hidden {
+  overflow: hidden;
+  border-radius: 12px !important;
+}
+
+.implementation-workspace .bg-slate-50\/80,
+.implementation-workspace .bg-slate-50 {
+  background: #f7f9fb !important;
+}
+
+.implementation-workspace .text-slate-900 {
+  color: var(--admin-text) !important;
+}
+
+.implementation-workspace .text-slate-800,
+.implementation-workspace .text-slate-700 {
+  color: #354452 !important;
+}
+
+.implementation-workspace .text-slate-600,
+.implementation-workspace .text-slate-500 {
+  color: var(--admin-muted) !important;
+}
+
+.implementation-workspace table {
+  font-size: 0.8rem;
+}
+
+.implementation-workspace thead {
+  background: #f7f9fb !important;
+}
+
+.implementation-workspace th {
+  color: #657482 !important;
+  font-size: 0.68rem;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.implementation-workspace tbody tr:hover {
+  background: #f8fafb !important;
+}
+
+/* Detalhes tecnicos ficam discretos */
+.implementation-summary > details {
+  margin-top: 1rem;
+  border-color: var(--implementation-border) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.implementation-summary > details summary {
+  color: #6c7986 !important;
+}
+
+/* Microinteracoes */
+.implementation-identity,
+.implementation-stepper,
+.implementation-metrics,
+.implementation-tabs,
+.implementation-summary,
+.implementation-workspace .rounded-lg.border.bg-white,
+.implementation-workspace [class*="rounded-[var(--radius-card)]"][class~="bg-white"] {
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+@keyframes implementation-premium-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 1024px) {
+  .implementation-summary > .grid {
+    grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.72fr) !important;
+    gap: 1rem !important;
+  }
+
+  .implementation-summary > .grid > .min-w-0 {
+    gap: 1rem;
+  }
+
+  .implementation-summary > .grid > aside {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .implementation-workspace-stack {
+    gap: 0.75rem;
+  }
+
+  .implementation-cover:has(img) {
+    height: 7rem;
+  }
+
+  .implementation-cover:not(:has(img)) {
+    height: 2.5rem;
+  }
+
+  .implementation-identity-body {
+    grid-template-columns: 1fr;
+    padding: 0 0.95rem 0.95rem;
+  }
+
+  .implementation-property-mark {
+    width: 3.1rem;
+    height: 3.1rem;
+    margin-top: -1.55rem;
+  }
+
+  .implementation-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .implementation-stepper {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .implementation-stepper-heading {
+    align-items: flex-start;
+  }
+
+  .implementation-stepper-heading > div {
+    align-items: flex-start;
+  }
+
+  .implementation-status-select {
+    min-width: 8.5rem;
+    max-width: 9.5rem;
+  }
+
+  .implementation-metric {
+    padding: 0.78rem 0.45rem;
+  }
+
+  .implementation-metric p:nth-child(2) {
+    font-size: 1.02rem !important;
+  }
+
+  .implementation-tabs {
+    margin-inline: -0.1rem;
+    border-radius: 10px;
+  }
+
+  .implementation-tabs button {
+    min-height: 2.2rem;
+    padding-inline: 0.72rem;
+  }
+
+  .implementation-summary {
+    padding: 0.85rem;
+  }
+
+  .implementation-summary > .grid > .min-w-0 > .grid > section,
+  .implementation-summary > .grid > aside > section {
+    padding: 0.9rem;
+  }
+
+  .implementation-workspace table {
+    min-width: 760px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .implementation-tabs + .grid,
+  .implementation-tabs + .flex,
+  .implementation-tabs + .space-y-4,
+  .implementation-tabs + .space-y-6 {
+    animation: none;
+  }
+}
