@@ -37,6 +37,8 @@ export interface Property {
   name: string;
   condominiumId: EntityId | null;
   condominiumName: string | null;
+  condominiumId?: EntityId | null;
+  tower?: string | null;
   unit: string | null;
   city: string | null;
   status: string;

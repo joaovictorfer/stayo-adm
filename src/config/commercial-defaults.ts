@@ -17,13 +17,13 @@ export interface QuickImplementationConditions {
  */
 export const DEFAULT_QUICK_IMPLEMENTATION_CONDITIONS: QuickImplementationConditions = {
   administrationFee: "20",
-  cleaningResponsibility: "stayo",
-  customCleaningResponsibility: "",
-  payoutRule: "Repasse mensal no dia 10",
-  maintenanceLimit: "200",
+  cleaningResponsibility: "custom",
+  customCleaningResponsibility: "R$ 250,00",
+  payoutRule: "Automático pelo Airbnb / Até o dia 10 em reservas fora da plataforma",
+  maintenanceLimit: "300",
   exclusivity: true,
   durationMonths: "12",
-  noticePeriodDays: "60",
+  noticePeriodDays: "30",
 };
 
 export const CLEANING_RESPONSIBILITY_LABELS: Record<CleaningResponsibility, string> = {

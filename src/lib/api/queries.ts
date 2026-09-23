@@ -10,6 +10,8 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { createDefaultAdminApiClient, type AdminApiClient } from "./admin-client";
 import { createMockCoreApiClient, type CoreApiClient } from "./core-client";
+import { createCloudImplementationApi } from "./cloud-implementations";
+import { isSupabaseConfigured } from "./supabase-client";
 import {
   checklistTemplatesStore,
   ownerNotesStore,
@@ -19,7 +21,10 @@ import {
 import type { EntityId } from "../../types/core";
 
 /** Fonte única de dados desta fase. */
-export const coreApi: CoreApiClient = createMockCoreApiClient();
+const defaultCoreApi = createMockCoreApiClient();
+export const coreApi: CoreApiClient = isSupabaseConfigured()
+  ? { ...defaultCoreApi, implementations: createCloudImplementationApi() }
+  : defaultCoreApi;
 
 /** Domínio próprio do Admin (Grupo A) — ver docs/OWNER_IMPLEMENTATION_AUDIT.md. */
 export const adminApi: AdminApiClient = createDefaultAdminApiClient();
