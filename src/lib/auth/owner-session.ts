@@ -107,12 +107,15 @@ export async function getCurrentOwnerSession(): Promise<Session | null> {
 }
 
 /** A própria conta do proprietário logado — RLS só deixa ver `id = auth.uid()`. */
-export async function getOwnerPortalAccount(): Promise<OwnerPortalAccount | null> {
+export async function getOwnerPortalAccount(userId?: string): Promise<OwnerPortalAccount | null> {
   const client = getSupabaseBrowserClient();
   if (!client) return null;
+  const verifiedUserId = userId ?? (await client.auth.getUser()).data.user?.id;
+  if (!verifiedUserId) return null;
   const { data, error } = await client
     .from("owner_portal_accounts")
     .select()
+    .eq("id", verifiedUserId)
     .maybeSingle<OwnerPortalAccountRow>();
   if (error) throw error;
   return data ? accountFromRow(data) : null;
@@ -149,7 +152,7 @@ export function useOwnerSession(): OwnerAuthState {
         return;
       }
       try {
-        const account = await getOwnerPortalAccount();
+        const account = await getOwnerPortalAccount(session.user.id);
         if (cancelled) return;
         if (!account) {
           setState({
