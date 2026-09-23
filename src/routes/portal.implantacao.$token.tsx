@@ -251,8 +251,9 @@ function OwnerOnboardingForm({
   const valid = (keys: OwnerFormField[]) =>
     keys.every((key) => !validateOwnerField(key, form[key]));
   const save = useMutation({
-    mutationFn: ({ submit, step }: { submit: boolean; step: number }) => {
+    mutationFn: async ({ submit, step }: { submit: boolean; step: number }) => {
       const parsed = ownerOnboardingFormSchema.parse(form);
+      await saveQueue.current;
       return adminApi.ownerOnboarding.saveDraft(
         token,
         normalizeOwnerSubmission(parsed),
@@ -267,6 +268,8 @@ function OwnerOnboardingForm({
           ownerOnboardingSubmissionQuery(implementationId).queryKey,
           submission,
         );
+      lastSaved.current = JSON.stringify(form);
+      setAutoSaveState("saved");
       toast.success(variables.submit ? "Recebemos seu cadastro" : "Dados salvos", {
         description: "Suas informações foram guardadas com segurança.",
       });
