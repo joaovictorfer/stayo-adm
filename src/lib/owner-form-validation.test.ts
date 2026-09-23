@@ -17,17 +17,26 @@ describe("documentos brasileiros", () => {
     expect(isValidBrazilianDocument(value)).toBe(true);
   });
 
-  it.each(["094.860.164-71", "123.456.789-00", "111.111.111-11", "123"])("rejeita CPF inválido %s", (value) => {
-    expect(isValidCpf(value)).toBe(false);
-  });
+  it.each(["094.860.164-71", "123.456.789-00", "111.111.111-11", "123"])(
+    "rejeita CPF inválido %s",
+    (value) => {
+      expect(isValidCpf(value)).toBe(false);
+    },
+  );
 
-  it.each(["04.252.011/0001-10", "04252011000110", "11.222.333/0001-81"])("aceita CNPJ válido %s", (value) => {
-    expect(isValidCnpj(value)).toBe(true);
-  });
+  it.each(["04.252.011/0001-10", "04252011000110", "11.222.333/0001-81"])(
+    "aceita CNPJ válido %s",
+    (value) => {
+      expect(isValidCnpj(value)).toBe(true);
+    },
+  );
 
-  it.each(["04.252.011/0001-11", "00.000.000/0000-00", "123"])("rejeita CNPJ inválido %s", (value) => {
-    expect(isValidCnpj(value)).toBe(false);
-  });
+  it.each(["04.252.011/0001-11", "00.000.000/0000-00", "123"])(
+    "rejeita CNPJ inválido %s",
+    (value) => {
+      expect(isValidCnpj(value)).toBe(false);
+    },
+  );
 });
 
 describe("normalização por tipo", () => {
@@ -39,7 +48,21 @@ describe("normalização por tipo", () => {
   });
 
   it("bloqueia documento inválido na edição administrativa", () => {
-    expect(ownerAdminEditSchema.safeParse({ name: "Victor Fernandes", phone: "(11) 99999-1234", email: "victor@exemplo.com", document: "094.860.164-70" }).success).toBe(true);
-    expect(ownerAdminEditSchema.safeParse({ name: "Victor Fernandes", phone: "(11) 99999-1234", email: "victor@exemplo.com", document: "111.111.111-11" }).success).toBe(false);
+    expect(
+      ownerAdminEditSchema.safeParse({
+        name: "Victor Fernandes",
+        phone: "(11) 99999-1234",
+        email: "victor@exemplo.com",
+        document: "094.860.164-70",
+      }).success,
+    ).toBe(true);
+    expect(
+      ownerAdminEditSchema.safeParse({
+        name: "Victor Fernandes",
+        phone: "(11) 99999-1234",
+        email: "victor@exemplo.com",
+        document: "111.111.111-11",
+      }).success,
+    ).toBe(false);
   });
 });

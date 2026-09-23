@@ -76,12 +76,61 @@ export function computeOwnerRegistration(input: {
   const submission = input.submission;
   const submitted = Boolean(submission?.submittedAt);
   const groups: OwnerRegistrationGroup[] = [
-    { id: "identity", label: "Identificação", state: submission?.fullName && submission.document ? (input.hasDivergences ? "review" : "complete") : "incomplete" },
-    { id: "contact", label: "Contato", state: submission?.email && submission.phone ? (input.hasDivergences ? "review" : "complete") : "incomplete" },
-    { id: "address", label: "Endereço", state: submission?.postalCode && submission.street && submission.number && submission.district && submission.city && submission.state ? (submitted ? "complete" : "review") : "incomplete" },
-    { id: "payout", label: "Dados para repasse", state: submission?.bankName && submission.accountHolder && submission.holderTaxId && submission.pixType && submission.pixKey ? (submitted ? "complete" : "review") : "incomplete" },
+    {
+      id: "identity",
+      label: "Identificação",
+      state:
+        submission?.fullName && submission.document
+          ? input.hasDivergences
+            ? "review"
+            : "complete"
+          : "incomplete",
+    },
+    {
+      id: "contact",
+      label: "Contato",
+      state:
+        submission?.email && submission.phone
+          ? input.hasDivergences
+            ? "review"
+            : "complete"
+          : "incomplete",
+    },
+    {
+      id: "address",
+      label: "Endereço",
+      state:
+        submission?.postalCode &&
+        submission.street &&
+        submission.number &&
+        submission.district &&
+        submission.city &&
+        submission.state
+          ? submitted
+            ? "complete"
+            : "review"
+          : "incomplete",
+    },
+    {
+      id: "payout",
+      label: "Dados para repasse",
+      state:
+        submission?.bankName &&
+        submission.accountHolder &&
+        submission.holderTaxId &&
+        submission.pixType &&
+        submission.pixKey
+          ? submitted
+            ? "complete"
+            : "review"
+          : "incomplete",
+    },
     { id: "contract", label: "Contrato", state: input.hasContract ? "complete" : "incomplete" },
-    { id: "documents", label: "Documentos", state: (input.documentCount ?? 0) > 0 ? "complete" : "incomplete" },
+    {
+      id: "documents",
+      label: "Documentos",
+      state: (input.documentCount ?? 0) > 0 ? "complete" : "incomplete",
+    },
   ];
   const complete = groups.filter((group) => group.state === "complete").length;
   const review = groups.filter((group) => group.state === "review").length;
@@ -89,6 +138,8 @@ export function computeOwnerRegistration(input: {
   return {
     groups,
     percentage: Math.round(((complete + review * 0.5) / groups.length) * 100),
-    nextAction: firstPending ? `${firstPending.state === "review" ? "revisar" : "completar"} ${firstPending.label.toLocaleLowerCase("pt-BR")}` : null,
+    nextAction: firstPending
+      ? `${firstPending.state === "review" ? "revisar" : "completar"} ${firstPending.label.toLocaleLowerCase("pt-BR")}`
+      : null,
   };
 }

@@ -37,7 +37,13 @@ import type {
 } from "../../types/owner-onboarding";
 import { constraintTargetsColumn, isUniqueViolation, nextSequentialCode } from "../sequential-code";
 import { hashToken } from "./token-hash";
-import { normalizeDocument, normalizeEmail, normalizeName, normalizePhone, ownerAdminEditSchema } from "../owner-form-validation";
+import {
+  normalizeDocument,
+  normalizeEmail,
+  normalizeName,
+  normalizePhone,
+  ownerAdminEditSchema,
+} from "../owner-form-validation";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase-client";
 import { newId, read, write } from "./local-store";
 
@@ -121,7 +127,12 @@ export interface AdminApiClient {
     findByToken(token: string): Promise<OwnerOnboardingLink | null>;
     getSubmission(implementationId: string): Promise<OwnerOnboardingSubmission | null>;
     getDraft(token: string): Promise<OwnerOnboardingSubmission | null>;
-    saveDraft(token: string, input: OwnerOnboardingSubmissionInput, currentStep: number, submit?: boolean): Promise<OwnerOnboardingSubmission>;
+    saveDraft(
+      token: string,
+      input: OwnerOnboardingSubmissionInput,
+      currentStep: number,
+      submit?: boolean,
+    ): Promise<OwnerOnboardingSubmission>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
       implementationId: string,
@@ -131,7 +142,9 @@ export interface AdminApiClient {
   };
 }
 
-function normalizeOwnerPatch<T extends Partial<Omit<OwnerRecord, "id" | "createdAt">>>(patch: T): T {
+function normalizeOwnerPatch<T extends Partial<Omit<OwnerRecord, "id" | "createdAt">>>(
+  patch: T,
+): T {
   const candidate = {
     name: patch.name ?? "Nome temporário",
     phone: patch.phone ?? "",
@@ -142,9 +155,15 @@ function normalizeOwnerPatch<T extends Partial<Omit<OwnerRecord, "id" | "created
   return {
     ...patch,
     ...(patch.name !== undefined ? { name: validated.name.trim().replace(/\s+/g, " ") } : {}),
-    ...(patch.phone !== undefined ? { phone: validated.phone ? normalizePhone(validated.phone) : null } : {}),
-    ...(patch.email !== undefined ? { email: validated.email ? normalizeEmail(validated.email) : null } : {}),
-    ...(patch.document !== undefined ? { document: validated.document ? normalizeDocument(validated.document) : null } : {}),
+    ...(patch.phone !== undefined
+      ? { phone: validated.phone ? normalizePhone(validated.phone) : null }
+      : {}),
+    ...(patch.email !== undefined
+      ? { email: validated.email ? normalizeEmail(validated.email) : null }
+      : {}),
+    ...(patch.document !== undefined
+      ? { document: validated.document ? normalizeDocument(validated.document) : null }
+      : {}),
   } as T;
 }
 
@@ -223,7 +242,11 @@ export function createLocalAdminApiClient(): AdminApiClient {
       const all = read<OwnerRecord>(OWNER_RECORDS_KEY);
       const target = all.find((o) => o.id === id);
       if (!target) throw new Error("Proprietário não encontrado");
-      const updated: OwnerRecord = { ...target, ...normalizeOwnerPatch(patch), updatedAt: new Date().toISOString() };
+      const updated: OwnerRecord = {
+        ...target,
+        ...normalizeOwnerPatch(patch),
+        updatedAt: new Date().toISOString(),
+      };
       write(
         OWNER_RECORDS_KEY,
         all.map((o) => (o.id === id ? updated : o)),
@@ -529,7 +552,9 @@ export function createLocalAdminApiClient(): AdminApiClient {
         currentStep,
         submittedAt: submit ? new Date().toISOString() : null,
       };
-      const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter((item) => item.implementationId !== link.implementationId);
+      const others = read<OwnerOnboardingSubmission>(OWNER_ONBOARDING_SUBMISSIONS_KEY).filter(
+        (item) => item.implementationId !== link.implementationId,
+      );
       write(OWNER_ONBOARDING_SUBMISSIONS_KEY, [...others, submission]);
       return submission;
     },
@@ -871,8 +896,11 @@ function ownerOnboardingSubmissionFromRow(
   };
 }
 
-function ownerOnboardingFromDraft(value: Record<string, unknown>, implementationId = ""): OwnerOnboardingSubmission {
-  const text = (key: string) => typeof value[key] === "string" ? value[key] as string : "";
+function ownerOnboardingFromDraft(
+  value: Record<string, unknown>,
+  implementationId = "",
+): OwnerOnboardingSubmission {
+  const text = (key: string) => (typeof value[key] === "string" ? (value[key] as string) : "");
   return {
     implementationId: implementationId || text("implementationId"),
     personType: value["personType"] === "pj" ? "pj" : "pf",
@@ -880,13 +908,27 @@ function ownerOnboardingFromDraft(value: Record<string, unknown>, implementation
     document: text("taxId") || text("document"),
     email: text("email"),
     phone: text("phone"),
-    postalCode: text("postalCode"), street: text("street"), number: text("number"),
-    complement: text("complement") || null, district: text("district"), city: text("city"), state: text("state"),
-    bankName: text("bankName"), bankBranch: text("bankBranch"), accountNumber: text("accountNumber"),
-    accountType: value["accountType"] === "savings" || value["accountType"] === "payment" ? value["accountType"] : "checking",
-    accountHolder: text("accountHolder"), holderTaxId: text("holderTaxId"),
-    pixType: ["cpf", "cnpj", "phone", "email", "random"].includes(text("pixType")) ? text("pixType") as OwnerOnboardingSubmission["pixType"] : "random",
-    pixKey: text("pixKey"), isPrimary: value["isPrimary"] !== false,
+    postalCode: text("postalCode"),
+    street: text("street"),
+    number: text("number"),
+    complement: text("complement") || null,
+    district: text("district"),
+    city: text("city"),
+    state: text("state"),
+    bankName: text("bankName"),
+    bankBranch: text("bankBranch"),
+    accountNumber: text("accountNumber"),
+    accountType:
+      value["accountType"] === "savings" || value["accountType"] === "payment"
+        ? value["accountType"]
+        : "checking",
+    accountHolder: text("accountHolder"),
+    holderTaxId: text("holderTaxId"),
+    pixType: ["cpf", "cnpj", "phone", "email", "random"].includes(text("pixType"))
+      ? (text("pixType") as OwnerOnboardingSubmission["pixType"])
+      : "random",
+    pixKey: text("pixKey"),
+    isPrimary: value["isPrimary"] !== false,
     currentStep: typeof value["currentStep"] === "number" ? value["currentStep"] : 1,
     submittedAt: text("submittedAt") || null,
   };
@@ -1308,19 +1350,33 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       return link;
     },
     getSubmission: async (implementationId) => {
-      const { data: profile, error: profileError } = await client().from("owner_onboarding_profiles").select().eq("implementation_id", implementationId).maybeSingle();
+      const { data: profile, error: profileError } = await client()
+        .from("owner_onboarding_profiles")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle();
       if (profileError) throw profileError;
       if (profile) {
-        const { data: payout, error: payoutError } = await client().from("owner_payout_accounts").select().eq("implementation_id", implementationId).maybeSingle();
+        const { data: payout, error: payoutError } = await client()
+          .from("owner_payout_accounts")
+          .select()
+          .eq("implementation_id", implementationId)
+          .maybeSingle();
         if (payoutError) throw payoutError;
         return ownerOnboardingFromDraft({ ...profile, ...(payout ?? {}) }, implementationId);
       }
-      const { data, error } = await client().from("owner_onboarding_submissions").select().eq("implementation_id", implementationId).maybeSingle<OwnerOnboardingSubmissionRow>();
+      const { data, error } = await client()
+        .from("owner_onboarding_submissions")
+        .select()
+        .eq("implementation_id", implementationId)
+        .maybeSingle<OwnerOnboardingSubmissionRow>();
       if (error) throw error;
       return data ? ownerOnboardingSubmissionFromRow(data) : null;
     },
     getDraft: async (token) => {
-      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", { p_token: token });
+      const { data, error } = await client().rpc("owner_onboarding_draft_resolve", {
+        p_token: token,
+      });
       if (error) throw error;
       return data ? ownerOnboardingFromDraft(data as Record<string, unknown>) : null;
     },
@@ -1328,7 +1384,13 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       const { data, error } = await client().rpc("owner_onboarding_draft_save", {
         p_token: token,
         p_submit: submit,
-        p_data: { ...input, legalName: input.fullName, taxId: input.document, currentStep, confirmed: submit },
+        p_data: {
+          ...input,
+          legalName: input.fullName,
+          taxId: input.document,
+          currentStep,
+          confirmed: submit,
+        },
       });
       if (error) throw error;
       return ownerOnboardingFromDraft(data as Record<string, unknown>);

@@ -40,7 +40,9 @@ export function isValidCnpj(value: string): boolean {
   const cnpj = normalizeDocument(value);
   if (cnpj.length !== 14 || hasRepeatedDigits(cnpj)) return false;
   const calculate = (base: string, weights: number[]) => {
-    const sum = base.split("").reduce((total, digit, index) => total + Number(digit) * (weights[index] ?? 0), 0);
+    const sum = base
+      .split("")
+      .reduce((total, digit, index) => total + Number(digit) * (weights[index] ?? 0), 0);
     const remainder = sum % 11;
     return remainder < 2 ? 0 : 11 - remainder;
   };
@@ -56,25 +58,61 @@ export function isValidBrazilianDocument(value: string): boolean {
 export function formatBrazilianDocument(value: string): string {
   const valueDigits = normalizeDocument(value).slice(0, 14);
   if (valueDigits.length <= 11) {
-    return valueDigits.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    return valueDigits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   }
-  return valueDigits.replace(/(\d{2})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1/$2").replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+  return valueDigits
+    .replace(/(\d{2})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 
 export function formatBrazilianPhone(value: string): string {
-  const valueDigits = normalizePhone(value).replace(/^55(?=\d{10,11}$)/, "").slice(0, 11);
-  if (valueDigits.length <= 10) return valueDigits.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
+  const valueDigits = normalizePhone(value)
+    .replace(/^55(?=\d{10,11}$)/, "")
+    .slice(0, 11);
+  if (valueDigits.length <= 10)
+    return valueDigits.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
   return valueDigits.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
 }
 
 export function formatBrazilianPostalCode(value: string): string {
-  return normalizeDocument(value).slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
+  return normalizeDocument(value)
+    .slice(0, 8)
+    .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-const requiredName = z.string().transform((value) => value.trim().replace(/\s+/g, " ")).pipe(z.string().min(3, "Informe o nome completo ou razão social.").max(120, "Use até 120 caracteres."));
-const documentSchema = z.string().min(1, "Informe o CPF ou CNPJ.").refine(isValidBrazilianDocument, "Confira o CPF ou CNPJ informado.");
-const emailSchema = z.string().transform(normalizeEmail).pipe(z.string().email("Digite um e-mail válido, como nome@exemplo.com.").max(255, "Use até 255 caracteres."));
-const phoneSchema = z.string().refine((value) => /^55\d{10,11}$/.test(normalizePhone(value)), "Digite um telefone brasileiro com DDD.");
+const requiredName = z
+  .string()
+  .transform((value) => value.trim().replace(/\s+/g, " "))
+  .pipe(
+    z
+      .string()
+      .min(3, "Informe o nome completo ou razão social.")
+      .max(120, "Use até 120 caracteres."),
+  );
+const documentSchema = z
+  .string()
+  .min(1, "Informe o CPF ou CNPJ.")
+  .refine(isValidBrazilianDocument, "Confira o CPF ou CNPJ informado.");
+const emailSchema = z
+  .string()
+  .transform(normalizeEmail)
+  .pipe(
+    z
+      .string()
+      .email("Digite um e-mail válido, como nome@exemplo.com.")
+      .max(255, "Use até 255 caracteres."),
+  );
+const phoneSchema = z
+  .string()
+  .refine(
+    (value) => /^55\d{10,11}$/.test(normalizePhone(value)),
+    "Digite um telefone brasileiro com DDD.",
+  );
 
 export const ownerOnboardingFormSchema = z.object({
   personType: z.enum(["pf", "pj"]),
@@ -82,13 +120,19 @@ export const ownerOnboardingFormSchema = z.object({
   document: documentSchema,
   email: emailSchema,
   phone: phoneSchema,
-  postalCode: z.string().refine((value) => normalizeDocument(value).length === 8, "Digite um CEP válido."),
+  postalCode: z
+    .string()
+    .refine((value) => normalizeDocument(value).length === 8, "Digite um CEP válido."),
   street: z.string().trim().min(2, "Informe o endereço.").max(160),
   number: z.string().trim().min(1, "Informe o número.").max(20),
   complement: z.string().trim().max(100).nullable(),
   district: z.string().trim().min(2, "Informe o bairro.").max(100),
   city: z.string().trim().min(2, "Informe a cidade.").max(100),
-  state: z.string().trim().length(2, "Informe a UF.").transform((value) => value.toUpperCase()),
+  state: z
+    .string()
+    .trim()
+    .length(2, "Informe a UF.")
+    .transform((value) => value.toUpperCase()),
   bankName: z.string().trim().min(2, "Informe o banco.").max(120),
   bankBranch: z.string().trim().min(1, "Informe a agência.").max(20),
   accountNumber: z.string().trim().min(1, "Informe a conta.").max(30),
@@ -96,7 +140,11 @@ export const ownerOnboardingFormSchema = z.object({
   accountHolder: requiredName,
   holderTaxId: documentSchema,
   pixType: z.enum(["cpf", "cnpj", "phone", "email", "random"]),
-  pixKey: z.string().trim().min(1, "Informe a chave Pix.").max(255, "A chave Pix deve ter até 255 caracteres."),
+  pixKey: z
+    .string()
+    .trim()
+    .min(1, "Informe a chave Pix.")
+    .max(255, "A chave Pix deve ter até 255 caracteres."),
   isPrimary: z.boolean(),
 });
 
@@ -115,13 +163,14 @@ export function validateOwnerField(field: OwnerFormField, value: unknown): strin
 }
 
 export function normalizeOwnerSubmission(input: z.output<typeof ownerOnboardingFormSchema>) {
-  const pixKey = input.pixType === "cpf" || input.pixType === "cnpj"
-    ? normalizeDocument(input.pixKey)
-    : input.pixType === "phone"
-      ? normalizePhone(input.pixKey)
-      : input.pixType === "email"
-        ? normalizeEmail(input.pixKey)
-        : input.pixKey.trim();
+  const pixKey =
+    input.pixType === "cpf" || input.pixType === "cnpj"
+      ? normalizeDocument(input.pixKey)
+      : input.pixType === "phone"
+        ? normalizePhone(input.pixKey)
+        : input.pixType === "email"
+          ? normalizeEmail(input.pixKey)
+          : input.pixKey.trim();
   return {
     ...input,
     fullName: input.fullName.trim().replace(/\s+/g, " "),
@@ -139,7 +188,8 @@ export function normalizeOwnerSubmission(input: z.output<typeof ownerOnboardingF
 export function maskDocument(value: string | null | undefined): string {
   const normalized = normalizeDocument(value);
   if (normalized.length === 11) return `***.${normalized.slice(3, 6)}.${normalized.slice(6, 9)}-**`;
-  if (normalized.length === 14) return `**.${normalized.slice(2, 5)}.${normalized.slice(5, 8)}/****-**`;
+  if (normalized.length === 14)
+    return `**.${normalized.slice(2, 5)}.${normalized.slice(5, 8)}/****-**`;
   return value ? "••••••••" : "—";
 }
 

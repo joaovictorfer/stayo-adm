@@ -1,12 +1,38 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AlertCircle, Check, CheckCircle2, Copy, ExternalLink, ListChecks, LockKeyhole, Pencil, Send, Share2 } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  ListChecks,
+  LockKeyhole,
+  Pencil,
+  Send,
+  Share2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../components/ui/accordion";
 import { Progress } from "../components/ui/progress";
 import { Button } from "../components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../components/ui/alert-dialog";
 import { toast } from "sonner";
 
 import {
@@ -47,7 +73,15 @@ import {
   statusLabels,
 } from "../lib/implementation-status";
 import { initialChargeStatusLabels } from "../lib/initial-charge-status";
-import { formatBrazilianPhone, maskDocument, maskPixKey, normalizeDocument, normalizeEmail, normalizeName, normalizePhone } from "../lib/owner-form-validation";
+import {
+  formatBrazilianPhone,
+  maskDocument,
+  maskPixKey,
+  normalizeDocument,
+  normalizeEmail,
+  normalizeName,
+  normalizePhone,
+} from "../lib/owner-form-validation";
 import type { ChargeType, InitialChargeStatus } from "../types/admin";
 import type {
   EntityId,
@@ -84,7 +118,9 @@ const surface = {
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"resumo" | "proprietario" | "imovel" | "enxoval" | "itens_faltantes" | "checklist" | "proposta">("resumo");
+  const [tab, setTab] = useState<
+    "resumo" | "proprietario" | "imovel" | "enxoval" | "itens_faltantes" | "checklist" | "proposta"
+  >("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
@@ -154,26 +190,38 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="flex flex-col gap-5">
-          <section className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+          <section
+            className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
             <div className="relative h-24 overflow-hidden sm:h-28">
-            {implementation.coverImage ? (
-              <img
-                src={implementation.coverImage}
-                alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-[linear-gradient(120deg,var(--stayo-forest-strong),var(--stayo-forest))]" />
-            )}
+              {implementation.coverImage ? (
+                <img
+                  src={implementation.coverImage}
+                  alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[linear-gradient(120deg,var(--stayo-forest-strong),var(--stayo-forest))]" />
+              )}
               <div className="absolute inset-0 bg-[linear-gradient(to_top,var(--stayo-forest),transparent)] opacity-80" />
             </div>
             <div className="relative grid gap-5 px-5 pb-5 sm:px-8 sm:pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="-mt-7 min-w-0">
-                <div className="mb-4 h-14 w-14 border-4 border-white bg-[var(--stayo-bg)] shadow-md sm:h-16 sm:w-16" aria-hidden="true" />
-                <h1 className="text-2xl font-semibold leading-tight sm:text-3xl" style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-forest)" }}>
+                <div
+                  className="mb-4 h-14 w-14 border-4 border-white bg-[var(--stayo-bg)] shadow-md sm:h-16 sm:w-16"
+                  aria-hidden="true"
+                />
+                <h1
+                  className="text-2xl font-semibold leading-tight sm:text-3xl"
+                  style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-forest)" }}
+                >
                   {propertyName}
                 </h1>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+                <div
+                  className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
                   <span className="inline-flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--stayo-gold)]" />
                     {statusLabels[implementation.status]}
@@ -203,8 +251,21 @@ function ImplementationDetailPage() {
 
           <IndicatorCards items={items} loading={itemsQuery.isPending} />
 
-          <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-            {(["resumo", "proprietario", "imovel", "enxoval", "itens_faltantes", "checklist", "proposta"] as const).map((t) => (
+          <div
+            className="flex flex-wrap gap-2 border-b"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            {(
+              [
+                "resumo",
+                "proprietario",
+                "imovel",
+                "enxoval",
+                "itens_faltantes",
+                "checklist",
+                "proposta",
+              ] as const
+            ).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -220,33 +281,52 @@ function ImplementationDetailPage() {
                   ? "Resumo"
                   : t === "proprietario"
                     ? "Proprietário"
-                  : t === "imovel"
-                    ? "Imóvel"
-                    : t === "enxoval"
-                       ? "Enxoval"
-                       : t === "itens_faltantes"
-                         ? "Itens faltantes"
-                       : t === "checklist"
-                        ? "Checklist"
-                        : "Proposta"}
+                    : t === "imovel"
+                      ? "Imóvel"
+                      : t === "enxoval"
+                        ? "Enxoval"
+                        : t === "itens_faltantes"
+                          ? "Itens faltantes"
+                          : t === "checklist"
+                            ? "Checklist"
+                            : "Proposta"}
               </button>
             ))}
           </div>
 
           {tab === "resumo" ? (
-            <div className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-8" style={{ borderColor: "var(--stayo-border)" }}>
+            <div
+              className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-8"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)]">
                 <div className="min-w-0 space-y-10">
                   <section>
-                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--stayo-gold)]">Próxima ação recomendada</p>
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--stayo-gold)]">
+                      Próxima ação recomendada
+                    </p>
                     <div className="border-l-2 border-[var(--stayo-forest)] bg-[var(--stayo-bg)] p-5 sm:p-7">
-                      <h2 className="text-xl font-semibold leading-snug sm:text-2xl" style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-forest)" }}>
+                      <h2
+                        className="text-xl font-semibold leading-snug sm:text-2xl"
+                        style={{
+                          fontFamily: "var(--stayo-font-display)",
+                          color: "var(--stayo-forest)",
+                        }}
+                      >
                         {nextItem?.title ?? "Tudo em dia por enquanto"}
                       </h2>
-                      <p className="mt-3 max-w-2xl text-sm leading-relaxed" style={{ color: "var(--stayo-ink-muted)" }}>
-                        {nextItem?.description || "Revise o progresso e acompanhe as próximas etapas da implantação."}
+                      <p
+                        className="mt-3 max-w-2xl text-sm leading-relaxed"
+                        style={{ color: "var(--stayo-ink-muted)" }}
+                      >
+                        {nextItem?.description ||
+                          "Revise o progresso e acompanhe as próximas etapas da implantação."}
                       </p>
-                      {nextItem && <Button size="sm" className="mt-5" onClick={() => setTab("checklist")}><ListChecks /> Resolver agora</Button>}
+                      {nextItem && (
+                        <Button size="sm" className="mt-5" onClick={() => setTab("checklist")}>
+                          <ListChecks /> Resolver agora
+                        </Button>
+                      )}
                     </div>
                   </section>
 
@@ -257,14 +337,41 @@ function ImplementationDetailPage() {
                         <SummaryRow label="Condomínio" value={implementation.condominiumName} />
                         <SummaryRow label="Unidade" value={implementation.unit} />
                         <SummaryRow label="Cidade" value={implementation.city} />
-                        <SummaryRow label="Perfil" value={[implementation.propertyType, implementation.bedrooms != null ? `${implementation.bedrooms} quarto(s)` : null, implementation.capacity != null ? `${implementation.capacity} hóspedes` : null].filter(Boolean).join(" · ") || null} />
+                        <SummaryRow
+                          label="Perfil"
+                          value={
+                            [
+                              implementation.propertyType,
+                              implementation.bedrooms != null
+                                ? `${implementation.bedrooms} quarto(s)`
+                                : null,
+                              implementation.capacity != null
+                                ? `${implementation.capacity} hóspedes`
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || null
+                          }
+                        />
                       </dl>
                     </section>
                     <section>
                       <SummaryHeading>Proprietário</SummaryHeading>
                       <div className="space-y-2 text-sm">
-                        {implementation.ownerId ? <LinkedField to="/proprietarios/$id" id={implementation.ownerId} label={implementation.ownerName} /> : <p className="font-semibold" style={{ color: "var(--stayo-forest)" }}>{implementation.ownerName || "Não informado"}</p>}
-                        <p style={{ color: "var(--stayo-ink-muted)" }}>{implementation.ownerPhone || "Telefone não informado"}</p>
+                        {implementation.ownerId ? (
+                          <LinkedField
+                            to="/proprietarios/$id"
+                            id={implementation.ownerId}
+                            label={implementation.ownerName}
+                          />
+                        ) : (
+                          <p className="font-semibold" style={{ color: "var(--stayo-forest)" }}>
+                            {implementation.ownerName || "Não informado"}
+                          </p>
+                        )}
+                        <p style={{ color: "var(--stayo-ink-muted)" }}>
+                          {implementation.ownerPhone || "Telefone não informado"}
+                        </p>
                       </div>
                     </section>
                     <section>
@@ -272,7 +379,10 @@ function ImplementationDetailPage() {
                       <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
                         <SummaryRow label="Etapa" value={statusLabels[implementation.status]} />
                         <SummaryRow label="Responsável" value={implementation.responsibleUserId} />
-                        <SummaryRow label="Previsão" value={implementation.completionDateEstimate} />
+                        <SummaryRow
+                          label="Previsão"
+                          value={implementation.completionDateEstimate}
+                        />
                       </dl>
                     </section>
                   </div>
@@ -284,22 +394,57 @@ function ImplementationDetailPage() {
                 <aside className="space-y-10">
                   <section>
                     <SummaryHeading>Pendências</SummaryHeading>
-                    {pendingItems.length === 0 && missingPropertyFields === 0 ? <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Nenhuma pendência aberta.</p> : (
+                    {pendingItems.length === 0 && missingPropertyFields === 0 ? (
+                      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                        Nenhuma pendência aberta.
+                      </p>
+                    ) : (
                       <ul className="space-y-4">
                         {missingPropertyFields > 0 && (
                           <li className="border-l-2 border-[var(--stayo-gold)] pl-3">
-                            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-                              {missingPropertyFields} {missingPropertyFields === 1 ? "informação ainda precisa" : "informações ainda precisam"} ser completada{missingPropertyFields === 1 ? "" : "s"}
+                            <p
+                              className="text-sm font-medium"
+                              style={{ color: "var(--stayo-ink)" }}
+                            >
+                              {missingPropertyFields}{" "}
+                              {missingPropertyFields === 1
+                                ? "informação ainda precisa"
+                                : "informações ainda precisam"}{" "}
+                              ser completada{missingPropertyFields === 1 ? "" : "s"}
                             </p>
-                            <button type="button" onClick={() => setTab("imovel")} className="mt-1 text-xs underline" style={{ color: "var(--stayo-forest)" }}>
+                            <button
+                              type="button"
+                              onClick={() => setTab("imovel")}
+                              className="mt-1 text-xs underline"
+                              style={{ color: "var(--stayo-forest)" }}
+                            >
                               Completar dados do imóvel
                             </button>
                           </li>
                         )}
                         {pendingItems.slice(0, 5).map((item) => (
-                          <li key={item.id} className="border-l-2 pl-3" style={{ borderColor: item.blocker ? "var(--stayo-danger)" : "var(--stayo-border)" }}>
-                            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{item.title}</p>
-                            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{item.blocker ? "Bloqueador crítico" : item.mandatory ? "Obrigatório" : itemStatusLabels[item.status]}</p>
+                          <li
+                            key={item.id}
+                            className="border-l-2 pl-3"
+                            style={{
+                              borderColor: item.blocker
+                                ? "var(--stayo-danger)"
+                                : "var(--stayo-border)",
+                            }}
+                          >
+                            <p
+                              className="text-sm font-medium"
+                              style={{ color: "var(--stayo-ink)" }}
+                            >
+                              {item.title}
+                            </p>
+                            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                              {item.blocker
+                                ? "Bloqueador crítico"
+                                : item.mandatory
+                                  ? "Obrigatório"
+                                  : itemStatusLabels[item.status]}
+                            </p>
                           </li>
                         ))}
                       </ul>
@@ -314,32 +459,57 @@ function ImplementationDetailPage() {
 
               <div className="mt-10 border-t pt-6" style={{ borderColor: "var(--stayo-border)" }}>
                 <details>
-                  <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Configurações operacionais</summary>
+                  <summary
+                    className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]"
+                    style={{ color: "var(--stayo-ink-muted)" }}
+                  >
+                    Configurações operacionais
+                  </summary>
                   <div className="mt-4 grid gap-4">
                     <InitialChargesPanel implementationId={implementation.id} />
                   </div>
                 </details>
               </div>
 
-              <details className="rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
-                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+              <details
+                className="rounded-[var(--radius-card)] border bg-white shadow-sm"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
+                <summary
+                  className="cursor-pointer list-none px-4 py-3 text-sm font-medium"
+                  style={{ color: "var(--stayo-ink)" }}
+                >
                   Detalhes técnicos e Integração (IDs e Registros)
                 </summary>
-                <div className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2 text-xs" style={{ borderColor: "var(--stayo-border)" }}>
+                <div
+                  className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2 text-xs"
+                  style={{ borderColor: "var(--stayo-border)" }}
+                >
                   <Field label="ID da Implantação" value={implementation.id} />
                   <Field label="Código" value={implementation.code} />
                   {implementation.origin && <Field label="Origem" value={implementation.origin} />}
-                  {implementation.notes && <Field label="Observações técnicas" value={implementation.notes} />}
-                  {implementation.corePropertyId && <Field label="Imóvel no Core" value={implementation.corePropertyId} />}
-                  {implementation.coreOwnerId && <Field label="Proprietário no Core" value={implementation.coreOwnerId} />}
+                  {implementation.notes && (
+                    <Field label="Observações técnicas" value={implementation.notes} />
+                  )}
+                  {implementation.corePropertyId && (
+                    <Field label="Imóvel no Core" value={implementation.corePropertyId} />
+                  )}
+                  {implementation.coreOwnerId && (
+                    <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
+                  )}
                   <Field label="Criada em" value={implementation.createdAt} />
                   <Field label="Atualizada em" value={implementation.updatedAt} />
                 </div>
-                <div className="border-t p-4" style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}>
+                <div
+                  className="border-t p-4"
+                  style={{
+                    borderColor: "var(--stayo-border)",
+                    backgroundColor: "var(--stayo-surface)",
+                  }}
+                >
                   <CoreConversionPanel implementation={implementation} />
                 </div>
               </details>
-
             </div>
           ) : tab === "proprietario" ? (
             <OwnerTab implementation={implementation} />
@@ -383,7 +553,10 @@ function recentActivity(items: ImplementationItem[]): TimelineEntry[] {
 
 function SummaryHeading({ children }: { children: string }) {
   return (
-    <h2 className="mb-5 border-b pb-2 text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}>
+    <h2
+      className="mb-5 border-b pb-2 text-[11px] font-semibold uppercase tracking-[0.16em]"
+      style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+    >
       {children}
     </h2>
   );
@@ -521,73 +694,172 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
 
   const confirmations = submitted
     ? [
-        { label: "Nome", current: ownerData?.name ?? implementation.ownerName, received: submitted.fullName, normalize: normalizeName },
-        { label: "Telefone", current: ownerData?.phone ?? implementation.ownerPhone, received: submitted.phone, normalize: normalizePhone },
-        { label: "E-mail", current: ownerData?.email, received: submitted.email, normalize: normalizeEmail },
-        { label: "CPF/CNPJ", current: ownerData?.document, received: submitted.document, normalize: normalizeDocument },
-      ].filter(({ current, received, normalize }) => received && normalize(current) !== normalize(received))
+        {
+          label: "Nome",
+          current: ownerData?.name ?? implementation.ownerName,
+          received: submitted.fullName,
+          normalize: normalizeName,
+        },
+        {
+          label: "Telefone",
+          current: ownerData?.phone ?? implementation.ownerPhone,
+          received: submitted.phone,
+          normalize: normalizePhone,
+        },
+        {
+          label: "E-mail",
+          current: ownerData?.email,
+          received: submitted.email,
+          normalize: normalizeEmail,
+        },
+        {
+          label: "CPF/CNPJ",
+          current: ownerData?.document,
+          received: submitted.document,
+          normalize: normalizeDocument,
+        },
+      ].filter(
+        ({ current, received, normalize }) =>
+          received && normalize(current) !== normalize(received),
+      )
     : [];
-  const registration = computeOwnerRegistration({ submission: submitted ?? null, hasDivergences: confirmations.length > 0 });
+  const registration = computeOwnerRegistration({
+    submission: submitted ?? null,
+    hasDivergences: confirmations.length > 0,
+  });
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
       <div className="space-y-4">
-        <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
+        <section
+          className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <SummaryHeading>Proprietário vinculado</SummaryHeading>
               {implementation.ownerId ? (
-                <LinkedField to="/proprietarios/$id" id={implementation.ownerId} label={ownerData?.name ?? implementation.ownerName} />
+                <LinkedField
+                  to="/proprietarios/$id"
+                  id={implementation.ownerId}
+                  label={ownerData?.name ?? implementation.ownerName}
+                />
               ) : (
-                <p className="font-semibold" style={{ color: "var(--stayo-ink)" }}>{implementation.ownerName || "Proprietário ainda não vinculado"}</p>
+                <p className="font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                  {implementation.ownerName || "Proprietário ainda não vinculado"}
+                </p>
               )}
             </div>
             {implementation.ownerId && <Tag label="Principal" tone="neutral" />}
           </div>
-          <dl className="mt-4 grid gap-x-8 border-t sm:grid-cols-2" style={{ borderColor: "var(--stayo-border)" }}>
-             <SummaryRow label="Telefone" value={formatBrazilianPhone(ownerData?.phone ?? implementation.ownerPhone ?? "")} />
+          <dl
+            className="mt-4 grid gap-x-8 border-t sm:grid-cols-2"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            <SummaryRow
+              label="Telefone"
+              value={formatBrazilianPhone(ownerData?.phone ?? implementation.ownerPhone ?? "")}
+            />
             <SummaryRow label="E-mail" value={ownerData?.email} />
             <SummaryRow label="Participação" value="Proprietário principal" />
           </dl>
         </section>
 
-        <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
+        <section
+          className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
           <div className="flex items-center justify-between gap-4">
             <SummaryHeading>Status do cadastro</SummaryHeading>
-             <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>{registration.percentage}%</span>
+            <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>
+              {registration.percentage}%
+            </span>
           </div>
-           <Progress value={registration.percentage} className="mb-5 h-1.5" />
+          <Progress value={registration.percentage} className="mb-5 h-1.5" />
           <ul className="grid gap-2 sm:grid-cols-2">
-             {registration.groups.map((item) => (
-               <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
-                 {item.state === "complete" ? <CheckCircle2 className="size-4 text-[var(--stayo-success)]" /> : <span className="size-4 rounded-full border" style={{ borderColor: "var(--stayo-border-strong)" }} />}
-                 <span style={{ color: item.state === "complete" ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{item.label}</span>
-                 <span className="ml-auto text-xs" style={{ color: item.state === "complete" ? "var(--stayo-success)" : "var(--stayo-ink-muted)" }}>{item.state === "complete" ? "Completo" : item.state === "review" ? "Aguardando revisão" : "Incompleto"}</span>
+            {registration.groups.map((item) => (
+              <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
+                {item.state === "complete" ? (
+                  <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
+                ) : (
+                  <span
+                    className="size-4 rounded-full border"
+                    style={{ borderColor: "var(--stayo-border-strong)" }}
+                  />
+                )}
+                <span
+                  style={{
+                    color:
+                      item.state === "complete" ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                  }}
+                >
+                  {item.label}
+                </span>
+                <span
+                  className="ml-auto text-xs"
+                  style={{
+                    color:
+                      item.state === "complete" ? "var(--stayo-success)" : "var(--stayo-ink-muted)",
+                  }}
+                >
+                  {item.state === "complete"
+                    ? "Completo"
+                    : item.state === "review"
+                      ? "Aguardando revisão"
+                      : "Incompleto"}
+                </span>
               </li>
             ))}
           </ul>
-           {registration.nextAction && implementation.ownerId && <Button asChild className="mt-4" size="sm"><Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>Resolver agora</Link></Button>}
+          {registration.nextAction && implementation.ownerId && (
+            <Button asChild className="mt-4" size="sm">
+              <Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>
+                Resolver agora
+              </Link>
+            </Button>
+          )}
         </section>
 
-        <section className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: "var(--stayo-border)" }}>
+        <section
+          className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
           <SummaryHeading>Precisamos confirmar</SummaryHeading>
           {submission.isPending ? (
-            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Verificando dados enviados...</p>
+            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+              Verificando dados enviados...
+            </p>
           ) : confirmations.length === 0 ? (
-            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+            <div
+              className="flex items-center gap-2 text-sm"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
               <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
               Nenhum dado enviado pelo proprietário aguarda revisão.
             </div>
           ) : (
             <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
               {confirmations.map((item) => (
-                <li key={item.label} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center">
+                <li
+                  key={item.label}
+                  className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center"
+                >
                   <AlertCircle className="size-4 shrink-0 text-[var(--stayo-warning)]" />
                   <div className="min-w-0 flex-1 text-sm">
-                    <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>{item.label} alterado pelo proprietário</p>
-                    <p className="truncate" style={{ color: "var(--stayo-ink-muted)" }}>Recebido: {item.received}</p>
+                    <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+                      {item.label} alterado pelo proprietário
+                    </p>
+                    <p className="truncate" style={{ color: "var(--stayo-ink-muted)" }}>
+                      Recebido: {item.received}
+                    </p>
                   </div>
-                  {implementation.ownerId && <Button asChild variant="outline" size="sm"><Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>Revisar cadastro</Link></Button>}
+                  {implementation.ownerId && (
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>
+                        Revisar cadastro
+                      </Link>
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -596,7 +868,11 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
       </div>
 
       <div id="portal-owner-panel">
-        <OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} compact />
+        <OwnerPortalPanel
+          implementationId={implementation.id}
+          ownerId={implementation.ownerId}
+          compact
+        />
       </div>
     </div>
   );
@@ -699,53 +975,80 @@ function OwnerPortalPanel({
       ) : (
         <>
           <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-             {compact
-               ? "Gerencie o acesso do proprietário ao acompanhamento da implantação."
-               : "Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser gerado."}
+            {compact
+              ? "Gerencie o acesso do proprietário ao acompanhamento da implantação."
+              : "Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser gerado."}
           </p>
 
           {link && status && (
-             <div className="mb-3 grid gap-2 text-xs sm:grid-cols-2">
-               <div className="flex flex-wrap items-center gap-2">
-              <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
+            <div className="mb-3 grid gap-2 text-xs sm:grid-cols-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
+                <span style={{ color: "var(--stayo-ink-muted)" }}>
+                  {status === "ativo"
+                    ? `Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
+                    : status === "revogado"
+                      ? `Revogado em ${new Date(link.revokedAt!).toLocaleString("pt-BR")}`
+                      : status === "expirado"
+                        ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
+                        : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
+                </span>
+              </div>
               <span style={{ color: "var(--stayo-ink-muted)" }}>
-                {status === "ativo"
-                  ? `Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                  : status === "revogado"
-                    ? `Revogado em ${new Date(link.revokedAt!).toLocaleString("pt-BR")}`
-                    : status === "expirado"
-                      ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                      : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
+                Último acesso:{" "}
+                {link.lastAccessAt
+                  ? new Date(link.lastAccessAt).toLocaleString("pt-BR")
+                  : "Ainda não acessado"}
               </span>
-               </div>
-               <span style={{ color: "var(--stayo-ink-muted)" }}>Último acesso: {link.lastAccessAt ? new Date(link.lastAccessAt).toLocaleString("pt-BR") : "Ainda não acessado"}</span>
             </div>
           )}
 
-           {url && (
-             <details className="mb-3 rounded-lg border p-3">
-               <summary className="cursor-pointer text-xs font-medium">Mostrar link deste dispositivo</summary>
-             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <code
-                className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
-                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-              >
-                {url}
-              </code>
-              <button
-                type="button"
-                onClick={() => void copy()}
-                className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? "Copiado" : "Copiar"}
-              </button>
-              <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"><ExternalLink size={14} />Abrir</button>
-              <a href={`https://wa.me/?text=${encodeURIComponent(`Acesse seu portal Stayo: ${url}`)}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"><Share2 size={14} />Enviar</a>
-             </div></details>
+          {url && (
+            <details className="mb-3 rounded-lg border p-3">
+              <summary className="cursor-pointer text-xs font-medium">
+                Mostrar link deste dispositivo
+              </summary>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <code
+                  className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
+                  style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+                >
+                  {url}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => void copy()}
+                  className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
+                  style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  {copied ? "Copiado" : "Copiar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+                  className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+                >
+                  <ExternalLink size={14} />
+                  Abrir
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Acesse seu portal Stayo: ${url}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+                >
+                  <Share2 size={14} />
+                  Enviar
+                </a>
+              </div>
+            </details>
           )}
-           {status === "ativo" && !url && <p className="mb-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">Acesso ativo. O link original não está disponível neste dispositivo.</p>}
+          {status === "ativo" && !url && (
+            <p className="mb-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">
+              Acesso ativo. O link original não está disponível neste dispositivo.
+            </p>
+          )}
 
           {(!url || status !== "ativo") && (
             <div className="flex flex-wrap gap-2">
@@ -756,18 +1059,44 @@ function OwnerPortalPanel({
                 className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
                 style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
               >
-                 <Send size={14} />
-                 {createLink.isPending
+                <Send size={14} />
+                {createLink.isPending
                   ? "Gerando..."
                   : link
-                     ? "Enviar novo acesso"
-                     : "Enviar acesso"}
+                    ? "Enviar novo acesso"
+                    : "Enviar acesso"}
               </button>
             </div>
           )}
-           {status === "ativo" && link && (
+          {status === "ativo" && link && (
             <div className="mt-2">
-               <AlertDialog><AlertDialogTrigger asChild><button type="button" disabled={revokeLink.isPending} className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60" style={{ ...surface, color: "var(--stayo-danger)" }}>Revogar</button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Revogar acesso do proprietário?</AlertDialogTitle><AlertDialogDescription>O link deixará de funcionar imediatamente. Um novo acesso poderá ser criado depois.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>Confirmar revogação</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={revokeLink.isPending}
+                    className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
+                    style={{ ...surface, color: "var(--stayo-danger)" }}
+                  >
+                    Revogar
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Revogar acesso do proprietário?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O link deixará de funcionar imediatamente. Um novo acesso poderá ser criado
+                      depois.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>
+                      Confirmar revogação
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </>
@@ -928,7 +1257,10 @@ function StatusStepper({
   const isAlternate = alternateStatuses.includes(status);
 
   return (
-    <div className="border-y bg-white px-4 py-4 sm:px-6" style={{ borderColor: "var(--stayo-border)" }}>
+    <div
+      className="border-y bg-white px-4 py-4 sm:px-6"
+      style={{ borderColor: "var(--stayo-border)" }}
+    >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
           Status da implantação
@@ -951,7 +1283,7 @@ function StatusStepper({
       <ol className="flex flex-col gap-3 md:flex-row md:gap-1.5">
         {mainStatusFlow.map((s, index) => {
           let state: "done" | "current" | "future" | "blocked" = "future";
-          
+
           if (isAlternate) {
             state = "blocked";
           } else if (currentIndex !== -1) {
@@ -959,17 +1291,23 @@ function StatusStepper({
             else if (index === currentIndex) state = "current";
           }
 
-          const color = 
-            state === "done" ? "var(--stayo-forest)" :
-            state === "current" ? "var(--stayo-forest)" :
-            state === "blocked" ? "var(--stayo-danger)" :
-            "var(--stayo-border)";
-            
+          const color =
+            state === "done"
+              ? "var(--stayo-forest)"
+              : state === "current"
+                ? "var(--stayo-forest)"
+                : state === "blocked"
+                  ? "var(--stayo-danger)"
+                  : "var(--stayo-border)";
+
           const opacity = state === "done" ? 0.55 : state === "blocked" ? 0.4 : 1;
           const isCurrent = state === "current";
 
           return (
-            <li key={s} className="flex md:flex-1 flex-row md:flex-col items-center md:items-start gap-3 md:gap-2 min-w-0">
+            <li
+              key={s}
+              className="flex md:flex-1 flex-row md:flex-col items-center md:items-start gap-3 md:gap-2 min-w-0"
+            >
               <span
                 className="h-1.5 w-8 shrink-0 rounded-full transition-colors md:h-0.5 md:w-full"
                 title={state === "blocked" ? "Bloqueado / Alternativo" : ""}
@@ -1007,20 +1345,64 @@ function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loadi
   const pending = items.filter((item) => item.status !== "concluido").length;
 
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border bg-white sm:grid-cols-3" style={{ borderColor: "var(--stayo-border)" }}>
-      <Metric label="Progresso" value={loading ? "—" : `${progress.percent}%`} detail={`${progress.done} de ${progress.total} concluídos`} />
-      <Metric label="Prontidão" value={loading ? "—" : readinessLabels[readiness.state]} detail={`${readiness.pendingBlockers} bloqueador(es)`} color={loading ? undefined : readinessColors[readiness.state]} />
-      <Metric label="Pendências" value={loading ? "—" : String(pending).padStart(2, "0")} detail={`${readiness.pendingMandatory} obrigatório(s)`} className="col-span-2 sm:col-span-1" />
+    <div
+      className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border bg-white sm:grid-cols-3"
+      style={{ borderColor: "var(--stayo-border)" }}
+    >
+      <Metric
+        label="Progresso"
+        value={loading ? "—" : `${progress.percent}%`}
+        detail={`${progress.done} de ${progress.total} concluídos`}
+      />
+      <Metric
+        label="Prontidão"
+        value={loading ? "—" : readinessLabels[readiness.state]}
+        detail={`${readiness.pendingBlockers} bloqueador(es)`}
+        color={loading ? undefined : readinessColors[readiness.state]}
+      />
+      <Metric
+        label="Pendências"
+        value={loading ? "—" : String(pending).padStart(2, "0")}
+        detail={`${readiness.pendingMandatory} obrigatório(s)`}
+        className="col-span-2 sm:col-span-1"
+      />
     </div>
   );
 }
 
-function Metric({ label, value, detail, color, className = "" }: { label: string; value: string; detail: string; color?: string | undefined; className?: string }) {
+function Metric({
+  label,
+  value,
+  detail,
+  color,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  color?: string | undefined;
+  className?: string;
+}) {
   return (
-    <div className={`border-r p-4 text-center last:border-r-0 sm:p-5 ${className}`} style={{ borderColor: "var(--stayo-border)" }}>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
-      <p className="mt-1 text-lg font-semibold sm:text-xl" style={{ color: color ?? "var(--stayo-forest)", fontFamily: "var(--stayo-font-display)" }}>{value}</p>
-      <p className="mt-1 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{detail}</p>
+    <div
+      className={`border-r p-4 text-center last:border-r-0 sm:p-5 ${className}`}
+      style={{ borderColor: "var(--stayo-border)" }}
+    >
+      <p
+        className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+        style={{ color: "var(--stayo-ink-muted)" }}
+      >
+        {label}
+      </p>
+      <p
+        className="mt-1 text-lg font-semibold sm:text-xl"
+        style={{ color: color ?? "var(--stayo-forest)", fontFamily: "var(--stayo-font-display)" }}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+        {detail}
+      </p>
     </div>
   );
 }
@@ -1035,8 +1417,12 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
   const [addressLookupMessage, setAddressLookupMessage] = useState("");
 
   const updateImplementation = useMutation({
-    mutationFn: (input: { address?: string | null; city?: string | null; postalCode?: string | null; notes?: string | null }) =>
-      coreApi.implementations.update(implementation.id, input),
+    mutationFn: (input: {
+      address?: string | null;
+      city?: string | null;
+      postalCode?: string | null;
+      notes?: string | null;
+    }) => coreApi.implementations.update(implementation.id, input),
     onSuccess: async () => {
       setEditingSection(null);
       await queryClient.invalidateQueries({ queryKey: ["implementations", implementation.id] });
@@ -1102,11 +1488,21 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
   }) {
     const isEditing = editingSection === id;
     return (
-      <details open={isEditing || undefined} className="group overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+      <details
+        open={isEditing || undefined}
+        className="group overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
+        style={{ borderColor: "var(--stayo-border)" }}
+      >
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{title}</h2>
-            {description && <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{description}</p>}
+            <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+              {title}
+            </h2>
+            {description && (
+              <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                {description}
+              </p>
+            )}
           </div>
           <Button
             type="button"
@@ -1131,20 +1527,37 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
+      <div
+        className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm"
+        style={{ borderColor: "var(--stayo-border)" }}
+      >
         {implementation.coverImage ? (
-          <img src={implementation.coverImage} alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`} className="h-48 w-full object-cover sm:h-60" />
+          <img
+            src={implementation.coverImage}
+            alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
+            className="h-48 w-full object-cover sm:h-60"
+          />
         ) : (
           <div className="flex h-48 items-end bg-[linear-gradient(135deg,var(--stayo-forest-strong),var(--stayo-forest),var(--stayo-gold))] p-5 sm:h-60">
-            <span className="text-sm text-[var(--stayo-on-dark-muted)]">Imagem institucional · nenhuma capa cadastrada</span>
+            <span className="text-sm text-[var(--stayo-on-dark-muted)]">
+              Imagem institucional · nenhuma capa cadastrada
+            </span>
           </div>
         )}
         <div className="flex flex-col gap-3 bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Imóvel</p>
-            <h1 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>{implementation.nickname || "Imóvel sem apelido"}</h1>
+            <p
+              className="text-[11px] font-medium uppercase tracking-[0.14em]"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Imóvel
+            </p>
+            <h1 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
+              {implementation.nickname || "Imóvel sem apelido"}
+            </h1>
             <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-              {[implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Condomínio e unidade não informados"}
+              {[implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") ||
+                "Condomínio e unidade não informados"}
             </p>
           </div>
           <div className="min-w-44 rounded-[var(--radius-control)] bg-[var(--stayo-bg)] p-3">
@@ -1152,15 +1565,27 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
               <span style={{ color: "var(--stayo-ink-muted)" }}>Preenchimento</span>
               <strong style={{ color: "var(--stayo-forest)" }}>{completionPercent}%</strong>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
-              <div className="h-full rounded-full" style={{ width: `${completionPercent}%`, backgroundColor: "var(--stayo-forest)" }} />
+            <div
+              className="mt-2 h-1.5 overflow-hidden rounded-full"
+              style={{ backgroundColor: "var(--stayo-border)" }}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${completionPercent}%`, backgroundColor: "var(--stayo-forest)" }}
+              />
             </div>
-            <p className="mt-1.5 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{filledFields} de {totalFields} campos principais</p>
+            <p className="mt-1.5 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+              {filledFields} de {totalFields} campos principais
+            </p>
           </div>
         </div>
       </div>
 
-      <Section id="identificacao" title="Identificação e endereço" description="Dados básicos do imóvel e localização">
+      <Section
+        id="identificacao"
+        title="Identificação e endereço"
+        description="Dados básicos do imóvel e localização"
+      >
         {editingSection === "identificacao" ? (
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -1170,22 +1595,78 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
               <Field label="Cidade" value={implementation.city || "Não informado"} />
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label className="flex-1 text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+              <label
+                className="flex-1 text-xs font-medium"
+                style={{ color: "var(--stayo-ink-muted)" }}
+              >
                 Buscar endereço por CEP
-                <input value={postalCode} onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, "").slice(0, 8).replace(/^(\d{5})(\d)/, "$1-$2"))} inputMode="numeric" placeholder="00000-000" className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+                <input
+                  value={postalCode}
+                  onChange={(event) =>
+                    setPostalCode(
+                      event.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 8)
+                        .replace(/^(\d{5})(\d)/, "$1-$2"),
+                    )
+                  }
+                  inputMode="numeric"
+                  placeholder="00000-000"
+                  className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                  style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+                />
               </label>
-              <button type="button" onClick={() => void searchPostalCode()} className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium" style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}>Buscar CEP</button>
+              <button
+                type="button"
+                onClick={() => void searchPostalCode()}
+                className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium"
+                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              >
+                Buscar CEP
+              </button>
             </div>
-            {addressLookupMessage && <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{addressLookupMessage}</p>}
-            <label className="block text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+            {addressLookupMessage && (
+              <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                {addressLookupMessage}
+              </p>
+            )}
+            <label
+              className="block text-xs font-medium"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
               Endereço
-              <input value={addressDraft} onChange={(event) => setAddressDraft(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+              <input
+                value={addressDraft}
+                onChange={(event) => setAddressDraft(event.target.value)}
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              />
             </label>
-            <label className="block text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+            <label
+              className="block text-xs font-medium"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
               Cidade
-              <input value={cityDraft} onChange={(event) => setCityDraft(event.target.value)} className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
+              <input
+                value={cityDraft}
+                onChange={(event) => setCityDraft(event.target.value)}
+                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              />
             </label>
-            <Button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ address: addressDraft, city: cityDraft, postalCode: postalCode || implementation.postalCode })}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</Button>
+            <Button
+              type="button"
+              disabled={updateImplementation.isPending}
+              onClick={() =>
+                updateImplementation.mutate({
+                  address: addressDraft,
+                  city: cityDraft,
+                  postalCode: postalCode || implementation.postalCode,
+                })
+              }
+            >
+              {updateImplementation.isPending ? "Salvando..." : "Salvar seção"}
+            </Button>
           </div>
         ) : (
           <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1198,7 +1679,11 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         )}
       </Section>
 
-      <Section id="composicao" title="Composição" description="Características principais da acomodação">
+      <Section
+        id="composicao"
+        title="Composição"
+        description="Características principais da acomodação"
+      >
         <div className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
           <Field label="Tipo de imóvel" value={implementation.propertyType || "Não informado"} />
           <Field label="Quartos" value={implementation.bedrooms ?? "Não informado"} />
@@ -1206,31 +1691,83 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         </div>
       </Section>
 
-      <Section id="ambientes" title="Ambientes e camas" description="Organização dos ambientes e lugares de dormir">
-        <div className="rounded-[var(--radius-control)] border border-dashed bg-[var(--stayo-bg)] p-4" style={{ borderColor: "var(--stayo-border)" }}>
-          <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>{implementation.bedrooms ?? "Não informado"} quarto(s) cadastrado(s)</p>
-          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Detalhamento de ambientes, camas e capacidades por cômodo ainda não informado nesta implantação.</p>
+      <Section
+        id="ambientes"
+        title="Ambientes e camas"
+        description="Organização dos ambientes e lugares de dormir"
+      >
+        <div
+          className="rounded-[var(--radius-control)] border border-dashed bg-[var(--stayo-bg)] p-4"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
+          <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+            {implementation.bedrooms ?? "Não informado"} quarto(s) cadastrado(s)
+          </p>
+          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Detalhamento de ambientes, camas e capacidades por cômodo ainda não informado nesta
+            implantação.
+          </p>
         </div>
       </Section>
 
-      <Section id="acessos" title="Acessos e Wi-Fi" description="Informações operacionais de entrada e conectividade">
+      <Section
+        id="acessos"
+        title="Acessos e Wi-Fi"
+        description="Informações operacionais de entrada e conectividade"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] bg-[var(--stayo-bg)] p-4">
           <div>
-            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>Dados de acesso e Wi-Fi</p>
-            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Ainda não informados</p>
+            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+              Dados de acesso e Wi-Fi
+            </p>
+            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              Ainda não informados
+            </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium" style={{ borderColor: "var(--stayo-gold)", backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}><LockKeyhole className="size-3" />Privado · somente operação</span>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium"
+            style={{
+              borderColor: "var(--stayo-gold)",
+              backgroundColor: "var(--stayo-gold-soft)",
+              color: "var(--stayo-warning)",
+            }}
+          >
+            <LockKeyhole className="size-3" />
+            Privado · somente operação
+          </span>
         </div>
       </Section>
 
-      <Section id="observacoes" title="Observações internas" description="Notas de uso exclusivo da operação">
+      <Section
+        id="observacoes"
+        title="Observações internas"
+        description="Notas de uso exclusivo da operação"
+      >
         {editingSection === "observacoes" ? (
           <div className="space-y-3">
-            <textarea value={notesDraft} onChange={(event) => setNotesDraft(event.target.value)} rows={5} placeholder="Adicione observações internas sobre o imóvel" className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }} />
-            <Button type="button" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ notes: notesDraft })}>{updateImplementation.isPending ? "Salvando..." : "Salvar seção"}</Button>
+            <textarea
+              value={notesDraft}
+              onChange={(event) => setNotesDraft(event.target.value)}
+              rows={5}
+              placeholder="Adicione observações internas sobre o imóvel"
+              className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+            />
+            <Button
+              type="button"
+              disabled={updateImplementation.isPending}
+              onClick={() => updateImplementation.mutate({ notes: notesDraft })}
+            >
+              {updateImplementation.isPending ? "Salvando..." : "Salvar seção"}
+            </Button>
           </div>
         ) : (
-          <p className="whitespace-pre-wrap text-sm" style={{ color: implementation.notes ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}>{implementation.notes || "Nenhuma observação interna cadastrada."}</p>
+          <p
+            className="whitespace-pre-wrap text-sm"
+            style={{ color: implementation.notes ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}
+          >
+            {implementation.notes || "Nenhuma observação interna cadastrada."}
+          </p>
         )}
       </Section>
     </div>
@@ -1372,33 +1909,78 @@ function Checklist({
   }
 
   const totalItems = items.length;
-  const completedItems = items.filter(i => i.status === "concluido").length;
-  const pendingItems = items.filter(i => i.status !== "concluido");
-  const blockersPending = pendingItems.filter(i => i.blocker).length;
-  const nextAction = [...pendingItems].sort((a, b) => Number(b.blocker) - Number(a.blocker) || a.order - b.order)[0];
+  const completedItems = items.filter((i) => i.status === "concluido").length;
+  const pendingItems = items.filter((i) => i.status !== "concluido");
+  const blockersPending = pendingItems.filter((i) => i.blocker).length;
+  const nextAction = [...pendingItems].sort(
+    (a, b) => Number(b.blocker) - Number(a.blocker) || a.order - b.order,
+  )[0];
   const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Painel de status geral */}
-      <div className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
-        <div className="grid divide-y sm:grid-cols-[1fr_auto_1.4fr] sm:divide-x sm:divide-y-0" style={{ borderColor: "var(--stayo-border)" }}>
+      <div
+        className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
+        style={{ borderColor: "var(--stayo-border)" }}
+      >
+        <div
+          className="grid divide-y sm:grid-cols-[1fr_auto_1.4fr] sm:divide-x sm:divide-y-0"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
           <div className="p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Progresso geral</p>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Progresso geral
+            </p>
             <div className="mt-2 flex items-center gap-3">
-              <strong className="text-xl" style={{ color: "var(--stayo-forest)" }}>{progressPercent}%</strong>
-              <div className="min-w-0 flex-1"><Progress value={progressPercent} className="h-2" /></div>
-              <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{completedItems}/{totalItems}</span>
+              <strong className="text-xl" style={{ color: "var(--stayo-forest)" }}>
+                {progressPercent}%
+              </strong>
+              <div className="min-w-0 flex-1">
+                <Progress value={progressPercent} className="h-2" />
+              </div>
+              <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                {completedItems}/{totalItems}
+              </span>
             </div>
           </div>
           <div className="min-w-36 p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Bloqueadores</p>
-            <p className="mt-2 text-sm font-semibold" style={{ color: blockersPending > 0 ? "var(--stayo-danger)" : "var(--stayo-ink)" }}>{blockersPending} pendente{blockersPending === 1 ? "" : "s"}</p>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Bloqueadores
+            </p>
+            <p
+              className="mt-2 text-sm font-semibold"
+              style={{ color: blockersPending > 0 ? "var(--stayo-danger)" : "var(--stayo-ink)" }}
+            >
+              {blockersPending} pendente{blockersPending === 1 ? "" : "s"}
+            </p>
           </div>
           <div className="min-w-0 p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>Próxima ação</p>
-            <p className="mt-2 truncate text-sm font-semibold" style={{ color: "var(--stayo-ink)" }} title={nextAction?.title ?? "Tudo concluído"}>{nextAction?.title ?? "Tudo concluído"}</p>
-            {nextAction && <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{nextAction.phase} · {nextAction.blocker ? "Bloqueador" : itemStatusLabels[nextAction.status]}</p>}
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Próxima ação
+            </p>
+            <p
+              className="mt-2 truncate text-sm font-semibold"
+              style={{ color: "var(--stayo-ink)" }}
+              title={nextAction?.title ?? "Tudo concluído"}
+            >
+              {nextAction?.title ?? "Tudo concluído"}
+            </p>
+            {nextAction && (
+              <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                {nextAction.phase} ·{" "}
+                {nextAction.blocker ? "Bloqueador" : itemStatusLabels[nextAction.status]}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -1407,14 +1989,27 @@ function Checklist({
         {[...groups.entries()].map(([phase, categories]) => {
           const phaseItems = Array.from(categories.values()).flat();
           const phaseTotal = phaseItems.length;
-          const phaseCompleted = phaseItems.filter(i => i.status === "concluido").length;
-          
+          const phaseCompleted = phaseItems.filter((i) => i.status === "concluido").length;
+
           return (
-            <AccordionItem key={phase} value={phase} className="rounded-[var(--radius-card)] border bg-white overflow-hidden shadow-sm" style={{ borderColor: "var(--stayo-border)" }}>
-              <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=open]:border-b data-[state=open]:bg-[var(--stayo-bg)]" style={{ borderColor: "var(--stayo-border)" }}>
+            <AccordionItem
+              key={phase}
+              value={phase}
+              className="rounded-[var(--radius-card)] border bg-white overflow-hidden shadow-sm"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
+              <AccordionTrigger
+                className="px-4 py-3 hover:no-underline data-[state=open]:border-b data-[state=open]:bg-[var(--stayo-bg)]"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
                 <div className="flex items-center justify-between w-full pr-4">
-                  <span className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>{phase}</span>
-                  <span className="text-[11px] font-medium rounded-full bg-slate-200/60 px-2.5 py-0.5" style={{ color: "var(--stayo-ink)" }}>
+                  <span className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                    {phase}
+                  </span>
+                  <span
+                    className="text-[11px] font-medium rounded-full bg-slate-200/60 px-2.5 py-0.5"
+                    style={{ color: "var(--stayo-ink)" }}
+                  >
                     {phaseCompleted}/{phaseTotal}
                   </span>
                 </div>
@@ -1433,7 +2028,20 @@ function Checklist({
                         <li key={item.id} className="flex flex-col gap-2 px-4 py-3">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <span className="flex size-5 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: item.status === "concluido" ? "var(--stayo-success)" : "var(--stayo-border)", backgroundColor: item.status === "concluido" ? "var(--stayo-success)" : "transparent", color: "var(--stayo-surface)" }}>
+                              <span
+                                className="flex size-5 shrink-0 items-center justify-center rounded-full border"
+                                style={{
+                                  borderColor:
+                                    item.status === "concluido"
+                                      ? "var(--stayo-success)"
+                                      : "var(--stayo-border)",
+                                  backgroundColor:
+                                    item.status === "concluido"
+                                      ? "var(--stayo-success)"
+                                      : "transparent",
+                                  color: "var(--stayo-surface)",
+                                }}
+                              >
                                 {item.status === "concluido" && <Check className="size-3" />}
                               </span>
                               <select
@@ -1457,18 +2065,31 @@ function Checklist({
                                   </option>
                                 ))}
                               </select>
-                              <span className="text-sm font-medium leading-tight" style={{ color: "var(--stayo-ink)" }}>
+                              <span
+                                className="text-sm font-medium leading-tight"
+                                style={{ color: "var(--stayo-ink)" }}
+                              >
                                 {item.title}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap sm:justify-end">
                               {item.dueDate && (
-                                <span className="rounded bg-[var(--stayo-bg)] px-2 py-1 text-[10px]" style={{ color: "var(--stayo-ink-muted)" }}>
-                                  Prazo: {new Date(item.dueDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                                <span
+                                  className="rounded bg-[var(--stayo-bg)] px-2 py-1 text-[10px]"
+                                  style={{ color: "var(--stayo-ink-muted)" }}
+                                >
+                                  Prazo:{" "}
+                                  {new Date(item.dueDate).toLocaleDateString("pt-BR", {
+                                    timeZone: "UTC",
+                                  })}
                                 </span>
                               )}
                               {item.responsibleUserId && (
-                                <span className="max-w-[160px] truncate rounded bg-[var(--stayo-bg)] px-2 py-1 text-[10px]" style={{ color: "var(--stayo-ink-muted)" }} title={item.responsibleUserId}>
+                                <span
+                                  className="max-w-[160px] truncate rounded bg-[var(--stayo-bg)] px-2 py-1 text-[10px]"
+                                  style={{ color: "var(--stayo-ink-muted)" }}
+                                  title={item.responsibleUserId}
+                                >
                                   Responsável: {item.responsibleUserId}
                                 </span>
                               )}
@@ -1485,7 +2106,9 @@ function Checklist({
                         </li>
                       ))}
                     </ul>
-                    {idx < arr.length - 1 && <div className="border-b" style={{ borderColor: "var(--stayo-border)" }} />}
+                    {idx < arr.length - 1 && (
+                      <div className="border-b" style={{ borderColor: "var(--stayo-border)" }} />
+                    )}
                   </div>
                 ))}
               </AccordionContent>
