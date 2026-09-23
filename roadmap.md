@@ -28,3 +28,4 @@
 - [x] Isolar o salvamento público de sessões administrativas expiradas e revelar erros de validação
 - [x] Reparar links públicos ligados a implantações ausentes no Cloud e validar o envio real
 - [x] Impedir lista vazia de proprietários e concorrência entre autosalvamento e envio final
+- [x] Recuperar conta existente e reparar o vínculo após criar a senha do proprietário

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
@@ -1116,12 +1116,33 @@ function TextField({
 }
 
 function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defaultEmail: string }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const createAccount = useMutation({
     mutationFn: () => createOwnerAccountAndLink(email, password, token),
-    onSuccess: () => toast.success("Conta criada"),
-    onError: () => toast.error("Não foi possível criar a conta"),
+    onSuccess: (result) => {
+      if (result.status === "confirmation_required") {
+        toast.success("Confira seu e-mail para confirmar o acesso");
+        return;
+      }
+      toast.success("Acesso criado com sucesso");
+      void navigate({ to: "/portal/inicio" });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message.toLocaleLowerCase("pt-BR") : "";
+      if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
+        toast.error("Este e-mail já possui acesso. Informe a senha criada anteriormente.");
+      } else if (message.includes("email not confirmed")) {
+        toast.error("Confirme o e-mail recebido antes de entrar.");
+      } else if (message.includes("mesmo e-mail informado")) {
+        toast.error("Use o mesmo e-mail informado no cadastro.");
+      } else if (message.includes("outra conta")) {
+        toast.error("Este cadastro já possui uma conta de acesso.");
+      } else {
+        toast.error("Não foi possível criar o acesso agora.");
+      }
+    },
   });
   if (!isSupabaseConfigured())
     return (
@@ -1129,11 +1150,15 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
         Continue usando o link enviado pela equipe Stayo.
       </p>
     );
-  if (createAccount.isSuccess)
+  if (createAccount.data?.status === "confirmation_required")
     return (
-      <p className="mt-4 text-sm text-[var(--portal-success)]">
-        Sua conta está pronta para acessar o portal.
-      </p>
+      <div className="portal-form-success mt-4" role="status">
+        <CheckCircle2 aria-hidden="true" />
+        <div>
+          <strong>Confirme seu e-mail</strong>
+          <p>Enviamos uma mensagem para {email}. Depois da confirmação, volte por este link.</p>
+        </div>
+      </div>
     );
   return (
     <form
@@ -1147,7 +1172,7 @@ function CreateOwnerAccountPanel({ token, defaultEmail }: { token: string; defau
       <TextField label="E-mail" type="email" value={email} onChange={setEmail} />
       <TextField label="Senha" type="password" value={password} onChange={setPassword} />
       <Button type="submit" disabled={createAccount.isPending} className="w-full">
-        Criar meu acesso
+        {createAccount.isPending ? "Preparando acesso..." : "Criar meu acesso"}
       </Button>
     </form>
   );
