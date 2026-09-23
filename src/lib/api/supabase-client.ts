@@ -12,7 +12,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../integrations/supabase/client";
 
 /**
  * O Lovable Cloud gera `VITE_SUPABASE_PUBLISHABLE_KEY` (formato novo de chave
