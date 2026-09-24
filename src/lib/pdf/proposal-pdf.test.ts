@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { generateProposalPdf } from "./proposal-pdf";
+import { generatePublishedProposalPdf } from "./proposal-pdf";
 import type { CommercialProposalSnapshot } from "../../types/commercial-proposal";
 
 const snapshot: CommercialProposalSnapshot = {
@@ -50,7 +50,7 @@ const snapshot: CommercialProposalSnapshot = {
 
 describe("generateProposalPdf", () => {
   it("gera um PDF usando apenas o snapshot publicado", async () => {
-    const bytes = await generateProposalPdf({ snapshot });
+    const bytes = await generatePublishedProposalPdf({ snapshot });
 
     expect(bytes).toBeInstanceOf(Uint8Array);
     expect(bytes.byteLength).toBeGreaterThan(500);

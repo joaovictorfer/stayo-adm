@@ -80,10 +80,9 @@ export async function generateProposalPdf(input: ProposalPdfInput): Promise<Uint
   builder.spacer(4);
   for (const item of proposal.items) {
     builder.ensureSpace(14);
-    builder.text(
-      `${item.description} · ${item.quantity}x · ${currency.format(item.total)}`,
-      { size: 10 },
-    );
+    builder.text(`${item.description} · ${item.quantity}x · ${currency.format(item.total)}`, {
+      size: 10,
+    });
   }
   builder.spacer(4);
   builder.text(`Total: ${currency.format(proposal.total)}`, {
@@ -173,10 +172,9 @@ export async function generatePublishedProposalPdf(
 
   for (const item of snapshot.items) {
     builder.ensureSpace(14);
-    builder.text(
-      `${item.description} · ${item.quantity}x · ${currency.format(item.total)}`,
-      { size: 10 },
-    );
+    builder.text(`${item.description} · ${item.quantity}x · ${currency.format(item.total)}`, {
+      size: 10,
+    });
   }
 
   builder.spacer(4);

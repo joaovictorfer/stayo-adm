@@ -26,9 +26,7 @@ function proposalFromRpc(value: unknown): CommercialProposalVersion {
     draftResponsibilities: Array.isArray(row.draftResponsibilities)
       ? row.draftResponsibilities
       : [],
-    requiredSignatories: Array.isArray(row.requiredSignatories)
-      ? row.requiredSignatories
-      : [],
+    requiredSignatories: Array.isArray(row.requiredSignatories) ? row.requiredSignatories : [],
     snapshot: row.snapshot ?? null,
   };
 }

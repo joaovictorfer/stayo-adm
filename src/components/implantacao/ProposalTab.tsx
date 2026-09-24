@@ -7,7 +7,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { commercialTermsQuery, implementationQuery } from "../../lib/api/queries";
 import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
-import { generateProposalPdf } from "../../lib/pdf/proposal-pdf";
+import { generatePublishedProposalPdf } from "../../lib/pdf/proposal-pdf";
 import type { EntityId, ProposalItem } from "../../types/core";
 import type {
   CommercialProposalSnapshot,
@@ -78,7 +78,7 @@ function lines(value: string): string[] {
 
 function signatories(value: string): ProposalRequiredSignatory[] {
   return lines(value).map((line) => {
-    const [label, role] = line.split("|", 2).map((part) => part.trim());
+    const [label = "", role] = line.split("|", 2).map((part) => part.trim());
     return { label, role: role || null };
   });
 }
@@ -88,9 +88,12 @@ function signatoriesText(value: ProposalRequiredSignatory[]): string {
 }
 
 function statusTone(status: CommercialProposalStatus) {
-  if (status === "accepted") return { color: "var(--stayo-success)", backgroundColor: "var(--stayo-forest-soft)" };
-  if (status === "published") return { color: "var(--stayo-forest)", backgroundColor: "var(--stayo-forest-soft)" };
-  if (status === "superseded") return { color: "var(--stayo-ink-muted)", backgroundColor: "var(--stayo-bg-soft)" };
+  if (status === "accepted")
+    return { color: "var(--stayo-success)", backgroundColor: "var(--stayo-forest-soft)" };
+  if (status === "published")
+    return { color: "var(--stayo-forest)", backgroundColor: "var(--stayo-forest-soft)" };
+  if (status === "superseded")
+    return { color: "var(--stayo-ink-muted)", backgroundColor: "var(--stayo-bg-soft)" };
   return { color: "var(--stayo-warning)", backgroundColor: "var(--stayo-warning-soft)" };
 }
 
@@ -201,7 +204,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const pdf = useMutation({
     mutationFn: async (version: CommercialProposalVersion) => {
       if (!version.snapshot) throw new Error("Esta versão ainda não possui snapshot publicado.");
-      const bytes = await generateProposalPdf({ snapshot: version.snapshot });
+      const bytes = await generatePublishedProposalPdf({ snapshot: version.snapshot });
       const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -247,7 +250,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   }
 
   const selectedVersion =
-    previewId && previewId !== "draft" ? versions.find((version) => version.id === previewId) ?? null : null;
+    previewId && previewId !== "draft"
+      ? (versions.find((version) => version.id === previewId) ?? null)
+      : null;
   const selectedSnapshot = selectedVersion?.snapshot ?? null;
 
   return (
@@ -266,7 +271,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   : "Preparar primeira versão"}
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              O rascunho é interno. Ao publicar, itens, condições, responsabilidades, conteúdo e signatários são congelados em um snapshot imutável.
+              O rascunho é interno. Ao publicar, itens, condições, responsabilidades, conteúdo e
+              signatários são congelados em um snapshot imutável.
             </p>
           </div>
 
@@ -277,7 +283,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </Button>
             <Button
               variant="outline"
-              disabled={saveDraft.isPending || publish.isPending || proposalItems.length === 0 || !dirty && Boolean(draftVersion)}
+              disabled={
+                saveDraft.isPending ||
+                publish.isPending ||
+                proposalItems.length === 0 ||
+                (!dirty && Boolean(draftVersion))
+              }
               onClick={() => saveDraft.mutate()}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -304,14 +315,19 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Serviços e valores</h3>
-            <p className="text-sm text-muted-foreground">Edite apenas o draft atual. Versões publicadas não são alteradas.</p>
+            <p className="text-sm text-muted-foreground">
+              Edite apenas o draft atual. Versões publicadas não são alteradas.
+            </p>
           </div>
           <strong className="text-sm">{currency.format(total)}</strong>
         </div>
 
         <div className="space-y-3">
           {items.map((item, index) => (
-            <div key={index} className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,1fr)_90px_130px_130px_auto] sm:items-end">
+            <div
+              key={index}
+              className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,1fr)_90px_130px_130px_auto] sm:items-end"
+            >
               <label className="space-y-1 text-xs font-medium text-muted-foreground">
                 Serviço
                 <Input
@@ -327,7 +343,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   min="0.01"
                   step="0.01"
                   value={item.quantity}
-                  onChange={(event) => updateItem(index, { quantity: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateItem(index, { quantity: Number(event.target.value) || 0 })
+                  }
                 />
               </label>
               <label className="space-y-1 text-xs font-medium text-muted-foreground">
@@ -337,7 +355,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   min="0"
                   step="0.01"
                   value={item.unitValue}
-                  onChange={(event) => updateItem(index, { unitValue: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateItem(index, { unitValue: Number(event.target.value) || 0 })
+                  }
                 />
               </label>
               <label className="space-y-1 text-xs font-medium text-muted-foreground">
@@ -347,7 +367,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   min="0"
                   step="0.01"
                   value={item.discount}
-                  onChange={(event) => updateItem(index, { discount: Number(event.target.value) || 0 })}
+                  onChange={(event) =>
+                    updateItem(index, { discount: Number(event.target.value) || 0 })
+                  }
                 />
               </label>
               <button
@@ -394,7 +416,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
           <h3 className="font-semibold">Signatários comerciais exigidos</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Um por linha. Use “Nome ou papel | função” quando precisar registrar a função. Isto não cria assinatura de contrato.
+            Um por linha. Use “Nome ou papel | função” quando precisar registrar a função. Isto não
+            cria assinatura de contrato.
           </p>
           <Textarea
             className="mt-3 min-h-36"
@@ -413,15 +436,27 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         {commercialTerms.isLoading ? (
           <p className="mt-3 text-sm text-muted-foreground">Carregando condições…</p>
         ) : commercialTerms.isError ? (
-          <p className="mt-3 text-sm text-destructive">Não foi possível carregar as condições comerciais. Não publique até corrigir.</p>
+          <p className="mt-3 text-sm text-destructive">
+            Não foi possível carregar as condições comerciais. Não publique até corrigir.
+          </p>
         ) : (commercialTerms.data ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Nenhuma condição comercial cadastrada. As condições contratuais da ficha também serão capturadas no snapshot quando existirem.</p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Nenhuma condição comercial cadastrada. As condições contratuais da ficha também serão
+            capturadas no snapshot quando existirem.
+          </p>
         ) : (
           <div className="mt-3 divide-y rounded-lg border">
             {(commercialTerms.data ?? []).map((term) => (
-              <div key={term.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm">
+              <div
+                key={term.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm"
+              >
                 <span>{term.label}</span>
-                <strong>{term.chargeType === "percentage" ? `${term.value}%` : currency.format(term.value)}</strong>
+                <strong>
+                  {term.chargeType === "percentage"
+                    ? `${term.value}%`
+                    : currency.format(term.value)}
+                </strong>
               </div>
             ))}
           </div>
@@ -430,11 +465,23 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
       {(previewId === "draft" || selectedVersion) && (
         <ProposalPreview
-          title={previewId === "draft" ? "Prévia do rascunho" : `Prévia da versão ${selectedVersion?.version}`}
-          items={previewId === "draft" ? proposalItems : selectedSnapshot?.items ?? []}
-          total={previewId === "draft" ? total : selectedSnapshot?.total ?? 0}
-          responsibilities={previewId === "draft" ? lines(responsibilitiesText) : selectedSnapshot?.responsibilities ?? []}
-          signatories={previewId === "draft" ? signatories(signatoriesValue) : selectedSnapshot?.requiredSignatories ?? []}
+          title={
+            previewId === "draft"
+              ? "Prévia do rascunho"
+              : `Prévia da versão ${selectedVersion?.version}`
+          }
+          items={previewId === "draft" ? proposalItems : (selectedSnapshot?.items ?? [])}
+          total={previewId === "draft" ? total : (selectedSnapshot?.total ?? 0)}
+          responsibilities={
+            previewId === "draft"
+              ? lines(responsibilitiesText)
+              : (selectedSnapshot?.responsibilities ?? [])
+          }
+          signatories={
+            previewId === "draft"
+              ? signatories(signatoriesValue)
+              : (selectedSnapshot?.requiredSignatories ?? [])
+          }
           snapshot={previewId === "draft" ? null : selectedSnapshot}
           onClose={() => setPreviewId(null)}
         />
@@ -443,7 +490,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
         <div className="mb-4">
           <h3 className="font-semibold">Histórico de versões</h3>
-          <p className="text-sm text-muted-foreground">Versões publicadas permanecem imutáveis. Uma nova negociação gera outra versão.</p>
+          <p className="text-sm text-muted-foreground">
+            Versões publicadas permanecem imutáveis. Uma nova negociação gera outra versão.
+          </p>
         </div>
 
         {versions.length === 0 ? (
@@ -453,11 +502,17 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         ) : (
           <div className="space-y-2">
             {versions.map((version) => (
-              <div key={version.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                key={version.id}
+                className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <strong>Versão {version.version}</strong>
-                    <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={statusTone(version.status)}>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={statusTone(version.status)}
+                    >
                       {statusLabels[version.status]}
                     </span>
                   </div>
@@ -465,7 +520,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     {version.publishedAt
                       ? `Publicada em ${new Date(version.publishedAt).toLocaleString("pt-BR")}`
                       : `Atualizada em ${new Date(version.updatedAt).toLocaleString("pt-BR")}`}
-                    {version.acceptedAt ? ` · aceite comercial em ${new Date(version.acceptedAt).toLocaleString("pt-BR")}` : ""}
+                    {version.acceptedAt
+                      ? ` · aceite comercial em ${new Date(version.acceptedAt).toLocaleString("pt-BR")}`
+                      : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -474,7 +531,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     Ver
                   </Button>
                   {version.snapshot && (
-                    <Button variant="outline" size="sm" disabled={pdf.isPending} onClick={() => pdf.mutate(version)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={pdf.isPending}
+                      onClick={() => pdf.mutate(version)}
+                    >
                       <FileText className="mr-2 h-4 w-4" />
                       PDF
                     </Button>
@@ -507,19 +569,34 @@ function ProposalPreview({
   onClose: () => void;
 }) {
   return (
-    <section className="rounded-[var(--radius-card)] border-2 bg-white p-4 sm:p-5" style={{ borderColor: "var(--stayo-forest)" }}>
+    <section
+      className="rounded-[var(--radius-card)] border-2 bg-white p-4 sm:p-5"
+      style={{ borderColor: "var(--stayo-forest)" }}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--stayo-forest)" }}>Prévia interna</p>
+          <p
+            className="text-[11px] font-medium uppercase tracking-[0.14em]"
+            style={{ color: "var(--stayo-forest)" }}
+          >
+            Prévia interna
+          </p>
           <h3 className="mt-1 text-lg font-semibold">{title}</h3>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>Fechar</Button>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Fechar
+        </Button>
       </div>
 
       <div className="mt-4 divide-y rounded-lg border">
         {items.map((item, index) => (
-          <div key={`${item.description}-${index}`} className="flex flex-wrap justify-between gap-3 px-3 py-3 text-sm">
-            <span>{item.description} · {item.quantity}x</span>
+          <div
+            key={`${item.description}-${index}`}
+            className="flex flex-wrap justify-between gap-3 px-3 py-3 text-sm"
+          >
+            <span>
+              {item.description} · {item.quantity}x
+            </span>
             <strong>{currency.format(item.total)}</strong>
           </div>
         ))}
@@ -530,14 +607,30 @@ function ProposalPreview({
       </div>
 
       {snapshot?.commercialTerms && snapshot.commercialTerms.length > 0 && (
-        <PreviewList title="Condições comerciais" values={snapshot.commercialTerms.map((term) => `${term.label}: ${term.chargeType === "percentage" ? `${term.value}%` : currency.format(term.value)}`)} />
+        <PreviewList
+          title="Condições comerciais"
+          values={snapshot.commercialTerms.map(
+            (term) =>
+              `${term.label}: ${term.chargeType === "percentage" ? `${term.value}%` : currency.format(term.value)}`,
+          )}
+        />
       )}
-      {responsibilities.length > 0 && <PreviewList title="Responsabilidades" values={responsibilities} />}
-      {requiredSignatories.length > 0 && <PreviewList title="Signatários comerciais" values={requiredSignatories.map((item) => `${item.label}${item.role ? ` — ${item.role}` : ""}`)} />}
+      {responsibilities.length > 0 && (
+        <PreviewList title="Responsabilidades" values={responsibilities} />
+      )}
+      {requiredSignatories.length > 0 && (
+        <PreviewList
+          title="Signatários comerciais"
+          values={requiredSignatories.map(
+            (item) => `${item.label}${item.role ? ` — ${item.role}` : ""}`,
+          )}
+        />
+      )}
 
       {!snapshot && (
         <p className="mt-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-          Esta é a prévia do rascunho. As condições comerciais, condições contratuais e blocos de conteúdo vigentes serão congelados pelo servidor no momento da publicação.
+          Esta é a prévia do rascunho. As condições comerciais, condições contratuais e blocos de
+          conteúdo vigentes serão congelados pelo servidor no momento da publicação.
         </p>
       )}
     </section>
@@ -549,7 +642,9 @@ function PreviewList({ title, values }: { title: string; values: string[] }) {
     <div className="mt-4">
       <h4 className="text-sm font-semibold">{title}</h4>
       <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-        {values.map((value, index) => <li key={`${value}-${index}`}>• {value}</li>)}
+        {values.map((value, index) => (
+          <li key={`${value}-${index}`}>• {value}</li>
+        ))}
       </ul>
     </div>
   );
