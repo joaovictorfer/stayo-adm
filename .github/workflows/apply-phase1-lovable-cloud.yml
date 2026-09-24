@@ -1,0 +1,190 @@
+name: Apply Phase 1 migration to Lovable Cloud
+
+on:
+  push:
+    branches:
+      - phase1-opportunity-intake
+    paths:
+      - '.github/workflows/apply-phase1-lovable-cloud.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LOVABLE_DB_MIGRATION_URL: ${{ secrets.LOVABLE_DB_MIGRATION_URL }}
+      EXPECTED_LOVABLE_REF: dftzonhzxsqghxrvgkkt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply exact migration and verify Phase 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun <<'EOF'
+          import postgres from 'postgres';
+          import { readFileSync } from 'node:fs';
+          import { randomUUID } from 'node:crypto';
+
+          const dbUrl = process.env.LOVABLE_DB_MIGRATION_URL;
+          const expectedRef = process.env.EXPECTED_LOVABLE_REF;
+          if (!dbUrl) throw new Error('LOVABLE_DB_MIGRATION_URL não configurado no GitHub Actions');
+          if (!expectedRef) throw new Error('EXPECTED_LOVABLE_REF ausente');
+
+          const parsed = new URL(dbUrl);
+          const identity = `${parsed.hostname}|${parsed.username}|${parsed.pathname}`;
+          if (!identity.includes(expectedRef)) {
+            throw new Error('Gate de identidade falhou: a URL de migration não referencia o Lovable Cloud esperado');
+          }
+
+          const sql = postgres(dbUrl, { max: 1, prepare: false, ssl: 'require' });
+          const migrationPath = 'supabase/migrations/0017_admin_opportunity_intake.sql';
+          const migrationSql = readFileSync(migrationPath, 'utf8');
+
+          try {
+            const [before] = await sql.unsafe(`
+              select
+                to_regprocedure('public.admin_create_opportunity(jsonb)') is not null as create_exists,
+                to_regprocedure('public.admin_find_owner_phone_duplicates(text)') is not null as duplicate_exists
+            `);
+
+            if (before.create_exists !== before.duplicate_exists) {
+              throw new Error('Schema divergente: apenas uma das RPCs da Fase 1 existe');
+            }
+
+            if (!before.create_exists) {
+              console.log('Preflight OK: 0017 pendente; aplicando SQL versionado do GitHub.');
+              await sql.unsafe(migrationSql);
+            } else {
+              console.log('0017 já materializada; DDL não reaplicado.');
+            }
+
+            const [after] = await sql.unsafe(`
+              select
+                to_regprocedure('public.admin_create_opportunity(jsonb)') is not null as create_exists,
+                to_regprocedure('public.admin_find_owner_phone_duplicates(text)') is not null as duplicate_exists,
+                has_function_privilege('authenticated', 'public.admin_create_opportunity(jsonb)', 'EXECUTE') as auth_create_execute,
+                has_function_privilege('authenticated', 'public.admin_find_owner_phone_duplicates(text)', 'EXECUTE') as auth_duplicate_execute,
+                has_function_privilege('anon', 'public.admin_create_opportunity(jsonb)', 'EXECUTE') as anon_create_execute,
+                has_function_privilege('anon', 'public.admin_find_owner_phone_duplicates(text)', 'EXECUTE') as anon_duplicate_execute
+            `);
+
+            if (!after.create_exists || !after.duplicate_exists) throw new Error('RPCs não existem após aplicação');
+            if (!after.auth_create_execute || !after.auth_duplicate_execute) throw new Error('authenticated sem EXECUTE esperado');
+            if (after.anon_create_execute || after.anon_duplicate_execute) throw new Error('anon recebeu EXECUTE indevido');
+
+            const [staff] = await sql.unsafe(`
+              select id::text as id
+              from public.admin_profiles
+              where active and role::text in ('super_admin','admin','commercial')
+              order by case role::text when 'super_admin' then 0 when 'admin' then 1 else 2 end, id
+              limit 1
+            `);
+            if (!staff?.id) throw new Error('Nenhum operador autorizado disponível para teste transacional');
+
+            const [beforeCondominiums] = await sql.unsafe('select count(*)::int as count from public.admin_condominiums');
+            const requestId = randomUUID();
+            const phone = '5554999999999';
+            const title = `__TEST_FASE1_${requestId.slice(0, 8)}__`;
+            const payload = JSON.stringify({
+              requestId,
+              contactName: 'Teste Automático Fase 1',
+              phone,
+              title,
+              responsibleUserId: staff.id,
+            });
+
+            let projectId;
+            let ownerId;
+
+            const sessionOne = postgres(dbUrl, { max: 1, prepare: false, ssl: 'require' });
+            try {
+              await sessionOne.unsafe('set role authenticated');
+              await sessionOne.unsafe(`select set_config('request.jwt.claim.sub', '${staff.id}', false)`);
+
+              const first = await sessionOne.unsafe(`
+                select
+                  (x).id::text as id,
+                  (x).owner_id::text as owner_id,
+                  (x).code,
+                  (x).status::text as status,
+                  (x).nickname,
+                  (x).condominium_id::text as condominium_id,
+                  (x).unit,
+                  (x).address,
+                  (x).origin
+                from (select public.admin_create_opportunity('${payload.replaceAll("'", "''")}'::jsonb) as x) s
+              `);
+              const second = await sessionOne.unsafe(`
+                select (public.admin_create_opportunity('${payload.replaceAll("'", "''")}'::jsonb)).id::text as id
+              `);
+
+              if (!first[0]?.id || first[0].id !== second[0]?.id) throw new Error('Idempotência falhou');
+              if (first[0].status !== 'prospect') throw new Error('Status inicial diferente de prospect');
+              if (first[0].nickname !== title) throw new Error('Título provisório não persistiu');
+              if (first[0].condominium_id !== null || first[0].unit !== null || first[0].address !== null) {
+                throw new Error('Criação leve preencheu dados de imóvel indevidamente');
+              }
+              projectId = first[0].id;
+              ownerId = first[0].owner_id;
+            } finally {
+              await sessionOne.end({ timeout: 5 });
+            }
+
+            const sessionTwo = postgres(dbUrl, { max: 1, prepare: false, ssl: 'require' });
+            try {
+              await sessionTwo.unsafe('set role authenticated');
+              await sessionTwo.unsafe(`select set_config('request.jwt.claim.sub', '${staff.id}', false)`);
+              const persisted = await sessionTwo.unsafe(`
+                select id::text as id, code, nickname, status::text as status, owner_id::text as owner_id
+                from public.implementation_projects
+                where id = '${projectId}'::uuid
+              `);
+              if (persisted.length !== 1 || persisted[0].nickname !== title || persisted[0].owner_id !== ownerId) {
+                throw new Error('Persistência entre sessões falhou');
+              }
+            } finally {
+              await sessionTwo.end({ timeout: 5 });
+            }
+
+            const unauthorized = postgres(dbUrl, { max: 1, prepare: false, ssl: 'require' });
+            try {
+              await unauthorized.unsafe('set role authenticated');
+              await unauthorized.unsafe(`select set_config('request.jwt.claim.sub', '${randomUUID()}', false)`);
+              let denied = false;
+              try {
+                await unauthorized.unsafe(`select * from public.admin_find_owner_phone_duplicates('${phone}')`);
+              } catch (error) {
+                denied = String(error).includes('sem permissão');
+              }
+              if (!denied) throw new Error('Usuário autenticado sem autorização conseguiu consultar contatos');
+            } finally {
+              await unauthorized.end({ timeout: 5 });
+            }
+
+            const [afterCondominiums] = await sql.unsafe('select count(*)::int as count from public.admin_condominiums');
+            if (beforeCondominiums.count !== afterCondominiums.count) {
+              throw new Error('A criação da oportunidade alterou a quantidade de condomínios');
+            }
+
+            await sql.begin(async (tx) => {
+              await tx.unsafe(`delete from public.implementation_owners where implementation_id = '${projectId}'::uuid`);
+              await tx.unsafe(`delete from public.implementation_projects where id = '${projectId}'::uuid`);
+              await tx.unsafe(`delete from public.owner_records where id = '${ownerId}'::uuid and name = 'Teste Automático Fase 1'`);
+            });
+
+            console.log('VALIDATION_OK: migration aplicada, permissões corretas, idempotência e persistência entre sessões comprovadas; fixture removida.');
+          } finally {
+            await sql.end({ timeout: 5 });
+          }
+          EOF
