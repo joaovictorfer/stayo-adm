@@ -16,6 +16,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
+import { CommercialMeetingPanel } from "./CommercialMeetingPanel";
 import { supabase } from "../../integrations/supabase/client";
 import type { EntityId } from "../../types/core";
 
@@ -135,8 +136,10 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
             payout_rule: values.payout_rule.trim() || null,
             maintenance_limit: parseNumber(values.maintenance_limit),
             exclusivity: values.exclusivity,
-            duration_months: values.duration_months.trim() === "" ? null : Number(values.duration_months),
-            notice_period_days: values.notice_period_days.trim() === "" ? null : Number(values.notice_period_days),
+            duration_months:
+              values.duration_months.trim() === "" ? null : Number(values.duration_months),
+            notice_period_days:
+              values.notice_period_days.trim() === "" ? null : Number(values.notice_period_days),
             updated_at: new Date().toISOString(),
           },
           { onConflict: "implementation_id" },
@@ -163,172 +166,216 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
   };
 
   return (
-    <div
-      className="rounded-[var(--radius-card)] border bg-white p-4"
-      style={{ borderColor: "var(--stayo-border)" }}
-    >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p
-            className="text-[11px] font-medium uppercase tracking-[0.14em]"
-            style={{ color: "var(--stayo-ink-muted)" }}
-          >
-            Condições contratuais
-          </p>
-          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Resumo operacional vigente</p>
-        </div>
+    <div className="space-y-6">
+      <CommercialMeetingPanel implementationId={implementationId} initialResponsibleUserId={null} />
 
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar condições
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Editar condições contratuais</DialogTitle>
-              <DialogDescription>
-                Atualize as exceções e regras aplicáveis a esta implantação.
-              </DialogDescription>
-            </DialogHeader>
+      <div
+        className="rounded-[var(--radius-card)] border bg-white p-4"
+        style={{ borderColor: "var(--stayo-border)" }}
+      >
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p
+              className="text-[11px] font-medium uppercase tracking-[0.14em]"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
+              Condições contratuais
+            </p>
+            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              Resumo operacional vigente
+            </p>
+          </div>
 
-            <div className="grid gap-4 py-2 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="administration_fee">Administração</Label>
-                <Input
-                  id="administration_fee"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.administration_fee}
-                  onChange={(event) => updateField("administration_fee", event.target.value)}
-                  placeholder="Ex.: 20"
-                />
-                <p className="text-[11px] text-muted-foreground">Valor ou percentual conforme a regra comercial.</p>
-              </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Pencil className="h-3.5 w-3.5" />
+                Editar condições
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Editar condições contratuais</DialogTitle>
+                <DialogDescription>
+                  Atualize as exceções e regras aplicáveis a esta implantação.
+                </DialogDescription>
+              </DialogHeader>
 
-              <div className="space-y-2">
-                <Label htmlFor="maintenance_limit">Limite de manutenção</Label>
-                <Input
-                  id="maintenance_limit"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.maintenance_limit}
-                  onChange={(event) => updateField("maintenance_limit", event.target.value)}
-                  placeholder="Ex.: 500"
-                />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="cleaning_responsibility">Limpeza</Label>
-                <Textarea
-                  id="cleaning_responsibility"
-                  value={form.cleaning_responsibility}
-                  onChange={(event) => updateField("cleaning_responsibility", event.target.value)}
-                  placeholder="Ex.: Sob responsabilidade do proprietário na entrega. Limpeza operacional avulsa..."
-                  className="min-h-[80px] resize-none"
-                />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="payout_rule">Repasse</Label>
-                <Textarea
-                  id="payout_rule"
-                  value={form.payout_rule}
-                  onChange={(event) => updateField("payout_rule", event.target.value)}
-                  placeholder="Ex.: Repasse efetuado até o 5º dia útil do mês subsequente..."
-                  className="min-h-[80px] resize-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="duration_months">Vigência (meses)</Label>
-                <Input
-                  id="duration_months"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.duration_months}
-                  onChange={(event) => updateField("duration_months", event.target.value)}
-                  placeholder="Ex.: 12"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notice_period_days">Aviso prévio (dias)</Label>
-                <Input
-                  id="notice_period_days"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.notice_period_days}
-                  onChange={(event) => updateField("notice_period_days", event.target.value)}
-                  placeholder="Ex.: 30"
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border p-3 sm:col-span-2">
-                <div>
-                  <Label htmlFor="exclusivity">Exclusividade</Label>
-                  <p className="mt-1 text-xs text-muted-foreground">Indica se o contrato possui exclusividade.</p>
+              <div className="grid gap-4 py-2 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="administration_fee">Administração</Label>
+                  <Input
+                    id="administration_fee"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.administration_fee}
+                    onChange={(event) => updateField("administration_fee", event.target.value)}
+                    placeholder="Ex.: 20"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Valor ou percentual conforme a regra comercial.
+                  </p>
                 </div>
-                <Switch
-                  id="exclusivity"
-                  checked={form.exclusivity}
-                  onCheckedChange={(checked) => updateField("exclusivity", checked)}
-                />
+
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance_limit">Limite de manutenção</Label>
+                  <Input
+                    id="maintenance_limit"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.maintenance_limit}
+                    onChange={(event) => updateField("maintenance_limit", event.target.value)}
+                    placeholder="Ex.: 500"
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="cleaning_responsibility">Limpeza</Label>
+                  <Textarea
+                    id="cleaning_responsibility"
+                    value={form.cleaning_responsibility}
+                    onChange={(event) => updateField("cleaning_responsibility", event.target.value)}
+                    placeholder="Ex.: Sob responsabilidade do proprietário na entrega. Limpeza operacional avulsa..."
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="payout_rule">Repasse</Label>
+                  <Textarea
+                    id="payout_rule"
+                    value={form.payout_rule}
+                    onChange={(event) => updateField("payout_rule", event.target.value)}
+                    placeholder="Ex.: Repasse efetuado até o 5º dia útil do mês subsequente..."
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="duration_months">Vigência (meses)</Label>
+                  <Input
+                    id="duration_months"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={form.duration_months}
+                    onChange={(event) => updateField("duration_months", event.target.value)}
+                    placeholder="Ex.: 12"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notice_period_days">Aviso prévio (dias)</Label>
+                  <Input
+                    id="notice_period_days"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={form.notice_period_days}
+                    onChange={(event) => updateField("notice_period_days", event.target.value)}
+                    placeholder="Ex.: 30"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3 sm:col-span-2">
+                  <div>
+                    <Label htmlFor="exclusivity">Exclusividade</Label>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Indica se o contrato possui exclusividade.
+                    </p>
+                  </div>
+                  <Switch
+                    id="exclusivity"
+                    checked={form.exclusivity}
+                    onCheckedChange={(checked) => updateField("exclusivity", checked)}
+                  />
+                </div>
               </div>
-            </div>
 
-            {save.isError && (
-              <p className="text-sm text-destructive" role="alert">
-                Não foi possível salvar as condições contratuais. Tente novamente.
-              </p>
-            )}
+              {save.isError && (
+                <p className="text-sm text-destructive" role="alert">
+                  Não foi possível salvar as condições contratuais. Tente novamente.
+                </p>
+              )}
 
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="button" onClick={() => save.mutate(form)} disabled={save.isPending} className="gap-2">
-                <Save className="h-4 w-4" />
-                {save.isPending ? "Salvando..." : "Salvar condições"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {query.isPending ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 7 }).map((_, index) => (
-            <div key={index} className="h-12 animate-pulse rounded-md bg-slate-100" />
-          ))}
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => save.mutate(form)}
+                  disabled={save.isPending}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {save.isPending ? "Salvando..." : "Salvar condições"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
-      ) : query.isError ? (
-        <p className="text-sm text-destructive">Não foi possível carregar as condições contratuais.</p>
-      ) : (
-        <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-          <Condition label="Administração" value={administration(conditions?.administration_fee ?? null)} />
-          <Condition label="Limpeza" value={cleaning(conditions?.cleaning_responsibility ?? null)} />
-          <Condition label="Repasse" value={textValue(conditions?.payout_rule ?? null)} />
-          <Condition label="Manutenção" value={conditions?.maintenance_limit == null ? "Não informado" : `Até ${money(conditions.maintenance_limit)} sem autorização`} />
-          <Condition
-            label="Exclusividade"
-            value={conditions?.exclusivity === null || conditions?.exclusivity === undefined ? "Não informado" : conditions.exclusivity ? "Sim" : "Não"}
-          />
-          <Condition
-            label="Vigência"
-            value={conditions?.duration_months == null ? "Não informado" : `${conditions.duration_months} meses`}
-          />
-          <Condition
-            label="Aviso prévio"
-            value={conditions?.notice_period_days == null ? "Não informado" : `${conditions.notice_period_days} dias`}
-          />
-        </dl>
-      )}
+
+        {query.isPending ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div key={index} className="h-12 animate-pulse rounded-md bg-slate-100" />
+            ))}
+          </div>
+        ) : query.isError ? (
+          <p className="text-sm text-destructive">
+            Não foi possível carregar as condições contratuais.
+          </p>
+        ) : (
+          <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+            <Condition
+              label="Administração"
+              value={administration(conditions?.administration_fee ?? null)}
+            />
+            <Condition
+              label="Limpeza"
+              value={cleaning(conditions?.cleaning_responsibility ?? null)}
+            />
+            <Condition label="Repasse" value={textValue(conditions?.payout_rule ?? null)} />
+            <Condition
+              label="Manutenção"
+              value={
+                conditions?.maintenance_limit == null
+                  ? "Não informado"
+                  : `Até ${money(conditions.maintenance_limit)} sem autorização`
+              }
+            />
+            <Condition
+              label="Exclusividade"
+              value={
+                conditions?.exclusivity === null || conditions?.exclusivity === undefined
+                  ? "Não informado"
+                  : conditions.exclusivity
+                    ? "Sim"
+                    : "Não"
+              }
+            />
+            <Condition
+              label="Vigência"
+              value={
+                conditions?.duration_months == null
+                  ? "Não informado"
+                  : `${conditions.duration_months} meses`
+              }
+            />
+            <Condition
+              label="Aviso prévio"
+              value={
+                conditions?.notice_period_days == null
+                  ? "Não informado"
+                  : `${conditions.notice_period_days} dias`
+              }
+            />
+          </dl>
+        )}
+      </div>
     </div>
   );
 }
@@ -336,8 +383,12 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
 function Condition({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid min-w-0 gap-1 py-2.5 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-baseline">
-      <dt className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>{label}</dt>
-      <dd className="text-sm font-semibold sm:text-right" style={{ color: "var(--stayo-ink)" }}>{value}</dd>
+      <dt className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+        {label}
+      </dt>
+      <dd className="text-sm font-semibold sm:text-right" style={{ color: "var(--stayo-ink)" }}>
+        {value}
+      </dd>
     </div>
   );
 }

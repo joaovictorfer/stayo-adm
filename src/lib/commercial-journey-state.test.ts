@@ -14,15 +14,18 @@ import type {
 const meeting = (patch: Partial<CommercialMeetingRecord> = {}): CommercialMeetingRecord => ({
   id: "meeting-1",
   implementationId: "implementation-1",
-  startsAt: "2026-10-02T15:00:00-03:00",
-  endsAt: "2026-10-02T15:45:00-03:00",
+  startsAt: "2026-10-02T18:00:00Z",
+  endsAt: "2026-10-02T18:45:00Z",
   timeZone: "America/Sao_Paulo",
   mode: "video",
   joinUrl: "https://meet.example.com/stayo-123",
   status: "confirmed",
   responsibleUserId: "user-1",
-  internalNote: "nota que nunca deve sair na projeção pública",
+  responsibleName: "Responsável",
+  rescheduledFromId: null,
+  version: 1,
   createdBy: "user-1",
+  updatedBy: "user-1",
   createdAt: "2026-09-24T00:00:00Z",
   updatedAt: "2026-09-24T00:00:00Z",
   ...patch,
@@ -53,7 +56,7 @@ describe("toCommercialMeetingPublicProjection", () => {
   it("remove dados internos e só libera o link quando confirmada", () => {
     const scheduled = toCommercialMeetingPublicProjection(meeting({ status: "scheduled" }));
     expect(scheduled.joinUrl).toBeNull();
-    expect("internalNote" in scheduled).toBe(false);
+    expect("responsibleName" in scheduled).toBe(false);
     expect("responsibleUserId" in scheduled).toBe(false);
 
     const confirmed = toCommercialMeetingPublicProjection(meeting());
@@ -61,13 +64,17 @@ describe("toCommercialMeetingPublicProjection", () => {
     expect(canJoinCommercialMeeting(confirmed)).toBe(true);
   });
 
-  it("não expõe link em reunião reagendada, cancelada ou com URL insegura", () => {
+  it("não expõe link em reunião reagendada, cancelada, no-show ou com URL insegura", () => {
     expect(
       toCommercialMeetingPublicProjection(meeting({ status: "rescheduled" })).joinUrl,
     ).toBeNull();
-    expect(toCommercialMeetingPublicProjection(meeting({ status: "cancelled" })).joinUrl).toBeNull();
     expect(
-      toCommercialMeetingPublicProjection(meeting({ joinUrl: "http://meet.example.com/room" })).joinUrl,
+      toCommercialMeetingPublicProjection(meeting({ status: "cancelled" })).joinUrl,
+    ).toBeNull();
+    expect(toCommercialMeetingPublicProjection(meeting({ status: "no_show" })).joinUrl).toBeNull();
+    expect(
+      toCommercialMeetingPublicProjection(meeting({ joinUrl: "http://meet.example.com/room" }))
+        .joinUrl,
     ).toBeNull();
   });
 });
