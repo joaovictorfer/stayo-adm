@@ -1,35 +1,36 @@
 # STAYO ADMIN — MATRIZ DE SUPERFÍCIE PÚBLICA
 
-> Fase A / Contenção P0  
-> Atualizado em: 23/09/2026  
+> Atualizado em: 24/09/2026  
 > Escopo desta revisão: `portal_content_blocks` e seus caminhos públicos diretos/indiretos  
-> Status: **PROVA NO BANCO CONCLUÍDA / CONTENÇÃO AINDA NÃO APLICADA**
+> Status: **P0 ENCERRADO / CONTENÇÃO COMPROVADA NO BANCO**
 
-Esta matriz substitui o estado anterior “prova no banco bloqueada” para a superfície P0 auditada. Outras superfícies do Portal permanecem fora do escopo desta execução e não são reclassificadas aqui sem necessidade.
+## 1. Identidades usadas
 
-## 1. Identidades usadas nos testes
+- `anon`: role pública sem sessão;
+- `authenticated sem papel`: role autenticada com UUID sem `admin_profiles` autorizado;
+- `operador autorizado`: sessão autenticada do `super_admin` ativo.
 
-- `anon`: role pública sem sessão.
-- `authenticated sem vínculo`: role autenticada com UUID sem owner/admin vinculado.
-- `operador autorizado`: sessão autenticada do `super_admin` ativo, usada apenas para provar o caminho interno legítimo.
+Foi usada somente uma fixture sintética, sem PII, removida ao final.
 
-Nenhum dado real sensível foi usado como fixture.
+## 2. Matriz antes/depois
 
-## 2. Matriz verificada
+| Superfície | Identidade | Antes da 0020 | Depois da 0020 |
+|---|---|---|---|
+| tabela base `public.portal_content_blocks` | `anon` | **PERMITIDO**; podia referenciar `draft_title` | **NEGADO** por ausência de grant |
+| tabela base `public.portal_content_blocks` | `authenticated` sem papel | **PERMITIDO** pela policy pública | **NEGADO** pela RLS; fixture existente retornou 0 linhas |
+| escrita na tabela base | `authenticated` sem papel | grant amplo, sujeito a policies | **NEGADA** pela RLS |
+| tabela base | operador autorizado | permitido legitimamente | **PERMITIDO** via policy administrativa |
+| manutenção `INSERT/UPDATE/DELETE` | operador autorizado | permitido | **PERMITIDO** e testado com fixture sintética |
+| policy `qualquer visitante lê blocos do portal` | qualquer role | **PRESENTE — SELECT USING (true)** | **AUSENTE** |
+| grants de tabela | `anon` | todos os privilégios de tabela | **NENHUM** |
+| grants de tabela | `authenticated` | privilégios amplos inclusive TRUNCATE/REFERENCES/TRIGGER | somente `SELECT/INSERT/UPDATE/DELETE`, sujeitos à RLS |
+| grants de tabela | `sandbox_exec` | `SELECT/INSERT`, com BYPASSRLS | **NENHUM** |
+| view/materialized view baseada na tabela | público | não existia | continua inexistente |
+| RPC/function baseada na tabela | público/auth | não existia | continua inexistente |
+| consumidor no `stayo-adm` | público | não localizado | não localizado |
+| consumidor no `STAYO.APP` | público | não localizado | não localizado |
 
-| Superfície | Identidade | Estado real antes da 0016 | Evidência | Estado esperado após 0016 |
-|---|---|---|---|---|
-| tabela base `public.portal_content_blocks` | `anon` | **PERMITIDO** | `SELECT` executa e consegue referenciar `draft_title`; 0 linhas por tabela vazia | **NEGADO** |
-| tabela base `public.portal_content_blocks` | `authenticated` sem vínculo | **PERMITIDO** | `SELECT` executa e consegue referenciar `draft_title`; 0 linhas por tabela vazia | **NEGADO** pela policy administrativa |
-| tabela base `public.portal_content_blocks` | operador autorizado | **PERMITIDO LEGITIMAMENTE** | `has_admin_role(super_admin, admin, commercial)=true` e leitura permitida | **PERMITIDO** |
-| policy `qualquer visitante lê blocos do portal` | qualquer role | **PRESENTE** | comando `SELECT`, condição `true` | **AUSENTE** |
-| grant de tabela para `anon` | `anon` | **PRESENTE** | `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, `TRIGGER` | **AUSENTE** |
-| view pública baseada em `portal_content_blocks` | `anon` | **NÃO EXISTE** | catálogo `pg_views` sem referência | continuar inexistente nesta fase |
-| RPC/função baseada em `portal_content_blocks` | `anon`/auth | **NÃO EXISTE** | catálogo `pg_proc` sem função regular que referencie a tabela | continuar inexistente nesta fase |
-| consumidor no `stayo-adm` | público | **NÃO LOCALIZADO** | busca por `portal_content_blocks` e `published_title` sem resultado | sem mudança funcional esperada |
-| consumidor no `STAYO.APP` | público | **NÃO LOCALIZADO** | busca por `portal_content_blocks` e `published_title` sem resultado | sem mudança funcional esperada |
-
-## 3. Schema que torna a policy atual perigosa
+## 3. Por que a tabela base permanece totalmente fechada ao público
 
 A mesma linha contém:
 
@@ -39,17 +40,15 @@ A mesma linha contém:
 - `published_body`;
 - `published_at`.
 
-Portanto, uma policy do tipo `published_at is not null` aplicada à **tabela base** não seria contenção suficiente: ao receber a linha, o cliente ainda poderia selecionar as colunas `draft_*`.
+Filtrar somente linhas com `published_at is not null` na tabela base não seria suficiente, porque o cliente ainda poderia selecionar as colunas `draft_*` da mesma linha.
 
-A contenção correta é fechar a tabela base para o público.
+A contenção correta é a aplicada pela `supabase/migrations/0020_lock_down_portal_content_blocks.sql`: nenhuma leitura pública da tabela base.
 
 ## 4. Consumidor público legítimo
 
-Nenhum consumidor legítimo atual foi comprovado no banco ou nos dois repositórios canônicos pesquisados.
+Nenhum consumidor atual foi comprovado no banco, no STAYO ADMIN ou no STAYO APP/Core. Portanto a Fase 2A não criou view/RPC pública.
 
-Por isso a migration 0016 não cria view/RPC pública.
-
-Se a integração com o Guia exigir leitura pública no futuro, o contrato deve nascer em migration incremental e expor somente campos published-only, por exemplo:
+Se houver necessidade futura, o contrato deverá nascer em migration incremental e expor apenas os campos publicados estritamente necessários, por exemplo:
 
 - `id`;
 - `kind`;
@@ -58,62 +57,40 @@ Se a integração com o Guia exigir leitura pública no futuro, o contrato deve 
 - `published_at`;
 - `display_order`.
 
-Nunca `draft_title`, `draft_body` ou `SELECT *` da tabela base.
+Nunca `draft_title`, `draft_body`, `SELECT *`, notas internas ou PII.
 
-## 5. Gate de migration
+## 5. Migration e reconciliação
 
-Migration versionada:
+Migration canônica aplicada:
 
-`drizzle/migrations/0016_lock_down_portal_content_blocks.sql`
+`supabase/migrations/0020_lock_down_portal_content_blocks.sql`
 
-Estado real confirmado:
+A antiga `drizzle/migrations/0016_lock_down_portal_content_blocks.sql` permanece histórica e foi usada somente como referência; não foi executada fora de sequência.
 
-- não aplicada;
-- histórico `drizzle.__drizzle_migrations` ainda termina na migration anterior;
-- `supabase_migrations.schema_migrations` não existe neste Cloud;
-- policy pública ainda presente;
-- grants de `anon` ainda presentes.
+O Lovable Cloud não possui `supabase_migrations.schema_migrations`. A 0020 foi materializada pelo mecanismo autorizado do Lovable Cloud usando exatamente o arquivo versionado no GitHub; a prova pós-aplicação é o catálogo real de policies/grants/RLS e os testes por identidade.
 
-## 6. Motivo da não aplicação
+## 6. API indireta / REST / RPC
 
-O Admin está configurado para o projeto Supabase ref `dftzonhzxsqghxrvgkkt`.
+- não existe view ou RPC baseada em `portal_content_blocks`;
+- `anon` não possui grant na tabela base, portanto a API automática não possui caminho de leitura da tabela para esse papel;
+- `authenticated` comum é filtrado pela policy administrativa e não consegue acessar a fixture;
+- não foi criado endpoint substituto nesta fase.
 
-O conector Supabase desta sessão:
+## 7. Storage
 
-- não lista esse projeto;
-- lista apenas `jsxwyewasvcxkgbpbdvk`;
-- retorna falta de permissão quando o ref correto é consultado diretamente.
+Nenhum bucket relacionado a `portal_content_blocks` foi identificado. Os buckets auditados que pertencem a outros domínios não foram alterados.
 
-Não foi usado o projeto errado e não foi executado DDL pelo Lovable.
+## 8. Regressão de aplicação
 
-## 7. Testes pós-aplicação obrigatórios
+Smoke Playwright do run `36039414015` executado com sucesso em `375x812` e `1280x900`:
 
-Assim que a 0016 for aplicada no projeto correto:
+- `/portal/implantacao/<token-inexistente>` mantém fallback seguro e não exibe conteúdo draft;
+- `/portal/proposta/<token-inexistente>` mantém fallback seguro;
+- `/implantacao` continua renderizando a área administrativa no adapter local;
+- sem overflow horizontal nos viewports testados.
 
-| Caso | Resultado obrigatório |
-|---|---|
-| `anon` consulta tabela base | negado |
-| `anon` tenta selecionar `draft_title`/`draft_body` | negado |
-| auth sem vínculo consulta tabela base | negado |
-| operador autorizado consulta tabela base | permitido |
-| operador autorizado edita bloco | permitido conforme policy interna |
-| grants de `anon` | nenhum na tabela base |
-| policy `USING (true)` | ausente |
-| eventual view/RPC pública | somente published-only |
-| histórico de migrations | contém a contenção aplicada |
-
-## 8. Browser
-
-A tabela está vazia e não existe consumidor público comprovado dessa superfície. Não foram criadas fixtures de produção apenas para simular estados publicados.
-
-Logo:
-
-- estado vazio do produto não comprova segurança desta tabela;
-- estado publicado não foi testado por ausência de fixture/consumer legítimo;
-- após eventual criação de projeção pública futura, os estados `vazio`, `erro` e `publicado` deverão ser verificados em navegador independente.
+A prova de autorização do operador em ambiente real foi feita separadamente no Lovable Cloud com `super_admin`.
 
 ## 9. Resultado
 
-**P0 BLOQUEADO.**
-
-A falha estrutural está comprovada e a migration correta está versionada, mas o banco produtivo ainda não foi alterado. A próxima ação é conectar/autorizar o projeto Supabase `dftzonhzxsqghxrvgkkt` no conector de migrations e, então, aplicar a 0016 e repetir toda a seção de testes pós-aplicação.
+**P0 ENCERRADO.** `portal_content_blocks` não é mais uma superfície pública direta ou indireta conhecida. Qualquer exposição futura de conteúdo publicado exigirá contrato público novo, mínimo e explicitamente versionado.

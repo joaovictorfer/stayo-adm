@@ -1,77 +1,51 @@
 # STAYO ADMIN — SCHEMA BASELINE
 
-> Fase A / Contenção P0  
-> Atualizado em: 23/09/2026  
-> Escopo desta revisão: `portal_content_blocks`, migrations e autorização necessária para a contenção P0  
-> Status: **BASELINE REAL CONFIRMADO / P0 AINDA NÃO APLICADO**
-
-Este documento substitui o antigo estado “banco produtivo não acessível”. O banco correto do STAYO ADMIN foi consultado em leitura pelo Lovable Cloud. A aplicação de DDL permanece bloqueada porque o conector Supabase disponível não possui acesso ao projeto configurado pelo Admin.
+> Atualizado em: 24/09/2026  
+> Escopo desta revisão: `portal_content_blocks`, migrations e autorização do gate P0  
+> Status: **BASELINE REAL CONFIRMADO / P0 ENCERRADO**
 
 ## 1. Estado canônico
 
-### GitHub
-
 - Repositório: `joaovictorfer/stayo-adm`.
-- Branch: `main`.
-- HEAD confirmado antes desta atualização: `91afdfd90c1efdbaf3a9a1680e2d989110d40302`.
-
-### Lovable
-
-- Projeto: `Stayo Adm`.
+- Lovable Cloud: `Stayo Adm`.
 - Project ID: `696b2125-0bf9-4538-8458-05d88fc5e8a2`.
-- `latest_commit_sha` confirmado igual ao HEAD acima antes das atualizações documentais.
-- Banco habilitado: sim.
-- Stack: Supabase.
+- Banco do Admin: Lovable Cloud, stack Supabase.
+- O conector Supabase separado não é fonte operacional deste projeto.
 
-### Supabase
+A Fase 2A foi executada em branch própria a partir da `main` `f3d07b0e816afcd9b8529c240708c0e5750a9a17`.
 
-O STAYO ADMIN está configurado para o projeto ref:
+## 2. Governança e reconciliação de migrations
 
-`dftzonhzxsqghxrvgkkt`
-
-O conector Supabase disponível nesta sessão lista apenas:
-
-`jsxwyewasvcxkgbpbdvk`
-
-Esse projeto não corresponde ao Admin e aparece `INACTIVE`. Uma tentativa read-only nele falhou por timeout. A consulta direta do projeto correto `dftzonhzxsqghxrvgkkt` pelo conector retornou falta de permissão.
-
-**Decisão:** não restaurar nem aplicar migration no projeto errado e não usar Lovable como atalho para DDL.
-
-## 2. Governança de migrations
-
-O repositório mantém duas linhas históricas:
+O repositório preserva duas linhas históricas:
 
 - `drizzle/migrations`;
 - `supabase/migrations`.
 
-A decisão aprovada permanece:
+Regras mantidas:
 
-- não reaplicar migrations históricas;
-- não renumerar artificialmente migrations já publicadas;
-- não considerar arquivo SQL como prova de aplicação;
-- tratar `supabase/migrations` como autoridade futura somente após reconciliação formal;
-- nesta contenção, respeitar o histórico real hoje registrado em `drizzle.__drizzle_migrations`.
+- migrations já aplicadas não são alteradas;
+- SQL histórico não é reaplicado fora de sequência;
+- arquivo no GitHub não é, sozinho, prova de aplicação;
+- novas alterações devem ser incrementais e versionadas.
 
-### Histórico real confirmado
+O banco possui `drizzle.__drizzle_migrations` e não possui `supabase_migrations.schema_migrations`.
 
-`drizzle.__drizzle_migrations` existe no Cloud e o último registro confirmado é:
+A antiga `drizzle/migrations/0016_lock_down_portal_content_blocks.sql` permaneceu somente como referência técnica e foi **supersedida para fins operacionais** pela migration canônica:
 
-- `id = 28`;
-- `created_at = 1790181469883`.
+`supabase/migrations/0020_lock_down_portal_content_blocks.sql`
 
-Esse timestamp corresponde à última migration anterior à nova contenção 0016.
+A linha Supabase efetivamente materializada no Lovable Cloud agora inclui:
 
-`supabase_migrations.schema_migrations` não existe neste banco.
+- `0017_admin_opportunity_intake.sql`;
+- `0018_lock_down_opportunity_rpcs.sql`;
+- `0019_harden_opportunity_rpc_authorization.sql`;
+- `0020_lock_down_portal_content_blocks.sql`.
 
-### Migration P0 versionada
+Como o mecanismo autorizado de materialização via Lovable Cloud não cria automaticamente uma linha em `supabase_migrations`, nenhuma linha de ledger foi inventada. A aplicação da 0020 é comprovada pelo SQL exato versionado + estado pós-migration do catálogo/RLS/grants no banco correto.
 
-`drizzle/migrations/0016_lock_down_portal_content_blocks.sql`
+## 3. Schema de `public.portal_content_blocks`
 
-Estado real: **PENDENTE / NÃO APLICADA**.
-
-## 3. Schema real de `public.portal_content_blocks`
-
-Colunas confirmadas diretamente no banco:
+Colunas confirmadas:
 
 | Coluna | Tipo | Nullable |
 |---|---|---|
@@ -86,146 +60,112 @@ Colunas confirmadas diretamente no banco:
 | `created_at` | timestamptz | não |
 | `updated_at` | timestamptz | não |
 
-Contagem atual:
+Estado final confirmado:
 
-- total: 0;
-- publicadas: 0;
-- não publicadas: 0.
+- total de registros: `0`;
+- RLS: habilitada;
+- nenhum dado sintético remanescente.
 
-## 4. RLS/policies reais
+## 4. Estado anterior do P0
 
-Policies efetivamente presentes antes da aplicação da contenção:
+Antes da 0020 existiam:
+
+### Policy pública
+
+`qualquer visitante lê blocos do portal`
+
+- comando: `SELECT`;
+- condição: `true`.
+
+### Grants públicos excessivos
+
+`anon` possuía `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES` e `TRIGGER`.
+
+`authenticated` e `service_role` possuíam os mesmos privilégios amplos. `sandbox_exec`, uma role com `BYPASSRLS`, possuía `SELECT` e `INSERT`.
+
+Como draft e publicação vivem na mesma linha, a policy pública tornava também `draft_title` e `draft_body` selecionáveis quando houvesse registros.
+
+## 5. Estado atual após `0020`
+
+Policies efetivamente presentes:
 
 ### `admin gerencia blocos do portal`
 
-- comando: ALL;
-- roles: PUBLIC/policy geral;
-- condição: `has_admin_role(super_admin, admin, commercial)`;
-- `WITH CHECK`: mesma condição.
+- comando: `ALL`;
+- role: `authenticated`;
+- `USING`: `has_admin_role(super_admin, admin, commercial) IS TRUE`;
+- `WITH CHECK`: mesmo guard.
 
-### `qualquer visitante lê blocos do portal`
+A policy `qualquer visitante lê blocos do portal` foi removida.
 
-- comando: SELECT;
-- condição: `true`.
+### Grants finais
 
-Esta segunda policy é o P0 estrutural. Como draft e publicação vivem na mesma linha, ela torna a linha completa elegível à leitura pública quando existir conteúdo.
+**anon**
 
-## 5. Grants reais
+- nenhum grant na tabela.
 
-Grants confirmados em `information_schema.role_table_grants`:
+**authenticated**
 
-### `anon`
+- `SELECT`;
+- `INSERT`;
+- `UPDATE`;
+- `DELETE`;
+- todos sujeitos à RLS/policy administrativa.
 
-- SELECT;
-- INSERT;
-- UPDATE;
-- DELETE;
-- TRUNCATE;
-- REFERENCES;
-- TRIGGER.
+**service_role**
 
-### `authenticated`
+- `SELECT`;
+- `INSERT`;
+- `UPDATE`;
+- `DELETE`.
 
-- SELECT;
-- INSERT;
-- UPDATE;
-- DELETE;
-- TRUNCATE;
-- REFERENCES;
-- TRIGGER.
+**sandbox_exec**
 
-### `service_role`
+- nenhum grant na tabela.
 
-- SELECT;
-- INSERT;
-- UPDATE;
-- DELETE;
-- TRUNCATE;
-- REFERENCES;
-- TRIGGER.
-
-RLS restringe operações de staff, mas a policy pública `SELECT USING (true)` neutraliza a proteção de leitura para qualquer linha existente.
+Não existe sequence relacionada.
 
 ## 6. Dependências reais
 
-Consultas ao catálogo do PostgreSQL confirmaram:
+Confirmado no catálogo:
 
-- nenhuma view referencia `portal_content_blocks`;
-- nenhuma função regular referencia `portal_content_blocks`.
+- nenhuma view dependente;
+- nenhuma materialized view dependente;
+- nenhuma função/RPC dependente da tabela;
+- nenhuma FK dependente;
+- somente o trigger técnico `portal_content_blocks_set_updated_at`, que chama `set_updated_at()`;
+- nenhuma function `SECURITY DEFINER` relacionada expondo o conteúdo.
 
-Busca nos repositórios canônicos `stayo-adm` e `STAYO.APP` não encontrou consumidor atual por nome da tabela nem por `published_title`.
+Busca nos repositórios `stayo-adm` e `STAYO.APP` não encontrou consumidor atual por nome da tabela nem pelos campos `draft_*`/`published_*`.
 
-**Conclusão:** não existe dependência pública comprovada que justifique manter leitura direta da tabela base.
-
-## 7. Provas de autorização reproduzidas
+## 7. Provas de autorização pós-0020
 
 ### `anon`
 
-Foi executado `SELECT` sob role `anon`. A consulta à tabela base funcionou e pôde referenciar `draft_title`. Retornou 0 linhas porque a tabela está vazia.
+`SELECT` direto é negado por falta de privilégio. Drafts não são acessíveis.
 
-**Estado:** acesso estrutural indevido CONFIRMADO.
+### `authenticated` sem papel administrativo
 
-### `authenticated` sem vínculo
-
-Foi simulada uma sessão `authenticated` com UUID sem vínculo. A consulta à tabela base funcionou e pôde referenciar `draft_title`. Retornou 0 linhas porque a tabela está vazia.
-
-**Estado:** acesso estrutural indevido CONFIRMADO.
+Com fixture sintética temporária existente, a leitura retornou `0` linhas e `INSERT` foi rejeitado por RLS.
 
 ### operador autorizado
 
-Foi simulada a sessão do `super_admin` ativo. `has_admin_role(super_admin, admin, commercial)` retornou `true` e a leitura interna foi permitida.
+O `super_admin` ativo manteve leitura e manutenção legítimas, inclusive `INSERT`, `UPDATE` e `DELETE` da fixture sintética.
 
-**Estado:** acesso interno legítimo CONFIRMADO.
+A fixture foi removida; a tabela voltou a `0` registros.
 
-## 8. Contenção requerida
+## 8. Superfície pública
 
-A migration 0016 representa exatamente a contenção necessária para esta fase:
+Nenhum consumidor público legítimo foi comprovado. Portanto não foi criada view, RPC ou projeção pública.
 
-1. remover a policy pública `qualquer visitante lê blocos do portal`;
-2. revogar privilégios de tabela de `anon`;
-3. preservar staff via policy administrativa;
-4. não criar atalho público na tabela base;
-5. futura exposição pública, se necessária, deve ser uma projeção `published-only`.
+Se o Guia ou outra experiência pública exigir esse conteúdo no futuro, deverá ser criada nova migration incremental com projeção `published-only`, mínima e explícita. A tabela base não deve voltar a receber `SELECT` público.
 
-Não foi identificada divergência de schema que exija alterar a migration.
+## 9. Storage
 
-## 9. Aplicação produtiva
+Não foi identificado bucket associado a `portal_content_blocks`. Nenhuma mudança de Storage foi necessária.
 
-**NÃO EXECUTADA.**
+## 10. Resultado
 
-Bloqueio operacional comprovado:
+**BASELINE REAL ATUALIZADO. O P0 DE `portal_content_blocks` ESTÁ ENCERRADO NO LOVABLE CLOUD.**
 
-- o conector Supabase não tem acesso ao ref `dftzonhzxsqghxrvgkkt`;
-- o único projeto disponível é outro ref;
-- usar Lovable para DDL é proibido pelo fluxo operacional do projeto.
-
-Nenhuma migration foi falsamente registrada como aplicada.
-
-## 10. Baseline de aceite pós-migration
-
-Após obter acesso ao projeto correto e aplicar a 0016 pelo mecanismo Supabase/migration apropriado, repetir:
-
-1. verificar ausência da policy pública;
-2. verificar ausência de grants de `anon` na tabela base;
-3. `anon` deve receber `permission denied`/negação equivalente ao tentar consultar a tabela base;
-4. `authenticated` sem autorização deve ser negado;
-5. operador autorizado deve continuar lendo/editando;
-6. eventual projeção pública deve retornar somente campos published-only;
-7. confirmar registro de migration no histórico real;
-8. validar consumidor público em navegador somente se existir contrato/fixture apropriado.
-
-## 11. Pendências fora deste baseline
-
-Permanecem para fases próprias, sem alteração nesta execução:
-
-- `supabase/migrations/0016_owner_journey_proposal.sql`;
-- RPCs da nova Owner Journey ainda ausentes;
-- proposta;
-- localStorage;
-- Core API;
-- conversão de imóveis;
-- integrações e operação.
-
-## 12. Resultado
-
-**BASELINE REAL ATUALIZADO. P0 BLOQUEADO POR ACESSO OPERACIONAL AO SUPABASE CORRETO.**
+Pendências de proposta, reunião, convite/Owner Journey, Core e integrações pertencem a fases posteriores e não alteram este resultado.
