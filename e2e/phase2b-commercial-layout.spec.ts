@@ -19,7 +19,21 @@ for (const viewport of viewports) {
     await page.goto("/implantacao");
 
     await expect(page.getByRole("heading", { name: "Implantações" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nova oportunidade" })).toBeVisible();
+    const newOpportunity = page.getByRole("button", { name: "Nova oportunidade" });
+    await expect(newOpportunity).toBeVisible();
+
+    // Regressão da Fase 1: os três dados leves continuam suficientes para
+    // habilitar a criação, sem condomínio, unidade, CPF ou Property operacional.
+    await newOpportunity.click();
+    await page.getByLabel("Nome do contato").fill("Contato Fase 1");
+    await page.getByLabel("Telefone").fill("(54) 99999-9999");
+    await page.getByLabel("Título provisório").fill("Oportunidade leve preservada");
+    await expect(page.getByRole("button", { name: "Criar oportunidade" })).toBeEnabled();
+    await expect(
+      page.getByText(/Condomínio, unidade, documentos e dados do imóvel ficam para depois/i),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Cancelar" }).click();
+
     await expectNoHorizontalOverflow(page);
     await page.screenshot({
       path: `test-results/phase2b-${viewport.name}-list.png`,
