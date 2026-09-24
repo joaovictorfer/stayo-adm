@@ -186,6 +186,8 @@ O drawer:
 
 A listagem mostra título, contato, etapa, responsável e próxima ação, preservando os registros já completos no mesmo dataset.
 
+A validação responsiva pré-merge foi feita sobre o código efetivamente validado pelo build: 375/390 px usam o drawer `w-full` e layout vertical; a partir de `sm`, o drawer assume 28rem e ações horizontais. A listagem troca o cabeçalho tabular por linhas empilhadas no mobile (`sm:grid` apenas a partir do breakpoint). O preview visual do Lovable acompanha `main`, por isso a inspeção visual pixel-a-pixel da nova UI só pode ocorrer depois do merge/sincronização; isso deve ser tratado como validação pós-merge imediata, sem iniciar nova fase.
+
 ## Compatibilidade com registros existentes
 
 Nenhuma coluna, enum ou tabela existente foi removida ou reinterpretada.
