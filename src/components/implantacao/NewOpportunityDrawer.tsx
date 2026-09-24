@@ -12,7 +12,7 @@ import {
   findOpportunityContactDuplicates,
   type OpportunityContactCandidate,
 } from "../../lib/api/opportunities";
-import { coreApi, implementationsListQuery } from "../../lib/api/queries";
+import { adminApi, coreApi, implementationsListQuery } from "../../lib/api/queries";
 import { formatBrazilianPhone, normalizePhone } from "../../lib/owner-form-validation";
 
 interface FormState {
@@ -40,15 +40,25 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
   const auth = useAuthSession();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
+  const [contactSearch, setContactSearch] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setForm(emptyForm);
+    setContactSearch("");
     setRequestId(crypto.randomUUID());
   }, [open]);
 
   const normalizedPhone = normalizePhone(form.phone);
   const validPhone = /^55\d{10,11}$/.test(normalizedPhone);
+
+  const contactsQuery = useQuery({
+    queryKey: ["commercial", "opportunity", "contacts", contactSearch.trim()],
+    queryFn: () => adminApi.owners.list({ q: contactSearch.trim() }),
+    enabled: open && contactSearch.trim().length >= 2,
+    staleTime: 30_000,
+    retry: 1,
+  });
 
   const duplicatesQuery = useQuery({
     queryKey: ["commercial", "opportunity", "duplicates", normalizedPhone],
@@ -58,9 +68,20 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
     retry: 1,
   });
 
+  const candidates = useMemo<OpportunityContactCandidate[]>(
+    () =>
+      (duplicatesQuery.data ?? []).map((candidate) => ({
+        id: candidate.id,
+        name: candidate.name,
+        phone: candidate.phone,
+        lifecycleStatus: candidate.lifecycleStatus,
+      })),
+    [duplicatesQuery.data],
+  );
+
   const selectedCandidate = useMemo(
-    () => (duplicatesQuery.data ?? []).find((candidate) => candidate.id === form.existingOwnerId) ?? null,
-    [duplicatesQuery.data, form.existingOwnerId],
+    () => candidates.find((candidate) => candidate.id === form.existingOwnerId) ?? null,
+    [candidates, form.existingOwnerId],
   );
 
   const valid =
@@ -103,15 +124,11 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
       contactName: candidate.name,
       phone: formatBrazilianPhone(candidate.phone ?? current.phone),
     }));
+    setContactSearch("");
   };
 
   return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      eyebrow="Comercial"
-      title="Nova oportunidade"
-    >
+    <Drawer open={open} onClose={onClose} eyebrow="Comercial" title="Nova oportunidade">
       <form
         className="flex flex-col gap-5"
         onSubmit={(event) => {
@@ -127,6 +144,46 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
           Comece só com o que você já sabe. Condomínio, unidade, documentos e dados do imóvel
           ficam para depois.
         </div>
+
+        <ContactSearch
+          value={contactSearch}
+          onChange={setContactSearch}
+          loading={contactsQuery.isPending}
+          error={contactsQuery.isError}
+          results={(contactsQuery.data ?? []).map((owner) => ({
+            id: owner.id,
+            name: owner.name,
+            phone: owner.phone,
+            lifecycleStatus: owner.lifecycleStatus,
+          }))}
+          onSelect={chooseCandidate}
+        />
+
+        {form.existingOwnerId && (
+          <div
+            className="rounded-[var(--radius-card)] border px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--stayo-success)", backgroundColor: "var(--stayo-forest-soft)" }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+                  Contato existente selecionado
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                  A oportunidade será vinculada a este cadastro. Nenhum merge automático será feito.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm((current) => ({ ...current, existingOwnerId: null }))}
+                className="shrink-0 text-xs font-medium underline"
+                style={{ color: "var(--stayo-forest)" }}
+              >
+                Desvincular
+              </button>
+            </div>
+          </div>
+        )}
 
         <Field
           label="Nome do contato"
@@ -157,8 +214,8 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
           <DuplicateNotice
             loading={duplicatesQuery.isPending}
             error={duplicatesQuery.isError}
-            candidates={duplicatesQuery.data ?? []}
-            selected={selectedCandidate}
+            candidates={candidates}
+            selectedOwnerId={form.existingOwnerId}
             onSelect={chooseCandidate}
             onCreateSeparate={() => setForm((current) => ({ ...current, existingOwnerId: null }))}
           />
@@ -226,18 +283,102 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
   );
 }
 
+function ContactSearch({
+  value,
+  onChange,
+  loading,
+  error,
+  results,
+  onSelect,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  loading: boolean;
+  error: boolean;
+  results: OpportunityContactCandidate[];
+  onSelect: (candidate: OpportunityContactCandidate) => void;
+}) {
+  return (
+    <div>
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+          Buscar contato existente <span className="font-normal">(opcional)</span>
+        </span>
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2"
+            style={{ color: "var(--stayo-ink-muted)" }}
+          />
+          <input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Nome ou telefone"
+            className="w-full rounded-[var(--radius-control)] border py-2.5 pl-9 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-[var(--stayo-forest)]/20"
+            style={{ ...surface, color: "var(--stayo-ink)" }}
+          />
+        </div>
+      </label>
+
+      {value.trim().length >= 2 && (
+        <div
+          className="mt-2 overflow-hidden rounded-[var(--radius-card)] border"
+          style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}
+        >
+          {loading ? (
+            <p className="flex items-center gap-2 px-3 py-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              <Loader2 className="size-3.5 animate-spin" /> Buscando contatos…
+            </p>
+          ) : error ? (
+            <p className="px-3 py-3 text-xs" style={{ color: "var(--stayo-danger)" }}>
+              Não foi possível buscar contatos agora.
+            </p>
+          ) : results.length === 0 ? (
+            <p className="px-3 py-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              Nenhum contato encontrado. Continue preenchendo os dados abaixo.
+            </p>
+          ) : (
+            <ul className="max-h-48 divide-y overflow-y-auto" style={{ borderColor: "var(--stayo-border)" }}>
+              {results.slice(0, 8).map((candidate) => (
+                <li key={candidate.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(candidate)}
+                    className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-[var(--stayo-bg)]"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+                        {candidate.name}
+                      </span>
+                      <span className="block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {candidate.phone ? formatBrazilianPhone(candidate.phone) : "Telefone não informado"}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-xs font-medium" style={{ color: "var(--stayo-forest)" }}>
+                      Selecionar
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DuplicateNotice({
   loading,
   error,
   candidates,
-  selected,
+  selectedOwnerId,
   onSelect,
   onCreateSeparate,
 }: {
   loading: boolean;
   error: boolean;
   candidates: OpportunityContactCandidate[];
-  selected: OpportunityContactCandidate | null;
+  selectedOwnerId: string | null;
   onSelect: (candidate: OpportunityContactCandidate) => void;
   onCreateSeparate: () => void;
 }) {
@@ -288,7 +429,7 @@ function DuplicateNotice({
                     {candidate.phone ? formatBrazilianPhone(candidate.phone) : "Telefone não informado"}
                   </span>
                 </span>
-                {selected?.id === candidate.id ? (
+                {selectedOwnerId === candidate.id ? (
                   <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: "var(--stayo-success)" }}>
                     <Check className="size-3.5" /> Selecionado
                   </span>
@@ -300,16 +441,14 @@ function DuplicateNotice({
               </button>
             ))}
           </div>
-          {selected && (
-            <button
-              type="button"
-              onClick={onCreateSeparate}
-              className="mt-3 text-xs font-medium underline"
-              style={{ color: "var(--stayo-warning)" }}
-            >
-              Criar um novo contato mesmo assim
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onCreateSeparate}
+            className="mt-3 text-xs font-medium underline"
+            style={{ color: "var(--stayo-warning)" }}
+          >
+            Criar um novo contato mesmo assim
+          </button>
         </div>
       </div>
     </div>
