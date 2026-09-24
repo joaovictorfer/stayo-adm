@@ -1,7 +1,4 @@
-import type {
-  CommercialMeetingStatus,
-  CommercialOverviewRow,
-} from "../types/commercial-journey";
+import type { CommercialMeetingStatus, CommercialOverviewRow } from "../types/commercial-journey";
 
 export const commercialMeetingStatusLabels: Record<CommercialMeetingStatus, string> = {
   scheduled: "Agendada",

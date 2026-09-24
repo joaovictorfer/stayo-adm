@@ -8,12 +8,7 @@ export type CommercialMeetingMode = "video" | "in_person";
  * preservando data, responsável e estado da ocorrência anterior.
  */
 export type CommercialMeetingStatus =
-  | "scheduled"
-  | "confirmed"
-  | "rescheduled"
-  | "cancelled"
-  | "completed"
-  | "no_show";
+  "scheduled" | "confirmed" | "rescheduled" | "cancelled" | "completed" | "no_show";
 
 /** Contrato interno do Admin. Não deve ser devolvido diretamente ao convite público. */
 export interface CommercialMeetingRecord {
@@ -112,11 +107,7 @@ export interface CommercialMeetingPublicProjection {
 }
 
 export type ProposalPresentationStatus =
-  | "draft"
-  | "published"
-  | "acceptance_ready"
-  | "accepted"
-  | "superseded";
+  "draft" | "published" | "acceptance_ready" | "accepted" | "superseded";
 
 /**
  * Estado da versão comercial apresentada. O snapshot em si continuará no

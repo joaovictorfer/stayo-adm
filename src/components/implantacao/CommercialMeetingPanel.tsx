@@ -84,13 +84,15 @@ export function CommercialMeetingPanel({
   const scheduleMutation = useMutation({
     mutationFn: (input: ScheduleCommercialMeetingInput) => commercialMeetingsApi.schedule(input),
     onSuccess: (state) => updateState(state, "Reunião agendada"),
-    onError: (error) => toast.error("Não foi possível agendar", { description: errorMessage(error) }),
+    onError: (error) =>
+      toast.error("Não foi possível agendar", { description: errorMessage(error) }),
   });
   const rescheduleMutation = useMutation({
     mutationFn: (input: RescheduleCommercialMeetingInput) =>
       commercialMeetingsApi.reschedule(input),
     onSuccess: (state) => updateState(state, "Reunião reagendada"),
-    onError: (error) => toast.error("Não foi possível reagendar", { description: errorMessage(error) }),
+    onError: (error) =>
+      toast.error("Não foi possível reagendar", { description: errorMessage(error) }),
   });
   const statusMutation = useMutation({
     mutationFn: (input: {
@@ -116,7 +118,9 @@ export function CommercialMeetingPanel({
     }) => commercialMeetingsApi.closeNextAction(input),
     onSuccess: (state) => updateState(state, "Próxima ação atualizada"),
     onError: (error) =>
-      toast.error("Não foi possível atualizar a próxima ação", { description: errorMessage(error) }),
+      toast.error("Não foi possível atualizar a próxima ação", {
+        description: errorMessage(error),
+      }),
   });
 
   const busy =
@@ -313,7 +317,12 @@ function CommercialMeetingContent({
           </p>
         </div>
         {!current && (
-          <Button type="button" size="sm" onClick={openSchedule} disabled={busy || !assignees.length}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={openSchedule}
+            disabled={busy || !assignees.length}
+          >
             <CalendarClock className="size-4" /> Agendar reunião
           </Button>
         )}
@@ -360,7 +369,13 @@ function CommercialMeetingContent({
                 </a>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={openReschedule} disabled={busy}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={openReschedule}
+                  disabled={busy}
+                >
                   Reagendar
                 </Button>
                 <Button
@@ -369,7 +384,11 @@ function CommercialMeetingContent({
                   size="sm"
                   disabled={busy}
                   onClick={() =>
-                    onStatus({ meetingId: current.id, expectedVersion: current.version, status: "completed" })
+                    onStatus({
+                      meetingId: current.id,
+                      expectedVersion: current.version,
+                      status: "completed",
+                    })
                   }
                 >
                   <CheckCircle2 className="size-4" /> Realizada
@@ -380,7 +399,11 @@ function CommercialMeetingContent({
                   size="sm"
                   disabled={busy}
                   onClick={() =>
-                    onStatus({ meetingId: current.id, expectedVersion: current.version, status: "no_show" })
+                    onStatus({
+                      meetingId: current.id,
+                      expectedVersion: current.version,
+                      status: "no_show",
+                    })
                   }
                 >
                   Não compareceu
@@ -391,7 +414,11 @@ function CommercialMeetingContent({
                   size="sm"
                   disabled={busy}
                   onClick={() =>
-                    onStatus({ meetingId: current.id, expectedVersion: current.version, status: "cancelled" })
+                    onStatus({
+                      meetingId: current.id,
+                      expectedVersion: current.version,
+                      status: "cancelled",
+                    })
                   }
                 >
                   <XCircle className="size-4" /> Cancelar
@@ -405,7 +432,8 @@ function CommercialMeetingContent({
                 Nenhuma reunião ativa
               </p>
               <p className="mt-1 text-xs leading-5 text-[var(--stayo-ink-muted)]">
-                Agende quando fizer sentido. Condomínio, unidade e Property operacional não são necessários.
+                Agende quando fizer sentido. Condomínio, unidade e Property operacional não são
+                necessários.
               </p>
             </div>
           )}
@@ -424,15 +452,24 @@ function CommercialMeetingContent({
                     {state.nextAction.title}
                   </p>
                   <p className="mt-1 text-xs text-[var(--stayo-ink-muted)]">
-                    Até {formatCommercialDateTime(state.nextAction.dueAt, state.nextAction.timeZone)}
-                    {state.nextAction.responsibleName ? ` · ${state.nextAction.responsibleName}` : ""}
+                    Até{" "}
+                    {formatCommercialDateTime(state.nextAction.dueAt, state.nextAction.timeZone)}
+                    {state.nextAction.responsibleName
+                      ? ` · ${state.nextAction.responsibleName}`
+                      : ""}
                   </p>
                 </>
               ) : (
                 <p className="mt-3 text-sm text-[var(--stayo-ink-muted)]">Nenhuma ação definida.</p>
               )}
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={() => setActionFormOpen(true)} disabled={busy}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setActionFormOpen(true)}
+              disabled={busy}
+            >
               {state.nextAction ? "Alterar" : "Definir"}
             </Button>
           </div>
@@ -537,12 +574,16 @@ function CommercialMeetingContent({
               </p>
               <ul className="mt-2 space-y-3">
                 {state.events.map((event) => (
-                  <li key={event.id} className="border-l-2 border-[var(--stayo-border)] pl-3 text-sm">
+                  <li
+                    key={event.id}
+                    className="border-l-2 border-[var(--stayo-border)] pl-3 text-sm"
+                  >
                     <p className="font-medium text-[var(--stayo-ink)]">
                       {commercialMeetingStatusLabels[event.toStatus]}
                     </p>
                     <p className="mt-0.5 text-xs text-[var(--stayo-ink-muted)]">
-                      {formatCommercialDateTime(event.startsAt, event.timeZone)} · {event.responsibleName}
+                      {formatCommercialDateTime(event.startsAt, event.timeZone)} ·{" "}
+                      {event.responsibleName}
                     </p>
                   </li>
                 ))}
@@ -554,7 +595,10 @@ function CommercialMeetingContent({
               </p>
               <ul className="mt-2 space-y-3">
                 {state.actionHistory.map((action) => (
-                  <li key={action.id} className="border-l-2 border-[var(--stayo-border)] pl-3 text-sm">
+                  <li
+                    key={action.id}
+                    className="border-l-2 border-[var(--stayo-border)] pl-3 text-sm"
+                  >
                     <p className="font-medium text-[var(--stayo-ink)]">{action.title}</p>
                     <p className="mt-0.5 text-xs text-[var(--stayo-ink-muted)]">
                       {formatCommercialDateTime(action.dueAt, action.timeZone)} · {action.status}
@@ -621,12 +665,21 @@ function MeetingForm({
         </FormField>
         <TimeZoneField value={timeZone} onChange={onTimeZone} />
         <FormField label="Formato">
-          <select value={mode} onChange={(event) => onMode(event.target.value as CommercialMeetingMode)} className="stayo-commercial-input">
+          <select
+            value={mode}
+            onChange={(event) => onMode(event.target.value as CommercialMeetingMode)}
+            className="stayo-commercial-input"
+          >
             <option value="video">Videochamada</option>
             <option value="in_person">Presencial</option>
           </select>
         </FormField>
-        <AssigneeField value={responsible} onChange={onResponsible} assignees={assignees} required />
+        <AssigneeField
+          value={responsible}
+          onChange={onResponsible}
+          assignees={assignees}
+          required
+        />
         {mode === "video" && (
           <FormField label="Link da videochamada" hint="Opcional. Se informado, deve usar HTTPS.">
             <input
@@ -638,12 +691,16 @@ function MeetingForm({
               className="stayo-commercial-input"
               aria-invalid={!validJoinUrl}
             />
-            {!validJoinUrl && <p className="mt-1 text-xs text-[var(--stayo-danger)]">Use um link HTTPS válido.</p>}
+            {!validJoinUrl && (
+              <p className="mt-1 text-xs text-[var(--stayo-danger)]">Use um link HTTPS válido.</p>
+            )}
           </FormField>
         )}
       </div>
       <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+          Cancelar
+        </Button>
         <Button type="button" onClick={onSubmit} disabled={!valid}>
           {busy && <Loader2 className="size-4 animate-spin" />} Salvar reunião
         </Button>
@@ -706,7 +763,9 @@ function ActionForm({
         <AssigneeField value={responsible} onChange={onResponsible} assignees={assignees} />
       </div>
       <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>Cancelar</Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+          Cancelar
+        </Button>
         <Button type="button" onClick={onSubmit} disabled={!valid}>
           {busy && <Loader2 className="size-4 animate-spin" />} Salvar próxima ação
         </Button>
@@ -743,7 +802,9 @@ function TimeZoneField({ value, onChange }: { value: string; onChange: (value: s
         className="stayo-commercial-input"
       />
       <datalist id="stayo-commercial-timezones">
-        {timeZones.map((zone) => <option key={zone} value={zone} />)}
+        {timeZones.map((zone) => (
+          <option key={zone} value={zone} />
+        ))}
       </datalist>
     </FormField>
   );
@@ -762,10 +823,16 @@ function AssigneeField({
 }) {
   return (
     <FormField label={`Responsável${required ? "" : " (opcional)"}`}>
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="stayo-commercial-input">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="stayo-commercial-input"
+      >
         {!required && <option value="">Sem responsável específico</option>}
         {assignees.map((person) => (
-          <option key={person.id} value={person.id}>{person.fullName}</option>
+          <option key={person.id} value={person.id}>
+            {person.fullName}
+          </option>
         ))}
       </select>
     </FormField>

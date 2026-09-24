@@ -68,10 +68,13 @@ describe("toCommercialMeetingPublicProjection", () => {
     expect(
       toCommercialMeetingPublicProjection(meeting({ status: "rescheduled" })).joinUrl,
     ).toBeNull();
-    expect(toCommercialMeetingPublicProjection(meeting({ status: "cancelled" })).joinUrl).toBeNull();
+    expect(
+      toCommercialMeetingPublicProjection(meeting({ status: "cancelled" })).joinUrl,
+    ).toBeNull();
     expect(toCommercialMeetingPublicProjection(meeting({ status: "no_show" })).joinUrl).toBeNull();
     expect(
-      toCommercialMeetingPublicProjection(meeting({ joinUrl: "http://meet.example.com/room" })).joinUrl,
+      toCommercialMeetingPublicProjection(meeting({ joinUrl: "http://meet.example.com/room" }))
+        .joinUrl,
     ).toBeNull();
   });
 });

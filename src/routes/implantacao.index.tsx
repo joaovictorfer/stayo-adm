@@ -22,10 +22,7 @@ import { Button } from "../components/ui/button";
 import { useAuthSession } from "../lib/auth/session";
 import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
 import { implementationsListQuery } from "../lib/api/queries";
-import {
-  commercialUrgency,
-  formatCommercialDateTime,
-} from "../lib/commercial-meeting-state";
+import { commercialUrgency, formatCommercialDateTime } from "../lib/commercial-meeting-state";
 import { opportunityNextAction, opportunityTitle } from "../lib/opportunity-state";
 import { formatBrazilianPhone } from "../lib/owner-form-validation";
 import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implementation-status";
@@ -78,9 +75,7 @@ function ImplementationsPage() {
 
   const commercialByImplementation = useMemo(
     () =>
-      new Map(
-        (commercialQuery.data ?? []).map((item) => [item.implementationId, item] as const),
-      ),
+      new Map((commercialQuery.data ?? []).map((item) => [item.implementationId, item] as const)),
     [commercialQuery.data],
   );
   const assigneeById = useMemo(
@@ -261,7 +256,10 @@ function OpportunityList({
                 className="admin-data-row grid gap-3 px-4 py-4 sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                  <p
+                    className="truncate text-sm font-semibold"
+                    style={{ color: "var(--stayo-ink)" }}
+                  >
                     {opportunityTitle(item)}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -273,7 +271,9 @@ function OpportunityList({
                     {item.ownerName || "Contato a completar"}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {item.ownerPhone ? formatBrazilianPhone(item.ownerPhone) : "Telefone a completar"}
+                    {item.ownerPhone
+                      ? formatBrazilianPhone(item.ownerPhone)
+                      : "Telefone a completar"}
                   </p>
                 </div>
                 <div>
@@ -403,7 +403,9 @@ function CommercialPriority({
       <span className="block min-w-0">
         <span
           className="block truncate text-sm font-medium"
-          style={{ color: urgency === "overdue_action" ? "var(--stayo-danger)" : "var(--stayo-forest)" }}
+          style={{
+            color: urgency === "overdue_action" ? "var(--stayo-danger)" : "var(--stayo-forest)",
+          }}
         >
           {commercial.nextActionTitle}
         </span>
@@ -421,7 +423,9 @@ function CommercialPriority({
       <span className="block min-w-0">
         <span
           className="inline-flex items-center gap-1.5 text-sm font-medium"
-          style={{ color: urgency === "meeting_soon" ? "var(--stayo-warning)" : "var(--stayo-forest)" }}
+          style={{
+            color: urgency === "meeting_soon" ? "var(--stayo-warning)" : "var(--stayo-forest)",
+          }}
         >
           <CalendarClock className="size-3.5" /> Reunião agendada
         </span>

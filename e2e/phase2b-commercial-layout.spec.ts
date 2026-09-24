@@ -7,7 +7,9 @@ const viewports = [
 ] as const;
 
 async function expectNoHorizontalOverflow(page: import("@playwright/test").Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth + 1,
+  );
   expect(overflow).toBe(false);
 }
 
@@ -19,7 +21,10 @@ for (const viewport of viewports) {
     await expect(page.getByRole("heading", { name: "Implantações" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Nova oportunidade" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
-    await page.screenshot({ path: `test-results/phase2b-${viewport.name}-list.png`, fullPage: true });
+    await page.screenshot({
+      path: `test-results/phase2b-${viewport.name}-list.png`,
+      fullPage: true,
+    });
 
     const firstRow = page.locator("a.admin-data-row").first();
     if ((await firstRow.count()) === 0) return;
@@ -28,9 +33,14 @@ for (const viewport of viewports) {
     await page.goto(href!);
 
     await expect(
-      page.getByText(/Reunião e próxima ação|Agenda comercial indisponível|Acesso não autorizado/).first(),
+      page
+        .getByText(/Reunião e próxima ação|Agenda comercial indisponível|Acesso não autorizado/)
+        .first(),
     ).toBeVisible();
     await expectNoHorizontalOverflow(page);
-    await page.screenshot({ path: `test-results/phase2b-${viewport.name}-detail.png`, fullPage: true });
+    await page.screenshot({
+      path: `test-results/phase2b-${viewport.name}-detail.png`,
+      fullPage: true,
+    });
   });
 }

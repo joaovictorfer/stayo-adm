@@ -43,8 +43,10 @@ export interface ScheduleCommercialMeetingInput {
   commandId?: string;
 }
 
-export interface RescheduleCommercialMeetingInput
-  extends Omit<ScheduleCommercialMeetingInput, "implementationId"> {
+export interface RescheduleCommercialMeetingInput extends Omit<
+  ScheduleCommercialMeetingInput,
+  "implementationId"
+> {
   meetingId: string;
   expectedVersion: number;
 }
@@ -91,16 +93,14 @@ export const commercialMeetingsApi = {
       meetingMode: (row["meeting_mode"] as CommercialMeetingMode | null) ?? null,
       meetingStatus:
         (row["meeting_status"] as CommercialOverviewRow["meetingStatus"] | null) ?? null,
-      meetingResponsibleUserId:
-        (row["meeting_responsible_user_id"] as string | null) ?? null,
+      meetingResponsibleUserId: (row["meeting_responsible_user_id"] as string | null) ?? null,
       meetingResponsibleName: (row["meeting_responsible_name"] as string | null) ?? null,
       nextActionTitle: (row["next_action_title"] as string | null) ?? null,
       nextActionDueAt: (row["next_action_due_at"] as string | null) ?? null,
       nextActionTimeZone: (row["next_action_time_zone"] as string | null) ?? null,
       nextActionResponsibleUserId:
         (row["next_action_responsible_user_id"] as string | null) ?? null,
-      nextActionResponsibleName:
-        (row["next_action_responsible_name"] as string | null) ?? null,
+      nextActionResponsibleName: (row["next_action_responsible_name"] as string | null) ?? null,
     }));
   },
 
@@ -175,9 +175,7 @@ export const commercialMeetingsApi = {
     return stateFromRpc(data);
   },
 
-  async closeNextAction(
-    input: CloseCommercialNextActionInput,
-  ): Promise<CommercialMeetingState> {
+  async closeNextAction(input: CloseCommercialNextActionInput): Promise<CommercialMeetingState> {
     const { data, error } = await client().rpc("admin_close_implementation_next_action", {
       p_data: {
         actionId: input.actionId,

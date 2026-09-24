@@ -136,8 +136,10 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
             payout_rule: values.payout_rule.trim() || null,
             maintenance_limit: parseNumber(values.maintenance_limit),
             exclusivity: values.exclusivity,
-            duration_months: values.duration_months.trim() === "" ? null : Number(values.duration_months),
-            notice_period_days: values.notice_period_days.trim() === "" ? null : Number(values.notice_period_days),
+            duration_months:
+              values.duration_months.trim() === "" ? null : Number(values.duration_months),
+            notice_period_days:
+              values.notice_period_days.trim() === "" ? null : Number(values.notice_period_days),
             updated_at: new Date().toISOString(),
           },
           { onConflict: "implementation_id" },
