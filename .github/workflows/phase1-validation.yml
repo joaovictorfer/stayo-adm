@@ -18,12 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
       - run: bun install --frozen-lockfile
       - name: Typecheck
-        run: bun run typecheck
+        run: bunx tsc --noEmit -p tsconfig.json
       - name: Lint changed files
         run: >-
-          bun x eslint
+          bunx eslint
           src/components/implantacao/NewOpportunityDrawer.tsx
           src/routes/implantacao.index.tsx
           src/lib/api/opportunities.ts
