@@ -3,7 +3,11 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { LayoutGrid, List, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { AdminActionButton, AdminFilterBar, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
+import {
+  AdminActionButton,
+  AdminFilterBar,
+  AdminStatusBadge,
+} from "@/components/admin/AdminPrimitives";
 import { NewOpportunityDrawer } from "../components/implantacao/NewOpportunityDrawer";
 import {
   EmptyRows,
@@ -182,7 +186,10 @@ function OpportunityList({
 }) {
   return (
     <Panel>
-      <div className="hidden grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(180px,1fr)] gap-4 border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] sm:grid" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}>
+      <div
+        className="hidden grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(180px,1fr)] gap-4 border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] sm:grid"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
+      >
         <span>Oportunidade</span>
         <span>Contato</span>
         <span>Etapa</span>
@@ -267,7 +274,10 @@ function Pipeline({
                   className="rounded-[var(--radius-card)] border p-3"
                   style={surface}
                 >
-                  <p className="truncate text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                  <p
+                    className="truncate text-sm font-semibold"
+                    style={{ color: "var(--stayo-ink)" }}
+                  >
                     {opportunityTitle(item)}
                   </p>
                   <p className="mt-1 truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>

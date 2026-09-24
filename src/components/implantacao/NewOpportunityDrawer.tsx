@@ -84,8 +84,7 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
     [candidates, form.existingOwnerId],
   );
 
-  const valid =
-    form.contactName.trim().length >= 3 && form.title.trim().length >= 3 && validPhone;
+  const valid = form.contactName.trim().length >= 3 && form.title.trim().length >= 3 && validPhone;
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -141,8 +140,8 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
           className="rounded-[var(--radius-card)] border px-4 py-3 text-sm"
           style={{ ...surface, color: "var(--stayo-ink-muted)" }}
         >
-          Comece só com o que você já sabe. Condomínio, unidade, documentos e dados do imóvel
-          ficam para depois.
+          Comece só com o que você já sabe. Condomínio, unidade, documentos e dados do imóvel ficam
+          para depois.
         </div>
 
         <ContactSearch
@@ -162,7 +161,10 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
         {form.existingOwnerId && (
           <div
             className="rounded-[var(--radius-card)] border px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--stayo-success)", backgroundColor: "var(--stayo-forest-soft)" }}
+            style={{
+              borderColor: "var(--stayo-success)",
+              backgroundColor: "var(--stayo-forest-soft)",
+            }}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -234,7 +236,10 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
           style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-bg)" }}
         >
           <div className="flex items-start gap-3">
-            <UserRound className="mt-0.5 size-4 shrink-0" style={{ color: "var(--stayo-forest)" }} />
+            <UserRound
+              className="mt-0.5 size-4 shrink-0"
+              style={{ color: "var(--stayo-forest)" }}
+            />
             <div>
               <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
                 Responsável
@@ -301,7 +306,10 @@ function ContactSearch({
   return (
     <div>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+        <span
+          className="mb-1 block text-xs font-medium"
+          style={{ color: "var(--stayo-ink-muted)" }}
+        >
           Buscar contato existente <span className="font-normal">(opcional)</span>
         </span>
         <div className="relative">
@@ -325,7 +333,10 @@ function ContactSearch({
           style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}
         >
           {loading ? (
-            <p className="flex items-center gap-2 px-3 py-3 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            <p
+              className="flex items-center gap-2 px-3 py-3 text-xs"
+              style={{ color: "var(--stayo-ink-muted)" }}
+            >
               <Loader2 className="size-3.5 animate-spin" /> Buscando contatos…
             </p>
           ) : error ? (
@@ -337,7 +348,10 @@ function ContactSearch({
               Nenhum contato encontrado. Continue preenchendo os dados abaixo.
             </p>
           ) : (
-            <ul className="max-h-48 divide-y overflow-y-auto" style={{ borderColor: "var(--stayo-border)" }}>
+            <ul
+              className="max-h-48 divide-y overflow-y-auto"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
               {results.slice(0, 8).map((candidate) => (
                 <li key={candidate.id}>
                   <button
@@ -346,14 +360,22 @@ function ContactSearch({
                     className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-[var(--stayo-bg)]"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+                      <span
+                        className="block truncate text-sm font-medium"
+                        style={{ color: "var(--stayo-ink)" }}
+                      >
                         {candidate.name}
                       </span>
                       <span className="block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                        {candidate.phone ? formatBrazilianPhone(candidate.phone) : "Telefone não informado"}
+                        {candidate.phone
+                          ? formatBrazilianPhone(candidate.phone)
+                          : "Telefone não informado"}
                       </span>
                     </span>
-                    <span className="shrink-0 text-xs font-medium" style={{ color: "var(--stayo-forest)" }}>
+                    <span
+                      className="shrink-0 text-xs font-medium"
+                      style={{ color: "var(--stayo-forest)" }}
+                    >
                       Selecionar
                     </span>
                   </button>
@@ -404,7 +426,10 @@ function DuplicateNotice({
       style={{ borderColor: "var(--stayo-warning)", backgroundColor: "var(--stayo-gold-soft)" }}
     >
       <div className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0" style={{ color: "var(--stayo-warning)" }} />
+        <AlertTriangle
+          className="mt-0.5 size-4 shrink-0"
+          style={{ color: "var(--stayo-warning)" }}
+        />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
             Possível contato já cadastrado
@@ -422,19 +447,30 @@ function DuplicateNotice({
                 style={{ borderColor: "var(--stayo-border)" }}
               >
                 <span className="min-w-0">
-                  <span className="block truncate font-medium" style={{ color: "var(--stayo-ink)" }}>
+                  <span
+                    className="block truncate font-medium"
+                    style={{ color: "var(--stayo-ink)" }}
+                  >
                     {candidate.name}
                   </span>
                   <span className="block text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {candidate.phone ? formatBrazilianPhone(candidate.phone) : "Telefone não informado"}
+                    {candidate.phone
+                      ? formatBrazilianPhone(candidate.phone)
+                      : "Telefone não informado"}
                   </span>
                 </span>
                 {selectedOwnerId === candidate.id ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: "var(--stayo-success)" }}>
+                  <span
+                    className="inline-flex items-center gap-1 text-xs font-medium"
+                    style={{ color: "var(--stayo-success)" }}
+                  >
                     <Check className="size-3.5" /> Selecionado
                   </span>
                 ) : (
-                  <span className="shrink-0 text-xs font-medium" style={{ color: "var(--stayo-forest)" }}>
+                  <span
+                    className="shrink-0 text-xs font-medium"
+                    style={{ color: "var(--stayo-forest)" }}
+                  >
                     Usar cadastro
                   </span>
                 )}
@@ -487,7 +523,10 @@ function Field({
         style={{ ...surface, color: "var(--stayo-ink)" }}
       />
       {hint && (
-        <span className="mt-1.5 block text-xs leading-5" style={{ color: "var(--stayo-ink-muted)" }}>
+        <span
+          className="mt-1.5 block text-xs leading-5"
+          style={{ color: "var(--stayo-ink-muted)" }}
+        >
           {hint}
         </span>
       )}

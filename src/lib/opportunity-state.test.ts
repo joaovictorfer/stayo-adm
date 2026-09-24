@@ -14,13 +14,23 @@ const base = {
 describe("opportunity state", () => {
   it("usa o título provisório antes dos dados do imóvel", () => {
     expect(
-      opportunityTitle({ nickname: "Apartamento da Ana", condominiumName: null, unit: null, code: "IMP-00010" }),
+      opportunityTitle({
+        nickname: "Apartamento da Ana",
+        condominiumName: null,
+        unit: null,
+        code: "IMP-00010",
+      }),
     ).toBe("Apartamento da Ana");
   });
 
   it("mantém compatibilidade com implantações antigas sem nickname", () => {
     expect(
-      opportunityTitle({ nickname: null, condominiumName: "Vêneto", unit: "302", code: "IMP-00010" }),
+      opportunityTitle({
+        nickname: null,
+        condominiumName: "Vêneto",
+        unit: "302",
+        code: "IMP-00010",
+      }),
     ).toBe("Vêneto · 302");
   });
 
