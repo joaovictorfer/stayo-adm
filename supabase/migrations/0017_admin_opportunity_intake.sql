@@ -40,7 +40,7 @@ begin
   end if;
 
   return query
-    select o.id, o.name, o.phone, o.lifecycle_status
+    select o.id, o.name, o.phone, o.lifecycle_status::text
     from public.owner_records o
     where case
       when regexp_replace(coalesce(o.phone, ''), '\D', '', 'g') ~ '^55[0-9]{10,11}$'
