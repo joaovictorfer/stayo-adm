@@ -1806,6 +1806,51 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_create_opportunity: {
+        Args: { p_data: Json }
+        Returns: {
+          address: string | null
+          bedrooms: number | null
+          capacity: number | null
+          city: string | null
+          code: string
+          completion_date_estimate: string | null
+          condominium_id: string | null
+          condominium_name: string | null
+          core_owner_id: string | null
+          core_property_id: string | null
+          cover_image: string | null
+          created_at: string
+          id: string
+          nickname: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string | null
+          postal_code: string | null
+          property_type: string | null
+          responsible_user_id: string | null
+          start_date_estimate: string | null
+          status: Database["public"]["Enums"]["implementation_status"]
+          tower: string | null
+          unit: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "implementation_projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_find_owner_phone_duplicates: {
+        Args: { p_phone: string }
+        Returns: {
+          id: string
+          lifecycle_status: string
+          name: string
+          phone: string
+        }[]
+      }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       current_admin_role: {
         Args: never
