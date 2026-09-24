@@ -82,7 +82,7 @@ Nenhum bucket relacionado a `portal_content_blocks` foi identificado. Os buckets
 
 ## 8. Regressão de aplicação
 
-Smoke Playwright executado em `375x812` e `1280x900`:
+Smoke Playwright do run `36039414015` executado com sucesso em `375x812` e `1280x900`:
 
 - `/portal/implantacao/<token-inexistente>` mantém fallback seguro e não exibe conteúdo draft;
 - `/portal/proposta/<token-inexistente>` mantém fallback seguro;
