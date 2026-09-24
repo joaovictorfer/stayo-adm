@@ -115,7 +115,7 @@ Também foi revalidado que não existe view, materialized view ou function/RPC b
 
 ## Testes de aplicação
 
-Validação isolada da Fase 2A no GitHub Actions:
+Validação isolada da Fase 2A no GitHub Actions, run `36039414015`:
 
 - TypeScript: **PASS**;
 - Vitest: **PASS — 69 testes**;
