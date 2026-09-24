@@ -113,6 +113,13 @@
       "when": 1790181469883,
       "tag": "0015_admin_condominiums_master_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790214610124,
+      "tag": "0016_lock_down_portal_content_blocks",
+      "breakpoints": true
     }
   ]
 }
