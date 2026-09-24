@@ -16,7 +16,9 @@ async function expectNoHorizontalOverflow(page: import("@playwright/test").Page)
 for (const viewport of viewports) {
   test(`Fase 2B mantém listagem e detalhe responsivos em ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
-    await page.goto("/implantacao");
+    // TanStack Start entrega HTML via SSR. Esperar networkidle evita clicar em
+    // controles visíveis antes de o React terminar a hidratação no cliente.
+    await page.goto("/implantacao", { waitUntil: "networkidle" });
 
     await expect(page.getByRole("heading", { name: "Implantações" })).toBeVisible();
     const newOpportunity = page.getByRole("button", { name: "Nova oportunidade" });
@@ -53,7 +55,7 @@ for (const viewport of viewports) {
     if ((await firstRow.count()) === 0) return;
     const href = await firstRow.getAttribute("href");
     expect(href).toMatch(/^\/implantacao\//);
-    await page.goto(href!);
+    await page.goto(href!, { waitUntil: "networkidle" });
 
     await expect(
       page
