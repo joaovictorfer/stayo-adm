@@ -69,19 +69,19 @@ begin
 end
 $$;
 
-select id as original_meeting_id, starts_at as original_starts_at, responsible_user_id as original_responsible
-from public.implementation_commercial_meetings
-where implementation_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-\gset
-
--- Reagenda: a ocorrência anterior precisa permanecer imutavelmente identificável
--- e a nova ocorrência vira a única reunião ativa.
+-- Reagenda: a ocorrência anterior precisa permanecer identificável e a nova
+-- ocorrência vira a única reunião ativa. O id antigo é encontrado pelo commandId
+-- de criação, evitando qualquer dependência de interpolação dentro de DO blocks.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 
 select public.admin_reschedule_commercial_meeting(
   jsonb_build_object(
-    'meetingId', :'original_meeting_id',
+    'meetingId', (
+      select id::text
+      from public.implementation_commercial_meetings
+      where command_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    ),
     'startsAtLocal', '2099-10-03T16:30',
     'timeZone', 'America/Sao_Paulo',
     'mode', 'in_person',
@@ -94,7 +94,11 @@ select public.admin_reschedule_commercial_meeting(
 
 select public.admin_reschedule_commercial_meeting(
   jsonb_build_object(
-    'meetingId', :'original_meeting_id',
+    'meetingId', (
+      select id::text
+      from public.implementation_commercial_meetings
+      where command_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    ),
     'startsAtLocal', '2099-10-03T16:30',
     'timeZone', 'America/Sao_Paulo',
     'mode', 'in_person',
@@ -114,6 +118,7 @@ declare
   v_events integer;
   v_old public.implementation_commercial_meetings%rowtype;
   v_new public.implementation_commercial_meetings%rowtype;
+  v_expected_old_start timestamptz := timestamp '2099-10-02 15:00' at time zone 'America/Sao_Paulo';
 begin
   select count(*) into v_meetings
   from public.implementation_commercial_meetings
@@ -130,11 +135,11 @@ begin
 
   select * into v_old
   from public.implementation_commercial_meetings
-  where id = :'original_meeting_id';
+  where command_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
   select * into v_new
   from public.implementation_commercial_meetings
-  where rescheduled_from_id = :'original_meeting_id';
+  where command_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 
   if v_meetings <> 2 then
     raise exception 'reschedule history failed: expected 2 occurrences, got %', v_meetings;
@@ -148,14 +153,17 @@ begin
   if v_old.status <> 'rescheduled' then
     raise exception 'old meeting status was not preserved as rescheduled';
   end if;
-  if v_old.starts_at <> :'original_starts_at'::timestamptz then
+  if v_old.starts_at <> v_expected_old_start then
     raise exception 'old meeting start was overwritten';
   end if;
-  if v_old.responsible_user_id <> :'original_responsible'::uuid then
+  if v_old.responsible_user_id <> '11111111-1111-1111-1111-111111111111'::uuid then
     raise exception 'old meeting responsible was overwritten';
   end if;
   if v_old.join_url is not null then
     raise exception 'stale meeting link should be removed from historical occurrence';
+  end if;
+  if v_new.rescheduled_from_id <> v_old.id then
+    raise exception 'new occurrence does not point to the original meeting';
   end if;
   if v_new.responsible_user_id <> '33333333-3333-3333-3333-333333333333'::uuid then
     raise exception 'new meeting responsible was not applied';
@@ -177,7 +185,7 @@ begin
 end
 $$;
 
--- Próxima ação: criação idempotente e substituição preserva histórico.
+-- Próxima ação: criação idempotente.
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
 select public.admin_set_implementation_next_action(
