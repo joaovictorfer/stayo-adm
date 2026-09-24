@@ -37,4 +37,4 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Phase 2A route smoke
-        run: bunx playwright test e2e/phase2a-smoke.spec.ts --project=chromium
+        run: bunx playwright test e2e/phase2a-smoke.spec.ts
