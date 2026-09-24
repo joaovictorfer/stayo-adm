@@ -25,14 +25,23 @@ for (const viewport of viewports) {
     // Regressão da Fase 1: os três dados leves continuam suficientes para
     // habilitar a criação, sem condomínio, unidade, CPF ou Property operacional.
     await newOpportunity.click();
-    await page.getByLabel("Nome do contato").fill("Contato Fase 1");
-    await page.getByLabel("Telefone").fill("(54) 99999-9999");
-    await page.getByLabel("Título provisório").fill("Oportunidade leve preservada");
-    await expect(page.getByRole("button", { name: "Criar oportunidade" })).toBeEnabled();
+    const opportunityDialog = page.getByRole("dialog");
+    await expect(opportunityDialog).toBeVisible();
+    await expect(opportunityDialog.getByText("Nova oportunidade")).toBeVisible();
+    await opportunityDialog.getByPlaceholder("Ex.: Ana Martins").fill("Contato Fase 1");
+    await opportunityDialog.getByPlaceholder("(54) 99999-9999").fill("(54) 99999-9999");
+    await opportunityDialog
+      .getByPlaceholder("Ex.: Apartamento da Ana · oportunidade setembro")
+      .fill("Oportunidade leve preservada");
     await expect(
-      page.getByText(/Condomínio, unidade, documentos e dados do imóvel ficam para depois/i),
+      opportunityDialog.getByRole("button", { name: "Criar oportunidade" }),
+    ).toBeEnabled();
+    await expect(
+      opportunityDialog.getByText(
+        /Condomínio, unidade, documentos e dados do imóvel ficam para depois/i,
+      ),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Cancelar" }).click();
+    await opportunityDialog.getByRole("button", { name: "Cancelar" }).click();
 
     await expectNoHorizontalOverflow(page);
     await page.screenshot({
