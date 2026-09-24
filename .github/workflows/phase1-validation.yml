@@ -1,0 +1,35 @@
+name: Phase 1 validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/implantacao/NewOpportunityDrawer.tsx'
+      - 'src/routes/implantacao.index.tsx'
+      - 'src/lib/api/opportunities.ts'
+      - 'src/lib/opportunity-state.ts'
+      - 'src/lib/opportunity-state.test.ts'
+      - 'supabase/migrations/0017_admin_opportunity_intake.sql'
+      - '.github/workflows/phase1-validation.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint changed files
+        run: >-
+          bun x eslint
+          src/components/implantacao/NewOpportunityDrawer.tsx
+          src/routes/implantacao.index.tsx
+          src/lib/api/opportunities.ts
+          src/lib/opportunity-state.ts
+          src/lib/opportunity-state.test.ts
+      - name: Opportunity unit tests
+        run: bun test src/lib/opportunity-state.test.ts
+      - name: Build
+        run: bun run build
