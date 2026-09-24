@@ -11,7 +11,7 @@ create table if not exists public.implementation_commercial_meetings (
   starts_at timestamptz not null,
   ends_at timestamptz,
   time_zone text not null,
-  mode text not null check (mode in ('video', 'phone', 'in_person')),
+  mode text not null check (mode in ('video', 'in_person')),
   join_url text,
   status text not null check (status in ('scheduled', 'confirmed', 'rescheduled', 'cancelled', 'completed', 'no_show')),
   responsible_user_id uuid not null references public.admin_profiles(id),
@@ -45,8 +45,7 @@ create table if not exists public.implementation_commercial_meeting_events (
   starts_at timestamptz not null,
   ends_at timestamptz,
   time_zone text not null,
-  mode text not null check (mode in ('video', 'phone', 'in_person')),
-  join_url text,
+  mode text not null check (mode in ('video', 'in_person')),
   responsible_user_id uuid not null references public.admin_profiles(id),
   replacement_meeting_id uuid references public.implementation_commercial_meetings(id),
   actor_id uuid not null references public.admin_profiles(id),
@@ -66,6 +65,7 @@ create table if not exists public.implementation_next_actions (
   responsible_user_id uuid references public.admin_profiles(id),
   status text not null default 'active' check (status in ('active', 'completed', 'cancelled', 'superseded')),
   command_id uuid not null unique,
+  closed_command_id uuid unique,
   version integer not null default 1 check (version > 0),
   created_by uuid not null references public.admin_profiles(id),
   updated_by uuid not null references public.admin_profiles(id),
@@ -225,7 +225,6 @@ begin
         'endsAt', e.ends_at,
         'timeZone', e.time_zone,
         'mode', e.mode,
-        'joinUrl', e.join_url,
         'responsibleUserId', e.responsible_user_id,
         'responsibleName', ap.full_name,
         'replacementMeetingId', e.replacement_meeting_id,
@@ -368,6 +367,10 @@ begin
     raise exception 'sem permissão para agendar reunião comercial';
   end if;
 
+  if coalesce(p_data->>'startsAtLocal', '') !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$' then
+    raise exception 'data da reunião inválida';
+  end if;
+
   begin
     v_implementation_id := (p_data->>'implementationId')::uuid;
     v_responsible_id := (p_data->>'responsibleUserId')::uuid;
@@ -397,14 +400,14 @@ begin
     raise exception 'responsável interno inválido';
   end if;
 
+  perform pg_advisory_xact_lock(hashtext('commercial_meeting:' || v_implementation_id::text));
+
   select * into v_meeting
   from public.implementation_commercial_meetings
   where command_id = v_command_id;
   if found then
     return public.admin_get_commercial_meeting_state(v_implementation_id);
   end if;
-
-  perform pg_advisory_xact_lock(hashtext('commercial_meeting:' || v_implementation_id::text));
 
   if exists (
     select 1 from public.implementation_commercial_meetings
@@ -414,6 +417,9 @@ begin
   end if;
 
   v_starts_at := v_starts_local at time zone v_time_zone;
+  if v_starts_at <= now() then
+    raise exception 'a reunião deve ser agendada para uma data futura';
+  end if;
 
   insert into public.implementation_commercial_meetings (
     implementation_id, starts_at, time_zone, mode, join_url, status,
@@ -426,12 +432,12 @@ begin
 
   insert into public.implementation_commercial_meeting_events (
     meeting_id, implementation_id, event_type, from_status, to_status,
-    starts_at, ends_at, time_zone, mode, join_url, responsible_user_id,
+    starts_at, ends_at, time_zone, mode, responsible_user_id,
     actor_id, command_id
   ) values (
     v_meeting.id, v_meeting.implementation_id, 'scheduled', null, 'scheduled',
     v_meeting.starts_at, v_meeting.ends_at, v_meeting.time_zone, v_meeting.mode,
-    v_meeting.join_url, v_meeting.responsible_user_id, v_actor, v_command_id
+    v_meeting.responsible_user_id, v_actor, v_command_id
   );
 
   return public.admin_get_commercial_meeting_state(v_implementation_id);
@@ -462,6 +468,10 @@ begin
     raise exception 'sem permissão para reagendar reunião comercial';
   end if;
 
+  if coalesce(p_data->>'startsAtLocal', '') !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$' then
+    raise exception 'data da reunião inválida';
+  end if;
+
   begin
     v_meeting_id := (p_data->>'meetingId')::uuid;
     v_responsible_id := (p_data->>'responsibleUserId')::uuid;
@@ -471,6 +481,8 @@ begin
   exception when others then
     raise exception 'dados de reagendamento inválidos';
   end;
+
+  perform pg_advisory_xact_lock(hashtext('commercial_meeting_id:' || v_meeting_id::text));
 
   select m.* into v_new
   from public.implementation_commercial_meetings m
@@ -495,11 +507,14 @@ begin
       and ap.role in ('super_admin', 'admin', 'commercial', 'operations')
   ) then raise exception 'responsável interno inválido'; end if;
 
-  perform pg_advisory_xact_lock(hashtext('commercial_meeting:' || v_old.implementation_id::text));
   v_starts_at := v_starts_local at time zone v_time_zone;
+  if v_starts_at <= now() then raise exception 'a reunião deve ser reagendada para uma data futura'; end if;
+
+  perform pg_advisory_xact_lock(hashtext('commercial_meeting:' || v_old.implementation_id::text));
 
   update public.implementation_commercial_meetings
-  set status = 'rescheduled', version = version + 1, updated_by = v_actor, updated_at = now()
+  set status = 'rescheduled', join_url = null, version = version + 1,
+      updated_by = v_actor, updated_at = now()
   where id = v_old.id;
 
   insert into public.implementation_commercial_meetings (
@@ -513,11 +528,11 @@ begin
 
   insert into public.implementation_commercial_meeting_events (
     meeting_id, implementation_id, event_type, from_status, to_status,
-    starts_at, ends_at, time_zone, mode, join_url, responsible_user_id,
+    starts_at, ends_at, time_zone, mode, responsible_user_id,
     replacement_meeting_id, actor_id, command_id
   ) values (
     v_old.id, v_old.implementation_id, 'rescheduled', v_old.status, 'rescheduled',
-    v_old.starts_at, v_old.ends_at, v_old.time_zone, v_old.mode, v_old.join_url,
+    v_old.starts_at, v_old.ends_at, v_old.time_zone, v_old.mode,
     v_old.responsible_user_id, v_new.id, v_actor, v_command_id
   );
 
@@ -537,6 +552,7 @@ declare
   v_command_id uuid;
   v_expected_version integer;
   v_target text := trim(coalesce(p_data->>'status', ''));
+  v_from_status text;
   v_meeting public.implementation_commercial_meetings%rowtype;
   v_existing_event public.implementation_commercial_meeting_events%rowtype;
 begin
@@ -552,15 +568,17 @@ begin
     raise exception 'comando de reunião inválido';
   end;
 
+  if v_target not in ('confirmed', 'completed', 'cancelled', 'no_show') then
+    raise exception 'transição de reunião inválida';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtext('commercial_meeting_id:' || v_meeting_id::text));
+
   select * into v_existing_event
   from public.implementation_commercial_meeting_events
   where command_id = v_command_id;
   if found then
     return public.admin_get_commercial_meeting_state(v_existing_event.implementation_id);
-  end if;
-
-  if v_target not in ('confirmed', 'completed', 'cancelled', 'no_show') then
-    raise exception 'transição de reunião inválida';
   end if;
 
   select * into v_meeting
@@ -579,20 +597,25 @@ begin
     raise exception 'reunião já está encerrada';
   end if;
 
+  v_from_status := v_meeting.status;
+
   update public.implementation_commercial_meetings
-  set status = v_target, version = version + 1, updated_by = v_actor, updated_at = now()
+  set status = v_target,
+      join_url = case when v_target = 'confirmed' then join_url else null end,
+      version = version + 1,
+      updated_by = v_actor,
+      updated_at = now()
   where id = v_meeting.id
   returning * into v_meeting;
 
   insert into public.implementation_commercial_meeting_events (
     meeting_id, implementation_id, event_type, from_status, to_status,
-    starts_at, ends_at, time_zone, mode, join_url, responsible_user_id,
+    starts_at, ends_at, time_zone, mode, responsible_user_id,
     actor_id, command_id
   ) values (
-    v_meeting.id, v_meeting.implementation_id, v_target,
-    case when v_target = 'confirmed' then 'scheduled' else coalesce((select from_status from public.implementation_commercial_meeting_events where meeting_id = v_meeting.id order by created_at desc limit 1), 'scheduled') end,
-    v_target, v_meeting.starts_at, v_meeting.ends_at, v_meeting.time_zone, v_meeting.mode,
-    v_meeting.join_url, v_meeting.responsible_user_id, v_actor, v_command_id
+    v_meeting.id, v_meeting.implementation_id, v_target, v_from_status, v_target,
+    v_meeting.starts_at, v_meeting.ends_at, v_meeting.time_zone, v_meeting.mode,
+    v_meeting.responsible_user_id, v_actor, v_command_id
   );
 
   return public.admin_get_commercial_meeting_state(v_meeting.implementation_id);
@@ -620,6 +643,10 @@ begin
     raise exception 'sem permissão para alterar próxima ação';
   end if;
 
+  if coalesce(p_data->>'dueAtLocal', '') !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$' then
+    raise exception 'prazo da próxima ação inválido';
+  end if;
+
   begin
     v_implementation_id := (p_data->>'implementationId')::uuid;
     v_command_id := (p_data->>'commandId')::uuid;
@@ -638,10 +665,11 @@ begin
       and ap.role in ('super_admin', 'admin', 'commercial', 'operations')
   ) then raise exception 'responsável interno inválido'; end if;
 
+  perform pg_advisory_xact_lock(hashtext('next_action:' || v_implementation_id::text));
+
   select * into v_action from public.implementation_next_actions where command_id = v_command_id;
   if found then return public.admin_get_commercial_meeting_state(v_implementation_id); end if;
 
-  perform pg_advisory_xact_lock(hashtext('next_action:' || v_implementation_id::text));
   v_due_at := v_due_local at time zone v_time_zone;
 
   update public.implementation_next_actions
@@ -678,6 +706,7 @@ begin
   if public.has_admin_role('super_admin', 'admin', 'commercial') is not true then
     raise exception 'sem permissão para encerrar próxima ação';
   end if;
+
   begin
     v_action_id := (p_data->>'actionId')::uuid;
     v_command_id := (p_data->>'commandId')::uuid;
@@ -685,9 +714,12 @@ begin
   exception when others then
     raise exception 'comando de próxima ação inválido';
   end;
+
   if v_target not in ('completed', 'cancelled') then raise exception 'status de próxima ação inválido'; end if;
 
-  select * into v_action from public.implementation_next_actions where command_id = v_command_id;
+  perform pg_advisory_xact_lock(hashtext('next_action_id:' || v_action_id::text));
+
+  select * into v_action from public.implementation_next_actions where closed_command_id = v_command_id;
   if found then return public.admin_get_commercial_meeting_state(v_action.implementation_id); end if;
 
   select * into v_action from public.implementation_next_actions where id = v_action_id for update;
@@ -695,10 +727,13 @@ begin
   if v_action.version <> v_expected_version then raise exception 'conflito de atualização; recarregue a próxima ação'; end if;
   if v_action.status <> 'active' then raise exception 'próxima ação já está encerrada'; end if;
 
-  -- Registra a idempotência do fechamento em uma nova linha terminal, preservando a linha ativa original.
   update public.implementation_next_actions
-  set status = v_target, version = version + 1, command_id = v_command_id,
-      updated_by = v_actor, updated_at = now(), closed_at = now()
+  set status = v_target,
+      closed_command_id = v_command_id,
+      version = version + 1,
+      updated_by = v_actor,
+      updated_at = now(),
+      closed_at = now()
   where id = v_action.id
   returning * into v_action;
 
