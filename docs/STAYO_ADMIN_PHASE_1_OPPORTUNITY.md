@@ -1,6 +1,6 @@
 # STAYO ADMIN — Fase 1: oportunidade comercial leve
 
-Data da auditoria: 24/09/2026.
+Data da validação: 24/09/2026.
 
 ## Objetivo
 
@@ -14,104 +14,177 @@ Entrada mínima:
 
 A oportunidade permanece no domínio do STAYO ADMIN como `implementation_projects.status = prospect` e evolui na mesma ficha. Nenhum `Property` operacional do STAYO APP/Core é criado.
 
-## Baseline confirmado antes da mudança
+## Ambiente comprovado
 
-- GitHub `main`: `1f1710c3720321fd1d2ddd4f2057e356dd19d5ab`.
-- Lovable: projeto **Stayo Adm**, ID `696b2125-0bf9-4538-8458-05d88fc5e8a2`, sincronizado com o mesmo SHA no início da execução.
-- Banco consultado: Lovable Cloud habilitado nesse Project ID.
-- O conector Supabase separado da sessão enxerga apenas o projeto `jsxwyewasvcxkgbpbdvk`; ele NÃO é o banco do Stayo Admin e não foi usado para DDL.
-- O banco Lovable Cloud do Admin apresenta histórico `drizzle.__drizzle_migrations` até a migration Drizzle `0015` (id 28). A contenção Drizzle `0016` não aparece como aplicada.
+- GitHub base da Fase 1: `main` em `1f1710c3720321fd1d2ddd4f2057e356dd19d5ab`.
+- Lovable Cloud: projeto **Stayo Adm**, Project ID `696b2125-0bf9-4538-8458-05d88fc5e8a2`.
+- Banco: PostgreSQL/Supabase provisionado pelo próprio Lovable Cloud desse projeto.
+- O conector Supabase separado não foi usado.
+- GitHub permaneceu como fonte de edição das migrations; o Lovable Cloud foi somente o ambiente de materialização do SQL versionado e de validação.
 
 ## Schema reutilizado
 
 Não foi criada tabela de oportunidade.
 
-`implementation_projects` já permite como `NULL`:
+`implementation_projects` já permite `NULL` para condomínio, unidade, endereço e demais dados de imóvel necessários apenas em fases posteriores. `nickname` é reutilizado como título provisório. `owner_records` aceita nome + telefone com e-mail/documento opcionais.
 
-- `condominium_id` / `condominium_name`;
-- `tower` / `unit`;
-- `address` / `postal_code` / `city`;
-- `property_type` / `bedrooms` / `capacity`;
-- `responsible_user_id`;
-- `core_property_id` / `core_owner_id`.
+A oportunidade criada continua sendo o mesmo `implementation_projects` usado pela ficha existente, evitando uma entidade comercial paralela.
 
-`nickname` é reutilizado como título provisório enquanto não existe identificação mais completa do imóvel. Registros existentes continuam usando o mesmo campo como apelido.
+## Migrations materializadas
 
-`owner_records` já aceita nome + telefone, mantendo e-mail/documento opcionais.
+### 0017 — `supabase/migrations/0017_admin_opportunity_intake.sql`
 
-## Blocker remoto encontrado
+Aplicada exatamente como versionada no Lovable Cloud.
 
-O schema comporta uma oportunidade leve, mas o RPC produtivo `admin_create_implementation(p_data jsonb)` exige hoje:
+Adiciona:
 
-- `ownerId`;
-- `condominiumName`;
-- `unit`.
+- `admin_find_owner_phone_duplicates(text)`;
+- `admin_create_opportunity(jsonb)`.
 
-Ele já gera `IMP-xxxxx` corretamente no servidor com `pg_advisory_xact_lock` e `UNIQUE(code)`. A Fase 1 não substitui esse RPC porque ele continua necessário para compatibilidade com o fluxo legado.
+A criação:
 
-A migration nova adiciona um RPC separado e específico `admin_create_opportunity`.
-
-## Migration 0017
-
-Arquivo: `supabase/migrations/0017_admin_opportunity_intake.sql`.
-
-Ela adiciona:
-
-### `admin_find_owner_phone_duplicates(text)`
-
-- `SECURITY INVOKER`;
-- exige papel `super_admin`, `admin` ou `commercial`;
-- normaliza telefone brasileiro;
-- retorna candidatos existentes para decisão humana;
-- não faz merge automático;
-- `EXECUTE` removido de `PUBLIC` e concedido somente a `authenticated`.
-
-### `admin_create_opportunity(jsonb)`
-
-- `SECURITY INVOKER`;
-- exige `super_admin`, `admin` ou `commercial`;
 - valida nome, telefone e título no banco;
-- aceita `existingOwnerId` somente quando o operador explicitamente escolhe um contato existente;
-- caso contrário cria novo `owner_records` como `prospect`;
-- não usa nome como identidade;
-- não cria condomínio;
-- não cria unidade;
-- não cria `Property` operacional;
-- não cria dados de acesso/Wi-Fi, repasse ou contrato;
-- cria `implementation_projects` como `prospect`, com o título em `nickname`;
-- mantém `implementation_owners` como vínculo principal;
-- gera código no banco sob lock transacional;
-- usa `requestId` + advisory lock + `origin=admin_opportunity:<uuid>` para tornar retries/duplo clique idempotentes.
+- cria `owner_records` como `prospect` quando nenhum contato existente é escolhido;
+- aceita `existingOwnerId` somente quando o operador escolhe explicitamente um cadastro existente;
+- cria `implementation_projects` como `prospect`;
+- grava o título provisório em `nickname`;
+- cria o vínculo em `implementation_owners`;
+- gera `IMP-xxxxx` no servidor sob advisory lock e `UNIQUE(code)`;
+- usa `requestId` + `origin=admin_opportunity:<uuid>` para idempotência;
+- não cria condomínio, unidade, endereço ou detalhe operacional.
 
-## RLS e autorização confirmadas
+### 0018 — `supabase/migrations/0018_lock_down_opportunity_rpcs.sql`
 
-No banco atual:
+Criada depois da validação pós-0017 detectar que o Lovable Cloud/Supabase adicionou grants diretos de `EXECUTE` para `anon` nas novas functions.
 
-- `owner_records`: INSERT/UPDATE somente `super_admin`, `admin`, `commercial`;
-- `implementation_projects`: gestão por `super_admin`, `admin`, `commercial`, `operations`;
-- `implementation_owners`: gestão por `super_admin`, `admin`, `commercial`, `operations`.
+Aplicada exatamente como versionada.
 
-A criação leve adota o limite mais restritivo de `owner_records`: `super_admin`, `admin`, `commercial`. Um usuário apenas de operações não ganha permissão nova por causa do RPC.
+Resultado efetivo:
 
-## UX implementada na branch
+- `authenticated`: `EXECUTE` nas duas RPCs;
+- `anon`: sem `EXECUTE`;
+- `service_role`/`postgres`: preservados como acesso interno.
 
-A área `/implantacao` passa a ter CTA **Nova oportunidade** e um formulário inicial apenas com:
+### 0019 — `supabase/migrations/0019_harden_opportunity_rpc_authorization.sql`
+
+Criada depois do teste de identidade detectar uma sutileza SQL: `has_admin_role(...)` retorna `NULL` quando `auth.uid()` não possui perfil administrativo; o guard original `IF NOT has_admin_role(...)` não rejeitava explicitamente esse `NULL`.
+
+Aplicada exatamente como versionada.
+
+As duas RPCs agora usam:
+
+`has_admin_role(...) IS NOT TRUE`
+
+portanto uma sessão autenticada sem papel permitido recebe erro explícito.
+
+A 0017 já materializada não foi alterada.
+
+## RLS e autorização comprovadas
+
+Tabelas relevantes continuam com RLS habilitada.
+
+Perfis permitidos para a criação leve:
+
+- `super_admin`;
+- `admin`;
+- `commercial`.
+
+Teste real com `super_admin` ativo:
+
+- `auth.uid()` resolvido corretamente;
+- `current_admin_role()` = `super_admin`;
+- criação e busca permitidas.
+
+Teste real com UUID autenticado sem `admin_profiles`:
+
+- busca por telefone: rejeitada com `sem permissão para consultar contatos comerciais`;
+- criação: rejeitada com `sem permissão para criar oportunidade`.
+
+Teste como `anon`:
+
+- `EXECUTE admin_find_owner_phone_duplicates`: permission denied;
+- `EXECUTE admin_create_opportunity`: permission denied.
+
+## Validação transacional no Lovable Cloud
+
+Foi criada uma fixture sintética e removida ao fim dos testes.
+
+### Criação mínima
+
+O RPC criou um registro com:
+
+- `status = prospect`;
+- `nickname` igual ao título provisório;
+- `condominium_id = NULL`;
+- `unit = NULL`;
+- `address = NULL`;
+- owner prospect vinculado;
+- código `IMP-*` gerado no banco.
+
+### Idempotência / duplo clique
+
+A mesma chamada com o mesmo `requestId` foi executada novamente e devolveu exatamente o mesmo `implementation_id` e `owner_id`.
+
+No banco permaneceu:
+
+- 1 owner para o telefone sintético;
+- 1 implementation para o `origin` sintético.
+
+### Persistência entre sessões
+
+Uma segunda sessão autenticada do operador leu o mesmo `implementation_id`, título, owner e status do registro criado na primeira sessão.
+
+Isso comprova persistência no Lovable Cloud e não em `localStorage`.
+
+### Duplicidade por telefone
+
+A busca com o mesmo número em formato brasileiro encontrou o owner sintético já persistido. Nenhum merge automático foi realizado.
+
+### Efeitos colaterais
+
+Baseline antes do teste:
+
+- `admin_condominiums`: 1;
+- `implementation_projects`: 4;
+- `implementation_property_details`: 2;
+- `owner_records`: 7.
+
+Durante o teste:
+
+- condomínio continuou em 1;
+- a oportunidade não recebeu linha em `implementation_property_details`;
+- não houve chamada para STAYO APP/Core e não existe criação de `Property` operacional nessa migration.
+
+Depois da limpeza da fixture, o banco voltou para:
+
+- `admin_condominiums`: 1;
+- `implementation_projects`: 4;
+- `implementation_property_details`: 2;
+- `owner_records`: 7;
+- 0 fixtures sintéticas remanescentes.
+
+## UX implementada
+
+A rota `/implantacao` passa a oferecer **Nova oportunidade** e formulário inicial apenas com:
 
 1. nome do contato;
 2. telefone;
 3. título provisório.
 
-O formulário:
+O drawer:
 
-- verifica possíveis duplicidades pelo telefone normalizado;
-- deixa o operador escolher um contato existente ou criar registro separado;
-- nunca faz merge automático;
-- define o usuário logado como responsável inicial quando disponível;
-- bloqueia duplo envio enquanto a mutation está pendente;
-- usa um `requestId` estável por tentativa para idempotência também no servidor;
-- só mostra sucesso depois de receber a oportunidade do banco e recarregá-la pela API.
+- ocupa tela cheia abaixo de `sm`, portanto atende 375/390 px sem largura fixa excedente;
+- usa `sm:w-[28rem]` no desktop/tablet;
+- mantém conteúdo rolável verticalmente;
+- mantém ações empilhadas no mobile e alinhadas em linha a partir de `sm`;
+- possui estados loading, erro, disabled e prevenção de novo submit enquanto a mutation está pendente;
+- pesquisa contato existente;
+- sinaliza possíveis duplicidades pelo telefone normalizado;
+- permite escolher um contato existente ou seguir com cadastro separado;
+- não faz merge automático;
+- só exibe sucesso após a criação e recarga do registro pelo banco.
 
-A listagem passa a priorizar título, contato, etapa, responsável e próxima ação sem perder registros antigos.
+A listagem mostra título, contato, etapa, responsável e próxima ação, preservando os registros já completos no mesmo dataset.
 
 ## Compatibilidade com registros existentes
 
@@ -121,49 +194,28 @@ A apresentação usa esta ordem para título:
 
 1. `nickname`;
 2. condomínio + unidade;
-3. código da oportunidade.
+3. código.
 
-Assim, implantações antigas que não possuem `nickname` continuam identificáveis pelo condomínio/unidade.
-
-## Continuação progressiva
-
-A oportunidade criada é o próprio `implementation_projects` já usado pela ficha atual. Portanto owner, endereço, cidade, condições comerciais, checklist e demais módulos continuam vinculados ao mesmo `implementation_id`.
-
-A ficha existente ainda possui lacunas de UX para edição de alguns campos cadastrais (por exemplo condomínio/unidade) que precisam ser tratadas incrementalmente sem criar outro cadastro. A Fase 1 não cria uma segunda entidade para resolver isso.
+Registros antigos continuam abrindo e editando na mesma ficha e no mesmo adapter.
 
 ## Reunião
 
-Não foi encontrada no banco correto qualquer tabela/RPC de reunião, meeting, appointment ou schedule.
+Não existe entidade persistente adequada de reunião no schema confirmado.
 
-A reunião opcional NÃO foi simulada em `notes`, `localStorage` ou campos sem contrato. A persistência estruturada de reunião permanece pendente para a Fase 2 / migration própria depois que o fluxo de migrations estiver liberado.
+A Fase 1 não simulou reunião em `notes` ou `localStorage`. Reagendamento, histórico e exposição ao proprietário permanecem para a Fase 2.
 
-## Coexistência Drizzle × Supabase
+## Histórico de migrations
 
-O banco real registra aplicações em `drizzle.__drizzle_migrations`, enquanto o repositório também contém `supabase/migrations/0001..0016`.
+A materialização desta fase ocorreu no Lovable Cloud executando exatamente os arquivos versionados no GitHub.
 
-Para esta fase:
+Não foi fabricada linha em `drizzle.__drizzle_migrations` nem alterado SQL histórico. A coexistência `drizzle/migrations` × `supabase/migrations` continua uma pendência de reconciliação global; para esta mudança, os arquivos Supabase 0017/0018/0019 são a trilha versionada e este documento registra sua execução real.
 
-- nenhuma migration histórica foi reaplicada;
-- nenhuma linha de histórico foi fabricada;
-- a mudança nova foi versionada somente como `supabase/migrations/0017_admin_opportunity_intake.sql`, seguindo a direção futura documentada após reconciliação;
-- a migration 0017 NÃO está considerada aplicada até existir evidência no Lovable Cloud correto.
+## Gate externo da Fase 2
 
-## Gate de aplicação
-
-O conector Supabase disponível nesta sessão não possui o banco Lovable Cloud do Stayo Admin. E o Lovable é ferramenta de consulta/preview, não canal autorizado de edição de banco.
-
-Portanto a migration 0017 está **PENDENTE DE APLICAÇÃO CONTROLADA**.
-
-Enquanto o RPC não existir no banco, o frontend retorna um erro explícito informando que a criação leve ainda não foi habilitada. Não há fallback para mock/localStorage.
-
-## P0 da Fase 2
-
-Continua aberto e fora do escopo desta implementação: `portal_content_blocks` ainda possui leitura anônima por policy `SELECT USING (true)` e grants para `anon` no banco consultado.
-
-Isso não é corrigido pela Fase 1 e segue como gate antes de qualquer publicação externa da Fase 2.
+`portal_content_blocks` permanece fora do escopo desta Fase 1 e continua sendo gate obrigatório antes da publicação externa da Fase 2.
 
 ## Rollback
 
-Antes de aplicar a migration, rollback = não fazer merge/deploy da branch.
+Rollback de interface: remover/desabilitar a entrada **Nova oportunidade** por commit incremental.
 
-Depois de aplicada, rollback funcional pode desabilitar/remover a entrada UI e restaurar o fluxo anterior; eventual remoção dos dois RPCs exige migration reversa explícita. Os dados de oportunidade já criados não devem ser apagados em rollback automático.
+Rollback de banco, se necessário, deve ser uma migration reversa explícita que remova/restrinja as RPCs; não editar migrations já aplicadas. O rollback não deve apagar oportunidades comerciais reais já criadas.
