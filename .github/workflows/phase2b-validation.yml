@@ -12,6 +12,24 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,6 +57,12 @@ jobs:
           src/components/implantacao/ContractConditionsPanel.tsx
           src/routes/implantacao.index.tsx
           e2e/phase2b-commercial-layout.spec.ts
+
+      - name: Phase 2B SQL integration
+        run: |
+          psql -f tests/sql/phase2b_fixture.sql
+          psql -f supabase/migrations/0021_commercial_meetings_and_next_actions.sql
+          psql -f tests/sql/phase2b_integration.sql
 
       - name: Unit tests
         run: bunx vitest run
