@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { LayoutGrid, List, Plus } from "lucide-react";
+import { AlertTriangle, CalendarClock, LayoutGrid, List, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -20,10 +20,16 @@ import {
 } from "../components/data/ListStates";
 import { Button } from "../components/ui/button";
 import { useAuthSession } from "../lib/auth/session";
+import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
 import { implementationsListQuery } from "../lib/api/queries";
+import {
+  commercialUrgency,
+  formatCommercialDateTime,
+} from "../lib/commercial-meeting-state";
 import { opportunityNextAction, opportunityTitle } from "../lib/opportunity-state";
 import { formatBrazilianPhone } from "../lib/owner-form-validation";
 import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implementation-status";
+import type { CommercialAssignee, CommercialOverviewRow } from "../types/commercial-journey";
 import type { ImplementationProject } from "../types/core";
 
 export const Route = createFileRoute("/implantacao/")({
@@ -49,14 +55,44 @@ const surface = {
   borderColor: "var(--stayo-border)",
 };
 
+type CommercialLoadState = "loading" | "ready" | "error";
+
 function ImplementationsPage() {
   const auth = useAuthSession();
   const query = useQuery(implementationsListQuery());
+  const commercialQuery = useQuery({
+    queryKey: ["commercial", "overview"],
+    queryFn: () => commercialMeetingsApi.listOverview(),
+    retry: 1,
+  });
+  const assigneesQuery = useQuery({
+    queryKey: ["commercial", "assignees"],
+    queryFn: () => commercialMeetingsApi.listAssignees(),
+    retry: 1,
+  });
   const data = query.data?.data ?? [];
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"lista" | "funil">("lista");
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const commercialByImplementation = useMemo(
+    () =>
+      new Map(
+        (commercialQuery.data ?? []).map((item) => [item.implementationId, item] as const),
+      ),
+    [commercialQuery.data],
+  );
+  const assigneeById = useMemo(
+    () => new Map((assigneesQuery.data ?? []).map((item) => [item.id, item] as const)),
+    [assigneesQuery.data],
+  );
+  const commercialLoadState: CommercialLoadState =
+    commercialQuery.isError || assigneesQuery.isError
+      ? "error"
+      : commercialQuery.isPending || assigneesQuery.isPending
+        ? "loading"
+        : "ready";
 
   const rows = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
@@ -169,9 +205,21 @@ function ImplementationsPage() {
           />
         </Panel>
       ) : view === "lista" ? (
-        <OpportunityList rows={rows} currentUserId={auth.profile?.id ?? null} />
+        <OpportunityList
+          rows={rows}
+          currentUserId={auth.profile?.id ?? null}
+          commercialByImplementation={commercialByImplementation}
+          assigneeById={assigneeById}
+          commercialLoadState={commercialLoadState}
+        />
       ) : (
-        <Pipeline rows={rows} currentUserId={auth.profile?.id ?? null} />
+        <Pipeline
+          rows={rows}
+          currentUserId={auth.profile?.id ?? null}
+          commercialByImplementation={commercialByImplementation}
+          assigneeById={assigneeById}
+          commercialLoadState={commercialLoadState}
+        />
       )}
     </>
   );
@@ -180,14 +228,20 @@ function ImplementationsPage() {
 function OpportunityList({
   rows,
   currentUserId,
+  commercialByImplementation,
+  assigneeById,
+  commercialLoadState,
 }: {
   rows: ImplementationProject[];
   currentUserId: string | null;
+  commercialByImplementation: Map<string, CommercialOverviewRow>;
+  assigneeById: Map<string, CommercialAssignee>;
+  commercialLoadState: CommercialLoadState;
 }) {
   return (
     <Panel>
       <div
-        className="hidden grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(180px,1fr)] gap-4 border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] sm:grid"
+        className="hidden grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] gap-4 border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] sm:grid"
         style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}
       >
         <span>Oportunidade</span>
@@ -197,51 +251,56 @@ function OpportunityList({
         <span>Próxima ação</span>
       </div>
       <ul className="divide-y divide-[var(--admin-border)]">
-        {rows.map((item) => (
-          <li key={item.id}>
-            <Link
-              to="/implantacao/$id"
-              params={{ id: item.id }}
-              className="admin-data-row grid gap-3 px-4 py-4 sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(180px,1fr)] sm:items-center"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
-                  {opportunityTitle(item)}
-                </p>
-                <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                  {item.code}
-                </p>
-              </div>
-              <div className="min-w-0 text-sm">
-                <p className="truncate" style={{ color: "var(--stayo-ink)" }}>
-                  {item.ownerName || "Contato a completar"}
-                </p>
-                <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                  {item.ownerPhone ? formatBrazilianPhone(item.ownerPhone) : "Telefone a completar"}
-                </p>
-              </div>
-              <div>
-                <AdminStatusBadge
-                  tone={
-                    item.status === "ativo"
-                      ? "success"
-                      : item.status === "cancelado" || item.status === "nao_convertido"
-                        ? "danger"
-                        : "info"
-                  }
-                >
-                  {statusLabels[item.status]}
-                </AdminStatusBadge>
-              </div>
-              <span className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                {responsibleLabel(item, currentUserId)}
-              </span>
-              <span className="text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
-                {opportunityNextAction(item)}
-              </span>
-            </Link>
-          </li>
-        ))}
+        {rows.map((item) => {
+          const commercial = commercialByImplementation.get(item.id);
+          return (
+            <li key={item.id}>
+              <Link
+                to="/implantacao/$id"
+                params={{ id: item.id }}
+                className="admin-data-row grid gap-3 px-4 py-4 sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                    {opportunityTitle(item)}
+                  </p>
+                  <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {item.code}
+                  </p>
+                </div>
+                <div className="min-w-0 text-sm">
+                  <p className="truncate" style={{ color: "var(--stayo-ink)" }}>
+                    {item.ownerName || "Contato a completar"}
+                  </p>
+                  <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {item.ownerPhone ? formatBrazilianPhone(item.ownerPhone) : "Telefone a completar"}
+                  </p>
+                </div>
+                <div>
+                  <AdminStatusBadge
+                    tone={
+                      item.status === "ativo"
+                        ? "success"
+                        : item.status === "cancelado" || item.status === "nao_convertido"
+                          ? "danger"
+                          : "info"
+                    }
+                  >
+                    {statusLabels[item.status]}
+                  </AdminStatusBadge>
+                </div>
+                <span className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                  {responsibleLabel(item, currentUserId, assigneeById)}
+                </span>
+                <CommercialPriority
+                  item={item}
+                  commercial={commercial}
+                  loadState={commercialLoadState}
+                />
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </Panel>
   );
@@ -250,9 +309,15 @@ function OpportunityList({
 function Pipeline({
   rows,
   currentUserId,
+  commercialByImplementation,
+  assigneeById,
+  commercialLoadState,
 }: {
   rows: ImplementationProject[];
   currentUserId: string | null;
+  commercialByImplementation: Map<string, CommercialOverviewRow>;
+  assigneeById: Map<string, CommercialAssignee>;
+  commercialLoadState: CommercialLoadState;
 }) {
   const columns = [...mainStatusFlow, ...alternateStatuses];
   return (
@@ -284,11 +349,15 @@ function Pipeline({
                     {item.ownerName || "Contato a completar"}
                     {item.ownerPhone ? ` · ${formatBrazilianPhone(item.ownerPhone)}` : ""}
                   </p>
-                  <p className="mt-3 text-xs font-medium" style={{ color: "var(--stayo-forest)" }}>
-                    {opportunityNextAction(item)}
-                  </p>
+                  <div className="mt-3">
+                    <CommercialPriority
+                      item={item}
+                      commercial={commercialByImplementation.get(item.id)}
+                      loadState={commercialLoadState}
+                    />
+                  </div>
                   <p className="mt-1 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {responsibleLabel(item, currentUserId)}
+                    {responsibleLabel(item, currentUserId, assigneeById)}
                   </p>
                 </Link>
               ))}
@@ -308,8 +377,75 @@ function Pipeline({
   );
 }
 
-function responsibleLabel(item: ImplementationProject, currentUserId: string | null): string {
+function CommercialPriority({
+  item,
+  commercial,
+  loadState,
+}: {
+  item: ImplementationProject;
+  commercial: CommercialOverviewRow | undefined;
+  loadState: CommercialLoadState;
+}) {
+  if (loadState === "loading") {
+    return <span className="text-xs text-[var(--stayo-ink-muted)]">Carregando agenda…</span>;
+  }
+  if (loadState === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--stayo-warning)]">
+        <AlertTriangle className="size-3.5" /> Agenda indisponível
+      </span>
+    );
+  }
+
+  const urgency = commercialUrgency(commercial);
+  if (commercial?.nextActionTitle && commercial.nextActionDueAt && commercial.nextActionTimeZone) {
+    return (
+      <span className="block min-w-0">
+        <span
+          className="block truncate text-sm font-medium"
+          style={{ color: urgency === "overdue_action" ? "var(--stayo-danger)" : "var(--stayo-forest)" }}
+        >
+          {commercial.nextActionTitle}
+        </span>
+        <span className="mt-0.5 block text-[11px] text-[var(--stayo-ink-muted)]">
+          {urgency === "overdue_action" ? "Vencida · " : "Até "}
+          {formatCommercialDateTime(commercial.nextActionDueAt, commercial.nextActionTimeZone)}
+          {commercial.nextActionResponsibleName ? ` · ${commercial.nextActionResponsibleName}` : ""}
+        </span>
+      </span>
+    );
+  }
+
+  if (commercial?.meetingStartsAt && commercial.meetingTimeZone) {
+    return (
+      <span className="block min-w-0">
+        <span
+          className="inline-flex items-center gap-1.5 text-sm font-medium"
+          style={{ color: urgency === "meeting_soon" ? "var(--stayo-warning)" : "var(--stayo-forest)" }}
+        >
+          <CalendarClock className="size-3.5" /> Reunião agendada
+        </span>
+        <span className="mt-0.5 block text-[11px] text-[var(--stayo-ink-muted)]">
+          {formatCommercialDateTime(commercial.meetingStartsAt, commercial.meetingTimeZone)}
+          {commercial.meetingResponsibleName ? ` · ${commercial.meetingResponsibleName}` : ""}
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
+      {opportunityNextAction(item)}
+    </span>
+  );
+}
+
+function responsibleLabel(
+  item: ImplementationProject,
+  currentUserId: string | null,
+  assigneeById: Map<string, CommercialAssignee>,
+): string {
   if (!item.responsibleUserId) return "A definir";
   if (currentUserId && item.responsibleUserId === currentUserId) return "Você";
-  return "Responsável definido";
+  return assigneeById.get(item.responsibleUserId)?.fullName ?? "Responsável definido";
 }
