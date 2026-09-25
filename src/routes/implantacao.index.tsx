@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, LayoutGrid, List, Plus } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  Plus,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -127,7 +134,7 @@ function ImplementationsPage() {
       </PageHeader>
 
       <section
-        className="mb-4 rounded-[var(--radius-card)] border px-4 py-3 sm:px-5"
+        className="mb-4 hidden rounded-[var(--radius-card)] border px-4 py-3 sm:block sm:px-5"
         style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}
       >
         <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
