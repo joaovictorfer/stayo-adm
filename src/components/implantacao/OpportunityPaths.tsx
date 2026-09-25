@@ -264,7 +264,7 @@ export function MeetingPath({ onBack, onClose }: { onBack: () => void; onClose: 
   const list = useQuery(implementationsListQuery());
   const openOpportunities = useMemo(
     () =>
-      (list.data ?? []).filter((i) =>
+      (list.data?.items ?? []).filter((i) =>
         ["prospect", "proposta", "aguardando_aprovacao"].includes(i.status),
       ),
     [list.data],
