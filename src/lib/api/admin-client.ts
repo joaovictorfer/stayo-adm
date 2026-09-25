@@ -134,6 +134,11 @@ export interface AdminApiClient {
     ): Promise<{ link: OwnerOnboardingLink; token: string }>;
     revoke(id: string): Promise<OwnerOnboardingLink>;
     /**
+     * Token do convite ativo, legível só pela equipe (tabela separada com
+     * RLS administrativa). Null quando revogado, usado, vencido ou antigo.
+     */
+    getLinkToken(invitationId: string): Promise<string | null>;
+    /**
      * Chamado pelo portal público (sem autenticação) — nunca lê a tabela
      * diretamente sob RLS; no adapter Supabase, resolve via função
      * security-definer (ver migration 0007).
@@ -592,6 +597,7 @@ export function createLocalAdminApiClient(): AdminApiClient {
       });
       return { link, token };
     },
+    getLinkToken: async () => null,
     revoke: async (id) => {
       const all = read<OwnerOnboardingLink>(OWNER_ONBOARDING_LINKS_KEY);
       const target = all.find((l) => l.id === id);
@@ -1597,6 +1603,10 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         .select()
         .single<OwnerOnboardingLinkRow>();
       if (error) throw error;
+      const { error: secretError } = await supabase
+        .from("owner_portal_invitation_secrets")
+        .insert({ invitation_id: data.id, token });
+      if (secretError) console.warn("Token do convite não guardado para a equipe");
       await audit.log({
         actorId: null,
         event: "portal.invitation_created",
@@ -1605,6 +1615,15 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
         metadata: {},
       });
       return { link: ownerOnboardingLinkFromRow(data), token };
+    },
+    getLinkToken: async (invitationId) => {
+      const { data, error } = await client()
+        .from("owner_portal_invitation_secrets")
+        .select("token")
+        .eq("invitation_id", invitationId)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.token ?? null;
     },
     revoke: async (id) => {
       const { data, error } = await client()
