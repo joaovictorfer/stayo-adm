@@ -533,38 +533,58 @@ export function OwnerJourney({
     !ownerValid ? "seus dados" : null,
     !propertyValid ? "os dados do imóvel" : null,
   ].filter(Boolean) as string[];
-  const copy = {
+  const resumeStage: Stage = stage === 2 || stage === 3 ? stage : 2;
+  const mainRef = useRef<HTMLElement | null>(null);
+  const openStage = (target: Stage) => {
+    if (target > maxStageRef.current) {
+      setMaxStage((value) => (value < target ? target : value));
+      maxStageRef.current = target;
+    }
+    setStage(target);
+    requestAnimationFrame(() =>
+      mainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
+  const copy: { title: string; lead: string; cta?: { label: string; onClick: () => void } } = {
     loading: { title: "Preparando sua página", lead: "Só um instante." },
     error: {
       title: "Não conseguimos carregar agora",
       lead: "Nada foi alterado. Tente novamente em instantes.",
     },
     A: {
-      title: "Conheça sua proposta",
-      lead: "Leia as condições combinadas. Depois do aceite, o cadastro abre aqui mesmo.",
+      title: "Conheça as condições da sua proposta",
+      lead: "Leia com calma. O cadastro abre aqui mesmo depois da sua confirmação.",
+      cta: { label: "Ver proposta", onClick: () => openStage(1) },
     },
     B: {
       title: "Estamos preparando sua proposta",
-      lead: "Avisaremos quando estiver pronta. Este mesmo link continua valendo.",
+      lead: "A equipe STAYO avisa você quando ela estiver disponível. Este link continua valendo.",
     },
     C: hasSavedDraft
       ? {
-          title: "Continuar de onde parou",
-          lead: "O que você preencheu está guardado. Falta pouco.",
+          title: "Continue de onde parou",
+          lead: "O que você preencheu está guardado.",
+          cta: { label: "Continuar cadastro", onClick: () => openStage(resumeStage) },
         }
       : {
-          title: "Vamos ao seu cadastro",
+          title: "Vamos conhecer melhor você e seu imóvel",
           lead: "Leva poucos minutos. Você pode parar e voltar pelo mesmo link.",
+          cta: { label: "Começar cadastro", onClick: () => openStage(2) },
         },
     D: {
       title: "Recebemos seu cadastro",
       lead: "A equipe STAYO está revisando as informações e fala com você em breve.",
     },
   }[journeyState];
+  const coverNote = !coverData
+    ? "Imagem institucional STAYO"
+    : coverData.source === "condominium"
+      ? coverData.label
+      : null;
 
   return (
     <div className="portal-onboarding">
-      <header className={`portal-onboarding-header${coverData ? " has-photo" : ""}`}>
+      <header className={`portal-onboarding-header is-compact${coverData ? " has-photo" : ""}`}>
         <img
           src={coverData?.url ?? institutionalCover}
           onError={() => setCoverBroken(true)}
@@ -575,8 +595,12 @@ export function OwnerJourney({
         <div className="portal-onboarding-cover-overlay" aria-hidden="true" />
         <div className="portal-onboarding-header-content">
           <div className="portal-onboarding-brand-row">
-            <StayoLogo variant="white" className="h-auto w-24" />
-            {journeyState === "C" && stage >= 2 && <SaveStatus state={saveState} />}
+            <StayoLogo variant="white" className="h-auto w-20" />
+            {journeyState === "C" && stage >= 2 ? (
+              <SaveStatus state={saveState} />
+            ) : coverNote ? (
+              <span className="portal-onboarding-cover-tag">{coverNote}</span>
+            ) : null}
           </div>
           <p className="portal-onboarding-eyebrow">
             {firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
@@ -585,13 +609,12 @@ export function OwnerJourney({
             {copy.title}
           </h1>
           <p className="portal-onboarding-lead">{copy.lead}</p>
-          <span className="portal-onboarding-cover-note">
-            {!coverData
-              ? "Imagem institucional STAYO"
-              : coverData.source === "condominium"
-                ? coverData.label
-                : "Foto do imóvel"}
-          </span>
+          {copy.cta && (
+            <button type="button" className="portal-onboarding-header-cta" onClick={copy.cta.onClick}>
+              {copy.cta.label}
+              <ArrowRight aria-hidden="true" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -615,7 +638,7 @@ export function OwnerJourney({
         </div>
       )}
 
-      <main className="portal-onboarding-main">
+      <main ref={mainRef} className="portal-onboarding-main">
         <div className="portal-onboarding-card">
           <div key={stage} className="portal-onboarding-stage">
             {stage === 1 && (
