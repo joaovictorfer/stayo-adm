@@ -1,16 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowDown,
-  ArrowUp,
-  Eye,
-  FileText,
-  Info,
-  Plus,
-  Save,
-  Send,
-  Trash2,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -111,7 +101,10 @@ function toOptions(items: DraftItem[]): ProposalItemOption[] {
     .map(({ uid: _u, ...rest }) => ({ ...rest, description: rest.description.trim() }));
 }
 
-function fromVersion(v: CommercialProposalVersion | null, fallbackItems: ProposalItem[]): DraftItem[] {
+function fromVersion(
+  v: CommercialProposalVersion | null,
+  fallbackItems: ProposalItem[],
+): DraftItem[] {
   const opts = v?.draftItemOptions;
   if (opts && opts.length) return opts.map((o) => ({ ...o, uid: uid() }));
   const base = v ? v.items : fallbackItems;
@@ -166,7 +159,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
     queryFn: async () => {
       const { data, error } = await supabase
         .from("implementation_contract_conditions")
-        .select("administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days")
+        .select(
+          "administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days",
+        )
         .eq("implementation_id", implementationId)
         .maybeSingle();
       if (error) throw error;
@@ -204,13 +199,17 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
   useEffect(() => {
     const source = draftVersion ?? latestPublished;
-    const key = source ? `${source.id}:${source.status}:${source.draftRevision}:${source.updatedAt}` : "empty";
+    const key = source
+      ? `${source.id}:${source.status}:${source.draftRevision}:${source.updatedAt}`
+      : "empty";
     if (key === loadedKey) return;
     const snap = !draftVersion ? latestPublished?.snapshot : null;
     setItems(fromVersion(draftVersion, snap?.items ?? []));
     setPartnershipObject(draftVersion?.draftPartnershipObject ?? snap?.partnershipObject ?? "");
     setResponsibilities(
-      (draftVersion?.draftResponsibilities ?? snap?.responsibilities ?? []).map(parseResponsibility),
+      (draftVersion?.draftResponsibilities ?? snap?.responsibilities ?? []).map(
+        parseResponsibility,
+      ),
     );
     setSignatoriesList(
       (draftVersion?.requiredSignatories ?? snap?.requiredSignatories ?? []).map((s) => ({
@@ -417,7 +416,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         </div>
         {(saveDraft.isError || publish.isError) && (
-          <div role="alert" className="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive"
+          >
             {proposalError(saveDraft.error ?? publish.error)} O que você preencheu continua na tela.
           </div>
         )}
@@ -488,7 +490,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   <div key={t.id} className="flex justify-between gap-3 px-3 py-2 text-sm">
                     <dt>{t.label}</dt>
                     <dd className="font-medium tabular-nums">
-                      {t.chargeType === "percentage" ? `${String(t.value).replace(".", ",")}%` : formatBRL(t.value)}
+                      {t.chargeType === "percentage"
+                        ? `${String(t.value).replace(".", ",")}%`
+                        : formatBRL(t.value)}
                     </dd>
                   </div>
                 ))}
@@ -512,7 +516,11 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     aria-label="Responsável"
                     value={r.party}
                     onChange={(e) => {
-                      setResponsibilities((cur) => cur.map((x) => (x.uid === r.uid ? { ...x, party: e.target.value as Party } : x)));
+                      setResponsibilities((cur) =>
+                        cur.map((x) =>
+                          x.uid === r.uid ? { ...x, party: e.target.value as Party } : x,
+                        ),
+                      );
                       touch();
                     }}
                     className="h-10 rounded-md border border-input bg-white px-2 text-sm"
@@ -526,7 +534,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     value={r.text}
                     placeholder="Ex.: Cadastro e configuração dos anúncios"
                     onChange={(e) => {
-                      setResponsibilities((cur) => cur.map((x) => (x.uid === r.uid ? { ...x, text: e.target.value } : x)));
+                      setResponsibilities((cur) =>
+                        cur.map((x) => (x.uid === r.uid ? { ...x, text: e.target.value } : x)),
+                      );
                       touch();
                     }}
                   />
@@ -570,7 +580,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     value={s.label}
                     placeholder="Ex.: Maria Souza"
                     onChange={(e) => {
-                      setSignatoriesList((cur) => cur.map((x) => (x.uid === s.uid ? { ...x, label: e.target.value } : x)));
+                      setSignatoriesList((cur) =>
+                        cur.map((x) => (x.uid === s.uid ? { ...x, label: e.target.value } : x)),
+                      );
                       touch();
                     }}
                   />
@@ -578,7 +590,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     aria-label="Papel"
                     value={s.role}
                     onChange={(e) => {
-                      setSignatoriesList((cur) => cur.map((x) => (x.uid === s.uid ? { ...x, role: e.target.value } : x)));
+                      setSignatoriesList((cur) =>
+                        cur.map((x) => (x.uid === s.uid ? { ...x, role: e.target.value } : x)),
+                      );
                       touch();
                     }}
                     className="h-10 rounded-md border border-input bg-white px-2 text-sm"
@@ -607,7 +621,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               variant="outline"
               size="sm"
               onClick={() => {
-                setSignatoriesList((cur) => [...cur, { uid: uid(), label: "", role: "Proprietário titular" }]);
+                setSignatoriesList((cur) => [
+                  ...cur,
+                  { uid: uid(), label: "", role: "Proprietário titular" },
+                ]);
                 touch();
               }}
             >
@@ -661,7 +678,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     min={1}
                     step={1}
                     value={item.quantity}
-                    onChange={(e) => updateItem(item.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })}
+                    onChange={(e) =>
+                      updateItem(item.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })
+                    }
                     className="mt-1"
                   />
                 </label>
@@ -688,10 +707,22 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   </p>
                 </div>
                 <div className="flex items-center justify-end gap-1">
-                  <button type="button" aria-label="Mover para cima" disabled={index === 0} onClick={() => moveItem(index, -1)} className="flex size-9 items-center justify-center rounded-md border disabled:opacity-40">
+                  <button
+                    type="button"
+                    aria-label="Mover para cima"
+                    disabled={index === 0}
+                    onClick={() => moveItem(index, -1)}
+                    className="flex size-9 items-center justify-center rounded-md border disabled:opacity-40"
+                  >
                     <ArrowUp className="size-4" />
                   </button>
-                  <button type="button" aria-label="Mover para baixo" disabled={index === items.length - 1} onClick={() => moveItem(index, 1)} className="flex size-9 items-center justify-center rounded-md border disabled:opacity-40">
+                  <button
+                    type="button"
+                    aria-label="Mover para baixo"
+                    disabled={index === items.length - 1}
+                    onClick={() => moveItem(index, 1)}
+                    className="flex size-9 items-center justify-center rounded-md border disabled:opacity-40"
+                  >
                     <ArrowDown className="size-4" />
                   </button>
                   <button
@@ -699,7 +730,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     aria-label="Remover item"
                     className="flex size-9 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
                     onClick={() => {
-                      setItems((cur) => (cur.length > 1 ? cur.filter((x) => x.uid !== item.uid) : [newItem()]));
+                      setItems((cur) =>
+                        cur.length > 1 ? cur.filter((x) => x.uid !== item.uid) : [newItem()],
+                      );
                       touch();
                     }}
                   >
@@ -709,7 +742,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                 <label className="flex items-center gap-1.5">
-                  <input type="checkbox" checked={item.optional} onChange={(e) => updateItem(item.uid, { optional: e.target.checked })} className="size-3.5" />
+                  <input
+                    type="checkbox"
+                    checked={item.optional}
+                    onChange={(e) => updateItem(item.uid, { optional: e.target.checked })}
+                    className="size-3.5"
+                  />
                   Item opcional
                 </label>
                 {item.discount > gross(item) && (
@@ -748,7 +786,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Descontos</dt>
-            <dd className="tabular-nums">{discounts > 0 ? `− ${formatBRL(discounts)}` : formatBRL(0)}</dd>
+            <dd className="tabular-nums">
+              {discounts > 0 ? `− ${formatBRL(discounts)}` : formatBRL(0)}
+            </dd>
           </div>
           <div className="flex justify-between border-t pt-2 text-base font-semibold">
             <dt>Total</dt>
@@ -758,7 +798,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       </section>
 
       {(previewId === "draft" || selectedVersion?.snapshot) && (
-        <section className="rounded-[var(--radius-card)] border-2 bg-white p-4 sm:p-5" style={{ borderColor: "var(--stayo-forest)" }}>
+        <section
+          className="rounded-[var(--radius-card)] border-2 bg-white p-4 sm:p-5"
+          style={{ borderColor: "var(--stayo-forest)" }}
+        >
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <p className={eyebrow}>Prévia interna · exatamente o que o proprietário verá</p>
@@ -772,7 +815,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               Fechar
             </Button>
           </div>
-          <ProposalPresentationView snapshot={previewId === "draft" ? draftSnapshot : selectedVersion!.snapshot!} />
+          <ProposalPresentationView
+            snapshot={previewId === "draft" ? draftSnapshot : selectedVersion!.snapshot!}
+          />
         </section>
       )}
 
@@ -780,7 +825,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         <div className="mb-4">
           <h3 className="font-semibold">Histórico de versões</h3>
           <p className="text-sm text-muted-foreground">
-            Versões publicadas e aceitas permanecem imutáveis. Uma nova negociação gera outra versão.
+            Versões publicadas e aceitas permanecem imutáveis. Uma nova negociação gera outra
+            versão.
           </p>
         </div>
         {versions.length === 0 ? (
@@ -790,20 +836,27 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         ) : (
           <div className="space-y-2">
             {versions.map((version) => (
-              <div key={version.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                key={version.id}
+                className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <strong>Versão {version.version}</strong>
                     <span className="rounded-full bg-[var(--stayo-bg-soft)] px-2 py-0.5 text-xs font-medium">
                       {statusLabels[version.status]}
                     </span>
-                    <span className="text-xs tabular-nums text-muted-foreground">{formatBRL(version.total)}</span>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {formatBRL(version.total)}
+                    </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {version.publishedAt
                       ? `Publicada em ${new Date(version.publishedAt).toLocaleString("pt-BR")}`
                       : `Atualizada em ${new Date(version.updatedAt).toLocaleString("pt-BR")}`}
-                    {version.acceptedAt ? ` · aceite comercial em ${new Date(version.acceptedAt).toLocaleString("pt-BR")}` : ""}
+                    {version.acceptedAt
+                      ? ` · aceite comercial em ${new Date(version.acceptedAt).toLocaleString("pt-BR")}`
+                      : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -812,7 +865,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                       <Button variant="outline" size="sm" onClick={() => setPreviewId(version.id)}>
                         <Eye className="mr-2 h-4 w-4" /> Ver
                       </Button>
-                      <Button variant="outline" size="sm" disabled={pdf.isPending} onClick={() => pdf.mutate(version)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={pdf.isPending}
+                        onClick={() => pdf.mutate(version)}
+                      >
                         <FileText className="mr-2 h-4 w-4" /> PDF
                       </Button>
                     </>
@@ -827,14 +885,14 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Publicar versão {draftSnapshot.version}?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Publicar versão {draftSnapshot.version}?</AlertDialogTitle>
             <AlertDialogDescription>
               {proposalItems.length} serviço(s) incluído(s), total {formatBRL(total)}. Depois de
               publicada, esta versão não pode ser alterada
-              {latestPublished?.status === "published" ? ` e a versão ${latestPublished.version} passa a ser substituída` : ""}.
-              Nenhuma cobrança é emitida ao publicar.
+              {latestPublished?.status === "published"
+                ? ` e a versão ${latestPublished.version} passa a ser substituída`
+                : ""}
+              . Nenhuma cobrança é emitida ao publicar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
