@@ -979,10 +979,17 @@ function OwnerPortalPanel({
     }
   };
 
-  const previewUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/portal/previa/${implementationId}`
-      : "";
+  // Link externo real: nunca a rota de prévia. Convite ativo recém-gerado →
+  // link seguro com token; convite já usado (conta criada) → login do portal.
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const ownerLink =
+    status === "ativo" && url ? url : status === "usado" ? `${origin}/portal/login` : null;
+  const ownerLinkBlocker =
+    status === "ativo" && !url
+      ? "Por segurança o link só aparece ao ser gerado. Gere um novo acesso abaixo para copiar."
+      : !link || status === "expirado" || status === "revogado"
+        ? "Ainda não há acesso válido para o proprietário. Gere um acesso abaixo."
+        : null;
 
   return (
     <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
@@ -993,40 +1000,47 @@ function OwnerPortalPanel({
         {compact ? "Portal do Proprietário" : "Cadastro do proprietário"}
       </h2>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border p-3">
-        <div className="mr-auto">
-          <p className="text-xs font-medium" style={{ color: "var(--stayo-ink)" }}>
-            Visualizar o portal do proprietário
+      <div className="mb-3 flex flex-col gap-3 rounded-lg border p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="mr-auto text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Prévia interna, só para a equipe. Não envie este endereço ao proprietário.
           </p>
-          <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Abra o portal exatamente como o proprietário vê esta implantação.
-          </p>
+          <Link
+            to="/portal/previa/$id"
+            params={{ id: implementationId }}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+          >
+            <ExternalLink size={14} />
+            Pré-visualizar portal
+          </Link>
         </div>
-        <Link
-          to="/portal/previa/$id"
-          params={{ id: implementationId }}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-        >
-          <ExternalLink size={14} />
-          Abrir visualização
-        </Link>
-        <button
-          type="button"
-          onClick={() => {
-            if (!previewUrl) return;
-            void navigator.clipboard
-              .writeText(previewUrl)
-              .then(() => toast.success("Link da visualização copiado"))
-              .catch(() => toast.error("Não foi possível copiar o link"));
-          }}
-          className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-        >
-          <Copy size={14} />
-          Copiar link
-        </button>
+        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+          <p className="mr-auto text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            {ownerLink
+              ? status === "usado"
+                ? "O proprietário já criou a conta. O link leva ao login do portal."
+                : "Link seguro e individual, com validade. Use este na mensagem de WhatsApp."
+              : ownerLinkBlocker}
+          </p>
+          <button
+            type="button"
+            disabled={!ownerLink}
+            onClick={() => {
+              if (!ownerLink) return;
+              void navigator.clipboard
+                .writeText(ownerLink)
+                .then(() => toast.success("Link do proprietário copiado"))
+                .catch(() => toast.error("Não foi possível copiar o link"));
+            }}
+            className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+          >
+            <Copy size={14} />
+            Copiar link do proprietário
+          </button>
+        </div>
       </div>
 
       {submissionQuery.data ? (
