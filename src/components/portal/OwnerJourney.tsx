@@ -561,6 +561,7 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
               onEnter={() => void navigate({ to: "/portal/inicio" })}
             />
           )}
+          </div>
         </div>
         <div className="portal-onboarding-trust">
           <ShieldCheck />
@@ -598,8 +599,8 @@ function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage
     { id: 4, label: "Seu acesso", icon: <KeyRound /> },
   ];
   return (
-    <nav className="mt-7 grid grid-cols-4 gap-2" aria-label="Etapas da jornada">
-      {steps.map((item) => {
+    <nav className="portal-journey-steps" aria-label="Etapas da jornada">
+      {steps.map((item, position) => {
         const complete = item.id < stage || item.id < maxStage;
         const current = item.id === stage;
         const enabled = item.id <= maxStage;
@@ -609,20 +610,16 @@ function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage
             type="button"
             disabled={!enabled}
             onClick={() => onSelect(item.id)}
-            className={`min-w-0 rounded-xl border px-2 py-2.5 text-left transition sm:px-3 ${
-              current
-                ? "border-white/65 bg-white/15 text-white"
-                : complete
-                  ? "border-white/25 bg-white/10 text-white"
-                  : "border-white/10 bg-white/5 text-white/45"
+            style={{ transitionDelay: `${position * 40}ms` }}
+            className={`portal-journey-step ${
+              current ? "is-current" : complete ? "is-complete" : "is-locked"
             }`}
           >
-            <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] sm:text-xs">
-              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-white/10 [&>svg]:size-3.5">
-                {complete && !current ? <Check /> : item.icon}
-              </span>
-              <span className="truncate">{item.label}</span>
+            <span className="portal-journey-step-icon">
+              {complete && !current ? <Check /> : item.icon}
             </span>
+            <span className="portal-journey-step-label">{item.label}</span>
+            <span className="portal-journey-step-bar" aria-hidden="true" />
           </button>
         );
       })}
