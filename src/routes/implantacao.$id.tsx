@@ -50,6 +50,8 @@ import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
 import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
+import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
+import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -740,6 +742,14 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
         <OwnerInviteSection
           implementationId={implementation.id}
           ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+        />
+        <OwnerIntakeReview
+          implementationId={implementation.id}
+          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+        />
+        <OwnerVisibilityPanel
+          implementationId={implementation.id}
+          defaultMessage="Estamos organizando a implantação do seu imóvel. Você acompanhará cada etapa por aqui."
         />
         <section
           className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"

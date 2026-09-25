@@ -45,7 +45,7 @@ const show = (key: string, v: unknown) =>
       ? propertyTypeLabel(String(v))
       : String(v);
 
-const norm = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/\D+/g, (m) => m);
+const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
 
 async function copy(text: string, label: string) {
   try {
