@@ -3891,12 +3891,9 @@ a.admin-data-row:hover,
     justify-content: center;
     margin-top: 0.85rem;
   }
-  .portal-hero-image-note {
-    top: 0.85rem;
-    right: auto;
-    bottom: auto;
-    left: 50%;
-    transform: translateX(-50%);
+  /* Sem foto autorizada, o celular não gasta a primeira tela com imagem genérica. */
+  .portal-property-hero:not(.has-photo) .portal-property-hero-image,
+  .portal-property-hero:not(.has-photo) .portal-hero-image-note {
     display: none;
   }
   .portal-phase-indicator strong {

@@ -848,7 +848,7 @@ function PortalHero({
   const image = hasPropertyPhoto ? implementation!.coverImage! : portalPropertyFallback;
 
   return (
-    <header className="portal-property-hero">
+    <header className={`portal-property-hero${hasPropertyPhoto ? " has-photo" : ""}`}>
       <img
         src={image}
         alt={
