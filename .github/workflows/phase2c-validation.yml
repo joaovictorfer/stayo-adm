@@ -11,7 +11,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,9 +35,24 @@ jobs:
           src/lib/pdf/proposal-pdf.ts
           src/lib/pdf/proposal-pdf.test.ts
           src/components/implantacao/ProposalTab.tsx
+          e2e/phase2c-proposal-layout.spec.ts
 
       - name: Unit tests
         run: bunx vitest run
 
       - name: Build
         run: bun run build
+
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Phase 2C responsive smoke
+        run: bunx playwright test e2e/phase2c-proposal-layout.spec.ts
+
+      - name: Upload viewport evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2c-responsive-evidence
+          path: test-results/phase2c-*-proposal.png
+          if-no-files-found: ignore
