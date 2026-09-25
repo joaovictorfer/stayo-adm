@@ -49,6 +49,7 @@ import {
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
+import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -736,6 +737,10 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
       <div className="space-y-4">
+        <OwnerInviteSection
+          implementationId={implementation.id}
+          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+        />
         <section
           className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
           style={{ borderColor: "var(--stayo-border)" }}
