@@ -1138,7 +1138,10 @@ function OwnerPortalPanel({
     status === "revogado" ||
     (status === "ativo" && tokenQuery.isSuccess && !token);
 
-  const firstName = (ownerName ?? "").trim().split(/\s+/)[0] ?? "";
+  const rawFirstName = (ownerName ?? "").trim().split(/\s+/)[0] ?? "";
+  const firstName = rawFirstName
+    ? rawFirstName.charAt(0).toLocaleUpperCase("pt-BR") + rawFirstName.slice(1)
+    : "";
   const defaultMessage = ownerUrl
     ? `${firstName ? `Oi, ${firstName}!` : "Oi!"} Preparei seu espaço na STAYO para acompanharmos a implantação e reunirmos as informações do imóvel. Você pode acessar por aqui: ${ownerUrl}`
     : "";
