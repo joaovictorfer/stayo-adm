@@ -502,7 +502,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </div>
 
         <div className="mt-5">
-          <ContractConditionsPanel implementationId={implementationId} />
+          <ContractConditionsPanel implementationId={implementationId} showMeetings={false} />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">

@@ -98,7 +98,13 @@ function textValue(value: string | null, fallback = "Não informado"): string {
   return value?.trim() || fallback;
 }
 
-export function ContractConditionsPanel({ implementationId }: { implementationId: EntityId }) {
+export function ContractConditionsPanel({
+  implementationId,
+  showMeetings = true,
+}: {
+  implementationId: EntityId;
+  showMeetings?: boolean;
+}) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ContractForm>(emptyForm);
@@ -167,7 +173,9 @@ export function ContractConditionsPanel({ implementationId }: { implementationId
 
   return (
     <div className="space-y-6">
-      <CommercialMeetingPanel implementationId={implementationId} initialResponsibleUserId={null} />
+      {showMeetings && (
+        <CommercialMeetingPanel implementationId={implementationId} initialResponsibleUserId={null} />
+      )}
 
       <div
         className="rounded-[var(--radius-card)] border bg-white p-4"
