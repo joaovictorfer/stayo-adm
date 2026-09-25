@@ -148,6 +148,13 @@
       "when": 1790369412397,
       "tag": "0020_harden_has_admin_role_null",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790369901700,
+      "tag": "0021_owner_next_meeting",
+      "breakpoints": true
     }
   ]
 }
