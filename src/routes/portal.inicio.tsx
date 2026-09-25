@@ -664,17 +664,27 @@ const portalModuleLabels: Record<OwnerPortalModule, string> = {
 function PortalPhaseIndicator({ phase }: { phase: OwnerPortalPhase }) {
   const activeIndex = phase === "implementation" ? 0 : phase === "ready" ? 1 : 2;
   const labels = ["Implantação", "Pronto para operar", "Em operação"];
+  const hint = (index: number) =>
+    index < activeIndex
+      ? "Concluída"
+      : index === activeIndex
+        ? "Etapa atual"
+        : "Ainda não iniciada";
   return (
-    <div className="portal-phase-indicator" aria-label={`Momento atual: ${labels[activeIndex]}`}>
+    <div className="portal-phase-indicator" aria-label={`Etapa atual: ${labels[activeIndex]}`}>
       {labels.map((label, index) => (
         <div
           key={label}
+          aria-current={index === activeIndex ? "step" : undefined}
           className={
             index < activeIndex ? "is-complete" : index === activeIndex ? "is-current" : "is-future"
           }
         >
           <span>{index < activeIndex ? <CheckCircle2 aria-hidden="true" /> : index + 1}</span>
-          <strong>{label}</strong>
+          <strong>
+            {label}
+            <small className="block text-[10px] font-normal opacity-70">{hint(index)}</small>
+          </strong>
         </div>
       ))}
     </div>
@@ -688,11 +698,12 @@ function ReadyTransition({ implementation }: { implementation: ImplementationPro
         <Sparkles aria-hidden="true" />
       </span>
       <div>
-        <p className="portal-milestones-eyebrow">Um novo momento começa</p>
-        <h2>Seu imóvel está pronto para começar a receber hóspedes.</h2>
+        <p className="portal-milestones-eyebrow">Próximo momento</p>
+        <h2>A implantação está na reta final.</h2>
         <p>
-          Estamos concluindo a passagem para a operação. Você continuará usando este mesmo portal e
-          verá novas áreas surgirem por aqui.
+          A operação ainda não começou. Ela só começa depois da ativação feita pela equipe Stayo,
+          quando o imóvel for registrado oficialmente. Até lá, reservas e financeiro não aparecem
+          aqui.
         </p>
       </div>
       <dl>
@@ -702,7 +713,7 @@ function ReadyTransition({ implementation }: { implementation: ImplementationPro
         </div>
         <div>
           <dt>Próximo passo</dt>
-          <dd>Concluir a ativação operacional</dd>
+          <dd>Ativação operacional pela equipe Stayo</dd>
         </div>
       </dl>
     </section>

@@ -47,3 +47,4 @@
 - [ ] Validar criação, retomada, desktop e celular
 - [x] 5/7 Cadastro comercial do proprietário (link próprio, 4 etapas, autosave, retomada)
 - [x] 6/7 Dados recebidos com revisão + área "Visível ao proprietário" + portal só com o liberado
+- [x] 7/7 Ciclo de acesso: portal só entra em operação com vínculo oficial do Core; ativação no Core pendente (dependência)
