@@ -20,7 +20,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { toast } from "sonner";
 
 import { StayoLogo } from "../brand/StayoLogo";
-import { OwnerCoverBanner } from "./OwnerCoverBanner";
+import institutionalCover from "../../assets/owner-portal-property-fallback.jpg";
+import { useOwnerCoverByToken } from "../../hooks/use-owner-cover";
 import { Button } from "../ui/button";
 import { ACCOUNT_TYPES, BRAZILIAN_BANKS, PIX_KEY_TYPES } from "../../config/payment-data";
 import { ownerJourneyApi, type OwnerJourneyProposal } from "../../lib/api/owner-journey";
@@ -150,6 +151,9 @@ export function OwnerJourney({
   const ownerId = implementationQ.data?.ownerId ?? null;
   const ownerQ = useQuery({ ...ownerQuery(ownerId ?? ""), enabled: Boolean(ownerId) });
 
+  const coverQ = useOwnerCoverByToken(token);
+  const [coverBroken, setCoverBroken] = useState(false);
+  const coverData = coverBroken ? null : (coverQ.data ?? null);
   const [form, setForm] = useState<OwnerOnboardingSubmissionInput>(emptyForm);
   const [stage, setStage] = useState<Stage>(1);
   const [maxStage, setMaxStage] = useState<Stage>(1);
@@ -507,25 +511,109 @@ export function OwnerJourney({
     finish.mutate();
   };
 
+  const firstName = (form.fullName || ownerQ.data?.name || "").trim().split(/\s+/)[0] ?? "";
+  const impl = implementationQ.data;
+  const propertyTitle =
+    impl?.nickname ||
+    [impl?.condominiumName, impl?.unit].filter(Boolean).join(" · ") ||
+    "Seu imóvel";
+  const journeyState: "loading" | "error" | "A" | "B" | "C" | "D" = journeyQ.isPending
+    ? "loading"
+    : journeyQ.isError
+      ? "error"
+      : submitted
+        ? "D"
+        : proposalAccepted
+          ? "C"
+          : journeyQ.data
+            ? "A"
+            : "B";
+  const hasSavedDraft = Boolean(draftQ.data && (draftQ.data.currentStep ?? 0) > 0);
+  const missing = [
+    !ownerValid ? "seus dados" : null,
+    !propertyValid ? "os dados do imóvel" : null,
+  ].filter(Boolean) as string[];
+  const copy = {
+    loading: { title: "Preparando sua página", lead: "Só um instante." },
+    error: {
+      title: "Não conseguimos carregar agora",
+      lead: "Nada foi alterado. Tente novamente em instantes.",
+    },
+    A: {
+      title: "Conheça sua proposta",
+      lead: "Leia as condições combinadas. Depois do aceite, o cadastro abre aqui mesmo.",
+    },
+    B: {
+      title: "Estamos preparando sua proposta",
+      lead: "Avisaremos quando estiver pronta. Este mesmo link continua valendo.",
+    },
+    C: hasSavedDraft
+      ? {
+          title: "Continuar de onde parou",
+          lead: "O que você preencheu está guardado. Falta pouco.",
+        }
+      : {
+          title: "Vamos ao seu cadastro",
+          lead: "Leva poucos minutos. Você pode parar e voltar pelo mesmo link.",
+        },
+    D: {
+      title: "Recebemos seu cadastro",
+      lead: "A equipe STAYO está revisando as informações e fala com você em breve.",
+    },
+  }[journeyState];
+
   return (
     <div className="portal-onboarding">
-      <header className="portal-onboarding-header">
-        <div className="portal-onboarding-brand-row">
-          <StayoLogo variant="white" className="h-auto w-24" />
-          {stage >= 2 && !submitted && <SaveStatus state={saveState} />}
+      <header className={`portal-onboarding-header${coverData ? " has-photo" : ""}`}>
+        <img
+          src={coverData?.url ?? institutionalCover}
+          onError={() => setCoverBroken(true)}
+          alt=""
+          aria-hidden="true"
+          className="portal-onboarding-cover"
+        />
+        <div className="portal-onboarding-cover-overlay" aria-hidden="true" />
+        <div className="portal-onboarding-header-content">
+          <div className="portal-onboarding-brand-row">
+            <StayoLogo variant="white" className="h-auto w-24" />
+            {journeyState === "C" && stage >= 2 && <SaveStatus state={saveState} />}
+          </div>
+          <p className="portal-onboarding-eyebrow">
+            {firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
+          </p>
+          <h1 key={journeyState} className="portal-onboarding-headline">
+            {copy.title}
+          </h1>
+          <p className="portal-onboarding-lead">{copy.lead}</p>
+          <span className="portal-onboarding-cover-note">
+            {!coverData
+              ? "Imagem institucional STAYO"
+              : coverData.source === "condominium"
+                ? coverData.label
+                : "Foto do imóvel"}
+          </span>
         </div>
-        <p className="portal-onboarding-eyebrow">Sua jornada com a STAYO</p>
-        <h1 key={stage} className="portal-onboarding-headline">
-          {headline(stage)}
-        </h1>
-        <p className="portal-onboarding-lead">
-          {stage === 1
-            ? "Conheça as condições combinadas antes de começarmos o cadastro."
-            : "Uma etapa por vez. Você pode sair e continuar depois pelo mesmo link."}
-        </p>
-        <OwnerCoverBanner token={token} inline />
-        <Timeline stage={stage} maxStage={maxStage} onSelect={go} />
       </header>
+
+      {journeyState !== "B" && journeyState !== "loading" && journeyState !== "error" && (
+        <div className="portal-journey-ruler-wrap">
+          <Timeline stage={stage} maxStage={maxStage} onSelect={go} showFollowUp={submitted} />
+        </div>
+      )}
+
+      {journeyState === "C" && hasSavedDraft && stage < 4 && (
+        <div className="portal-resume-note" role="status">
+          <CheckCircle2 aria-hidden="true" />
+          <div>
+            <strong>Etapa salva: {stage === 3 ? "Seu imóvel" : "Seus dados"}</strong>
+            <span>
+              {missing.length
+                ? `Falta preencher ${missing.join(" e ")}.`
+                : "Tudo preenchido. Revise e envie."}
+            </span>
+          </div>
+        </div>
+      )}
 
       <main className="portal-onboarding-main">
         <div className="portal-onboarding-card">
@@ -623,19 +711,28 @@ function Timeline({
   stage,
   maxStage,
   onSelect,
+  showFollowUp,
 }: {
   stage: Stage;
   maxStage: Stage;
   onSelect: (stage: Stage) => void;
+  showFollowUp: boolean;
 }) {
   const steps: Array<{ id: Stage; label: string; short: string; icon: ReactNode }> = [
     { id: 1, label: "Proposta", short: "Proposta", icon: <FileCheck2 /> },
     { id: 2, label: "Seus dados", short: "Dados", icon: <UserRound /> },
     { id: 3, label: "Seu imóvel", short: "Imóvel", icon: <Home /> },
-    { id: 4, label: "Seu acesso", short: "Acesso", icon: <KeyRound /> },
   ];
+  // "Acompanhar" só aparece depois do envio: é a conta de acompanhamento,
+  // nunca uma etapa de coleta inicial de senhas ou códigos.
+  if (showFollowUp)
+    steps.push({ id: 4, label: "Acompanhar", short: "Acompanhar", icon: <KeyRound /> });
   return (
-    <nav className="portal-journey-steps" aria-label="Etapas da jornada">
+    <nav
+      className="portal-journey-steps"
+      aria-label="Etapas da jornada"
+      style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+    >
       {steps.map((item, position) => {
         const complete = item.id < stage || item.id < maxStage;
         const current = item.id === stage;
@@ -707,8 +804,9 @@ function ProposalStep({
   if (!journey)
     return (
       <Blocked
-        title="Sua proposta ainda está sendo preparada"
-        text="Este cadastro já está reservado para você, mas a equipe STAYO ainda precisa vincular a versão da proposta. Este mesmo link será usado quando ela estiver pronta."
+        icon={<Cloud />}
+        title="O que acontece agora"
+        text="A equipe STAYO está finalizando as condições. Quando a proposta for publicada, ela aparece aqui e o cadastro abre logo depois do seu aceite. Não é preciso fazer nada agora."
       />
     );
 
@@ -1726,13 +1824,6 @@ function Blocked({
       </p>
     </div>
   );
-}
-
-function headline(stage: Stage) {
-  if (stage === 1) return "Antes de começar, confira sua proposta";
-  if (stage === 2) return "Vamos preparar seu cadastro";
-  if (stage === 3) return "Conte-nos sobre o seu imóvel";
-  return "Último passo: seu acesso";
 }
 
 function getPropertyErrors(form: OwnerOnboardingSubmissionInput): PropertyErrors {
