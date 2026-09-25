@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import type { CommercialProposalSnapshot } from "../../types/commercial-proposal";
+import type {
+  CommercialProposalSnapshot,
+  ProposalRequiredSignatory,
+  ProposalSnapshotContractConditions,
+} from "../../types/commercial-proposal";
 import { getSupabasePublicBrowserClient } from "./supabase-client";
 
 const proposalItemSchema = z.object({
@@ -20,15 +24,28 @@ const commercialTermSchema = z.object({
   notes: z.string().nullable(),
 });
 
-const contractConditionsSchema = z.object({
-  administrationFee: z.number().nullable().optional(),
-  cleaningResponsibility: z.string().nullable().optional(),
-  payoutRule: z.string().nullable().optional(),
-  maintenanceLimit: z.number().nullable().optional(),
-  exclusivity: z.boolean().nullable().optional(),
-  durationMonths: z.number().nullable().optional(),
-  noticePeriodDays: z.number().nullable().optional(),
-});
+const contractConditionsSchema = z
+  .object({
+    administrationFee: z.number().nullable().optional(),
+    cleaningResponsibility: z.string().nullable().optional(),
+    payoutRule: z.string().nullable().optional(),
+    maintenanceLimit: z.number().nullable().optional(),
+    exclusivity: z.boolean().nullable().optional(),
+    durationMonths: z.number().nullable().optional(),
+    noticePeriodDays: z.number().nullable().optional(),
+  })
+  .transform((value): ProposalSnapshotContractConditions => {
+    const result: ProposalSnapshotContractConditions = {};
+    if (value.administrationFee !== undefined) result.administrationFee = value.administrationFee;
+    if (value.cleaningResponsibility !== undefined)
+      result.cleaningResponsibility = value.cleaningResponsibility;
+    if (value.payoutRule !== undefined) result.payoutRule = value.payoutRule;
+    if (value.maintenanceLimit !== undefined) result.maintenanceLimit = value.maintenanceLimit;
+    if (value.exclusivity !== undefined) result.exclusivity = value.exclusivity;
+    if (value.durationMonths !== undefined) result.durationMonths = value.durationMonths;
+    if (value.noticePeriodDays !== undefined) result.noticePeriodDays = value.noticePeriodDays;
+    return result;
+  });
 
 const contentBlockSchema = z.object({
   title: z.string(),
@@ -36,10 +53,14 @@ const contentBlockSchema = z.object({
   displayOrder: z.number(),
 });
 
-const requiredSignatorySchema = z.object({
-  label: z.string(),
-  role: z.string().nullable().optional(),
-});
+const requiredSignatorySchema = z
+  .object({
+    label: z.string(),
+    role: z.string().nullable().optional(),
+  })
+  .transform((value): ProposalRequiredSignatory =>
+    value.role === undefined ? { label: value.label } : { label: value.label, role: value.role },
+  );
 
 const publicProposalSnapshotSchema = z.object({
   schemaVersion: z.number(),
