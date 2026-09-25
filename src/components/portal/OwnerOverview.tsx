@@ -1,4 +1,12 @@
-import { ArrowRight, CalendarClock, FileSignature, RefreshCw, Video, MapPin, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  FileSignature,
+  RefreshCw,
+  Video,
+  MapPin,
+  Users,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { OverviewContent, ProposalContent } from "../../lib/api/portal-visibility";
@@ -31,7 +39,9 @@ const taskTab: Record<string, { tab: string; label: string }> = {
 };
 
 const fmtDay = (v: string, tz = "America/Sao_Paulo") =>
-  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: tz }).format(new Date(v));
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: tz }).format(
+    new Date(v),
+  );
 const fmtMeeting = (v: string, tz: string) =>
   new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
@@ -111,14 +121,17 @@ export function OwnerOverview({
               className="owner-overview-cta portal-action"
               onClick={() => goTo(taskTab[first.kind]?.tab ?? "dados")}
             >
-              {taskTab[first.kind]?.label ?? "Resolver agora"} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              {taskTab[first.kind]?.label ?? "Resolver agora"}{" "}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </>
         ) : (
           <>
             <h2 className="owner-overview-title">Por enquanto, está tudo com a equipe STAYO.</h2>
             <p className="owner-overview-muted">
-              {meeting.isError ? "Quando houver novidade, avisamos por aqui e pelo WhatsApp." : nextUpdate}
+              {meeting.isError
+                ? "Quando houver novidade, avisamos por aqui e pelo WhatsApp."
+                : nextUpdate}
             </p>
           </>
         )}
@@ -129,17 +142,30 @@ export function OwnerOverview({
         <ErrorLine text="Não conseguimos consultar a agenda agora." onRetry={meeting.refetch} />
       ) : nextMeeting ? (
         <Block icon={<CalendarClock />} title="Próxima reunião">
-          <p className="font-medium capitalize">{fmtMeeting(nextMeeting.startsAt, nextMeeting.timeZone)}</p>
+          <p className="font-medium capitalize">
+            {fmtMeeting(nextMeeting.startsAt, nextMeeting.timeZone)}
+          </p>
           <p className="owner-overview-muted flex items-center gap-1.5">
-            {nextMeeting.mode === "video" ? <Video className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
+            {nextMeeting.mode === "video" ? (
+              <Video className="h-3.5 w-3.5" />
+            ) : (
+              <Users className="h-3.5 w-3.5" />
+            )}
             {nextMeeting.mode === "video" ? "Por vídeo" : "Presencial"}
           </p>
           {nextMeeting.joinUrl ? (
-            <a href={nextMeeting.joinUrl} target="_blank" rel="noopener noreferrer" className="owner-overview-cta portal-action mt-3">
+            <a
+              href={nextMeeting.joinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="owner-overview-cta portal-action mt-3"
+            >
               Entrar no Google Meet <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </a>
           ) : nextMeeting.hasJoinUrl ? (
-            <p className="owner-overview-muted mt-2">O link da reunião aparece aqui 2 horas antes.</p>
+            <p className="owner-overview-muted mt-2">
+              O link da reunião aparece aqui 2 horas antes.
+            </p>
           ) : null}
         </Block>
       ) : null}
@@ -149,7 +175,10 @@ export function OwnerOverview({
         {timeline.isPending ? (
           <Skeleton lines={3} />
         ) : timeline.isError ? (
-          <ErrorLine text="Não conseguimos carregar o histórico agora." onRetry={timeline.refetch} />
+          <ErrorLine
+            text="Não conseguimos carregar o histórico agora."
+            onRetry={timeline.refetch}
+          />
         ) : (timeline.data ?? []).length === 0 ? (
           <p className="owner-overview-muted">Os marcos da sua implantação vão aparecer aqui.</p>
         ) : (
