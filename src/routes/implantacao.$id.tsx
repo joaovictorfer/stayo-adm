@@ -741,6 +741,14 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
   });
 
   return (
+    <div className="space-y-4">
+      <div id="portal-owner-panel">
+        <OwnerPortalPanel
+          implementationId={implementation.id}
+          ownerId={implementation.ownerId}
+          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+        />
+      </div>
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
       <div className="space-y-4">
         <OwnerInviteSection
@@ -761,6 +769,8 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
           implementationId={implementation.id}
           defaultMessage="Estamos organizando a implantação do seu imóvel. Você acompanhará cada etapa por aqui."
         />
+      </div>
+      <div className="space-y-4">
         <section
           className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
           style={{ borderColor: "var(--stayo-border)" }}
@@ -901,14 +911,7 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
           )}
         </section>
       </div>
-
-      <div id="portal-owner-panel">
-        <OwnerPortalPanel
-          implementationId={implementation.id}
-          ownerId={implementation.ownerId}
-          compact
-        />
-      </div>
+    </div>
     </div>
   );
 }
@@ -928,270 +931,303 @@ const invitationStatusTone: Record<OwnerOnboardingLinkStatus, "neutral" | "dange
 };
 
 /**
- * Convite público (ainda sem conta/login real — depende de Supabase
- * configurado) pro proprietário preencher os próprios dados durante a
- * implantação. O token só é visível uma vez, no momento em que é gerado —
- * depois disso só existe o hash, nunca o valor puro.
+ * Link de implantação do proprietário — único bloco com as três ações
+ * (copiar link, copiar convite, acessar painel). A URL é sempre a externa
+ * definitiva (/portal/implantacao/<token> ou, após criar a conta,
+ * /portal/login); nunca a prévia interna e nunca só o ID da implantação.
+ * O token é lido de uma tabela separada que só a equipe acessa e que é
+ * apagada ao revogar/usar o convite.
  */
 function OwnerPortalPanel({
   implementationId,
   ownerId,
-  compact = false,
+  ownerName,
 }: {
   implementationId: EntityId;
   ownerId: EntityId | null;
-  compact?: boolean;
+  ownerName: string | null;
 }) {
   const queryClient = useQueryClient();
   const linkQuery = useQuery(ownerOnboardingLinkQuery(implementationId));
   const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(implementationId));
-  const [copied, setCopied] = useState(false);
-  const [freshToken, setFreshToken] = useState<string | null>(null);
+  const link = linkQuery.data;
+  const status = link ? ownerOnboardingLinkStatus(link) : null;
+  const tokenQuery = useQuery({
+    queryKey: ["owner-onboarding", "link-token", link?.id],
+    queryFn: () => adminApi.ownerOnboarding.getLinkToken(link!.id),
+    enabled: Boolean(link && status === "ativo"),
+    staleTime: 60_000,
+  });
 
-  const invalidateLink = () =>
-    queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
+  const invalidateLink = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
+    await queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link-token"] });
+  };
 
   const createLink = useMutation({
     mutationFn: () => adminApi.ownerOnboarding.createLink(implementationId, ownerId),
-    onSuccess: async ({ token }) => {
-      setFreshToken(token);
-      await invalidateLink();
-      toast.success("Novo acesso criado", { description: "O acesso anterior foi invalidado." });
+    onSuccess: async ({ link: created, token }) => {
+      queryClient.setQueryData(["owner-onboarding", "link-token", created.id], token);
+      await queryClient.invalidateQueries({
+        queryKey: ["owner-onboarding", "link", implementationId],
+      });
+      toast.success("Link gerado", { description: "Qualquer link anterior foi desativado." });
     },
-    onError: () => toast.error("Não foi possível gerar o acesso"),
+    onError: () => toast.error("Não foi possível gerar o link"),
   });
 
   const revokeLink = useMutation({
     mutationFn: (id: EntityId) => adminApi.ownerOnboarding.revoke(id),
     onSuccess: async () => {
-      setFreshToken(null);
       await invalidateLink();
-      toast.success("Acesso revogado");
+      toast.success("Link revogado");
     },
-    onError: () => toast.error("Não foi possível revogar o acesso"),
+    onError: () => toast.error("Não foi possível revogar o link"),
   });
 
-  const link = linkQuery.data;
-  const status = link ? ownerOnboardingLinkStatus(link) : null;
-  const url = freshToken
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/portal/implantacao/${freshToken}`
-    : null;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const token = status === "ativo" ? (tokenQuery.data ?? null) : null;
+  const ownerUrl =
+    status === "usado"
+      ? `${origin}/portal/login`
+      : token
+        ? `${origin}/portal/implantacao/${token}`
+        : null;
+  const needsNewLink =
+    !link ||
+    status === "expirado" ||
+    status === "revogado" ||
+    (status === "ativo" && tokenQuery.isSuccess && !token);
 
-  const copy = async () => {
-    if (!url) return;
+  const firstName = (ownerName ?? "").trim().split(/\s+/)[0] ?? "";
+  const defaultMessage = ownerUrl
+    ? `${firstName ? `Oi, ${firstName}!` : "Oi!"} Preparei seu espaço na STAYO para acompanharmos a implantação e reunirmos as informações do imóvel. Você pode acessar por aqui: ${ownerUrl}`
+    : "";
+  const [message, setMessage] = useState(defaultMessage);
+  const [editingMessage, setEditingMessage] = useState(false);
+  useEffect(() => {
+    setMessage(defaultMessage);
+  }, [defaultMessage]);
+
+  const copy = async (text: string, success: string) => {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast.success("Link copiado");
+      await navigator.clipboard.writeText(text);
+      toast.success(success);
     } catch {
-      // Clipboard indisponível (ex: contexto não seguro) — link já está visível pra copiar manualmente.
+      toast.error("Não foi possível copiar", { description: "Selecione e copie manualmente." });
     }
   };
 
-  // Link externo real: nunca a rota de prévia. Convite ativo recém-gerado →
-  // link seguro com token; convite já usado (conta criada) → login do portal.
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const ownerLink =
-    status === "ativo" && url ? url : status === "usado" ? `${origin}/portal/login` : null;
-  const ownerLinkBlocker =
-    status === "ativo" && !url
-      ? "Por segurança o link só aparece ao ser gerado. Gere um novo acesso abaixo para copiar."
-      : !link || status === "expirado" || status === "revogado"
-        ? "Ainda não há acesso válido para o proprietário. Gere um acesso abaixo."
-        : null;
+  const submission = submissionQuery.data;
+  const fmt = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : null;
+
+  const steps: { label: string; done: boolean; detail: string }[] = [
+    {
+      label: "Link gerado",
+      done: Boolean(link),
+      detail: link ? (fmt(link.createdAt) ?? "") : "Ainda não gerado",
+    },
+    {
+      label: "Acessado",
+      done: Boolean(link?.lastAccessAt),
+      detail: fmt(link?.lastAccessAt) ?? "Ainda não acessado",
+    },
+    {
+      label: "Cadastro recebido",
+      done: Boolean(submission?.submittedAt),
+      detail: submission?.submittedAt
+        ? (fmt(submission.submittedAt) ?? "")
+        : submission
+          ? "Em andamento"
+          : "Aguardando",
+    },
+    {
+      label: "Conta criada",
+      done: status === "usado",
+      detail: status === "usado" ? (fmt(link?.usedAt) ?? "") : "Aguardando",
+    },
+  ];
+
+  const statusDetail = !link
+    ? "Nenhum link gerado"
+    : status === "ativo"
+      ? `Válido até ${fmt(link.expiresAt)}`
+      : status === "revogado"
+        ? `Revogado em ${fmt(link.revokedAt)}`
+        : status === "expirado"
+          ? `Venceu em ${fmt(link.expiresAt)}`
+          : `Conta criada em ${fmt(link.usedAt)} · acesso pelo login`;
 
   return (
-    <div className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <h2
-        className="mb-3 text-sm"
-        style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-      >
-        {compact ? "Portal do Proprietário" : "Cadastro do proprietário"}
-      </h2>
-
-      <div className="mb-3 flex flex-col gap-3 rounded-lg border p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="mr-auto text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Prévia interna, só para a equipe. Não envie este endereço ao proprietário.
-          </p>
-          <Link
-            to="/portal/previa/$id"
-            params={{ id: implementationId }}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+    <section
+      aria-labelledby="owner-link-title"
+      className="rounded-[var(--radius-card)] border-2 bg-white p-4 shadow-sm sm:p-5"
+      style={{ borderColor: "var(--stayo-forest)" }}
+    >
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <div className="min-w-0">
+          <h2
+            id="owner-link-title"
+            className="text-base font-semibold"
+            style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
           >
-            <ExternalLink size={14} />
-            Pré-visualizar portal
-          </Link>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-          <p className="mr-auto text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            {ownerLink
-              ? status === "usado"
-                ? "O proprietário já criou a conta. O link leva ao login do portal."
-                : "Link seguro e individual, com validade. Use este na mensagem de WhatsApp."
-              : ownerLinkBlocker}
+            Link de implantação do proprietário
+          </h2>
+          <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            {linkQuery.isPending ? "Verificando link…" : statusDetail}
           </p>
-          <button
-            type="button"
-            disabled={!ownerLink}
-            onClick={() => {
-              if (!ownerLink) return;
-              void navigator.clipboard
-                .writeText(ownerLink)
-                .then(() => toast.success("Link do proprietário copiado"))
-                .catch(() => toast.error("Não foi possível copiar o link"));
-            }}
-            className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-          >
-            <Copy size={14} />
-            Copiar link do proprietário
-          </button>
         </div>
+        {status && <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />}
       </div>
 
-      {submissionQuery.data ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome completo" value={submissionQuery.data.fullName} />
-          <Field label="Documento" value={maskDocument(submissionQuery.data.document)} />
-          <Field label="E-mail" value={submissionQuery.data.email} />
-          <Field label="Telefone" value={submissionQuery.data.phone} />
-          <Field label="Chave Pix" value={maskPixKey(submissionQuery.data.pixKey)} />
-          <Field label="Recebido em" value={submissionQuery.data.submittedAt} />
-        </div>
-      ) : (
-        <>
-          <p className="mb-3 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-            {compact
-              ? "Gerencie o acesso do proprietário ao acompanhamento da implantação."
-              : "Gere um convite para o proprietário preencher os próprios dados — eles ficam aqui assim que ele enviar. O link expira em 7 dias e só fica visível para copiar logo após ser gerado."}
+      <div className="mt-4">
+        {linkQuery.isError ? (
+          <p className="text-sm text-[var(--stayo-danger)]">
+            Não foi possível verificar o link agora.{" "}
+            <button type="button" className="underline" onClick={() => void linkQuery.refetch()}>
+              Tentar de novo
+            </button>
           </p>
-
-          {link && status && (
-            <div className="mb-3 grid gap-2 text-xs sm:grid-cols-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
-                <span style={{ color: "var(--stayo-ink-muted)" }}>
-                  {status === "ativo"
-                    ? `Expira em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                    : status === "revogado"
-                      ? `Revogado em ${new Date(link.revokedAt!).toLocaleString("pt-BR")}`
-                      : status === "expirado"
-                        ? `Expirou em ${new Date(link.expiresAt).toLocaleString("pt-BR")}`
-                        : `Usado em ${new Date(link.usedAt!).toLocaleString("pt-BR")}`}
-                </span>
-              </div>
-              <span style={{ color: "var(--stayo-ink-muted)" }}>
-                Último acesso:{" "}
-                {link.lastAccessAt
-                  ? new Date(link.lastAccessAt).toLocaleString("pt-BR")
-                  : "Ainda não acessado"}
-              </span>
-            </div>
-          )}
-
-          {url && (
-            <details className="mb-3 rounded-lg border p-3">
-              <summary className="cursor-pointer text-xs font-medium">
-                Mostrar link deste dispositivo
-              </summary>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <code
-                  className="flex-1 rounded-[var(--radius-control)] border px-3 py-2 text-xs break-all"
-                  style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-                >
-                  {url}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => void copy()}
-                  className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-                  style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
-                >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? "Copiado" : "Copiar"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
-                  className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-                >
-                  <ExternalLink size={14} />
-                  Abrir
-                </button>
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Acesse seu portal Stayo: ${url}`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-                >
-                  <Share2 size={14} />
-                  Enviar
-                </a>
-              </div>
-            </details>
-          )}
-          {status === "ativo" && !url && (
-            <p className="mb-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">
-              Acesso ativo. O link original não está disponível neste dispositivo.
+        ) : linkQuery.isPending || (status === "ativo" && tokenQuery.isPending) ? (
+          <div className="h-11 animate-pulse rounded-[var(--radius-control)] bg-[var(--stayo-surface-muted,#f1efe9)]" />
+        ) : needsNewLink ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+              {status === "ativo"
+                ? "Este link foi criado antes de a equipe poder copiá-lo de novo. Gere um novo para continuar."
+                : "Ainda não há um link válido para o proprietário."}
             </p>
-          )}
-
-          {(!url || status !== "ativo") && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => createLink.mutate()}
-                disabled={createLink.isPending}
-                className="rounded-[var(--radius-control)] px-3 py-2 text-sm disabled:opacity-60"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+            <Button onClick={() => createLink.mutate()} disabled={createLink.isPending} className="min-h-11">
+              <Send /> {createLink.isPending ? "Gerando…" : "Gerar link"}
+            </Button>
+          </div>
+        ) : ownerUrl ? (
+          <>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <Button className="min-h-11" onClick={() => void copy(ownerUrl, "Link copiado")}>
+                <Copy /> Copiar link
+              </Button>
+              <Button
+                variant="outline"
+                className="min-h-11"
+                onClick={() => void copy(message, "Convite copiado")}
               >
-                <Send size={14} />
-                {createLink.isPending
-                  ? "Gerando..."
-                  : link
-                    ? "Enviar novo acesso"
-                    : "Enviar acesso"}
+                <Copy /> Copiar convite
+              </Button>
+              <Button asChild variant="outline" className="min-h-11">
+                <a href={ownerUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink /> Acessar painel
+                </a>
+              </Button>
+            </div>
+            <div className="mt-3 rounded-[var(--radius-control)] border p-3" style={{ borderColor: "var(--stayo-border)" }}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
+                  Mensagem do convite (WhatsApp)
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-medium underline"
+                  onClick={() => setEditingMessage((v) => !v)}
+                >
+                  {editingMessage ? "Pronto" : "Editar"}
+                </button>
+              </div>
+              {editingMessage ? (
+                <textarea
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  rows={4}
+                  aria-label="Mensagem do convite"
+                  className="mt-2 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+                />
+              ) : (
+                <p className="mt-1 text-sm break-words" style={{ color: "var(--stayo-ink)" }}>
+                  {message}
+                </p>
+              )}
+              <p className="mt-2 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                Copiar não envia nada. Cole a mensagem no WhatsApp do proprietário.
+              </p>
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      <ol className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:grid-cols-4" style={{ borderColor: "var(--stayo-border)" }}>
+        {steps.map((step) => (
+          <li key={step.label} className="flex min-w-0 items-start gap-2">
+            {step.done ? (
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--stayo-success)]" />
+            ) : (
+              <span className="mt-0.5 size-4 shrink-0 rounded-full border" style={{ borderColor: "var(--stayo-border-strong)" }} />
+            )}
+            <span className="min-w-0">
+              <span className="block text-xs font-medium" style={{ color: "var(--stayo-ink)" }}>
+                {step.label}
+              </span>
+              <span className="block truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                {step.detail}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+        {status === "ativo" && link && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button type="button" disabled={revokeLink.isPending} className="font-medium text-[var(--stayo-danger)] underline disabled:opacity-60">
+                Revogar link
               </button>
-            </div>
-          )}
-          {status === "ativo" && link && (
-            <div className="mt-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    type="button"
-                    disabled={revokeLink.isPending}
-                    className="rounded-[var(--radius-control)] border px-3 py-2 text-sm disabled:opacity-60"
-                    style={{ ...surface, color: "var(--stayo-danger)" }}
-                  >
-                    Revogar
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Revogar acesso do proprietário?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      O link deixará de funcionar imediatamente. Um novo acesso poderá ser criado
-                      depois.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>
-                      Confirmar revogação
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
-        </>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Revogar o link do proprietário?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O link deixa de funcionar na hora. Você pode gerar um novo depois.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>Confirmar revogação</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        {status === "ativo" && !needsNewLink && (
+          <button type="button" onClick={() => createLink.mutate()} disabled={createLink.isPending} className="underline disabled:opacity-60" style={{ color: "var(--stayo-ink-muted)" }}>
+            Gerar novo link (desativa o atual)
+          </button>
+        )}
+        <Link
+          to="/portal/previa/$id"
+          params={{ id: implementationId }}
+          target="_blank"
+          rel="noreferrer"
+          className="ml-auto underline"
+          style={{ color: "var(--stayo-ink-muted)" }}
+        >
+          Prévia interna (só equipe)
+        </Link>
+      </div>
+
+      {submission && (
+        <details className="mt-3 rounded-[var(--radius-control)] border p-3" style={{ borderColor: "var(--stayo-border)" }}>
+          <summary className="cursor-pointer text-xs font-medium">Ver dados recebidos pelo link</summary>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="Nome completo" value={submission.fullName} />
+            <Field label="Documento" value={maskDocument(submission.document)} />
+            <Field label="E-mail" value={submission.email} />
+            <Field label="Telefone" value={submission.phone} />
+            <Field label="Chave Pix" value={maskPixKey(submission.pixKey)} />
+            <Field label="Recebido em" value={submission.submittedAt} />
+          </div>
+        </details>
       )}
-    </div>
+    </section>
   );
 }
 
