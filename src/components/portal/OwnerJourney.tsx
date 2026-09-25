@@ -491,7 +491,9 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
           {stage >= 2 && !submitted && <SaveStatus state={saveState} />}
         </div>
         <p className="portal-onboarding-eyebrow">Sua jornada com a STAYO</p>
-        <h1>{headline(stage)}</h1>
+        <h1 key={stage} className="portal-onboarding-headline">
+          {headline(stage)}
+        </h1>
         <p className="portal-onboarding-lead">
           {stage === 1
             ? "Conheça as condições combinadas antes de começarmos o cadastro."
@@ -502,7 +504,8 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
 
       <main className="portal-onboarding-main">
         <div className="portal-onboarding-card">
-          {stage === 1 && (
+          <div key={stage} className="portal-onboarding-stage">
+            {stage === 1 && (
             <ProposalStep
               journey={journeyQ.data ?? null}
               loading={journeyQ.isPending}
