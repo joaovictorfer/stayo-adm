@@ -4,18 +4,49 @@ import { getOwnerPortalModules, getOwnerPortalPhase } from "./owner-portal-lifec
 
 describe("owner portal lifecycle", () => {
   it("mantém o foco na implantação antes da prontidão", () => {
-    expect(getOwnerPortalPhase({ status: "em_implantacao", corePropertyId: null })).toBe("implementation");
+    expect(
+      getOwnerPortalPhase({ status: "em_implantacao", corePropertyId: null, coreOwnerId: null }),
+    ).toBe("implementation");
   });
 
   it("mostra transição quando está pronto, mas ainda não há imóvel oficial", () => {
-    expect(getOwnerPortalPhase({ status: "pronto_para_operacao", corePropertyId: null })).toBe("ready");
-    expect(getOwnerPortalPhase({ status: "ativo", corePropertyId: null })).toBe("ready");
+    expect(
+      getOwnerPortalPhase({
+        status: "pronto_para_operacao",
+        corePropertyId: null,
+        coreOwnerId: null,
+      }),
+    ).toBe("ready");
+    expect(getOwnerPortalPhase({ status: "ativo", corePropertyId: null, coreOwnerId: null })).toBe(
+      "ready",
+    );
   });
 
   it("libera operação apenas com status ativo e imóvel oficial", () => {
-    const phase = getOwnerPortalPhase({ status: "ativo", corePropertyId: "property-1" });
+    const phase = getOwnerPortalPhase({
+      status: "ativo",
+      corePropertyId: "property-1",
+      coreOwnerId: "owner-1",
+    });
     expect(phase).toBe("operation");
     expect(getOwnerPortalModules(phase)).toContain("reservations");
     expect(getOwnerPortalModules(phase)).toContain("finance");
+  });
+});
+
+describe("ativação controlada", () => {
+  it("não entra em operação sem owner oficial do Core", () => {
+    expect(getOwnerPortalPhase({ status: "ativo", corePropertyId: "p", coreOwnerId: null })).toBe(
+      "ready",
+    );
+  });
+  it("não entra em operação sem status ativo, mesmo com vínculo", () => {
+    expect(
+      getOwnerPortalPhase({
+        status: "pronto_para_operacao",
+        corePropertyId: "p",
+        coreOwnerId: "o",
+      }),
+    ).toBe("ready");
   });
 });

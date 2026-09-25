@@ -665,7 +665,11 @@ function PortalPhaseIndicator({ phase }: { phase: OwnerPortalPhase }) {
   const activeIndex = phase === "implementation" ? 0 : phase === "ready" ? 1 : 2;
   const labels = ["Implantação", "Pronto para operar", "Em operação"];
   const hint = (index: number) =>
-    index < activeIndex ? "Concluída" : index === activeIndex ? "Etapa atual" : "Ainda não iniciada";
+    index < activeIndex
+      ? "Concluída"
+      : index === activeIndex
+        ? "Etapa atual"
+        : "Ainda não iniciada";
   return (
     <div className="portal-phase-indicator" aria-label={`Etapa atual: ${labels[activeIndex]}`}>
       {labels.map((label, index) => (
@@ -698,7 +702,8 @@ function ReadyTransition({ implementation }: { implementation: ImplementationPro
         <h2>A implantação está na reta final.</h2>
         <p>
           A operação ainda não começou. Ela só começa depois da ativação feita pela equipe Stayo,
-          quando o imóvel for registrado oficialmente. Até lá, reservas e financeiro não aparecem aqui.
+          quando o imóvel for registrado oficialmente. Até lá, reservas e financeiro não aparecem
+          aqui.
         </p>
       </div>
       <dl>

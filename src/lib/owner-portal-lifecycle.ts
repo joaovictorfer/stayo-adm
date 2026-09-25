@@ -43,20 +43,18 @@ const operationModules: OwnerPortalModule[] = [
  */
 export function isOperationallyActivated(
   implementation:
-    | Pick<ImplementationProject, "status" | "corePropertyId" | "coreOwnerId">
-    | undefined,
+    Pick<ImplementationProject, "status" | "corePropertyId" | "coreOwnerId"> | undefined,
 ): boolean {
   return Boolean(
     implementation?.status === "ativo" &&
-      implementation.corePropertyId &&
-      implementation.coreOwnerId,
+    implementation.corePropertyId &&
+    implementation.coreOwnerId,
   );
 }
 
 export function getOwnerPortalPhase(
   implementation:
-    | Pick<ImplementationProject, "status" | "corePropertyId" | "coreOwnerId">
-    | undefined,
+    Pick<ImplementationProject, "status" | "corePropertyId" | "coreOwnerId"> | undefined,
 ): OwnerPortalPhase {
   if (isOperationallyActivated(implementation)) return "operation";
   if (implementation?.status === "pronto_para_operacao" || implementation?.status === "ativo")
