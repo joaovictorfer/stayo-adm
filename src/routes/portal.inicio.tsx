@@ -61,6 +61,8 @@ import {
   type ProposalContent,
 } from "../lib/api/portal-visibility";
 import { ReleasedOverview, ReleasedProposal } from "../components/portal/ReleasedBlocks";
+import { OwnerOverview, type OverviewMeeting } from "../components/portal/OwnerOverview";
+import { getSupabaseBrowserClient } from "../lib/api/supabase-client";
 import type { Attachment } from "../lib/api/attachments";
 import {
   commercialTermsQuery,
@@ -1482,6 +1484,19 @@ export function OwnerHomeContent({
     queryFn: () => listActiveReleases(implementation?.id ?? ""),
     enabled: Boolean(implementation?.id),
   });
+  const meetingQ = useQuery({
+    queryKey: ["owner-portal", "next-meeting", implementation?.id],
+    enabled: Boolean(implementation?.id),
+    queryFn: async (): Promise<OverviewMeeting | null> => {
+      const db = getSupabaseBrowserClient();
+      if (!db) throw new Error("Banco indisponível");
+      const { data, error } = await db.rpc("owner_next_meeting", {
+        p_implementation_id: implementation?.id ?? "",
+      });
+      if (error) throw error;
+      return (data as OverviewMeeting | null) ?? null;
+    },
+  });
   const releasedOverview = releasesQ.data?.find((r) => r.block === "overview")?.content as
     OverviewContent | undefined;
   const releasedProposal = releasesQ.data?.find((r) => r.block === "proposal")?.content as
@@ -1602,19 +1617,6 @@ export function OwnerHomeContent({
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
-          {releasesQ.isPending ? (
-            <PortalSkeleton rows={2} />
-          ) : releasedOverview ? (
-            <ReleasedOverview content={releasedOverview} />
-          ) : (
-            <PortalEmptyState
-              icon={<Key />}
-              title="Seu resumo ainda não foi publicado"
-              description="A equipe Stayo publica aqui um resumo da implantação quando houver informação confirmada."
-              nextStep="Enquanto isso, acompanhe as etapas na aba Implantação."
-              action={{ label: "Ver implantação", onClick: () => setActiveTab("implantacao") }}
-            />
-          )}
           {portalPhase === "operation" && (
             <OperationalOverview
               reservationCount={
@@ -1624,64 +1626,18 @@ export function OwnerHomeContent({
               }
             />
           )}
-          <section>
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]">
-                <ClipboardList className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold">Precisamos de você</h2>
-                <p className="text-xs text-[var(--portal-muted)]">
-                  Tudo o que depende de você, reunido com clareza.
-                </p>
-              </div>
-            </div>
-            <div>
-              {tasksQ.isPending ? (
-                <LoadingBlock />
-              ) : pending.length === 0 ? (
-                <PortalEmptyState
-                  positive
-                  icon={<CircleCheckBig />}
-                  title="Tudo em dia por aqui"
-                  description="Você não tem nenhuma ação pendente agora."
-                  nextStep="Quando precisarmos de alguma informação ou confirmação, ela aparecerá nesta área."
-                />
-              ) : (
-                <ul className="portal-card divide-y divide-[var(--portal-border)]">
-                  {pending.map((task) => (
-                    <li
-                      key={task.id}
-                      className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{task.title}</p>
-                        <p className="mt-1 text-xs text-[var(--portal-muted)]">
-                          {ownerTaskKindLabels[task.kind] ?? task.kind} ·{" "}
-                          {ownerTaskStatusLabels[task.status]}
-                        </p>
-                      </div>
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--stayo-gold)]" />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
-          <section>
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--portal-gold-soft)] text-[var(--portal-gold)]">
-                <BellRing className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold">Atualizações</h2>
-                <p className="text-xs text-[var(--portal-muted)]">
-                  Novidades compartilhadas pela equipe Stayo.
-                </p>
-              </div>
-            </div>
-            <PortalTimeline events={timelineQ.data ?? []} loading={timelineQ.isPending} compact />
-          </section>
+          <OwnerOverview
+            propertyLabel={[propertyName(implementation), implementation?.code].filter(Boolean).join(" · ")}
+            stageLabel={statusLabels[implementation?.status ?? "prospect"]}
+            stageMessage={stageMessages[implementation?.status ?? "prospect"]}
+            tasks={{ ...tasksQ, data: tasksQ.data ? pending : undefined }}
+            timeline={timelineQ}
+            meeting={meetingQ}
+            releasedOverview={releasedOverview}
+            releasedProposal={releasedProposal}
+            releasesLoading={releasesQ.isPending}
+            goTo={setActiveTab}
+          />
         </TabsContent>
 
         <>

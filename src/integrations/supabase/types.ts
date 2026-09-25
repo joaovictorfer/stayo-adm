@@ -2439,6 +2439,10 @@ export type Database = {
         }
         Returns: Json
       }
+      owner_next_meeting: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
       owner_onboarding_draft_resolve: {
         Args: { p_token: string }
         Returns: Json
