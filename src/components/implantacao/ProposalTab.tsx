@@ -23,6 +23,10 @@ import { formatBRL, roundCents } from "../../lib/money";
 import { MoneyInput } from "./MoneyInput";
 import { ContractConditionsPanel } from "./ContractConditionsPanel";
 import { ProposalPresentationView } from "./ProposalPresentationView";
+import {
+  PROPOSAL_ITEM_TEMPLATES,
+  type ProposalItemTemplate,
+} from "../../config/proposal-item-templates";
 import type { EntityId, ProposalItem } from "../../types/core";
 import type {
   CommercialProposalSnapshot,
@@ -71,7 +75,29 @@ const newItem = (): DraftItem => ({
   discount: 0,
   included: true,
   optional: false,
+  templateKey: null,
+  details: "",
+  scope: [],
 });
+
+const cleanScope = (scope: string[] | undefined) =>
+  (scope ?? []).map((x) => x.trim()).filter(Boolean);
+
+function fromTemplate(t: ProposalItemTemplate): DraftItem {
+  // Cópia independente do modelo, desligada: nada entra no total sem ação da equipe.
+  return {
+    uid: uid(),
+    description: t.description,
+    quantity: 1,
+    unitValue: t.unitValue,
+    discount: 0,
+    included: false,
+    optional: false,
+    templateKey: t.key,
+    details: t.details,
+    scope: [...t.scope],
+  };
+}
 
 const statusLabels: Record<CommercialProposalStatus, string> = {
   draft: "Rascunho",
@@ -92,13 +118,20 @@ function toProposalItems(items: DraftItem[]): ProposalItem[] {
       unitValue: roundCents(i.unitValue),
       discount: roundCents(Math.min(i.discount, gross(i))),
       total: lineTotal(i),
+      details: i.details?.trim() || null,
+      scope: cleanScope(i.scope),
     }));
 }
 
 function toOptions(items: DraftItem[]): ProposalItemOption[] {
   return items
     .filter((i) => i.description.trim())
-    .map(({ uid: _u, ...rest }) => ({ ...rest, description: rest.description.trim() }));
+    .map(({ uid: _u, ...rest }) => ({
+      ...rest,
+      description: rest.description.trim(),
+      details: rest.details?.trim() || null,
+      scope: cleanScope(rest.scope),
+    }));
 }
 
 function fromVersion(
@@ -106,7 +139,8 @@ function fromVersion(
   fallbackItems: ProposalItem[],
 ): DraftItem[] {
   const opts = v?.draftItemOptions;
-  if (opts && opts.length) return opts.map((o) => ({ ...o, uid: uid() }));
+  if (opts && opts.length)
+    return opts.map((o) => ({ ...o, details: o.details ?? "", scope: o.scope ?? [], uid: uid() }));
   const base = v ? v.items : fallbackItems;
   return base.length
     ? base.map((i) => ({
@@ -117,8 +151,11 @@ function fromVersion(
         discount: i.discount,
         included: true,
         optional: false,
+        templateKey: null,
+        details: i.details ?? "",
+        scope: i.scope ?? [],
       }))
-    : [newItem()];
+    : [];
 }
 
 function parseResponsibility(line: string): Responsibility {
@@ -186,9 +223,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const draftVersion = versions.find((v) => v.status === "draft") ?? null;
   const latestPublished = versions.find((v) => v.status !== "draft") ?? null;
   // A lista completa (com desligados) e o objeto só persistem após a migration 0025.
-  const optionsSupported = versions.some((v) => v.draftItemOptions !== undefined);
+  const optionsSupported = true;
 
-  const [items, setItems] = useState<DraftItem[]>([newItem()]);
+  const [items, setItems] = useState<DraftItem[]>([]);
   const [partnershipObject, setPartnershipObject] = useState("");
   const [responsibilities, setResponsibilities] = useState<Responsibility[]>([]);
   const [signatoriesList, setSignatoriesList] = useState<Signatory[]>([]);
@@ -227,6 +264,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const subtotal = roundCents(included.reduce((a, i) => a + gross(i), 0));
   const discounts = roundCents(included.reduce((a, i) => a + Math.min(i.discount, gross(i)), 0));
   const total = roundCents(proposalItems.reduce((a, i) => a + i.total, 0));
+  const usedKeys = new Set(items.map((i) => i.templateKey).filter(Boolean));
+  const missingTemplates = PROPOSAL_ITEM_TEMPLATES.filter((t) => !usedKeys.has(t.key));
   const excludedCount = items.filter((i) => !i.included && i.description.trim()).length;
 
   const draftInput = () => ({
@@ -645,6 +684,49 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           cobrança, nota ou pagamento.
         </p>
 
+        {missingTemplates.length > 0 && (
+          <div className="mt-4 rounded-lg border border-dashed p-3">
+            <p className="text-xs font-semibold">Itens padrão de implantação</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Sugestões do modelo. Ao adicionar, vira uma cópia editável deste rascunho, desligada
+              até você incluir.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {missingTemplates.map((t) => (
+                <Button
+                  key={t.key}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setItems((cur) => [...cur, fromTemplate(t)]);
+                    touch();
+                  }}
+                >
+                  <Plus className="mr-1 size-3.5" /> {t.description} · {formatBRL(t.unitValue)}
+                </Button>
+              ))}
+              {missingTemplates.length > 1 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setItems((cur) => [...cur, ...missingTemplates.map(fromTemplate)]);
+                    touch();
+                  }}
+                >
+                  Adicionar todos
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {items.length === 0 && (
+          <p className="mt-4 rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+            Nenhum serviço no rascunho. Use os itens padrão ou adicione um item personalizado.
+          </p>
+        )}
+
         <ul className="mt-4 space-y-2">
           {items.map((item, index) => (
             <li
@@ -730,9 +812,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                     aria-label="Remover item"
                     className="flex size-9 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
                     onClick={() => {
-                      setItems((cur) =>
-                        cur.length > 1 ? cur.filter((x) => x.uid !== item.uid) : [newItem()],
-                      );
+                      setItems((cur) => cur.filter((x) => x.uid !== item.uid));
                       touch();
                     }}
                   >
@@ -750,12 +830,23 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   />
                   Item opcional
                 </label>
+                {item.templateKey && <span>Cópia do modelo — editar aqui não muda o modelo.</span>}
                 {item.discount > gross(item) && (
                   <span className="text-[var(--stayo-warning)]">
                     Desconto maior que o valor; o total fica em {formatBRL(0)}.
                   </span>
                 )}
               </div>
+              {item.included ? (
+                <ItemScopeEditor item={item} onChange={(patch) => updateItem(item.uid, patch)} />
+              ) : (
+                (item.details || (item.scope?.length ?? 0) > 0) && (
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Desligado · descrição e {item.scope?.length ?? 0} subitem(ns) guardados no
+                    rascunho.
+                  </p>
+                )
+              )}
             </li>
           ))}
         </ul>
@@ -769,7 +860,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             touch();
           }}
         >
-          <Plus className="mr-1.5 size-4" /> Adicionar item próprio
+          <Plus className="mr-1.5 size-4" /> Adicionar item personalizado
         </Button>
 
         {excludedCount > 0 && !optionsSupported && (
@@ -901,6 +992,89 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function ItemScopeEditor({
+  item,
+  onChange,
+}: {
+  item: DraftItem;
+  onChange: (patch: Partial<DraftItem>) => void;
+}) {
+  const scope = item.scope ?? [];
+  const setScope = (next: string[]) => onChange({ scope: next });
+  const swap = (a: number, b: number) => {
+    const n = [...scope];
+    [n[a], n[b]] = [n[b]!, n[a]!];
+    setScope(n);
+  };
+  return (
+    <div className="mt-3 grid gap-3 border-t pt-3 md:grid-cols-2">
+      <label className="text-[11px] font-medium text-muted-foreground">
+        Descrição do serviço
+        <Textarea
+          className="mt-1 min-h-20"
+          maxLength={1000}
+          value={item.details ?? ""}
+          placeholder="O que está incluído. Se algo depende de fornecedor, material, aprovação ou preço à parte, diga aqui."
+          onChange={(e) => onChange({ details: e.target.value })}
+        />
+      </label>
+      <div>
+        <p className="text-[11px] font-medium text-muted-foreground">
+          Escopo (subitens) · descrevem o serviço, não são cobranças extras
+        </p>
+        <ul className="mt-1 space-y-1.5">
+          {scope.map((entry, i) => (
+            <li key={i} className="flex gap-1">
+              <Input
+                aria-label={`Subitem ${i + 1}`}
+                value={entry}
+                maxLength={200}
+                onChange={(e) => setScope(scope.map((x, j) => (j === i ? e.target.value : x)))}
+                className="h-9"
+              />
+              <button
+                type="button"
+                aria-label="Subir subitem"
+                disabled={i === 0}
+                onClick={() => swap(i, i - 1)}
+                className="flex size-9 shrink-0 items-center justify-center rounded-md border disabled:opacity-40"
+              >
+                <ArrowUp className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Descer subitem"
+                disabled={i === scope.length - 1}
+                onClick={() => swap(i, i + 1)}
+                className="flex size-9 shrink-0 items-center justify-center rounded-md border disabled:opacity-40"
+              >
+                <ArrowDown className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Remover subitem"
+                onClick={() => setScope(scope.filter((_, j) => j !== i))}
+                className="flex size-9 shrink-0 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <Button
+          className="mt-1.5"
+          variant="ghost"
+          size="sm"
+          disabled={scope.length >= 30}
+          onClick={() => setScope([...scope, ""])}
+        >
+          <Plus className="mr-1 size-3.5" /> Adicionar subitem
+        </Button>
+      </div>
     </div>
   );
 }
