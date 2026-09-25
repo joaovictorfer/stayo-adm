@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { StayoLogo } from "../components/brand/StayoLogo";
+import { OwnerCoverBanner } from "../components/portal/OwnerCoverBanner";
 import {
   propertyTypeLabel,
   propertyTypeOptions,
@@ -73,6 +74,7 @@ function IntakePage() {
       <header className="flex justify-center px-4 pb-2 pt-6">
         <StayoLogo className="h-11 w-auto" />
       </header>
+      <OwnerCoverBanner token={token} />
       <div className="mx-auto w-full max-w-xl px-4 pb-16 pt-2">
         {q.isPending ? (
           <div

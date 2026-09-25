@@ -4,6 +4,7 @@ import { Clock, Link2Off, MessageCircle, RefreshCw, ShieldOff, WifiOff } from "l
 import type { ReactNode } from "react";
 
 import { StayoLogo } from "../components/brand/StayoLogo";
+import { OwnerCoverBanner } from "../components/portal/OwnerCoverBanner";
 import { formatMoney } from "../lib/format";
 import { resolvePresentation } from "../lib/api/presentation-invites";
 import type { CommercialProposalSnapshot } from "../types/commercial-proposal";
@@ -18,10 +19,16 @@ export const Route = createFileRoute("/portal/apresentacao/$token")({
   head: () => ({
     meta: [
       { title: "Sua proposta STAYO" },
-      { name: "description", content: "Conheça a proposta de administração STAYO para o seu imóvel." },
+      {
+        name: "description",
+        content: "Conheça a proposta de administração STAYO para o seu imóvel.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Sua proposta STAYO" },
-      { property: "og:description", content: "Conheça a proposta de administração STAYO para o seu imóvel." },
+      {
+        property: "og:description",
+        content: "Conheça a proposta de administração STAYO para o seu imóvel.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -43,6 +50,7 @@ function PresentationPage() {
       <header className="flex justify-center px-4 pb-2 pt-6">
         <StayoLogo className="h-12 w-auto" />
       </header>
+      <OwnerCoverBanner token={token} />
       <div className="mx-auto w-full max-w-xl px-4 pb-28 pt-2 md:max-w-2xl">
         {q.isPending ? (
           <Loading />
@@ -131,7 +139,10 @@ function Presentation({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
       ["Taxa de administração", c.administrationFee != null ? `${c.administrationFee}%` : null],
       ["Limpeza", c.cleaningResponsibility ?? null],
       ["Repasse", c.payoutRule ?? null],
-      ["Manutenção sem autorização", c.maintenanceLimit != null ? `até ${formatMoney(c.maintenanceLimit)}` : null],
+      [
+        "Manutenção sem autorização",
+        c.maintenanceLimit != null ? `até ${formatMoney(c.maintenanceLimit)}` : null,
+      ],
       ["Vigência", c.durationMonths ? `${c.durationMonths} meses` : null],
       ["Aviso prévio", c.noticePeriodDays ? `${c.noticePeriodDays} dias` : null],
     ] as Array<[string, string | null]>
@@ -190,7 +201,10 @@ function Presentation({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
         <Card title="Condições">
           <dl className="grid gap-x-6 sm:grid-cols-2">
             {conditions.map(([k, v]) => (
-              <div key={k} className="border-b border-[var(--stayo-border)] py-2.5 text-sm last:border-0">
+              <div
+                key={k}
+                className="border-b border-[var(--stayo-border)] py-2.5 text-sm last:border-0"
+              >
                 <dt className="text-xs text-[var(--stayo-ink-muted)]">{k}</dt>
                 <dd className="mt-0.5 font-medium">{v}</dd>
               </div>

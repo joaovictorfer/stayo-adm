@@ -19,6 +19,7 @@ export type Database = {
           address: string | null
           city: string | null
           concierge_phone: string | null
+          cover_external_allowed: boolean
           cover_image: string | null
           created_at: string
           created_by: string | null
@@ -35,6 +36,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           concierge_phone?: string | null
+          cover_external_allowed?: boolean
           cover_image?: string | null
           created_at?: string
           created_by?: string | null
@@ -51,6 +53,7 @@ export type Database = {
           address?: string | null
           city?: string | null
           concierge_phone?: string | null
+          cover_external_allowed?: boolean
           cover_image?: string | null
           created_at?: string
           created_by?: string | null
@@ -836,7 +839,10 @@ export type Database = {
           condominium_name: string | null
           core_owner_id: string | null
           core_property_id: string | null
+          cover_approved_at: string | null
+          cover_approved_by: string | null
           cover_image: string | null
+          cover_source: string | null
           created_at: string
           id: string
           nickname: string | null
@@ -863,7 +869,10 @@ export type Database = {
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
+          cover_approved_at?: string | null
+          cover_approved_by?: string | null
           cover_image?: string | null
+          cover_source?: string | null
           created_at?: string
           id?: string
           nickname?: string | null
@@ -890,7 +899,10 @@ export type Database = {
           condominium_name?: string | null
           core_owner_id?: string | null
           core_property_id?: string | null
+          cover_approved_at?: string | null
+          cover_approved_by?: string | null
           cover_image?: string | null
+          cover_source?: string | null
           created_at?: string
           id?: string
           nickname?: string | null
@@ -2254,7 +2266,10 @@ export type Database = {
           condominium_name: string | null
           core_owner_id: string | null
           core_property_id: string | null
+          cover_approved_at: string | null
+          cover_approved_by: string | null
           cover_image: string | null
+          cover_source: string | null
           created_at: string
           id: string
           nickname: string | null
@@ -2290,7 +2305,10 @@ export type Database = {
           condominium_name: string | null
           core_owner_id: string | null
           core_property_id: string | null
+          cover_approved_at: string | null
+          cover_approved_by: string | null
           cover_image: string | null
+          cover_source: string | null
           created_at: string
           id: string
           nickname: string | null
@@ -2388,6 +2406,10 @@ export type Database = {
         Args: { roles: Database["public"]["Enums"]["admin_role"][] }
         Returns: boolean
       }
+      implementation_effective_cover: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
       is_valid_brazilian_document: {
         Args: { p_value: string }
         Returns: boolean
@@ -2409,6 +2431,11 @@ export type Database = {
       owner_can_access_implementation: {
         Args: { p_implementation_id: string }
         Returns: boolean
+      }
+      owner_cover_by_token: { Args: { p_token: string }; Returns: Json }
+      owner_cover_for_implementation: {
+        Args: { p_implementation_id: string }
+        Returns: Json
       }
       owner_intake_link_by_token: {
         Args: { p_token: string }
