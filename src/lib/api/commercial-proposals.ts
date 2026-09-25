@@ -27,6 +27,7 @@ function proposalFromRpc(value: unknown): CommercialProposalVersion {
       ? row.draftResponsibilities
       : [],
     requiredSignatories: Array.isArray(row.requiredSignatories) ? row.requiredSignatories : [],
+    draftItemOptions: Array.isArray(row.draftItemOptions) ? row.draftItemOptions : undefined,
     snapshot: row.snapshot ?? null,
   };
 }
@@ -49,6 +50,8 @@ export const commercialProposalsApi = {
         items: input.items,
         responsibilities: input.responsibilities,
         requiredSignatories: input.requiredSignatories,
+        itemOptions: input.itemOptions ?? [],
+        partnershipObject: input.partnershipObject ?? null,
         commandId: input.commandId || commandId(),
       },
     });

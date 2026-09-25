@@ -30,6 +30,14 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
           {snapshot.opportunity?.title || "Proposta STAYO"}
         </h2>
       </div>
+      {snapshot.partnershipObject && (
+        <section>
+          <h3 className="font-semibold">Objeto da parceria</h3>
+          <p className="mt-1 whitespace-pre-line text-[var(--stayo-ink-muted)]">
+            {snapshot.partnershipObject}
+          </p>
+        </section>
+      )}
       {content.map((block, i) => (
         <section key={i}>
           <h3 className="font-semibold">{block.title}</h3>

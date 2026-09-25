@@ -32,8 +32,19 @@ export interface ProposalRequiredSignatory {
   role?: string | null;
 }
 
+export interface ProposalItemOption {
+  description: string;
+  quantity: number;
+  unitValue: number;
+  discount: number;
+  included: boolean;
+  optional: boolean;
+}
+
 export interface CommercialProposalSnapshot {
   schemaVersion: number;
+  /** Aditivo (migration 0025). Ausente em versões anteriores. */
+  partnershipObject?: string | null;
   proposalId: EntityId;
   implementationId: EntityId;
   version: number;
@@ -60,6 +71,9 @@ export interface CommercialProposalVersion {
   total: number;
   draftResponsibilities: string[];
   requiredSignatories: ProposalRequiredSignatory[];
+  /** Presentes só quando a migration 0025 estiver aplicada (undefined antes). */
+  draftItemOptions?: ProposalItemOption[] | undefined;
+  draftPartnershipObject?: string | null | undefined;
   snapshot: CommercialProposalSnapshot | null;
   draftRevision: number;
   publishedAt: string | null;
@@ -77,5 +91,8 @@ export interface ProposalDraftInput {
   items: ProposalItem[];
   responsibilities: string[];
   requiredSignatories: ProposalRequiredSignatory[];
+  /** Lista completa, com desligados. Ignorada pelo banco antes da 0025. */
+  itemOptions?: ProposalItemOption[];
+  partnershipObject?: string | null;
   commandId: string;
 }
