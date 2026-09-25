@@ -16,7 +16,7 @@ import {
   CalendarPlus,
   Megaphone,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Accordion,
