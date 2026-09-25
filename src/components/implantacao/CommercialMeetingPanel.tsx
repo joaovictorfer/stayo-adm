@@ -512,7 +512,7 @@ function CommercialMeetingContent({
 
       {meetingFormOpen && (
         <MeetingForm
-          title={rescheduling ? "Reagendar reunião" : "Agendar reunião"}
+          title={rescheduling ? "Editar reunião" : "Agendar reunião"}
           startsAtLocal={startsAtLocal}
           onStartsAtLocal={setStartsAtLocal}
           timeZone={meetingTimeZone}
