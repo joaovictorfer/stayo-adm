@@ -116,6 +116,13 @@ function ResponsibleSelect({
   allowEmpty: boolean;
 }) {
   const assignees = useAssignees(true);
+  const list = assignees.data ?? [];
+  const valueMissing = !value || !list.some((a) => a.id === value);
+  const firstId = list[0]?.id;
+  // A required select shows its first option even when state is empty; sync state to it.
+  useEffect(() => {
+    if (!allowEmpty && valueMissing && firstId) onChange(firstId);
+  }, [allowEmpty, valueMissing, firstId, onChange]);
   return (
     <label className="block">
       <Label optional={allowEmpty}>Responsável interno</Label>
