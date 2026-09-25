@@ -80,7 +80,7 @@ function PresentationPage() {
             text="Não encontramos uma proposta para este endereço. Confira se o link foi copiado por inteiro."
           />
         ) : (
-          <Presentation snapshot={q.data.snapshot} />
+          "snapshot" in q.data && <Presentation snapshot={q.data.snapshot} />
         )}
       </div>
     </main>
