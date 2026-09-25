@@ -36,10 +36,29 @@ const operationModules: OwnerPortalModule[] = [
   "implementation",
 ];
 
+/**
+ * A área operacional só existe após a ativação controlada: implantação "ativo"
+ * E vínculo oficial com owner + Property do STAYO APP/Core. Sem isso, nunca
+ * mostramos "Em operação" — nem por status isolado, nem pelo convite inicial.
+ */
+export function isOperationallyActivated(
+  implementation:
+    | Pick<ImplementationProject, "status" | "corePropertyId" | "coreOwnerId">
+    | undefined,
+): boolean {
+  return Boolean(
+    implementation?.status === "ativo" &&
+      implementation.corePropertyId &&
+      implementation.coreOwnerId,
+  );
+}
+
 export function getOwnerPortalPhase(
-  implementation: Pick<ImplementationProject, "status" | "corePropertyId"> | undefined,
+  implementation:
+    | Pick<ImplementationProject, "status" | "corePropertyId" | "coreOwnerId">
+    | undefined,
 ): OwnerPortalPhase {
-  if (implementation?.status === "ativo" && implementation.corePropertyId) return "operation";
+  if (isOperationallyActivated(implementation)) return "operation";
   if (implementation?.status === "pronto_para_operacao" || implementation?.status === "ativo")
     return "ready";
   return "implementation";
