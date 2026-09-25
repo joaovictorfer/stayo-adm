@@ -2343,6 +2343,10 @@ export type Database = {
           version: number
         }[]
       }
+      proposal_public_link_status: {
+        Args: { p_token: string }
+        Returns: string
+      }
       proposal_public_resolve_by_token: {
         Args: { p_token: string }
         Returns: Json
