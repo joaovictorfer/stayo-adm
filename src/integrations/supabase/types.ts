@@ -298,6 +298,189 @@ export type Database = {
         }
         Relationships: []
       }
+      implementation_commercial_meeting_events: {
+        Row: {
+          actor_id: string
+          command_id: string
+          created_at: string
+          ends_at: string | null
+          event_type: string
+          from_status: string | null
+          id: string
+          implementation_id: string
+          meeting_id: string
+          mode: string
+          replacement_meeting_id: string | null
+          responsible_user_id: string
+          starts_at: string
+          time_zone: string
+          to_status: string
+        }
+        Insert: {
+          actor_id: string
+          command_id: string
+          created_at?: string
+          ends_at?: string | null
+          event_type: string
+          from_status?: string | null
+          id?: string
+          implementation_id: string
+          meeting_id: string
+          mode: string
+          replacement_meeting_id?: string | null
+          responsible_user_id: string
+          starts_at: string
+          time_zone: string
+          to_status: string
+        }
+        Update: {
+          actor_id?: string
+          command_id?: string
+          created_at?: string
+          ends_at?: string | null
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          implementation_id?: string
+          meeting_id?: string
+          mode?: string
+          replacement_meeting_id?: string | null
+          responsible_user_id?: string
+          starts_at?: string
+          time_zone?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_commercial_meeting_e_replacement_meeting_id_fkey"
+            columns: ["replacement_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_commercial_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meeting_even_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meeting_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meeting_events_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meeting_events_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_commercial_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_commercial_meetings: {
+        Row: {
+          command_id: string
+          created_at: string
+          created_by: string
+          ends_at: string | null
+          id: string
+          implementation_id: string
+          join_url: string | null
+          mode: string
+          rescheduled_from_id: string | null
+          responsible_user_id: string
+          starts_at: string
+          status: string
+          time_zone: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          command_id: string
+          created_at?: string
+          created_by: string
+          ends_at?: string | null
+          id?: string
+          implementation_id: string
+          join_url?: string | null
+          mode: string
+          rescheduled_from_id?: string | null
+          responsible_user_id: string
+          starts_at: string
+          status: string
+          time_zone: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          command_id?: string
+          created_at?: string
+          created_by?: string
+          ends_at?: string | null
+          id?: string
+          implementation_id?: string
+          join_url?: string | null
+          mode?: string
+          rescheduled_from_id?: string | null
+          responsible_user_id?: string
+          starts_at?: string
+          status?: string
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_commercial_meetings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meetings_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meetings_rescheduled_from_id_fkey"
+            columns: ["rescheduled_from_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_commercial_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meetings_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_commercial_meetings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_contract_conditions: {
         Row: {
           administration_fee: number | null
@@ -506,6 +689,89 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_next_actions: {
+        Row: {
+          closed_at: string | null
+          closed_command_id: string | null
+          command_id: string
+          created_at: string
+          created_by: string
+          due_at: string
+          id: string
+          implementation_id: string
+          responsible_user_id: string | null
+          status: string
+          time_zone: string
+          title: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_command_id?: string | null
+          command_id: string
+          created_at?: string
+          created_by: string
+          due_at: string
+          id?: string
+          implementation_id: string
+          responsible_user_id?: string | null
+          status?: string
+          time_zone: string
+          title: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          closed_at?: string | null
+          closed_command_id?: string | null
+          command_id?: string
+          created_at?: string
+          created_by?: string
+          due_at?: string
+          id?: string
+          implementation_id?: string
+          responsible_user_id?: string | null
+          status?: string
+          time_zone?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_next_actions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_next_actions_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_next_actions_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_next_actions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1539,20 +1805,29 @@ export type Database = {
       proposal_share_links: {
         Row: {
           created_at: string
+          expires_at: string | null
           implementation_id: string
+          link_type: string
           proposal_id: string
+          revoked_at: string | null
           token_hash: string
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           implementation_id: string
+          link_type?: string
           proposal_id: string
+          revoked_at?: string | null
           token_hash: string
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           implementation_id?: string
+          link_type?: string
           proposal_id?: string
+          revoked_at?: string | null
           token_hash?: string
         }
         Relationships: [
@@ -1577,30 +1852,63 @@ export type Database = {
           accepted_at: string | null
           accepted_name: string | null
           created_at: string
+          draft_responsibilities: Json
+          draft_revision: number
           id: string
           implementation_id: string
           items: Json
+          last_draft_command_id: string | null
+          publish_command_id: string | null
+          published_at: string | null
+          published_by: string | null
+          required_signatories: Json
+          snapshot: Json | null
+          status: string
           total: number
+          updated_at: string
+          updated_by: string | null
           version: number
         }
         Insert: {
           accepted_at?: string | null
           accepted_name?: string | null
           created_at?: string
+          draft_responsibilities?: Json
+          draft_revision?: number
           id?: string
           implementation_id: string
           items: Json
+          last_draft_command_id?: string | null
+          publish_command_id?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          required_signatories?: Json
+          snapshot?: Json | null
+          status?: string
           total: number
+          updated_at?: string
+          updated_by?: string | null
           version: number
         }
         Update: {
           accepted_at?: string | null
           accepted_name?: string | null
           created_at?: string
+          draft_responsibilities?: Json
+          draft_revision?: number
           id?: string
           implementation_id?: string
           items?: Json
+          last_draft_command_id?: string | null
+          publish_command_id?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          required_signatories?: Json
+          snapshot?: Json | null
+          status?: string
           total?: number
+          updated_at?: string
+          updated_by?: string | null
           version?: number
         }
         Relationships: [
@@ -1609,6 +1917,20 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1770,6 +2092,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_close_implementation_next_action: {
+        Args: { p_data: Json }
+        Returns: Json
+      }
       admin_create_implementation: {
         Args: { p_data: Json }
         Returns: {
@@ -1851,7 +2177,58 @@ export type Database = {
           phone: string
         }[]
       }
+      admin_get_commercial_meeting_state: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
+      admin_list_commercial_assignees: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["admin_role"]
+        }[]
+      }
+      admin_list_commercial_overview: {
+        Args: never
+        Returns: {
+          implementation_id: string
+          meeting_mode: string
+          meeting_responsible_name: string
+          meeting_responsible_user_id: string
+          meeting_starts_at: string
+          meeting_status: string
+          meeting_time_zone: string
+          next_action_due_at: string
+          next_action_responsible_name: string
+          next_action_responsible_user_id: string
+          next_action_time_zone: string
+          next_action_title: string
+        }[]
+      }
+      admin_list_proposal_versions: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
+      admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
+      admin_reschedule_commercial_meeting: {
+        Args: { p_data: Json }
+        Returns: Json
+      }
+      admin_save_proposal_draft: { Args: { p_data: Json }; Returns: Json }
+      admin_schedule_commercial_meeting: {
+        Args: { p_data: Json }
+        Returns: Json
+      }
+      admin_set_implementation_next_action: {
+        Args: { p_data: Json }
+        Returns: Json
+      }
+      admin_update_commercial_meeting_status: {
+        Args: { p_data: Json }
+        Returns: Json
+      }
       current_admin_role: {
         Args: never
         Returns: Database["public"]["Enums"]["admin_role"]
@@ -1965,6 +2342,10 @@ export type Database = {
           total: number
           version: number
         }[]
+      }
+      proposal_public_resolve_by_token: {
+        Args: { p_token: string }
+        Returns: Json
       }
       proposal_resolve_by_token: {
         Args: { p_token: string }
