@@ -805,7 +805,7 @@ function ProposalStep({
     return (
       <Blocked
         icon={<Cloud />}
-        title="Estamos preparando sua proposta"
+        title="O que acontece agora"
         text="A equipe STAYO está finalizando as condições. Quando a proposta for publicada, ela aparece aqui e o cadastro abre logo depois do seu aceite. Não é preciso fazer nada agora."
       />
     );
