@@ -1621,68 +1621,6 @@ function StatusStepper({
   );
 }
 
-function IndicatorCards({ items, loading }: { items: ImplementationItem[]; loading: boolean }) {
-  const progress = computeProgress(items);
-  const readiness = computeReadiness(items);
-  const pending = items.filter((item) => item.status !== "concluido").length;
-
-  return (
-    <div className="implementation-metrics">
-      <Metric
-        label="Progresso"
-        value={loading ? "—" : `${progress.percent}%`}
-        detail={`${progress.done} de ${progress.total} concluídos`}
-      />
-      <Metric
-        label="Prontidão"
-        value={loading ? "—" : readinessLabels[readiness.state]}
-        detail={`${readiness.pendingBlockers} bloqueador(es)`}
-        color={loading ? undefined : readinessColors[readiness.state]}
-      />
-      <Metric
-        label="Pendências"
-        value={loading ? "—" : String(pending).padStart(2, "0")}
-        detail={`${readiness.pendingMandatory} obrigatório(s)`}
-        className="col-span-2 sm:col-span-1"
-      />
-    </div>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  detail,
-  color,
-  className = "",
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  color?: string | undefined;
-  className?: string;
-}) {
-  return (
-    <div className={`implementation-metric ${className}`}>
-      <p
-        className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-        style={{ color: "var(--stayo-ink-muted)" }}
-      >
-        {label}
-      </p>
-      <p
-        className="mt-1 text-lg font-semibold sm:text-xl"
-        style={{ color: color ?? "var(--stayo-forest)", fontFamily: "var(--stayo-font-display)" }}
-      >
-        {value}
-      </p>
-      <p className="mt-1 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-        {detail}
-      </p>
-    </div>
-  );
-}
-
 const PropertySectionContext = createContext<{
   editingSection: string | null;
   setEditingSection: (id: string | null) => void;
