@@ -569,7 +569,7 @@ function Stepper({
   onChange,
 }: {
   label: string;
-  value?: number;
+  value?: number | undefined;
   onChange: (v: number) => void;
 }) {
   const v = value ?? 0;
