@@ -618,7 +618,10 @@ function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage
             <span className="portal-journey-step-icon">
               {complete && !current ? <Check /> : item.icon}
             </span>
-            <span className="portal-journey-step-label">{item.label}</span>
+            <span className="portal-journey-step-label">
+              <span className="max-sm:hidden">{item.label}</span>
+              <span className="sm:hidden">{item.short}</span>
+            </span>
             <span className="portal-journey-step-bar" aria-hidden="true" />
           </button>
         );
