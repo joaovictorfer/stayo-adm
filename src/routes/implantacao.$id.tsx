@@ -1471,6 +1471,82 @@ function Metric({
   );
 }
 
+const PropertySectionContext = createContext<{
+  editingSection: string | null;
+  setEditingSection: (id: string | null) => void;
+}>({ editingSection: null, setEditingSection: () => undefined });
+
+/**
+ * Seção editável da aba Imóvel. Fica fora do PropertyTab para não ser
+ * recriada a cada render (antes era remontada a cada tecla, perdendo foco
+ * e a posição da página). Ao abrir/fechar, mantém a própria seção visível.
+ */
+function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  const { editingSection, setEditingSection } = useContext(PropertySectionContext);
+  const isEditing = editingSection === id;
+  const ref = useRef<HTMLElement>(null);
+  const wasEditing = useRef(isEditing);
+  useEffect(() => {
+    if (wasEditing.current !== isEditing) {
+      wasEditing.current = isEditing;
+      const el = ref.current;
+      if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "nearest" });
+    }
+  }, [isEditing]);
+  return (
+    <section
+      ref={ref}
+      id={`secao-${id}`}
+      className="scroll-mt-4 overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
+      style={{ borderColor: "var(--stayo-border)" }}
+    >
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+            {title}
+          </h2>
+          {description && (
+            <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              {description}
+            </p>
+          )}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-expanded={isEditing}
+          aria-controls={`secao-${id}-conteudo`}
+          onClick={() => setEditingSection(isEditing ? null : id)}
+          className="shrink-0"
+        >
+          <Pencil />
+          {isEditing ? "Fechar edição" : "Editar seção"}
+        </Button>
+      </div>
+      {isEditing && (
+        <div
+          id={`secao-${id}-conteudo`}
+          className="border-t px-4 py-4"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function PropertyTab({ implementation }: { implementation: ImplementationProject }) {
   const adminCover = useAdminCoverUrl(implementation.id);
   const queryClient = useQueryClient();
@@ -1497,6 +1573,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
   const [accessCode, setAccessCode] = useState("");
   const [wifiNetwork, setWifiNetwork] = useState("");
   const [wifiPassword, setWifiPassword] = useState("");
+  const [showWifiPassword, setShowWifiPassword] = useState(false);
   const [timelineTitle, setTimelineTitle] = useState("");
   const [timelineDescription, setTimelineDescription] = useState("");
   const [inspectionDate, setInspectionDate] = useState("");
@@ -1539,6 +1616,10 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
       });
       toast.success("Acesso e Wi-Fi atualizados");
     },
+    onError: (error) =>
+      toast.error("Não foi possível salvar", {
+        description: error instanceof Error ? error.message : "Seus dados continuam no formulário.",
+      }),
   });
   const publishUpdate = useMutation({
     mutationFn: () =>
@@ -1586,9 +1667,13 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
     }) => coreApi.implementations.update(implementation.id, input),
     onSuccess: async () => {
       setEditingSection(null);
-      await queryClient.invalidateQueries({ queryKey: ["implementations", implementation.id] });
+      toast.success("Seção salva");
       await queryClient.invalidateQueries({ queryKey: ["implementations"] });
     },
+    onError: (error) =>
+      toast.error("Não foi possível salvar", {
+        description: error instanceof Error ? error.message : "Seus dados continuam no formulário.",
+      }),
   });
 
   const filledFields = [
@@ -1636,57 +1721,8 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
     }
   }
 
-  function Section({
-    id,
-    title,
-    description,
-    children,
-  }: {
-    id: string;
-    title: string;
-    description?: string;
-    children: React.ReactNode;
-  }) {
-    const isEditing = editingSection === id;
-    return (
-      <details
-        open={isEditing || undefined}
-        className="group overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
-        style={{ borderColor: "var(--stayo-border)" }}
-      >
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
-              {title}
-            </h2>
-            {description && (
-              <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                {description}
-              </p>
-            )}
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={(event) => {
-              event.preventDefault();
-              setEditingSection(isEditing ? null : id);
-            }}
-            className="shrink-0"
-          >
-            <Pencil />
-            {isEditing ? "Fechar edição" : "Editar seção"}
-          </Button>
-        </summary>
-        <div className="border-t px-4 py-4" style={{ borderColor: "var(--stayo-border)" }}>
-          {children}
-        </div>
-      </details>
-    );
-  }
-
   return (
+    <PropertySectionContext.Provider value={{ editingSection, setEditingSection }}>
     <div className="flex flex-col gap-4">
       <div
         className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm"
@@ -1910,21 +1946,37 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
                 className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
               />
             </label>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
             <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
               Rede Wi-Fi
               <input
                 value={wifiNetwork}
                 onChange={(event) => setWifiNetwork(event.target.value)}
+                autoComplete="off"
                 className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
               />
             </label>
             <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
               Senha do Wi-Fi
-              <input
-                value={wifiPassword}
-                onChange={(event) => setWifiPassword(event.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
-              />
+              <span className="relative mt-1 block">
+                <input
+                  type={showWifiPassword ? "text" : "password"}
+                  value={wifiPassword}
+                  onChange={(event) => setWifiPassword(event.target.value)}
+                  autoComplete="new-password"
+                  className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm text-[var(--stayo-ink)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowWifiPassword((v) => !v)}
+                  aria-label={showWifiPassword ? "Ocultar senha do Wi-Fi" : "Mostrar senha do Wi-Fi"}
+                  aria-pressed={showWifiPassword}
+                  className="absolute inset-y-0 right-0 grid w-10 place-items-center text-[var(--stayo-ink-muted)] hover:text-[var(--stayo-ink)]"
+                >
+                  {showWifiPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </span>
             </label>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2060,6 +2112,7 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         )}
       </Section>
     </div>
+    </PropertySectionContext.Provider>
   );
 }
 
