@@ -53,11 +53,11 @@ import { ContractConditionsPanel } from "../components/implantacao/ContractCondi
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
 import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
 import { formatCommercialDateTime } from "../lib/commercial-meeting-state";
+import { MissingItemsTab } from "../components/implantacao/MissingItemsTab";
 import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
 import { CoverPicker, useAdminCoverUrl } from "../components/implantacao/CoverPicker";
 import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
 import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
-import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
@@ -665,7 +665,7 @@ function ImplementationDetailPage() {
           ) : tab === "enxoval" ? (
             <SupplySheet implementationId={implementation.id} />
           ) : tab === "itens_faltantes" ? (
-            <EnxovalTab implementationId={implementation.id} mode="missing" />
+            <MissingItemsTab implementationId={implementation.id} />
           ) : tab === "checklist" ? (
             <Checklist
               implementationId={implementation.id}
