@@ -252,7 +252,7 @@ function CommercialMeetingContent({
   const openSchedule = () => {
     setRescheduling(false);
     setStartsAtLocal("");
-    setMeetingTimeZone(resolvedTimeZone());
+    setMeetingTimeZone("America/Sao_Paulo");
     setMode("video");
     setJoinUrl("");
     setMeetingResponsible(defaultAssignee);
