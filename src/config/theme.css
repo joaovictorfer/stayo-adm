@@ -4384,3 +4384,109 @@ a.admin-data-row:hover,
   padding-top: 1rem;
 }
 .portal-journey-ruler-wrap { position: relative; z-index: 1; }
+
+/* Link externo de implantação — cabeçalho compacto (primeira tela leve). */
+.portal-onboarding-header.is-compact {
+  min-height: 0;
+  border-radius: 0 0 22px 22px;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-header-content {
+  padding: 1.1rem 2rem 1.5rem;
+  max-width: 44rem;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-brand-row {
+  margin-bottom: 1.1rem;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-headline {
+  margin-top: 0.3rem;
+  font-size: clamp(1.3rem, 3.6vw, 1.85rem);
+  line-height: 1.18;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-lead {
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-cover-overlay {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--portal-navy) 94%, transparent) 0%,
+    color-mix(in srgb, var(--portal-navy) 82%, transparent) 55%,
+    color-mix(in srgb, var(--portal-navy) 50%, transparent) 100%
+  );
+}
+.portal-onboarding-cover-tag {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-navy) 55%, transparent);
+  padding: 0.2rem 0.55rem;
+  color: var(--portal-hero-muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+.portal-onboarding-header-cta {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  border-radius: 999px;
+  background: var(--portal-gold);
+  padding: 0 1.2rem;
+  color: var(--portal-navy-strong, var(--portal-navy));
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.portal-onboarding-header-cta svg { width: 1rem; height: 1rem; transition: transform 180ms ease; }
+.portal-onboarding-header-cta:hover { box-shadow: 0 8px 20px color-mix(in srgb, var(--portal-navy-strong, #000) 35%, transparent); }
+.portal-onboarding-header-cta:hover svg { transform: translateX(3px); }
+.portal-onboarding-header-cta:active { transform: scale(0.98); }
+.portal-onboarding-header-cta:focus-visible { outline: 2px solid var(--portal-hero-foreground); outline-offset: 3px; }
+
+/* Régua discreta: linha fina com pontos, sem cartões. */
+.portal-journey-ruler-wrap { padding: 0.9rem 2rem 0; }
+.portal-journey-ruler-wrap .portal-journey-steps { gap: 0.35rem; }
+.portal-journey-ruler-wrap .portal-journey-step,
+.portal-journey-ruler-wrap .portal-journey-step.is-complete,
+.portal-journey-ruler-wrap .portal-journey-step.is-current,
+.portal-journey-ruler-wrap .portal-journey-step:not(:disabled):hover {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.3rem 0 0.7rem;
+  transform: none;
+}
+.portal-journey-ruler-wrap .portal-journey-step-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  background: var(--portal-border);
+}
+.portal-journey-ruler-wrap .portal-journey-step-icon svg { width: 0.65rem; height: 0.65rem; }
+.portal-journey-ruler-wrap .portal-journey-step.is-complete .portal-journey-step-icon {
+  background: var(--portal-navy);
+  color: var(--portal-hero-foreground);
+}
+.portal-journey-ruler-wrap .portal-journey-step-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.portal-journey-ruler-wrap .portal-journey-step-bar { left: 0; right: 0; bottom: 0.2rem; background: var(--portal-border); }
+
+@media (max-width: 640px) {
+  .portal-onboarding-header.is-compact .portal-onboarding-header-content { padding: 1rem 1.25rem 1.25rem; }
+  .portal-onboarding-header.is-compact .portal-onboarding-headline { font-size: 1.35rem; }
+  .portal-onboarding-header-cta { width: 100%; justify-content: center; }
+  .portal-journey-ruler-wrap { padding: 0.75rem 1.25rem 0; }
+}
