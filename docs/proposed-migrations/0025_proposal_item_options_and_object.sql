@@ -1,4 +1,5 @@
--- PROPOSTA — NÃO APLICADA. Revisar antes de aplicar.
+-- Aprovada pelo usuário em 2026-09-25. Itens guardam também descrição (details)
+-- e escopo (scope: subitens descritivos, nunca cobranças extras).
 --
 -- Objetivo: permitir que o rascunho da proposta guarde
 --   1) a lista completa de serviços editáveis, inclusive os desligados
@@ -128,7 +129,9 @@ BEGIN
       'quantity', q.quantity,
       'unitValue', q.unit_value,
       'discount', q.discount,
-      'total', greatest(0, q.quantity * q.unit_value - q.discount)
+      'total', greatest(0, q.quantity * q.unit_value - q.discount),
+      'details', q.details,
+      'scope', q.scope
     ) ORDER BY q.ord),
     coalesce(sum(greatest(0, q.quantity * q.unit_value - q.discount)), 0)
     INTO v_items, v_total
@@ -137,7 +140,15 @@ BEGIN
         regexp_replace(trim(value->>'description'), '\s+', ' ', 'g') AS description,
         (value->>'quantity')::numeric AS quantity,
         (value->>'unitValue')::numeric AS unit_value,
-        coalesce((value->>'discount')::numeric, 0) AS discount
+        coalesce((value->>'discount')::numeric, 0) AS discount,
+        nullif(left(trim(coalesce(value->>'details', '')), 1000), '') AS details,
+        coalesce((
+          SELECT jsonb_agg(left(trim(s), 200) ORDER BY so)
+          FROM jsonb_array_elements_text(
+            CASE WHEN jsonb_typeof(value->'scope') = 'array' THEN value->'scope' ELSE '[]'::jsonb END
+          ) WITH ORDINALITY AS sc(s, so)
+          WHERE trim(s) <> '' AND so <= 30
+        ), '[]'::jsonb) AS scope
       FROM jsonb_array_elements(v_items_input) WITH ORDINALITY AS e(value, ord)
     ) q
     WHERE char_length(q.description) BETWEEN 1 AND 240
@@ -157,7 +168,16 @@ BEGIN
       'unitValue', (value->>'unitValue')::numeric,
       'discount', coalesce((value->>'discount')::numeric, 0),
       'included', coalesce((value->>'included')::boolean, true),
-      'optional', coalesce((value->>'optional')::boolean, false)
+      'optional', coalesce((value->>'optional')::boolean, false),
+      'templateKey', nullif(left(coalesce(value->>'templateKey', ''), 60), ''),
+      'details', nullif(left(trim(coalesce(value->>'details', '')), 1000), ''),
+      'scope', coalesce((
+        SELECT jsonb_agg(left(trim(s), 200) ORDER BY so)
+        FROM jsonb_array_elements_text(
+          CASE WHEN jsonb_typeof(value->'scope') = 'array' THEN value->'scope' ELSE '[]'::jsonb END
+        ) WITH ORDINALITY AS sc(s, so)
+        WHERE trim(s) <> '' AND so <= 30
+      ), '[]'::jsonb)
     ) ORDER BY ord), '[]'::jsonb)
     INTO v_options
     FROM jsonb_array_elements(v_options_input) WITH ORDINALITY AS e(value, ord)

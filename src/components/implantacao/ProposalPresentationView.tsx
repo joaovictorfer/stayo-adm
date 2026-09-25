@@ -1,4 +1,5 @@
 import { formatMoney } from "../../lib/format";
+import { formatBRL } from "../../lib/money";
 import type { CommercialProposalSnapshot } from "../../types/commercial-proposal";
 
 /**
@@ -49,16 +50,30 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
           <h3 className="mb-2 font-semibold">Itens</h3>
           <ul className="divide-y divide-[var(--stayo-border)] rounded-[var(--radius-card)] border border-[var(--stayo-border)]">
             {snapshot.items.map((item, i) => (
-              <li key={i} className="flex justify-between gap-3 px-3 py-2">
-                <span>
-                  {item.quantity > 1 ? `${item.quantity}× ` : ""}
-                  {item.description}
-                </span>
-                <span className="shrink-0 font-medium">{formatMoney(item.total)}</span>
+              <li key={i} className="px-3 py-2">
+                <div className="flex justify-between gap-3">
+                  <span>
+                    {item.quantity > 1 ? `${item.quantity}× ` : ""}
+                    {item.description}
+                  </span>
+                  <span className="shrink-0 font-medium">{formatBRL(item.total)}</span>
+                </div>
+                {item.details && (
+                  <p className="mt-1 whitespace-pre-line text-xs text-[var(--stayo-ink-muted)]">
+                    {item.details}
+                  </p>
+                )}
+                {item.scope && item.scope.length > 0 && (
+                  <ul className="mt-1 list-disc pl-5 text-xs text-[var(--stayo-ink-muted)]">
+                    {item.scope.map((entry, j) => (
+                      <li key={j}>{entry}</li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-right font-semibold">Total: {formatMoney(snapshot.total)}</p>
+          <p className="mt-2 text-right font-semibold">Total: {formatBRL(snapshot.total)}</p>
         </section>
       )}
       {conditions.some(([, v]) => v) && (

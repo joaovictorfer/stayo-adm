@@ -169,6 +169,13 @@
       "when": 1790373004549,
       "tag": "0023_owner_portal_invitation_secrets",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790374212771,
+      "tag": "0024_proposal_item_options_and_object",
+      "breakpoints": true
     }
   ]
 }

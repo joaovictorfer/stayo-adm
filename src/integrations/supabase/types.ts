@@ -2035,6 +2035,8 @@ export type Database = {
           accepted_at: string | null
           accepted_name: string | null
           created_at: string
+          draft_item_options: Json
+          draft_partnership_object: string | null
           draft_responsibilities: Json
           draft_revision: number
           id: string
@@ -2056,6 +2058,8 @@ export type Database = {
           accepted_at?: string | null
           accepted_name?: string | null
           created_at?: string
+          draft_item_options?: Json
+          draft_partnership_object?: string | null
           draft_responsibilities?: Json
           draft_revision?: number
           id?: string
@@ -2077,6 +2081,8 @@ export type Database = {
           accepted_at?: string | null
           accepted_name?: string | null
           created_at?: string
+          draft_item_options?: Json
+          draft_partnership_object?: string | null
           draft_responsibilities?: Json
           draft_revision?: number
           id?: string
