@@ -745,7 +745,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   <span className="md:sr-only">Incluir</span>
                 </label>
                 <label className="text-[11px] font-medium text-muted-foreground">
-                  Descrição
+                  Nome do serviço
                   <Input
                     value={item.description}
                     placeholder="Ex.: Fotos profissionais"
