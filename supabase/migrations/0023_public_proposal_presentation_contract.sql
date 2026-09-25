@@ -9,7 +9,9 @@
 -- - novos links são presentation por padrão e exigem expiração;
 -- - o resolver público lê SOMENTE o snapshot imutável criado na publicação;
 -- - nenhuma tabela interna recebe SELECT público;
--- - tokens presentation não podem usar o aceite legado.
+-- - tokens presentation não podem usar o aceite legado;
+-- - o mesmo token/hash nunca pode pertencer simultaneamente aos domínios de
+--   proposta pública e onboarding sensível.
 
 DO $$
 BEGIN
@@ -32,6 +34,14 @@ BEGIN
      OR to_regprocedure('public.owner_property_details_resolve_by_token(text)') IS NULL
      OR to_regprocedure('public.proposal_accept_by_token(text,text)') IS NULL THEN
     RAISE EXCEPTION 'Fase 2D.2 interrompida: RPCs públicas esperadas não existem';
+  END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM public.proposal_share_links AS proposal_link
+    JOIN public.owner_portal_invitations AS onboarding_link
+      ON onboarding_link.token_hash = proposal_link.token_hash
+  ) THEN
+    RAISE EXCEPTION 'Fase 2D.2 interrompida: existe token compartilhado entre proposta e onboarding';
   END IF;
 END
 $$;
@@ -67,6 +77,65 @@ ALTER TABLE public.proposal_share_links
 ALTER TABLE public.proposal_share_links
   ADD CONSTRAINT proposal_share_links_presentation_expiry_check
   CHECK (link_type <> 'presentation' OR expires_at IS NOT NULL);
+
+-- Separação de capacidade em nível de banco. As RPCs sensíveis de onboarding
+-- resolvem exclusivamente owner_portal_invitations; portanto impedir o mesmo
+-- hash nas duas tabelas torna impossível um token presentation também ser um
+-- convite de onboarding. O advisory lock fecha a corrida de inserts concorrentes.
+CREATE OR REPLACE FUNCTION public.enforce_public_token_domain_separation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF NEW.token_hash IS NULL OR char_length(NEW.token_hash) <> 64 THEN
+    RAISE EXCEPTION 'hash de token público inválido';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('stayo_public_token:' || NEW.token_hash));
+
+  IF TG_TABLE_NAME = 'proposal_share_links' THEN
+    IF EXISTS (
+      SELECT 1
+      FROM public.owner_portal_invitations
+      WHERE token_hash = NEW.token_hash
+    ) THEN
+      RAISE EXCEPTION 'token já pertence ao onboarding';
+    END IF;
+  ELSIF TG_TABLE_NAME = 'owner_portal_invitations' THEN
+    IF EXISTS (
+      SELECT 1
+      FROM public.proposal_share_links
+      WHERE token_hash = NEW.token_hash
+    ) THEN
+      RAISE EXCEPTION 'token já pertence à proposta pública';
+    END IF;
+  ELSE
+    RAISE EXCEPTION 'domínio de token público inválido';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.enforce_public_token_domain_separation() FROM PUBLIC;
+
+DROP TRIGGER IF EXISTS proposal_share_links_token_domain_guard
+  ON public.proposal_share_links;
+CREATE TRIGGER proposal_share_links_token_domain_guard
+  BEFORE INSERT OR UPDATE OF token_hash
+  ON public.proposal_share_links
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_public_token_domain_separation();
+
+DROP TRIGGER IF EXISTS owner_portal_invitations_token_domain_guard
+  ON public.owner_portal_invitations;
+CREATE TRIGGER owner_portal_invitations_token_domain_guard
+  BEFORE INSERT OR UPDATE OF token_hash
+  ON public.owner_portal_invitations
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_public_token_domain_separation();
 
 -- ---------------------------------------------------------------------
 -- 2. Resolver oficial de apresentação: whitelist do snapshot, nada vivo
