@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, LayoutGrid, List, Plus } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  Plus,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -127,7 +134,7 @@ function ImplementationsPage() {
       </PageHeader>
 
       <section
-        className="mb-4 rounded-[var(--radius-card)] border px-4 py-3 sm:px-5"
+        className="mb-4 hidden rounded-[var(--radius-card)] border px-4 py-3 sm:block sm:px-5"
         style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}
       >
         <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
@@ -246,16 +253,82 @@ function OpportunityList({
         <span>Próxima ação</span>
       </div>
       <ul className="divide-y divide-[var(--admin-border)]">
-        {rows.map((item) => {
+        {rows.map((item, index) => {
           const commercial = commercialByImplementation.get(item.id);
+          const tone =
+            item.status === "ativo"
+              ? "success"
+              : item.status === "cancelado" || item.status === "nao_convertido"
+                ? "danger"
+                : "info";
+          const contactName =
+            item.ownerName || (item.ownerId ? "Contato a completar" : "Aguardando cadastro");
+          const phone = item.ownerPhone
+            ? formatBrazilianPhone(item.ownerPhone)
+            : "Telefone a completar";
           return (
-            <li key={item.id}>
+            <li
+              key={item.id}
+              className="animate-fade-in"
+              style={{ animationDelay: `${Math.min(index, 8) * 35}ms`, animationFillMode: "both" }}
+            >
               <Link
                 to="/implantacao/$id"
                 params={{ id: item.id }}
-                className="admin-data-row grid gap-3 px-4 py-4 sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center"
+                className="group block px-4 py-4 transition-colors duration-200 hover:bg-[var(--admin-surface-subtle)] focus-visible:bg-[var(--admin-surface-subtle)] focus-visible:outline-none active:bg-[var(--admin-surface-subtle)] sm:grid sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center sm:gap-4"
               >
-                <div className="min-w-0">
+                {/* Mobile card */}
+                <div className="flex flex-col gap-3 sm:hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p
+                        className="line-clamp-2 text-[15px] font-semibold leading-snug"
+                        style={{ color: "var(--stayo-ink)" }}
+                      >
+                        {opportunityTitle(item)}
+                      </p>
+                      <p
+                        className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.06em]"
+                        style={{ color: "var(--stayo-ink-muted)" }}
+                      >
+                        {item.code}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <AdminStatusBadge tone={tone}>{statusLabels[item.status]}</AdminStatusBadge>
+                      <ChevronRight
+                        className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                        style={{ color: "var(--stayo-ink-muted)" }}
+                      />
+                    </div>
+                  </div>
+                  <div
+                    className="flex items-center justify-between gap-3 text-[13px]"
+                    style={{ color: "var(--stayo-ink-muted)" }}
+                  >
+                    <span className="min-w-0 truncate">
+                      <span style={{ color: "var(--stayo-ink)" }}>{contactName}</span>
+                      {" · "}
+                      {phone}
+                    </span>
+                    <span className="shrink-0 text-xs">
+                      {responsibleLabel(item, currentUserId, assigneeById)}
+                    </span>
+                  </div>
+                  <div
+                    className="rounded-[var(--admin-radius)] px-3 py-2 text-sm"
+                    style={{ backgroundColor: "var(--admin-surface-subtle)" }}
+                  >
+                    <CommercialPriority
+                      item={item}
+                      commercial={commercial}
+                      loadState={commercialLoadState}
+                    />
+                  </div>
+                </div>
+
+                {/* Desktop row */}
+                <div className="hidden min-w-0 sm:block">
                   <p
                     className="truncate text-sm font-semibold"
                     style={{ color: "var(--stayo-ink)" }}
@@ -266,37 +339,27 @@ function OpportunityList({
                     {item.code}
                   </p>
                 </div>
-                <div className="min-w-0 text-sm">
+                <div className="hidden min-w-0 text-sm sm:block">
                   <p className="truncate" style={{ color: "var(--stayo-ink)" }}>
-                    {item.ownerName || (item.ownerId ? "Contato a completar" : "Aguardando cadastro")}
+                    {contactName}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {item.ownerPhone
-                      ? formatBrazilianPhone(item.ownerPhone)
-                      : "Telefone a completar"}
+                    {phone}
                   </p>
                 </div>
-                <div>
-                  <AdminStatusBadge
-                    tone={
-                      item.status === "ativo"
-                        ? "success"
-                        : item.status === "cancelado" || item.status === "nao_convertido"
-                          ? "danger"
-                          : "info"
-                    }
-                  >
-                    {statusLabels[item.status]}
-                  </AdminStatusBadge>
+                <div className="hidden sm:block">
+                  <AdminStatusBadge tone={tone}>{statusLabels[item.status]}</AdminStatusBadge>
                 </div>
-                <span className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                <span className="hidden text-sm sm:block" style={{ color: "var(--stayo-ink-muted)" }}>
                   {responsibleLabel(item, currentUserId, assigneeById)}
                 </span>
-                <CommercialPriority
-                  item={item}
-                  commercial={commercial}
-                  loadState={commercialLoadState}
-                />
+                <div className="hidden sm:block">
+                  <CommercialPriority
+                    item={item}
+                    commercial={commercial}
+                    loadState={commercialLoadState}
+                  />
+                </div>
               </Link>
             </li>
           );
