@@ -234,14 +234,14 @@ function CommercialMeetingContent({
   const [meetingFormOpen, setMeetingFormOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
   const [startsAtLocal, setStartsAtLocal] = useState("");
-  const [meetingTimeZone, setMeetingTimeZone] = useState(resolvedTimeZone());
+  const [meetingTimeZone, setMeetingTimeZone] = useState("America/Sao_Paulo");
   const [mode, setMode] = useState<CommercialMeetingMode>("video");
   const [joinUrl, setJoinUrl] = useState("");
   const [meetingResponsible, setMeetingResponsible] = useState(defaultAssignee);
   const [actionFormOpen, setActionFormOpen] = useState(false);
   const [actionTitle, setActionTitle] = useState("");
   const [actionDueLocal, setActionDueLocal] = useState("");
-  const [actionTimeZone, setActionTimeZone] = useState(resolvedTimeZone());
+  const [actionTimeZone, setActionTimeZone] = useState("America/Sao_Paulo");
   const [actionResponsible, setActionResponsible] = useState(defaultAssignee);
 
   useEffect(() => {
@@ -252,7 +252,7 @@ function CommercialMeetingContent({
   const openSchedule = () => {
     setRescheduling(false);
     setStartsAtLocal("");
-    setMeetingTimeZone(resolvedTimeZone());
+    setMeetingTimeZone("America/Sao_Paulo");
     setMode("video");
     setJoinUrl("");
     setMeetingResponsible(defaultAssignee);
@@ -365,7 +365,7 @@ function CommercialMeetingContent({
                   rel="noreferrer"
                   className="mt-3 inline-flex text-sm font-medium text-[var(--stayo-forest)] underline"
                 >
-                  Abrir link da videochamada
+                  Abrir Google Meet
                 </a>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
@@ -376,7 +376,7 @@ function CommercialMeetingContent({
                   onClick={openReschedule}
                   disabled={busy}
                 >
-                  Reagendar
+                  Editar
                 </Button>
                 <Button
                   type="button"
@@ -512,7 +512,7 @@ function CommercialMeetingContent({
 
       {meetingFormOpen && (
         <MeetingForm
-          title={rescheduling ? "Reagendar reunião" : "Agendar reunião"}
+          title={rescheduling ? "Editar reunião" : "Agendar reunião"}
           startsAtLocal={startsAtLocal}
           onStartsAtLocal={setStartsAtLocal}
           timeZone={meetingTimeZone}
@@ -563,7 +563,10 @@ function CommercialMeetingContent({
       )}
 
       {(state.events.length > 0 || state.actionHistory.length > 0) && (
-        <details className="rounded-[var(--radius-card)] border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4">
+        <details
+          open
+          className="rounded-[var(--radius-card)] border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4"
+        >
           <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-[var(--stayo-ink)]">
             <History className="size-4" /> Histórico comercial
           </summary>
@@ -681,13 +684,16 @@ function MeetingForm({
           required
         />
         {mode === "video" && (
-          <FormField label="Link da videochamada" hint="Opcional. Se informado, deve usar HTTPS.">
+          <FormField
+            label="Link do Google Meet"
+            hint="Opcional e informado manualmente. Nenhum convite é enviado."
+          >
             <input
               type="url"
               inputMode="url"
               value={joinUrl}
               onChange={(event) => onJoinUrl(event.target.value)}
-              placeholder="https://…"
+              placeholder="https://meet.google.com/…"
               className="stayo-commercial-input"
               aria-invalid={!validJoinUrl}
             />

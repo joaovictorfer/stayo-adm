@@ -48,6 +48,7 @@ import {
 } from "../components/data/ListStates";
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
+import { MeetingSummary } from "../components/implantacao/MeetingSummary";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -449,6 +450,10 @@ function ImplementationDetailPage() {
                         ))}
                       </ul>
                     )}
+                  </section>
+                  <section>
+                    <SummaryHeading>Reuniões</SummaryHeading>
+                    <MeetingSummary implementationId={implementation.id} />
                   </section>
                   <section>
                     <SummaryHeading>Atividade recente</SummaryHeading>
