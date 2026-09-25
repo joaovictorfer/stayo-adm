@@ -107,7 +107,7 @@ function parsePercent(value: string): number | null {
 function toSnapshot(f: ContractForm): ProposalSnapshotContractConditions {
   const fee = parsePercent(f.administration_fee);
   return {
-    administrationFee: fee === null || Number.isNaN(fee) ? null : fee,
+    administrationFee: fee === null || Number.isNaN(fee) || fee < 0 || fee > 100 ? null : fee,
     maintenanceLimit: f.maintenance_limit,
     initialCleaningOption: f.initial_cleaning_option || null,
     initialCleaningOther: f.initial_cleaning_other.trim() || null,
