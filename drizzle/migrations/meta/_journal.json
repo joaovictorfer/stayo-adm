@@ -162,6 +162,13 @@
       "when": 1790371991216,
       "tag": "0022_implementation_cover_selection",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790373004549,
+      "tag": "0023_owner_portal_invitation_secrets",
+      "breakpoints": true
     }
   ]
 }
