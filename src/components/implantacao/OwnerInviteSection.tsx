@@ -279,9 +279,8 @@ export function OwnerInviteSection({
           )}
 
           <p className="mt-4 text-xs text-[var(--stayo-ink-muted)]">
-            Para o proprietário preencher o cadastro e os dados do imóvel é preciso o link de
-            cadastro desta aba, que é outro acesso, com permissão de edição. Os dois nunca se
-            misturam.
+            Este link não permite preencher cadastro. Para isso, gere o link de cadastro no card
+            “Dados recebidos” abaixo — é outro acesso, e os dois nunca se misturam.
           </p>
         </>
       )}

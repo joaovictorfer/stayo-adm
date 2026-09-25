@@ -54,6 +54,13 @@ import {
   useOwnerWelcomeState,
 } from "../components/portal/PortalExperience";
 import { getAttachmentSignedUrl, listOwnerAttachments } from "../lib/api/attachments";
+import {
+  listActiveReleases,
+  type DocumentsContent,
+  type OverviewContent,
+  type ProposalContent,
+} from "../lib/api/portal-visibility";
+import { ReleasedOverview, ReleasedProposal } from "../components/portal/ReleasedBlocks";
 import type { Attachment } from "../lib/api/attachments";
 import {
   commercialTermsQuery,
@@ -630,6 +637,15 @@ function DocumentIcon({ attachment }: { attachment: Attachment }) {
     <FileCheck2 aria-hidden="true" />
   );
 }
+
+const moduleTabValue: Partial<Record<OwnerPortalModule, string>> = {
+  overview: "visao-geral",
+  implementation: "implantacao",
+  profile: "dados",
+  proposal: "proposta",
+  documents: "documentos",
+};
+const tabValueOf = (module: OwnerPortalModule) => moduleTabValue[module] ?? module;
 
 const portalModuleLabels: Record<OwnerPortalModule, string> = {
   overview: "Visão geral",
@@ -1432,6 +1448,24 @@ export function OwnerHomeContent({
     queryFn: () => listPortalInspections(implementation?.id ?? ""),
     enabled: Boolean(implementation?.id) && activeTab === "inspections",
   });
+  const releasesQ = useQuery({
+    queryKey: ["portal-visibility", implementation?.id],
+    queryFn: () => listActiveReleases(implementation?.id ?? ""),
+    enabled: Boolean(implementation?.id),
+  });
+  const releasedOverview = releasesQ.data?.find((r) => r.block === "overview")?.content as
+    OverviewContent | undefined;
+  const releasedProposal = releasesQ.data?.find((r) => r.block === "proposal")?.content as
+    ProposalContent | undefined;
+  const releasedDocIds = new Set(
+    (
+      (
+        releasesQ.data?.find((r) => r.block === "documents")?.content as
+          DocumentsContent | undefined
+      )?.documents ?? []
+    ).map((d) => d.attachmentId),
+  );
+  const releasedDocs = (attachmentsQ.data ?? []).filter((a) => releasedDocIds.has(a.id));
   const download = useMutation({
     mutationFn: (storagePath: string) => getAttachmentSignedUrl(storagePath),
     onSuccess: (url) => {
@@ -1449,8 +1483,8 @@ export function OwnerHomeContent({
   const welcome = useOwnerWelcomeState();
 
   useEffect(() => {
-    const activeModule = activeTab === "dados" ? "profile" : activeTab;
-    if (!portalModules.includes(activeModule as OwnerPortalModule)) setActiveTab("visao-geral");
+    if (!portalModules.some((module) => tabValueOf(module) === activeTab))
+      setActiveTab("visao-geral");
   }, [activeTab, portalModules]);
 
   useEffect(() => {
@@ -1511,11 +1545,7 @@ export function OwnerHomeContent({
             className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0"
           >
             {portalModules.map((module) => (
-              <TabsTrigger
-                key={module}
-                value={module === "profile" ? "dados" : module}
-                className="stayo-tab snap-start"
-              >
+              <TabsTrigger key={module} value={tabValueOf(module)} className="stayo-tab snap-start">
                 {portalModuleLabels[module]}
               </TabsTrigger>
             ))}
@@ -1523,6 +1553,19 @@ export function OwnerHomeContent({
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
+          {releasesQ.isPending ? (
+            <PortalSkeleton rows={2} />
+          ) : releasedOverview ? (
+            <ReleasedOverview content={releasedOverview} />
+          ) : (
+            <PortalEmptyState
+              icon={<Key />}
+              title="Seu resumo ainda não foi publicado"
+              description="A equipe Stayo publica aqui um resumo da implantação quando houver informação confirmada."
+              nextStep="Enquanto isso, acompanhe as etapas na aba Implantação."
+              action={{ label: "Ver implantação", onClick: () => setActiveTab("implantacao") }}
+            />
+          )}
           {portalPhase === "operation" && (
             <OperationalOverview
               reservationCount={
@@ -1722,21 +1765,16 @@ export function OwnerHomeContent({
         </TabsContent>
 
         <TabsContent value="proposta" className="tab-content-anim space-y-6">
-          {proposalsQ.isPending || commercialTermsQ.isPending || proposalLinkQ.isPending ? (
+          {releasesQ.isPending ? (
             <PortalSkeleton rows={4} />
-          ) : currentProposal ? (
-            <OwnerProposal
-              proposal={currentProposal}
-              versions={proposalVersions}
-              terms={commercialTermsQ.data ?? []}
-              shareToken={proposalLinkQ.data?.token}
-            />
+          ) : releasedProposal ? (
+            <ReleasedProposal content={releasedProposal} />
           ) : (
             <PortalEmptyState
               icon={<FileSignature />}
-              title="Sua proposta está sendo preparada"
-              description="A equipe Stayo está organizando os detalhes comerciais do seu imóvel."
-              nextStep="Assim que estiver pronta, você poderá visualizar, baixar e aceitar a proposta por aqui."
+              title="Nenhuma proposta liberada ainda"
+              description="Quando a equipe Stayo liberar a proposta para você, ela aparecerá aqui com valores e condições."
+              nextStep="Se você já conversou com a equipe, responda a mensagem recebida para combinar os próximos passos."
               action={{
                 label: "Acompanhar implantação",
                 onClick: () => setActiveTab("implantacao"),
@@ -1760,7 +1798,7 @@ export function OwnerHomeContent({
                 </p>
               </div>
             </div>
-            {attachmentsQ.isPending ? (
+            {attachmentsQ.isPending || releasesQ.isPending ? (
               <PortalSkeleton rows={3} />
             ) : attachmentsQ.isError ? (
               <PortalEmptyState
@@ -1769,12 +1807,12 @@ export function OwnerHomeContent({
                 description="Seus documentos continuam protegidos."
                 nextStep="Tente novamente em alguns instantes. Se o problema continuar, fale com a equipe Stayo."
               />
-            ) : (attachmentsQ.data ?? []).length === 0 ? (
+            ) : releasedDocs.length === 0 ? (
               <PortalEmptyState
                 icon={<FileText />}
-                title="Sua pasta está pronta"
+                title="Nenhum documento liberado"
                 description="Ainda não há documentos liberados para você."
-                nextStep="Contratos, propostas e outros arquivos aparecerão aqui com data e status quando forem disponibilizados."
+                nextStep="Quando a equipe Stayo liberar contratos ou outros arquivos, eles aparecerão aqui com data."
                 action={{
                   label: "Ver minhas pendências",
                   onClick: () => setActiveTab("visao-geral"),
@@ -1782,7 +1820,7 @@ export function OwnerHomeContent({
               />
             ) : (
               <ul className="portal-document-list">
-                {(attachmentsQ.data ?? []).map((attachment) => (
+                {releasedDocs.map((attachment) => (
                   <li key={attachment.id} className="portal-document-row portal-interactive-row">
                     <span className="portal-document-icon">
                       <DocumentIcon attachment={attachment} />

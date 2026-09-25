@@ -45,3 +45,5 @@
 - [x] Evoluir etapas de proprietário, condomínio, imóvel e condições
 - [x] Implementar fotos privadas e autosalvamento do rascunho
 - [ ] Validar criação, retomada, desktop e celular
+- [x] 5/7 Cadastro comercial do proprietário (link próprio, 4 etapas, autosave, retomada)
+- [x] 6/7 Dados recebidos com revisão + área "Visível ao proprietário" + portal só com o liberado

@@ -1323,6 +1323,107 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_intake_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          implementation_id: string
+          last_access_at: string | null
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          implementation_id: string
+          last_access_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          implementation_id?: string
+          last_access_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_intake_links_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_intake_submissions: {
+        Row: {
+          created_at: string
+          current_step: number
+          data: Json
+          implementation_id: string
+          link_id: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number
+          data?: Json
+          implementation_id: string
+          link_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: number
+          data?: Json
+          implementation_id?: string
+          link_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_intake_submissions_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_intake_submissions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "owner_intake_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_notes: {
         Row: {
           content: string
@@ -1764,6 +1865,50 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_visibility_releases: {
+        Row: {
+          block: string
+          content: Json
+          id: string
+          implementation_id: string
+          released_at: string
+          released_by: string
+          released_by_name: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+        }
+        Insert: {
+          block: string
+          content: Json
+          id?: string
+          implementation_id: string
+          released_at?: string
+          released_by: string
+          released_by_name?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Update: {
+          block?: string
+          content?: Json
+          id?: string
+          implementation_id?: string
+          released_at?: string
+          released_by?: string
+          released_by_name?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_visibility_releases_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_content_blocks: {
         Row: {
           body: string
@@ -2181,6 +2326,10 @@ export type Database = {
         Args: { p_implementation_id: string }
         Returns: Json
       }
+      admin_hide_portal_block: {
+        Args: { p_block: string; p_implementation_id: string }
+        Returns: undefined
+      }
       admin_list_commercial_assignees: {
         Args: never
         Returns: {
@@ -2212,10 +2361,12 @@ export type Database = {
       }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
+      admin_release_portal_block: { Args: { p_data: Json }; Returns: Json }
       admin_reschedule_commercial_meeting: {
         Args: { p_data: Json }
         Returns: Json
       }
+      admin_review_owner_intake: { Args: { p_data: Json }; Returns: Json }
       admin_save_proposal_draft: { Args: { p_data: Json }; Returns: Json }
       admin_schedule_commercial_meeting: {
         Args: { p_data: Json }
@@ -2258,6 +2409,35 @@ export type Database = {
       owner_can_access_implementation: {
         Args: { p_implementation_id: string }
         Returns: boolean
+      }
+      owner_intake_link_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          implementation_id: string
+          last_access_at: string | null
+          revoked_at: string | null
+          token_hash: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "owner_intake_links"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      owner_intake_resolve: { Args: { p_token: string }; Returns: Json }
+      owner_intake_save: {
+        Args: {
+          p_data: Json
+          p_step: number
+          p_submit: boolean
+          p_token: string
+        }
+        Returns: Json
       }
       owner_onboarding_draft_resolve: {
         Args: { p_token: string }
@@ -2329,6 +2509,10 @@ export type Database = {
       owner_property_details_save_by_token: {
         Args: { p_data: Json; p_token: string }
         Returns: Json
+      }
+      portal_attachment_released: {
+        Args: { p_attachment_id: string; p_implementation_id: string }
+        Returns: boolean
       }
       proposal_accept_by_token: {
         Args: { p_accepted_name: string; p_token: string }

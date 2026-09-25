@@ -127,6 +127,27 @@
       "when": 1790367174051,
       "tag": "0017_proposal_public_link_status",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790368775789,
+      "tag": "0018_owner_intake_and_portal_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790369241371,
+      "tag": "0019_timeline_kinds_cadastro_enxoval",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790369412397,
+      "tag": "0020_harden_has_admin_role_null",
+      "breakpoints": true
     }
   ]
 }
