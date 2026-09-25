@@ -28,7 +28,10 @@ function contractRows(conditions: ProposalSnapshotContractConditions) {
   const rows: Array<{ label: string; value: string }> = [];
 
   if (conditions.administrationFee != null) {
-    rows.push({ label: "Taxa de administração", value: `${number.format(conditions.administrationFee)}%` });
+    rows.push({
+      label: "Taxa de administração",
+      value: `${number.format(conditions.administrationFee)}%`,
+    });
   }
   if (conditions.cleaningResponsibility) {
     rows.push({ label: "Responsabilidade pela limpeza", value: conditions.cleaningResponsibility });
@@ -37,28 +40,31 @@ function contractRows(conditions: ProposalSnapshotContractConditions) {
     rows.push({ label: "Regra de repasse", value: conditions.payoutRule });
   }
   if (conditions.maintenanceLimit != null) {
-    rows.push({ label: "Limite para manutenção", value: currency.format(conditions.maintenanceLimit) });
+    rows.push({
+      label: "Limite para manutenção",
+      value: currency.format(conditions.maintenanceLimit),
+    });
   }
   if (conditions.exclusivity != null) {
     rows.push({ label: "Exclusividade", value: conditions.exclusivity ? "Sim" : "Não" });
   }
   if (conditions.durationMonths != null) {
-    rows.push({ label: "Prazo previsto", value: `${number.format(conditions.durationMonths)} meses` });
+    rows.push({
+      label: "Prazo previsto",
+      value: `${number.format(conditions.durationMonths)} meses`,
+    });
   }
   if (conditions.noticePeriodDays != null) {
-    rows.push({ label: "Aviso prévio", value: `${number.format(conditions.noticePeriodDays)} dias` });
+    rows.push({
+      label: "Aviso prévio",
+      value: `${number.format(conditions.noticePeriodDays)} dias`,
+    });
   }
 
   return rows;
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-[var(--portal-navy)] sm:text-lg">{title}</h2>
@@ -67,11 +73,7 @@ function Section({
   );
 }
 
-export function PublicProposalPresentation({
-  snapshot,
-}: {
-  snapshot: CommercialProposalSnapshot;
-}) {
+export function PublicProposalPresentation({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
   const contract = contractRows(snapshot.contractConditions);
   const terms = [...snapshot.commercialTerms].sort((a, b) => a.displayOrder - b.displayOrder);
   const content = [...snapshot.content].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -86,7 +88,9 @@ export function PublicProposalPresentation({
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Proposta comercial
             </div>
-            <h1 className="mt-3 max-w-3xl text-2xl font-semibold leading-tight sm:text-3xl">{title}</h1>
+            <h1 className="mt-3 max-w-3xl text-2xl font-semibold leading-tight sm:text-3xl">
+              {title}
+            </h1>
             <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/75">
               {snapshot.opportunity.code ? <span>{snapshot.opportunity.code}</span> : null}
               <span>Versão {snapshot.version}</span>
@@ -99,7 +103,9 @@ export function PublicProposalPresentation({
 
           <div className="shrink-0 rounded-2xl border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-sm sm:px-5">
             <p className="text-xs uppercase tracking-[0.14em] text-white/65">Valor total</p>
-            <p className="mt-1 text-2xl font-semibold sm:text-3xl">{currency.format(snapshot.total)}</p>
+            <p className="mt-1 text-2xl font-semibold sm:text-3xl">
+              {currency.format(snapshot.total)}
+            </p>
           </div>
         </div>
       </header>
@@ -108,7 +114,9 @@ export function PublicProposalPresentation({
         <div className="space-y-4 sm:space-y-5">
           <Section title="Serviços e valores">
             {snapshot.items.length === 0 ? (
-              <p className="text-sm text-[var(--portal-muted)]">Nenhum item foi incluído nesta versão.</p>
+              <p className="text-sm text-[var(--portal-muted)]">
+                Nenhum item foi incluído nesta versão.
+              </p>
             ) : (
               <ul className="divide-y divide-[var(--portal-border)]">
                 {snapshot.items.map((item, index) => (
@@ -143,7 +151,9 @@ export function PublicProposalPresentation({
                       <div className="min-w-0">
                         <p className="font-medium text-[var(--portal-ink)]">{term.label}</p>
                         {term.notes ? (
-                          <p className="mt-1 text-sm leading-5 text-[var(--portal-muted)]">{term.notes}</p>
+                          <p className="mt-1 text-sm leading-5 text-[var(--portal-muted)]">
+                            {term.notes}
+                          </p>
                         ) : null}
                         {term.optional ? (
                           <span className="mt-2 inline-block rounded-full bg-white px-2 py-1 text-[11px] font-medium text-[var(--portal-muted)]">
@@ -182,11 +192,16 @@ export function PublicProposalPresentation({
             <Section title="Condições do contrato">
               <dl className="space-y-3">
                 {contract.map((item) => (
-                  <div key={item.label} className="border-b border-[var(--portal-border)] pb-3 last:border-b-0 last:pb-0">
+                  <div
+                    key={item.label}
+                    className="border-b border-[var(--portal-border)] pb-3 last:border-b-0 last:pb-0"
+                  >
                     <dt className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--portal-muted)]">
                       {item.label}
                     </dt>
-                    <dd className="mt-1 text-sm leading-5 text-[var(--portal-ink)]">{item.value}</dd>
+                    <dd className="mt-1 text-sm leading-5 text-[var(--portal-ink)]">
+                      {item.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -197,8 +212,14 @@ export function PublicProposalPresentation({
             <Section title="Responsabilidades apresentadas">
               <ul className="space-y-3">
                 {snapshot.responsibilities.map((item, index) => (
-                  <li key={`${item}-${index}`} className="flex items-start gap-3 text-sm leading-5 text-[var(--portal-ink)]">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--stayo-success)]" aria-hidden="true" />
+                  <li
+                    key={`${item}-${index}`}
+                    className="flex items-start gap-3 text-sm leading-5 text-[var(--portal-ink)]"
+                  >
+                    <CheckCircle2
+                      className="mt-0.5 h-4 w-4 shrink-0 text-[var(--stayo-success)]"
+                      aria-hidden="true"
+                    />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -210,23 +231,34 @@ export function PublicProposalPresentation({
             <Section title="Partes previstas">
               <ul className="space-y-2">
                 {snapshot.requiredSignatories.map((signatory, index) => (
-                  <li key={`${signatory.label}-${index}`} className="flex items-center gap-2 text-sm text-[var(--portal-ink)]">
-                    <FileText className="h-4 w-4 shrink-0 text-[var(--portal-muted)]" aria-hidden="true" />
+                  <li
+                    key={`${signatory.label}-${index}`}
+                    className="flex items-center gap-2 text-sm text-[var(--portal-ink)]"
+                  >
+                    <FileText
+                      className="h-4 w-4 shrink-0 text-[var(--portal-muted)]"
+                      aria-hidden="true"
+                    />
                     <span>{signatory.label}</span>
                   </li>
                 ))}
               </ul>
               <p className="mt-3 text-xs leading-5 text-[var(--portal-muted)]">
-                Esta apresentação não registra aceite nem assinatura. O processo contratual é tratado separadamente pela Stayo.
+                Esta apresentação não registra aceite nem assinatura. O processo contratual é
+                tratado separadamente pela Stayo.
               </p>
             </Section>
           ) : null}
 
           <div className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-surface-soft)] p-4 text-sm leading-6 text-[var(--portal-muted)]">
             <div className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[var(--portal-navy)]" aria-hidden="true" />
+              <ShieldCheck
+                className="mt-0.5 h-5 w-5 shrink-0 text-[var(--portal-navy)]"
+                aria-hidden="true"
+              />
               <p>
-                Este link serve somente para visualizar esta versão publicada da proposta. Ele não libera cadastro, edição, dados do imóvel ou aceite comercial.
+                Este link serve somente para visualizar esta versão publicada da proposta. Ele não
+                libera cadastro, edição, dados do imóvel ou aceite comercial.
               </p>
             </div>
           </div>
