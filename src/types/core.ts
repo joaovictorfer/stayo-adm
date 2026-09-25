@@ -177,6 +177,10 @@ export interface ProposalItem {
   unitValue: number;
   discount: number;
   total: number;
+  /** Descrição do serviço (aditivo; ausente em versões antigas). */
+  details?: string | null;
+  /** Escopo descritivo (subitens). Nunca representa cobrança extra. */
+  scope?: string[];
 }
 
 export interface Proposal {

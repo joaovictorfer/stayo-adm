@@ -39,6 +39,10 @@ export interface ProposalItemOption {
   discount: number;
   included: boolean;
   optional: boolean;
+  /** Chave do modelo de origem; a cópia é independente do modelo. */
+  templateKey?: string | null;
+  details?: string | null;
+  scope?: string[];
 }
 
 export interface CommercialProposalSnapshot {
