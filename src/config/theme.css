@@ -3975,3 +3975,32 @@ a.admin-data-row:hover,
   .owner-overview-stage { grid-column: 1 / -1; }
   .owner-overview-next { grid-row: 2 / span 3; }
 }
+
+/* ===== Telas internas (visual 3/3) ===== */
+.portal-property-flow-note {
+  margin: 0.25rem 0 1rem;
+  border-left: 3px solid var(--portal-gold);
+  border-radius: 6px;
+  background: var(--portal-gold-soft);
+  padding: 0.6rem 0.85rem;
+  color: var(--portal-navy);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.portal-profile-checklist.is-compact li.is-pending,
+.portal-profile-checklist.is-compact li.is-complete {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+.portal-profile-checklist.is-compact li.is-pending { opacity: 0.72; }
+.portal-profile-checklist.is-compact li.is-current {
+  border-color: color-mix(in srgb, var(--portal-gold) 55%, var(--portal-border));
+  background: var(--portal-gold-soft);
+}
+.portal-action:focus-visible,
+.portal-tab:focus-visible,
+.owner-overview-cta:focus-visible,
+.owner-overview-link:focus-visible {
+  outline: 2px solid var(--portal-gold);
+  outline-offset: 2px;
+}
