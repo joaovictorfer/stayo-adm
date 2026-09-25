@@ -1627,7 +1627,7 @@ export function OwnerHomeContent({
             />
           )}
           <OwnerOverview
-            propertyLabel={propertyName(implementation)}
+            propertyLabel={[propertyName(implementation), implementation?.code].filter(Boolean).join(" · ")}
             stageLabel={statusLabels[implementation?.status ?? "prospect"]}
             stageMessage={stageMessages[implementation?.status ?? "prospect"]}
             tasks={{ ...tasksQ, data: tasksQ.data ? pending : undefined }}
