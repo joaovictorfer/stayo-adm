@@ -14,6 +14,7 @@ import {
 } from "../../lib/api/opportunities";
 import { adminApi, coreApi, implementationsListQuery } from "../../lib/api/queries";
 import { formatBrazilianPhone, normalizePhone } from "../../lib/owner-form-validation";
+import { InvitePath, MeetingPath, PathChooser, type OpportunityPath } from "./OpportunityPaths";
 
 interface FormState {
   contactName: string;
@@ -41,11 +42,13 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
   const [form, setForm] = useState<FormState>(emptyForm);
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [contactSearch, setContactSearch] = useState("");
+  const [path, setPath] = useState<OpportunityPath | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setForm(emptyForm);
     setContactSearch("");
+    setPath(null);
     setRequestId(crypto.randomUUID());
   }, [open]);
 
@@ -126,8 +129,29 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
     setContactSearch("");
   };
 
+  const pathTitles: Record<OpportunityPath, string> = {
+    manual: "Cadastrar proprietário",
+    meeting: "Agendar reunião",
+    invite: "Convidar proprietário",
+  };
+
+  if (path !== "manual") {
+    return (
+      <Drawer
+        open={open}
+        onClose={onClose}
+        eyebrow="Comercial"
+        title={path ? pathTitles[path] : "Nova oportunidade"}
+      >
+        {path === null && <PathChooser onChoose={setPath} />}
+        {path === "invite" && <InvitePath onBack={() => setPath(null)} onClose={onClose} />}
+        {path === "meeting" && <MeetingPath onBack={() => setPath(null)} onClose={onClose} />}
+      </Drawer>
+    );
+  }
+
   return (
-    <Drawer open={open} onClose={onClose} eyebrow="Comercial" title="Nova oportunidade">
+    <Drawer open={open} onClose={onClose} eyebrow="Comercial" title={pathTitles.manual}>
       <form
         className="flex flex-col gap-5"
         onSubmit={(event) => {
@@ -266,8 +290,13 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
         )}
 
         <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" onClick={onClose} disabled={mutation.isPending}>
-            Cancelar
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setPath(null)}
+            disabled={mutation.isPending}
+          >
+            Voltar
           </Button>
           <Button
             type="submit"

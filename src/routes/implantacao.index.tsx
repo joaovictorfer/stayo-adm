@@ -268,7 +268,7 @@ function OpportunityList({
                 </div>
                 <div className="min-w-0 text-sm">
                   <p className="truncate" style={{ color: "var(--stayo-ink)" }}>
-                    {item.ownerName || "Contato a completar"}
+                    {item.ownerName || (item.ownerId ? "Contato a completar" : "Aguardando cadastro")}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
                     {item.ownerPhone
@@ -346,7 +346,7 @@ function Pipeline({
                     {opportunityTitle(item)}
                   </p>
                   <p className="mt-1 truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {item.ownerName || "Contato a completar"}
+                    {item.ownerName || (item.ownerId ? "Contato a completar" : "Aguardando cadastro")}
                     {item.ownerPhone ? ` · ${formatBrazilianPhone(item.ownerPhone)}` : ""}
                   </p>
                   <div className="mt-3">
