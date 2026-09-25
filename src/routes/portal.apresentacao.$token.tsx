@@ -1,3 +1,4 @@
+import { contractConditionRows } from "@/lib/contract-conditions";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Clock, Link2Off, MessageCircle, RefreshCw, ShieldOff, WifiOff } from "lucide-react";
@@ -134,19 +135,7 @@ function StateCard({
 
 function Presentation({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
   const c = snapshot.contractConditions ?? {};
-  const conditions = (
-    [
-      ["Taxa de administração", c.administrationFee != null ? `${c.administrationFee}%` : null],
-      ["Limpeza", c.cleaningResponsibility ?? null],
-      ["Repasse", c.payoutRule ?? null],
-      [
-        "Manutenção sem autorização",
-        c.maintenanceLimit != null ? `até ${formatMoney(c.maintenanceLimit)}` : null,
-      ],
-      ["Vigência", c.durationMonths ? `${c.durationMonths} meses` : null],
-      ["Aviso prévio", c.noticePeriodDays ? `${c.noticePeriodDays} dias` : null],
-    ] as Array<[string, string | null]>
-  ).filter(([, v]) => v);
+  const conditions = contractConditionRows(c);
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   const items = snapshot.items ?? [];
   const published = snapshot.publishedAt
