@@ -38,7 +38,10 @@ export const Route = createFileRoute("/portal/cadastro/$token")({
       { name: "description", content: "Conte para a STAYO um pouco sobre você e o seu imóvel." },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Seu cadastro · STAYO" },
-      { property: "og:description", content: "Conte para a STAYO um pouco sobre você e o seu imóvel." },
+      {
+        property: "og:description",
+        content: "Conte para a STAYO um pouco sobre você e o seu imóvel.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -63,6 +66,7 @@ function IntakePage() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+  const active = q.data?.state === "active" ? q.data : null;
 
   return (
     <main className="min-h-dvh bg-[var(--stayo-bg)] text-[var(--stayo-ink)]">
@@ -71,29 +75,60 @@ function IntakePage() {
       </header>
       <div className="mx-auto w-full max-w-xl px-4 pb-16 pt-2">
         {q.isPending ? (
-          <div className="mt-4 h-72 animate-pulse rounded-2xl bg-[var(--stayo-surface)]" aria-busy="true" />
+          <div
+            className="mt-4 h-72 animate-pulse rounded-2xl bg-[var(--stayo-surface)]"
+            aria-busy="true"
+          />
         ) : !q.data || q.data.state === "network" ? (
-          <StateCard icon={<WifiOff className="size-6" />} title="Sem conexão no momento" text="Verifique sua internet e tente de novo. O que você já preencheu está guardado.">
-            <button type="button" onClick={() => void q.refetch()} className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)]">
+          <StateCard
+            icon={<WifiOff className="size-6" />}
+            title="Sem conexão no momento"
+            text="Verifique sua internet e tente de novo. O que você já preencheu está guardado."
+          >
+            <button
+              type="button"
+              onClick={() => void q.refetch()}
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)]"
+            >
               <RefreshCw className="size-4" /> Tentar de novo
             </button>
           </StateCard>
         ) : q.data.state === "expired" ? (
-          <StateCard icon={<Clock className="size-6" />} title="Este link expirou" text="Peça um novo link a quem enviou a mensagem." />
+          <StateCard
+            icon={<Clock className="size-6" />}
+            title="Este link expirou"
+            text="Peça um novo link a quem enviou a mensagem."
+          />
         ) : q.data.state === "revoked" ? (
-          <StateCard icon={<ShieldOff className="size-6" />} title="Este link foi desativado" text="Peça o link atualizado a quem enviou a mensagem." />
+          <StateCard
+            icon={<ShieldOff className="size-6" />}
+            title="Este link foi desativado"
+            text="Peça o link atualizado a quem enviou a mensagem."
+          />
         ) : q.data.state === "invalid" ? (
-          <StateCard icon={<Link2Off className="size-6" />} title="Link inválido" text="Confira se o link foi copiado por inteiro." />
-        ) : q.data.status === "submitted" || q.data.status === "approved" ? (
-          <StateCard icon={<CheckCircle2 className="size-6 text-[var(--stayo-success)]" />} title="Recebemos seu cadastro" text="Obrigado! A equipe STAYO vai revisar as informações e falar com você pelo WhatsApp. Não é preciso fazer mais nada agora." />
-        ) : q.data.status === "discarded" ? (
-          <StateCard icon={<ShieldOff className="size-6" />} title="Cadastro encerrado" text="Fale com a equipe STAYO se precisar retomar." />
+          <StateCard
+            icon={<Link2Off className="size-6" />}
+            title="Link inválido"
+            text="Confira se o link foi copiado por inteiro."
+          />
+        ) : !active ? null : active.status === "submitted" || active.status === "approved" ? (
+          <StateCard
+            icon={<CheckCircle2 className="size-6 text-[var(--stayo-success)]" />}
+            title="Recebemos seu cadastro"
+            text="Obrigado! A equipe STAYO vai revisar as informações e falar com você pelo WhatsApp. Não é preciso fazer mais nada agora."
+          />
+        ) : active.status === "discarded" ? (
+          <StateCard
+            icon={<ShieldOff className="size-6" />}
+            title="Cadastro encerrado"
+            text="Fale com a equipe STAYO se precisar retomar."
+          />
         ) : (
           <Wizard
             token={token}
-            initial={q.data.data}
-            initialStep={q.data.currentStep}
-            correctionNote={q.data.correctionNote}
+            initial={active.data}
+            initialStep={active.currentStep}
+            correctionNote={active.correctionNote}
             onSubmitted={() => void q.refetch()}
           />
         )}
@@ -164,17 +199,27 @@ function Wizard({
   const phoneDigits = (data.phone ?? "").replace(/\D/g, "");
   const errors: Record<string, string | null> = {
     fullName: (data.fullName ?? "").trim().length < 3 ? "Informe seu nome completo." : null,
-    phone: phoneDigits.length < 10 || phoneDigits.length > 13 ? "Informe o telefone com DDD." : null,
-    email: data.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email) ? "Confira o e-mail." : null,
+    phone:
+      phoneDigits.length < 10 || phoneDigits.length > 13 ? "Informe o telefone com DDD." : null,
+    email:
+      data.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email) ? "Confira o e-mail." : null,
     city: !(data.city ?? "").trim() ? "Informe a cidade." : null,
     propertyType: !data.propertyType ? "Escolha o tipo do imóvel." : null,
   };
-  const stepFields: Record<number, string[]> = { 1: ["fullName", "phone", "email"], 2: ["city"], 3: ["propertyType"], 4: [] };
-  const stepValid = (s: number) => stepFields[s].every((f) => !errors[f]);
+  const stepFields: Record<number, string[]> = {
+    1: ["fullName", "phone", "email"],
+    2: ["city"],
+    3: ["propertyType"],
+    4: [],
+  };
+  const stepValid = (s: number) => (stepFields[s] ?? []).every((f) => !errors[f]);
 
   const go = (next: number) => {
     if (next > step && !stepValid(step)) {
-      setTouched((t) => ({ ...t, ...Object.fromEntries(stepFields[step].map((f) => [f, true])) }));
+      setTouched((t) => ({
+        ...t,
+        ...Object.fromEntries((stepFields[step] ?? []).map((f) => [f, true])),
+      }));
       return;
     }
     setStep(next);
@@ -207,9 +252,13 @@ function Wizard({
   return (
     <div className="mt-2">
       <div className="rounded-2xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-5 shadow-sm sm:p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--stayo-forest)]">Seu cadastro</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--stayo-forest)]">
+          Seu cadastro
+        </p>
         <h1 className="mt-1 text-xl font-semibold">Seu cadastro, passo a passo</h1>
-        <p className="mt-1 text-sm text-[var(--stayo-ink-muted)]">Leva uns 3 minutos. Você pode parar e voltar depois pelo mesmo link.</p>
+        <p className="mt-1 text-sm text-[var(--stayo-ink-muted)]">
+          Leva uns 3 minutos. Você pode parar e voltar depois pelo mesmo link.
+        </p>
 
         {correctionNote && (
           <div className="mt-4 rounded-xl border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-3 text-sm">
@@ -222,32 +271,66 @@ function Wizard({
             const n = i + 1;
             return (
               <li key={s.title}>
-                <div className="h-1.5 rounded-full transition-colors duration-300" style={{ background: n <= step ? "var(--stayo-forest)" : "var(--stayo-border)" }} />
-                <p className={`mt-1.5 truncate text-[11px] ${n === step ? "font-semibold text-[var(--stayo-ink)]" : "text-[var(--stayo-ink-muted)]"}`}>{s.title}</p>
+                <div
+                  className="h-1.5 rounded-full transition-colors duration-300"
+                  style={{ background: n <= step ? "var(--stayo-forest)" : "var(--stayo-border)" }}
+                />
+                <p
+                  className={`mt-1.5 truncate text-[11px] ${n === step ? "font-semibold text-[var(--stayo-ink)]" : "text-[var(--stayo-ink-muted)]"}`}
+                >
+                  {s.title}
+                </p>
               </li>
             );
           })}
         </ol>
         <div className="mt-2 flex items-center justify-between text-xs text-[var(--stayo-ink-muted)]">
-          <span>Etapa {step} de 4 · {percent}%</span>
+          <span>
+            Etapa {step} de 4 · {percent}%
+          </span>
           <SaveBadge state={save} />
         </div>
       </div>
 
-      <section key={step} className="mt-4 animate-in fade-in slide-in-from-bottom-2 rounded-2xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-5 shadow-sm duration-300 sm:p-6">
-        <h2 className="text-base font-semibold">{STEPS[step - 1].title}</h2>
-        <p className="mb-4 text-xs text-[var(--stayo-ink-muted)]">{STEPS[step - 1].hint}</p>
+      <section
+        key={step}
+        className="mt-4 animate-in fade-in slide-in-from-bottom-2 rounded-2xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-5 shadow-sm duration-300 sm:p-6"
+      >
+        <h2 className="text-base font-semibold">{STEPS[step - 1]!.title}</h2>
+        <p className="mb-4 text-xs text-[var(--stayo-ink-muted)]">{STEPS[step - 1]!.hint}</p>
 
         {step === 1 && (
           <div className="space-y-4">
             <Field label="Nome completo" error={err("fullName")}>
-              <input className="stayo-commercial-input" autoComplete="name" value={data.fullName ?? ""} onChange={(e) => set("fullName", e.target.value)} onBlur={blur("fullName")} />
+              <input
+                className="stayo-commercial-input"
+                autoComplete="name"
+                value={data.fullName ?? ""}
+                onChange={(e) => set("fullName", e.target.value)}
+                onBlur={blur("fullName")}
+              />
             </Field>
             <Field label="WhatsApp com DDD" error={err("phone")}>
-              <input className="stayo-commercial-input" inputMode="tel" autoComplete="tel" placeholder="(54) 99999-9999" value={data.phone ?? ""} onChange={(e) => set("phone", maskPhone(e.target.value))} onBlur={blur("phone")} />
+              <input
+                className="stayo-commercial-input"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="(54) 99999-9999"
+                value={data.phone ?? ""}
+                onChange={(e) => set("phone", maskPhone(e.target.value))}
+                onBlur={blur("phone")}
+              />
             </Field>
             <Field label="E-mail" optional error={err("email")}>
-              <input className="stayo-commercial-input" type="email" inputMode="email" autoComplete="email" value={data.email ?? ""} onChange={(e) => set("email", e.target.value)} onBlur={blur("email")} />
+              <input
+                className="stayo-commercial-input"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={data.email ?? ""}
+                onChange={(e) => set("email", e.target.value)}
+                onBlur={blur("email")}
+              />
             </Field>
           </div>
         )}
@@ -255,21 +338,49 @@ function Wizard({
         {step === 2 && (
           <div className="space-y-4">
             <Field label="Cidade" error={err("city")}>
-              <input className="stayo-commercial-input" value={data.city ?? ""} onChange={(e) => set("city", e.target.value)} onBlur={blur("city")} placeholder="Gramado" />
+              <input
+                className="stayo-commercial-input"
+                value={data.city ?? ""}
+                onChange={(e) => set("city", e.target.value)}
+                onBlur={blur("city")}
+                placeholder="Gramado"
+              />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Bairro" optional>
-                <input className="stayo-commercial-input" value={data.district ?? ""} onChange={(e) => set("district", e.target.value)} onBlur={blur("district")} />
+                <input
+                  className="stayo-commercial-input"
+                  value={data.district ?? ""}
+                  onChange={(e) => set("district", e.target.value)}
+                  onBlur={blur("district")}
+                />
               </Field>
               <Field label="CEP" optional>
-                <input className="stayo-commercial-input" inputMode="numeric" value={data.postalCode ?? ""} onChange={(e) => set("postalCode", maskCep(e.target.value))} onBlur={blur("postalCode")} />
+                <input
+                  className="stayo-commercial-input"
+                  inputMode="numeric"
+                  value={data.postalCode ?? ""}
+                  onChange={(e) => set("postalCode", maskCep(e.target.value))}
+                  onBlur={blur("postalCode")}
+                />
               </Field>
             </div>
             <Field label="Nome do condomínio ou prédio" optional>
-              <input className="stayo-commercial-input" value={data.locationName ?? ""} onChange={(e) => set("locationName", e.target.value)} onBlur={blur("locationName")} />
+              <input
+                className="stayo-commercial-input"
+                value={data.locationName ?? ""}
+                onChange={(e) => set("locationName", e.target.value)}
+                onBlur={blur("locationName")}
+              />
             </Field>
             <Field label="Como você identifica o imóvel" optional>
-              <input className="stayo-commercial-input" placeholder="Ex.: apto 302, torre B" value={data.unitLabel ?? ""} onChange={(e) => set("unitLabel", e.target.value)} onBlur={blur("unitLabel")} />
+              <input
+                className="stayo-commercial-input"
+                placeholder="Ex.: apto 302, torre B"
+                value={data.unitLabel ?? ""}
+                onChange={(e) => set("unitLabel", e.target.value)}
+                onBlur={blur("unitLabel")}
+              />
             </Field>
           </div>
         )}
@@ -303,37 +414,104 @@ function Wizard({
               </div>
             </Field>
             <Stepper label="Quartos" value={data.bedrooms} onChange={(v) => set("bedrooms", v)} />
-            <Stepper label="Banheiros" value={data.bathrooms} onChange={(v) => set("bathrooms", v)} />
-            <Stepper label="Hóspedes (aproximado)" value={data.capacity} onChange={(v) => set("capacity", v)} />
+            <Stepper
+              label="Banheiros"
+              value={data.bathrooms}
+              onChange={(v) => set("bathrooms", v)}
+            />
+            <Stepper
+              label="Hóspedes (aproximado)"
+              value={data.capacity}
+              onChange={(v) => set("capacity", v)}
+            />
             <Field label="Algo mais que devemos saber?" optional>
-              <textarea className="stayo-commercial-input" rows={3} placeholder="Ex.: tem lareira, vista para o vale, já foi alugado antes…" value={data.notes ?? ""} onChange={(e) => set("notes", e.target.value)} onBlur={blur("notes")} />
+              <textarea
+                className="stayo-commercial-input"
+                rows={3}
+                placeholder="Ex.: tem lareira, vista para o vale, já foi alugado antes…"
+                value={data.notes ?? ""}
+                onChange={(e) => set("notes", e.target.value)}
+                onBlur={blur("notes")}
+              />
             </Field>
           </div>
         )}
 
         {step === 4 && (
           <div className="space-y-3">
-            <Review title="Sobre você" onEdit={() => setStep(1)} rows={[["Nome", data.fullName], ["WhatsApp", data.phone], ["E-mail", data.email]]} />
-            <Review title="Onde fica" onEdit={() => setStep(2)} rows={[["Cidade", data.city], ["Bairro", data.district], ["CEP", data.postalCode], ["Condomínio/prédio", data.locationName], ["Identificação", data.unitLabel]]} />
-            <Review title="O imóvel" onEdit={() => setStep(3)} rows={[["Tipo", propertyTypeLabel(data.propertyType)], ["Quartos", data.bedrooms], ["Banheiros", data.bathrooms], ["Hóspedes", data.capacity], ["Observações", data.notes]]} />
-            <p className="text-xs text-[var(--stayo-ink-muted)]">Ao enviar, a equipe STAYO revisa as informações antes de usá-las. Nenhum dado bancário ou documento é pedido agora.</p>
-            {submitError && <p role="alert" className="text-sm text-[var(--stayo-danger)]">{submitError}</p>}
+            <Review
+              title="Sobre você"
+              onEdit={() => setStep(1)}
+              rows={[
+                ["Nome", data.fullName],
+                ["WhatsApp", data.phone],
+                ["E-mail", data.email],
+              ]}
+            />
+            <Review
+              title="Onde fica"
+              onEdit={() => setStep(2)}
+              rows={[
+                ["Cidade", data.city],
+                ["Bairro", data.district],
+                ["CEP", data.postalCode],
+                ["Condomínio/prédio", data.locationName],
+                ["Identificação", data.unitLabel],
+              ]}
+            />
+            <Review
+              title="O imóvel"
+              onEdit={() => setStep(3)}
+              rows={[
+                ["Tipo", propertyTypeLabel(data.propertyType)],
+                ["Quartos", data.bedrooms],
+                ["Banheiros", data.bathrooms],
+                ["Hóspedes", data.capacity],
+                ["Observações", data.notes],
+              ]}
+            />
+            <p className="text-xs text-[var(--stayo-ink-muted)]">
+              Ao enviar, a equipe STAYO revisa as informações antes de usá-las. Nenhum dado bancário
+              ou documento é pedido agora.
+            </p>
+            {submitError && (
+              <p role="alert" className="text-sm text-[var(--stayo-danger)]">
+                {submitError}
+              </p>
+            )}
           </div>
         )}
 
         <div className="mt-6 flex gap-2">
           {step > 1 && (
-            <button type="button" onClick={() => go(step - 1)} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--stayo-border)] px-4 py-2.5 text-sm font-medium">
+            <button
+              type="button"
+              onClick={() => go(step - 1)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--stayo-border)] px-4 py-2.5 text-sm font-medium"
+            >
               <ArrowLeft className="size-4" /> Voltar
             </button>
           )}
           {step < 4 ? (
-            <button type="button" onClick={() => go(step + 1)} className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)] transition-transform active:scale-[0.97]">
+            <button
+              type="button"
+              onClick={() => go(step + 1)}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)] transition-transform active:scale-[0.97]"
+            >
               Continuar <ArrowRight className="size-4" />
             </button>
           ) : (
-            <button type="button" disabled={submitting || !stepValid(1) || !stepValid(2) || !stepValid(3)} onClick={() => void submit()} className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)] transition-transform active:scale-[0.97] disabled:opacity-50">
-              {submitting ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+            <button
+              type="button"
+              disabled={submitting || !stepValid(1) || !stepValid(2) || !stepValid(3)}
+              onClick={() => void submit()}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)] transition-transform active:scale-[0.97] disabled:opacity-50"
+            >
+              {submitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="size-4" />
+              )}
               {submitting ? "Enviando…" : "Enviar cadastro"}
             </button>
           )}
@@ -345,16 +523,39 @@ function Wizard({
 
 function SaveBadge({ state }: { state: Save }) {
   if (state === "idle") return <span>Salvo automaticamente</span>;
-  if (state === "saving") return <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" /> Salvando…</span>;
-  if (state === "error") return <span className="text-[var(--stayo-danger)]">Não salvou — tentaremos de novo</span>;
-  return <span className="inline-flex items-center gap-1 text-[var(--stayo-success)]"><CloudCheck className="size-3.5" /> Salvo</span>;
+  if (state === "saving")
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Loader2 className="size-3 animate-spin" /> Salvando…
+      </span>
+    );
+  if (state === "error")
+    return <span className="text-[var(--stayo-danger)]">Não salvou — tentaremos de novo</span>;
+  return (
+    <span className="inline-flex items-center gap-1 text-[var(--stayo-success)]">
+      <CloudCheck className="size-3.5" /> Salvo
+    </span>
+  );
 }
 
-function Field({ label, optional, error, children }: { label: string; optional?: boolean; error?: string | null; children: ReactNode }) {
+function Field({
+  label,
+  optional,
+  error,
+  children,
+}: {
+  label: string;
+  optional?: boolean;
+  error?: string | null | undefined;
+  children: ReactNode;
+}) {
   return (
     <div>
       <p className="mb-1 text-sm font-medium">
-        {label} {optional && <span className="text-xs font-normal text-[var(--stayo-ink-muted)]">(opcional)</span>}
+        {label}{" "}
+        {optional && (
+          <span className="text-xs font-normal text-[var(--stayo-ink-muted)]">(opcional)</span>
+        )}
       </p>
       {children}
       {error && <p className="mt-1 text-xs text-[var(--stayo-danger)]">{error}</p>}
@@ -362,17 +563,37 @@ function Field({ label, optional, error, children }: { label: string; optional?:
   );
 }
 
-function Stepper({ label, value, onChange }: { label: string; value?: number; onChange: (v: number) => void }) {
+function Stepper({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: number;
+  onChange: (v: number) => void;
+}) {
   const v = value ?? 0;
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm font-medium">{label}</span>
       <div className="flex items-center gap-3">
-        <button type="button" aria-label={`Diminuir ${label}`} disabled={v <= 0} onClick={() => onChange(Math.max(0, v - 1))} className="flex size-9 items-center justify-center rounded-full border border-[var(--stayo-border)] disabled:opacity-40 active:scale-95">
+        <button
+          type="button"
+          aria-label={`Diminuir ${label}`}
+          disabled={v <= 0}
+          onClick={() => onChange(Math.max(0, v - 1))}
+          className="flex size-9 items-center justify-center rounded-full border border-[var(--stayo-border)] disabled:opacity-40 active:scale-95"
+        >
           <Minus className="size-4" />
         </button>
         <span className="w-6 text-center text-base font-semibold tabular-nums">{v}</span>
-        <button type="button" aria-label={`Aumentar ${label}`} disabled={v >= 50} onClick={() => onChange(Math.min(50, v + 1))} className="flex size-9 items-center justify-center rounded-full border border-[var(--stayo-border)] active:scale-95">
+        <button
+          type="button"
+          aria-label={`Aumentar ${label}`}
+          disabled={v >= 50}
+          onClick={() => onChange(Math.min(50, v + 1))}
+          className="flex size-9 items-center justify-center rounded-full border border-[var(--stayo-border)] active:scale-95"
+        >
           <Plus className="size-4" />
         </button>
       </div>
@@ -380,18 +601,34 @@ function Stepper({ label, value, onChange }: { label: string; value?: number; on
   );
 }
 
-function Review({ title, rows, onEdit }: { title: string; rows: Array<[string, unknown]>; onEdit: () => void }) {
+function Review({
+  title,
+  rows,
+  onEdit,
+}: {
+  title: string;
+  rows: Array<[string, unknown]>;
+  onEdit: () => void;
+}) {
   return (
     <div className="rounded-xl border border-[var(--stayo-border)] p-3">
       <div className="mb-1 flex items-center justify-between">
         <p className="text-sm font-semibold">{title}</p>
-        <button type="button" onClick={onEdit} className="text-xs font-medium text-[var(--stayo-forest)]">Editar</button>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-xs font-medium text-[var(--stayo-forest)]"
+        >
+          Editar
+        </button>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
             <dt className="text-xs text-[var(--stayo-ink-muted)]">{k}</dt>
-            <dd className="break-words">{v === undefined || v === null || v === "" ? "—" : String(v)}</dd>
+            <dd className="break-words">
+              {v === undefined || v === null || v === "" ? "—" : String(v)}
+            </dd>
           </div>
         ))}
       </dl>
@@ -399,10 +636,22 @@ function Review({ title, rows, onEdit }: { title: string; rows: Array<[string, u
   );
 }
 
-function StateCard({ icon, title, text, children }: { icon: ReactNode; title: string; text: string; children?: ReactNode }) {
+function StateCard({
+  icon,
+  title,
+  text,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  text: string;
+  children?: ReactNode;
+}) {
   return (
     <section className="mt-6 rounded-2xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-6 py-10 text-center shadow-sm">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--stayo-bg)] text-[var(--stayo-ink-muted)]">{icon}</div>
+      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--stayo-bg)] text-[var(--stayo-ink-muted)]">
+        {icon}
+      </div>
       <h1 className="mt-4 text-lg font-semibold">{title}</h1>
       <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--stayo-ink-muted)]">{text}</p>
       {children}

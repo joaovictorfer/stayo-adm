@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, CheckCircle2, Clock, Copy, Inbox, Link2, MessageCircle, PencilLine, ShieldOff } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Clock,
+  Copy,
+  Inbox,
+  Link2,
+  MessageCircle,
+  PencilLine,
+  ShieldOff,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -45,7 +55,10 @@ const show = (key: string, v: unknown) =>
       ? propertyTypeLabel(String(v))
       : String(v);
 
-const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+const norm = (v: unknown) =>
+  String(v ?? "")
+    .trim()
+    .toLowerCase();
 
 async function copy(text: string, label: string) {
   try {
@@ -97,7 +110,8 @@ export function OwnerIntakeReview({
       await refresh();
       toast.success("Link de cadastro gerado");
     },
-    onError: (e) => toast.error("Não foi possível gerar o link", { description: (e as Error).message }),
+    onError: (e) =>
+      toast.error("Não foi possível gerar o link", { description: (e as Error).message }),
   });
   const revoke = useMutation({
     mutationFn: (id: string) => ownerIntakeAdminApi.revoke(id),
@@ -109,7 +123,11 @@ export function OwnerIntakeReview({
   });
   const review = useMutation({
     mutationFn: (decision: "approve" | "request_correction" | "keep_pending") =>
-      ownerIntakeAdminApi.review({ implementationId, decision, note: note.trim() || undefined }),
+      ownerIntakeAdminApi.review(
+        note.trim()
+          ? { implementationId, decision, note: note.trim() }
+          : { implementationId, decision },
+      ),
     onSuccess: async (_, decision) => {
       setCorrecting(false);
       setNote("");
@@ -124,7 +142,8 @@ export function OwnerIntakeReview({
             : "Mantido pendente",
       );
     },
-    onError: (e) => toast.error("Não foi possível registrar a decisão", { description: (e as Error).message }),
+    onError: (e) =>
+      toast.error("Não foi possível registrar a decisão", { description: (e as Error).message }),
   });
 
   const link = linkQ.data;
@@ -168,7 +187,12 @@ export function OwnerIntakeReview({
         )}
         <div className="ml-auto flex gap-2">
           {link && linkState === "Ativo" && (
-            <Button size="sm" variant="outline" disabled={revoke.isPending} onClick={() => revoke.mutate(link.id)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={revoke.isPending}
+              onClick={() => revoke.mutate(link.id)}
+            >
               <ShieldOff className="size-3.5" /> Desativar
             </Button>
           )}
@@ -183,15 +207,32 @@ export function OwnerIntakeReview({
           <p className="text-xs text-[var(--stayo-ink-muted)]">
             Copie agora: por segurança o link não fica guardado. Vale por 15 dias.
           </p>
-          <input readOnly value={url} className="stayo-commercial-input" onFocus={(e) => e.target.select()} />
-          <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} className="stayo-commercial-input" />
+          <input
+            readOnly
+            value={url}
+            className="stayo-commercial-input"
+            onFocus={(e) => e.target.select()}
+          />
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+            className="stayo-commercial-input"
+          />
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={async () => (await copy(url, "Link")) && setCopied("link")}>
+            <Button
+              variant="outline"
+              onClick={async () => (await copy(url, "Link")) && setCopied("link")}
+            >
               {copied === "link" ? <Check className="size-4" /> : <Copy className="size-4" />}
               {copied === "link" ? "Link copiado" : "Copiar link"}
             </Button>
             <Button onClick={async () => (await copy(message, "Mensagem")) && setCopied("msg")}>
-              {copied === "msg" ? <Check className="size-4" /> : <MessageCircle className="size-4" />}
+              {copied === "msg" ? (
+                <Check className="size-4" />
+              ) : (
+                <MessageCircle className="size-4" />
+              )}
               {copied === "msg" ? "Mensagem copiada" : "Copiar mensagem para WhatsApp"}
             </Button>
           </div>
@@ -202,7 +243,9 @@ export function OwnerIntakeReview({
       {subQ.isPending ? (
         <p className="mt-4 text-sm text-[var(--stayo-ink-muted)]">Carregando…</p>
       ) : subQ.isError ? (
-        <p className="mt-4 text-sm text-[var(--stayo-danger)]">Seu perfil não tem acesso aos dados recebidos.</p>
+        <p className="mt-4 text-sm text-[var(--stayo-danger)]">
+          Seu perfil não tem acesso aos dados recebidos.
+        </p>
       ) : !sub ? (
         <div className="mt-4 flex items-center gap-2 text-sm text-[var(--stayo-ink-muted)]">
           <Inbox className="size-4" /> Nenhum dado recebido ainda.
@@ -213,7 +256,8 @@ export function OwnerIntakeReview({
             <span
               className="rounded-full px-2.5 py-0.5 font-semibold"
               style={{
-                background: sub.status === "submitted" ? "var(--stayo-gold-soft)" : "var(--stayo-bg)",
+                background:
+                  sub.status === "submitted" ? "var(--stayo-gold-soft)" : "var(--stayo-bg)",
                 color:
                   sub.status === "approved"
                     ? "var(--stayo-success)"
@@ -222,10 +266,15 @@ export function OwnerIntakeReview({
                       : "var(--stayo-ink-muted)",
               }}
             >
-              {sub.status === "submitted" ? "Recebido · Pendente de revisão" : intakeStatusLabel[sub.status]}
+              {sub.status === "submitted"
+                ? "Recebido · Pendente de revisão"
+                : intakeStatusLabel[sub.status]}
             </span>
             <span className="text-[var(--stayo-ink-muted)]">
-              Origem: link de cadastro comercial · {sub.submittedAt ? `enviado em ${fmt(sub.submittedAt)}` : `rascunho salvo em ${fmt(sub.updatedAt)}`}
+              Origem: link de cadastro comercial ·{" "}
+              {sub.submittedAt
+                ? `enviado em ${fmt(sub.submittedAt)}`
+                : `rascunho salvo em ${fmt(sub.updatedAt)}`}
             </span>
           </div>
           {sub.reviewedAt && (
@@ -253,9 +302,15 @@ export function OwnerIntakeReview({
                   return (
                     <tr key={key} className="border-t border-[var(--stayo-border)]">
                       <td className="px-3 py-2 text-xs text-[var(--stayo-ink-muted)]">{label}</td>
-                      <td className={`px-3 py-2 ${differs ? "font-semibold text-[var(--stayo-ink)]" : ""}`}>
+                      <td
+                        className={`px-3 py-2 ${differs ? "font-semibold text-[var(--stayo-ink)]" : ""}`}
+                      >
                         {show(key, received)}
-                        {differs && <span className="ml-1.5 text-[10px] font-medium text-[var(--stayo-warning)]">diferente</span>}
+                        {differs && (
+                          <span className="ml-1.5 text-[10px] font-medium text-[var(--stayo-warning)]">
+                            diferente
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-[var(--stayo-ink-muted)]">
                         {officialQ.isPending ? "…" : show(key, current)}
@@ -268,7 +323,9 @@ export function OwnerIntakeReview({
           </div>
           {sub.data.notes && (
             <p className="mt-2 rounded-[var(--radius-card)] bg-[var(--stayo-bg)] p-3 text-sm">
-              <span className="text-xs text-[var(--stayo-ink-muted)]">Observações do proprietário: </span>
+              <span className="text-xs text-[var(--stayo-ink-muted)]">
+                Observações do proprietário:{" "}
+              </span>
               {sub.data.notes}
             </p>
           )}
@@ -277,7 +334,8 @@ export function OwnerIntakeReview({
             <div className="mt-4 space-y-3">
               <p className="text-xs text-[var(--stayo-ink-muted)]">
                 Aprovar aplica os dados do imóvel à ficha e só preenche nome, telefone e e-mail do
-                proprietário quando estiverem vazios. Não cria imóvel no STAYO APP e não libera nada no portal.
+                proprietário quando estiverem vazios. Não cria imóvel no STAYO APP e não libera nada
+                no portal.
               </p>
               {correcting && (
                 <textarea
@@ -295,11 +353,18 @@ export function OwnerIntakeReview({
                 <Button
                   variant="outline"
                   disabled={review.isPending || (correcting && note.trim().length < 3)}
-                  onClick={() => (correcting ? review.mutate("request_correction") : setCorrecting(true))}
+                  onClick={() =>
+                    correcting ? review.mutate("request_correction") : setCorrecting(true)
+                  }
                 >
-                  <PencilLine className="size-4" /> {correcting ? "Enviar pedido de correção" : "Solicitar correção"}
+                  <PencilLine className="size-4" />{" "}
+                  {correcting ? "Enviar pedido de correção" : "Solicitar correção"}
                 </Button>
-                <Button variant="ghost" disabled={review.isPending} onClick={() => review.mutate("keep_pending")}>
+                <Button
+                  variant="ghost"
+                  disabled={review.isPending}
+                  onClick={() => review.mutate("keep_pending")}
+                >
                   <Clock className="size-4" /> Manter pendente
                 </Button>
               </div>

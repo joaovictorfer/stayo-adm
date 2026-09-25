@@ -37,7 +37,13 @@ const fmt = (v: string) =>
     timeZone: "America/Sao_Paulo",
   }).format(new Date(v));
 
-type Attachment = { id: string; filename: string; mime_type: string; category: string; created_at: string };
+type Attachment = {
+  id: string;
+  filename: string;
+  mime_type: string;
+  category: string;
+  created_at: string;
+};
 
 async function listImplementationAttachments(implementationId: string): Promise<Attachment[]> {
   const db = getSupabaseBrowserClient();
@@ -52,7 +58,13 @@ async function listImplementationAttachments(implementationId: string): Promise<
   return data ?? [];
 }
 
-const NEVER = ["Acesso e fechadura", "Wi-Fi", "Códigos e senhas", "Dados bancários", "Notas internas"];
+const NEVER = [
+  "Acesso e fechadura",
+  "Wi-Fi",
+  "Códigos e senhas",
+  "Dados bancários",
+  "Notas internas",
+];
 
 export function OwnerVisibilityPanel({
   implementationId,
@@ -136,15 +148,25 @@ export function OwnerVisibilityPanel({
   };
   const readyHint: Record<PortalBlock, string> = {
     overview: "Mensagem escrita pela equipe",
-    proposal: published.length ? `${published.length} versão(ões) publicada(s)` : "Nenhuma versão publicada",
-    documents: attachmentsQ.data?.length ? `${attachmentsQ.data.length} arquivo(s) na implantação` : "Nenhum arquivo anexado",
+    proposal: published.length
+      ? `${published.length} versão(ões) publicada(s)`
+      : "Nenhuma versão publicada",
+    documents: attachmentsQ.data?.length
+      ? `${attachmentsQ.data.length} arquivo(s) na implantação`
+      : "Nenhum arquivo anexado",
   };
 
   const selectedProposal = published.find((p) => p.id === proposalId);
   const selectedDocs: DocumentsContent = {
     documents: (attachmentsQ.data ?? [])
       .filter((a) => docIds.includes(a.id))
-      .map((a) => ({ attachmentId: a.id, filename: a.filename, mimeType: a.mime_type, category: a.category, createdAt: a.created_at })),
+      .map((a) => ({
+        attachmentId: a.id,
+        filename: a.filename,
+        mimeType: a.mime_type,
+        category: a.category,
+        createdAt: a.created_at,
+      })),
   };
   const canConfirm =
     open === "overview"
@@ -179,20 +201,35 @@ export function OwnerVisibilityPanel({
                   <span
                     className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                     style={{
-                      background: r ? "var(--stayo-forest-soft)" : ready[b] ? "var(--stayo-gold-soft)" : "var(--stayo-bg)",
-                      color: r ? "var(--stayo-success)" : ready[b] ? "var(--stayo-warning)" : "var(--stayo-ink-muted)",
+                      background: r
+                        ? "var(--stayo-forest-soft)"
+                        : ready[b]
+                          ? "var(--stayo-gold-soft)"
+                          : "var(--stayo-bg)",
+                      color: r
+                        ? "var(--stayo-success)"
+                        : ready[b]
+                          ? "var(--stayo-warning)"
+                          : "var(--stayo-ink-muted)",
                     }}
                   >
                     {state}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-[var(--stayo-ink-muted)]">
-                  {r ? `Liberado por ${r.releasedByName ?? "equipe"} em ${fmt(r.releasedAt)}` : readyHint[b]}
+                  {r
+                    ? `Liberado por ${r.releasedByName ?? "equipe"} em ${fmt(r.releasedAt)}`
+                    : readyHint[b]}
                 </p>
               </div>
               <div className="flex gap-2">
                 {r && (
-                  <Button size="sm" variant="outline" disabled={hide.isPending} onClick={() => hide.mutate(b)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={hide.isPending}
+                    onClick={() => hide.mutate(b)}
+                  >
                     <EyeOff className="size-3.5" /> Tornar privado
                   </Button>
                 )}
@@ -221,27 +258,55 @@ export function OwnerVisibilityPanel({
 
           {open === "overview" && (
             <div className="space-y-2">
-              <input className="stayo-commercial-input" value={overview.title} onChange={(e) => setOverview({ ...overview, title: e.target.value })} placeholder="Título" />
-              <textarea className="stayo-commercial-input" rows={3} value={overview.message} onChange={(e) => setOverview({ ...overview, message: e.target.value })} placeholder="Mensagem" />
-              <input className="stayo-commercial-input" value={overview.nextStep ?? ""} onChange={(e) => setOverview({ ...overview, nextStep: e.target.value || null })} placeholder="Próximo passo (opcional)" />
+              <input
+                className="stayo-commercial-input"
+                value={overview.title}
+                onChange={(e) => setOverview({ ...overview, title: e.target.value })}
+                placeholder="Título"
+              />
+              <textarea
+                className="stayo-commercial-input"
+                rows={3}
+                value={overview.message}
+                onChange={(e) => setOverview({ ...overview, message: e.target.value })}
+                placeholder="Mensagem"
+              />
+              <input
+                className="stayo-commercial-input"
+                value={overview.nextStep ?? ""}
+                onChange={(e) => setOverview({ ...overview, nextStep: e.target.value || null })}
+                placeholder="Próximo passo (opcional)"
+              />
             </div>
           )}
           {open === "proposal" && (
-            <select className="stayo-commercial-input" value={proposalId} onChange={(e) => setProposalId(e.target.value)}>
+            <select
+              className="stayo-commercial-input"
+              value={proposalId}
+              onChange={(e) => setProposalId(e.target.value)}
+            >
               {published.map((p) => (
-                <option key={p.id} value={p.id}>Versão {p.version}</option>
+                <option key={p.id} value={p.id}>
+                  Versão {p.version}
+                </option>
               ))}
             </select>
           )}
           {open === "documents" && (
             <div className="space-y-1.5">
-              <p className="text-xs text-[var(--stayo-ink-muted)]">Marque apenas os arquivos que podem ser vistos.</p>
+              <p className="text-xs text-[var(--stayo-ink-muted)]">
+                Marque apenas os arquivos que podem ser vistos.
+              </p>
               {(attachmentsQ.data ?? []).map((a) => (
                 <label key={a.id} className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={docIds.includes(a.id)}
-                    onChange={(e) => setDocIds((ids) => (e.target.checked ? [...ids, a.id] : ids.filter((i) => i !== a.id)))}
+                    onChange={(e) =>
+                      setDocIds((ids) =>
+                        e.target.checked ? [...ids, a.id] : ids.filter((i) => i !== a.id),
+                      )
+                    }
                   />
                   <span className="truncate">{a.filename}</span>
                 </label>
@@ -255,7 +320,9 @@ export function OwnerVisibilityPanel({
             </p>
             {open === "overview" && <ReleasedOverview content={overview} />}
             {open === "proposal" && selectedProposal?.snapshot && (
-              <ReleasedProposal content={{ proposalId, snapshot: selectedProposal.snapshot } as ProposalContent} />
+              <ReleasedProposal
+                content={{ proposalId, snapshot: selectedProposal.snapshot } as ProposalContent}
+              />
             )}
             {open === "documents" &&
               (selectedDocs.documents.length ? (
@@ -266,7 +333,9 @@ export function OwnerVisibilityPanel({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setOpen(null)}>
+              Cancelar
+            </Button>
             <Button disabled={!canConfirm || release.isPending} onClick={() => release.mutate()}>
               {release.isPending ? "Liberando…" : "Confirmar liberação"}
             </Button>

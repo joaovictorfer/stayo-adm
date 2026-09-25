@@ -1445,15 +1445,15 @@ export function OwnerHomeContent({
     enabled: Boolean(implementation?.id),
   });
   const releasedOverview = releasesQ.data?.find((r) => r.block === "overview")?.content as
-    | OverviewContent
-    | undefined;
+    OverviewContent | undefined;
   const releasedProposal = releasesQ.data?.find((r) => r.block === "proposal")?.content as
-    | ProposalContent
-    | undefined;
+    ProposalContent | undefined;
   const releasedDocIds = new Set(
     (
-      (releasesQ.data?.find((r) => r.block === "documents")?.content as DocumentsContent | undefined)
-        ?.documents ?? []
+      (
+        releasesQ.data?.find((r) => r.block === "documents")?.content as
+          DocumentsContent | undefined
+      )?.documents ?? []
     ).map((d) => d.attachmentId),
   );
   const releasedDocs = (attachmentsQ.data ?? []).filter((a) => releasedDocIds.has(a.id));
@@ -1770,7 +1770,10 @@ export function OwnerHomeContent({
               title="Nenhuma proposta liberada ainda"
               description="Quando a equipe Stayo liberar a proposta para você, ela aparecerá aqui com valores e condições."
               nextStep="Se você já conversou com a equipe, responda a mensagem recebida para combinar os próximos passos."
-              action={{ label: "Acompanhar implantação", onClick: () => setActiveTab("implantacao") }}
+              action={{
+                label: "Acompanhar implantação",
+                onClick: () => setActiveTab("implantacao"),
+              }}
             />
           )}
         </TabsContent>

@@ -27,11 +27,7 @@ export interface OwnerIntakeData {
 }
 
 export type OwnerIntakeStatus =
-  | "draft"
-  | "submitted"
-  | "approved"
-  | "correction_requested"
-  | "discarded";
+  "draft" | "submitted" | "approved" | "correction_requested" | "discarded";
 
 export const intakeStatusLabel: Record<OwnerIntakeStatus, string> = {
   draft: "Em preenchimento",
@@ -181,7 +177,9 @@ export const ownerIntakeAdminApi = {
     const db = client();
     const { data: p, error } = await db
       .from("implementation_projects")
-      .select("owner_id, city, postal_code, condominium_name, unit, property_type, bedrooms, capacity")
+      .select(
+        "owner_id, city, postal_code, condominium_name, unit, property_type, bedrooms, capacity",
+      )
       .eq("id", implementationId)
       .single();
     if (error) throw error;
