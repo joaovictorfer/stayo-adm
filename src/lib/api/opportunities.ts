@@ -105,3 +105,36 @@ export async function createOpportunity(
   if (!implementationId) throw new Error("O banco não devolveu a oportunidade criada.");
   return { implementationId };
 }
+
+export interface CreateInviteOpportunityInput {
+  title: string;
+  responsibleUserId: string | null;
+  requestId: string;
+}
+
+/**
+ * Caminho "Convidar proprietário": oportunidade sem proprietário, telefone,
+ * condomínio ou imóvel. Depende da migration 0024 (admin_create_invite_opportunity).
+ */
+export async function createInviteOpportunity(
+  input: CreateInviteOpportunityInput,
+): Promise<CreateOpportunityResult> {
+  const { data, error } = await client().rpc("admin_create_invite_opportunity", {
+    p_data: {
+      title: input.title.trim(),
+      responsibleUserId: input.responsibleUserId,
+      requestId: input.requestId,
+    },
+  });
+  if (error) {
+    if (error.code === "PGRST202" || error.message?.includes("admin_create_invite_opportunity")) {
+      throw new Error(
+        "O convite sem proprietário ainda não está habilitado no banco. A migration 0024 precisa ser aplicada.",
+      );
+    }
+    throw new Error(error.message || "Não foi possível preparar o convite.");
+  }
+  const implementationId = firstOpportunityId(data as OpportunityRow);
+  if (!implementationId) throw new Error("O banco não devolveu a oportunidade criada.");
+  return { implementationId };
+}

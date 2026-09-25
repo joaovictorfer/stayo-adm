@@ -49,4 +49,13 @@ describe("opportunity state", () => {
     expect(opportunityNextAction({ ...base, status: "proposta" })).toBe("Revisar proposta");
     expect(opportunityNextAction({ ...base, status: "ativo" })).toBe("Acompanhar operação");
   });
+
+  it("mostra convite a preparar para oportunidade sem proprietário", () => {
+    expect(
+      opportunityNextAction({ ...base, origin: "admin_invite:abc", ownerId: null }),
+    ).toBe("Convite a preparar");
+    expect(
+      opportunityNextAction({ ...base, origin: "admin_invite:abc", ownerId: "o1" }),
+    ).toBe("Completar dados ou preparar proposta");
+  });
 });

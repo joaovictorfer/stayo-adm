@@ -24,13 +24,22 @@ export function isLightOpportunity(
   );
 }
 
+/** Oportunidade criada pelo caminho "Convidar proprietário" e ainda sem proprietário. */
+export function isInviteOpportunity(
+  value: Partial<Pick<ImplementationProject, "origin" | "ownerId">>,
+): boolean {
+  return !value.ownerId && Boolean(value.origin?.startsWith("admin_invite:"));
+}
+
 export function opportunityNextAction(
   value: Pick<
     ImplementationProject,
     "status" | "condominiumId" | "condominiumName" | "unit" | "address" | "corePropertyId"
-  >,
+  > &
+    Partial<Pick<ImplementationProject, "origin" | "ownerId">>,
 ): string {
   if (value.status === "prospect") {
+    if (isInviteOpportunity(value)) return "Convite a preparar";
     return isLightOpportunity(value) ? "Completar dados ou preparar proposta" : "Preparar proposta";
   }
   if (value.status === "proposta") return "Revisar proposta";
