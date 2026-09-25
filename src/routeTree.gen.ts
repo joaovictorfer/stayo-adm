@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ApresentacaoTokenRouteImport } from './routes/apresentacao.$token'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
@@ -67,6 +68,11 @@ const BiRoute = BiRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApresentacaoTokenRoute = ApresentacaoTokenRouteImport.update({
+  id: '/apresentacao/$token',
+  path: '/apresentacao/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
@@ -280,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
   '/login': typeof LoginRoute
+  '/apresentacao/$token': typeof ApresentacaoTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
   '/login': typeof LoginRoute
+  '/apresentacao/$token': typeof ApresentacaoTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -373,6 +381,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
   '/login': typeof LoginRoute
+  '/apresentacao/$token': typeof ApresentacaoTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -421,6 +430,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bi'
     | '/login'
+    | '/apresentacao/$token'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bi'
     | '/login'
+    | '/apresentacao/$token'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bi'
     | '/login'
+    | '/apresentacao/$token'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -560,6 +572,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
   LoginRoute: typeof LoginRoute
+  ApresentacaoTokenRoute: typeof ApresentacaoTokenRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
   ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
@@ -624,6 +637,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apresentacao/$token': {
+      id: '/apresentacao/$token'
+      path: '/apresentacao/$token'
+      fullPath: '/apresentacao/$token'
+      preLoaderRoute: typeof ApresentacaoTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/condominios/': {
@@ -920,6 +940,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
   LoginRoute: LoginRoute,
+  ApresentacaoTokenRoute: ApresentacaoTokenRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
   ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,

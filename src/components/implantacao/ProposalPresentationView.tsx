@@ -12,7 +12,10 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
     ["Taxa de administração", c.administrationFee != null ? `${c.administrationFee}%` : null],
     ["Limpeza", c.cleaningResponsibility ?? null],
     ["Repasse", c.payoutRule ?? null],
-    ["Manutenção sem autorização", c.maintenanceLimit != null ? formatMoney(c.maintenanceLimit) : null],
+    [
+      "Manutenção sem autorização",
+      c.maintenanceLimit != null ? formatMoney(c.maintenanceLimit) : null,
+    ],
     ["Vigência", c.durationMonths ? `${c.durationMonths} meses` : null],
     ["Aviso prévio", c.noticePeriodDays ? `${c.noticePeriodDays} dias` : null],
   ];
@@ -39,7 +42,10 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
           <ul className="divide-y divide-[var(--stayo-border)] rounded-[var(--radius-card)] border border-[var(--stayo-border)]">
             {snapshot.items.map((item, i) => (
               <li key={i} className="flex justify-between gap-3 px-3 py-2">
-                <span>{item.quantity > 1 ? `${item.quantity}× ` : ""}{item.description}</span>
+                <span>
+                  {item.quantity > 1 ? `${item.quantity}× ` : ""}
+                  {item.description}
+                </span>
                 <span className="shrink-0 font-medium">{formatMoney(item.total)}</span>
               </li>
             ))}
@@ -54,7 +60,10 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
             {conditions
               .filter(([, v]) => v)
               .map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-3 border-b border-[var(--stayo-border)] py-1.5">
+                <div
+                  key={k}
+                  className="flex justify-between gap-3 border-b border-[var(--stayo-border)] py-1.5"
+                >
                   <dt className="text-[var(--stayo-ink-muted)]">{k}</dt>
                   <dd className="text-right font-medium">{v}</dd>
                 </div>

@@ -237,7 +237,12 @@ export function OwnerInviteSection({
               <p className="text-xs text-[var(--stayo-ink-muted)]">
                 Copie agora: por segurança o link não fica guardado. Se perder, publique de novo.
               </p>
-              <input readOnly value={link} className="stayo-commercial-input" onFocus={(e) => e.target.select()} />
+              <input
+                readOnly
+                value={link}
+                className="stayo-commercial-input"
+                onFocus={(e) => e.target.select()}
+              />
               <label className="block text-xs font-medium text-[var(--stayo-ink-muted)]">
                 Mensagem para WhatsApp (editável)
                 <textarea

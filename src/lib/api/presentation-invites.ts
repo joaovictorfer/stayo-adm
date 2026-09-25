@@ -25,7 +25,10 @@ export interface PresentationInvite {
 
 export type PresentationInviteStatus = "active" | "expired" | "revoked";
 
-export function inviteStatus(invite: PresentationInvite, now = new Date()): PresentationInviteStatus {
+export function inviteStatus(
+  invite: PresentationInvite,
+  now = new Date(),
+): PresentationInviteStatus {
   if (invite.revokedAt) return "revoked";
   if (invite.expiresAt && new Date(invite.expiresAt).getTime() < now.getTime()) return "expired";
   return "active";

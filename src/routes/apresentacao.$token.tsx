@@ -10,7 +10,10 @@ export const Route = createFileRoute("/apresentacao/$token")({
   head: () => ({
     meta: [
       { title: "Proposta STAYO" },
-      { name: "description", content: "Conheça a proposta de administração STAYO para o seu imóvel." },
+      {
+        name: "description",
+        content: "Conheça a proposta de administração STAYO para o seu imóvel.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Proposta STAYO" },
       { property: "og:description", content: "Conheça a proposta de administração STAYO." },
