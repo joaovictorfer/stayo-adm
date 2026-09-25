@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "../../lib/api/queries";
+import type { AuditEvent } from "../../types/audit";
 
 /**
  * Itens faltantes: combina faltas derivadas do enxoval (necessário > existente)
@@ -169,7 +170,7 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["supply_items", implementationId] });
-  const audit = (event: string, metadata: Record<string, unknown>) =>
+  const audit = (event: AuditEvent, metadata: Record<string, unknown>) =>
     adminApi.audit.log({
       actorId: null,
       event,
@@ -234,8 +235,8 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
     mutationFn: async (input: {
       row: Row;
       patch: Partial<SupplyItem>;
-      auditEvent?: string;
-      reason?: string;
+      auditEvent?: AuditEvent | undefined;
+      reason?: string | undefined;
     }) => {
       const ids = input.row.items
         .filter((i) => (input.patch.status === "pendente" ? true : !isClosed(i)))
@@ -252,7 +253,7 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
       }
       const { error } = await supabase
         .from("implementation_supply_items")
-        .update({ ...input.patch, updated_at: new Date().toISOString() })
+        .update({ ...(input.patch as Record<string, unknown>), updated_at: new Date().toISOString() } as never)
         .in("id", ids.length ? ids : input.row.items.map((i) => i.id));
       if (error) throw error;
     },
@@ -482,7 +483,7 @@ function MissingRow({
   pending: boolean;
   onEdit: () => void;
   onDismissToggle: () => void;
-  onPatch: (patch: Partial<SupplyItem>, auditEvent?: string, reason?: string) => Promise<void>;
+  onPatch: (patch: Partial<SupplyItem>, auditEvent?: AuditEvent, reason?: string) => Promise<void>;
   onCloseEdit: () => void;
 }) {
   const item = row.primary;
