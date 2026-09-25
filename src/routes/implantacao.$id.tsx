@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
+  Eye,
+  EyeOff,
   ListChecks,
   LockKeyhole,
   Pencil,
@@ -1723,395 +1725,405 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
 
   return (
     <PropertySectionContext.Provider value={{ editingSection, setEditingSection }}>
-    <div className="flex flex-col gap-4">
-      <div
-        className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm"
-        style={{ borderColor: "var(--stayo-border)" }}
-      >
-        {adminCover ? (
-          <img
-            src={adminCover}
-            alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
-            className="h-48 w-full object-cover sm:h-60"
-          />
-        ) : (
-          <div className="flex h-48 items-end bg-[linear-gradient(135deg,var(--stayo-forest-strong),var(--stayo-forest),var(--stayo-gold))] p-5 sm:h-60">
-            <span className="text-sm text-[var(--stayo-on-dark-muted)]">
-              Imagem institucional · nenhuma capa cadastrada
-            </span>
-          </div>
-        )}
-        <div className="flex flex-col gap-3 bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p
-              className="text-[11px] font-medium uppercase tracking-[0.14em]"
-              style={{ color: "var(--stayo-ink-muted)" }}
-            >
-              Imóvel
-            </p>
-            <h1 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
-              {implementation.nickname || "Imóvel sem apelido"}
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-              {[implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") ||
-                "Condomínio e unidade não informados"}
-            </p>
-          </div>
-          <div className="min-w-44 rounded-[var(--radius-control)] bg-[var(--stayo-bg)] p-3">
-            <div className="flex items-center justify-between gap-3 text-xs">
-              <span style={{ color: "var(--stayo-ink-muted)" }}>Preenchimento</span>
-              <strong style={{ color: "var(--stayo-forest)" }}>{completionPercent}%</strong>
+      <div className="flex flex-col gap-4">
+        <div
+          className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
+          {adminCover ? (
+            <img
+              src={adminCover}
+              alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
+              className="h-48 w-full object-cover sm:h-60"
+            />
+          ) : (
+            <div className="flex h-48 items-end bg-[linear-gradient(135deg,var(--stayo-forest-strong),var(--stayo-forest),var(--stayo-gold))] p-5 sm:h-60">
+              <span className="text-sm text-[var(--stayo-on-dark-muted)]">
+                Imagem institucional · nenhuma capa cadastrada
+              </span>
             </div>
-            <div
-              className="mt-2 h-1.5 overflow-hidden rounded-full"
-              style={{ backgroundColor: "var(--stayo-border)" }}
-            >
-              <div
-                className="h-full rounded-full"
-                style={{ width: `${completionPercent}%`, backgroundColor: "var(--stayo-forest)" }}
-              />
-            </div>
-            <p className="mt-1.5 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-              {filledFields} de {totalFields} campos principais
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <Section
-        id="identificacao"
-        title="Identificação e endereço"
-        description="Dados básicos do imóvel e localização"
-      >
-        {editingSection === "identificacao" ? (
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Apelido" value={implementation.nickname || "Não informado"} />
-              <Field label="Condomínio" value={implementation.condominiumName || "Não informado"} />
-              <Field label="Unidade" value={implementation.unit || "Não informado"} />
-              <Field label="Cidade" value={implementation.city || "Não informado"} />
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label
-                className="flex-1 text-xs font-medium"
+          )}
+          <div className="flex flex-col gap-3 bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p
+                className="text-[11px] font-medium uppercase tracking-[0.14em]"
                 style={{ color: "var(--stayo-ink-muted)" }}
               >
-                Buscar endereço por CEP
+                Imóvel
+              </p>
+              <h1 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                {implementation.nickname || "Imóvel sem apelido"}
+              </h1>
+              <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                {[implementation.condominiumName, implementation.unit]
+                  .filter(Boolean)
+                  .join(" · ") || "Condomínio e unidade não informados"}
+              </p>
+            </div>
+            <div className="min-w-44 rounded-[var(--radius-control)] bg-[var(--stayo-bg)] p-3">
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span style={{ color: "var(--stayo-ink-muted)" }}>Preenchimento</span>
+                <strong style={{ color: "var(--stayo-forest)" }}>{completionPercent}%</strong>
+              </div>
+              <div
+                className="mt-2 h-1.5 overflow-hidden rounded-full"
+                style={{ backgroundColor: "var(--stayo-border)" }}
+              >
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${completionPercent}%`, backgroundColor: "var(--stayo-forest)" }}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                {filledFields} de {totalFields} campos principais
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Section
+          id="identificacao"
+          title="Identificação e endereço"
+          description="Dados básicos do imóvel e localização"
+        >
+          {editingSection === "identificacao" ? (
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Apelido" value={implementation.nickname || "Não informado"} />
+                <Field
+                  label="Condomínio"
+                  value={implementation.condominiumName || "Não informado"}
+                />
+                <Field label="Unidade" value={implementation.unit || "Não informado"} />
+                <Field label="Cidade" value={implementation.city || "Não informado"} />
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label
+                  className="flex-1 text-xs font-medium"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
+                  Buscar endereço por CEP
+                  <input
+                    value={postalCode}
+                    onChange={(event) =>
+                      setPostalCode(
+                        event.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 8)
+                          .replace(/^(\d{5})(\d)/, "$1-$2"),
+                      )
+                    }
+                    inputMode="numeric"
+                    placeholder="00000-000"
+                    className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                    style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void searchPostalCode()}
+                  className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium"
+                  style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+                >
+                  Buscar CEP
+                </button>
+              </div>
+              {addressLookupMessage && (
+                <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                  {addressLookupMessage}
+                </p>
+              )}
+              <label
+                className="block text-xs font-medium"
+                style={{ color: "var(--stayo-ink-muted)" }}
+              >
+                Endereço
                 <input
-                  value={postalCode}
-                  onChange={(event) =>
-                    setPostalCode(
-                      event.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 8)
-                        .replace(/^(\d{5})(\d)/, "$1-$2"),
-                    )
-                  }
-                  inputMode="numeric"
-                  placeholder="00000-000"
+                  value={addressDraft}
+                  onChange={(event) => setAddressDraft(event.target.value)}
                   className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
                   style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
                 />
               </label>
-              <button
-                type="button"
-                onClick={() => void searchPostalCode()}
-                className="rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium"
-                style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+              <label
+                className="block text-xs font-medium"
+                style={{ color: "var(--stayo-ink-muted)" }}
               >
-                Buscar CEP
-              </button>
-            </div>
-            {addressLookupMessage && (
-              <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                {addressLookupMessage}
-              </p>
-            )}
-            <label
-              className="block text-xs font-medium"
-              style={{ color: "var(--stayo-ink-muted)" }}
-            >
-              Endereço
-              <input
-                value={addressDraft}
-                onChange={(event) => setAddressDraft(event.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-              />
-            </label>
-            <label
-              className="block text-xs font-medium"
-              style={{ color: "var(--stayo-ink-muted)" }}
-            >
-              Cidade
-              <input
-                value={cityDraft}
-                onChange={(event) => setCityDraft(event.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-              />
-            </label>
-            <Button
-              type="button"
-              disabled={updateImplementation.isPending}
-              onClick={() =>
-                updateImplementation.mutate({
-                  address: addressDraft,
-                  city: cityDraft,
-                  postalCode: postalCode || implementation.postalCode,
-                })
-              }
-            >
-              {updateImplementation.isPending ? "Salvando..." : "Salvar seção"}
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Apelido" value={implementation.nickname || "Não informado"} />
-            <Field label="Condomínio" value={implementation.condominiumName || "Não informado"} />
-            <Field label="Unidade" value={implementation.unit || "Não informado"} />
-            <Field label="Endereço" value={implementation.address || "Não informado"} />
-            <Field label="Cidade" value={implementation.city || "Não informado"} />
-          </div>
-        )}
-      </Section>
-
-      <Section
-        id="composicao"
-        title="Composição"
-        description="Características principais da acomodação"
-      >
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
-          <Field label="Tipo de imóvel" value={implementation.propertyType || "Não informado"} />
-          <Field label="Quartos" value={implementation.bedrooms ?? "Não informado"} />
-          <Field label="Capacidade" value={implementation.capacity ?? "Não informado"} />
-        </div>
-      </Section>
-
-      <Section
-        id="ambientes"
-        title="Ambientes e camas"
-        description="Organização dos ambientes e lugares de dormir"
-      >
-        <div
-          className="rounded-[var(--radius-control)] border border-dashed bg-[var(--stayo-bg)] p-4"
-          style={{ borderColor: "var(--stayo-border)" }}
-        >
-          <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-            {implementation.bedrooms ?? "Não informado"} quarto(s) cadastrado(s)
-          </p>
-          <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Detalhamento de ambientes, camas e capacidades por cômodo ainda não informado nesta
-            implantação.
-          </p>
-        </div>
-      </Section>
-
-      <Section
-        id="acessos"
-        title="Acessos e Wi-Fi"
-        description="Ficha compartilhada com o proprietário"
-      >
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
-              Forma de acesso
-              <select
-                value={accessType ?? ""}
-                onChange={(event) =>
-                  setAccessType((event.target.value || null) as PropertyDetailsInput["accessType"])
-                }
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
-              >
-                <option value="">Selecione</option>
-                <option value="key">Chave</option>
-                <option value="lock">Fechadura digital</option>
-                <option value="concierge">Portaria</option>
-                <option value="other">Outro</option>
-              </select>
-            </label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
-              Orientações
-              <input
-                value={accessNotes}
-                onChange={(event) => setAccessNotes(event.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
-              />
-            </label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
-              Senha da fechadura
-              <input
-                value={accessCode}
-                onChange={(event) => setAccessCode(event.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
-              />
-            </label>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
-              Rede Wi-Fi
-              <input
-                value={wifiNetwork}
-                onChange={(event) => setWifiNetwork(event.target.value)}
-                autoComplete="off"
-                className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
-              />
-            </label>
-            <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
-              Senha do Wi-Fi
-              <span className="relative mt-1 block">
+                Cidade
                 <input
-                  type={showWifiPassword ? "text" : "password"}
-                  value={wifiPassword}
-                  onChange={(event) => setWifiPassword(event.target.value)}
-                  autoComplete="new-password"
-                  className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm text-[var(--stayo-ink)]"
+                  value={cityDraft}
+                  onChange={(event) => setCityDraft(event.target.value)}
+                  className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                  style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowWifiPassword((v) => !v)}
-                  aria-label={showWifiPassword ? "Ocultar senha do Wi-Fi" : "Mostrar senha do Wi-Fi"}
-                  aria-pressed={showWifiPassword}
-                  className="absolute inset-y-0 right-0 grid w-10 place-items-center text-[var(--stayo-ink-muted)] hover:text-[var(--stayo-ink)]"
+              </label>
+              <Button
+                type="button"
+                disabled={updateImplementation.isPending}
+                onClick={() =>
+                  updateImplementation.mutate({
+                    address: addressDraft,
+                    city: cityDraft,
+                    postalCode: postalCode || implementation.postalCode,
+                  })
+                }
+              >
+                {updateImplementation.isPending ? "Salvando..." : "Salvar seção"}
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="Apelido" value={implementation.nickname || "Não informado"} />
+              <Field label="Condomínio" value={implementation.condominiumName || "Não informado"} />
+              <Field label="Unidade" value={implementation.unit || "Não informado"} />
+              <Field label="Endereço" value={implementation.address || "Não informado"} />
+              <Field label="Cidade" value={implementation.city || "Não informado"} />
+            </div>
+          )}
+        </Section>
+
+        <Section
+          id="composicao"
+          title="Composição"
+          description="Características principais da acomodação"
+        >
+          <div className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
+            <Field label="Tipo de imóvel" value={implementation.propertyType || "Não informado"} />
+            <Field label="Quartos" value={implementation.bedrooms ?? "Não informado"} />
+            <Field label="Capacidade" value={implementation.capacity ?? "Não informado"} />
+          </div>
+        </Section>
+
+        <Section
+          id="ambientes"
+          title="Ambientes e camas"
+          description="Organização dos ambientes e lugares de dormir"
+        >
+          <div
+            className="rounded-[var(--radius-control)] border border-dashed bg-[var(--stayo-bg)] p-4"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+              {implementation.bedrooms ?? "Não informado"} quarto(s) cadastrado(s)
+            </p>
+            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              Detalhamento de ambientes, camas e capacidades por cômodo ainda não informado nesta
+              implantação.
+            </p>
+          </div>
+        </Section>
+
+        <Section
+          id="acessos"
+          title="Acessos e Wi-Fi"
+          description="Ficha compartilhada com o proprietário"
+        >
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+                Forma de acesso
+                <select
+                  value={accessType ?? ""}
+                  onChange={(event) =>
+                    setAccessType(
+                      (event.target.value || null) as PropertyDetailsInput["accessType"],
+                    )
+                  }
+                  className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
                 >
-                  {showWifiPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </span>
-            </label>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--stayo-gold)] bg-[var(--stayo-gold-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--stayo-warning)]">
-              <LockKeyhole className="size-3" /> Protegido · compartilhado com o proprietário
-            </span>
-            <Button
-              size="sm"
-              onClick={() => saveSharedDetails.mutate()}
-              disabled={saveSharedDetails.isPending}
-            >
-              {saveSharedDetails.isPending ? "Salvando…" : "Salvar acesso"}
-            </Button>
-          </div>
-        </div>
-      </Section>
-
-      <Section
-        id="timeline-publica"
-        title="Linha do tempo pública"
-        description="Atualizações visíveis no Portal do Proprietário"
-      >
-        <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
-          <input
-            value={timelineTitle}
-            onChange={(event) => setTimelineTitle(event.target.value)}
-            placeholder="Título da atualização"
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-          />
-          <input
-            value={timelineDescription}
-            onChange={(event) => setTimelineDescription(event.target.value)}
-            placeholder="Mensagem para o proprietário"
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-          />
-          <Button
-            size="sm"
-            onClick={() => publishUpdate.mutate()}
-            disabled={!timelineTitle.trim() || publishUpdate.isPending}
-          >
-            <Megaphone /> Publicar
-          </Button>
-        </div>
-        <div className="mt-4 space-y-2">
-          {(timelineQ.data ?? []).slice(0, 5).map((event) => (
-            <div
-              key={event.id}
-              className="flex items-start justify-between gap-3 border-t border-[var(--stayo-border)] pt-3 text-sm"
-            >
-              <div>
-                <strong>{event.title}</strong>
-                {event.description && (
-                  <p className="text-xs text-[var(--stayo-ink-muted)]">{event.description}</p>
-                )}
-              </div>
-              <span className="shrink-0 text-xs text-[var(--stayo-ink-muted)]">
-                {new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}
-              </span>
+                  <option value="">Selecione</option>
+                  <option value="key">Chave</option>
+                  <option value="lock">Fechadura digital</option>
+                  <option value="concierge">Portaria</option>
+                  <option value="other">Outro</option>
+                </select>
+              </label>
+              <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+                Orientações
+                <input
+                  value={accessNotes}
+                  onChange={(event) => setAccessNotes(event.target.value)}
+                  className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+                />
+              </label>
+              <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+                Senha da fechadura
+                <input
+                  value={accessCode}
+                  onChange={(event) => setAccessCode(event.target.value)}
+                  className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+                />
+              </label>
             </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        id="vistorias"
-        title="Vistorias"
-        description="Agendamento e resumo liberados no portal"
-      >
-        <div className="grid gap-3 sm:grid-cols-[13rem_1fr_auto]">
-          <input
-            type="datetime-local"
-            value={inspectionDate}
-            onChange={(event) => setInspectionDate(event.target.value)}
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-          />
-          <input
-            value={inspectionNotes}
-            onChange={(event) => setInspectionNotes(event.target.value)}
-            placeholder="Resumo para o proprietário"
-            className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
-          />
-          <Button
-            size="sm"
-            onClick={() => scheduleInspection.mutate()}
-            disabled={!inspectionDate || scheduleInspection.isPending}
-          >
-            <CalendarPlus /> Agendar
-          </Button>
-        </div>
-        <div className="mt-4 space-y-2">
-          {(inspectionsQ.data ?? []).map((inspection) => (
-            <div
-              key={inspection.id}
-              className="flex items-center justify-between border-t border-[var(--stayo-border)] pt-3 text-sm"
-            >
-              <span>{inspection.publicNotes || "Vistoria do imóvel"}</span>
-              <strong>{inspection.status === "completed" ? "Concluída" : "Agendada"}</strong>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+                Rede Wi-Fi
+                <input
+                  value={wifiNetwork}
+                  onChange={(event) => setWifiNetwork(event.target.value)}
+                  autoComplete="off"
+                  className="mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]"
+                />
+              </label>
+              <label className="text-xs font-medium text-[var(--stayo-ink-muted)]">
+                Senha do Wi-Fi
+                <span className="relative mt-1 block">
+                  <input
+                    type={showWifiPassword ? "text" : "password"}
+                    value={wifiPassword}
+                    onChange={(event) => setWifiPassword(event.target.value)}
+                    autoComplete="new-password"
+                    className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm text-[var(--stayo-ink)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowWifiPassword((v) => !v)}
+                    aria-label={
+                      showWifiPassword ? "Ocultar senha do Wi-Fi" : "Mostrar senha do Wi-Fi"
+                    }
+                    aria-pressed={showWifiPassword}
+                    className="absolute inset-y-0 right-0 grid w-10 place-items-center text-[var(--stayo-ink-muted)] hover:text-[var(--stayo-ink)]"
+                  >
+                    {showWifiPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </span>
+              </label>
             </div>
-          ))}
-        </div>
-      </Section>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--stayo-gold)] bg-[var(--stayo-gold-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--stayo-warning)]">
+                <LockKeyhole className="size-3" /> Protegido · compartilhado com o proprietário
+              </span>
+              <Button
+                size="sm"
+                onClick={() => saveSharedDetails.mutate()}
+                disabled={saveSharedDetails.isPending}
+              >
+                {saveSharedDetails.isPending ? "Salvando…" : "Salvar acesso"}
+              </Button>
+            </div>
+          </div>
+        </Section>
 
-      <Section
-        id="observacoes"
-        title="Observações internas"
-        description="Notas de uso exclusivo da operação"
-      >
-        {editingSection === "observacoes" ? (
-          <div className="space-y-3">
-            <textarea
-              value={notesDraft}
-              onChange={(event) => setNotesDraft(event.target.value)}
-              rows={5}
-              placeholder="Adicione observações internas sobre o imóvel"
-              className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-              style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+        <Section
+          id="timeline-publica"
+          title="Linha do tempo pública"
+          description="Atualizações visíveis no Portal do Proprietário"
+        >
+          <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
+            <input
+              value={timelineTitle}
+              onChange={(event) => setTimelineTitle(event.target.value)}
+              placeholder="Título da atualização"
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+            />
+            <input
+              value={timelineDescription}
+              onChange={(event) => setTimelineDescription(event.target.value)}
+              placeholder="Mensagem para o proprietário"
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
             />
             <Button
-              type="button"
-              disabled={updateImplementation.isPending}
-              onClick={() => updateImplementation.mutate({ notes: notesDraft })}
+              size="sm"
+              onClick={() => publishUpdate.mutate()}
+              disabled={!timelineTitle.trim() || publishUpdate.isPending}
             >
-              {updateImplementation.isPending ? "Salvando..." : "Salvar seção"}
+              <Megaphone /> Publicar
             </Button>
           </div>
-        ) : (
-          <p
-            className="whitespace-pre-wrap text-sm"
-            style={{ color: implementation.notes ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }}
-          >
-            {implementation.notes || "Nenhuma observação interna cadastrada."}
-          </p>
-        )}
-      </Section>
-    </div>
+          <div className="mt-4 space-y-2">
+            {(timelineQ.data ?? []).slice(0, 5).map((event) => (
+              <div
+                key={event.id}
+                className="flex items-start justify-between gap-3 border-t border-[var(--stayo-border)] pt-3 text-sm"
+              >
+                <div>
+                  <strong>{event.title}</strong>
+                  {event.description && (
+                    <p className="text-xs text-[var(--stayo-ink-muted)]">{event.description}</p>
+                  )}
+                </div>
+                <span className="shrink-0 text-xs text-[var(--stayo-ink-muted)]">
+                  {new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section
+          id="vistorias"
+          title="Vistorias"
+          description="Agendamento e resumo liberados no portal"
+        >
+          <div className="grid gap-3 sm:grid-cols-[13rem_1fr_auto]">
+            <input
+              type="datetime-local"
+              value={inspectionDate}
+              onChange={(event) => setInspectionDate(event.target.value)}
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+            />
+            <input
+              value={inspectionNotes}
+              onChange={(event) => setInspectionNotes(event.target.value)}
+              placeholder="Resumo para o proprietário"
+              className="rounded-[var(--radius-control)] border px-3 py-2 text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={() => scheduleInspection.mutate()}
+              disabled={!inspectionDate || scheduleInspection.isPending}
+            >
+              <CalendarPlus /> Agendar
+            </Button>
+          </div>
+          <div className="mt-4 space-y-2">
+            {(inspectionsQ.data ?? []).map((inspection) => (
+              <div
+                key={inspection.id}
+                className="flex items-center justify-between border-t border-[var(--stayo-border)] pt-3 text-sm"
+              >
+                <span>{inspection.publicNotes || "Vistoria do imóvel"}</span>
+                <strong>{inspection.status === "completed" ? "Concluída" : "Agendada"}</strong>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section
+          id="observacoes"
+          title="Observações internas"
+          description="Notas de uso exclusivo da operação"
+        >
+          {editingSection === "observacoes" ? (
+            <div className="space-y-3">
+              <textarea
+                value={notesDraft}
+                onChange={(event) => setNotesDraft(event.target.value)}
+                rows={5}
+                placeholder="Adicione observações internas sobre o imóvel"
+                className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+              />
+              <Button
+                type="button"
+                disabled={updateImplementation.isPending}
+                onClick={() => updateImplementation.mutate({ notes: notesDraft })}
+              >
+                {updateImplementation.isPending ? "Salvando..." : "Salvar seção"}
+              </Button>
+            </div>
+          ) : (
+            <p
+              className="whitespace-pre-wrap text-sm"
+              style={{
+                color: implementation.notes ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+              }}
+            >
+              {implementation.notes || "Nenhuma observação interna cadastrada."}
+            </p>
+          )}
+        </Section>
+      </div>
     </PropertySectionContext.Provider>
   );
 }
