@@ -1,6 +1,14 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Loader2, Pencil, Plus, RotateCcw, ShieldAlert } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Pencil,
+  Plus,
+  RotateCcw,
+  ShieldAlert,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -75,7 +83,10 @@ const enxovalMissing = (i: SupplyItem) => i.module === "enxoval" && i.existing_q
 function buildRows(items: SupplyItem[]): Row[] {
   const groups = new Map<string, SupplyItem[]>();
   for (const item of items) {
-    const relevant = item.module === "faltante" || enxovalMissing(item) || (item.module === "enxoval" && isClosed(item) && item.existing_qty < item.required_qty);
+    const relevant =
+      item.module === "faltante" ||
+      enxovalMissing(item) ||
+      (item.module === "enxoval" && isClosed(item) && item.existing_qty < item.required_qty);
     if (!relevant) continue;
     const k = keyOf(item.name, item.room);
     groups.set(k, [...(groups.get(k) ?? []), item]);
@@ -142,7 +153,8 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
   const counts = {
     todos: openRows.length,
     bloqueadores: openRows.filter((r) => r.blocks).length,
-    comprar: openRows.filter((r) => r.items.some((i) => !isClosed(i) && i.status === "pendente")).length,
+    comprar: openRows.filter((r) => r.items.some((i) => !isClosed(i) && i.status === "pendente"))
+      .length,
     resolvidos: rows.length - openRows.length,
   };
   const visible = rows.filter((r) =>
@@ -155,9 +167,16 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
           : !r.resolved,
   );
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["supply_items", implementationId] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["supply_items", implementationId] });
   const audit = (event: string, metadata: Record<string, unknown>) =>
-    adminApi.audit.log({ actorId: null, event, entityType: "implementation", entityId: implementationId, metadata });
+    adminApi.audit.log({
+      actorId: null,
+      event,
+      entityType: "implementation",
+      entityId: implementationId,
+      metadata,
+    });
 
   const create = useMutation({
     mutationFn: async (d: typeof emptyDraft) => {
@@ -181,14 +200,21 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
       if (error) throw error;
     },
     onSuccess: async () => {
-      setDraft((d) => ({ ...emptyDraft, room: d.room, priority: d.priority, responsible: d.responsible }));
+      setDraft((d) => ({
+        ...emptyDraft,
+        room: d.room,
+        priority: d.priority,
+        responsible: d.responsible,
+      }));
       setAddError(null);
       toast.success("Item adicionado");
       await invalidate();
       nameRef.current?.focus({ preventScroll: true });
     },
     onError: (err: unknown) =>
-      setAddError(`Não foi possível salvar: ${err instanceof Error ? err.message : "tente de novo"}. O que você digitou continua aqui.`),
+      setAddError(
+        `Não foi possível salvar: ${err instanceof Error ? err.message : "tente de novo"}. O que você digitou continua aqui.`,
+      ),
   });
 
   const commit = () => {
@@ -196,7 +222,9 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
     const k = keyOf(draft.name, draft.room.trim() || "Geral");
     const dup = rows.find((r) => r.key === k && !r.resolved);
     if (dup) {
-      setAddError(`"${dup.primary.name}" em ${dup.primary.room || "Geral"} já está na lista (${originLabels[dup.origin].toLowerCase()}). Edite o item existente.`);
+      setAddError(
+        `"${dup.primary.name}" em ${dup.primary.room || "Geral"} já está na lista (${originLabels[dup.origin].toLowerCase()}). Edite o item existente.`,
+      );
       return;
     }
     create.mutate(draft);
@@ -209,7 +237,9 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
       auditEvent?: string;
       reason?: string;
     }) => {
-      const ids = input.row.items.filter((i) => (input.patch.status === "pendente" ? true : !isClosed(i))).map((i) => i.id);
+      const ids = input.row.items
+        .filter((i) => (input.patch.status === "pendente" ? true : !isClosed(i)))
+        .map((i) => i.id);
       if (input.auditEvent) {
         await audit(input.auditEvent, {
           items: ids,
@@ -230,7 +260,9 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
       await invalidate();
     },
     onError: (err: unknown) =>
-      toast.error("Não foi possível salvar", { description: err instanceof Error ? err.message : undefined }),
+      toast.error("Não foi possível salvar", {
+        description: err instanceof Error ? err.message : undefined,
+      }),
   });
 
   return (
@@ -341,8 +373,16 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
             />
             Bloqueia
           </label>
-          <Button type="submit" className="h-9 gap-1.5" disabled={!draft.name.trim() || create.isPending}>
-            {create.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
+          <Button
+            type="submit"
+            className="h-9 gap-1.5"
+            disabled={!draft.name.trim() || create.isPending}
+          >
+            {create.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Plus className="size-3.5" />
+            )}
             Adicionar
           </Button>
         </div>
@@ -359,11 +399,19 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
               Tamanho / especificação
-              <Input value={draft.size} onChange={(e) => setDraft({ ...draft, size: e.target.value })} className="mt-1 h-9 bg-white" />
+              <Input
+                value={draft.size}
+                onChange={(e) => setDraft({ ...draft, size: e.target.value })}
+                className="mt-1 h-9 bg-white"
+              />
             </label>
             <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
               Observações
-              <Input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} className="mt-1 h-9 bg-white" />
+              <Input
+                value={draft.notes}
+                onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                className="mt-1 h-9 bg-white"
+              />
             </label>
           </div>
         )}
@@ -389,7 +437,9 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
         </p>
       ) : visible.length === 0 ? (
         <p className="rounded-lg border bg-white p-6 text-center text-sm text-[var(--stayo-ink-muted)]">
-          {filter === "resolvidos" ? "Nenhum item resolvido ainda." : "Nenhum item faltante neste filtro."}
+          {filter === "resolvidos"
+            ? "Nenhum item resolvido ainda."
+            : "Nenhum item faltante neste filtro."}
         </p>
       ) : (
         <ul className="divide-y rounded-lg border bg-white">
@@ -476,7 +526,11 @@ function MissingRow({
       patch.required_qty = Math.max(1, Number(edit.qty) || 1);
     }
     try {
-      await onPatch(patch, unblocking ? "supply.blocker_removed" : undefined, edit.reason.trim() || undefined);
+      await onPatch(
+        patch,
+        unblocking ? "supply.blocker_removed" : undefined,
+        edit.reason.trim() || undefined,
+      );
       toast.success("Item atualizado");
       onCloseEdit();
     } catch (err) {
@@ -494,12 +548,17 @@ function MissingRow({
               {originLabels[row.origin]}
             </span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700">
-              {row.resolved ? statusLabels[row.items.some((i) => i.status === "instalado") ? "instalado" : "nao_aplicavel"] : statusLabels[item.status]}
+              {row.resolved
+                ? statusLabels[
+                    row.items.some((i) => i.status === "instalado") ? "instalado" : "nao_aplicavel"
+                  ]
+                : statusLabels[item.status]}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-[var(--stayo-ink-muted)]">
-            {row.missingQty > 0 ? `Faltam ${row.missingQty}` : `${item.required_qty} un.`} · {item.room || "Geral"} ·
-            Prioridade {priorityLabels[item.priority] ?? item.priority} · {item.responsible || "sem responsável"}
+            {row.missingQty > 0 ? `Faltam ${row.missingQty}` : `${item.required_qty} un.`} ·{" "}
+            {item.room || "Geral"} · Prioridade {priorityLabels[item.priority] ?? item.priority} ·{" "}
+            {item.responsible || "sem responsável"}
             {item.size ? ` · ${item.size}` : ""}
           </p>
           {row.blocks && !row.resolved && (
@@ -510,18 +569,44 @@ function MissingRow({
         </div>
         <div className="flex flex-wrap items-start justify-end gap-1.5">
           {row.resolved ? (
-            <Button size="sm" variant="outline" disabled={pending} onClick={() => void onPatch({ status: "pendente" }, "supply.reopened")}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() =>
+                void onPatch({ status: "pendente" }, "supply.reopened").catch(() => undefined)
+              }
+            >
               <RotateCcw className="size-3.5" /> Reabrir
             </Button>
           ) : (
             <>
-              <Button size="sm" disabled={pending} onClick={() => void onPatch({ status: "instalado" }, "supply.resolved").then(() => toast.success("Item resolvido"))}>
+              <Button
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  void onPatch({ status: "instalado" }, "supply.resolved")
+                    .then(() => toast.success("Item resolvido"))
+                    .catch(() => undefined)
+                }
+              >
                 Resolver
               </Button>
-              <Button size="sm" variant="outline" onClick={onDismissToggle} aria-expanded={dismissing}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onDismissToggle}
+                aria-expanded={dismissing}
+              >
                 Dispensar
               </Button>
-              <Button size="sm" variant="ghost" onClick={onEdit} aria-expanded={editing} aria-label={`Editar ${item.name}`}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onEdit}
+                aria-expanded={editing}
+                aria-label={`Editar ${item.name}`}
+              >
                 <Pencil className="size-3.5" />
               </Button>
             </>
@@ -533,17 +618,28 @@ function MissingRow({
         <div className="mt-3 rounded-md border bg-amber-50/60 p-3">
           <label className="text-xs font-medium text-[var(--stayo-ink)]">
             {row.blocks ? "Justificativa (obrigatória: item bloqueador)" : "Motivo (opcional)"}
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-9 bg-white" autoFocus />
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="mt-1 h-9 bg-white"
+              autoFocus
+            />
           </label>
           <div className="mt-2 flex gap-2">
             <Button
               size="sm"
               disabled={pending || (row.blocks && reason.trim().length < 5)}
               onClick={() =>
-                void onPatch({ status: "nao_aplicavel" }, "supply.dismissed", reason.trim() || undefined).then(() => {
-                  setReason("");
-                  toast.success("Item dispensado e registrado");
-                })
+                void onPatch(
+                  { status: "nao_aplicavel" },
+                  "supply.dismissed",
+                  reason.trim() || undefined,
+                )
+                  .then(() => {
+                    setReason("");
+                    toast.success("Item dispensado e registrado");
+                  })
+                  .catch(() => undefined)
               }
             >
               Confirmar dispensa
@@ -561,11 +657,21 @@ function MissingRow({
             <>
               <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
                 Item
-                <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} className="mt-1 h-9 bg-white" />
+                <Input
+                  value={edit.name}
+                  onChange={(e) => setEdit({ ...edit, name: e.target.value })}
+                  className="mt-1 h-9 bg-white"
+                />
               </label>
               <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
                 Quantidade
-                <Input type="number" min={1} value={edit.qty} onChange={(e) => setEdit({ ...edit, qty: e.target.value })} className="mt-1 h-9 bg-white" />
+                <Input
+                  type="number"
+                  min={1}
+                  value={edit.qty}
+                  onChange={(e) => setEdit({ ...edit, qty: e.target.value })}
+                  className="mt-1 h-9 bg-white"
+                />
               </label>
             </>
           ) : (
@@ -575,11 +681,19 @@ function MissingRow({
           )}
           <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
             Ambiente
-            <Input value={edit.room} onChange={(e) => setEdit({ ...edit, room: e.target.value })} className="mt-1 h-9 bg-white" />
+            <Input
+              value={edit.room}
+              onChange={(e) => setEdit({ ...edit, room: e.target.value })}
+              className="mt-1 h-9 bg-white"
+            />
           </label>
           <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
             Prioridade
-            <select value={edit.priority} onChange={(e) => setEdit({ ...edit, priority: e.target.value as Priority })} className={`${control} mt-1`}>
+            <select
+              value={edit.priority}
+              onChange={(e) => setEdit({ ...edit, priority: e.target.value as Priority })}
+              className={`${control} mt-1`}
+            >
               <option value="baixa">Baixa</option>
               <option value="media">Média</option>
               <option value="alta">Alta</option>
@@ -587,11 +701,19 @@ function MissingRow({
           </label>
           <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
             Responsável
-            <Input value={edit.responsible} onChange={(e) => setEdit({ ...edit, responsible: e.target.value })} className="mt-1 h-9 bg-white" />
+            <Input
+              value={edit.responsible}
+              onChange={(e) => setEdit({ ...edit, responsible: e.target.value })}
+              className="mt-1 h-9 bg-white"
+            />
           </label>
           <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
             Status
-            <select value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as SupplyStatus })} className={`${control} mt-1`}>
+            <select
+              value={edit.status}
+              onChange={(e) => setEdit({ ...edit, status: e.target.value as SupplyStatus })}
+              className={`${control} mt-1`}
+            >
               <option value="pendente">Pendente (comprar)</option>
               <option value="comprado">Comprado</option>
               <option value="entregue">Entregue</option>
@@ -599,24 +721,44 @@ function MissingRow({
           </label>
           <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
             Tamanho
-            <Input value={edit.size} onChange={(e) => setEdit({ ...edit, size: e.target.value })} className="mt-1 h-9 bg-white" />
+            <Input
+              value={edit.size}
+              onChange={(e) => setEdit({ ...edit, size: e.target.value })}
+              className="mt-1 h-9 bg-white"
+            />
           </label>
           <label className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
             Observações
-            <Input value={edit.notes} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} className="mt-1 h-9 bg-white" />
+            <Input
+              value={edit.notes}
+              onChange={(e) => setEdit({ ...edit, notes: e.target.value })}
+              className="mt-1 h-9 bg-white"
+            />
           </label>
           <label className="flex min-h-9 items-center gap-2 text-xs font-medium text-[var(--stayo-ink)] sm:col-span-2">
-            <input type="checkbox" checked={edit.blocks} onChange={(e) => setEdit({ ...edit, blocks: e.target.checked })} className="size-4" />
+            <input
+              type="checkbox"
+              checked={edit.blocks}
+              onChange={(e) => setEdit({ ...edit, blocks: e.target.checked })}
+              className="size-4"
+            />
             Bloqueia a prontidão
           </label>
           {unblocking && (
             <label className="text-[11px] font-medium text-[var(--stayo-danger)] sm:col-span-2 lg:col-span-4">
               Justificativa para retirar o bloqueio (fica registrada)
-              <Input value={edit.reason} onChange={(e) => setEdit({ ...edit, reason: e.target.value })} className="mt-1 h-9 bg-white" />
+              <Input
+                value={edit.reason}
+                onChange={(e) => setEdit({ ...edit, reason: e.target.value })}
+                className="mt-1 h-9 bg-white"
+              />
             </label>
           )}
           {error && (
-            <p role="alert" className="text-xs text-[var(--stayo-danger)] sm:col-span-2 lg:col-span-4">
+            <p
+              role="alert"
+              className="text-xs text-[var(--stayo-danger)] sm:col-span-2 lg:col-span-4"
+            >
               {error}
             </p>
           )}
