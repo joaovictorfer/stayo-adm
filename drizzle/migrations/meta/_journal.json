@@ -141,6 +141,13 @@
       "when": 1790369241371,
       "tag": "0019_timeline_kinds_cadastro_enxoval",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790369412397,
+      "tag": "0020_harden_has_admin_role_null",
+      "breakpoints": true
     }
   ]
 }
