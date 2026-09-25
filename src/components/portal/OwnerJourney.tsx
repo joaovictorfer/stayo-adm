@@ -592,11 +592,11 @@ function SaveStatus({ state }: { state: "idle" | "saving" | "saved" | "error" })
 }
 
 function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage; onSelect: (stage: Stage) => void }) {
-  const steps: Array<{ id: Stage; label: string; icon: ReactNode }> = [
-    { id: 1, label: "Proposta", icon: <FileCheck2 /> },
-    { id: 2, label: "Seus dados", icon: <UserRound /> },
-    { id: 3, label: "Seu imóvel", icon: <Home /> },
-    { id: 4, label: "Seu acesso", icon: <KeyRound /> },
+  const steps: Array<{ id: Stage; label: string; short: string; icon: ReactNode }> = [
+    { id: 1, label: "Proposta", short: "Proposta", icon: <FileCheck2 /> },
+    { id: 2, label: "Seus dados", short: "Dados", icon: <UserRound /> },
+    { id: 3, label: "Seu imóvel", short: "Imóvel", icon: <Home /> },
+    { id: 4, label: "Seu acesso", short: "Acesso", icon: <KeyRound /> },
   ];
   return (
     <nav className="portal-journey-steps" aria-label="Etapas da jornada">
