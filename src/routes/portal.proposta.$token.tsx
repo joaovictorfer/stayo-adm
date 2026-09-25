@@ -2,7 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileWarning, WifiOff } from "lucide-react";
 
-import { PortalEmptyState, PortalShell, PortalSkeleton } from "../components/portal/PortalExperience";
+import {
+  PortalEmptyState,
+  PortalShell,
+  PortalSkeleton,
+} from "../components/portal/PortalExperience";
 import { PublicProposalPresentation } from "../components/portal/PublicProposalPresentation";
 import { resolvePublicProposalByToken } from "../lib/api/public-proposal";
 
