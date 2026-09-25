@@ -563,7 +563,10 @@ function CommercialMeetingContent({
       )}
 
       {(state.events.length > 0 || state.actionHistory.length > 0) && (
-        <details open className="rounded-[var(--radius-card)] border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4">
+        <details
+          open
+          className="rounded-[var(--radius-card)] border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4"
+        >
           <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-[var(--stayo-ink)]">
             <History className="size-4" /> Histórico comercial
           </summary>
@@ -681,7 +684,10 @@ function MeetingForm({
           required
         />
         {mode === "video" && (
-          <FormField label="Link do Google Meet" hint="Opcional e informado manualmente. Nenhum convite é enviado.">
+          <FormField
+            label="Link do Google Meet"
+            hint="Opcional e informado manualmente. Nenhum convite é enviado."
+          >
             <input
               type="url"
               inputMode="url"
