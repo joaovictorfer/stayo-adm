@@ -3972,5 +3972,6 @@ a.admin-data-row:hover,
   .owner-overview { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
   .owner-overview-stage, .owner-overview-next { grid-column: 1; }
   .owner-overview > .owner-overview-block, .owner-overview > .owner-overview-error { grid-column: 2; }
-  .owner-overview-stage { grid-row: 1; }
+  .owner-overview-stage { grid-column: 1 / -1; }
+  .owner-overview-next { grid-row: 2 / span 3; }
 }
