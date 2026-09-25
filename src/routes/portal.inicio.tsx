@@ -638,6 +638,15 @@ function DocumentIcon({ attachment }: { attachment: Attachment }) {
   );
 }
 
+const moduleTabValue: Partial<Record<OwnerPortalModule, string>> = {
+  overview: "visao-geral",
+  implementation: "implantacao",
+  profile: "dados",
+  proposal: "proposta",
+  documents: "documentos",
+};
+const tabValueOf = (module: OwnerPortalModule) => moduleTabValue[module] ?? module;
+
 const portalModuleLabels: Record<OwnerPortalModule, string> = {
   overview: "Visão geral",
   implementation: "Minha implantação",
@@ -1474,8 +1483,8 @@ export function OwnerHomeContent({
   const welcome = useOwnerWelcomeState();
 
   useEffect(() => {
-    const activeModule = activeTab === "dados" ? "profile" : activeTab;
-    if (!portalModules.includes(activeModule as OwnerPortalModule)) setActiveTab("visao-geral");
+    if (!portalModules.some((module) => tabValueOf(module) === activeTab))
+      setActiveTab("visao-geral");
   }, [activeTab, portalModules]);
 
   useEffect(() => {
@@ -1536,11 +1545,7 @@ export function OwnerHomeContent({
             className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0"
           >
             {portalModules.map((module) => (
-              <TabsTrigger
-                key={module}
-                value={module === "profile" ? "dados" : module}
-                className="stayo-tab snap-start"
-              >
+              <TabsTrigger key={module} value={tabValueOf(module)} className="stayo-tab snap-start">
                 {portalModuleLabels[module]}
               </TabsTrigger>
             ))}

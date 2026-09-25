@@ -183,6 +183,7 @@ export async function listPortalTimeline(implementationId: string): Promise<Port
         .from("implementation_timeline_updates")
         .select("id,title,description,event_date,kind")
         .eq("implementation_id", implementationId)
+        .eq("owner_visible", true)
         .order("event_date", { ascending: false }),
       supabase
         .from("implementation_items")
@@ -190,13 +191,16 @@ export async function listPortalTimeline(implementationId: string): Promise<Port
         .eq("implementation_id", implementationId)
         .eq("owner_visible", true),
       supabase
-        .from("proposals")
-        .select("id,version,created_at,accepted_at")
-        .eq("implementation_id", implementationId),
+        .from("portal_visibility_releases")
+        .select("id,released_at,content")
+        .eq("implementation_id", implementationId)
+        .eq("block", "proposal")
+        .is("revoked_at", null),
       supabase
         .from("implementation_inspections")
         .select("id,type,status,scheduled_for,completed_at,public_notes")
-        .eq("implementation_id", implementationId),
+        .eq("implementation_id", implementationId)
+        .eq("owner_visible", true),
       supabase
         .from("implementation_projects")
         .select("id,status,start_date_estimate,completion_date_estimate,updated_at")
@@ -233,14 +237,14 @@ export async function listPortalTimeline(implementationId: string): Promise<Port
       source: "automatic",
     });
   }
-  for (const proposal of proposalsResult.data ?? []) {
+  for (const release of proposalsResult.data ?? []) {
+    const version = (release.content as { snapshot?: { version?: number } } | null)?.snapshot
+      ?.version;
     events.push({
-      id: `proposal-${proposal.id}`,
-      title: `Proposta comercial · versão ${proposal.version}`,
-      description: proposal.accepted_at
-        ? "Proposta aceita."
-        : "Proposta disponibilizada para análise.",
-      date: proposal.accepted_at ?? proposal.created_at,
+      id: `proposal-${release.id}`,
+      title: `Proposta comercial${version ? ` · versão ${version}` : ""}`,
+      description: "Proposta liberada para você na aba Proposta.",
+      date: release.released_at,
       kind: "budget",
       source: "automatic",
     });
