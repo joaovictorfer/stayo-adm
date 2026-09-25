@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { toast } from "sonner";
 
 import { StayoLogo } from "../brand/StayoLogo";
+import { OwnerCoverBanner } from "./OwnerCoverBanner";
 import { Button } from "../ui/button";
 import { ACCOUNT_TYPES, BRAZILIAN_BANKS, PIX_KEY_TYPES } from "../../config/payment-data";
 import { ownerJourneyApi, type OwnerJourneyProposal } from "../../lib/api/owner-journey";
@@ -126,7 +127,13 @@ interface PropertyErrors {
   propertyType?: string | undefined;
 }
 
-export function OwnerJourney({ implementationId, token }: { implementationId: string; token: string }) {
+export function OwnerJourney({
+  implementationId,
+  token,
+}: {
+  implementationId: string;
+  token: string;
+}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const implementationQ = useQuery(implementationQuery(implementationId));
@@ -153,7 +160,9 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
   const [agreed, setAgreed] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordAgain, setPasswordAgain] = useState("");
-  const [accountState, setAccountState] = useState<"idle" | "confirmation_required" | "linked">("idle");
+  const [accountState, setAccountState] = useState<"idle" | "confirmation_required" | "linked">(
+    "idle",
+  );
 
   const hydrated = useRef(false);
   const formRef = useRef(form);
@@ -277,7 +286,10 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
           const saved = await adminApi.ownerOnboarding.saveDraft(token, snapshot, code, false);
           lastSaved.current = signature;
           queryClient.setQueryData(["owner-onboarding-draft", token], saved);
-          queryClient.setQueryData(ownerOnboardingSubmissionQuery(implementationId).queryKey, saved);
+          queryClient.setQueryData(
+            ownerOnboardingSubmissionQuery(implementationId).queryKey,
+            saved,
+          );
           setSaveState("saved");
         })
         .catch(() => setSaveState("error"));
@@ -337,7 +349,14 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
       ...current,
       people: [
         ...current.people,
-        { role: "coproprietario", personType: "pf", fullName: "", document: "", email: "", phone: "" },
+        {
+          role: "coproprietario",
+          personType: "pf",
+          fullName: "",
+          document: "",
+          email: "",
+          phone: "",
+        },
       ],
     }));
   const removePerson = (index: number) =>
@@ -416,7 +435,10 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
     },
     onSuccess: (submission) => {
       queryClient.setQueryData(["owner-onboarding-draft", token], submission);
-      queryClient.setQueryData(ownerOnboardingSubmissionQuery(implementationId).queryKey, submission);
+      queryClient.setQueryData(
+        ownerOnboardingSubmissionQuery(implementationId).queryKey,
+        submission,
+      );
       lastSaved.current = JSON.stringify(form);
       setSaveState("saved");
       setMaxStage(4);
@@ -426,7 +448,9 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
       });
     },
     onError: (error) =>
-      toast.error("Não foi possível concluir o cadastro", { description: ownerErrorMessage(error) }),
+      toast.error("Não foi possível concluir o cadastro", {
+        description: ownerErrorMessage(error),
+      }),
     onSettled: () => {
       finalizing.current = false;
     },
@@ -499,6 +523,7 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
             ? "Conheça as condições combinadas antes de começarmos o cadastro."
             : "Uma etapa por vez. Você pode sair e continuar depois pelo mesmo link."}
         </p>
+        <OwnerCoverBanner token={token} inline />
         <Timeline stage={stage} maxStage={maxStage} onSelect={go} />
       </header>
 
@@ -506,67 +531,70 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
         <div className="portal-onboarding-card">
           <div key={stage} className="portal-onboarding-stage">
             {stage === 1 && (
-            <ProposalStep
-              journey={journeyQ.data ?? null}
-              loading={journeyQ.isPending}
-              failed={journeyQ.isError}
-              acceptName={acceptName}
-              agreed={agreed}
-              accepting={acceptProposal.isPending}
-              onAcceptName={setAcceptName}
-              onAgree={setAgreed}
-              onAccept={() => acceptProposal.mutate()}
-              onContinue={() => {
-                setMaxStage((value) => (value < 2 ? 2 : value));
-                setStage(2);
-              }}
-            />
-          )}
-          {stage === 2 && (
-            <OwnerStep
-              form={form}
-              people={people}
-              showErrors={showOwnerErrors}
-              onSet={set}
-              onUpdatePerson={updatePerson}
-              onAddPerson={addPerson}
-              onRemovePerson={removePerson}
-              onBack={() => go(1)}
-              onContinue={continueOwner}
-            />
-          )}
-          {stage === 3 && (
-            <PropertyStep
-              form={form}
-              implementationName={implementationQ.data?.condominiumName || implementationQ.data?.nickname || null}
-              errors={showPropertyErrors ? propertyErrors : {}}
-              finishing={finish.isPending}
-              onSet={set}
-              onBack={() => go(2)}
-              onContinue={continueProperty}
-            />
-          )}
-          {stage === 4 && (
-            <AccessStep
-              email={form.email}
-              password={password}
-              passwordAgain={passwordAgain}
-              accountState={accountState}
-              creating={createAccount.isPending}
-              authReady={isSupabaseConfigured()}
-              onPassword={setPassword}
-              onPasswordAgain={setPasswordAgain}
-              onCreate={() => createAccount.mutate()}
-              onBack={() => go(3)}
-              onEnter={() => void navigate({ to: "/portal/inicio" })}
-            />
-          )}
+              <ProposalStep
+                journey={journeyQ.data ?? null}
+                loading={journeyQ.isPending}
+                failed={journeyQ.isError}
+                acceptName={acceptName}
+                agreed={agreed}
+                accepting={acceptProposal.isPending}
+                onAcceptName={setAcceptName}
+                onAgree={setAgreed}
+                onAccept={() => acceptProposal.mutate()}
+                onContinue={() => {
+                  setMaxStage((value) => (value < 2 ? 2 : value));
+                  setStage(2);
+                }}
+              />
+            )}
+            {stage === 2 && (
+              <OwnerStep
+                form={form}
+                people={people}
+                showErrors={showOwnerErrors}
+                onSet={set}
+                onUpdatePerson={updatePerson}
+                onAddPerson={addPerson}
+                onRemovePerson={removePerson}
+                onBack={() => go(1)}
+                onContinue={continueOwner}
+              />
+            )}
+            {stage === 3 && (
+              <PropertyStep
+                form={form}
+                implementationName={
+                  implementationQ.data?.condominiumName || implementationQ.data?.nickname || null
+                }
+                errors={showPropertyErrors ? propertyErrors : {}}
+                finishing={finish.isPending}
+                onSet={set}
+                onBack={() => go(2)}
+                onContinue={continueProperty}
+              />
+            )}
+            {stage === 4 && (
+              <AccessStep
+                email={form.email}
+                password={password}
+                passwordAgain={passwordAgain}
+                accountState={accountState}
+                creating={createAccount.isPending}
+                authReady={isSupabaseConfigured()}
+                onPassword={setPassword}
+                onPasswordAgain={setPasswordAgain}
+                onCreate={() => createAccount.mutate()}
+                onBack={() => go(3)}
+                onEnter={() => void navigate({ to: "/portal/inicio" })}
+              />
+            )}
           </div>
         </div>
         <div className="portal-onboarding-trust">
           <ShieldCheck />
           <span>
-            Seus dados são protegidos e acessíveis apenas à equipe autorizada. Informações do imóvel não são publicadas automaticamente no Guia do Hóspede.
+            Seus dados são protegidos e acessíveis apenas à equipe autorizada. Informações do imóvel
+            não são publicadas automaticamente no Guia do Hóspede.
           </span>
         </div>
       </main>
@@ -591,7 +619,15 @@ function SaveStatus({ state }: { state: "idle" | "saving" | "saved" | "error" })
   );
 }
 
-function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage; onSelect: (stage: Stage) => void }) {
+function Timeline({
+  stage,
+  maxStage,
+  onSelect,
+}: {
+  stage: Stage;
+  maxStage: Stage;
+  onSelect: (stage: Stage) => void;
+}) {
   const steps: Array<{ id: Stage; label: string; short: string; icon: ReactNode }> = [
     { id: 1, label: "Proposta", short: "Proposta", icon: <FileCheck2 /> },
     { id: 2, label: "Seus dados", short: "Dados", icon: <UserRound /> },
@@ -653,8 +689,21 @@ function ProposalStep({
   onAccept: () => void;
   onContinue: () => void;
 }) {
-  if (loading) return <Blocked icon={<Cloud />} title="Carregando sua proposta" text="Estamos buscando a versão vinculada a este acesso." />;
-  if (failed) return <Blocked title="Não conseguimos abrir a proposta agora" text="Nada foi alterado. Tente novamente em instantes ou fale com a equipe STAYO." />;
+  if (loading)
+    return (
+      <Blocked
+        icon={<Cloud />}
+        title="Carregando sua proposta"
+        text="Estamos buscando a versão vinculada a este acesso."
+      />
+    );
+  if (failed)
+    return (
+      <Blocked
+        title="Não conseguimos abrir a proposta agora"
+        text="Nada foi alterado. Tente novamente em instantes ou fale com a equipe STAYO."
+      />
+    );
   if (!journey)
     return (
       <Blocked
@@ -683,12 +732,20 @@ function ProposalStep({
         <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <strong className="text-sm">Itens desta versão</strong>
-            <strong className="text-sm text-[var(--portal-navy)]">{money.format(journey.proposal.total)}</strong>
+            <strong className="text-sm text-[var(--portal-navy)]">
+              {money.format(journey.proposal.total)}
+            </strong>
           </div>
           <div className="divide-y divide-[var(--portal-border)]">
             {journey.proposal.items.map((item, index) => (
-              <div key={`${item.description}-${index}`} className="flex justify-between gap-4 py-2.5 text-sm">
-                <span>{item.description}{item.quantity > 1 ? ` · x${item.quantity}` : ""}</span>
+              <div
+                key={`${item.description}-${index}`}
+                className="flex justify-between gap-4 py-2.5 text-sm"
+              >
+                <span>
+                  {item.description}
+                  {item.quantity > 1 ? ` · x${item.quantity}` : ""}
+                </span>
                 <span className="shrink-0 font-medium">{money.format(item.total)}</span>
               </div>
             ))}
@@ -702,19 +759,37 @@ function ProposalStep({
             <Summary label="Repasse" value={journey.contractConditions.payoutRule} />
             <Summary
               label="Manutenção sem autorização"
-              value={journey.contractConditions.maintenanceLimit === null ? null : `Até ${money.format(journey.contractConditions.maintenanceLimit)}`}
+              value={
+                journey.contractConditions.maintenanceLimit === null
+                  ? null
+                  : `Até ${money.format(journey.contractConditions.maintenanceLimit)}`
+              }
             />
             <Summary
               label="Exclusividade"
-              value={journey.contractConditions.exclusivity === null ? null : journey.contractConditions.exclusivity ? "Sim" : "Não"}
+              value={
+                journey.contractConditions.exclusivity === null
+                  ? null
+                  : journey.contractConditions.exclusivity
+                    ? "Sim"
+                    : "Não"
+              }
             />
             <Summary
               label="Vigência"
-              value={journey.contractConditions.durationMonths === null ? null : `${journey.contractConditions.durationMonths} meses`}
+              value={
+                journey.contractConditions.durationMonths === null
+                  ? null
+                  : `${journey.contractConditions.durationMonths} meses`
+              }
             />
             <Summary
               label="Aviso prévio"
-              value={journey.contractConditions.noticePeriodDays === null ? null : `${journey.contractConditions.noticePeriodDays} dias`}
+              value={
+                journey.contractConditions.noticePeriodDays === null
+                  ? null
+                  : `${journey.contractConditions.noticePeriodDays} dias`
+              }
             />
           </div>
         </div>
@@ -726,8 +801,12 @@ function ProposalStep({
             <div>
               <strong className="text-sm text-emerald-950">Proposta aceita</strong>
               <p className="mt-1 text-xs text-emerald-800">
-                Aceite registrado{journey.proposal.acceptedName ? ` por ${journey.proposal.acceptedName}` : ""}
-                {journey.proposal.acceptedAt ? ` em ${new Date(journey.proposal.acceptedAt).toLocaleString("pt-BR")}` : ""}.
+                Aceite registrado
+                {journey.proposal.acceptedName ? ` por ${journey.proposal.acceptedName}` : ""}
+                {journey.proposal.acceptedAt
+                  ? ` em ${new Date(journey.proposal.acceptedAt).toLocaleString("pt-BR")}`
+                  : ""}
+                .
               </p>
             </div>
           </div>
@@ -739,15 +818,31 @@ function ProposalStep({
         <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
           <strong className="text-sm">Confirme para continuar</strong>
           <p className="mt-1 text-xs text-[var(--portal-muted)]">
-            Este aceite registra concordância comercial com esta versão. O contrato formal é tratado separadamente pela equipe STAYO.
+            Este aceite registra concordância comercial com esta versão. O contrato formal é tratado
+            separadamente pela equipe STAYO.
           </p>
           <div className="mt-4 space-y-3">
-            <Field label="Nome completo para confirmação" value={acceptName} onChange={onAcceptName} placeholder="Digite seu nome completo" />
+            <Field
+              label="Nome completo para confirmação"
+              value={acceptName}
+              onChange={onAcceptName}
+              placeholder="Digite seu nome completo"
+            />
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--portal-border)] p-3 text-sm">
-              <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} className="mt-0.5 size-4" />
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(event) => onAgree(event.target.checked)}
+                className="mt-0.5 size-4"
+              />
               <span>Li a proposta e estou de acordo com as condições apresentadas.</span>
             </label>
-            <Button type="button" className="portal-cta w-full" disabled={accepting || !agreed || acceptName.trim().length < 3} onClick={onAccept}>
+            <Button
+              type="button"
+              className="portal-cta w-full"
+              disabled={accepting || !agreed || acceptName.trim().length < 3}
+              onClick={onAccept}
+            >
               {accepting ? "Registrando aceite..." : "Aceitar proposta e continuar"}
               {!accepting && <ChevronRight className="size-4" />}
             </Button>
@@ -761,7 +856,9 @@ function ProposalStep({
 function TermCard({ term }: { term: CommercialTerm }) {
   return (
     <div className="portal-term-card rounded-2xl border border-[var(--portal-border)] bg-white p-4">
-      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--portal-muted)]">{term.label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--portal-muted)]">
+        {term.label}
+      </span>
       <strong className="mt-1 block text-lg text-[var(--portal-navy)]">{formatTerm(term)}</strong>
       {term.notes && <p className="mt-1 text-xs text-[var(--portal-muted)]">{term.notes}</p>}
     </div>
@@ -769,11 +866,13 @@ function TermCard({ term }: { term: CommercialTerm }) {
 }
 
 function formatTerm(term: CommercialTerm) {
-  if (term.chargeType === "percentage") return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(term.value)}%`;
+  if (term.chargeType === "percentage")
+    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(term.value)}%`;
   if (term.chargeType === "fixed_once") return `${money.format(term.value)} · uma vez`;
   if (term.chargeType === "per_reservation") return `${money.format(term.value)} · por reserva`;
   if (term.chargeType === "monthly") return `${money.format(term.value)} · por mês`;
-  if (term.chargeType === "optional") return term.value ? `${money.format(term.value)} · opcional` : "Opcional";
+  if (term.chargeType === "optional")
+    return term.value ? `${money.format(term.value)} · opcional` : "Opcional";
   if (term.chargeType === "informational") return term.notes || "Condição informativa";
   return String(term.value);
 }
@@ -792,19 +891,31 @@ function OwnerStep({
   form: OwnerOnboardingSubmissionInput;
   people: OwnerOnboardingPerson[];
   showErrors: boolean;
-  onSet: <K extends keyof OwnerOnboardingSubmissionInput>(key: K, value: OwnerOnboardingSubmissionInput[K]) => void;
+  onSet: <K extends keyof OwnerOnboardingSubmissionInput>(
+    key: K,
+    value: OwnerOnboardingSubmissionInput[K],
+  ) => void;
   onUpdatePerson: (index: number, patch: Partial<OwnerOnboardingPerson>) => void;
   onAddPerson: () => void;
   onRemovePerson: (index: number) => void;
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const error = (field: OwnerFormField) => showErrors ? validateOwnerField(field, form[field]) : undefined;
+  const error = (field: OwnerFormField) =>
+    showErrors ? validateOwnerField(field, form[field]) : undefined;
   const primary = people[0];
   return (
     <section className="space-y-6">
-      <Heading eyebrow="Etapa 2 de 4" title="Conte um pouco sobre você" text="Usaremos estes dados para preparar a implantação, os repasses e o relacionamento com a STAYO." />
-      <Section title="Identificação" icon={<UserRound />} text="Comece pelo proprietário principal. Se houver coproprietário ou proponente, adicione abaixo.">
+      <Heading
+        eyebrow="Etapa 2 de 4"
+        title="Conte um pouco sobre você"
+        text="Usaremos estes dados para preparar a implantação, os repasses e o relacionamento com a STAYO."
+      />
+      <Section
+        title="Identificação"
+        icon={<UserRound />}
+        text="Comece pelo proprietário principal. Se houver coproprietário ou proponente, adicione abaixo."
+      >
         <div className="space-y-3">
           {people.map((person, index) => (
             <PersonEditor
@@ -846,25 +957,119 @@ function OwnerStep({
           />
         </div>
       </Section>
-      <Section title="Seu endereço" text="Este é o endereço do proprietário, não o endereço do imóvel administrado.">
+      <Section
+        title="Seu endereço"
+        text="Este é o endereço do proprietário, não o endereço do imóvel administrado."
+      >
         <div className="grid gap-3 sm:grid-cols-6">
-          <Field className="sm:col-span-2" label="CEP" inputMode="numeric" value={formatBrazilianPostalCode(form.postalCode)} onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))} onBlur={() => void findCep(form.postalCode, onSet, false)} error={error("postalCode")} />
-          <Field className="sm:col-span-4" label="Endereço" value={form.street} onChange={(value) => onSet("street", value)} error={error("street")} />
-          <Field className="sm:col-span-2" label="Número" value={form.number} onChange={(value) => onSet("number", value)} error={error("number")} />
-          <Field className="sm:col-span-4" label="Complemento (opcional)" value={form.complement ?? ""} onChange={(value) => onSet("complement", value || null)} />
-          <Field className="sm:col-span-3" label="Bairro" value={form.district} onChange={(value) => onSet("district", value)} error={error("district")} />
-          <Field className="sm:col-span-2" label="Cidade" value={form.city} onChange={(value) => onSet("city", value)} error={error("city")} />
-          <Field className="sm:col-span-1" label="UF" value={form.state} onChange={(value) => onSet("state", value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2))} error={error("state")} />
+          <Field
+            className="sm:col-span-2"
+            label="CEP"
+            inputMode="numeric"
+            value={formatBrazilianPostalCode(form.postalCode)}
+            onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))}
+            onBlur={() => void findCep(form.postalCode, onSet, false)}
+            error={error("postalCode")}
+          />
+          <Field
+            className="sm:col-span-4"
+            label="Endereço"
+            value={form.street}
+            onChange={(value) => onSet("street", value)}
+            error={error("street")}
+          />
+          <Field
+            className="sm:col-span-2"
+            label="Número"
+            value={form.number}
+            onChange={(value) => onSet("number", value)}
+            error={error("number")}
+          />
+          <Field
+            className="sm:col-span-4"
+            label="Complemento (opcional)"
+            value={form.complement ?? ""}
+            onChange={(value) => onSet("complement", value || null)}
+          />
+          <Field
+            className="sm:col-span-3"
+            label="Bairro"
+            value={form.district}
+            onChange={(value) => onSet("district", value)}
+            error={error("district")}
+          />
+          <Field
+            className="sm:col-span-2"
+            label="Cidade"
+            value={form.city}
+            onChange={(value) => onSet("city", value)}
+            error={error("city")}
+          />
+          <Field
+            className="sm:col-span-1"
+            label="UF"
+            value={form.state}
+            onChange={(value) =>
+              onSet(
+                "state",
+                value
+                  .toUpperCase()
+                  .replace(/[^A-Z]/g, "")
+                  .slice(0, 2),
+              )
+            }
+            error={error("state")}
+          />
         </div>
       </Section>
-      <Section title="Dados para repasse" icon={<LockKeyhole />} text="Informações financeiras ficam restritas à equipe autorizada e são confirmadas antes do primeiro repasse.">
+      <Section
+        title="Dados para repasse"
+        icon={<LockKeyhole />}
+        text="Informações financeiras ficam restritas à equipe autorizada e são confirmadas antes do primeiro repasse."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Select label="Banco" value={form.bankName} onChange={(value) => onSet("bankName", value)} options={BRAZILIAN_BANKS.map((bank) => ({ value: bank, label: bank }))} placeholder="Selecione o banco" error={error("bankName")} />
-          <Select label="Tipo de conta" value={form.accountType} onChange={(value) => onSet("accountType", value as OwnerOnboardingSubmissionInput["accountType"])} options={[...ACCOUNT_TYPES]} error={error("accountType")} />
-          <Field label="Agência" value={form.bankBranch} onChange={(value) => onSet("bankBranch", value)} error={error("bankBranch")} />
-          <Field label="Conta com dígito" value={form.accountNumber} onChange={(value) => onSet("accountNumber", value)} error={error("accountNumber")} />
-          <Field label="Titular da conta" value={form.accountHolder} onChange={(value) => onSet("accountHolder", value)} error={error("accountHolder")} />
-          <Field label="CPF/CNPJ do titular" inputMode="numeric" value={formatBrazilianDocument(form.holderTaxId)} onChange={(value) => onSet("holderTaxId", formatBrazilianDocument(value))} error={error("holderTaxId")} />
+          <Select
+            label="Banco"
+            value={form.bankName}
+            onChange={(value) => onSet("bankName", value)}
+            options={BRAZILIAN_BANKS.map((bank) => ({ value: bank, label: bank }))}
+            placeholder="Selecione o banco"
+            error={error("bankName")}
+          />
+          <Select
+            label="Tipo de conta"
+            value={form.accountType}
+            onChange={(value) =>
+              onSet("accountType", value as OwnerOnboardingSubmissionInput["accountType"])
+            }
+            options={[...ACCOUNT_TYPES]}
+            error={error("accountType")}
+          />
+          <Field
+            label="Agência"
+            value={form.bankBranch}
+            onChange={(value) => onSet("bankBranch", value)}
+            error={error("bankBranch")}
+          />
+          <Field
+            label="Conta com dígito"
+            value={form.accountNumber}
+            onChange={(value) => onSet("accountNumber", value)}
+            error={error("accountNumber")}
+          />
+          <Field
+            label="Titular da conta"
+            value={form.accountHolder}
+            onChange={(value) => onSet("accountHolder", value)}
+            error={error("accountHolder")}
+          />
+          <Field
+            label="CPF/CNPJ do titular"
+            inputMode="numeric"
+            value={formatBrazilianDocument(form.holderTaxId)}
+            onChange={(value) => onSet("holderTaxId", formatBrazilianDocument(value))}
+            error={error("holderTaxId")}
+          />
           <Select
             label="Tipo da chave Pix"
             value={form.pixType}
@@ -877,7 +1082,12 @@ function OwnerStep({
             options={[...PIX_KEY_TYPES]}
             error={error("pixType")}
           />
-          <Field label="Chave Pix" value={form.pixKey} onChange={(value) => onSet("pixKey", value)} error={error("pixKey")} />
+          <Field
+            label="Chave Pix"
+            value={form.pixKey}
+            onChange={(value) => onSet("pixKey", value)}
+            error={error("pixKey")}
+          />
         </div>
       </Section>
       <Actions onBack={onBack} onContinue={onContinue} label="Continuar para o imóvel" />
@@ -904,20 +1114,81 @@ function PersonEditor({
     <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <strong className="text-sm">{index === 0 ? "Proprietário principal" : `Pessoa ${index + 1}`}</strong>
-          <p className="mt-0.5 text-xs text-[var(--portal-muted)]">{index === 0 ? "Responsável principal pela jornada" : "Coproprietário ou proponente"}</p>
+          <strong className="text-sm">
+            {index === 0 ? "Proprietário principal" : `Pessoa ${index + 1}`}
+          </strong>
+          <p className="mt-0.5 text-xs text-[var(--portal-muted)]">
+            {index === 0 ? "Responsável principal pela jornada" : "Coproprietário ou proponente"}
+          </p>
         </div>
-        {onRemove && <Button type="button" variant="ghost" size="icon" onClick={onRemove} aria-label="Remover pessoa"><Trash2 className="size-4" /></Button>}
+        {onRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onRemove}
+            aria-label="Remover pessoa"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        {index > 0 && <Select label="Participação" value={person.role} onChange={(value) => onChange({ role: value as OwnerOnboardingPerson["role"] })} options={[{ value: "coproprietario", label: "Coproprietário" }, { value: "proponente", label: "Proponente" }]} />}
-        <Select label="Tipo de pessoa" value={person.personType} onChange={(value) => onChange({ personType: value as OwnerOnboardingPerson["personType"] })} options={[{ value: "pf", label: "Pessoa física" }, { value: "pj", label: "Pessoa jurídica" }]} />
-        <Field label={person.personType === "pf" ? "Nome completo" : "Razão social"} value={person.fullName} onChange={(value) => onChange({ fullName: value })} error={nameError} />
-        <Field label={person.personType === "pf" ? "CPF" : "CNPJ"} inputMode="numeric" value={formatBrazilianDocument(person.document)} onChange={(value) => onChange({ document: formatBrazilianDocument(value) })} error={documentError} />
+        {index > 0 && (
+          <Select
+            label="Participação"
+            value={person.role}
+            onChange={(value) => onChange({ role: value as OwnerOnboardingPerson["role"] })}
+            options={[
+              { value: "coproprietario", label: "Coproprietário" },
+              { value: "proponente", label: "Proponente" },
+            ]}
+          />
+        )}
+        <Select
+          label="Tipo de pessoa"
+          value={person.personType}
+          onChange={(value) =>
+            onChange({ personType: value as OwnerOnboardingPerson["personType"] })
+          }
+          options={[
+            { value: "pf", label: "Pessoa física" },
+            { value: "pj", label: "Pessoa jurídica" },
+          ]}
+        />
+        <Field
+          label={person.personType === "pf" ? "Nome completo" : "Razão social"}
+          value={person.fullName}
+          onChange={(value) => onChange({ fullName: value })}
+          error={nameError}
+        />
+        <Field
+          label={person.personType === "pf" ? "CPF" : "CNPJ"}
+          inputMode="numeric"
+          value={formatBrazilianDocument(person.document)}
+          onChange={(value) => onChange({ document: formatBrazilianDocument(value) })}
+          error={documentError}
+        />
         {index > 0 && (
           <>
-            <Field label="E-mail (opcional)" type="email" value={person.email} onChange={(value) => onChange({ email: value })} error={showErrors && person.email ? validateOwnerField("email", person.email) : undefined} />
-            <Field label="Telefone (opcional)" inputMode="tel" value={formatBrazilianPhone(person.phone)} onChange={(value) => onChange({ phone: formatBrazilianPhone(value) })} error={showErrors && person.phone ? validateOwnerField("phone", person.phone) : undefined} />
+            <Field
+              label="E-mail (opcional)"
+              type="email"
+              value={person.email}
+              onChange={(value) => onChange({ email: value })}
+              error={
+                showErrors && person.email ? validateOwnerField("email", person.email) : undefined
+              }
+            />
+            <Field
+              label="Telefone (opcional)"
+              inputMode="tel"
+              value={formatBrazilianPhone(person.phone)}
+              onChange={(value) => onChange({ phone: formatBrazilianPhone(value) })}
+              error={
+                showErrors && person.phone ? validateOwnerField("phone", person.phone) : undefined
+              }
+            />
           </>
         )}
       </div>
@@ -938,55 +1209,195 @@ function PropertyStep({
   implementationName: string | null;
   errors: PropertyErrors;
   finishing: boolean;
-  onSet: <K extends keyof OwnerOnboardingSubmissionInput>(key: K, value: OwnerOnboardingSubmissionInput[K]) => void;
+  onSet: <K extends keyof OwnerOnboardingSubmissionInput>(
+    key: K,
+    value: OwnerOnboardingSubmissionInput[K],
+  ) => void;
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const number = (key: "propertyBedrooms" | "propertySuites" | "propertyBathrooms" | "propertyParkingSpots", value: string) =>
-    onSet(key, value === "" ? null : Math.max(0, Number.parseInt(value, 10) || 0));
+  const number = (
+    key: "propertyBedrooms" | "propertySuites" | "propertyBathrooms" | "propertyParkingSpots",
+    value: string,
+  ) => onSet(key, value === "" ? null : Math.max(0, Number.parseInt(value, 10) || 0));
   return (
     <section className="space-y-6">
-      <Heading eyebrow="Etapa 3 de 4" title="Agora, seu imóvel" text="Estas informações iniciam a ficha de implantação. A equipe STAYO valida os dados antes de uso operacional ou publicação." />
+      <Heading
+        eyebrow="Etapa 3 de 4"
+        title="Agora, seu imóvel"
+        text="Estas informações iniciam a ficha de implantação. A equipe STAYO valida os dados antes de uso operacional ou publicação."
+      />
       {implementationName && (
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-surface-soft)] p-4">
           <Building2 className="size-5 text-[var(--portal-navy)]" />
-          <div><span className="text-xs text-[var(--portal-muted)]">Pré-cadastro STAYO</span><strong className="block text-sm">{implementationName}</strong></div>
+          <div>
+            <span className="text-xs text-[var(--portal-muted)]">Pré-cadastro STAYO</span>
+            <strong className="block text-sm">{implementationName}</strong>
+          </div>
         </div>
       )}
-      <Section title="Localização" icon={<Home />} text="Se o endereço já veio preenchido pela STAYO, confira e complete o que estiver faltando.">
+      <Section
+        title="Localização"
+        icon={<Home />}
+        text="Se o endereço já veio preenchido pela STAYO, confira e complete o que estiver faltando."
+      >
         <div className="grid gap-3 sm:grid-cols-6">
-          <Field className="sm:col-span-2" label="CEP do imóvel" inputMode="numeric" value={formatBrazilianPostalCode(form.propertyPostalCode)} onChange={(value) => onSet("propertyPostalCode", formatBrazilianPostalCode(value))} onBlur={() => void findCep(form.propertyPostalCode, onSet, true)} error={errors.propertyPostalCode} />
-          <Field className="sm:col-span-4" label="Endereço" value={form.propertyStreet} onChange={(value) => onSet("propertyStreet", value)} error={errors.propertyStreet} />
-          <Field className="sm:col-span-2" label="Número / unidade" value={form.propertyNumber} onChange={(value) => onSet("propertyNumber", value)} error={errors.propertyNumber} />
-          <Field className="sm:col-span-4" label="Complemento (opcional)" value={form.propertyComplement ?? ""} onChange={(value) => onSet("propertyComplement", value || null)} />
-          <Field className="sm:col-span-3" label="Bairro" value={form.propertyDistrict} onChange={(value) => onSet("propertyDistrict", value)} error={errors.propertyDistrict} />
-          <Field className="sm:col-span-2" label="Cidade" value={form.propertyCity} onChange={(value) => onSet("propertyCity", value)} error={errors.propertyCity} />
-          <Field className="sm:col-span-1" label="UF" value={form.propertyState} onChange={(value) => onSet("propertyState", value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2))} error={errors.propertyState} />
+          <Field
+            className="sm:col-span-2"
+            label="CEP do imóvel"
+            inputMode="numeric"
+            value={formatBrazilianPostalCode(form.propertyPostalCode)}
+            onChange={(value) => onSet("propertyPostalCode", formatBrazilianPostalCode(value))}
+            onBlur={() => void findCep(form.propertyPostalCode, onSet, true)}
+            error={errors.propertyPostalCode}
+          />
+          <Field
+            className="sm:col-span-4"
+            label="Endereço"
+            value={form.propertyStreet}
+            onChange={(value) => onSet("propertyStreet", value)}
+            error={errors.propertyStreet}
+          />
+          <Field
+            className="sm:col-span-2"
+            label="Número / unidade"
+            value={form.propertyNumber}
+            onChange={(value) => onSet("propertyNumber", value)}
+            error={errors.propertyNumber}
+          />
+          <Field
+            className="sm:col-span-4"
+            label="Complemento (opcional)"
+            value={form.propertyComplement ?? ""}
+            onChange={(value) => onSet("propertyComplement", value || null)}
+          />
+          <Field
+            className="sm:col-span-3"
+            label="Bairro"
+            value={form.propertyDistrict}
+            onChange={(value) => onSet("propertyDistrict", value)}
+            error={errors.propertyDistrict}
+          />
+          <Field
+            className="sm:col-span-2"
+            label="Cidade"
+            value={form.propertyCity}
+            onChange={(value) => onSet("propertyCity", value)}
+            error={errors.propertyCity}
+          />
+          <Field
+            className="sm:col-span-1"
+            label="UF"
+            value={form.propertyState}
+            onChange={(value) =>
+              onSet(
+                "propertyState",
+                value
+                  .toUpperCase()
+                  .replace(/[^A-Z]/g, "")
+                  .slice(0, 2),
+              )
+            }
+            error={errors.propertyState}
+          />
         </div>
       </Section>
-      <Section title="Características" text="Uma visão inicial é suficiente; a vistoria e a implantação completam a ficha depois.">
+      <Section
+        title="Características"
+        text="Uma visão inicial é suficiente; a vistoria e a implantação completam a ficha depois."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Tipo do imóvel" value={form.propertyType} onChange={(value) => onSet("propertyType", value)} placeholder="Ex.: Apartamento" error={errors.propertyType} />
-          <NumberInput label="Dormitórios" value={form.propertyBedrooms} onChange={(value) => number("propertyBedrooms", value)} />
-          <NumberInput label="Suítes" value={form.propertySuites} onChange={(value) => number("propertySuites", value)} />
-          <NumberInput label="Banheiros" value={form.propertyBathrooms} onChange={(value) => number("propertyBathrooms", value)} />
-          <NumberInput label="Vagas" value={form.propertyParkingSpots} onChange={(value) => number("propertyParkingSpots", value)} />
+          <Field
+            label="Tipo do imóvel"
+            value={form.propertyType}
+            onChange={(value) => onSet("propertyType", value)}
+            placeholder="Ex.: Apartamento"
+            error={errors.propertyType}
+          />
+          <NumberInput
+            label="Dormitórios"
+            value={form.propertyBedrooms}
+            onChange={(value) => number("propertyBedrooms", value)}
+          />
+          <NumberInput
+            label="Suítes"
+            value={form.propertySuites}
+            onChange={(value) => number("propertySuites", value)}
+          />
+          <NumberInput
+            label="Banheiros"
+            value={form.propertyBathrooms}
+            onChange={(value) => number("propertyBathrooms", value)}
+          />
+          <NumberInput
+            label="Vagas"
+            value={form.propertyParkingSpots}
+            onChange={(value) => number("propertyParkingSpots", value)}
+          />
         </div>
       </Section>
-      <Section title="Acesso e informações operacionais" icon={<KeyRound />} text="Preencha apenas o que já souber. Senhas e códigos são restritos e não são publicados automaticamente.">
+      <Section
+        title="Acesso e informações operacionais"
+        icon={<KeyRound />}
+        text="Preencha apenas o que já souber. Senhas e códigos são restritos e não são publicados automaticamente."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Select label="Forma de acesso" value={form.propertyAccessType ?? ""} onChange={(value) => onSet("propertyAccessType", (value || null) as OwnerOnboardingSubmissionInput["propertyAccessType"])} placeholder="Selecione" options={[{ value: "key", label: "Chave" }, { value: "lock", label: "Fechadura" }, { value: "concierge", label: "Portaria" }, { value: "other", label: "Outro" }]} />
-          <Field label="Orientações de acesso (opcional)" value={form.propertyAccessNotes} onChange={(value) => onSet("propertyAccessNotes", value)} />
-          {form.propertyAccessType === "lock" && <Field label="Código da fechadura (opcional)" type="password" value={form.propertyAccessCode} onChange={(value) => onSet("propertyAccessCode", value)} />}
-          <Field label="Rede Wi-Fi (opcional)" value={form.propertyWifiNetwork} onChange={(value) => onSet("propertyWifiNetwork", value)} />
-          <Field label="Senha do Wi-Fi (opcional)" type="password" value={form.propertyWifiPassword} onChange={(value) => onSet("propertyWifiPassword", value)} />
+          <Select
+            label="Forma de acesso"
+            value={form.propertyAccessType ?? ""}
+            onChange={(value) =>
+              onSet(
+                "propertyAccessType",
+                (value || null) as OwnerOnboardingSubmissionInput["propertyAccessType"],
+              )
+            }
+            placeholder="Selecione"
+            options={[
+              { value: "key", label: "Chave" },
+              { value: "lock", label: "Fechadura" },
+              { value: "concierge", label: "Portaria" },
+              { value: "other", label: "Outro" },
+            ]}
+          />
+          <Field
+            label="Orientações de acesso (opcional)"
+            value={form.propertyAccessNotes}
+            onChange={(value) => onSet("propertyAccessNotes", value)}
+          />
+          {form.propertyAccessType === "lock" && (
+            <Field
+              label="Código da fechadura (opcional)"
+              type="password"
+              value={form.propertyAccessCode}
+              onChange={(value) => onSet("propertyAccessCode", value)}
+            />
+          )}
+          <Field
+            label="Rede Wi-Fi (opcional)"
+            value={form.propertyWifiNetwork}
+            onChange={(value) => onSet("propertyWifiNetwork", value)}
+          />
+          <Field
+            label="Senha do Wi-Fi (opcional)"
+            type="password"
+            value={form.propertyWifiPassword}
+            onChange={(value) => onSet("propertyWifiPassword", value)}
+          />
         </div>
       </Section>
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
         <strong className="block">Importante</strong>
-        <p className="mt-1">Dados enviados aqui alimentam a implantação administrativa. Nada é publicado automaticamente no Guia do Hóspede sem revisão da equipe STAYO.</p>
+        <p className="mt-1">
+          Dados enviados aqui alimentam a implantação administrativa. Nada é publicado
+          automaticamente no Guia do Hóspede sem revisão da equipe STAYO.
+        </p>
       </div>
-      <Actions onBack={onBack} onContinue={onContinue} label={finishing ? "Enviando cadastro..." : "Finalizar cadastro e criar acesso"} disabled={finishing} />
+      <Actions
+        onBack={onBack}
+        onContinue={onContinue}
+        label={finishing ? "Enviando cadastro..." : "Finalizar cadastro e criar acesso"}
+        disabled={finishing}
+      />
     </section>
   );
 }
@@ -1018,52 +1429,149 @@ function AccessStep({
 }) {
   return (
     <section className="space-y-6">
-      <Heading eyebrow="Etapa 4 de 4" title="Seu acesso à STAYO" text="Proposta aceita e cadastro recebido. Agora crie sua senha para acompanhar a implantação e, depois, a operação do imóvel." />
+      <Heading
+        eyebrow="Etapa 4 de 4"
+        title="Seu acesso à STAYO"
+        text="Proposta aceita e cadastro recebido. Agora crie sua senha para acompanhar a implantação e, depois, a operação do imóvel."
+      />
       <div className="grid gap-3 sm:grid-cols-3">
         <Done label="Proposta" text="Aceita" />
         <Done label="Seus dados" text="Recebidos" />
         <Done label="Seu imóvel" text="Recebido" />
       </div>
       {!authReady ? (
-        <Blocked title="Cadastro concluído" text="O ambiente atual ainda não está conectado ao serviço de autenticação. Seus dados foram preservados e a equipe STAYO poderá liberar o acesso quando o serviço estiver disponível." />
+        <Blocked
+          title="Cadastro concluído"
+          text="O ambiente atual ainda não está conectado ao serviço de autenticação. Seus dados foram preservados e a equipe STAYO poderá liberar o acesso quando o serviço estiver disponível."
+        />
       ) : accountState === "confirmation_required" ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center"><CheckCircle2 className="mx-auto size-8 text-emerald-700" /><strong className="mt-3 block text-emerald-950">Confirme seu e-mail</strong><p className="mt-1 text-sm text-emerald-800">Enviamos uma confirmação para {email}. Depois, volte por este mesmo acesso ou entre no Portal do Proprietário.</p></div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+          <CheckCircle2 className="mx-auto size-8 text-emerald-700" />
+          <strong className="mt-3 block text-emerald-950">Confirme seu e-mail</strong>
+          <p className="mt-1 text-sm text-emerald-800">
+            Enviamos uma confirmação para {email}. Depois, volte por este mesmo acesso ou entre no
+            Portal do Proprietário.
+          </p>
+        </div>
       ) : accountState === "linked" ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center"><CheckCircle2 className="mx-auto size-8 text-emerald-700" /><strong className="mt-3 block text-emerald-950">Tudo pronto</strong><Button type="button" className="mt-4 w-full" onClick={onEnter}>Entrar no Portal do Proprietário</Button></div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+          <CheckCircle2 className="mx-auto size-8 text-emerald-700" />
+          <strong className="mt-3 block text-emerald-950">Tudo pronto</strong>
+          <Button type="button" className="mt-4 w-full" onClick={onEnter}>
+            Entrar no Portal do Proprietário
+          </Button>
+        </div>
       ) : (
         <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
-          <div className="mb-4 flex items-start gap-3"><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--portal-surface-soft)] text-[var(--portal-navy)]"><ShieldCheck className="size-5" /></div><div><strong className="text-sm">Crie sua senha</strong><p className="mt-1 text-xs text-[var(--portal-muted)]">O acesso será vinculado ao mesmo proprietário deste cadastro.</p></div></div>
+          <div className="mb-4 flex items-start gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--portal-surface-soft)] text-[var(--portal-navy)]">
+              <ShieldCheck className="size-5" />
+            </div>
+            <div>
+              <strong className="text-sm">Crie sua senha</strong>
+              <p className="mt-1 text-xs text-[var(--portal-muted)]">
+                O acesso será vinculado ao mesmo proprietário deste cadastro.
+              </p>
+            </div>
+          </div>
           <div className="space-y-3">
             <Field label="E-mail" type="email" value={email} onChange={() => undefined} disabled />
-            <Field label="Crie uma senha" type="password" value={password} onChange={onPassword} hint="Use pelo menos 8 caracteres." />
-            <Field label="Confirme a senha" type="password" value={passwordAgain} onChange={onPasswordAgain} error={passwordAgain && password !== passwordAgain ? "As senhas não coincidem." : undefined} />
-            <Button type="button" className="w-full" disabled={creating || password.length < 8 || password !== passwordAgain} onClick={onCreate}>{creating ? "Preparando acesso..." : "Criar meu acesso"}{!creating && <KeyRound className="size-4" />}</Button>
+            <Field
+              label="Crie uma senha"
+              type="password"
+              value={password}
+              onChange={onPassword}
+              hint="Use pelo menos 8 caracteres."
+            />
+            <Field
+              label="Confirme a senha"
+              type="password"
+              value={passwordAgain}
+              onChange={onPasswordAgain}
+              error={
+                passwordAgain && password !== passwordAgain ? "As senhas não coincidem." : undefined
+              }
+            />
+            <Button
+              type="button"
+              className="w-full"
+              disabled={creating || password.length < 8 || password !== passwordAgain}
+              onClick={onCreate}
+            >
+              {creating ? "Preparando acesso..." : "Criar meu acesso"}
+              {!creating && <KeyRound className="size-4" />}
+            </Button>
           </div>
         </div>
       )}
-      <Button type="button" variant="ghost" onClick={onBack} className="w-full"><ChevronLeft className="size-4" /> Voltar aos dados do imóvel</Button>
+      <Button type="button" variant="ghost" onClick={onBack} className="w-full">
+        <ChevronLeft className="size-4" /> Voltar aos dados do imóvel
+      </Button>
     </section>
   );
 }
 
-function Section({ title, text, icon, children }: { title: string; text: string; icon?: ReactNode | undefined; children: ReactNode }) {
+function Section({
+  title,
+  text,
+  icon,
+  children,
+}: {
+  title: string;
+  text: string;
+  icon?: ReactNode | undefined;
+  children: ReactNode;
+}) {
   return (
     <div className="portal-onboarding-section space-y-4 rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
-      <div className="flex items-start gap-3">{icon && <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--portal-surface-soft)] text-[var(--portal-navy)] [&>svg]:size-4">{icon}</div>}<div><strong className="text-sm">{title}</strong><p className="mt-1 text-xs leading-relaxed text-[var(--portal-muted)]">{text}</p></div></div>
+      <div className="flex items-start gap-3">
+        {icon && (
+          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--portal-surface-soft)] text-[var(--portal-navy)] [&>svg]:size-4">
+            {icon}
+          </div>
+        )}
+        <div>
+          <strong className="text-sm">{title}</strong>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--portal-muted)]">{text}</p>
+        </div>
+      </div>
       {children}
     </div>
   );
 }
 
 function Heading({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
-  return <div><span className="text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--portal-muted)]">{eyebrow}</span><h2 className="mt-1 text-xl font-semibold text-[var(--portal-navy)] sm:text-2xl">{title}</h2><p className="mt-2 text-sm leading-relaxed text-[var(--portal-muted)]">{text}</p></div>;
+  return (
+    <div>
+      <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--portal-muted)]">
+        {eyebrow}
+      </span>
+      <h2 className="mt-1 text-xl font-semibold text-[var(--portal-navy)] sm:text-2xl">{title}</h2>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--portal-muted)]">{text}</p>
+    </div>
+  );
 }
 
-function Actions({ onBack, onContinue, label, disabled }: { onBack: () => void; onContinue: () => void; label: string; disabled?: boolean | undefined }) {
+function Actions({
+  onBack,
+  onContinue,
+  label,
+  disabled,
+}: {
+  onBack: () => void;
+  onContinue: () => void;
+  label: string;
+  disabled?: boolean | undefined;
+}) {
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-[var(--portal-border)] pt-5 sm:flex-row sm:justify-between">
-      <Button type="button" variant="ghost" onClick={onBack} disabled={disabled}><ChevronLeft className="size-4" /> Voltar</Button>
-      <Button type="button" className="portal-cta" onClick={onContinue} disabled={disabled}>{label}{!disabled && <ChevronRight className="size-4" />}</Button>
+      <Button type="button" variant="ghost" onClick={onBack} disabled={disabled}>
+        <ChevronLeft className="size-4" /> Voltar
+      </Button>
+      <Button type="button" className="portal-cta" onClick={onContinue} disabled={disabled}>
+        {label}
+        {!disabled && <ChevronRight className="size-4" />}
+      </Button>
     </div>
   );
 }
@@ -1096,23 +1604,78 @@ function Field({
   return (
     <label className={`block text-sm ${className ?? ""}`}>
       <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">{label}</span>
-      <input className="portal-input w-full rounded-xl px-3 py-2.5 disabled:cursor-not-allowed disabled:opacity-65" type={type} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} inputMode={inputMode} placeholder={placeholder} aria-invalid={Boolean(error)} disabled={disabled} />
-      {error ? <span className="portal-field-error mt-1 block text-xs text-[var(--portal-danger)]">{error}</span> : hint ? <span className="mt-1 block text-[11px] text-[var(--portal-muted)]">{hint}</span> : null}
+      <input
+        className="portal-input w-full rounded-xl px-3 py-2.5 disabled:cursor-not-allowed disabled:opacity-65"
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
+        inputMode={inputMode}
+        placeholder={placeholder}
+        aria-invalid={Boolean(error)}
+        disabled={disabled}
+      />
+      {error ? (
+        <span className="portal-field-error mt-1 block text-xs text-[var(--portal-danger)]">
+          {error}
+        </span>
+      ) : hint ? (
+        <span className="mt-1 block text-[11px] text-[var(--portal-muted)]">{hint}</span>
+      ) : null}
     </label>
   );
 }
 
-function NumberInput({ label, value, onChange }: { label: string; value: number | null; onChange: (value: string) => void }) {
-  return <Field label={label} type="number" inputMode="numeric" value={value === null ? "" : String(value)} onChange={onChange} />;
+function NumberInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field
+      label={label}
+      type="number"
+      inputMode="numeric"
+      value={value === null ? "" : String(value)}
+      onChange={onChange}
+    />
+  );
 }
 
-function Select({ label, value, onChange, options, placeholder, error }: { label: string; value: string; onChange: (value: string) => void; options: ReadonlyArray<{ value: string; label: string }>; placeholder?: string | undefined; error?: string | undefined }) {
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  placeholder?: string | undefined;
+  error?: string | undefined;
+}) {
   return (
     <label className="block text-sm">
       <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">{label}</span>
-      <select className="portal-input w-full rounded-xl px-3 py-2.5" value={value} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)}>
+      <select
+        className="portal-input w-full rounded-xl px-3 py-2.5"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+      >
         {placeholder && <option value="">{placeholder}</option>}
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
       {error && <span className="mt-1 block text-xs text-[var(--portal-danger)]">{error}</span>}
     </label>
@@ -1121,15 +1684,48 @@ function Select({ label, value, onChange, options, placeholder, error }: { label
 
 function Summary({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
-  return <div className="rounded-xl bg-white/70 px-3 py-2"><span className="block text-[10px] uppercase tracking-[0.08em] text-[var(--portal-muted)]">{label}</span><strong className="mt-0.5 block text-xs">{value}</strong></div>;
+  return (
+    <div className="rounded-xl bg-white/70 px-3 py-2">
+      <span className="block text-[10px] uppercase tracking-[0.08em] text-[var(--portal-muted)]">
+        {label}
+      </span>
+      <strong className="mt-0.5 block text-xs">{value}</strong>
+    </div>
+  );
 }
 
 function Done({ label, text }: { label: string; text: string }) {
-  return <div className="portal-done-card rounded-2xl border border-emerald-200 bg-emerald-50 p-3"><div className="flex items-center gap-2"><CheckCircle2 className="size-4 text-emerald-700" /><span className="text-xs font-medium text-emerald-950">{label}</span></div><span className="mt-1 block text-xs text-emerald-800">{text}</span></div>;
+  return (
+    <div className="portal-done-card rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+      <div className="flex items-center gap-2">
+        <CheckCircle2 className="size-4 text-emerald-700" />
+        <span className="text-xs font-medium text-emerald-950">{label}</span>
+      </div>
+      <span className="mt-1 block text-xs text-emerald-800">{text}</span>
+    </div>
+  );
 }
 
-function Blocked({ title, text, icon }: { title: string; text: string; icon?: ReactNode | undefined }) {
-  return <div className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-surface-soft)] p-5 text-center"><div className="mx-auto grid size-8 place-items-center text-[var(--portal-navy)] [&>svg]:size-7">{icon ?? <LockKeyhole />}</div><strong className="mt-3 block text-sm">{title}</strong><p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[var(--portal-muted)]">{text}</p></div>;
+function Blocked({
+  title,
+  text,
+  icon,
+}: {
+  title: string;
+  text: string;
+  icon?: ReactNode | undefined;
+}) {
+  return (
+    <div className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-surface-soft)] p-5 text-center">
+      <div className="mx-auto grid size-8 place-items-center text-[var(--portal-navy)] [&>svg]:size-7">
+        {icon ?? <LockKeyhole />}
+      </div>
+      <strong className="mt-3 block text-sm">{title}</strong>
+      <p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[var(--portal-muted)]">
+        {text}
+      </p>
+    </div>
+  );
 }
 
 function headline(stage: Stage) {
@@ -1141,8 +1737,10 @@ function headline(stage: Stage) {
 
 function getPropertyErrors(form: OwnerOnboardingSubmissionInput): PropertyErrors {
   const errors: PropertyErrors = {};
-  if (form.propertyPostalCode && form.propertyPostalCode.replace(/\D/g, "").length !== 8) errors.propertyPostalCode = "Confira o CEP informado.";
-  if (form.propertyStreet.trim().length < 2) errors.propertyStreet = "Informe o endereço do imóvel.";
+  if (form.propertyPostalCode && form.propertyPostalCode.replace(/\D/g, "").length !== 8)
+    errors.propertyPostalCode = "Confira o CEP informado.";
+  if (form.propertyStreet.trim().length < 2)
+    errors.propertyStreet = "Informe o endereço do imóvel.";
   if (!form.propertyNumber.trim()) errors.propertyNumber = "Informe o número ou unidade.";
   if (form.propertyDistrict.trim().length < 2) errors.propertyDistrict = "Informe o bairro.";
   if (form.propertyCity.trim().length < 2) errors.propertyCity = "Informe a cidade.";
@@ -1153,14 +1751,23 @@ function getPropertyErrors(form: OwnerOnboardingSubmissionInput): PropertyErrors
 
 async function findCep(
   value: string,
-  set: <K extends keyof OwnerOnboardingSubmissionInput>(key: K, value: OwnerOnboardingSubmissionInput[K]) => void,
+  set: <K extends keyof OwnerOnboardingSubmissionInput>(
+    key: K,
+    value: OwnerOnboardingSubmissionInput[K],
+  ) => void,
   property: boolean,
 ) {
   const postalCode = value.replace(/\D/g, "");
   if (postalCode.length !== 8) return;
   try {
     const response = await fetch(`https://viacep.com.br/ws/${postalCode}/json/`);
-    const data = (await response.json()) as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string };
+    const data = (await response.json()) as {
+      erro?: boolean;
+      logradouro?: string;
+      bairro?: string;
+      localidade?: string;
+      uf?: string;
+    };
     if (data.erro) return;
     if (property) {
       set("propertyStreet", data.logradouro ?? "");
@@ -1175,16 +1782,20 @@ async function findCep(
     }
     toast.success("Endereço encontrado");
   } catch {
-    toast.info("Preencha o endereço manualmente", { description: "A busca do CEP está indisponível no momento." });
+    toast.info("Preencha o endereço manualmente", {
+      description: "A busca do CEP está indisponível no momento.",
+    });
   }
 }
 
 function ownerErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message.toLocaleLowerCase("pt-BR") : "";
-  if (message.includes("cpf") || message.includes("cnpj") || message.includes("documento")) return "Confira o CPF ou CNPJ informado.";
+  if (message.includes("cpf") || message.includes("cnpj") || message.includes("documento"))
+    return "Confira o CPF ou CNPJ informado.";
   if (message.includes("telefone")) return "Confira o telefone e o DDD.";
   if (message.includes("e-mail") || message.includes("email")) return "Confira o e-mail informado.";
-  if (message.includes("repasse") || message.includes("pix") || message.includes("conta")) return "Confira os dados de repasse.";
+  if (message.includes("repasse") || message.includes("pix") || message.includes("conta"))
+    return "Confira os dados de repasse.";
   return "Há um dado obrigatório ainda incompleto. Revise as etapas anteriores.";
 }
 
@@ -1192,7 +1803,8 @@ function accountErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message.toLocaleLowerCase("pt-BR") : "";
   if (message.includes("8 caracteres")) return "A senha precisa ter pelo menos 8 caracteres.";
   if (message.includes("não coincidem")) return "Digite a mesma senha nos dois campos.";
-  if (message.includes("already registered") || message.includes("já possui")) return "Este e-mail já possui acesso. Use a senha criada anteriormente ou recupere seu acesso.";
+  if (message.includes("already registered") || message.includes("já possui"))
+    return "Este e-mail já possui acesso. Use a senha criada anteriormente ou recupere seu acesso.";
   if (message.includes("email not confirmed")) return "Confirme o e-mail recebido antes de entrar.";
   if (message.includes("mesmo e-mail")) return "Use o mesmo e-mail informado no cadastro.";
   return "Tente novamente em alguns instantes.";

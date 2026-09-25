@@ -50,6 +50,7 @@ import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
 import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
+import { CoverPicker, useAdminCoverUrl } from "../components/implantacao/CoverPicker";
 import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
 import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
@@ -141,6 +142,7 @@ function ImplementationDetailPage() {
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
+  const adminCover = useAdminCoverUrl(implementation?.id);
   const nextItem = (itemsQuery.data ?? []).find((item) => item.status !== "concluido");
   const items = itemsQuery.data ?? [];
   const progress = computeProgress(items);
@@ -216,9 +218,9 @@ function ImplementationDetailPage() {
         <div className="implementation-workspace-stack">
           <section className="implementation-identity">
             <div className="implementation-cover">
-              {implementation.coverImage ? (
+              {adminCover ? (
                 <img
-                  src={implementation.coverImage}
+                  src={adminCover}
                   alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
                   className="absolute inset-0 h-full w-full object-cover"
                 />
@@ -742,6 +744,12 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
         <OwnerInviteSection
           implementationId={implementation.id}
           ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+        />
+        <CoverPicker
+          implementationId={implementation.id}
+          propertyName={
+            implementation.nickname || implementation.condominiumName || implementation.code
+          }
         />
         <OwnerIntakeReview
           implementationId={implementation.id}
@@ -1464,6 +1472,7 @@ function Metric({
 }
 
 function PropertyTab({ implementation }: { implementation: ImplementationProject }) {
+  const adminCover = useAdminCoverUrl(implementation.id);
   const queryClient = useQueryClient();
   const detailsQ = useQuery({
     queryKey: ["implementation-property-details", implementation.id],
@@ -1683,9 +1692,9 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
         className="relative overflow-hidden rounded-[var(--radius-card)] border shadow-sm"
         style={{ borderColor: "var(--stayo-border)" }}
       >
-        {implementation.coverImage ? (
+        {adminCover ? (
           <img
-            src={implementation.coverImage}
+            src={adminCover}
             alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
             className="h-48 w-full object-cover sm:h-60"
           />

@@ -13,6 +13,7 @@ import {
 } from "@/components/condominios/CondominiumForm";
 import { DetailSkeleton, ErrorRows, NotFoundPanel } from "@/components/data/ListStates";
 import { Button } from "@/components/ui/button";
+import { CondominiumCoverPanel } from "@/components/implantacao/CoverPicker";
 import { adminApi, adminCondominiumQuery, implementationsListQuery } from "@/lib/api/queries";
 import { statusLabels } from "@/lib/implementation-status";
 import type { AdminCondominium } from "@/types/admin";
@@ -118,6 +119,9 @@ function CondominiumDetailPage() {
             ) : (
               <ReadView condo={condo} />
             )}
+          </AdminSection>
+          <AdminSection title="Foto do condomínio" className="admin-panel p-4">
+            <CondominiumCoverPanel condominiumId={condo.id} condominiumName={condo.name} />
           </AdminSection>
           <LinkedApartments condominiumId={condo.id} />
         </div>

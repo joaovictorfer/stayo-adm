@@ -12,6 +12,7 @@ import {
   findOpportunityContactDuplicates,
   type OpportunityContactCandidate,
 } from "../../lib/api/opportunities";
+import { uploadImplementationCoverFor } from "../../lib/api/implementation-covers";
 import { adminApi, coreApi, implementationsListQuery } from "../../lib/api/queries";
 import { formatBrazilianPhone, normalizePhone } from "../../lib/owner-form-validation";
 import { InvitePath, MeetingPath, PathChooser, type OpportunityPath } from "./OpportunityPaths";
@@ -87,6 +88,7 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
     [candidates, form.existingOwnerId],
   );
 
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const valid = form.contactName.trim().length >= 3 && form.title.trim().length >= 3 && validPhone;
 
   const mutation = useMutation({
@@ -99,6 +101,15 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
         existingOwnerId: form.existingOwnerId,
         requestId,
       });
+      if (coverFile) {
+        try {
+          await uploadImplementationCoverFor(result.implementationId, coverFile);
+        } catch (e) {
+          toast.error("Oportunidade criada, mas a foto não foi enviada", {
+            description: e instanceof Error ? e.message : "Envie a foto na ficha.",
+          });
+        }
+      }
       const created = await coreApi.implementations.get(result.implementationId);
       if (!created) throw new Error("A oportunidade foi criada, mas não pôde ser recarregada.");
       return created;
@@ -254,6 +265,22 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
           hint="É apenas uma referência comercial. Não cria condomínio, unidade ou imóvel operacional."
           onChange={(value) => setForm((current) => ({ ...current, title: value }))}
         />
+
+        <label className="grid gap-1.5 text-sm">
+          <span className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+            Foto de capa do link (opcional)
+          </span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Foto de capa do link"
+            onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
+            className="text-xs file:mr-3 file:rounded-full file:border-0 file:bg-[var(--stayo-bg)] file:px-3 file:py-1.5"
+          />
+          <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Aparece no topo do link do proprietário. Pode trocar depois na ficha.
+          </span>
+        </label>
 
         <div
           className="rounded-[var(--radius-card)] border p-4"

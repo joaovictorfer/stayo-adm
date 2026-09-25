@@ -44,6 +44,7 @@ import { StayoLogo } from "@/components/brand/StayoLogo";
 import { toast } from "sonner";
 
 import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg";
+import { useOwnerCoverForImplementation } from "../hooks/use-owner-cover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
 import {
@@ -835,26 +836,32 @@ function PortalHero({
   const status = implementation?.status ?? "prospect";
   // Só é "foto do imóvel" quando há imagem autorizada na implantação;
   // caso contrário, é explicitamente o visual institucional da STAYO.
-  const hasPropertyPhoto = Boolean(implementation?.coverImage?.startsWith("http"));
-  const image = hasPropertyPhoto ? implementation!.coverImage! : portalPropertyFallback;
+  const cover = useOwnerCoverForImplementation(implementation?.id);
+  const [coverBroken, setCoverBroken] = useState(false);
+  const coverData = coverBroken ? null : (cover.data ?? null);
+  const hasPropertyPhoto = coverData?.source === "implementation";
+  const hasCondoPhoto = coverData?.source === "condominium";
+  const image = coverData?.url ?? portalPropertyFallback;
 
   return (
-    <header className={`portal-property-hero${hasPropertyPhoto ? " has-photo" : ""}`}>
+    <header className={`portal-property-hero${coverData ? " has-photo" : ""}`}>
       <img
         src={image}
+        onError={() => setCoverBroken(true)}
         alt={
           hasPropertyPhoto && implementation
             ? `Foto de ${propertyName(implementation)}`
-            : "Visual institucional STAYO (não é foto do imóvel)"
+            : hasCondoPhoto
+              ? `Foto do ${coverData?.label ?? "condomínio"}`
+              : "Visual institucional STAYO (não é foto do imóvel)"
         }
         width={1600}
         height={700}
         className="portal-property-hero-image"
       />
       <div className="portal-property-hero-overlay" />
-      {!hasPropertyPhoto && (
-        <span className="portal-hero-image-note">Imagem institucional STAYO</span>
-      )}
+      {!coverData && <span className="portal-hero-image-note">Imagem institucional STAYO</span>}
+      {hasCondoPhoto && <span className="portal-hero-image-note">{coverData?.label}</span>}
       <div className="portal-property-hero-content">
         <div className="flex items-start justify-between gap-4">
           <div className="portal-property-brand">
