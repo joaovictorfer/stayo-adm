@@ -126,15 +126,26 @@ export const presentationInvitesApi = {
   },
 };
 
-/** Leitura pública (anônima) — só a whitelist do snapshot publicado. */
-export async function resolvePresentation(
-  token: string,
-): Promise<CommercialProposalSnapshot | null> {
+export type PresentationResult =
+  | { state: "active"; snapshot: CommercialProposalSnapshot }
+  | { state: "invalid" | "expired" | "revoked" | "network" };
+
+/** Leitura pública (anônima) — estado do link + whitelist do snapshot publicado. */
+export async function resolvePresentation(token: string): Promise<PresentationResult> {
   const db = getSupabasePublicBrowserClient();
-  if (!db) throw new Error("Banco indisponível.");
-  const { data, error } = await db.rpc("proposal_public_resolve_by_token", { p_token: token });
-  if (error) throw error;
-  return (data as CommercialProposalSnapshot | null) ?? null;
+  if (!db) return { state: "network" };
+  try {
+    const status = await db.rpc("proposal_public_link_status", { p_token: token });
+    if (status.error) return { state: "network" };
+    const value = status.data as string;
+    if (value === "expired" || value === "revoked" || value === "invalid") return { state: value };
+    const { data, error } = await db.rpc("proposal_public_resolve_by_token", { p_token: token });
+    if (error) return { state: "network" };
+    if (!data) return { state: "invalid" };
+    return { state: "active", snapshot: data as CommercialProposalSnapshot };
+  } catch {
+    return { state: "network" };
+  }
 }
 
 export function presentationUrl(token: string): string {
