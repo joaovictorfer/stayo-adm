@@ -1106,6 +1106,274 @@ a.admin-data-row:hover,
   flex: 0 0 auto;
   color: var(--portal-gold);
 }
+
+/* Jornada pública do proprietário — microinterações e fluidez. */
+.portal-onboarding-header {
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 85% -10%, color-mix(in srgb, var(--portal-gold) 16%, transparent), transparent 55%),
+    var(--portal-navy);
+}
+.portal-onboarding-header::after {
+  transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.portal-onboarding-headline {
+  animation: portal-headline-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes portal-headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portal-journey-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1.6rem;
+}
+.portal-journey-step {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--portal-hero-foreground) 10%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--portal-hero-foreground) 5%, transparent);
+  padding: 0.65rem 0.7rem 0.8rem;
+  color: color-mix(in srgb, var(--portal-hero-foreground) 45%, transparent);
+  text-align: left;
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    color 220ms ease,
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms ease;
+}
+.portal-journey-step:not(:disabled) {
+  cursor: pointer;
+}
+.portal-journey-step:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--portal-hero-foreground) 35%, transparent);
+  background: color-mix(in srgb, var(--portal-hero-foreground) 12%, transparent);
+}
+.portal-journey-step:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+.portal-journey-step:focus-visible {
+  outline: 2px solid var(--portal-gold);
+  outline-offset: 2px;
+}
+.portal-journey-step.is-complete {
+  border-color: color-mix(in srgb, var(--portal-hero-foreground) 25%, transparent);
+  background: color-mix(in srgb, var(--portal-hero-foreground) 10%, transparent);
+  color: var(--portal-hero-foreground);
+}
+.portal-journey-step.is-current {
+  border-color: color-mix(in srgb, var(--portal-gold) 70%, transparent);
+  background: color-mix(in srgb, var(--portal-hero-foreground) 14%, transparent);
+  color: var(--portal-hero-foreground);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--portal-navy-strong) 45%, transparent);
+}
+.portal-journey-step-icon {
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-hero-foreground) 12%, transparent);
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.portal-journey-step-icon svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+.portal-journey-step.is-current .portal-journey-step-icon {
+  background: var(--portal-gold);
+  color: var(--portal-navy-strong);
+  transform: scale(1.08);
+}
+.portal-journey-step.is-complete .portal-journey-step-icon svg {
+  animation: portal-check-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.portal-journey-step-label {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.portal-journey-step-bar {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.45rem;
+  left: 0.7rem;
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-hero-foreground) 14%, transparent);
+  overflow: hidden;
+}
+.portal-journey-step-bar::after {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--portal-gold);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.portal-journey-step.is-current .portal-journey-step-bar::after,
+.portal-journey-step.is-complete .portal-journey-step-bar::after {
+  transform: scaleX(1);
+}
+
+.portal-onboarding-stage {
+  animation: portal-stage-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes portal-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portal-onboarding-section {
+  animation: portal-stage-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+.portal-onboarding-stage > section > .portal-onboarding-section:nth-of-type(2) {
+  animation-delay: 60ms;
+}
+.portal-onboarding-stage > section > .portal-onboarding-section:nth-of-type(3) {
+  animation-delay: 120ms;
+}
+.portal-onboarding-stage > section > .portal-onboarding-section:nth-of-type(4) {
+  animation-delay: 180ms;
+}
+.portal-onboarding-section:focus-within {
+  border-color: color-mix(in srgb, var(--portal-navy) 35%, var(--portal-border));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--portal-navy) 8%, transparent);
+}
+
+.portal-term-card {
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+.portal-term-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--portal-gold) 45%, var(--portal-border));
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--portal-navy) 9%, transparent);
+}
+
+.portal-field-error {
+  animation: portal-field-shake 260ms ease both;
+}
+@keyframes portal-field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.portal-cta {
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+.portal-cta:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--portal-navy) 22%, transparent);
+}
+.portal-cta:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+.portal-cta:not(:disabled) svg:last-child {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.portal-cta:not(:disabled):hover svg:last-child {
+  transform: translateX(3px);
+}
+
+.portal-done-card {
+  animation: portal-stage-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.portal-done-card svg {
+  animation: portal-check-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes portal-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .portal-onboarding-header {
+    padding: 1.4rem 1.25rem 2.9rem;
+  }
+  .portal-onboarding-brand-row {
+    margin-bottom: 1.6rem;
+  }
+  .portal-journey-steps {
+    gap: 0.4rem;
+    margin-top: 1.3rem;
+  }
+  .portal-journey-step {
+    padding: 0.55rem 0.55rem 0.75rem;
+  }
+  .portal-journey-step-label {
+    font-size: 0.56rem;
+    letter-spacing: 0.05em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stayo-owner-theme *,
+  .stayo-owner-theme *::before,
+  .stayo-owner-theme *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .portal-form-title {
   color: var(--portal-navy);
   font-family: "Sora", var(--stayo-font-display);
