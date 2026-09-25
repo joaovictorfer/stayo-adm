@@ -491,7 +491,9 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
           {stage >= 2 && !submitted && <SaveStatus state={saveState} />}
         </div>
         <p className="portal-onboarding-eyebrow">Sua jornada com a STAYO</p>
-        <h1>{headline(stage)}</h1>
+        <h1 key={stage} className="portal-onboarding-headline">
+          {headline(stage)}
+        </h1>
         <p className="portal-onboarding-lead">
           {stage === 1
             ? "Conheça as condições combinadas antes de começarmos o cadastro."
@@ -502,7 +504,8 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
 
       <main className="portal-onboarding-main">
         <div className="portal-onboarding-card">
-          {stage === 1 && (
+          <div key={stage} className="portal-onboarding-stage">
+            {stage === 1 && (
             <ProposalStep
               journey={journeyQ.data ?? null}
               loading={journeyQ.isPending}
@@ -558,6 +561,7 @@ export function OwnerJourney({ implementationId, token }: { implementationId: st
               onEnter={() => void navigate({ to: "/portal/inicio" })}
             />
           )}
+          </div>
         </div>
         <div className="portal-onboarding-trust">
           <ShieldCheck />
@@ -588,15 +592,15 @@ function SaveStatus({ state }: { state: "idle" | "saving" | "saved" | "error" })
 }
 
 function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage; onSelect: (stage: Stage) => void }) {
-  const steps: Array<{ id: Stage; label: string; icon: ReactNode }> = [
-    { id: 1, label: "Proposta", icon: <FileCheck2 /> },
-    { id: 2, label: "Seus dados", icon: <UserRound /> },
-    { id: 3, label: "Seu imóvel", icon: <Home /> },
-    { id: 4, label: "Seu acesso", icon: <KeyRound /> },
+  const steps: Array<{ id: Stage; label: string; short: string; icon: ReactNode }> = [
+    { id: 1, label: "Proposta", short: "Proposta", icon: <FileCheck2 /> },
+    { id: 2, label: "Seus dados", short: "Dados", icon: <UserRound /> },
+    { id: 3, label: "Seu imóvel", short: "Imóvel", icon: <Home /> },
+    { id: 4, label: "Seu acesso", short: "Acesso", icon: <KeyRound /> },
   ];
   return (
-    <nav className="mt-7 grid grid-cols-4 gap-2" aria-label="Etapas da jornada">
-      {steps.map((item) => {
+    <nav className="portal-journey-steps" aria-label="Etapas da jornada">
+      {steps.map((item, position) => {
         const complete = item.id < stage || item.id < maxStage;
         const current = item.id === stage;
         const enabled = item.id <= maxStage;
@@ -606,20 +610,19 @@ function Timeline({ stage, maxStage, onSelect }: { stage: Stage; maxStage: Stage
             type="button"
             disabled={!enabled}
             onClick={() => onSelect(item.id)}
-            className={`min-w-0 rounded-xl border px-2 py-2.5 text-left transition sm:px-3 ${
-              current
-                ? "border-white/65 bg-white/15 text-white"
-                : complete
-                  ? "border-white/25 bg-white/10 text-white"
-                  : "border-white/10 bg-white/5 text-white/45"
+            style={{ transitionDelay: `${position * 40}ms` }}
+            className={`portal-journey-step ${
+              current ? "is-current" : complete ? "is-complete" : "is-locked"
             }`}
           >
-            <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] sm:text-xs">
-              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-white/10 [&>svg]:size-3.5">
-                {complete && !current ? <Check /> : item.icon}
-              </span>
-              <span className="truncate">{item.label}</span>
+            <span className="portal-journey-step-icon">
+              {complete && !current ? <Check /> : item.icon}
             </span>
+            <span className="portal-journey-step-label">
+              <span className="max-sm:hidden">{item.label}</span>
+              <span className="sm:hidden">{item.short}</span>
+            </span>
+            <span className="portal-journey-step-bar" aria-hidden="true" />
           </button>
         );
       })}
@@ -744,7 +747,7 @@ function ProposalStep({
               <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} className="mt-0.5 size-4" />
               <span>Li a proposta e estou de acordo com as condições apresentadas.</span>
             </label>
-            <Button type="button" className="w-full" disabled={accepting || !agreed || acceptName.trim().length < 3} onClick={onAccept}>
+            <Button type="button" className="portal-cta w-full" disabled={accepting || !agreed || acceptName.trim().length < 3} onClick={onAccept}>
               {accepting ? "Registrando aceite..." : "Aceitar proposta e continuar"}
               {!accepting && <ChevronRight className="size-4" />}
             </Button>
@@ -757,7 +760,7 @@ function ProposalStep({
 
 function TermCard({ term }: { term: CommercialTerm }) {
   return (
-    <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
+    <div className="portal-term-card rounded-2xl border border-[var(--portal-border)] bg-white p-4">
       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--portal-muted)]">{term.label}</span>
       <strong className="mt-1 block text-lg text-[var(--portal-navy)]">{formatTerm(term)}</strong>
       {term.notes && <p className="mt-1 text-xs text-[var(--portal-muted)]">{term.notes}</p>}
@@ -1045,7 +1048,7 @@ function AccessStep({
 
 function Section({ title, text, icon, children }: { title: string; text: string; icon?: ReactNode | undefined; children: ReactNode }) {
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
+    <div className="portal-onboarding-section space-y-4 rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
       <div className="flex items-start gap-3">{icon && <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--portal-surface-soft)] text-[var(--portal-navy)] [&>svg]:size-4">{icon}</div>}<div><strong className="text-sm">{title}</strong><p className="mt-1 text-xs leading-relaxed text-[var(--portal-muted)]">{text}</p></div></div>
       {children}
     </div>
@@ -1060,7 +1063,7 @@ function Actions({ onBack, onContinue, label, disabled }: { onBack: () => void; 
   return (
     <div className="flex flex-col-reverse gap-2 border-t border-[var(--portal-border)] pt-5 sm:flex-row sm:justify-between">
       <Button type="button" variant="ghost" onClick={onBack} disabled={disabled}><ChevronLeft className="size-4" /> Voltar</Button>
-      <Button type="button" onClick={onContinue} disabled={disabled}>{label}{!disabled && <ChevronRight className="size-4" />}</Button>
+      <Button type="button" className="portal-cta" onClick={onContinue} disabled={disabled}>{label}{!disabled && <ChevronRight className="size-4" />}</Button>
     </div>
   );
 }
@@ -1094,7 +1097,7 @@ function Field({
     <label className={`block text-sm ${className ?? ""}`}>
       <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">{label}</span>
       <input className="portal-input w-full rounded-xl px-3 py-2.5 disabled:cursor-not-allowed disabled:opacity-65" type={type} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} inputMode={inputMode} placeholder={placeholder} aria-invalid={Boolean(error)} disabled={disabled} />
-      {error ? <span className="mt-1 block text-xs text-[var(--portal-danger)]">{error}</span> : hint ? <span className="mt-1 block text-[11px] text-[var(--portal-muted)]">{hint}</span> : null}
+      {error ? <span className="portal-field-error mt-1 block text-xs text-[var(--portal-danger)]">{error}</span> : hint ? <span className="mt-1 block text-[11px] text-[var(--portal-muted)]">{hint}</span> : null}
     </label>
   );
 }
@@ -1122,7 +1125,7 @@ function Summary({ label, value }: { label: string; value: string | null }) {
 }
 
 function Done({ label, text }: { label: string; text: string }) {
-  return <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3"><div className="flex items-center gap-2"><CheckCircle2 className="size-4 text-emerald-700" /><span className="text-xs font-medium text-emerald-950">{label}</span></div><span className="mt-1 block text-xs text-emerald-800">{text}</span></div>;
+  return <div className="portal-done-card rounded-2xl border border-emerald-200 bg-emerald-50 p-3"><div className="flex items-center gap-2"><CheckCircle2 className="size-4 text-emerald-700" /><span className="text-xs font-medium text-emerald-950">{label}</span></div><span className="mt-1 block text-xs text-emerald-800">{text}</span></div>;
 }
 
 function Blocked({ title, text, icon }: { title: string; text: string; icon?: ReactNode | undefined }) {
