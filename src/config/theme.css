@@ -3978,7 +3978,7 @@ a.admin-data-row:hover,
 
 /* ===== Telas internas (visual 3/3) ===== */
 .portal-property-flow-note {
-  margin: 0.25rem 0 1rem;
+  margin: 0.25rem clamp(1rem, 3vw, 1.5rem) 1rem;
   border-left: 3px solid var(--portal-gold);
   border-radius: 6px;
   background: var(--portal-gold-soft);
