@@ -41,7 +41,7 @@ function PresentationPage() {
   return (
     <main className="min-h-dvh bg-[var(--stayo-bg)] text-[var(--stayo-ink)]">
       <header className="flex justify-center px-4 pb-2 pt-6">
-        <StayoLogo />
+        <StayoLogo className="h-12 w-auto" />
       </header>
       <div className="mx-auto w-full max-w-xl px-4 pb-28 pt-2 md:max-w-2xl">
         {q.isPending ? (
@@ -55,7 +55,7 @@ function PresentationPage() {
               <button
                 type="button"
                 onClick={() => void q.refetch()}
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--stayo-navy)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)]"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--stayo-forest-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--stayo-surface)]"
               >
                 <RefreshCw className="size-4" /> Tentar de novo
               </button>
@@ -146,7 +146,7 @@ function Presentation({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
 
   return (
     <article className="space-y-4">
-      <section className="rounded-2xl bg-[var(--stayo-navy)] px-5 py-6 text-[var(--stayo-surface)] shadow-sm sm:px-7">
+      <section className="rounded-2xl bg-[var(--stayo-forest-strong)] px-5 py-6 text-[var(--stayo-surface)] shadow-sm sm:px-7">
         <p className="text-xs uppercase tracking-[0.16em] opacity-75">
           Proposta · versão {snapshot.version}
         </p>
