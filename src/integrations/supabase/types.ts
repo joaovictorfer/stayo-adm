@@ -491,9 +491,15 @@ export type Database = {
           duration_months: number | null
           exclusivity: boolean | null
           implementation_id: string
+          initial_cleaning_cost_bearer: string | null
+          initial_cleaning_option: string | null
+          initial_cleaning_other: string | null
           maintenance_limit: number | null
           notice_period_days: number | null
           payout_rule: string | null
+          turnover_cleaning_fee: number | null
+          turnover_cleaning_payer: string | null
+          turnover_cleaning_team: string | null
           updated_at: string
         }
         Insert: {
@@ -502,9 +508,15 @@ export type Database = {
           duration_months?: number | null
           exclusivity?: boolean | null
           implementation_id: string
+          initial_cleaning_cost_bearer?: string | null
+          initial_cleaning_option?: string | null
+          initial_cleaning_other?: string | null
           maintenance_limit?: number | null
           notice_period_days?: number | null
           payout_rule?: string | null
+          turnover_cleaning_fee?: number | null
+          turnover_cleaning_payer?: string | null
+          turnover_cleaning_team?: string | null
           updated_at?: string
         }
         Update: {
@@ -513,9 +525,15 @@ export type Database = {
           duration_months?: number | null
           exclusivity?: boolean | null
           implementation_id?: string
+          initial_cleaning_cost_bearer?: string | null
+          initial_cleaning_option?: string | null
+          initial_cleaning_other?: string | null
           maintenance_limit?: number | null
           notice_period_days?: number | null
           payout_rule?: string | null
+          turnover_cleaning_fee?: number | null
+          turnover_cleaning_payer?: string | null
+          turnover_cleaning_team?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -176,6 +176,13 @@
       "when": 1790374212771,
       "tag": "0024_proposal_item_options_and_object",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790375026042,
+      "tag": "0025_contract_conditions_cleaning",
+      "breakpoints": true
     }
   ]
 }
