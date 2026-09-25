@@ -39,8 +39,8 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
           <ul className="divide-y divide-[var(--stayo-border)] rounded-[var(--radius-card)] border border-[var(--stayo-border)]">
             {snapshot.items.map((item, i) => (
               <li key={i} className="flex justify-between gap-3 px-3 py-2">
-                <span>{item.label}</span>
-                <span className="shrink-0 font-medium">{formatMoney(item.amount)}</span>
+                <span>{item.quantity > 1 ? `${item.quantity}× ` : ""}{item.description}</span>
+                <span className="shrink-0 font-medium">{formatMoney(item.total)}</span>
               </li>
             ))}
           </ul>
