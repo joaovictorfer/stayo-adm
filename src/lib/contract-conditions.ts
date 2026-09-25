@@ -44,7 +44,7 @@ export function splitPayoutRule(
   const match = text.match(
     /Reservas pelo Airbnb:\s*(.+?)\s*Reservas pelo Booking e reservas diretas:\s*(.+)$/is,
   );
-  if (!match) return null;
+  if (!match?.[1] || !match[2]) return null;
   return { airbnb: match[1].trim(), others: match[2].trim() };
 }
 

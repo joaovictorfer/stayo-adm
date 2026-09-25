@@ -572,8 +572,8 @@ function Field({
 }: {
   id: string;
   label: string;
-  hint?: string;
-  error?: string;
+  hint?: string | undefined;
+  error?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
