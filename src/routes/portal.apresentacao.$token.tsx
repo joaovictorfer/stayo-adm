@@ -5,7 +5,7 @@ import { ProposalPresentationView } from "../components/implantacao/ProposalPres
 import { StayoLogo } from "../components/brand/StayoLogo";
 import { resolvePresentation } from "../lib/api/presentation-invites";
 
-export const Route = createFileRoute("/apresentacao/$token")({
+export const Route = createFileRoute("/portal/apresentacao/$token")({
   ssr: false,
   head: () => ({
     meta: [

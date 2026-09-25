@@ -138,7 +138,7 @@ export async function resolvePresentation(
 }
 
 export function presentationUrl(token: string): string {
-  return `${window.location.origin}/apresentacao/${token}`;
+  return `${window.location.origin}/portal/apresentacao/${token}`;
 }
 
 export function whatsappMessage(name: string | null | undefined, link: string): string {
