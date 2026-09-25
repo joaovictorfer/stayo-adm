@@ -373,80 +373,74 @@ function OwnerDataJourney({
   email,
   phone,
   document,
-  hasPaymentData,
-  hasDocuments,
+  pendingKinds,
   onReviewPending,
 }: {
   name: string | null | undefined;
   email: string | null | undefined;
   phone: string | null | undefined;
   document: string | null | undefined;
-  hasPaymentData: boolean;
-  hasDocuments: boolean;
+  /** Tipos de pendência abertos pela equipe; dados bancários/documentos só entram quando pedidos. */
+  pendingKinds: string[];
   onReviewPending: () => void;
 }) {
-  const steps: ProfileStep[] = [
+  const steps: (ProfileStep & { minutes: string; fields: string })[] = [
     {
       label: "Identificação",
-      description: "Nome completo e documento principal",
+      description: "Quem é o proprietário",
+      fields: "Nome completo e CPF ou CNPJ",
+      minutes: "1 min",
       complete: Boolean(name && document),
     },
     {
       label: "Contato",
-      description: "E-mail e telefone para falarmos com você",
+      description: "Como falamos com você",
+      fields: "E-mail e telefone",
+      minutes: "1 min",
       complete: Boolean(email && phone),
     },
-    {
-      label: "Conta para repasse",
-      description: "Dados necessários para futuros repasses",
-      complete: hasPaymentData,
-    },
-    {
-      label: "Documentos",
-      description: "Arquivos solicitados pela equipe Stayo",
-      complete: hasDocuments,
-    },
   ];
-  const completed = steps.filter((step) => step.complete).length;
-  const percent = Math.round((completed / steps.length) * 100);
-  const nextStep = steps.find((step) => !step.complete);
+  if (pendingKinds.includes("banking_data"))
+    steps.push({
+      label: "Conta para repasse",
+      description: "Pedido pela equipe STAYO",
+      fields: "Banco ou chave PIX do titular",
+      minutes: "2 min",
+      complete: false,
+    });
+  if (pendingKinds.includes("regulation_document"))
+    steps.push({
+      label: "Documentos",
+      description: "Pedido pela equipe STAYO",
+      fields: "Arquivos solicitados",
+      minutes: "3 min",
+      complete: false,
+    });
+  const current = steps.find((step) => !step.complete);
 
   return (
     <section className="portal-profile-journey" aria-labelledby="profile-journey-title">
       <div className="portal-profile-intro">
         <div>
-          <p className="portal-milestones-eyebrow">Seu cadastro</p>
+          <p className="portal-milestones-eyebrow">Meus dados</p>
           <h2 id="profile-journey-title">Seu cadastro, passo a passo</h2>
-          <p>
-            Complete no seu ritmo. A equipe Stayo cuida das suas informações com atenção e
-            segurança.
-          </p>
-        </div>
-        <div className="portal-profile-progress" aria-label={`${percent}% do cadastro concluído`}>
-          <strong>{percent}%</strong>
-          <span>
-            {completed} de {steps.length} etapas
-          </span>
+          <p>Só pedimos o essencial agora. Outras informações entram quando forem necessárias.</p>
         </div>
       </div>
 
-      <div className="portal-profile-progress-track" aria-hidden="true">
-        <span style={{ width: `${percent}%` }} />
-      </div>
-
-      {nextStep ? (
+      {current ? (
         <div className="portal-profile-next">
           <div>
-            <span>Próximo passo</span>
-            <strong>{nextStep.label}</strong>
-            <p>{nextStep.description}. É rápido e você pode conferir tudo antes de enviar.</p>
+            <span>Etapa atual · cerca de {current.minutes}</span>
+            <strong>{current.label}</strong>
+            <p>{current.fields}.</p>
           </div>
           <Button
             type="button"
             onClick={onReviewPending}
-            className="portal-action bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
+            className="portal-action min-h-11 bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]"
           >
-            Continuar cadastro <ArrowRight className="h-4 w-4" />
+            Ver o que falta <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       ) : (
@@ -454,22 +448,20 @@ function OwnerDataJourney({
           <CheckCircle2 aria-hidden="true" />
           <div>
             <strong>Cadastro em dia</strong>
-            <p>
-              Já temos as informações necessárias. Se precisarmos confirmar algo, falaremos com
-              você.
-            </p>
+            <p>Sua ficha tem o que precisamos agora. Se faltar algo, avisamos você.</p>
           </div>
         </div>
       )}
 
-      <ol className="portal-profile-checklist">
+      <ol className="portal-profile-checklist is-compact">
         {steps.map((step, index) => (
           <li
             key={step.label}
+            aria-current={current?.label === step.label ? "step" : undefined}
             className={
               step.complete
                 ? "is-complete"
-                : nextStep?.label === step.label
+                : current?.label === step.label
                   ? "is-current"
                   : "is-pending"
             }
@@ -479,21 +471,18 @@ function OwnerDataJourney({
             </span>
             <div>
               <strong>{step.label}</strong>
-              <p>{step.description}</p>
+              {current?.label === step.label && <p>{step.description}</p>}
             </div>
             <span className="portal-profile-step-status">
-              {step.complete
-                ? "Concluído"
-                : nextStep?.label === step.label
-                  ? "Próximo"
-                  : "Aguardando"}
+              {step.complete ? "Na sua ficha" : current?.label === step.label ? "Agora" : "Depois"}
             </span>
           </li>
         ))}
       </ol>
 
       <p className="portal-profile-save-note">
-        <CheckCircle2 aria-hidden="true" /> Tudo o que você já enviou está guardado com segurança.
+        <Clock3 aria-hidden="true" /> Pode continuar depois. O que já está na sua ficha fica
+        guardado.
       </p>
     </section>
   );
@@ -1100,18 +1089,23 @@ function PropertyDetailsPanel({
     <section className="portal-property-details">
       <div className="portal-property-details-heading">
         <div>
-          <p className="portal-milestones-eyebrow">Ficha compartilhada</p>
+          <p className="portal-milestones-eyebrow">Meu imóvel</p>
           <h2>{propertyName(implementation)}</h2>
-          <p>Você e a equipe Stayo podem manter estes dados atualizados.</p>
+          <p>Ficha compartilhada entre você e a equipe STAYO.</p>
         </div>
         <Button
           variant={editing ? "ghost" : "outline"}
-          size="sm"
+          className="min-h-11"
           onClick={() => setEditing((value) => !value)}
         >
           {editing ? "Cancelar" : "Editar dados"}
         </Button>
       </div>
+      <p className="portal-property-flow-note">
+        {editing
+          ? "Ao salvar, a alteração entra direto na ficha e a equipe STAYO vê na hora. Não há etapa de revisão antes."
+          : "O que aparece aqui é o que está salvo na ficha agora. Ainda não mostramos, por item, o que está em revisão ou aprovado pela equipe."}
+      </p>
       {editing ? (
         <div className="portal-property-form">
           <div className="portal-property-form-grid">
@@ -1187,7 +1181,14 @@ function PropertyDetailsPanel({
               <DoorOpen />
             </span>
             <h3>Acesso</h3>
-            <p>{details?.accessNotes || "Forma de acesso ainda não informada"}</p>
+            <p>
+              {details?.accessNotes
+                ? "Orientações registradas"
+                : "Forma de acesso ainda não informada"}
+            </p>
+            {details?.accessNotes && (
+              <SecretValue label="Orientações" value={details.accessNotes} visible={showSecrets} />
+            )}
             {details?.accessCode && (
               <SecretValue
                 label="Senha da fechadura"
@@ -1201,14 +1202,26 @@ function PropertyDetailsPanel({
               <Wifi />
             </span>
             <h3>Wi-Fi</h3>
-            <p>{details?.wifiNetwork || "Rede ainda não informada"}</p>
+            <p>{details?.wifiNetwork ? "Rede registrada" : "Rede ainda não informada"}</p>
+            {details?.wifiNetwork && (
+              <SecretValue label="Rede" value={details.wifiNetwork} visible={showSecrets} />
+            )}
             {details?.wifiPassword && (
               <SecretValue label="Senha" value={details.wifiPassword} visible={showSecrets} />
             )}
           </div>
-          {(details?.accessCode || details?.wifiPassword) && (
-            <Button variant="ghost" size="sm" onClick={() => setShowSecrets((value) => !value)}>
-              {showSecrets ? "Ocultar senhas" : "Mostrar senhas"}
+          {(details?.accessCode ||
+            details?.wifiPassword ||
+            details?.wifiNetwork ||
+            details?.accessNotes) && (
+            <Button
+              variant="ghost"
+              className="min-h-11"
+              aria-pressed={showSecrets}
+              onClick={() => setShowSecrets((value) => !value)}
+            >
+              <LockKeyhole className="h-4 w-4" />
+              {showSecrets ? "Ocultar dados protegidos" : "Mostrar dados protegidos"}
             </Button>
           )}
         </div>
@@ -1228,7 +1241,7 @@ function SecretValue({
 }) {
   return (
     <small>
-      {label}: <strong>{visible ? value : "••••••••"}</strong>
+      {label}: <strong>{visible ? value : "Protegido"}</strong>
     </small>
   );
 }
@@ -1237,15 +1250,37 @@ function InspectionsPanel({
   inspections,
   attachments,
   loading,
+  error = false,
+  onRetry,
   onOpen,
 }: {
   inspections: PortalInspection[];
   attachments: Attachment[];
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   onOpen: (path: string) => void;
 }) {
   if (loading) return <PortalSkeleton rows={4} />;
-  if (inspections.length === 0) return <OperationalPlaceholder module="inspections" />;
+  if (error)
+    return (
+      <PortalEmptyState
+        icon={<ClipboardCheck />}
+        title="Não conseguimos carregar as vistorias agora"
+        description="Isso não quer dizer que não existam vistorias."
+        nextStep="Tente de novo em alguns instantes."
+        {...(onRetry ? { action: { label: "Tentar de novo", onClick: onRetry } } : {})}
+      />
+    );
+  if (inspections.length === 0)
+    return (
+      <PortalEmptyState
+        icon={<ClipboardCheck />}
+        title="Nenhuma vistoria registrada ainda"
+        description="A vistoria é marcada pela equipe STAYO durante a implantação."
+        nextStep="Quando houver data, ela aparece aqui. O relatório entra depois que a equipe liberar."
+      />
+    );
   const status = {
     scheduled: "Agendada",
     in_progress: "Em andamento",
@@ -1627,7 +1662,9 @@ export function OwnerHomeContent({
             />
           )}
           <OwnerOverview
-            propertyLabel={[propertyName(implementation), implementation?.code].filter(Boolean).join(" · ")}
+            propertyLabel={[propertyName(implementation), implementation?.code]
+              .filter(Boolean)
+              .join(" · ")}
             stageLabel={statusLabels[implementation?.status ?? "prospect"]}
             stageMessage={stageMessages[implementation?.status ?? "prospect"]}
             tasks={{ ...tasksQ, data: tasksQ.data ? pending : undefined }}
@@ -1730,6 +1767,8 @@ export function OwnerHomeContent({
                 (attachment) => attachment.implementationId === implementation?.id,
               )}
               loading={inspectionsQ.isPending || attachmentsQ.isPending}
+              error={inspectionsQ.isError}
+              onRetry={() => void inspectionsQ.refetch()}
               onOpen={(path) => download.mutate(path)}
             />
           </TabsContent>
@@ -1762,8 +1801,7 @@ export function OwnerHomeContent({
               email={ownerQ.data?.email}
               phone={ownerQ.data?.phone}
               document={ownerQ.data?.document}
-              hasPaymentData={Boolean(submissionQ.data?.pixKey)}
-              hasDocuments={(attachmentsQ.data ?? []).length > 0}
+              pendingKinds={pending.map((task) => task.kind)}
               onReviewPending={() => setActiveTab("visao-geral")}
             />
           )}
@@ -1772,14 +1810,22 @@ export function OwnerHomeContent({
         <TabsContent value="proposta" className="tab-content-anim space-y-6">
           {releasesQ.isPending ? (
             <PortalSkeleton rows={4} />
+          ) : releasesQ.isError ? (
+            <PortalEmptyState
+              icon={<FileSignature />}
+              title="Não conseguimos consultar a proposta agora"
+              description="Isso não quer dizer que ela não exista."
+              nextStep="Tente de novo em alguns instantes."
+              action={{ label: "Tentar de novo", onClick: () => void releasesQ.refetch() }}
+            />
           ) : releasedProposal ? (
             <ReleasedProposal content={releasedProposal} />
           ) : (
             <PortalEmptyState
               icon={<FileSignature />}
-              title="Nenhuma proposta liberada ainda"
-              description="Quando a equipe Stayo liberar a proposta para você, ela aparecerá aqui com valores e condições."
-              nextStep="Se você já conversou com a equipe, responda a mensagem recebida para combinar os próximos passos."
+              title="A proposta ainda está sendo preparada"
+              description="Avisaremos você quando estiver disponível."
+              nextStep="Ela aparece aqui com valores e condições assim que a equipe STAYO liberar."
               action={{
                 label: "Acompanhar implantação",
                 onClick: () => setActiveTab("implantacao"),
@@ -1805,7 +1851,7 @@ export function OwnerHomeContent({
             </div>
             {attachmentsQ.isPending || releasesQ.isPending ? (
               <PortalSkeleton rows={3} />
-            ) : attachmentsQ.isError ? (
+            ) : attachmentsQ.isError || releasesQ.isError ? (
               <PortalEmptyState
                 icon={<FileText />}
                 title="Não foi possível abrir sua pasta agora"
@@ -1815,9 +1861,9 @@ export function OwnerHomeContent({
             ) : releasedDocs.length === 0 ? (
               <PortalEmptyState
                 icon={<FileText />}
-                title="Nenhum documento liberado"
-                description="Ainda não há documentos liberados para você."
-                nextStep="Quando a equipe Stayo liberar contratos ou outros arquivos, eles aparecerão aqui com data."
+                title="Nenhum documento por aqui ainda"
+                description="Os arquivos entram nesta pasta só depois que a equipe STAYO libera."
+                nextStep="Avisaremos você quando houver um documento para consultar."
                 action={{
                   label: "Ver minhas pendências",
                   onClick: () => setActiveTab("visao-geral"),
