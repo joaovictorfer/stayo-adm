@@ -138,7 +138,9 @@ test("inválido, expirado, revogado e token de onboarding não exibem apresenta�
     "onboarding-token-00000000-0000-0000-0000-000000000005",
   ]) {
     await page.goto(`/portal/proposta/${token}`);
-    await expect(page.getByRole("heading", { name: "Esta proposta não está disponível" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Esta proposta não está disponível" }),
+    ).toBeVisible();
     await expect(page.getByTestId("public-proposal-presentation")).toHaveCount(0);
   }
 
@@ -151,7 +153,9 @@ test("falha de rede tem estado próprio e permite tentar novamente", async ({ br
   const page = await context.newPage();
 
   await page.goto(`/portal/proposta/${validToken}`);
-  await expect(page.getByRole("heading", { name: "Não foi possível carregar a proposta" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Não foi possível carregar a proposta" }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Tentar novamente" })).toBeVisible();
   await expect(page.getByTestId("public-proposal-presentation")).toHaveCount(0);
 
