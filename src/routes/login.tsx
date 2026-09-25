@@ -1,3 +1,4 @@
+import { StayoLogo } from "@/components/brand/StayoLogo";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -26,15 +27,13 @@ function Shell({ children }: { children: React.ReactNode }) {
       }}
     >
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center gap-2">
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <StayoLogo className="h-auto w-36" />
           <span
-            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-sm"
-            style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
+            className="text-xs uppercase tracking-[0.18em]"
+            style={{ color: "var(--stayo-ink-muted)" }}
           >
-            S
-          </span>
-          <span className="text-base" style={{ fontFamily: "var(--stayo-font-display)" }}>
-            Stayo Admin
+            Painel administrativo
           </span>
         </div>
         <div className="rounded-[var(--radius-card)] border p-6" style={surface}>
