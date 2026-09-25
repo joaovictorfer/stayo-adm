@@ -1,0 +1,48 @@
+name: Phase 2D.2 SQL Contract
+
+on:
+  push:
+    branches: [phase2d2-public-proposal-contract]
+    paths:
+      - 'supabase/migrations/0023_public_proposal_presentation_contract.sql'
+      - 'tests/sql/phase2d2_fixture.sql'
+      - 'tests/sql/phase2d2_integration.sql'
+      - '.github/workflows/phase2d2-sql.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sql-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: stayo_phase2d2
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d stayo_phase2d2"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: stayo_phase2d2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare audited pre-2D.2 fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/phase2d2_fixture.sql
+
+      - name: Apply exact versioned migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/0023_public_proposal_presentation_contract.sql
+
+      - name: Run denial and snapshot stability matrix
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/phase2d2_integration.sql
