@@ -93,10 +93,11 @@ function buildRows(items: SupplyItem[]): Row[] {
     groups.set(k, [...(groups.get(k) ?? []), item]);
   }
   return [...groups.entries()].map(([key, group]) => {
-    const enx = group.filter((i) => i.module === "enxoval");
-    const man = group.filter((i) => i.module === "faltante");
-    const primary = enx[0] ?? man[0]!;
     const open = group.filter((i) => !isClosed(i));
+    const pool = open.length ? open : group;
+    const enx = pool.filter((i) => i.module === "enxoval");
+    const man = pool.filter((i) => i.module === "faltante");
+    const primary = enx[0] ?? man[0]!;
     const missingQty = enx.length
       ? enx.reduce((a, i) => a + Math.max(0, i.required_qty - i.existing_qty), 0)
       : man.reduce((a, i) => a + i.required_qty, 0);
