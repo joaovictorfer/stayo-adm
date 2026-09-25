@@ -197,7 +197,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       const { data, error } = await supabase
         .from("implementation_contract_conditions")
         .select(
-          "administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days",
+          "administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days, initial_cleaning_option, initial_cleaning_other, initial_cleaning_cost_bearer, turnover_cleaning_team, turnover_cleaning_fee, turnover_cleaning_payer",
         )
         .eq("implementation_id", implementationId)
         .maybeSingle();
