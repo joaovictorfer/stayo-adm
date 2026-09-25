@@ -19,6 +19,12 @@ export interface ProposalSnapshotContractConditions {
   exclusivity?: boolean | null;
   durationMonths?: number | null;
   noticePeriodDays?: number | null;
+  initialCleaningOption?: string | null;
+  initialCleaningOther?: string | null;
+  initialCleaningCostBearer?: string | null;
+  turnoverCleaningTeam?: string | null;
+  turnoverCleaningFee?: number | null;
+  turnoverCleaningPayer?: string | null;
 }
 
 export interface ProposalSnapshotContentBlock {

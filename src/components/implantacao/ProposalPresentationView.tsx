@@ -1,3 +1,4 @@
+import { contractConditionRows } from "@/lib/contract-conditions";
 import { formatMoney } from "../../lib/format";
 import { formatBRL } from "../../lib/money";
 import type { CommercialProposalSnapshot } from "../../types/commercial-proposal";
@@ -9,17 +10,7 @@ import type { CommercialProposalSnapshot } from "../../types/commercial-proposal
  */
 export function ProposalPresentationView({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
   const c = snapshot.contractConditions ?? {};
-  const conditions: Array<[string, string | null]> = [
-    ["Taxa de administração", c.administrationFee != null ? `${c.administrationFee}%` : null],
-    ["Limpeza", c.cleaningResponsibility ?? null],
-    ["Repasse", c.payoutRule ?? null],
-    [
-      "Manutenção sem autorização",
-      c.maintenanceLimit != null ? formatMoney(c.maintenanceLimit) : null,
-    ],
-    ["Vigência", c.durationMonths ? `${c.durationMonths} meses` : null],
-    ["Aviso prévio", c.noticePeriodDays ? `${c.noticePeriodDays} dias` : null],
-  ];
+  const conditions = contractConditionRows(c);
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   return (
     <div className="space-y-5 text-sm text-[var(--stayo-ink)]">

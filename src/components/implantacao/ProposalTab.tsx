@@ -197,7 +197,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       const { data, error } = await supabase
         .from("implementation_contract_conditions")
         .select(
-          "administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days",
+          "administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days, initial_cleaning_option, initial_cleaning_other, initial_cleaning_cost_bearer, turnover_cleaning_team, turnover_cleaning_fee, turnover_cleaning_payer",
         )
         .eq("implementation_id", implementationId)
         .maybeSingle();
@@ -367,6 +367,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             exclusivity: contractQuery.data.exclusivity,
             durationMonths: contractQuery.data.duration_months,
             noticePeriodDays: contractQuery.data.notice_period_days,
+            initialCleaningOption: contractQuery.data.initial_cleaning_option,
+            initialCleaningOther: contractQuery.data.initial_cleaning_other,
+            initialCleaningCostBearer: contractQuery.data.initial_cleaning_cost_bearer,
+            turnoverCleaningTeam: contractQuery.data.turnover_cleaning_team,
+            turnoverCleaningFee: contractQuery.data.turnover_cleaning_fee,
+            turnoverCleaningPayer: contractQuery.data.turnover_cleaning_payer,
           }
         : {},
       responsibilities: serializeResponsibilities(responsibilities),
@@ -541,7 +547,13 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </div>
 
         <div className="mt-5">
-          <ContractConditionsPanel implementationId={implementationId} showMeetings={false} />
+          <ContractConditionsPanel
+            implementationId={implementationId}
+            showMeetings={false}
+            cleaningItems={items
+              .filter((i) => i.templateKey === "limpeza-pos-obra" || /limpeza/i.test(i.description))
+              .map((i) => ({ description: i.description, total: lineTotal(i), included: i.included }))}
+          />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">

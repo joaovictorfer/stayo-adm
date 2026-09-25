@@ -19,7 +19,7 @@ export const DEFAULT_QUICK_IMPLEMENTATION_CONDITIONS: QuickImplementationConditi
   administrationFee: "20",
   cleaningResponsibility: "custom",
   customCleaningResponsibility: "R$ 250,00",
-  payoutRule: "Automático pelo Airbnb / Até o dia 10 em reservas fora da plataforma",
+  payoutRule: "Reservas pelo Airbnb: repasse automático pela plataforma. Reservas pelo Booking e reservas diretas: repasse até o dia 10 do mês subsequente, conforme os valores efetivamente recebidos e conciliados.",
   maintenanceLimit: "300",
   exclusivity: true,
   durationMonths: "12",
