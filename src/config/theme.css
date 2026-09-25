@@ -3787,3 +3787,135 @@ a.admin-data-row:hover,
     transition: none;
   }
 }
+
+/* ===== Portal — refinamento visual 1/3 ===== */
+.portal-property-hero,
+.portal-property-hero-content {
+  min-height: 228px;
+}
+.portal-property-hero-content {
+  padding: 1.25rem 1.5rem;
+}
+.portal-property-title {
+  font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+}
+.portal-property-greeting {
+  margin-top: 0.75rem;
+}
+.portal-property-moment {
+  margin-top: 0.45rem;
+}
+.portal-hero-image-note {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.8rem;
+  z-index: 1;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--portal-navy-strong) 62%, transparent);
+  padding: 0.25rem 0.6rem;
+  color: var(--portal-hero-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(8px);
+}
+.portal-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  min-height: 42px;
+  border-radius: 999px;
+  background: var(--portal-gold-soft);
+  padding: 0.55rem 1.1rem;
+  color: var(--portal-navy-strong);
+  font-size: 0.82rem;
+  font-weight: 650;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.portal-hero-primary:hover {
+  background: var(--portal-surface);
+}
+.portal-hero-primary:active {
+  transform: scale(0.97);
+}
+.portal-phase-indicator strong small {
+  margin-top: 0.1rem;
+  letter-spacing: 0.02em;
+}
+.portal-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+.portal-tab-short {
+  display: none;
+}
+.portal-tab-lock {
+  width: 0.8rem;
+  height: 0.8rem;
+  opacity: 0.7;
+}
+.stayo-tab.is-locked:not([data-state="active"]) {
+  color: color-mix(in srgb, var(--portal-muted) 72%, transparent);
+}
+@media (max-width: 1023px) {
+  .portal-tab-full {
+    display: none;
+  }
+  .portal-tab-short {
+    display: inline;
+  }
+}
+@media (max-width: 640px) {
+  .portal-property-hero,
+  .portal-property-hero-content {
+    min-height: 0;
+  }
+  .portal-property-hero-content {
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .portal-property-title {
+    font-size: clamp(1.45rem, 7vw, 1.9rem);
+  }
+  .portal-property-greeting {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .portal-property-estimate {
+    display: none;
+  }
+  .portal-hero-primary {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.85rem;
+  }
+  /* Sem foto autorizada, o celular não gasta a primeira tela com imagem genérica. */
+  .portal-property-hero:not(.has-photo) .portal-property-hero-image,
+  .portal-property-hero:not(.has-photo) .portal-hero-image-note {
+    display: none;
+  }
+  .portal-phase-indicator strong {
+    font-size: 0.7rem;
+  }
+  .portal-phase-indicator strong small {
+    font-size: 0.6rem;
+  }
+  .portal-nav-wrap {
+    position: static;
+  }
+  .portal-tabs-list {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: visible !important;
+    mask-image: none !important;
+  }
+  .portal-tabs-list .stayo-tab {
+    min-height: 42px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.74rem;
+    white-space: normal;
+    line-height: 1.15;
+  }
+}

@@ -647,6 +647,13 @@ const moduleTabValue: Partial<Record<OwnerPortalModule, string>> = {
 };
 const tabValueOf = (module: OwnerPortalModule) => moduleTabValue[module] ?? module;
 
+const portalModuleShortLabels: Partial<Record<OwnerPortalModule, string>> = {
+  implementation: "Implantação",
+  property: "Imóvel",
+  profile: "Dados",
+  documents: "Docs",
+};
+
 const portalModuleLabels: Record<OwnerPortalModule, string> = {
   overview: "Visão geral",
   implementation: "Minha implantação",
@@ -826,31 +833,37 @@ function PortalHero({
   implementation,
   onSignOut,
   preview = false,
+  onPrimary,
 }: {
   firstName: string;
   implementation: ImplementationProject | undefined;
   onSignOut: () => void;
   preview?: boolean;
+  onPrimary?: () => void;
 }) {
   const status = implementation?.status ?? "prospect";
-  const image = implementation?.coverImage?.startsWith("http")
-    ? implementation.coverImage
-    : portalPropertyFallback;
+  // Só é "foto do imóvel" quando há imagem autorizada na implantação;
+  // caso contrário, é explicitamente o visual institucional da STAYO.
+  const hasPropertyPhoto = Boolean(implementation?.coverImage?.startsWith("http"));
+  const image = hasPropertyPhoto ? implementation!.coverImage! : portalPropertyFallback;
 
   return (
-    <header className="portal-property-hero">
+    <header className={`portal-property-hero${hasPropertyPhoto ? " has-photo" : ""}`}>
       <img
         src={image}
         alt={
-          implementation
-            ? `Vista de ${propertyName(implementation)}`
-            : "Imóvel acompanhado pela Stayo"
+          hasPropertyPhoto && implementation
+            ? `Foto de ${propertyName(implementation)}`
+            : "Visual institucional STAYO (não é foto do imóvel)"
         }
         width={1600}
         height={700}
         className="portal-property-hero-image"
       />
       <div className="portal-property-hero-overlay" />
+      {!hasPropertyPhoto && (
+        <span className="portal-hero-image-note">Imagem institucional STAYO</span>
+      )}
       <div className="portal-property-hero-content">
         <div className="flex items-start justify-between gap-4">
           <div className="portal-property-brand">
@@ -895,6 +908,11 @@ function PortalHero({
                 new Date(`${implementation.completionDateEstimate}T12:00:00`),
               )}
             </p>
+          )}
+          {onPrimary && (
+            <button type="button" onClick={onPrimary} className="portal-hero-primary portal-action">
+              Ver próximo passo <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </button>
           )}
         </div>
       </div>
@@ -1523,6 +1541,7 @@ export function OwnerHomeContent({
         implementation={implementation}
         onSignOut={onSignOut}
         preview={preview}
+        onPrimary={() => setActiveTab("implantacao")}
       />
 
       {ownerImplementations.length > 1 && (
@@ -1553,13 +1572,32 @@ export function OwnerHomeContent({
           <TabsList
             ref={tabsListRef}
             aria-label="Navegação do Portal"
-            className="hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0"
+            className="portal-tabs-list hide-scrollbar scroll-mask flex h-auto w-full snap-x snap-mandatory scroll-px-2 scroll-smooth justify-start gap-1 overflow-x-auto overflow-y-hidden bg-transparent p-0"
           >
-            {portalModules.map((module) => (
-              <TabsTrigger key={module} value={tabValueOf(module)} className="stayo-tab snap-start">
-                {portalModuleLabels[module]}
-              </TabsTrigger>
-            ))}
+            {portalModules.map((module) => {
+              const locked =
+                !releasesQ.isPending &&
+                ((module === "proposal" && !releasedProposal) ||
+                  (module === "documents" && releasedDocs.length === 0));
+              return (
+                <TabsTrigger
+                  key={module}
+                  value={tabValueOf(module)}
+                  className={`stayo-tab portal-tab snap-start${locked ? " is-locked" : ""}`}
+                  aria-label={
+                    locked
+                      ? `${portalModuleLabels[module]} — ainda não liberado`
+                      : portalModuleLabels[module]
+                  }
+                >
+                  {locked && <LockKeyhole aria-hidden="true" className="portal-tab-lock" />}
+                  <span className="portal-tab-full">{portalModuleLabels[module]}</span>
+                  <span className="portal-tab-short">
+                    {portalModuleShortLabels[module] ?? portalModuleLabels[module]}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
         </div>
 
