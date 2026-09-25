@@ -1,38 +1,86 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, FileText, Plus, Save, Send, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  FileText,
+  Info,
+  Plus,
+  Save,
+  Send,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import { supabase } from "../../integrations/supabase/client";
 import { commercialTermsQuery, implementationQuery } from "../../lib/api/queries";
 import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
 import { generatePublishedProposalPdf } from "../../lib/pdf/proposal-pdf";
+import { formatBRL, roundCents } from "../../lib/money";
+import { MoneyInput } from "./MoneyInput";
+import { ContractConditionsPanel } from "./ContractConditionsPanel";
+import { ProposalPresentationView } from "./ProposalPresentationView";
 import type { EntityId, ProposalItem } from "../../types/core";
 import type {
   CommercialProposalSnapshot,
   CommercialProposalStatus,
   CommercialProposalVersion,
+  ProposalItemOption,
   ProposalRequiredSignatory,
 } from "../../types/commercial-proposal";
 
-interface DraftItem {
-  description: string;
-  quantity: number;
-  unitValue: number;
-  discount: number;
+// ---------------------------------------------------------------------------
+// Modelo local
+// ---------------------------------------------------------------------------
+
+interface DraftItem extends ProposalItemOption {
+  uid: string;
 }
 
-const emptyItem: DraftItem = {
+type Party = "STAYO" | "Proprietário" | "Ambos";
+interface Responsibility {
+  uid: string;
+  party: Party;
+  text: string;
+}
+interface Signatory {
+  uid: string;
+  label: string;
+  role: string;
+}
+
+const PARTIES: Party[] = ["STAYO", "Proprietário", "Ambos"];
+const ROLES = [
+  "Proprietário titular",
+  "Coproprietário",
+  "Cônjuge",
+  "Procurador",
+  "Representante legal",
+  "Outro",
+];
+
+const uid = () => crypto.randomUUID();
+const newItem = (): DraftItem => ({
+  uid: uid(),
   description: "",
   quantity: 1,
   unitValue: 0,
   discount: 0,
-};
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
+  included: true,
+  optional: false,
 });
 
 const statusLabels: Record<CommercialProposalStatus, string> = {
@@ -42,71 +90,68 @@ const statusLabels: Record<CommercialProposalStatus, string> = {
   superseded: "Substituída",
 };
 
-function lineTotal(item: DraftItem): number {
-  return Math.max(0, item.quantity * item.unitValue - item.discount);
-}
+const gross = (i: DraftItem) => roundCents(i.quantity * i.unitValue);
+const lineTotal = (i: DraftItem) => roundCents(Math.max(0, gross(i) - i.discount));
 
 function toProposalItems(items: DraftItem[]): ProposalItem[] {
   return items
-    .filter((item) => item.description.trim().length > 0)
-    .map((item) => ({
-      description: item.description.trim(),
-      quantity: item.quantity,
-      unitValue: item.unitValue,
-      discount: item.discount,
-      total: lineTotal(item),
+    .filter((i) => i.included && i.description.trim())
+    .map((i) => ({
+      description: i.description.trim(),
+      quantity: i.quantity,
+      unitValue: roundCents(i.unitValue),
+      discount: roundCents(Math.min(i.discount, gross(i))),
+      total: lineTotal(i),
     }));
 }
 
-function fromProposalItems(items: ProposalItem[]): DraftItem[] {
-  return items.length > 0
-    ? items.map((item) => ({
-        description: item.description,
-        quantity: item.quantity,
-        unitValue: item.unitValue,
-        discount: item.discount,
+function toOptions(items: DraftItem[]): ProposalItemOption[] {
+  return items
+    .filter((i) => i.description.trim())
+    .map(({ uid: _u, ...rest }) => ({ ...rest, description: rest.description.trim() }));
+}
+
+function fromVersion(v: CommercialProposalVersion | null, fallbackItems: ProposalItem[]): DraftItem[] {
+  const opts = v?.draftItemOptions;
+  if (opts && opts.length) return opts.map((o) => ({ ...o, uid: uid() }));
+  const base = v ? v.items : fallbackItems;
+  return base.length
+    ? base.map((i) => ({
+        uid: uid(),
+        description: i.description,
+        quantity: i.quantity,
+        unitValue: i.unitValue,
+        discount: i.discount,
+        included: true,
+        optional: false,
       }))
-    : [{ ...emptyItem }];
+    : [newItem()];
 }
 
-function lines(value: string): string[] {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
+function parseResponsibility(line: string): Responsibility {
+  const match = /^(STAYO|Proprietário|Ambos):\s*(.*)$/.exec(line);
+  return match
+    ? { uid: uid(), party: match[1] as Party, text: match[2] ?? "" }
+    : { uid: uid(), party: "STAYO", text: line };
 }
-
-function signatories(value: string): ProposalRequiredSignatory[] {
-  return lines(value).map((line) => {
-    const [label = "", role] = line.split("|", 2).map((part) => part.trim());
-    return { label, role: role || null };
-  });
-}
-
-function signatoriesText(value: ProposalRequiredSignatory[]): string {
-  return value.map((item) => `${item.label}${item.role ? ` | ${item.role}` : ""}`).join("\n");
-}
-
-function statusTone(status: CommercialProposalStatus) {
-  if (status === "accepted")
-    return { color: "var(--stayo-success)", backgroundColor: "var(--stayo-forest-soft)" };
-  if (status === "published")
-    return { color: "var(--stayo-forest)", backgroundColor: "var(--stayo-forest-soft)" };
-  if (status === "superseded")
-    return { color: "var(--stayo-ink-muted)", backgroundColor: "var(--stayo-bg-soft)" };
-  return { color: "var(--stayo-warning)", backgroundColor: "var(--stayo-warning-soft)" };
-}
+const serializeResponsibilities = (list: Responsibility[]) =>
+  list.filter((r) => r.text.trim()).map((r) => `${r.party}: ${r.text.trim()}`);
+const serializeSignatories = (list: Signatory[]): ProposalRequiredSignatory[] =>
+  list.filter((s) => s.label.trim()).map((s) => ({ label: s.label.trim(), role: s.role || null }));
 
 function proposalError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
-  if (message.toLowerCase().includes("sem permissão")) {
+  if (message.toLowerCase().includes("sem permissão"))
     return "Você não tem permissão para acessar ou alterar propostas comerciais.";
-  }
-  if (message.toLowerCase().includes("conflito")) {
+  if (message.toLowerCase().includes("conflito"))
     return "A proposta mudou em outra sessão. Recarregue antes de continuar.";
-  }
   return message || "Não foi possível carregar as propostas.";
 }
+
+const card = "rounded-[var(--radius-card)] border bg-white p-4 sm:p-5";
+const eyebrow = "text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--stayo-forest)]";
+
+// ---------------------------------------------------------------------------
 
 export function ProposalTab({ implementationId }: { implementationId: EntityId }) {
   const queryClient = useQueryClient();
@@ -116,61 +161,92 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   });
   const implementationQueryResult = useQuery(implementationQuery(implementationId));
   const commercialTerms = useQuery(commercialTermsQuery(implementationId));
+  const contractQuery = useQuery({
+    queryKey: ["implementation-contract-conditions", implementationId, "proposal-preview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("implementation_contract_conditions")
+        .select("administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days")
+        .eq("implementation_id", implementationId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const contentQuery = useQuery({
+    queryKey: ["proposal-content-blocks", implementationId, "proposta"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("proposal_content_blocks")
+        .select("title, body, display_order")
+        .eq("implementation_id", implementationId)
+        .eq("visibility", "proposta")
+        .order("display_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   const versions = versionsQuery.data ?? [];
-  const draftVersion = versions.find((version) => version.status === "draft") ?? null;
-  const latestPublished = versions.find((version) => version.status !== "draft") ?? null;
+  const draftVersion = versions.find((v) => v.status === "draft") ?? null;
+  const latestPublished = versions.find((v) => v.status !== "draft") ?? null;
+  // A lista completa (com desligados) e o objeto só persistem após a migration 0025.
+  const optionsSupported = versions.some((v) => v.draftItemOptions !== undefined);
 
-  const [items, setItems] = useState<DraftItem[]>([{ ...emptyItem }]);
-  const [responsibilitiesText, setResponsibilitiesText] = useState("");
-  const [signatoriesValue, setSignatoriesValue] = useState("");
+  const [items, setItems] = useState<DraftItem[]>([newItem()]);
+  const [partnershipObject, setPartnershipObject] = useState("");
+  const [responsibilities, setResponsibilities] = useState<Responsibility[]>([]);
+  const [signatoriesList, setSignatoriesList] = useState<Signatory[]>([]);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [previewId, setPreviewId] = useState<string | "draft" | null>(null);
+  const [confirmPublish, setConfirmPublish] = useState(false);
 
   useEffect(() => {
     const source = draftVersion ?? latestPublished;
-    const key = source
-      ? `${source.id}:${source.status}:${source.draftRevision}:${source.updatedAt}`
-      : "empty";
+    const key = source ? `${source.id}:${source.status}:${source.draftRevision}:${source.updatedAt}` : "empty";
     if (key === loadedKey) return;
-
-    if (draftVersion) {
-      setItems(fromProposalItems(draftVersion.items));
-      setResponsibilitiesText(draftVersion.draftResponsibilities.join("\n"));
-      setSignatoriesValue(signatoriesText(draftVersion.requiredSignatories));
-    } else if (latestPublished?.snapshot) {
-      setItems(fromProposalItems(latestPublished.snapshot.items));
-      setResponsibilitiesText(latestPublished.snapshot.responsibilities.join("\n"));
-      setSignatoriesValue(signatoriesText(latestPublished.snapshot.requiredSignatories));
-    } else {
-      setItems([{ ...emptyItem }]);
-      setResponsibilitiesText("");
-      setSignatoriesValue("");
-    }
-
+    const snap = !draftVersion ? latestPublished?.snapshot : null;
+    setItems(fromVersion(draftVersion, snap?.items ?? []));
+    setPartnershipObject(draftVersion?.draftPartnershipObject ?? snap?.partnershipObject ?? "");
+    setResponsibilities(
+      (draftVersion?.draftResponsibilities ?? snap?.responsibilities ?? []).map(parseResponsibility),
+    );
+    setSignatoriesList(
+      (draftVersion?.requiredSignatories ?? snap?.requiredSignatories ?? []).map((s) => ({
+        uid: uid(),
+        label: s.label,
+        role: s.role ?? "",
+      })),
+    );
     setLoadedKey(key);
     setDirty(false);
   }, [draftVersion, latestPublished, loadedKey]);
 
   const proposalItems = useMemo(() => toProposalItems(items), [items]);
-  const total = proposalItems.reduce((sum, item) => sum + item.total, 0);
+  const included = items.filter((i) => i.included && i.description.trim());
+  const subtotal = roundCents(included.reduce((a, i) => a + gross(i), 0));
+  const discounts = roundCents(included.reduce((a, i) => a + Math.min(i.discount, gross(i)), 0));
+  const total = roundCents(proposalItems.reduce((a, i) => a + i.total, 0));
+  const excludedCount = items.filter((i) => !i.included && i.description.trim()).length;
 
-  const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", implementationId] });
-  };
+  const draftInput = () => ({
+    proposalId: draftVersion?.id ?? null,
+    implementationId,
+    expectedRevision: draftVersion?.draftRevision ?? null,
+    items: proposalItems,
+    itemOptions: toOptions(items),
+    partnershipObject: partnershipObject.trim() || null,
+    responsibilities: serializeResponsibilities(responsibilities),
+    requiredSignatories: serializeSignatories(signatoriesList),
+    commandId: crypto.randomUUID(),
+  });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["commercial-proposals", implementationId] });
 
   const saveDraft = useMutation({
-    mutationFn: () =>
-      commercialProposalsApi.saveDraft({
-        proposalId: draftVersion?.id ?? null,
-        implementationId,
-        expectedRevision: draftVersion?.draftRevision ?? null,
-        items: proposalItems,
-        responsibilities: lines(responsibilitiesText),
-        requiredSignatories: signatories(signatoriesValue),
-        commandId: crypto.randomUUID(),
-      }),
+    mutationFn: () => commercialProposalsApi.saveDraft(draftInput()),
     onSuccess: async () => {
       setDirty(false);
       await invalidate();
@@ -179,15 +255,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
   const publish = useMutation({
     mutationFn: async () => {
-      const saved = await commercialProposalsApi.saveDraft({
-        proposalId: draftVersion?.id ?? null,
-        implementationId,
-        expectedRevision: draftVersion?.draftRevision ?? null,
-        items: proposalItems,
-        responsibilities: lines(responsibilitiesText),
-        requiredSignatories: signatories(signatoriesValue),
-        commandId: crypto.randomUUID(),
-      });
+      const saved = await commercialProposalsApi.saveDraft(draftInput());
       return commercialProposalsApi.publish({
         proposalId: saved.id,
         expectedRevision: saved.draftRevision,
@@ -215,32 +283,86 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
     },
   });
 
-  const updateItem = (index: number, patch: Partial<DraftItem>) => {
-    setItems((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    );
-    setDirty(true);
+  const touch = () => setDirty(true);
+  const updateItem = (id: string, patch: Partial<DraftItem>) => {
+    setItems((cur) => cur.map((i) => (i.uid === id ? { ...i, ...patch } : i)));
+    touch();
+  };
+  const moveItem = (index: number, delta: number) => {
+    setItems((cur) => {
+      const next = [...cur];
+      const target = index + delta;
+      if (target < 0 || target >= next.length) return cur;
+      [next[index], next[target]] = [next[target]!, next[index]!];
+      return next;
+    });
+    touch();
   };
 
-  const removeItem = (index: number) => {
-    setItems((current) => {
-      const next = current.filter((_, itemIndex) => itemIndex !== index);
-      return next.length > 0 ? next : [{ ...emptyItem }];
-    });
-    setDirty(true);
-  };
+  const draftSnapshot: CommercialProposalSnapshot = useMemo(
+    () => ({
+      schemaVersion: 1,
+      proposalId: draftVersion?.id ?? "draft",
+      implementationId,
+      version: draftVersion?.version ?? (latestPublished ? latestPublished.version + 1 : 1),
+      opportunity: {
+        code: implementationQueryResult.data?.code ?? "",
+        title: implementationQueryResult.data?.nickname ?? null,
+      },
+      partnershipObject: optionsSupported ? partnershipObject.trim() || null : null,
+      items: proposalItems,
+      total,
+      commercialTerms: (commercialTerms.data ?? []).map((t) => ({
+        label: t.label,
+        chargeType: t.chargeType,
+        value: t.value,
+        optional: t.optional,
+        displayOrder: t.displayOrder,
+        notes: t.notes,
+      })),
+      contractConditions: contractQuery.data
+        ? {
+            administrationFee: contractQuery.data.administration_fee,
+            cleaningResponsibility: contractQuery.data.cleaning_responsibility,
+            payoutRule: contractQuery.data.payout_rule,
+            maintenanceLimit: contractQuery.data.maintenance_limit,
+            exclusivity: contractQuery.data.exclusivity,
+            durationMonths: contractQuery.data.duration_months,
+            noticePeriodDays: contractQuery.data.notice_period_days,
+          }
+        : {},
+      responsibilities: serializeResponsibilities(responsibilities),
+      content: (contentQuery.data ?? []).map((b) => ({
+        title: b.title,
+        body: b.body,
+        displayOrder: b.display_order,
+      })),
+      requiredSignatories: serializeSignatories(signatoriesList),
+      publishedAt: new Date().toISOString(),
+    }),
+    [
+      draftVersion,
+      latestPublished,
+      implementationId,
+      implementationQueryResult.data,
+      optionsSupported,
+      partnershipObject,
+      proposalItems,
+      total,
+      commercialTerms.data,
+      contractQuery.data,
+      responsibilities,
+      contentQuery.data,
+      signatoriesList,
+    ],
+  );
 
   if (versionsQuery.isLoading) {
-    return (
-      <div className="rounded-[var(--radius-card)] border bg-white p-6 text-sm text-muted-foreground">
-        Carregando propostas…
-      </div>
-    );
+    return <div className={`${card} text-sm text-muted-foreground`}>Carregando propostas…</div>;
   }
-
   if (versionsQuery.isError) {
     return (
-      <div className="rounded-[var(--radius-card)] border bg-white p-6">
+      <div className={card}>
         <p className="text-sm font-medium text-destructive">{proposalError(versionsQuery.error)}</p>
         <Button className="mt-4" variant="outline" onClick={() => void versionsQuery.refetch()}>
           Tentar novamente
@@ -250,16 +372,15 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   }
 
   const selectedVersion =
-    previewId && previewId !== "draft"
-      ? (versions.find((version) => version.id === previewId) ?? null)
-      : null;
-  const selectedSnapshot = selectedVersion?.snapshot ?? null;
+    previewId && previewId !== "draft" ? (versions.find((v) => v.id === previewId) ?? null) : null;
+  const canSave = proposalItems.length > 0 && !saveDraft.isPending && !publish.isPending;
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
+      {/* Cabeçalho da versão */}
+      <section className={card}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Proposta comercial
             </p>
@@ -271,230 +392,397 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                   : "Preparar primeira versão"}
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              O rascunho é interno. Ao publicar, itens, condições, responsabilidades, conteúdo e
-              signatários são congelados em um snapshot imutável.
+              {latestPublished
+                ? `Versão ${latestPublished.version} está ${statusLabels[latestPublished.status].toLowerCase()} e não muda. As edições abaixo formam a próxima versão.`
+                : "O rascunho é interno até você publicar."}
+              {dirty && " · Alterações não salvas."}
             </p>
           </div>
-
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setPreviewId("draft")}>
-              <Eye className="mr-2 h-4 w-4" />
-              Prévia
+              <Eye className="mr-2 h-4 w-4" /> Ver como o proprietário
             </Button>
             <Button
               variant="outline"
-              disabled={
-                saveDraft.isPending ||
-                publish.isPending ||
-                proposalItems.length === 0 ||
-                (!dirty && Boolean(draftVersion))
-              }
+              disabled={!canSave || (!dirty && Boolean(draftVersion))}
               onClick={() => saveDraft.mutate()}
             >
               <Save className="mr-2 h-4 w-4" />
               {saveDraft.isPending ? "Salvando…" : "Salvar rascunho"}
             </Button>
-            <Button
-              disabled={publish.isPending || saveDraft.isPending || proposalItems.length === 0}
-              onClick={() => publish.mutate()}
-            >
+            <Button disabled={!canSave} onClick={() => setConfirmPublish(true)}>
               <Send className="mr-2 h-4 w-4" />
-              {publish.isPending ? "Publicando…" : "Publicar versão"}
+              {publish.isPending ? "Publicando…" : "Publicar nova versão"}
             </Button>
           </div>
         </div>
-
         {(saveDraft.isError || publish.isError) && (
-          <div className="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-            {proposalError(saveDraft.error ?? publish.error)}
+          <div role="alert" className="mt-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            {proposalError(saveDraft.error ?? publish.error)} O que você preencheu continua na tela.
           </div>
+        )}
+        {saveDraft.isSuccess && !dirty && (
+          <p className="mt-3 text-xs text-[var(--stayo-success)]">Rascunho salvo.</p>
         )}
       </section>
 
-      <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold">Serviços e valores</h3>
-            <p className="text-sm text-muted-foreground">
-              Edite apenas o draft atual. Versões publicadas não são alteradas.
-            </p>
-          </div>
-          <strong className="text-sm">{currency.format(total)}</strong>
+      {/* A. Condições da proposta */}
+      <section className={card} aria-labelledby="area-condicoes">
+        <p className={eyebrow}>A</p>
+        <h3 id="area-condicoes" className="text-lg font-semibold">
+          Condições da proposta
+        </h3>
+        <div className="mt-3 flex gap-2 rounded-lg border border-[var(--stayo-gold)] bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">
+          <Info className="mt-0.5 size-4 shrink-0" />
+          <p>
+            A proposta comercial apresenta condições e serviços. Ela não substitui o contrato
+            assinado, que é tratado à parte. O aceite do proprietário é comercial.
+          </p>
         </div>
 
-        <div className="space-y-3">
-          {items.map((item, index) => (
-            <div
-              key={index}
-              className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,1fr)_90px_130px_130px_auto] sm:items-end"
-            >
-              <label className="space-y-1 text-xs font-medium text-muted-foreground">
-                Serviço
-                <Input
-                  value={item.description}
-                  onChange={(event) => updateItem(index, { description: event.target.value })}
-                  placeholder="Ex.: Taxa de implantação"
-                />
-              </label>
-              <label className="space-y-1 text-xs font-medium text-muted-foreground">
-                Qtd.
-                <Input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={item.quantity}
-                  onChange={(event) =>
-                    updateItem(index, { quantity: Number(event.target.value) || 0 })
-                  }
-                />
-              </label>
-              <label className="space-y-1 text-xs font-medium text-muted-foreground">
-                Valor unitário
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.unitValue}
-                  onChange={(event) =>
-                    updateItem(index, { unitValue: Number(event.target.value) || 0 })
-                  }
-                />
-              </label>
-              <label className="space-y-1 text-xs font-medium text-muted-foreground">
-                Desconto
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.discount}
-                  onChange={(event) =>
-                    updateItem(index, { discount: Number(event.target.value) || 0 })
-                  }
-                />
-              </label>
-              <button
-                type="button"
-                aria-label="Remover item"
-                className="flex h-10 w-10 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
-                onClick={() => removeItem(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <div>
+            <label htmlFor="partnership-object" className="text-sm font-semibold">
+              Objeto da parceria
+            </label>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Em uma ou duas frases: o que a STAYO fará por este imóvel.
+            </p>
+            <Textarea
+              id="partnership-object"
+              className="mt-2 min-h-24"
+              maxLength={2000}
+              disabled={!optionsSupported}
+              value={partnershipObject}
+              placeholder="Ex.: Gestão completa da locação por temporada do apartamento, incluindo anúncios, atendimento aos hóspedes, limpeza e manutenção."
+              onChange={(e) => {
+                setPartnershipObject(e.target.value);
+                touch();
+              }}
+            />
+            {!optionsSupported && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Disponível depois que a atualização do banco for aprovada.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold">Condições comerciais</h4>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Vêm da ficha (aba Resumo) e são congeladas na publicação.
+            </p>
+            {commercialTerms.isLoading ? (
+              <p className="mt-2 text-sm text-muted-foreground">Carregando…</p>
+            ) : commercialTerms.isError ? (
+              <p className="mt-2 text-sm text-destructive">
+                Não foi possível carregar. Não publique até corrigir.
+              </p>
+            ) : (commercialTerms.data ?? []).length === 0 ? (
+              <p className="mt-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                Nenhuma condição comercial cadastrada.
+              </p>
+            ) : (
+              <dl className="mt-2 divide-y rounded-lg border">
+                {(commercialTerms.data ?? []).map((t) => (
+                  <div key={t.id} className="flex justify-between gap-3 px-3 py-2 text-sm">
+                    <dt>{t.label}</dt>
+                    <dd className="font-medium tabular-nums">
+                      {t.chargeType === "percentage" ? `${String(t.value).replace(".", ",")}%` : formatBRL(t.value)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </div>
         </div>
+
+        <div className="mt-5">
+          <ContractConditionsPanel implementationId={implementationId} />
+        </div>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <div>
+            <h4 className="text-sm font-semibold">Responsabilidades</h4>
+            <p className="mt-0.5 text-xs text-muted-foreground">Quem faz o quê, uma por linha.</p>
+            <ul className="mt-2 space-y-2">
+              {responsibilities.map((r) => (
+                <li key={r.uid} className="grid grid-cols-[120px_minmax(0,1fr)_auto] gap-2">
+                  <select
+                    aria-label="Responsável"
+                    value={r.party}
+                    onChange={(e) => {
+                      setResponsibilities((cur) => cur.map((x) => (x.uid === r.uid ? { ...x, party: e.target.value as Party } : x)));
+                      touch();
+                    }}
+                    className="h-10 rounded-md border border-input bg-white px-2 text-sm"
+                  >
+                    {PARTIES.map((p) => (
+                      <option key={p}>{p}</option>
+                    ))}
+                  </select>
+                  <Input
+                    aria-label="Responsabilidade"
+                    value={r.text}
+                    placeholder="Ex.: Cadastro e configuração dos anúncios"
+                    onChange={(e) => {
+                      setResponsibilities((cur) => cur.map((x) => (x.uid === r.uid ? { ...x, text: e.target.value } : x)));
+                      touch();
+                    }}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Remover responsabilidade"
+                    className="flex size-10 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      setResponsibilities((cur) => cur.filter((x) => x.uid !== r.uid));
+                      touch();
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <Button
+              className="mt-2"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setResponsibilities((cur) => [...cur, { uid: uid(), party: "STAYO", text: "" }]);
+                touch();
+              }}
+            >
+              <Plus className="mr-1.5 size-4" /> Adicionar responsabilidade
+            </Button>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold">Partes exigidas</h4>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Quem precisa participar do aceite comercial. Isto não cria assinatura de contrato.
+            </p>
+            <ul className="mt-2 space-y-2">
+              {signatoriesList.map((s) => (
+                <li key={s.uid} className="grid grid-cols-[minmax(0,1fr)_160px_auto] gap-2">
+                  <Input
+                    aria-label="Nome ou identificação"
+                    value={s.label}
+                    placeholder="Ex.: Maria Souza"
+                    onChange={(e) => {
+                      setSignatoriesList((cur) => cur.map((x) => (x.uid === s.uid ? { ...x, label: e.target.value } : x)));
+                      touch();
+                    }}
+                  />
+                  <select
+                    aria-label="Papel"
+                    value={s.role}
+                    onChange={(e) => {
+                      setSignatoriesList((cur) => cur.map((x) => (x.uid === s.uid ? { ...x, role: e.target.value } : x)));
+                      touch();
+                    }}
+                    className="h-10 rounded-md border border-input bg-white px-2 text-sm"
+                  >
+                    <option value="">Papel…</option>
+                    {[...new Set([...ROLES, ...(s.role ? [s.role] : [])])].map((r) => (
+                      <option key={r}>{r}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    aria-label="Remover parte"
+                    className="flex size-10 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      setSignatoriesList((cur) => cur.filter((x) => x.uid !== s.uid));
+                      touch();
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <Button
+              className="mt-2"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSignatoriesList((cur) => [...cur, { uid: uid(), label: "", role: "Proprietário titular" }]);
+                touch();
+              }}
+            >
+              <Plus className="mr-1.5 size-4" /> Adicionar parte
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* B. Serviços e valores */}
+      <section className={card} aria-labelledby="area-servicos">
+        <p className={eyebrow}>B</p>
+        <h3 id="area-servicos" className="text-lg font-semibold">
+          Serviços e valores da implantação
+        </h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Itens desligados não entram no total nem na versão publicada. Ligar um item não gera
+          cobrança, nota ou pagamento.
+        </p>
+
+        <ul className="mt-4 space-y-2">
+          {items.map((item, index) => (
+            <li
+              key={item.uid}
+              className={`rounded-lg border p-3 transition-opacity ${item.included ? "" : "bg-slate-50 opacity-70"}`}
+            >
+              <div className="grid gap-2 md:grid-cols-[auto_minmax(0,1fr)_70px_130px_130px_120px_auto] md:items-end">
+                <label className="flex min-h-10 items-center gap-2 text-xs font-medium">
+                  <input
+                    type="checkbox"
+                    checked={item.included}
+                    onChange={(e) => updateItem(item.uid, { included: e.target.checked })}
+                    className="size-4"
+                    aria-label={`Incluir ${item.description || "item"}`}
+                  />
+                  <span className="md:sr-only">Incluir</span>
+                </label>
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Descrição
+                  <Input
+                    value={item.description}
+                    placeholder="Ex.: Fotos profissionais"
+                    onChange={(e) => updateItem(item.uid, { description: e.target.value })}
+                    className="mt-1"
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Qtd.
+                  <Input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={item.quantity}
+                    onChange={(e) => updateItem(item.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })}
+                    className="mt-1"
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Valor unitário
+                  <MoneyInput
+                    value={item.unitValue}
+                    onValueChange={(v) => updateItem(item.uid, { unitValue: v })}
+                    className="mt-1"
+                  />
+                </label>
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Desconto
+                  <MoneyInput
+                    value={item.discount}
+                    onValueChange={(v) => updateItem(item.uid, { discount: v })}
+                    className="mt-1"
+                  />
+                </label>
+                <div className="text-[11px] font-medium text-muted-foreground">
+                  Total
+                  <p className="mt-1 flex h-10 items-center justify-end font-semibold tabular-nums text-foreground">
+                    {item.included ? formatBRL(lineTotal(item)) : "Fora do total"}
+                  </p>
+                </div>
+                <div className="flex items-center justify-end gap-1">
+                  <button type="button" aria-label="Mover para cima" disabled={index === 0} onClick={() => moveItem(index, -1)} className="flex size-9 items-center justify-center rounded-md border disabled:opacity-40">
+                    <ArrowUp className="size-4" />
+                  </button>
+                  <button type="button" aria-label="Mover para baixo" disabled={index === items.length - 1} onClick={() => moveItem(index, 1)} className="flex size-9 items-center justify-center rounded-md border disabled:opacity-40">
+                    <ArrowDown className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Remover item"
+                    className="flex size-9 items-center justify-center rounded-md border text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      setItems((cur) => (cur.length > 1 ? cur.filter((x) => x.uid !== item.uid) : [newItem()]));
+                      touch();
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                <label className="flex items-center gap-1.5">
+                  <input type="checkbox" checked={item.optional} onChange={(e) => updateItem(item.uid, { optional: e.target.checked })} className="size-3.5" />
+                  Item opcional
+                </label>
+                {item.discount > gross(item) && (
+                  <span className="text-[var(--stayo-warning)]">
+                    Desconto maior que o valor; o total fica em {formatBRL(0)}.
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
 
         <Button
           className="mt-3"
           variant="outline"
           size="sm"
           onClick={() => {
-            setItems((current) => [...current, { ...emptyItem }]);
-            setDirty(true);
+            setItems((cur) => [...cur, newItem()]);
+            touch();
           }}
         >
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar item
+          <Plus className="mr-1.5 size-4" /> Adicionar item próprio
         </Button>
-      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
-          <h3 className="font-semibold">Responsabilidades apresentadas</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Uma responsabilidade por linha.</p>
-          <Textarea
-            className="mt-3 min-h-36"
-            value={responsibilitiesText}
-            placeholder="Ex.: STAYO realiza cadastro e configuração inicial dos canais"
-            onChange={(event) => {
-              setResponsibilitiesText(event.target.value);
-              setDirty(true);
-            }}
-          />
-        </section>
-
-        <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
-          <h3 className="font-semibold">Signatários comerciais exigidos</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Um por linha. Use “Nome ou papel | função” quando precisar registrar a função. Isto não
-            cria assinatura de contrato.
+        {excludedCount > 0 && !optionsSupported && (
+          <p className="mt-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">
+            {excludedCount} item(ns) desligado(s). Até a atualização do banco ser aprovada, itens
+            desligados não ficam guardados no rascunho ao salvar.
           </p>
-          <Textarea
-            className="mt-3 min-h-36"
-            value={signatoriesValue}
-            placeholder="Proprietário titular | proprietário"
-            onChange={(event) => {
-              setSignatoriesValue(event.target.value);
-              setDirty(true);
-            }}
-          />
-        </section>
-      </div>
-
-      <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
-        <h3 className="font-semibold">Condições que serão congeladas na publicação</h3>
-        {commercialTerms.isLoading ? (
-          <p className="mt-3 text-sm text-muted-foreground">Carregando condições…</p>
-        ) : commercialTerms.isError ? (
-          <p className="mt-3 text-sm text-destructive">
-            Não foi possível carregar as condições comerciais. Não publique até corrigir.
-          </p>
-        ) : (commercialTerms.data ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Nenhuma condição comercial cadastrada. As condições contratuais da ficha também serão
-            capturadas no snapshot quando existirem.
-          </p>
-        ) : (
-          <div className="mt-3 divide-y rounded-lg border">
-            {(commercialTerms.data ?? []).map((term) => (
-              <div
-                key={term.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm"
-              >
-                <span>{term.label}</span>
-                <strong>
-                  {term.chargeType === "percentage"
-                    ? `${term.value}%`
-                    : currency.format(term.value)}
-                </strong>
-              </div>
-            ))}
-          </div>
         )}
+
+        <dl className="mt-4 ml-auto max-w-sm space-y-1 border-t pt-3 text-sm">
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Subtotal</dt>
+            <dd className="tabular-nums">{formatBRL(subtotal)}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Descontos</dt>
+            <dd className="tabular-nums">{discounts > 0 ? `− ${formatBRL(discounts)}` : formatBRL(0)}</dd>
+          </div>
+          <div className="flex justify-between border-t pt-2 text-base font-semibold">
+            <dt>Total</dt>
+            <dd className="tabular-nums">{formatBRL(total)}</dd>
+          </div>
+        </dl>
       </section>
 
-      {(previewId === "draft" || selectedVersion) && (
-        <ProposalPreview
-          title={
-            previewId === "draft"
-              ? "Prévia do rascunho"
-              : `Prévia da versão ${selectedVersion?.version}`
-          }
-          items={previewId === "draft" ? proposalItems : (selectedSnapshot?.items ?? [])}
-          total={previewId === "draft" ? total : (selectedSnapshot?.total ?? 0)}
-          responsibilities={
-            previewId === "draft"
-              ? lines(responsibilitiesText)
-              : (selectedSnapshot?.responsibilities ?? [])
-          }
-          signatories={
-            previewId === "draft"
-              ? signatories(signatoriesValue)
-              : (selectedSnapshot?.requiredSignatories ?? [])
-          }
-          snapshot={previewId === "draft" ? null : selectedSnapshot}
-          onClose={() => setPreviewId(null)}
-        />
+      {(previewId === "draft" || selectedVersion?.snapshot) && (
+        <section className="rounded-[var(--radius-card)] border-2 bg-white p-4 sm:p-5" style={{ borderColor: "var(--stayo-forest)" }}>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p className={eyebrow}>Prévia interna · exatamente o que o proprietário verá</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {previewId === "draft"
+                  ? "Rascunho atual, ainda não publicado. As condições da ficha são congeladas no momento da publicação."
+                  : `Versão ${selectedVersion?.version} publicada — imutável.`}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setPreviewId(null)}>
+              Fechar
+            </Button>
+          </div>
+          <ProposalPresentationView snapshot={previewId === "draft" ? draftSnapshot : selectedVersion!.snapshot!} />
+        </section>
       )}
 
-      <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5">
+      <section className={card}>
         <div className="mb-4">
           <h3 className="font-semibold">Histórico de versões</h3>
           <p className="text-sm text-muted-foreground">
-            Versões publicadas permanecem imutáveis. Uma nova negociação gera outra versão.
+            Versões publicadas e aceitas permanecem imutáveis. Uma nova negociação gera outra versão.
           </p>
         </div>
-
         {versions.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
             Nenhuma versão criada. O primeiro salvamento criará a versão 1 como rascunho.
@@ -502,44 +790,32 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         ) : (
           <div className="space-y-2">
             {versions.map((version) => (
-              <div
-                key={version.id}
-                className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
+              <div key={version.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <strong>Versão {version.version}</strong>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-xs font-medium"
-                      style={statusTone(version.status)}
-                    >
+                    <span className="rounded-full bg-[var(--stayo-bg-soft)] px-2 py-0.5 text-xs font-medium">
                       {statusLabels[version.status]}
                     </span>
+                    <span className="text-xs tabular-nums text-muted-foreground">{formatBRL(version.total)}</span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {version.publishedAt
                       ? `Publicada em ${new Date(version.publishedAt).toLocaleString("pt-BR")}`
                       : `Atualizada em ${new Date(version.updatedAt).toLocaleString("pt-BR")}`}
-                    {version.acceptedAt
-                      ? ` · aceite comercial em ${new Date(version.acceptedAt).toLocaleString("pt-BR")}`
-                      : ""}
+                    {version.acceptedAt ? ` · aceite comercial em ${new Date(version.acceptedAt).toLocaleString("pt-BR")}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setPreviewId(version.id)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Ver
-                  </Button>
                   {version.snapshot && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={pdf.isPending}
-                      onClick={() => pdf.mutate(version)}
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      PDF
-                    </Button>
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setPreviewId(version.id)}>
+                        <Eye className="mr-2 h-4 w-4" /> Ver
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={pdf.isPending} onClick={() => pdf.mutate(version)}>
+                        <FileText className="mr-2 h-4 w-4" /> PDF
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -547,105 +823,26 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         )}
       </section>
-    </div>
-  );
-}
 
-function ProposalPreview({
-  title,
-  items,
-  total,
-  responsibilities,
-  signatories: requiredSignatories,
-  snapshot,
-  onClose,
-}: {
-  title: string;
-  items: ProposalItem[];
-  total: number;
-  responsibilities: string[];
-  signatories: ProposalRequiredSignatory[];
-  snapshot: CommercialProposalSnapshot | null;
-  onClose: () => void;
-}) {
-  return (
-    <section
-      className="rounded-[var(--radius-card)] border-2 bg-white p-4 sm:p-5"
-      style={{ borderColor: "var(--stayo-forest)" }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p
-            className="text-[11px] font-medium uppercase tracking-[0.14em]"
-            style={{ color: "var(--stayo-forest)" }}
-          >
-            Prévia interna
-          </p>
-          <h3 className="mt-1 text-lg font-semibold">{title}</h3>
-        </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Fechar
-        </Button>
-      </div>
-
-      <div className="mt-4 divide-y rounded-lg border">
-        {items.map((item, index) => (
-          <div
-            key={`${item.description}-${index}`}
-            className="flex flex-wrap justify-between gap-3 px-3 py-3 text-sm"
-          >
-            <span>
-              {item.description} · {item.quantity}x
-            </span>
-            <strong>{currency.format(item.total)}</strong>
-          </div>
-        ))}
-        <div className="flex justify-between gap-3 px-3 py-3 text-sm font-semibold">
-          <span>Total</span>
-          <span>{currency.format(total)}</span>
-        </div>
-      </div>
-
-      {snapshot?.commercialTerms && snapshot.commercialTerms.length > 0 && (
-        <PreviewList
-          title="Condições comerciais"
-          values={snapshot.commercialTerms.map(
-            (term) =>
-              `${term.label}: ${term.chargeType === "percentage" ? `${term.value}%` : currency.format(term.value)}`,
-          )}
-        />
-      )}
-      {responsibilities.length > 0 && (
-        <PreviewList title="Responsabilidades" values={responsibilities} />
-      )}
-      {requiredSignatories.length > 0 && (
-        <PreviewList
-          title="Signatários comerciais"
-          values={requiredSignatories.map(
-            (item) => `${item.label}${item.role ? ` — ${item.role}` : ""}`,
-          )}
-        />
-      )}
-
-      {!snapshot && (
-        <p className="mt-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-          Esta é a prévia do rascunho. As condições comerciais, condições contratuais e blocos de
-          conteúdo vigentes serão congelados pelo servidor no momento da publicação.
-        </p>
-      )}
-    </section>
-  );
-}
-
-function PreviewList({ title, values }: { title: string; values: string[] }) {
-  return (
-    <div className="mt-4">
-      <h4 className="text-sm font-semibold">{title}</h4>
-      <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-        {values.map((value, index) => (
-          <li key={`${value}-${index}`}>• {value}</li>
-        ))}
-      </ul>
+      <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Publicar versão {draftSnapshot.version}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {proposalItems.length} serviço(s) incluído(s), total {formatBRL(total)}. Depois de
+              publicada, esta versão não pode ser alterada
+              {latestPublished?.status === "published" ? ` e a versão ${latestPublished.version} passa a ser substituída` : ""}.
+              Nenhuma cobrança é emitida ao publicar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => publish.mutate()}>Publicar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
