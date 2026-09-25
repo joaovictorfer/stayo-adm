@@ -1698,6 +1698,32 @@ export type Database = {
           },
         ]
       }
+      owner_portal_invitation_secrets: {
+        Row: {
+          created_at: string
+          invitation_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          invitation_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          invitation_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_portal_invitation_secrets_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: true
+            referencedRelation: "owner_portal_invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_portal_invitations: {
         Row: {
           created_at: string
