@@ -51,11 +51,11 @@ describe("opportunity state", () => {
   });
 
   it("mostra convite a preparar para oportunidade sem proprietário", () => {
-    expect(
-      opportunityNextAction({ ...base, origin: "admin_invite:abc", ownerId: null }),
-    ).toBe("Convite a preparar");
-    expect(
-      opportunityNextAction({ ...base, origin: "admin_invite:abc", ownerId: "o1" }),
-    ).toBe("Completar dados ou preparar proposta");
+    expect(opportunityNextAction({ ...base, origin: "admin_invite:abc", ownerId: null })).toBe(
+      "Convite a preparar",
+    );
+    expect(opportunityNextAction({ ...base, origin: "admin_invite:abc", ownerId: "o1" })).toBe(
+      "Completar dados ou preparar proposta",
+    );
   });
 });

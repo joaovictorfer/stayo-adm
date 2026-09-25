@@ -24,8 +24,7 @@ const inputStyle = {
   borderColor: "var(--stayo-border)",
   color: "var(--stayo-ink)",
 };
-const primaryBtn =
-  "min-w-40 bg-[var(--stayo-forest)] text-white hover:bg-[var(--stayo-forest)]/90";
+const primaryBtn = "min-w-40 bg-[var(--stayo-forest)] text-white hover:bg-[var(--stayo-forest)]/90";
 
 export function PathChooser({ onChoose }: { onChoose: (path: OpportunityPath) => void }) {
   const options: Array<{
