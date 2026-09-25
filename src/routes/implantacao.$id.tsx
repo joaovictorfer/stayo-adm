@@ -51,6 +51,8 @@ import {
 import { ProposalTab } from "../components/implantacao/ProposalTab";
 import { ContractConditionsPanel } from "../components/implantacao/ContractConditionsPanel";
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
+import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
+import { formatCommercialDateTime } from "../lib/commercial-meeting-state";
 import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
 import { CoverPicker, useAdminCoverUrl } from "../components/implantacao/CoverPicker";
 import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
@@ -164,6 +166,35 @@ function ImplementationDetailPage() {
       ].filter((value) => value === null || value === undefined || value === "").length
     : 0;
 
+  const commercialQuery = useQuery({
+    queryKey: ["commercial", "overview"],
+    queryFn: () => commercialMeetingsApi.listOverview(),
+    retry: 1,
+  });
+  const assigneesQuery = useQuery({
+    queryKey: ["commercial", "assignees"],
+    queryFn: () => commercialMeetingsApi.listAssignees(),
+    retry: 1,
+  });
+  const commercial = (commercialQuery.data ?? []).find((row) => row.implementationId === id);
+  const responsibleName = !implementation?.responsibleUserId
+    ? "a definir"
+    : ((assigneesQuery.data ?? []).find((a) => a.id === implementation.responsibleUserId)
+        ?.fullName ?? (assigneesQuery.isPending ? "…" : "definido"));
+  const nextActionLabel = commercial?.nextActionTitle
+    ? commercial.nextActionTitle
+    : nextItem
+      ? nextItem.title
+      : itemsQuery.isPending || commercialQuery.isPending
+        ? "—"
+        : "Nenhuma definida";
+  const nextActionDetail =
+    commercial?.nextActionTitle && commercial.nextActionDueAt && commercial.nextActionTimeZone
+      ? formatCommercialDateTime(commercial.nextActionDueAt, commercial.nextActionTimeZone)
+      : !commercial?.nextActionTitle && nextItem
+        ? "Item do checklist"
+        : null;
+
   const shareWorkspace = async () => {
     if (typeof window === "undefined") return;
     if (navigator.share) {
@@ -218,49 +249,155 @@ function ImplementationDetailPage() {
         <NotFoundPanel message="Implantação não encontrada" />
       ) : (
         <div className="implementation-workspace-stack">
-          <section className="implementation-identity">
-            <div className="implementation-cover">
-              {adminCover ? (
-                <img
-                  src={adminCover}
-                  alt={`Capa do imóvel ${implementation.nickname ?? implementation.code}`}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-[var(--stayo-forest)]" />
-              )}
-              <div className="implementation-cover-overlay" />
-            </div>
-            <div className="implementation-identity-body">
-              <div className="implementation-identity-copy">
-                <div className="implementation-property-mark" aria-hidden="true" />
-                <h1 className="implementation-property-name">{propertyName}</h1>
-                <div className="implementation-identity-meta">
-                  <span className="implementation-status-pill">
-                    <span aria-hidden="true" />
-                    {statusLabels[implementation.status]}
-                  </span>
-                  <span>Proprietário: {implementation.ownerName || "Não informado"}</span>
+          <section
+            className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
+            style={{ borderColor: "var(--stayo-border)" }}
+            aria-label="Resumo da implantação"
+          >
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 p-4 sm:p-5">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="relative hidden size-14 shrink-0 overflow-hidden rounded-[var(--radius-control)] bg-[var(--stayo-forest)] sm:block">
+                  {adminCover && (
+                    <img
+                      src={adminCover}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p
+                    className="text-[11px] font-medium uppercase tracking-[0.12em]"
+                    style={{ color: "var(--stayo-ink-muted)" }}
+                  >
+                    {implementation.code}
+                  </p>
+                  <h1
+                    className="truncate text-lg font-semibold sm:text-xl"
+                    style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+                  >
+                    {propertyName}
+                  </h1>
+                  <p
+                    className="mt-0.5 truncate text-xs sm:text-sm"
+                    style={{ color: "var(--stayo-ink-muted)" }}
+                  >
+                    {implementation.ownerName
+                      ? `Proprietário: ${implementation.ownerName}`
+                      : "Proprietário ainda não informado"}
+                    {" · "}
+                    Responsável: {responsibleName}
+                  </p>
                 </div>
               </div>
-              <div className="implementation-actions">
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="implementation-status-pill">
+                  <span aria-hidden="true" />
+                  {statusLabels[implementation.status]}
+                </span>
                 <Button
-                  className="implementation-primary-action"
-                  size="sm"
-                  onClick={() => setTab("proprietario")}
-                >
-                  <ExternalLink /> Portal
-                </Button>
-                <Button
-                  className="implementation-secondary-action"
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  className="size-9"
                   onClick={() => void shareWorkspace()}
+                  aria-label="Compartilhar ficha com a equipe"
                 >
-                  <Share2 /> Compartilhar
+                  <Share2 />
                 </Button>
               </div>
             </div>
+            <dl
+              className="grid grid-cols-2 border-t text-sm sm:grid-cols-4"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
+              <div
+                className="col-span-2 min-w-0 border-b p-3 sm:col-span-1 sm:border-b-0 sm:border-r sm:px-5"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
+                <dt
+                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
+                  Próxima ação
+                </dt>
+                <dd className="mt-1 truncate font-medium" style={{ color: "var(--stayo-ink)" }}>
+                  {nextActionLabel}
+                </dd>
+                {nextActionDetail && (
+                  <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {nextActionDetail}
+                  </dd>
+                )}
+              </div>
+              <div
+                className="min-w-0 border-r p-3 sm:px-5"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
+                <dt
+                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
+                  Pendências
+                </dt>
+                <dd
+                  className="mt-1 font-medium"
+                  style={{
+                    color: readiness.pendingBlockers ? "var(--stayo-danger)" : "var(--stayo-ink)",
+                  }}
+                >
+                  {itemsQuery.isPending
+                    ? "—"
+                    : itemsQuery.isError
+                      ? "Indisponível"
+                      : pendingItems.length}
+                </dd>
+                {!itemsQuery.isPending && !itemsQuery.isError && (
+                  <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {readiness.pendingMandatory} obrigatória(s) · {readiness.pendingBlockers}{" "}
+                    bloqueador(es)
+                  </dd>
+                )}
+              </div>
+              <div
+                className="min-w-0 p-3 sm:border-r sm:px-5"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
+                <dt
+                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
+                  Progresso
+                </dt>
+                <dd className="mt-1 font-medium" style={{ color: "var(--stayo-ink)" }}>
+                  {itemsQuery.isPending ? "—" : `${progress.percent}%`}
+                </dd>
+                <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                  {progress.done} de {progress.total} itens
+                </dd>
+              </div>
+              <div
+                className="col-span-2 min-w-0 border-t p-3 sm:col-span-1 sm:border-t-0 sm:px-5"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
+                <dt
+                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
+                  Prontidão para operar
+                </dt>
+                <dd
+                  className="mt-1 font-medium"
+                  style={{
+                    color: itemsQuery.isPending ? undefined : readinessColors[readiness.state],
+                  }}
+                >
+                  {itemsQuery.isPending ? "—" : readinessLabels[readiness.state]}
+                </dd>
+                <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+                  Separada do progresso
+                </dd>
+              </div>
+            </dl>
           </section>
 
           <StatusStepper
@@ -268,8 +405,6 @@ function ImplementationDetailPage() {
             onChange={(status) => changeStatus.mutate(status)}
             pending={changeStatus.isPending}
           />
-
-          <IndicatorCards items={items} loading={itemsQuery.isPending} />
 
           <nav className="implementation-tabs" aria-label="Seções da implantação">
             {(
@@ -749,169 +884,171 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
           ownerName={ownerData?.name ?? implementation.ownerName ?? null}
         />
       </div>
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
-      <div className="space-y-4">
-        <OwnerInviteSection
-          implementationId={implementation.id}
-          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-        />
-        <CoverPicker
-          implementationId={implementation.id}
-          propertyName={
-            implementation.nickname || implementation.condominiumName || implementation.code
-          }
-        />
-        <OwnerIntakeReview
-          implementationId={implementation.id}
-          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-        />
-        <OwnerVisibilityPanel
-          implementationId={implementation.id}
-          defaultMessage="Estamos organizando a implantação do seu imóvel. Você acompanhará cada etapa por aqui."
-        />
-      </div>
-      <div className="space-y-4">
-        <section
-          className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
-          style={{ borderColor: "var(--stayo-border)" }}
-        >
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <SummaryHeading>Proprietário vinculado</SummaryHeading>
-              {implementation.ownerId ? (
-                <LinkedField
-                  to="/proprietarios/$id"
-                  id={implementation.ownerId}
-                  label={ownerData?.name ?? implementation.ownerName}
-                />
-              ) : (
-                <p className="font-semibold" style={{ color: "var(--stayo-ink)" }}>
-                  {implementation.ownerName || "Proprietário ainda não vinculado"}
-                </p>
-              )}
-            </div>
-            {implementation.ownerId && <Tag label="Principal" tone="neutral" />}
-          </div>
-          <dl
-            className="mt-4 grid gap-x-8 border-t sm:grid-cols-2"
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+        <div className="space-y-4">
+          <OwnerInviteSection
+            implementationId={implementation.id}
+            ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+          />
+          <CoverPicker
+            implementationId={implementation.id}
+            propertyName={
+              implementation.nickname || implementation.condominiumName || implementation.code
+            }
+          />
+          <OwnerIntakeReview
+            implementationId={implementation.id}
+            ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+          />
+          <OwnerVisibilityPanel
+            implementationId={implementation.id}
+            defaultMessage="Estamos organizando a implantação do seu imóvel. Você acompanhará cada etapa por aqui."
+          />
+        </div>
+        <div className="space-y-4">
+          <section
+            className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
             style={{ borderColor: "var(--stayo-border)" }}
           >
-            <SummaryRow
-              label="Telefone"
-              value={formatBrazilianPhone(ownerData?.phone ?? implementation.ownerPhone ?? "")}
-            />
-            <SummaryRow label="E-mail" value={ownerData?.email} />
-            <SummaryRow label="Participação" value="Proprietário principal" />
-          </dl>
-        </section>
-
-        <section
-          className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
-          style={{ borderColor: "var(--stayo-border)" }}
-        >
-          <div className="flex items-center justify-between gap-4">
-            <SummaryHeading>Status do cadastro</SummaryHeading>
-            <div className="flex items-center gap-2">
-              {submitted && !submitted.submittedAt && (
-                <Tag label="Cadastro em andamento" tone="gold" />
-              )}
-              <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>
-                {registration.percentage}%
-              </span>
-            </div>
-          </div>
-          <Progress value={registration.percentage} className="mb-5 h-1.5" />
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {registration.groups.map((item) => (
-              <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
-                {item.state === "complete" ? (
-                  <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
-                ) : (
-                  <span
-                    className="size-4 rounded-full border"
-                    style={{ borderColor: "var(--stayo-border-strong)" }}
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <SummaryHeading>Proprietário vinculado</SummaryHeading>
+                {implementation.ownerId ? (
+                  <LinkedField
+                    to="/proprietarios/$id"
+                    id={implementation.ownerId}
+                    label={ownerData?.name ?? implementation.ownerName}
                   />
+                ) : (
+                  <p className="font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                    {implementation.ownerName || "Proprietário ainda não vinculado"}
+                  </p>
                 )}
-                <span
-                  style={{
-                    color:
-                      item.state === "complete" ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                  }}
-                >
-                  {item.label}
-                </span>
-                <span
-                  className="ml-auto text-xs"
-                  style={{
-                    color:
-                      item.state === "complete" ? "var(--stayo-success)" : "var(--stayo-ink-muted)",
-                  }}
-                >
-                  {item.state === "complete"
-                    ? "Completo"
-                    : item.state === "review"
-                      ? "Aguardando revisão"
-                      : "Incompleto"}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {registration.nextAction && implementation.ownerId && (
-            <Button asChild className="mt-4" size="sm">
-              <Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>
-                Resolver agora
-              </Link>
-            </Button>
-          )}
-        </section>
-
-        <section
-          className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
-          style={{ borderColor: "var(--stayo-border)" }}
-        >
-          <SummaryHeading>Precisamos confirmar</SummaryHeading>
-          {submission.isPending ? (
-            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-              Verificando dados enviados...
-            </p>
-          ) : confirmations.length === 0 ? (
-            <div
-              className="flex items-center gap-2 text-sm"
-              style={{ color: "var(--stayo-ink-muted)" }}
-            >
-              <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
-              Nenhum dado enviado pelo proprietário aguarda revisão.
+              </div>
+              {implementation.ownerId && <Tag label="Principal" tone="neutral" />}
             </div>
-          ) : (
-            <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-              {confirmations.map((item) => (
-                <li
-                  key={item.label}
-                  className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center"
-                >
-                  <AlertCircle className="size-4 shrink-0 text-[var(--stayo-warning)]" />
-                  <div className="min-w-0 flex-1 text-sm">
-                    <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
-                      {item.label} alterado pelo proprietário
-                    </p>
-                    <p className="truncate" style={{ color: "var(--stayo-ink-muted)" }}>
-                      Recebido: {item.received}
-                    </p>
-                  </div>
-                  {implementation.ownerId && (
-                    <Button asChild variant="outline" size="sm">
-                      <Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>
-                        Revisar cadastro
-                      </Link>
-                    </Button>
+            <dl
+              className="mt-4 grid gap-x-8 border-t sm:grid-cols-2"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
+              <SummaryRow
+                label="Telefone"
+                value={formatBrazilianPhone(ownerData?.phone ?? implementation.ownerPhone ?? "")}
+              />
+              <SummaryRow label="E-mail" value={ownerData?.email} />
+              <SummaryRow label="Participação" value="Proprietário principal" />
+            </dl>
+          </section>
+
+          <section
+            className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <SummaryHeading>Status do cadastro</SummaryHeading>
+              <div className="flex items-center gap-2">
+                {submitted && !submitted.submittedAt && (
+                  <Tag label="Cadastro em andamento" tone="gold" />
+                )}
+                <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink-muted)" }}>
+                  {registration.percentage}%
+                </span>
+              </div>
+            </div>
+            <Progress value={registration.percentage} className="mb-5 h-1.5" />
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {registration.groups.map((item) => (
+                <li key={item.label} className="flex items-center gap-2 py-1 text-sm">
+                  {item.state === "complete" ? (
+                    <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
+                  ) : (
+                    <span
+                      className="size-4 rounded-full border"
+                      style={{ borderColor: "var(--stayo-border-strong)" }}
+                    />
                   )}
+                  <span
+                    style={{
+                      color:
+                        item.state === "complete" ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    className="ml-auto text-xs"
+                    style={{
+                      color:
+                        item.state === "complete"
+                          ? "var(--stayo-success)"
+                          : "var(--stayo-ink-muted)",
+                    }}
+                  >
+                    {item.state === "complete"
+                      ? "Completo"
+                      : item.state === "review"
+                        ? "Aguardando revisão"
+                        : "Incompleto"}
+                  </span>
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+            {registration.nextAction && implementation.ownerId && (
+              <Button asChild className="mt-4" size="sm">
+                <Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>
+                  Resolver agora
+                </Link>
+              </Button>
+            )}
+          </section>
+
+          <section
+            className="rounded-[var(--radius-card)] border bg-white p-5 shadow-sm sm:p-6"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            <SummaryHeading>Precisamos confirmar</SummaryHeading>
+            {submission.isPending ? (
+              <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                Verificando dados enviados...
+              </p>
+            ) : confirmations.length === 0 ? (
+              <div
+                className="flex items-center gap-2 text-sm"
+                style={{ color: "var(--stayo-ink-muted)" }}
+              >
+                <CheckCircle2 className="size-4 text-[var(--stayo-success)]" />
+                Nenhum dado enviado pelo proprietário aguarda revisão.
+              </div>
+            ) : (
+              <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                {confirmations.map((item) => (
+                  <li
+                    key={item.label}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center"
+                  >
+                    <AlertCircle className="size-4 shrink-0 text-[var(--stayo-warning)]" />
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+                        {item.label} alterado pelo proprietário
+                      </p>
+                      <p className="truncate" style={{ color: "var(--stayo-ink-muted)" }}>
+                        Recebido: {item.received}
+                      </p>
+                    </div>
+                    {implementation.ownerId && (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>
+                          Revisar cadastro
+                        </Link>
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
-    </div>
     </div>
   );
 }
@@ -960,7 +1097,9 @@ function OwnerPortalPanel({
   });
 
   const invalidateLink = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link", implementationId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["owner-onboarding", "link", implementationId],
+    });
     await queryClient.invalidateQueries({ queryKey: ["owner-onboarding", "link-token"] });
   };
 
@@ -1078,7 +1217,9 @@ function OwnerPortalPanel({
             {linkQuery.isPending ? "Verificando link…" : statusDetail}
           </p>
         </div>
-        {status && <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />}
+        {status && (
+          <Tag label={invitationStatusLabels[status]} tone={invitationStatusTone[status]} />
+        )}
       </div>
 
       <div className="mt-4">
@@ -1098,7 +1239,11 @@ function OwnerPortalPanel({
                 ? "Este link foi criado antes de a equipe poder copiá-lo de novo. Gere um novo para continuar."
                 : "Ainda não há um link válido para o proprietário."}
             </p>
-            <Button onClick={() => createLink.mutate()} disabled={createLink.isPending} className="min-h-11">
+            <Button
+              onClick={() => createLink.mutate()}
+              disabled={createLink.isPending}
+              className="min-h-11"
+            >
               <Send /> {createLink.isPending ? "Gerando…" : "Gerar link"}
             </Button>
           </div>
@@ -1121,7 +1266,10 @@ function OwnerPortalPanel({
                 </a>
               </Button>
             </div>
-            <div className="mt-3 rounded-[var(--radius-control)] border p-3" style={{ borderColor: "var(--stayo-border)" }}>
+            <div
+              className="mt-3 rounded-[var(--radius-control)] border p-3"
+              style={{ borderColor: "var(--stayo-border)" }}
+            >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
                   Mensagem do convite (WhatsApp)
@@ -1155,19 +1303,28 @@ function OwnerPortalPanel({
         ) : null}
       </div>
 
-      <ol className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:grid-cols-4" style={{ borderColor: "var(--stayo-border)" }}>
+      <ol
+        className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:grid-cols-4"
+        style={{ borderColor: "var(--stayo-border)" }}
+      >
         {steps.map((step) => (
           <li key={step.label} className="flex min-w-0 items-start gap-2">
             {step.done ? (
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--stayo-success)]" />
             ) : (
-              <span className="mt-0.5 size-4 shrink-0 rounded-full border" style={{ borderColor: "var(--stayo-border-strong)" }} />
+              <span
+                className="mt-0.5 size-4 shrink-0 rounded-full border"
+                style={{ borderColor: "var(--stayo-border-strong)" }}
+              />
             )}
             <span className="min-w-0">
               <span className="block text-xs font-medium" style={{ color: "var(--stayo-ink)" }}>
                 {step.label}
               </span>
-              <span className="block truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
+              <span
+                className="block truncate text-[11px]"
+                style={{ color: "var(--stayo-ink-muted)" }}
+              >
                 {step.detail}
               </span>
             </span>
@@ -1179,7 +1336,11 @@ function OwnerPortalPanel({
         {status === "ativo" && link && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button type="button" disabled={revokeLink.isPending} className="font-medium text-[var(--stayo-danger)] underline disabled:opacity-60">
+              <button
+                type="button"
+                disabled={revokeLink.isPending}
+                className="font-medium text-[var(--stayo-danger)] underline disabled:opacity-60"
+              >
                 Revogar link
               </button>
             </AlertDialogTrigger>
@@ -1192,13 +1353,21 @@ function OwnerPortalPanel({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>Confirmar revogação</AlertDialogAction>
+                <AlertDialogAction onClick={() => revokeLink.mutate(link.id)}>
+                  Confirmar revogação
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         )}
         {status === "ativo" && !needsNewLink && (
-          <button type="button" onClick={() => createLink.mutate()} disabled={createLink.isPending} className="underline disabled:opacity-60" style={{ color: "var(--stayo-ink-muted)" }}>
+          <button
+            type="button"
+            onClick={() => createLink.mutate()}
+            disabled={createLink.isPending}
+            className="underline disabled:opacity-60"
+            style={{ color: "var(--stayo-ink-muted)" }}
+          >
             Gerar novo link (desativa o atual)
           </button>
         )}
@@ -1215,8 +1384,13 @@ function OwnerPortalPanel({
       </div>
 
       {submission && (
-        <details className="mt-3 rounded-[var(--radius-control)] border p-3" style={{ borderColor: "var(--stayo-border)" }}>
-          <summary className="cursor-pointer text-xs font-medium">Ver dados recebidos pelo link</summary>
+        <details
+          className="mt-3 rounded-[var(--radius-control)] border p-3"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
+          <summary className="cursor-pointer text-xs font-medium">
+            Ver dados recebidos pelo link
+          </summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="Nome completo" value={submission.fullName} />
             <Field label="Documento" value={maskDocument(submission.document)} />
