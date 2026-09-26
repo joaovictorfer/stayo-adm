@@ -249,14 +249,20 @@ export function ImplementationDecisionsPanel({ implementationId }: { implementat
           <div className="flex flex-wrap items-end gap-4">
             <MoneyField label="Valor da limpeza de implantação" value={d.initial_cleaning_fee} onChange={(v) => set("initial_cleaning_fee", v)} />
             <div className="text-xs font-medium">
-              Quem paga
-              <div className="mt-1 flex gap-2">
-                {(Object.keys(COST_BEARER_LABELS) as CostBearer[]).map((b) => (
-                  <Button key={b} type="button" size="sm" variant={d.initial_cleaning_cost_bearer === b ? "default" : "outline"}
-                    onClick={() => set("initial_cleaning_cost_bearer", d.initial_cleaning_cost_bearer === b ? null : b)}>
-                    {COST_BEARER_LABELS[b]}
-                  </Button>
-                ))}
+              <span id="dec-cleaning-payer-label">Quem paga a limpeza de implantação</span>
+              <div role="radiogroup" aria-labelledby="dec-cleaning-payer-label" className="mt-1 flex gap-2">
+                {(Object.keys(COST_BEARER_LABELS) as CostBearer[]).map((b) => {
+                  const on = d.initial_cleaning_cost_bearer === b;
+                  return (
+                    <Button key={b} id={`dec-cleaning-payer-${b}`} data-testid={`dec-cleaning-payer-${b}`}
+                      type="button" size="sm" role="radio" aria-checked={on}
+                      aria-label={`Limpeza de implantação paga por: ${COST_BEARER_LABELS[b]}`}
+                      variant={on ? "default" : "outline"}
+                      onClick={() => set("initial_cleaning_cost_bearer", on ? null : b)}>
+                      {COST_BEARER_LABELS[b]}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </div>
