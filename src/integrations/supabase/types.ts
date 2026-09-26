@@ -1792,6 +1792,73 @@ export type Database = {
           },
         ]
       }
+      owner_proposal_confirmations: {
+        Row: {
+          command_id: string
+          confirmed_at: string
+          confirmed_name: string
+          id: string
+          implementation_id: string
+          invitation_id: string
+          proposal_id: string
+          result: string
+          snapshot: Json
+          snapshot_hash: string
+          statement: string
+          version: number
+        }
+        Insert: {
+          command_id: string
+          confirmed_at?: string
+          confirmed_name: string
+          id?: string
+          implementation_id: string
+          invitation_id: string
+          proposal_id: string
+          result?: string
+          snapshot: Json
+          snapshot_hash: string
+          statement: string
+          version: number
+        }
+        Update: {
+          command_id?: string
+          confirmed_at?: string
+          confirmed_name?: string
+          id?: string
+          implementation_id?: string
+          invitation_id?: string
+          proposal_id?: string
+          result?: string
+          snapshot?: Json
+          snapshot_hash?: string
+          statement?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_proposal_confirmations_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_proposal_confirmations_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "owner_portal_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_proposal_confirmations_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_records: {
         Row: {
           core_owner_id: string | null
@@ -2514,6 +2581,19 @@ export type Database = {
           p_submit: boolean
           p_token: string
         }
+        Returns: Json
+      }
+      owner_journey_accept_proposal: {
+        Args: {
+          p_accepted_name: string
+          p_command_id: string
+          p_proposal_id: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      owner_journey_resolve_proposal: {
+        Args: { p_token: string }
         Returns: Json
       }
       owner_next_meeting: {
