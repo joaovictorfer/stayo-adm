@@ -216,16 +216,20 @@ function InspectionConfigPrototype() {
             <ol className="space-y-1.5">
               {model.rooms.map((r, i) => (
                 <li key={r.name + i}>
-                  <div className={`flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] border p-2 ${i === roomIdx ? "border-[var(--admin-primary)]" : "border-[var(--admin-border)]"} ${r.active ? "" : "opacity-70"}`}>
-                    <span className="flex flex-col"><ArrowUp size={14} className={muted} /><ArrowDown size={14} className={muted} /></span>
-                    <span className="w-5 text-xs text-center">{i + 1}</span>
-                    <span className="min-w-0 flex-1 basis-[60%] font-medium sm:basis-auto">{r.name}</span>
-                    <AdminStatusBadge tone={r.required ? "info" : "neutral"}>{r.required ? "Obrigatório" : "Opcional"}</AdminStatusBadge>
-                    <span className={`text-xs ${muted}`}>{r.items.length} itens</span>
-                    <AdminStatusBadge tone={r.active ? "success" : "neutral"}>{r.active ? "Ativo" : "Inativo"}</AdminStatusBadge>
-                    <button type="button" onClick={() => { setRoomIdx(i); setItemIdx(0); }} className="inline-flex min-h-11 items-center gap-1 px-2 text-sm underline">
-                      <Pencil size={14} /> Editar
-                    </button>
+                  <div className={`flex flex-col gap-1 rounded-[var(--radius-control)] border p-2 sm:flex-row sm:items-center sm:gap-2 ${i === roomIdx ? "border-[var(--admin-primary)]" : "border-[var(--admin-border)]"} ${r.active ? "" : "opacity-70"}`}>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="flex flex-col"><ArrowUp size={14} className={muted} /><ArrowDown size={14} className={muted} /></span>
+                      <span className="w-5 text-center text-xs">{i + 1}</span>
+                      <span className="min-w-0 flex-1 font-medium">{r.name}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pl-9 sm:pl-0">
+                      <AdminStatusBadge tone={r.required ? "info" : "neutral"}>{r.required ? "Obrigatório" : "Opcional"}</AdminStatusBadge>
+                      <span className={`text-xs ${muted}`}>{r.items.length} itens</span>
+                      <AdminStatusBadge tone={r.active ? "success" : "neutral"}>{r.active ? "Ativo" : "Inativo"}</AdminStatusBadge>
+                      <button type="button" onClick={() => { setRoomIdx(i); setItemIdx(0); }} className="ml-auto inline-flex min-h-11 items-center gap-1 px-2 text-sm underline">
+                        <Pencil size={14} /> Editar
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}
