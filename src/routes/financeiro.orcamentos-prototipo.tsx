@@ -102,7 +102,7 @@ function OrcamentosPrototype() {
     <>
       <select aria-label="Imóvel" value={fl.property} onChange={set("property")} className={cls}><option value="todos">Todos os imóveis</option>{PROPERTIES.map((p) => <option key={p}>{p}</option>)}</select>
       <select aria-label="Tipo de serviço" value={fl.service} onChange={set("service")} className={cls}><option value="todos">Todos os serviços</option>{SERVICES.map((p) => <option key={p}>{p}</option>)}</select>
-      <select aria-label="Fornecedor" value={fl.supplier} onChange={set("supplier")} className={cls}><option value="todos">Todos os fornecedores</option>{SUPPLIERS.map((p) => <option key={p}>{p}</option>)}</select>
+      <select aria-label="Fornecedor" value={fl.supplier} onChange={set("supplier")} className={cls}><option value="todos">Fornecedor: todos</option>{SUPPLIERS.map((p) => <option key={p}>{p}</option>)}</select>
       <select aria-label="Status" value={fl.status} onChange={set("status")} className={cls}><option value="todos">Todos os status</option>{Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
       <select aria-label="Validade" value={fl.validity} onChange={set("validity")} className={cls}><option value="todos">Qualquer validade</option><option value="7d">Vencem em 7 dias</option><option value="exp">Expirados</option></select>
       <select aria-label="Período" value={fl.period} onChange={set("period")} className={cls}><option value="todos">Todos os períodos</option><option value="2026-09">09/2026</option><option value="2026-08">08/2026</option></select>
