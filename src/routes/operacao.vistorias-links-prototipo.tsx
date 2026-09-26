@@ -213,7 +213,7 @@ function LinksPrototype() {
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Filtros{activeFilters > 0 ? ` (${activeFilters})` : ""}
             </button>
           </div>
-          <div className={`${showFilters ? "grid" : "hidden"} mb-4 grid-cols-2 gap-2 lg:grid lg:grid-cols-6`}>
+          <div className={`${showFilters ? "grid" : "hidden"} mb-4 grid-cols-2 gap-2 lg:grid lg:grid-cols-3 xl:grid-cols-6`}>
             <Filter label="Imóvel" value={f.prop} onChange={set("prop")} all="Todos os imóveis" options={PROPS.map((p) => [p, p])} />
             <Filter label="Origem" value={f.origin} onChange={set("origin")} all="Todas as origens" options={Object.entries(ORIGIN)} />
             <Filter label="Tipo" value={f.type} onChange={set("type")} all="Todos os tipos" options={TYPES.map((t) => [t, t])} />
@@ -248,7 +248,7 @@ function LinksPrototype() {
             </div>
           ) : (
             <div className="admin-panel overflow-hidden">
-              <div className="hidden grid-cols-[minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_auto] gap-4 border-b border-[var(--admin-border)] px-4 py-2 text-xs font-medium uppercase tracking-wide text-[var(--admin-muted)] lg:grid">
+              <div className="hidden grid-cols-[minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_auto] gap-4 border-b border-[var(--admin-border)] px-4 py-2 text-xs font-medium uppercase tracking-wide text-[var(--admin-muted)] xl:grid">
                 <span>Vistoria</span><span>Origem e modelo</span><span>Responsável e prazo</span><span>Status</span><span className="w-[168px]">Ações</span>
               </div>
               <ul className="divide-y divide-[var(--admin-border)]">
@@ -321,7 +321,7 @@ function StatusBadges({ i, partial }: { i: Inst; partial: boolean }) {
 function Actions({ i, onAction, full }: { i: Inst; onAction: (a: Action) => void; full?: boolean }) {
   const linkUsable = i.link === "ativo" || i.link === "aberto" || i.link === "nao_enviado";
   const canReopen = ["enviada", "em_revisao", "concluida"].includes(i.status);
-  const btn = "admin-input rounded-md border border-border inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-sm disabled:opacity-40";
+  const btn = "rounded-md !border !border-solid border-input bg-background inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-sm disabled:opacity-40";
   const items: { a: Action | "previa"; label: string; icon: typeof Copy; disabled: boolean }[] = [
     { a: "copiar", label: "Copiar link", icon: Copy, disabled: !linkUsable },
     { a: "compartilhar", label: "Compartilhar link", icon: Share2, disabled: !linkUsable },
@@ -354,7 +354,7 @@ function Row({ i, partial, onOpen, onAction }: { i: Inst; partial: boolean; onOp
       tabIndex={0}
       onClick={() => onOpen(i)}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen(i))}
-      className={`grid w-full cursor-pointer gap-x-4 gap-y-2 border-l-4 px-4 py-3 text-left hover:bg-[var(--admin-surface-muted,transparent)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_auto] lg:items-center ${alert ? "border-l-[var(--admin-danger,currentColor)]" : "border-l-transparent"}`}
+      className={`grid w-full cursor-pointer gap-x-4 gap-y-2 border-l-4 px-4 py-3 text-left hover:bg-[var(--admin-surface-muted,transparent)] xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_auto] xl:items-center ${alert ? "border-l-[var(--admin-danger,currentColor)]" : "border-l-transparent"}`}
     >
       <span className="min-w-0">
         <span className="block text-sm font-semibold text-[var(--admin-text)]">{i.code} · {i.property}</span>
