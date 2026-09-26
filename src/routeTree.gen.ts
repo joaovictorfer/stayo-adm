@@ -28,6 +28,7 @@ import { Route as FinanceiroDespesasPrototipoRouteImport } from './routes/financ
 import { Route as FinanceiroFechamentosPrototipoRouteImport } from './routes/financeiro.fechamentos-prototipo'
 import { Route as FinanceiroPrototipoRouteImport } from './routes/financeiro.prototipo'
 import { Route as FinanceiroReceberPrototipoRouteImport } from './routes/financeiro.receber-prototipo'
+import { Route as FinanceiroRepassesPrototipoRouteImport } from './routes/financeiro.repasses-prototipo'
 import { Route as GuiaIndexRouteImport } from './routes/guia.index'
 import { Route as GuiaIdRouteImport } from './routes/guia.$id'
 import { Route as HospedesIndexRouteImport } from './routes/hospedes.index'
@@ -161,6 +162,12 @@ const FinanceiroReceberPrototipoRoute =
   FinanceiroReceberPrototipoRouteImport.update({
     id: '/financeiro/receber-prototipo',
     path: '/financeiro/receber-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const FinanceiroRepassesPrototipoRoute =
+  FinanceiroRepassesPrototipoRouteImport.update({
+    id: '/financeiro/repasses-prototipo',
+    path: '/financeiro/repasses-prototipo',
     getParentRoute: () => rootRouteImport,
   } as any)
 const GuiaIndexRoute = GuiaIndexRouteImport.update({
@@ -357,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
+  '/financeiro/repasses-prototipo': typeof FinanceiroRepassesPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -413,6 +421,7 @@ export interface FileRoutesByTo {
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
+  '/financeiro/repasses-prototipo': typeof FinanceiroRepassesPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
+  '/financeiro/repasses-prototipo': typeof FinanceiroRepassesPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/financeiro/fechamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
+    | '/financeiro/repasses-prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -584,6 +595,7 @@ export interface FileRouteTypes {
     | '/financeiro/fechamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
+    | '/financeiro/repasses-prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -640,6 +652,7 @@ export interface FileRouteTypes {
     | '/financeiro/fechamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
+    | '/financeiro/repasses-prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -697,6 +710,7 @@ export interface RootRouteChildren {
   FinanceiroFechamentosPrototipoRoute: typeof FinanceiroFechamentosPrototipoRoute
   FinanceiroPrototipoRoute: typeof FinanceiroPrototipoRoute
   FinanceiroReceberPrototipoRoute: typeof FinanceiroReceberPrototipoRoute
+  FinanceiroRepassesPrototipoRoute: typeof FinanceiroRepassesPrototipoRoute
   GuiaIdRoute: typeof GuiaIdRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
@@ -871,6 +885,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/receber-prototipo'
       fullPath: '/financeiro/receber-prototipo'
       preLoaderRoute: typeof FinanceiroReceberPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/repasses-prototipo': {
+      id: '/financeiro/repasses-prototipo'
+      path: '/financeiro/repasses-prototipo'
+      fullPath: '/financeiro/repasses-prototipo'
+      preLoaderRoute: typeof FinanceiroRepassesPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guia/': {
@@ -1137,6 +1158,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroFechamentosPrototipoRoute: FinanceiroFechamentosPrototipoRoute,
   FinanceiroPrototipoRoute: FinanceiroPrototipoRoute,
   FinanceiroReceberPrototipoRoute: FinanceiroReceberPrototipoRoute,
+  FinanceiroRepassesPrototipoRoute: FinanceiroRepassesPrototipoRoute,
   GuiaIdRoute: GuiaIdRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
