@@ -19,9 +19,7 @@ import {
   ArrowRight,
   ChevronDown,
   Loader2,
-  BedDouble,
   Clock3,
-  Compass,
   Sparkles,
   Camera,
   Shirt,
@@ -60,7 +58,7 @@ import {
   implementationDecisionItems,
   type ConditionItem,
 } from "../../lib/contract-conditions";
-import { PRICING_LABELS, resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
+import { resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
 import { publishedProposalPresentation } from "../../lib/published-proposal-presentation";
 import type {
   CommercialProposalSnapshot,
@@ -1048,15 +1046,12 @@ function ProposalStep({
         <div id="confirmar-proposta" className="pj-confirm">
           <p className="pj-confirm-eyebrow">Confirmação</p>
           <h2 className="pj-confirm-title">Você está confirmando a proposta versão {current.version}</h2>
-          <ul className="pj-confirm-list">
-            <li><span>Taxa de administração</span><strong>{facts.admin ?? "A definir"}</strong></li>
-            <li><span>Limpeza comercial</span><strong>{facts.cleaning ? `${facts.cleaning} por utilização` : "Valor a definir"}</strong></li>
-            <li><span>Prazo da parceria</span><strong>{facts.duration ?? "A definir"}</strong></li>
-            <li><span>Valor definido da implantação</span><strong>{facts.implementation ?? "A definir"}</strong></li>
-          </ul>
+          <p className="pj-confirm-summary">
+            Você confirma a proposta versão {current.version}, com implantação definida em {facts.implementation ?? "valor a definir"}.
+          </p>
+          <a className="pj-review-link" href="#pj-cond-title">Revisar condições da proposta</a>
           <p className="pj-fineprint">
-            Esta confirmação registra seu aceite comercial das condições apresentadas. A formalização contratual
-            será realizada em etapa própria.
+            Este aceite confirma as condições comerciais. O contrato será formalizado em etapa própria.
           </p>
           <label className="pj-field">
             <span>Nome completo</span>
@@ -1069,11 +1064,11 @@ function ProposalStep({
           </label>
           <label className={`pj-agree${agreed ? " is-checked" : ""}`}>
             <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} />
-            <span>Li e confirmo as condições comerciais desta proposta</span>
+            <span>Li e confirmo as condições desta proposta.</span>
           </label>
           <Button
             type="button"
-            className="portal-cta h-auto min-h-12 w-full whitespace-normal py-3 text-center"
+            className="portal-cta h-12 w-full whitespace-nowrap px-3 text-center text-sm"
             disabled={accepting || !agreed || acceptName.trim().length < 3}
             aria-busy={accepting}
             onClick={onAccept}
@@ -1081,7 +1076,7 @@ function ProposalStep({
             {accepting ? (
               <><Loader2 className="size-4 animate-spin" /> Registrando sua confirmação…</>
             ) : (
-              <>Confirmar proposta e iniciar cadastro <ChevronRight className="size-4" /></>
+              <>Confirmar e iniciar cadastro <ChevronRight className="size-4" /></>
             )}
           </Button>
           {(!agreed || acceptName.trim().length < 3) && !accepting && (
@@ -1204,17 +1199,6 @@ function publicBlocks(snapshot: CommercialProposalSnapshot) {
     }));
   const get = (k: string) => sections.find((s) => s.key === k);
   const management = [...(get("management")?.items ?? []), ...terms];
-  const baseImplCleaning = decisions.find((d) => d.label === "Limpeza de implantação");
-  const implCleaning: ConditionItem | undefined = presentation.cleaningDecision
-    ? {
-        label: "Limpeza de implantação",
-        value: presentation.cleaningDecision.price
-          ? `${presentation.cleaningDecision.value} · ${presentation.cleaningDecision.price}`
-          : `${presentation.cleaningDecision.value} · Valor a definir após avaliação`,
-        help: presentation.cleaningDecision.help,
-        ...(presentation.cleaningDecision.state === "quote" ? { tbd: true } : {}),
-      }
-    : baseImplCleaning;
   const cleaning = get("cleaning")?.items ?? [];
   const use = get("owner_use")?.items ?? [];
   const cut = use.findIndex((i) => i.label === "Cessão de uso");
@@ -1333,9 +1317,8 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
                 key={b.key}
                 className="pj-acc"
                 open={openBlock === b.key}
-                onToggle={(event) => toggleBlock(b.key, event.currentTarget.open)}
               >
-                <summary>
+                <summary onClick={(event) => { event.preventDefault(); toggleBlock(b.key, openBlock !== b.key); }}>
                   <span className="pj-acc-text">
                     <span className="pj-acc-title">{b.title}</span>
                     <span className="pj-acc-tag">{blockSummary(b.key)}</span>
