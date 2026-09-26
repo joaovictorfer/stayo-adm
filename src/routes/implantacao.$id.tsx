@@ -461,13 +461,7 @@ function ImplementationDetailPage() {
                 ) : step === "faltantes" ? (
                   <MissingItemsTab implementationId={implementation.id} />
                 ) : step === "condicoes" ? (
-                  <div className="space-y-4">
-                    <CommercialTermsPanel implementationId={implementation.id} />
-                    <ContractConditionsPanel
-                      implementationId={implementation.id}
-                      showMeetings={false}
-                    />
-                  </div>
+                  <ProposalTab implementationId={implementation.id} />
                 ) : null
               }
             />

@@ -458,8 +458,9 @@ export function ContractConditionsPanel({
                       <div>
                         <Label htmlFor="exclusivity">Exclusividade da gestão de locações por temporada</Label>
                         <p className="mt-1 text-[11px] text-muted-foreground">
-                          Indica se a STAYO será a responsável exclusiva pela gestão das locações por
-                          temporada deste imóvel durante a vigência acordada.
+                          Durante o contrato, só a STAYO anuncia e administra o imóvel para aluguel
+                          por temporada (Airbnb, Booking, reservas diretas). O proprietário continua
+                          livre para usar o imóvel nas datas que reservar.
                         </p>
                       </div>
                       <Switch
