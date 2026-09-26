@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   AlertTriangle,
   CalendarCheck,
@@ -234,7 +234,15 @@ function CentralPrototype() {
               </div>
             </AdminSection>
 
-            <AdminSection title="Agenda do dia" description="Por imóvel, em ordem de horário.">
+            <AdminSection
+              title="Agenda do dia"
+              description="Por imóvel, em ordem de horário."
+              action={
+                <Link to="/operacao/agenda-prototipo" className="text-sm font-medium text-[var(--admin-primary)] hover:underline">
+                  Ver agenda completa
+                </Link>
+              }
+            >
               <div className="admin-panel">
                 {demo === "carregando" ? (
                   <SkeletonRows />
