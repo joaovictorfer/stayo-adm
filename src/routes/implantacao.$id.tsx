@@ -65,6 +65,8 @@ import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
 import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
+import { Collapsible, DomainHub, FichaNav, OverviewCard } from "../components/implantacao/ficha/FichaParts";
+import { FICHA_SECTIONS, nextAction, proposalStatusLabel, toFichaSection, type FichaSection } from "../lib/ficha-next-action";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -137,8 +139,9 @@ export const Route = createFileRoute("/implantacao/$id")({
       },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { etapa?: JourneyStep | undefined; acao?: string | undefined } => ({
+  validateSearch: (search: Record<string, unknown>): { etapa?: JourneyStep | undefined; acao?: string | undefined; secao?: FichaSection | undefined } => ({
     etapa: toJourneyStep(search["etapa"]),
+    secao: toFichaSection(search["secao"]),
     acao: typeof search["acao"] === "string" ? search["acao"] : undefined,
   }),
   component: ImplementationDetailPage,
@@ -979,7 +982,13 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
   );
 }
 
-function OwnerTab({ implementation }: { implementation: ImplementationProject }) {
+function OwnerTab({
+  implementation,
+  part,
+}: {
+  implementation: ImplementationProject;
+  part: "owner" | "portal";
+}) {
   const owner = useQuery({
     ...ownerQuery(implementation.ownerId ?? ""),
     enabled: Boolean(implementation.ownerId),
@@ -1024,34 +1033,46 @@ function OwnerTab({ implementation }: { implementation: ImplementationProject })
     hasDivergences: confirmations.length > 0,
   });
 
-  return (
-    <div className="space-y-4">
-      <div id="portal-owner-panel">
-        <OwnerPortalPanel
-          implementationId={implementation.id}
-          ownerId={implementation.ownerId}
-          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-        />
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
-        <div className="space-y-4">
+  if (part === "portal")
+    return (
+      <div className="space-y-4">
+        <div id="portal-owner-panel">
+          <OwnerPortalPanel
+            implementationId={implementation.id}
+            ownerId={implementation.ownerId}
+            ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+          />
+        </div>
+        <Collapsible title="Convite da proposta" summary="Link de apresentação e aceite">
           <OwnerInviteSection
             implementationId={implementation.id}
             ownerName={ownerData?.name ?? implementation.ownerName ?? null}
           />
+        </Collapsible>
+        <Collapsible title="Visibilidade no portal" summary="O que o proprietário pode ver">
+          <OwnerVisibilityPanel
+            implementationId={implementation.id}
+            defaultMessage="Estamos organizando a implantação do seu imóvel. Você acompanhará cada etapa por aqui."
+          />
+        </Collapsible>
+        <Collapsible title="Capa do link" summary="Foto exibida ao proprietário">
           <CoverPicker
             implementationId={implementation.id}
             propertyName={
               implementation.nickname || implementation.condominiumName || implementation.code
             }
           />
+        </Collapsible>
+      </div>
+    );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4">
+        <div className="space-y-4">
           <OwnerIntakeReview
             implementationId={implementation.id}
             ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-          />
-          <OwnerVisibilityPanel
-            implementationId={implementation.id}
-            defaultMessage="Estamos organizando a implantação do seu imóvel. Você acompanhará cada etapa por aqui."
           />
         </div>
         <div className="space-y-4">
@@ -2456,20 +2477,6 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
             </p>
           )}
         </Section>
-        <section
-          id="secao-fornecedores"
-          className="scroll-mt-4 rounded-[var(--radius-card)] border bg-white px-4 py-3 shadow-sm"
-          style={{ borderColor: "var(--stayo-border)" }}
-        >
-          <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
-            Fornecedores e instalações
-          </h2>
-          <p className="mb-3 mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-            Quem forneceu, instalou ou atende os principais sistemas do imóvel. Uso interno e da
-            implantação; não entra na proposta nem no guia do hóspede.
-          </p>
-          <PropertySuppliersPanel implementationId={implementation.id} />
-        </section>
       </div>
     </PropertySectionContext.Provider>
   );
