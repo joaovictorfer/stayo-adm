@@ -69,7 +69,7 @@ export async function deleteImplementation(implementationId: string, confirmCode
 
 /** Upload legado (rascunho do cadastro). Mantido por compatibilidade. */
 export async function uploadImplementationCover(file: File, kind: "property" | "condominium") {
-  validate(file);
+  file = await prepare(file);
   const client = requireClient();
   const path = `drafts/${kind}/${crypto.randomUUID()}.${extension(file)}`;
   const { error } = await client.storage
@@ -138,7 +138,7 @@ async function removeOwnedFile(path: string | null | undefined, prefix: string) 
 }
 
 export async function uploadImplementationCoverFor(implementationId: string, file: File) {
-  validate(file);
+  file = await prepare(file);
   const client = requireClient();
   const prefix = `implementations/${implementationId}/`;
   const path = `${prefix}${crypto.randomUUID()}.${extension(file)}`;
@@ -220,7 +220,7 @@ export async function getCondominiumCover(condominiumId: string) {
 }
 
 export async function uploadCondominiumCover(condominiumId: string, file: File) {
-  validate(file);
+  file = await prepare(file);
   const client = requireClient();
   const prefix = `condominiums/${condominiumId}/`;
   const path = `${prefix}${crypto.randomUUID()}.${extension(file)}`;
