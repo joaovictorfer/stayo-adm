@@ -2067,7 +2067,17 @@ async function findCep(
 }
 
 function ownerErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message.toLocaleLowerCase("pt-BR") : "";
+  const raw =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === "object" && "message" in error
+        ? String((error as { message: unknown }).message)
+        : "";
+  const message = raw.toLocaleLowerCase("pt-BR");
+  if (message.includes("já enviado")) return "Seu cadastro já foi enviado para análise.";
+  if (message.includes("confirme as condições"))
+    return "Confirme as condições da proposta antes de continuar.";
+  if (message.includes("acesso inválido")) return "Este link não está mais disponível.";
   if (message.includes("cpf") || message.includes("cnpj") || message.includes("documento"))
     return "Confira o CPF ou CNPJ informado.";
   if (message.includes("telefone")) return "Confira o telefone e o DDD.";
