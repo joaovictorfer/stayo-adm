@@ -25,6 +25,7 @@ import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
 import { Route as FinanceiroIdRouteImport } from './routes/financeiro.$id'
 import { Route as FinanceiroDespesasPrototipoRouteImport } from './routes/financeiro.despesas-prototipo'
+import { Route as FinanceiroFechamentosPrototipoRouteImport } from './routes/financeiro.fechamentos-prototipo'
 import { Route as FinanceiroPrototipoRouteImport } from './routes/financeiro.prototipo'
 import { Route as FinanceiroReceberPrototipoRouteImport } from './routes/financeiro.receber-prototipo'
 import { Route as GuiaIndexRouteImport } from './routes/guia.index'
@@ -143,6 +144,12 @@ const FinanceiroDespesasPrototipoRoute =
   FinanceiroDespesasPrototipoRouteImport.update({
     id: '/financeiro/despesas-prototipo',
     path: '/financeiro/despesas-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const FinanceiroFechamentosPrototipoRoute =
+  FinanceiroFechamentosPrototipoRouteImport.update({
+    id: '/financeiro/fechamentos-prototipo',
+    path: '/financeiro/fechamentos-prototipo',
     getParentRoute: () => rootRouteImport,
   } as any)
 const FinanceiroPrototipoRoute = FinanceiroPrototipoRouteImport.update({
@@ -347,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
+  '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByTo {
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
+  '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
@@ -458,6 +467,7 @@ export interface FileRoutesById {
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
+  '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
@@ -515,6 +525,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/despesas-prototipo'
+    | '/financeiro/fechamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
     | '/guia/$id'
@@ -570,6 +581,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/despesas-prototipo'
+    | '/financeiro/fechamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
     | '/guia/$id'
@@ -625,6 +637,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/despesas-prototipo'
+    | '/financeiro/fechamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
     | '/guia/$id'
@@ -681,6 +694,7 @@ export interface RootRouteChildren {
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
   FinanceiroDespesasPrototipoRoute: typeof FinanceiroDespesasPrototipoRoute
+  FinanceiroFechamentosPrototipoRoute: typeof FinanceiroFechamentosPrototipoRoute
   FinanceiroPrototipoRoute: typeof FinanceiroPrototipoRoute
   FinanceiroReceberPrototipoRoute: typeof FinanceiroReceberPrototipoRoute
   GuiaIdRoute: typeof GuiaIdRoute
@@ -836,6 +850,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/despesas-prototipo'
       fullPath: '/financeiro/despesas-prototipo'
       preLoaderRoute: typeof FinanceiroDespesasPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/fechamentos-prototipo': {
+      id: '/financeiro/fechamentos-prototipo'
+      path: '/financeiro/fechamentos-prototipo'
+      fullPath: '/financeiro/fechamentos-prototipo'
+      preLoaderRoute: typeof FinanceiroFechamentosPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro/prototipo': {
@@ -1113,6 +1134,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
   FinanceiroDespesasPrototipoRoute: FinanceiroDespesasPrototipoRoute,
+  FinanceiroFechamentosPrototipoRoute: FinanceiroFechamentosPrototipoRoute,
   FinanceiroPrototipoRoute: FinanceiroPrototipoRoute,
   FinanceiroReceberPrototipoRoute: FinanceiroReceberPrototipoRoute,
   GuiaIdRoute: GuiaIdRoute,
