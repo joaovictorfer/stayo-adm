@@ -1,3 +1,4 @@
+import { conditionPendingIssues, contractRowToSnapshot } from "../../lib/contract-conditions";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
@@ -205,9 +206,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
     queryFn: async () => {
       const { data, error } = await supabase
         .from("implementation_contract_conditions")
-        .select(
-          "administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days, initial_cleaning_option, initial_cleaning_other, initial_cleaning_cost_bearer, turnover_cleaning_team, turnover_cleaning_fee, turnover_cleaning_payer",
-        )
+        .select("*")
         .eq("implementation_id", implementationId)
         .maybeSingle();
       if (error) throw error;
@@ -276,9 +275,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const total = roundCents(
     proposalItems.filter((i) => countsInDefinedTotal(i)).reduce((a, i) => a + i.total, 0),
   );
-  const pricingWarnings = included.flatMap((i) =>
-    pricingIssues(i).map((msg) => `${i.description.trim()}: ${msg}`),
-  );
+  const pricingWarnings = [
+    ...included.flatMap((i) => pricingIssues(i).map((msg) => `${i.description.trim()}: ${msg}`)),
+    ...conditionPendingIssues(contractRowToSnapshot(contractQuery.data)).map(
+      (m) => `${m} — defina antes de apresentar como condição aceita`,
+    ),
+  ];
   const usedKeys = new Set(items.map((i) => i.templateKey).filter(Boolean));
   const missingTemplates = PROPOSAL_ITEM_TEMPLATES.filter((t) => !usedKeys.has(t.key));
   const excludedCount = items.filter((i) => !i.included && i.description.trim()).length;
@@ -373,23 +375,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         displayOrder: t.displayOrder,
         notes: t.notes,
       })),
-      contractConditions: contractQuery.data
-        ? {
-            administrationFee: contractQuery.data.administration_fee,
-            cleaningResponsibility: contractQuery.data.cleaning_responsibility,
-            payoutRule: contractQuery.data.payout_rule,
-            maintenanceLimit: contractQuery.data.maintenance_limit,
-            exclusivity: contractQuery.data.exclusivity,
-            durationMonths: contractQuery.data.duration_months,
-            noticePeriodDays: contractQuery.data.notice_period_days,
-            initialCleaningOption: contractQuery.data.initial_cleaning_option,
-            initialCleaningOther: contractQuery.data.initial_cleaning_other,
-            initialCleaningCostBearer: contractQuery.data.initial_cleaning_cost_bearer,
-            turnoverCleaningTeam: contractQuery.data.turnover_cleaning_team,
-            turnoverCleaningFee: contractQuery.data.turnover_cleaning_fee,
-            turnoverCleaningPayer: contractQuery.data.turnover_cleaning_payer,
-          }
-        : {},
+      contractConditions: contractRowToSnapshot(contractQuery.data),
       responsibilities: serializeResponsibilities(responsibilities),
       content: (contentQuery.data ?? []).map((b) => ({
         title: b.title,
@@ -529,8 +515,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             )}
           </div>
 
+          {!(commercialTerms.isSuccess && (commercialTerms.data ?? []).length === 0) && (
           <div>
-            <h4 className="text-sm font-semibold">Condições comerciais</h4>
+            <h4 className="text-sm font-semibold">Condições comerciais adicionais</h4>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Vêm da ficha (aba Resumo) e são congeladas na publicação.
             </p>
@@ -559,6 +546,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               </dl>
             )}
           </div>
+          )}
         </div>
 
         <div className="mt-5">

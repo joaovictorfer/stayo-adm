@@ -27,7 +27,15 @@ import {
   DEFAULT_TURNOVER_TEAM,
   INITIAL_CLEANING_LABELS,
   TURNOVER_PAYER_LABELS,
-  contractConditionRows,
+  conditionSections,
+  contractRowToSnapshot,
+  OWNER_USE_LIMIT_LABELS,
+  ASSIGNMENT_LABELS,
+  DEFAULT_ASSIGNMENT_WHO,
+  DEFAULT_ASSIGNMENT_PROCEDURE,
+  type OwnerUseLimitMode,
+  type AssignmentMode,
+  type ConditionSection,
   type CostBearer,
   type InitialCleaningOption,
   type TurnoverPayer,
@@ -35,8 +43,7 @@ import {
 import type { ProposalSnapshotContractConditions } from "../../types/commercial-proposal";
 import type { EntityId } from "../../types/core";
 
-const COLUMNS =
-  "implementation_id, administration_fee, cleaning_responsibility, payout_rule, maintenance_limit, exclusivity, duration_months, notice_period_days, initial_cleaning_option, initial_cleaning_other, initial_cleaning_cost_bearer, turnover_cleaning_team, turnover_cleaning_fee, turnover_cleaning_payer, updated_at";
+const COLUMNS = "*";
 
 interface ContractConditions {
   implementation_id: string;
@@ -53,6 +60,16 @@ interface ContractConditions {
   turnover_cleaning_team: string | null;
   turnover_cleaning_fee: number | null;
   turnover_cleaning_payer: string | null;
+  initial_cleaning_fee: number | null;
+  owner_use_limit_mode: string | null;
+  owner_use_limit_days: number | null;
+  owner_use_limit_period: string | null;
+  owner_use_notice_days: number | null;
+  owner_use_notes: string | null;
+  assignment_mode: string | null;
+  assignment_who: string | null;
+  assignment_procedure: string | null;
+  assignment_notice_days: number | null;
   updated_at: string;
 }
 
@@ -70,6 +87,16 @@ interface ContractForm {
   duration_months: string;
   notice_period_days: string;
   legacy_cleaning: string | null;
+  initial_cleaning_fee: number | null;
+  owner_use_limit_mode: OwnerUseLimitMode | "";
+  owner_use_limit_days: string;
+  owner_use_limit_period: string;
+  owner_use_notice_days: string;
+  owner_use_notes: string;
+  assignment_mode: AssignmentMode | "";
+  assignment_who: string;
+  assignment_procedure: string;
+  assignment_notice_days: string;
 }
 
 export interface CleaningProposalItem {
@@ -95,6 +122,16 @@ function toForm(v: ContractConditions | null): ContractForm {
     duration_months: v?.duration_months == null ? "" : String(v.duration_months),
     notice_period_days: v?.notice_period_days == null ? "" : String(v.notice_period_days),
     legacy_cleaning: v?.cleaning_responsibility ?? null,
+    initial_cleaning_fee: v?.initial_cleaning_fee ?? null,
+    owner_use_limit_mode: (v?.owner_use_limit_mode as OwnerUseLimitMode) ?? "",
+    owner_use_limit_days: v?.owner_use_limit_days == null ? "" : String(v.owner_use_limit_days),
+    owner_use_limit_period: v?.owner_use_limit_period ?? "por ano",
+    owner_use_notice_days: v?.owner_use_notice_days == null ? "" : String(v.owner_use_notice_days),
+    owner_use_notes: v?.owner_use_notes ?? "",
+    assignment_mode: (v?.assignment_mode as AssignmentMode) ?? "",
+    assignment_who: v?.assignment_who ?? DEFAULT_ASSIGNMENT_WHO,
+    assignment_procedure: v?.assignment_procedure ?? DEFAULT_ASSIGNMENT_PROCEDURE,
+    assignment_notice_days: v?.assignment_notice_days == null ? "" : String(v.assignment_notice_days),
   };
 }
 
@@ -121,26 +158,26 @@ function toSnapshot(f: ContractForm): ProposalSnapshotContractConditions {
     exclusivity: f.exclusivity,
     durationMonths: f.duration_months ? Number(f.duration_months) : null,
     noticePeriodDays: f.notice_period_days ? Number(f.notice_period_days) : null,
+    commercialCleaningFee: f.turnover_cleaning_fee,
+    initialCleaningFee:
+      f.initial_cleaning_option === "owner_delivers" || f.initial_cleaning_option === "tbd"
+        ? null
+        : f.initial_cleaning_fee,
+    ownerUseLimitMode: f.owner_use_limit_mode || null,
+    ownerUseLimitDays: f.owner_use_limit_mode === "limited" && f.owner_use_limit_days ? Number(f.owner_use_limit_days) : null,
+    ownerUseLimitPeriod: f.owner_use_limit_mode === "limited" ? f.owner_use_limit_period.trim() || null : null,
+    ownerUseNoticeDays: f.owner_use_notice_days ? Number(f.owner_use_notice_days) : null,
+    ownerUseNotes: f.owner_use_notes.trim() || null,
+    assignmentMode: f.assignment_mode || null,
+    assignmentWho: f.assignment_mode === "allowed" ? f.assignment_who.trim() || null : null,
+    assignmentProcedure: f.assignment_mode === "allowed" ? f.assignment_procedure.trim() || null : null,
+    assignmentNoticeDays:
+      f.assignment_mode === "allowed" && f.assignment_notice_days ? Number(f.assignment_notice_days) : null,
   };
 }
 
 function fromRow(v: ContractConditions | null | undefined): ProposalSnapshotContractConditions {
-  if (!v) return {};
-  return {
-    administrationFee: v.administration_fee,
-    maintenanceLimit: v.maintenance_limit,
-    initialCleaningOption: v.initial_cleaning_option,
-    initialCleaningOther: v.initial_cleaning_other,
-    initialCleaningCostBearer: v.initial_cleaning_cost_bearer,
-    turnoverCleaningTeam: v.turnover_cleaning_team,
-    turnoverCleaningFee: v.turnover_cleaning_fee,
-    turnoverCleaningPayer: v.turnover_cleaning_payer,
-    cleaningResponsibility: v.cleaning_responsibility,
-    payoutRule: v.payout_rule,
-    exclusivity: v.exclusivity,
-    durationMonths: v.duration_months,
-    noticePeriodDays: v.notice_period_days,
-  };
+  return contractRowToSnapshot(v as unknown as Record<string, unknown> | null);
 }
 
 function validate(f: ContractForm): Partial<Record<keyof ContractForm, string>> {
@@ -150,7 +187,15 @@ function validate(f: ContractForm): Partial<Record<keyof ContractForm, string>> 
     e.administration_fee = "Informe um percentual entre 0% e 100%.";
   if (f.initial_cleaning_option === "other" && !f.initial_cleaning_other.trim())
     e.initial_cleaning_other = "Descreva a condição.";
-  for (const key of ["duration_months", "notice_period_days"] as const) {
+  if (f.owner_use_limit_mode === "limited" && !f.owner_use_limit_days.trim())
+    e.owner_use_limit_days = "Informe a quantidade de dias.";
+  for (const key of [
+    "duration_months",
+    "notice_period_days",
+    "owner_use_limit_days",
+    "owner_use_notice_days",
+    "assignment_notice_days",
+  ] as const) {
     const raw = f[key].trim();
     if (raw && !(Number.isInteger(Number(raw)) && Number(raw) >= 0))
       e[key] = "Use um número inteiro.";
@@ -200,7 +245,7 @@ export function ContractConditionsPanel({
   const errors = validate(form);
   const hasErrors = Object.keys(errors).length > 0;
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
-  const previewRows = useMemo(() => contractConditionRows(toSnapshot(form)), [form]);
+  const previewSections = useMemo(() => conditionSections(toSnapshot(form)), [form]);
 
   const save = useMutation({
     mutationFn: async (values: ContractForm) => {
@@ -221,6 +266,16 @@ export function ContractConditionsPanel({
           exclusivity: s.exclusivity ?? null,
           duration_months: s.durationMonths ?? null,
           notice_period_days: s.noticePeriodDays ?? null,
+          initial_cleaning_fee: s.initialCleaningFee ?? null,
+          owner_use_limit_mode: s.ownerUseLimitMode ?? null,
+          owner_use_limit_days: s.ownerUseLimitDays ?? null,
+          owner_use_limit_period: s.ownerUseLimitPeriod ?? null,
+          owner_use_notice_days: s.ownerUseNoticeDays ?? null,
+          owner_use_notes: s.ownerUseNotes ?? null,
+          assignment_mode: s.assignmentMode ?? null,
+          assignment_who: s.assignmentWho ?? null,
+          assignment_procedure: s.assignmentProcedure ?? null,
+          assignment_notice_days: s.assignmentNoticeDays ?? null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "implementation_id" },
@@ -246,7 +301,7 @@ export function ContractConditionsPanel({
   const set = <K extends keyof ContractForm>(field: K, value: ContractForm[K]) =>
     setForm((c) => ({ ...c, [field]: value }));
 
-  const rows = contractConditionRows(fromRow(query.data));
+  const sections = conditionSections(fromRow(query.data));
   const includedCleaning = (cleaningItems ?? []).filter((i) => i.included);
   const stayoCleans =
     form.initial_cleaning_option === "stayo_initial" ||
@@ -335,8 +390,51 @@ export function ContractConditionsPanel({
                     </div>
                   </Section>
 
-                  <Section n={2} title="Limpeza inicial do imóvel">
-                    <div className="grid gap-2" role="radiogroup" aria-label="Limpeza inicial">
+                  <Section n={2} title="Limpeza comercial">
+                    <Field
+                      id="turnover_fee"
+                      label="Valor da limpeza comercial deste imóvel"
+                      hint="Limpeza padrão do apartamento (ex.: R$ 200, 250 ou 300 conforme o padrão). Usada após hospedagens, uso próprio e cessão. Vazio = a definir."
+                    >
+                      <NullableMoney
+                        id="turnover_fee"
+                        value={form.turnover_cleaning_fee}
+                        onChange={(v) => set("turnover_cleaning_fee", v)}
+                      />
+                    </Field>
+                  </Section>
+
+                  <Section n={3} title="Limpeza entre hospedagens">
+                    <Field id="turnover_team" label="Quem executa">
+                      <Input
+                        id="turnover_team"
+                        maxLength={200}
+                        value={form.turnover_cleaning_team}
+                        onChange={(e) => set("turnover_cleaning_team", e.target.value)}
+                      />
+                    </Field>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium">Quem paga e como é cobrada</p>
+                      {(Object.keys(TURNOVER_PAYER_LABELS) as TurnoverPayer[]).map((p) => (
+                        <Choice
+                          key={p}
+                          name="turnover_payer"
+                          checked={form.turnover_cleaning_payer === p}
+                          onChange={() => set("turnover_cleaning_payer", p)}
+                          label={TURNOVER_PAYER_LABELS[p]}
+                        />
+                      ))}
+                      <p className="text-[11px] text-muted-foreground">
+                        Valor usado: {form.turnover_cleaning_fee != null ? formatBRL(form.turnover_cleaning_fee) : "limpeza comercial a definir"}.
+                      </p>
+                    </div>
+                  </Section>
+
+                  <Section n={4} title="Limpeza de implantação">
+                    <p className="text-[11px] text-muted-foreground">
+                      Preparação inicial do imóvel. Preço separado da limpeza comercial.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Limpeza de implantação">
                       {(Object.keys(INITIAL_CLEANING_LABELS) as InitialCleaningOption[]).map((opt) => (
                         <Choice
                           key={opt}
@@ -358,85 +456,123 @@ export function ContractConditionsPanel({
                       </Field>
                     )}
                     {stayoCleans && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium">Quem paga o custo</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(Object.keys(COST_BEARER_LABELS) as CostBearer[]).map((b) => (
-                            <Choice
-                              key={b}
-                              name="initial_cleaning_cost"
-                              checked={form.initial_cleaning_cost_bearer === b}
-                              onChange={() => set("initial_cleaning_cost_bearer", b)}
-                              label={COST_BEARER_LABELS[b]}
-                            />
-                          ))}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field id="initial_cleaning_fee" label="Preço da limpeza de implantação" hint="Vazio = a definir.">
+                          <NullableMoney
+                            id="initial_cleaning_fee"
+                            value={form.initial_cleaning_fee}
+                            onChange={(v) => set("initial_cleaning_fee", v)}
+                          />
+                        </Field>
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium">Quem paga</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(Object.keys(COST_BEARER_LABELS) as CostBearer[]).map((b) => (
+                              <Choice
+                                key={b}
+                                name="initial_cleaning_cost"
+                                checked={form.initial_cleaning_cost_bearer === b}
+                                onChange={() => set("initial_cleaning_cost_bearer", b)}
+                                label={COST_BEARER_LABELS[b]}
+                              />
+                            ))}
+                          </div>
                         </div>
-                        {form.initial_cleaning_cost_bearer === "owner" && (
-                          <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-                            {cleaningItems === undefined
-                              ? "O valor cobrado vem do item de limpeza na aba Proposta. Nada é cobrado por aqui."
-                              : includedCleaning.length > 0
-                                ? `Cobrado pelo item da proposta: ${includedCleaning
-                                    .map((i) => `${i.description} ${formatBRL(i.total)}`)
-                                    .join("; ")}. Nenhuma cobrança nova é criada.`
-                                : "Nenhum item de limpeza incluído em Serviços e valores. Para cobrar, inclua o item lá; nada é cobrado por aqui."}
+                        {includedCleaning.length > 0 && (
+                          <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground sm:col-span-2">
+                            Também há item de limpeza em Serviços de implantação:{" "}
+                            {includedCleaning.map((i) => `${i.description} ${formatBRL(i.total)}`).join("; ")}.
                           </p>
                         )}
                       </div>
                     )}
                   </Section>
 
-                  <Section n={3} title="Limpeza entre hospedagens">
-                    <Field id="turnover_team" label="Quem faz">
-                      <Input
-                        id="turnover_team"
-                        maxLength={200}
-                        value={form.turnover_cleaning_team}
-                        onChange={(e) => set("turnover_cleaning_team", e.target.value)}
+                  <Section n={5} title="Uso pelo proprietário">
+                    <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Limite de uso próprio">
+                      {(Object.keys(OWNER_USE_LIMIT_LABELS) as OwnerUseLimitMode[]).map((m) => (
+                        <Choice
+                          key={m}
+                          name="owner_use_limit"
+                          checked={form.owner_use_limit_mode === m}
+                          onChange={() => set("owner_use_limit_mode", m)}
+                          label={OWNER_USE_LIMIT_LABELS[m]}
+                        />
+                      ))}
+                    </div>
+                    {form.owner_use_limit_mode === "limited" && (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field id="owner_use_limit_days" label="Quantidade de dias" error={errors.owner_use_limit_days}>
+                          <Suffixed id="owner_use_limit_days" suffix="dias" value={form.owner_use_limit_days} onChange={(v) => set("owner_use_limit_days", v)} />
+                        </Field>
+                        <Field id="owner_use_limit_period" label="Período" hint="Ex.: por ano, por temporada, por mês.">
+                          <Input
+                            id="owner_use_limit_period"
+                            maxLength={60}
+                            value={form.owner_use_limit_period}
+                            onChange={(e) => set("owner_use_limit_period", e.target.value)}
+                          />
+                        </Field>
+                      </div>
+                    )}
+                    <Field
+                      id="owner_use_notice_days"
+                      label="Antecedência mínima para pedir o uso"
+                      hint="Vazio = a decidir."
+                      error={errors.owner_use_notice_days}
+                    >
+                      <Suffixed id="owner_use_notice_days" suffix="dias" value={form.owner_use_notice_days} onChange={(v) => set("owner_use_notice_days", v)} />
+                    </Field>
+                    <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                      Limpeza após o uso: {form.turnover_cleaning_fee != null ? formatBRL(form.turnover_cleaning_fee) : "valor a definir"} (limpeza comercial), cobrada a cada uso.
+                    </p>
+                    <Field id="owner_use_notes" label="Observações desta proposta">
+                      <Textarea
+                        id="owner_use_notes"
+                        rows={2}
+                        maxLength={600}
+                        value={form.owner_use_notes}
+                        onChange={(e) => set("owner_use_notes", e.target.value)}
                       />
                     </Field>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Field
-                        id="turnover_fee"
-                        label="Taxa de limpeza por hospedagem"
-                        hint="Não entra no total da implantação."
-                      >
-                        <MoneyInput
-                          id="turnover_fee"
-                          value={form.turnover_cleaning_fee ?? 0}
-                          onValueChange={(v) => set("turnover_cleaning_fee", v)}
+                  </Section>
+
+                  <Section n={6} title="Cessão de uso a terceiros">
+                    <p className="text-[11px] text-muted-foreground">
+                      Familiar ou outra pessoa autorizada pelo proprietário. Não é hospedagem comercial nem uso próprio.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Cessão de uso">
+                      {(Object.keys(ASSIGNMENT_LABELS) as AssignmentMode[]).map((m) => (
+                        <Choice
+                          key={m}
+                          name="assignment_mode"
+                          checked={form.assignment_mode === m}
+                          onChange={() => set("assignment_mode", m)}
+                          label={ASSIGNMENT_LABELS[m]}
                         />
-                      </Field>
-                      {form.turnover_cleaning_fee != null && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium">Quem paga</p>
-                          {(Object.keys(TURNOVER_PAYER_LABELS) as TurnoverPayer[]).map((p) => (
-                            <Choice
-                              key={p}
-                              name="turnover_payer"
-                              checked={form.turnover_cleaning_payer === p}
-                              onChange={() => set("turnover_cleaning_payer", p)}
-                              label={TURNOVER_PAYER_LABELS[p]}
-                            />
-                          ))}
-                        </div>
-                      )}
+                      ))}
                     </div>
-                    {form.turnover_cleaning_fee != null && (
-                      <button
-                        type="button"
-                        className="text-xs underline text-muted-foreground"
-                        onClick={() => {
-                          set("turnover_cleaning_fee", null);
-                          set("turnover_cleaning_payer", "");
-                        }}
-                      >
-                        Sem taxa de limpeza por hospedagem
-                      </button>
+                    {form.assignment_mode === "allowed" && (
+                      <>
+                        <Field id="assignment_who" label="A quem pode ser concedida">
+                          <Textarea id="assignment_who" rows={2} maxLength={400} value={form.assignment_who} onChange={(e) => set("assignment_who", e.target.value)} />
+                        </Field>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <Field id="assignment_notice_days" label="Antecedência mínima" hint="Vazio = a decidir." error={errors.assignment_notice_days}>
+                            <Suffixed id="assignment_notice_days" suffix="dias" value={form.assignment_notice_days} onChange={(v) => set("assignment_notice_days", v)} />
+                          </Field>
+                          <Field id="assignment_procedure" label="Como solicitar">
+                            <Textarea id="assignment_procedure" rows={2} maxLength={400} value={form.assignment_procedure} onChange={(e) => set("assignment_procedure", e.target.value)} />
+                          </Field>
+                        </div>
+                        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                          Limpeza após a cessão: {form.turnover_cleaning_fee != null ? formatBRL(form.turnover_cleaning_fee) : "valor a definir"} (limpeza comercial).
+                        </p>
+                      </>
                     )}
                   </Section>
 
-                  <Section n={4} title="Repasses">
+                  <Section n={7} title="Repasses">
                     <Field id="payout_rule" label="Regra de repasse" hint="Ajuste por implantação, se necessário.">
                       <Textarea
                         id="payout_rule"
@@ -453,7 +589,7 @@ export function ContractConditionsPanel({
                     )}
                   </Section>
 
-                  <Section n={5} title="Exclusividade e prazo">
+                  <Section n={8} title="Exclusividade e prazo">
                     <div className="flex items-start justify-between gap-4 rounded-md border px-3 py-3">
                       <div>
                         <Label htmlFor="exclusivity">Exclusividade da gestão de locações por temporada</Label>
@@ -489,17 +625,10 @@ export function ContractConditionsPanel({
                         </span>
                       )}
                     </div>
-                    {previewRows.length === 0 ? (
+                    {previewSections.length === 0 ? (
                       <p className="text-xs text-muted-foreground">Nada preenchido ainda.</p>
                     ) : (
-                      <dl className="space-y-2">
-                        {previewRows.map(([k, v]) => (
-                          <div key={k}>
-                            <dt className="text-[11px] text-muted-foreground">{k}</dt>
-                            <dd className="text-xs font-medium">{v}</dd>
-                          </div>
-                        ))}
-                      </dl>
+                      <ConditionSummary sections={previewSections} compact />
                     )}
                   </div>
                 </aside>
@@ -537,14 +666,10 @@ export function ContractConditionsPanel({
           </div>
         ) : query.isError ? (
           <p className="text-sm text-destructive">Não foi possível carregar as condições contratuais.</p>
-        ) : rows.length === 0 ? (
+        ) : sections.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma condição preenchida.</p>
         ) : (
-          <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-            {rows.map(([label, value]) => (
-              <Condition key={label} label={label} value={value} />
-            ))}
-          </dl>
+          <ConditionSummary sections={sections} />
         )}
       </div>
     </div>
@@ -636,6 +761,47 @@ function Suffixed({
         {suffix}
       </span>
     </div>
+  );
+}
+
+function ConditionSummary({ sections, compact = false }: { sections: ConditionSection[]; compact?: boolean }) {
+  return (
+    <div className={compact ? "space-y-3" : "grid gap-3 md:grid-cols-2"}>
+      {sections.map((sec) => (
+        <section key={sec.key} className="rounded-md border p-3" style={{ borderColor: "var(--stayo-border)" }}>
+          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+            {sec.title}
+          </h4>
+          <dl className="space-y-2.5">
+            {sec.items.map((it, i) => (
+              <div key={`${it.label}${i}`}>
+                <dt className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{it.label}</dt>
+                <dd className={`text-sm font-semibold ${it.tbd ? "text-amber-700" : ""}`}>{it.value}</dd>
+                {it.help && !compact && <dd className="text-[11px] text-muted-foreground">{it.help}</dd>}
+              </div>
+            ))}
+          </dl>
+          {sec.note && <p className="mt-2 rounded bg-muted px-2 py-1.5 text-[11px] text-muted-foreground">{sec.note}</p>}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function NullableMoney({ id, value, onChange }: { id: string; value: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <Input
+      id={id}
+      inputMode="numeric"
+      autoComplete="off"
+      placeholder="A definir"
+      value={value == null ? "" : formatBRL(value)}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, "").slice(0, 13);
+        onChange(digits ? Number.parseInt(digits, 10) / 100 : null);
+      }}
+      className="text-right tabular-nums"
+    />
   );
 }
 
