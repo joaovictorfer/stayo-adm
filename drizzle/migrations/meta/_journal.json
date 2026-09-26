@@ -197,6 +197,13 @@
       "when": 1790381006316,
       "tag": "0027_owner_link_save_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790381264726,
+      "tag": "0028_owner_link_guard_same_tx",
+      "breakpoints": true
     }
   ]
 }
