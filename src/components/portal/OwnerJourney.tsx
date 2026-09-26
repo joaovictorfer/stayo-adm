@@ -58,6 +58,7 @@ import {
   type ConditionItem,
 } from "../../lib/contract-conditions";
 import { PRICING_LABELS, resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
+import { publishedProposalPresentation } from "../../lib/published-proposal-presentation";
 import type {
   CommercialProposalSnapshot,
   ProposalSnapshotCommercialTerm,
@@ -1091,17 +1092,6 @@ function ProposalStep({
 
 type SnapItem = CommercialProposalSnapshot["items"][number];
 
-function groupItems(items: SnapItem[]) {
-  const fixed = items.filter((i) => resolvePricing(i) === "fixed");
-  const optional = items.filter((i) => resolvePricing(i) === "optional");
-  const pending = items.filter((i) => {
-    const p = resolvePricing(i);
-    return p === "conditional" || p === "tbd";
-  });
-  const fixedTotal = fixed.reduce((a, i) => a + (Number(i.total) || 0), 0);
-  return { fixed, optional, pending, fixedTotal };
-}
-
 const TERM_HELP: Array<[RegExp, string]> = [
   [/^Taxa de administração/, "Percentual das receitas das reservas que remunera a gestão da STAYO."],
   [/^Manutenção/, "Pequenos reparos até esse valor podem ser feitos sem consultar você. Não é uma cobrança."],
@@ -1138,7 +1128,7 @@ function ItemRow({ item, badge }: { item: SnapItem; badge: ItemPricing }) {
       : badge === "conditional"
         ? Number(item.total) > 0
           ? `a partir de ${money.format(item.total)}`
-          : "Conforme avaliação"
+          : "Valor a definir após avaliação"
         : money.format(item.total);
   const head = (
     <>
@@ -1180,7 +1170,8 @@ const DECISION_STATE_LABEL: Record<DecisionState, string> = {
   quote: "Depende de orçamento",
 };
 
-function decisionState(it: ConditionItem): DecisionState {
+function decisionState(it: ConditionItem, explicit?: DecisionState): DecisionState {
+  if (explicit) return explicit;
   if (it.tbd) return "tbd";
   if (/valor a definir|depende de orçamento|conforme orçamento/i.test(it.help ?? "")) return "quote";
   return "defined";
@@ -1190,6 +1181,7 @@ function publicBlocks(snapshot: CommercialProposalSnapshot) {
   const c = snapshot.contractConditions ?? {};
   const sections = conditionSections(c);
   const decisions = implementationDecisionItems(c);
+  const presentation = publishedProposalPresentation(snapshot);
   const terms = [...(snapshot.commercialTerms ?? [])]
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .map<ConditionItem>((t) => ({
@@ -1199,7 +1191,17 @@ function publicBlocks(snapshot: CommercialProposalSnapshot) {
     }));
   const get = (k: string) => sections.find((s) => s.key === k);
   const management = [...(get("management")?.items ?? []), ...terms];
-  const implCleaning = decisions.find((d) => d.label === "Limpeza de implantação");
+  const baseImplCleaning = decisions.find((d) => d.label === "Limpeza de implantação");
+  const implCleaning: ConditionItem | undefined = presentation.cleaningDecision
+    ? {
+        label: "Limpeza de implantação",
+        value: presentation.cleaningDecision.price
+          ? `${presentation.cleaningDecision.value} · ${presentation.cleaningDecision.price}`
+          : `${presentation.cleaningDecision.value} · Valor a definir após avaliação`,
+        help: presentation.cleaningDecision.help,
+        ...(presentation.cleaningDecision.state === "quote" ? { tbd: true } : {}),
+      }
+    : baseImplCleaning;
   const cleaning = [...(get("cleaning")?.items ?? []), ...(implCleaning ? [implCleaning] : [])];
   const use = get("owner_use")?.items ?? [];
   const cut = use.findIndex((i) => i.label === "Cessão de uso");
@@ -1207,20 +1209,42 @@ function publicBlocks(snapshot: CommercialProposalSnapshot) {
   const assignment = cut < 0 ? [] : use.slice(cut);
   const rule = get("owner_use")?.note;
   return [
-    { key: "management", title: "Gestão comercial", lead: "Taxa, repasses, vigência e exclusividade.", items: management },
+    {
+      key: "management",
+      title: "Gestão comercial",
+      lead: management.some((item) => /^Repasse/.test(item.label))
+        ? "Taxa, repasses, vigência e exclusividade."
+        : "Taxa, vigência e exclusividade.",
+      items: management,
+    },
     { key: "cleaning", title: "Limpeza e operação", lead: "Valor da limpeza, quem faz e como é cobrada.", items: cleaning },
     { key: "owner_use", title: "Uso do imóvel pelo proprietário", lead: "Como reservar datas para você usar o imóvel.", items: ownerUse, note: rule },
-    { key: "assignment", title: "Cessão para familiares ou convidados", lead: "Quando outra pessoa usa o imóvel com sua autorização.", items: assignment, note: assignment.length > 1 ? rule : undefined },
+    { key: "assignment", title: "Cessão para familiares ou convidados", lead: "Quando outra pessoa usa o imóvel com sua autorização.", items: assignment, note: assignment.length > 0 ? rule : undefined },
   ].filter((b) => b.items.length > 0);
 }
 
 function proposalFacts(snapshot: CommercialProposalSnapshot) {
   const c = snapshot.contractConditions ?? {};
-  const groups = groupItems(snapshot.items ?? []);
-  const decisions = implementationDecisionItems(c);
+  const presentation = publishedProposalPresentation(snapshot);
+  const groups = presentation.groups;
+  const decisions = implementationDecisionItems(c).map((decision) => {
+    if (decision.label !== "Limpeza de implantação" || !presentation.cleaningDecision) return decision;
+    return {
+      ...decision,
+      value: presentation.cleaningDecision.value,
+      help: presentation.cleaningDecision.help,
+      tbd: presentation.cleaningDecision.state === "quote",
+      presentationState: presentation.cleaningDecision.state as DecisionState,
+      presentationPrice: presentation.cleaningDecision.price,
+    };
+  });
   const fee = commercialCleaningFee(c);
   const hasPending =
-    groups.pending.length > 0 || fee == null || decisions.some((d) => decisionState(d) !== "defined");
+    groups.pending.length > 0 ||
+    fee == null ||
+    decisions.some((d) =>
+      decisionState(d, "presentationState" in d ? d.presentationState : undefined) !== "defined",
+    );
   return {
     admin: formatPercent(c.administrationFee),
     duration: c.durationMonths ? `${c.durationMonths} meses` : null,
@@ -1335,7 +1359,7 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
           <h2 id="pj-dec-title" className="pj-section-title">Como vamos preparar seu imóvel</h2>
           <ul className="pj-decisions">
             {decisions.map((d) => {
-              const st = decisionState(d);
+              const st = decisionState(d, "presentationState" in d ? d.presentationState : undefined);
               return (
                 <li key={d.label} className="pj-decision">
                   <span className="pj-decision-icon">{decisionIcon(d.label)}</span>
@@ -1344,7 +1368,10 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
                       <span className="pj-decision-label">{d.label}</span>
                       <em className={`pj-state is-${st}`}>{DECISION_STATE_LABEL[st]}</em>
                     </div>
-                    <p className="pj-decision-value">{st === "tbd" ? "Decisão ainda não tomada" : d.value}</p>
+                    <p className="pj-decision-value">
+                      {st === "tbd" ? "Decisão ainda não tomada" : d.value}
+                      {"presentationPrice" in d && d.presentationPrice ? ` · ${d.presentationPrice}` : ""}
+                    </p>
                     {d.help && <p className="pj-decision-help">{d.help}</p>}
                   </div>
                 </li>
