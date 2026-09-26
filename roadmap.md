@@ -1,7 +1,7 @@
 # Roadmap
 
 - [x] Otimizar todas as telas reais do Admin e do Portal para 360, 375, 390 e 430 px
-- [ ] Validar fluxos mobile reais, estados, áreas de toque e ausência de rolagem horizontal
+- [x] Validar fluxos mobile reais, estados, áreas de toque e ausência de rolagem horizontal
 
 - [x] Refinar a proposta pública em 360–390 px e impedir que palavras quebrem no meio
 - [ ] Excluir todas as implantações, preservando somente a IMP-00003 Canela Residence

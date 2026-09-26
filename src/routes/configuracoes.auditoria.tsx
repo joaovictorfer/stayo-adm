@@ -75,7 +75,7 @@ function AuditoriaPage() {
 
       <p className="mb-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
         {usingSupabase
-          ? "Fonte: Supabase (audit_logs, protegido por RLS)."
+          ? "Fonte: banco protegido do Stayo Admin."
           : "Fonte: armazenamento local do navegador — some ao limpar dados do site. Configure VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY para persistência real e compartilhada entre usuários."}
       </p>
 
@@ -108,8 +108,10 @@ function AuditoriaPage() {
                     </div>
                     <div>
                       <dt className="text-[var(--stayo-ink-muted)]">Detalhes</dt>
-                      <dd className="break-all text-[var(--stayo-ink)]">
-                        {Object.keys(entry.metadata).length > 0 ? JSON.stringify(entry.metadata) : "—"}
+                      <dd className="mt-1 max-h-40 overflow-auto rounded-md bg-[var(--stayo-bg)] p-2 font-mono text-[11px] leading-relaxed text-[var(--stayo-ink)] [overflow-wrap:anywhere]">
+                        {Object.keys(entry.metadata).length > 0
+                          ? JSON.stringify(entry.metadata, null, 2)
+                          : "—"}
                       </dd>
                     </div>
                   </dl>
