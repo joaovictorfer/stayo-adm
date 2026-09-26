@@ -515,8 +515,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             )}
           </div>
 
+          {!(commercialTerms.isSuccess && (commercialTerms.data ?? []).length === 0) && (
           <div>
-            <h4 className="text-sm font-semibold">Condições comerciais</h4>
+            <h4 className="text-sm font-semibold">Condições comerciais adicionais</h4>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Vêm da ficha (aba Resumo) e são congeladas na publicação.
             </p>
@@ -545,6 +546,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               </dl>
             )}
           </div>
+          )}
         </div>
 
         <div className="mt-5">
