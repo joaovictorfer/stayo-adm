@@ -30,6 +30,7 @@ import {
   type ItemPricing,
 } from "../../lib/proposal-pricing";
 import { ContractConditionsPanel } from "./ContractConditionsPanel";
+import { ImplementationDecisionsPanel } from "./ImplementationDecisionsPanel";
 import { ProposalPresentationView } from "./ProposalPresentationView";
 import {
   PROPOSAL_ITEM_TEMPLATES,
@@ -547,6 +548,10 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             )}
           </div>
           )}
+        </div>
+
+        <div className="mt-5">
+          <ImplementationDecisionsPanel implementationId={implementationId} />
         </div>
 
         <div className="mt-5">
