@@ -4850,3 +4850,4 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
   .pj-item-body, .pj-more-body { animation: none; }
   .pj-chevron { transition: none; }
 }
+.pj-term-value[data-tbd="true"] { color: var(--stayo-ink-muted); font-style: italic; }
