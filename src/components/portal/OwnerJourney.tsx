@@ -1188,8 +1188,6 @@ function decisionState(it: ConditionItem, explicit?: DecisionState): DecisionSta
 function publicBlocks(snapshot: CommercialProposalSnapshot) {
   const c = snapshot.contractConditions ?? {};
   const sections = conditionSections(c);
-  const decisions = implementationDecisionItems(c);
-  const presentation = publishedProposalPresentation(snapshot);
   const terms = [...(snapshot.commercialTerms ?? [])]
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .map<ConditionItem>((t) => ({
