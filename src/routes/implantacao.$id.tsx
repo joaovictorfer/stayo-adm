@@ -2464,13 +2464,20 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
             </p>
           )}
         </Section>
-        <Section
-          id="fornecedores"
-          title="Fornecedores e instalações"
-          description="Quem forneceu, instalou ou atende os principais sistemas do imóvel. Uso interno e da implantação; não entra na proposta nem no guia do hóspede."
+        <section
+          id="secao-fornecedores"
+          className="scroll-mt-4 rounded-[var(--radius-card)] border bg-white px-4 py-3 shadow-sm"
+          style={{ borderColor: "var(--stayo-border)" }}
         >
+          <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+            Fornecedores e instalações
+          </h2>
+          <p className="mb-3 mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+            Quem forneceu, instalou ou atende os principais sistemas do imóvel. Uso interno e da
+            implantação; não entra na proposta nem no guia do hóspede.
+          </p>
           <PropertySuppliersPanel implementationId={implementation.id} />
-        </Section>
+        </section>
       </div>
     </PropertySectionContext.Provider>
   );
