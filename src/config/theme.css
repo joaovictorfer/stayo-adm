@@ -4286,8 +4286,9 @@ a.admin-data-row:hover,
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: portal-cover-in 700ms ease both;
+  opacity: 0;
 }
+.portal-onboarding-cover.is-ready { opacity: 1; transition: opacity 220ms ease; }
 .portal-onboarding-cover-overlay {
   position: absolute;
   inset: 0;
@@ -4496,10 +4497,9 @@ a.admin-data-row:hover,
 
 /* Capa: movimento lento e elegante (ken burns sutil). */
 .portal-onboarding-cover {
-  animation:
-    portal-cover-in 700ms ease both,
-    portal-cover-drift 26s ease-in-out 700ms infinite alternate;
+  transform: scale(1);
 }
+.portal-onboarding-cover.is-ready { animation: portal-cover-drift 26s ease-in-out 220ms infinite alternate; }
 @keyframes portal-cover-drift {
   from { transform: scale(1) translateX(0); }
   to { transform: scale(1.05) translateX(-0.6%); }
@@ -4735,9 +4735,7 @@ a.admin-data-row:hover,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .portal-onboarding-cover {
-    animation: portal-cover-in 1ms ease both;
-  }
+  .portal-onboarding-cover.is-ready { animation: none; transition: none; }
   .portal-journey-ruler-wrap .portal-journey-step.is-current .portal-journey-step-icon {
     animation: none;
   }
@@ -5020,8 +5018,15 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pj-review-link { display: inline-block; margin-top: 0.45rem; color: var(--portal-navy); font-size: 0.8rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .pj-agree { align-items: center; min-height: 3rem; padding: 0.65rem 0.75rem; font-size: 0.86rem; line-height: 1.25; }
 
-.pj-faq { display: grid; gap: 0.55rem; }
-.pj-faq-lead { margin-top: -0.35rem; font-size: 0.85rem; line-height: 1.45; color: var(--portal-muted); }
+.pj-faq-shell { overflow: hidden; border: 1px solid var(--portal-border); border-radius: 8px; background: var(--portal-surface); }
+.pj-faq-shell > summary { display: flex; min-height: 4.25rem; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem; cursor: pointer; list-style: none; }
+.pj-faq-shell > summary::-webkit-details-marker { display: none; }
+.pj-faq-shell > summary:focus-visible { outline: 2px solid var(--portal-gold); outline-offset: -2px; }
+.pj-faq-shell-icon { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; color: var(--portal-gold); }
+.pj-faq-shell-copy { display: grid; min-width: 0; flex: 1; gap: 0.15rem; }
+.pj-faq-shell-copy strong { color: var(--portal-navy); font-size: 1rem; font-weight: 600; }
+.pj-faq-shell-copy small { color: var(--portal-muted); font-size: 0.8rem; line-height: 1.35; }
+.pj-faq { display: grid; gap: 0.55rem; padding: 0 0.75rem 0.85rem; }
 .pj-faq-acc { border-radius: 8px; }
 .pj-faq-acc > summary { min-height: 3rem; padding: 0.6rem 0.75rem; gap: 0.6rem; font-size: 0.9rem; }
 .pj-faq-icon { flex: 0 0 auto; width: 1rem; height: 1rem; color: var(--portal-gold); }
@@ -5038,12 +5043,12 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
   .portal-onboarding-header.is-compact .portal-onboarding-headline { font-size: 1.2rem; }
   .portal-onboarding-header.is-compact .portal-onboarding-header-cta { width: auto; }
   .portal-journey-ruler-wrap { padding-inline: 1rem; }
-  .portal-journey-ruler-wrap .portal-journey-steps { gap: 0.15rem; }
+  .portal-journey-ruler-wrap .portal-journey-steps { gap: 0; }
   .portal-journey-ruler-wrap .portal-journey-step,
   .portal-journey-ruler-wrap .portal-journey-step.is-complete,
   .portal-journey-ruler-wrap .portal-journey-step.is-current,
   .portal-journey-ruler-wrap .portal-journey-step:not(:disabled):hover { min-width: 0; gap: 0.25rem; padding-inline: 0.1rem; }
-  .portal-journey-ruler-wrap .portal-journey-step-label { min-width: 0; overflow: hidden; font-size: 0.62rem; text-overflow: ellipsis; white-space: nowrap; }
+  .portal-journey-ruler-wrap .portal-journey-step-label { min-width: 0; overflow: visible; font-size: 0.62rem; text-overflow: clip; white-space: nowrap; }
   .pj-stat { padding-inline: 0.45rem; }
   .pj-stat dt { font-size: 0.66rem; }
   .pj-stat-value { font-size: 0.8rem; }
@@ -5051,3 +5056,25 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
   .pj-item-value { max-width: 5.8rem; font-size: 0.8rem; }
   .pj-agree span { white-space: normal; }
 }
+
+/* Linha do tempo: conectores passam pelo centro dos ícones e os rótulos ficam alinhados. */
+.portal-journey-ruler-wrap .portal-journey-step,
+.portal-journey-ruler-wrap .portal-journey-step.is-complete,
+.portal-journey-ruler-wrap .portal-journey-step.is-current,
+.portal-journey-ruler-wrap .portal-journey-step:not(:disabled):hover {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  padding-bottom: 0.45rem;
+  text-align: center;
+}
+.portal-journey-ruler-wrap .portal-journey-step-icon { z-index: 1; }
+.portal-journey-ruler-wrap .portal-journey-step-bar {
+  top: 0.84rem;
+  right: calc(-50% + 0.55rem);
+  bottom: auto;
+  left: calc(50% + 0.55rem);
+  height: 1px;
+}
+.portal-journey-ruler-wrap .portal-journey-step:last-child .portal-journey-step-bar { display: none; }
+.portal-journey-ruler-wrap .portal-journey-step-label { width: 100%; text-align: center; }

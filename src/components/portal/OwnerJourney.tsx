@@ -176,6 +176,7 @@ export function OwnerJourney({
   const coverQ = useOwnerCoverByToken(token);
   const [coverBroken, setCoverBroken] = useState(false);
   const coverData = coverBroken ? null : (coverQ.data ?? null);
+  const [coverReady, setCoverReady] = useState(false);
   const [form, setForm] = useState<OwnerOnboardingSubmissionInput>(emptyForm);
   const [stage, setStage] = useState<Stage>(1);
   const [maxStage, setMaxStage] = useState<Stage>(1);
@@ -632,7 +633,10 @@ export function OwnerJourney({
       lead: "A equipe STAYO está revisando as informações e fala com você em breve.",
     },
   }[journeyState];
-  const coverNote = !coverData
+  const coverSrc = coverQ.isPending ? null : (coverData?.url ?? institutionalCover);
+  const coverNote = coverQ.isPending
+    ? null
+    : !coverData
     ? "Imagem institucional STAYO"
     : coverData.source === "condominium"
       ? coverData.label
@@ -641,13 +645,20 @@ export function OwnerJourney({
   return (
     <div className="portal-onboarding">
       <header className={`portal-onboarding-header is-compact${coverData ? " has-photo" : ""}`}>
-        <img
-          src={coverData?.url ?? institutionalCover}
-          onError={() => setCoverBroken(true)}
-          alt=""
-          aria-hidden="true"
-          className="portal-onboarding-cover"
-        />
+        {coverSrc && (
+          <img
+            key={coverSrc}
+            src={coverSrc}
+            onLoad={() => setCoverReady(true)}
+            onError={() => {
+              setCoverReady(false);
+              setCoverBroken(true);
+            }}
+            alt=""
+            aria-hidden="true"
+            className={`portal-onboarding-cover${coverReady ? " is-ready" : ""}`}
+          />
+        )}
         <div className="portal-onboarding-cover-overlay" aria-hidden="true" />
         <div className="portal-onboarding-header-content">
           <div className="portal-onboarding-brand-row">
@@ -666,12 +677,6 @@ export function OwnerJourney({
             {copy.title}
           </h1>
           <p className="portal-onboarding-lead">{copy.lead}</p>
-          {journeyState === "A" && journeyQ.data?.current && (
-            <p className="pj-hero-meta">
-              Versão {journeyQ.data.current.version}
-              {journeyQ.data.current.publishedAt ? ` · ${formatDate(journeyQ.data.current.publishedAt)}` : ""}
-            </p>
-          )}
           {copy.cta && (
             <button type="button" className="portal-onboarding-header-cta" onClick={copy.cta.onClick}>
               {copy.cta.label}
@@ -918,8 +923,8 @@ function Timeline({
 }) {
   const steps: Array<{ id: Stage; label: string; short: string; icon: ReactNode }> = [
     { id: 1, label: "Proposta", short: "Proposta", icon: <FileCheck2 /> },
-    { id: 2, label: "Seus dados", short: "Dados", icon: <UserRound /> },
-    { id: 3, label: "Seu imóvel", short: "Imóvel", icon: <Home /> },
+    { id: 2, label: "Seus dados", short: "Seus dados", icon: <UserRound /> },
+    { id: 3, label: "Seu imóvel", short: "Seu imóvel", icon: <Home /> },
   ];
   // "Acompanhar" só aparece depois do envio: é a conta de acompanhamento,
   // nunca uma etapa de coleta inicial de senhas ou códigos.
@@ -1149,30 +1154,38 @@ const FAQ_ITEMS: Array<{ q: string; a: string }> = [
 function ProposalFaq() {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <section aria-labelledby="pj-faq-title" className="pj-faq">
-      <h2 id="pj-faq-title" className="pj-section-title">Dúvidas frequentes</h2>
-      <p className="pj-faq-lead">Entenda como funciona a gestão e a implantação do seu imóvel.</p>
-      <div className="pj-accordion">
-        {FAQ_ITEMS.map((item, i) => (
-          <details key={item.q} className="pj-acc pj-faq-acc" open={open === i}>
-            <summary
-              onClick={(event) => {
-                event.preventDefault();
-                setOpen(open === i ? null : i);
-              }}
-            >
-              <CircleHelp className="pj-faq-icon" aria-hidden="true" />
-              <span className="pj-faq-question">{item.q}</span>
-              <ChevronDown className="pj-chevron" aria-hidden="true" />
-            </summary>
-            <div className="pj-faq-body">
-              <p>{item.a}</p>
-            </div>
-          </details>
-        ))}
-      </div>
-      <p className="pj-faq-note">Ficou com alguma dúvida? Nossa equipe estará ao seu lado durante toda a implantação.</p>
-    </section>
+    <details className="pj-faq-shell">
+      <summary>
+        <CircleHelp className="pj-faq-shell-icon" aria-hidden="true" />
+        <span className="pj-faq-shell-copy">
+          <strong id="pj-faq-title">Dúvidas frequentes</strong>
+          <small>Entenda como funciona a gestão e a implantação do seu imóvel.</small>
+        </span>
+        <ChevronDown className="pj-chevron" aria-hidden="true" />
+      </summary>
+      <section aria-labelledby="pj-faq-title" className="pj-faq">
+        <div className="pj-accordion">
+          {FAQ_ITEMS.map((item, i) => (
+            <details key={item.q} className="pj-acc pj-faq-acc" open={open === i}>
+              <summary
+                onClick={(event) => {
+                  event.preventDefault();
+                  setOpen(open === i ? null : i);
+                }}
+              >
+                <CircleHelp className="pj-faq-icon" aria-hidden="true" />
+                <span className="pj-faq-question">{item.q}</span>
+                <ChevronDown className="pj-chevron" aria-hidden="true" />
+              </summary>
+              <div className="pj-faq-body">
+                <p>{item.a}</p>
+              </div>
+            </details>
+          ))}
+        </div>
+        <p className="pj-faq-note">Ficou com alguma dúvida? Nossa equipe estará ao seu lado durante toda a implantação.</p>
+      </section>
+    </details>
   );
 }
 
