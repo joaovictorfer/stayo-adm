@@ -2592,6 +2592,10 @@ export type Database = {
         }
         Returns: Json
       }
+      owner_journey_current_confirmed: {
+        Args: { p_implementation_id: string }
+        Returns: boolean
+      }
       owner_journey_resolve_proposal: {
         Args: { p_token: string }
         Returns: Json
