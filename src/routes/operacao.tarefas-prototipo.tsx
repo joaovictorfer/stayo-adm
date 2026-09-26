@@ -21,6 +21,7 @@ import {
   AdminStatusBadge,
   type AdminTone,
 } from "@/components/admin/AdminPrimitives";
+import { OperacaoPrototypeNav } from "@/components/admin/OperacaoPrototypeNav";
 import { PeriodFilter } from "@/components/patterns/IndicatorCard";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -176,11 +177,7 @@ function TasksPrototype() {
         </select>
       </div>
 
-      <nav aria-label="Operação" className="mb-2 flex flex-wrap gap-1 text-sm">
-        <Link to="/operacao/prototipo" className="inline-flex min-h-10 items-center rounded-md px-3 text-[var(--admin-muted)] hover:text-[var(--admin-text)]">Visão geral</Link>
-        <Link to="/operacao/agenda-prototipo" className="inline-flex min-h-10 items-center rounded-md px-3 text-[var(--admin-muted)] hover:text-[var(--admin-text)]">Agenda</Link>
-        <span aria-current="page" className="inline-flex min-h-10 items-center rounded-md border-b-2 border-[var(--admin-primary)] px-3 font-medium text-[var(--admin-text)]">Tarefas</span>
-      </nav>
+      <OperacaoPrototypeNav />
 
       <AdminPageHeader
         title="Tarefas operacionais"

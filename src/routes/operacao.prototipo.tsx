@@ -20,6 +20,7 @@ import {
   AdminStatusBadge,
   type AdminTone,
 } from "@/components/admin/AdminPrimitives";
+import { OperacaoPrototypeNav } from "@/components/admin/OperacaoPrototypeNav";
 import { PeriodFilter } from "@/components/patterns/IndicatorCard";
 
 export const Route = createFileRoute("/operacao/prototipo")({
@@ -128,6 +129,8 @@ function CentralPrototype() {
           <PeriodFilter value={demo} onChange={setDemo} options={stateOptions} />
         </div>
       </div>
+
+      <OperacaoPrototypeNav />
 
       <AdminPageHeader
         title="Operação"
