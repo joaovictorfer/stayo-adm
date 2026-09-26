@@ -18,7 +18,7 @@ import {
   XOctagon,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import demoPhoto from "@/assets/vistoria-demo-sala.jpg";
 import { StayoLogo } from "@/components/brand/StayoLogo";
@@ -93,6 +93,14 @@ function FieldInspectionPrototype() {
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [save, setSave] = useState<Save>("salvo");
+  const [qa, setQa] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    setQa(q.get("controles") === "1");
+    const e = q.get("estado") as LinkState | null;
+    if (e && STATES.some((x) => x.v === e)) applyState(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyState = (s: LinkState) => {
     setLinkState(s);
@@ -125,17 +133,7 @@ function FieldInspectionPrototype() {
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-muted/40">
-      {/* Ferramenta de protótipo — fora da experiência */}
-      <div className="border-b border-dashed border-border bg-background/80 px-3 py-2 text-xs text-muted-foreground">
-        <div className="mx-auto flex max-w-md items-center gap-2">
-          <span className="shrink-0 font-medium">QA · estado do link</span>
-          <select aria-label="Estado do link" value={linkState} onChange={(e) => applyState(e.target.value as LinkState)} className="h-9 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground">
-            {STATES.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <main className="relative mx-auto flex min-h-[calc(100dvh-53px)] w-full max-w-md flex-col bg-background shadow-sm md:my-6 md:min-h-[780px] md:overflow-hidden md:rounded-3xl md:border md:border-border">
+      <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background shadow-sm md:my-6 md:min-h-[780px] md:overflow-hidden md:rounded-3xl md:border md:border-border">
         {linkState === "expirado" ? (
           <Expired />
         ) : screen === "inicio" ? (
@@ -174,6 +172,14 @@ function FieldInspectionPrototype() {
           <Final />
         )}
       </main>
+      {qa && (
+        <aside aria-label="Controles de protótipo" className="mx-auto mt-6 w-full max-w-md border-t-2 border-dashed border-border px-4 py-4 text-xs text-muted-foreground">
+          <p className="mb-2 font-semibold uppercase tracking-wide">Controles de protótipo · fora da experiência</p>
+          <select aria-label="Estado do link" value={linkState} onChange={(e) => applyState(e.target.value as LinkState)} className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground">
+            {STATES.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
+          </select>
+        </aside>
+      )}
     </div>
   );
 }
