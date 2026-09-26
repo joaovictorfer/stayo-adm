@@ -378,3 +378,18 @@ function EditorFor({
     />
   );
 }
+
+/** Resumo compacto para a linha da ficha: recomendações, concluídas, a confirmar e portal. */
+export function GuideSummary({ implementationId, guideType }: { implementationId: string; guideType: GuideType }) {
+  const key = ["guide", implementationId, guideType];
+  const q = useQuery({ queryKey: key, queryFn: () => listGuide(implementationId, guideType) });
+  const released = useQuery({ queryKey: [...key, "released"], queryFn: () => isGuideReleased(implementationId, guideType) });
+  if (!q.data) return <>Carregando…</>;
+  if (!q.data.length) return <>Nenhum guia aplicado</>;
+  const s = summarizeGuide(q.data.filter((i) => i.enabled).map(toRow));
+  return (
+    <>
+      {s.total} recomendações · {s.confirmadas} concluídas · {s.aConfirmar} a confirmar · Portal: {released.data ? "Visível" : "Privado"}
+    </>
+  );
+}

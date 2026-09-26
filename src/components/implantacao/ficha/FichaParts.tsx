@@ -84,7 +84,7 @@ export function FichaNav({
 export interface HubRow {
   id: string;
   label: string;
-  summary: string;
+  summary: ReactNode;
   tone?: "danger" | "ok" | "muted";
   content: ReactNode;
 }
