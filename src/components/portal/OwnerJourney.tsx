@@ -164,6 +164,8 @@ export function OwnerJourney({
   const [maxStage, setMaxStage] = useState<Stage>(1);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [showOwnerErrors, setShowOwnerErrors] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const sending = useRef(false);
   const [showPropertyErrors, setShowPropertyErrors] = useState(false);
   const [acceptName, setAcceptName] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -291,7 +293,7 @@ export function OwnerJourney({
         return queue.current;
 
       setSaveState("saving");
-      const code = target >= 3 ? STEP.property : STEP.owner;
+      const code = Math.max(target, maxStageRef.current) >= 3 ? STEP.property : STEP.owner;
       queue.current = queue.current
         .catch(() => undefined)
         .then(async () => {
@@ -458,10 +460,11 @@ export function OwnerJourney({
       );
       lastSaved.current = JSON.stringify(form);
       setSaveState("saved");
+      setReviewing(false);
       setMaxStage(4);
       setStage(4);
-      toast.success("Cadastro recebido", {
-        description: "Falta apenas preparar seu acesso ao Portal do Proprietário.",
+      toast.success("Informações enviadas para análise", {
+        description: "A equipe STAYO vai revisar. Agora você pode criar seu acesso.",
       });
     },
     onError: (error) =>
@@ -470,6 +473,7 @@ export function OwnerJourney({
       }),
     onSettled: () => {
       finalizing.current = false;
+      sending.current = false;
     },
   });
 
@@ -495,6 +499,8 @@ export function OwnerJourney({
 
   const go = (target: Stage) => {
     if (target > maxStageRef.current) return;
+    void persist(formRef.current, stageRef.current);
+    setReviewing(false);
     setStage(target);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -521,6 +527,13 @@ export function OwnerJourney({
       toast.error("Revise os dados do proprietário antes de finalizar");
       return;
     }
+    void persist(formRef.current, 3);
+    setReviewing(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const sendForReview = () => {
+    if (finish.isPending || sending.current) return;
+    sending.current = true;
     finish.mutate();
   };
 
@@ -610,7 +623,7 @@ export function OwnerJourney({
           <div className="portal-onboarding-brand-row">
             <StayoLogo variant="white" className="h-auto w-20" />
             {journeyState === "C" && stage >= 2 ? (
-              <SaveStatus state={saveState} />
+              <SaveStatus state={saveState} onRetry={() => void persist(formRef.current, stageRef.current)} />
             ) : coverNote ? (
               <span className="portal-onboarding-cover-tag">{coverNote}</span>
             ) : null}
@@ -693,7 +706,17 @@ export function OwnerJourney({
                 onContinue={continueOwner}
               />
             )}
-            {stage === 3 && (
+            {stage === 3 && reviewing && (
+              <ReviewStep
+                form={form}
+                sending={finish.isPending}
+                saveState={saveState}
+                onEditOwner={() => go(2)}
+                onEditProperty={() => setReviewing(false)}
+                onSend={sendForReview}
+              />
+            )}
+            {stage === 3 && !reviewing && (
               <PropertyStep
                 form={form}
                 implementationName={
@@ -735,20 +758,112 @@ export function OwnerJourney({
   );
 }
 
-function SaveStatus({ state }: { state: "idle" | "saving" | "saved" | "error" }) {
+function SaveStatus({
+  state,
+  onRetry,
+}: {
+  state: "idle" | "saving" | "saved" | "error";
+  onRetry: () => void;
+}) {
+  if (state === "error")
+    return (
+      <button type="button" className="portal-autosave is-error" role="status" onClick={onRetry}>
+        <Cloud />
+        <span>Não foi possível salvar — tentar novamente</span>
+      </button>
+    );
   return (
-    <div className={`portal-autosave is-${state}`} role="status">
+    <div className={`portal-autosave is-${state}`} role="status" aria-live="polite">
       {state === "saved" ? <CheckCircle2 /> : <Cloud />}
-      <span>
-        {state === "saving"
-          ? "Salvando…"
-          : state === "error"
-            ? "Tentaremos novamente"
-            : state === "saved"
-              ? "Tudo salvo"
-              : "Salvamento ativo"}
-      </span>
+      <span>{state === "saving" ? "Salvando…" : state === "saved" ? "Salvo" : "Rascunho"}</span>
     </div>
+  );
+}
+
+function ReviewStep({
+  form,
+  sending,
+  saveState,
+  onEditOwner,
+  onEditProperty,
+  onSend,
+}: {
+  form: OwnerOnboardingSubmissionInput;
+  sending: boolean;
+  saveState: "idle" | "saving" | "saved" | "error";
+  onEditOwner: () => void;
+  onEditProperty: () => void;
+  onSend: () => void;
+}) {
+  const address = [
+    form.propertyStreet,
+    form.propertyNumber,
+    form.propertyComplement,
+    form.propertyDistrict,
+    form.propertyCity,
+    form.propertyState,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const rows = (items: Array<[string, string | number | null | undefined]>) =>
+    items.filter(([, v]) => v !== null && v !== undefined && v !== "");
+  const owner = rows([
+    ["Nome", form.fullName],
+    ["CPF/CNPJ", form.document],
+    ["E-mail", form.email],
+    ["Telefone", form.phone],
+    ["Outras pessoas", form.people.length > 1 ? form.people.length - 1 : null],
+    ["Banco", form.bankName],
+    ["Chave Pix", form.pixKey],
+  ]);
+  const property = rows([
+    ["Endereço", address],
+    ["Tipo", form.propertyType],
+    ["Quartos", form.propertyBedrooms],
+    ["Banheiros", form.propertyBathrooms],
+    ["Vagas", form.propertyParkingSpots],
+  ]);
+  const block = (title: string, list: typeof owner, onEdit: () => void) => (
+    <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
+      <div className="flex items-center justify-between gap-3">
+        <strong className="text-sm">{title}</strong>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="min-h-11 px-2 text-sm font-medium text-[var(--portal-navy)] underline-offset-4 hover:underline"
+        >
+          Editar
+        </button>
+      </div>
+      <dl className="mt-1 divide-y divide-[var(--portal-border)] text-sm">
+        {list.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-3 py-1.5">
+            <dt className="text-[var(--portal-muted)]">{k}</dt>
+            <dd className="text-right font-medium break-all">{String(v)}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+  return (
+    <section className="space-y-4">
+      <Heading
+        eyebrow="Revisão final"
+        title="Confira antes de enviar"
+        text="Seu rascunho está salvo. Depois do envio, a equipe STAYO revisa as informações; nada vira imóvel em operação nem é publicado no Guia do Hóspede."
+      />
+      {block("Seus dados", owner, onEditOwner)}
+      {block("Seu imóvel", property, onEditProperty)}
+      <Button
+        type="button"
+        className="portal-cta w-full"
+        disabled={sending || saveState === "saving"}
+        onClick={onSend}
+      >
+        {sending ? "Enviando…" : "Enviar informações para análise"}
+        {!sending && <ChevronRight className="size-4" />}
+      </Button>
+    </section>
   );
 }
 
@@ -1546,55 +1661,15 @@ function PropertyStep({
           />
         </div>
       </Section>
-      <Section
-        title="Acesso e informações operacionais"
-        icon={<KeyRound />}
-        text="Preencha apenas o que já souber. Senhas e códigos são restritos e não são publicados automaticamente."
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Select
-            label="Forma de acesso"
-            value={form.propertyAccessType ?? ""}
-            onChange={(value) =>
-              onSet(
-                "propertyAccessType",
-                (value || null) as OwnerOnboardingSubmissionInput["propertyAccessType"],
-              )
-            }
-            placeholder="Selecione"
-            options={[
-              { value: "key", label: "Chave" },
-              { value: "lock", label: "Fechadura" },
-              { value: "concierge", label: "Portaria" },
-              { value: "other", label: "Outro" },
-            ]}
-          />
-          <Field
-            label="Orientações de acesso (opcional)"
-            value={form.propertyAccessNotes}
-            onChange={(value) => onSet("propertyAccessNotes", value)}
-          />
-          {form.propertyAccessType === "lock" && (
-            <Field
-              label="Código da fechadura (opcional)"
-              type="password"
-              value={form.propertyAccessCode}
-              onChange={(value) => onSet("propertyAccessCode", value)}
-            />
-          )}
-          <Field
-            label="Rede Wi-Fi (opcional)"
-            value={form.propertyWifiNetwork}
-            onChange={(value) => onSet("propertyWifiNetwork", value)}
-          />
-          <Field
-            label="Senha do Wi-Fi (opcional)"
-            type="password"
-            value={form.propertyWifiPassword}
-            onChange={(value) => onSet("propertyWifiPassword", value)}
-          />
-        </div>
-      </Section>
+      <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 text-xs text-[var(--portal-muted)]">
+        <strong className="flex items-center gap-2 text-sm text-[var(--portal-navy)]">
+          <KeyRound className="size-4" /> Acesso e Wi-Fi ficam para depois
+        </strong>
+        <p className="mt-1">
+          Senhas, códigos e Wi-Fi não são pedidos por este link. Você informa depois, já com seu
+          login no Portal do Proprietário.
+        </p>
+      </div>
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
         <strong className="block">Importante</strong>
         <p className="mt-1">
@@ -1605,7 +1680,7 @@ function PropertyStep({
       <Actions
         onBack={onBack}
         onContinue={onContinue}
-        label={finishing ? "Enviando cadastro..." : "Finalizar cadastro e criar acesso"}
+        label="Revisar antes de enviar"
         disabled={finishing}
       />
     </section>
