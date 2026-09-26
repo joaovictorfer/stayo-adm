@@ -20,6 +20,7 @@ import { Route as ConfiguracoesComercialRouteImport } from './routes/configuraco
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
 import { Route as ConfiguracoesMigracaoRouteImport } from './routes/configuracoes.migracao'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
+import { Route as ConfiguracoesVistoriasPrototipoRouteImport } from './routes/configuracoes.vistorias-prototipo'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
@@ -123,6 +124,12 @@ const ConfiguracoesStayoCoreRoute = ConfiguracoesStayoCoreRouteImport.update({
   path: '/configuracoes/stayo-core',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfiguracoesVistoriasPrototipoRoute =
+  ConfiguracoesVistoriasPrototipoRouteImport.update({
+    id: '/configuracoes/vistorias-prototipo',
+    path: '/configuracoes/vistorias-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ContratosIndexRoute = ContratosIndexRouteImport.update({
   id: '/contratos/',
   path: '/contratos/',
@@ -372,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
+  '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
@@ -431,6 +439,7 @@ export interface FileRoutesByTo {
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
+  '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
@@ -491,6 +500,7 @@ export interface FileRoutesById {
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
+  '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
@@ -552,6 +562,7 @@ export interface FileRouteTypes {
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
+    | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/despesas-prototipo'
@@ -611,6 +622,7 @@ export interface FileRouteTypes {
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
+    | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/despesas-prototipo'
@@ -670,6 +682,7 @@ export interface FileRouteTypes {
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
+    | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/despesas-prototipo'
@@ -730,6 +743,7 @@ export interface RootRouteChildren {
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesMigracaoRoute: typeof ConfiguracoesMigracaoRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
+  ConfiguracoesVistoriasPrototipoRoute: typeof ConfiguracoesVistoriasPrototipoRoute
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
   FinanceiroDespesasPrototipoRoute: typeof FinanceiroDespesasPrototipoRoute
@@ -857,6 +871,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes/stayo-core'
       fullPath: '/configuracoes/stayo-core'
       preLoaderRoute: typeof ConfiguracoesStayoCoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/vistorias-prototipo': {
+      id: '/configuracoes/vistorias-prototipo'
+      path: '/configuracoes/vistorias-prototipo'
+      fullPath: '/configuracoes/vistorias-prototipo'
+      preLoaderRoute: typeof ConfiguracoesVistoriasPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contratos/': {
@@ -1194,6 +1215,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesMigracaoRoute: ConfiguracoesMigracaoRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
+  ConfiguracoesVistoriasPrototipoRoute: ConfiguracoesVistoriasPrototipoRoute,
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
   FinanceiroDespesasPrototipoRoute: FinanceiroDespesasPrototipoRoute,

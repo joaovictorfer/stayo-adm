@@ -61,6 +61,12 @@ const links: SettingsLink[] = [
       "Taxas e valores padrão (administração, limpeza, implantação) para novas propostas.",
   },
   {
+    icon: ClipboardList,
+    to: "/configuracoes/vistorias-prototipo",
+    title: "Vistorias (protótipo)",
+    description: "Modelos, ambientes e itens de vistoria — protótipo visual, sem persistência.",
+  },
+  {
     icon: DatabaseZap,
     to: "/configuracoes/migracao",
     title: "Migração de dados",
