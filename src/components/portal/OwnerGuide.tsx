@@ -74,9 +74,9 @@ export function OwnerGuide({ token, guideType }: { token: string; guideType: Gui
         <ChevronLeft className="size-4" /> Voltar
       </button>
       <h3 className="text-lg font-semibold">{title}</h3>
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist">
+      <div className="scroll-mask hide-scrollbar flex max-w-full snap-x gap-2 overflow-x-auto pb-1" role="tablist" aria-label={`Categorias do ${title.toLowerCase()}`}>
         {categories.map((c) => (
-          <button key={c} type="button" role="tab" aria-selected={c === active} onClick={() => setCategory(c)} className={`min-h-10 shrink-0 rounded-full border px-4 text-sm ${c === active ? "border-[var(--portal-navy)] bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)]" : "border-[var(--portal-border)]"}`}>
+          <button key={c} type="button" role="tab" aria-selected={c === active} onClick={() => setCategory(c)} className={`min-h-11 shrink-0 snap-start rounded-full border px-4 text-sm ${c === active ? "border-[var(--portal-navy)] bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)]" : "border-[var(--portal-border)]"}`}>
             {c}
           </button>
         ))}
@@ -133,8 +133,8 @@ function GuideCard({ item, token, imageUrl, onSaved }: { item: PortalGuideItem; 
           ))}
         </div>
         {answer !== "nao_informado" && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm">Quantas unidades?</span>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 sm:flex sm:gap-3">
+            <span className="min-w-0 text-sm">Quantas unidades?</span>
             <button type="button" aria-label="Diminuir" onClick={() => setQty((n) => Math.max(0, n - 1))} className="grid size-11 place-items-center rounded-full border border-[var(--portal-border)]"><Minus className="size-4" /></button>
             <span className="w-8 text-center text-lg font-semibold" aria-live="polite">{qty}</span>
             <button type="button" aria-label="Aumentar" onClick={() => setQty((n) => Math.min(999, n + 1))} className="grid size-11 place-items-center rounded-full border border-[var(--portal-border)]"><Plus className="size-4" /></button>

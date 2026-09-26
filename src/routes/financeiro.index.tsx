@@ -344,7 +344,7 @@ function ServiceInvoiceDetail({ invoice }: { invoice: ServiceInvoice }) {
         </ol>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Imóvel" value={invoice.propertyName} />
         <Field label="Proprietário" value={invoice.ownerName} />
         <Field label="Competência" value={invoice.referenceMonth} />
@@ -479,7 +479,7 @@ function SettlementsTab() {
 function SettlementDetail({ settlement }: { settlement: Settlement }) {
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field
           label="Prestador"
           value={
@@ -617,7 +617,7 @@ function ExpensesTab() {
         title={selected?.description ?? ""}
       >
         {selected && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Categoria" value={selected.category} />
             <Field label="Imóvel" value={selected.propertyName} />
             <Field label="Status" value={expenseStatusLabels[selected.status]} />

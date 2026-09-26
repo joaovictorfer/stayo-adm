@@ -1,5 +1,7 @@
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+
+import { Button } from "../ui/button";
 
 const surface = {
   backgroundColor: "var(--stayo-surface)",
@@ -26,13 +28,21 @@ export function Drawer({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -47,7 +57,8 @@ export function Drawer({
       <div
         role="dialog"
         aria-modal="true"
-        className="absolute right-0 top-0 flex h-full w-full flex-col border-l sm:w-[28rem]"
+        aria-label={typeof title === "string" ? title : eyebrow ?? "Painel"}
+        className="absolute right-0 top-0 flex h-dvh w-full min-w-0 flex-col border-l sm:w-[28rem]"
         style={surface}
       >
         <div
@@ -67,18 +78,20 @@ export function Drawer({
               {title}
             </h2>
           </div>
-          <button
+          <Button
+            ref={closeButtonRef}
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-[var(--radius-control)] p-1.5"
-            style={{ color: "#fdfdfb" }}
+            className="min-h-11 min-w-11 shrink-0 text-[var(--primary-foreground)] hover:bg-[color-mix(in_srgb,var(--stayo-surface)_14%,transparent)] hover:text-[var(--primary-foreground)]"
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
 
         {footer && (
           <div className="border-t p-4" style={{ borderColor: "var(--stayo-border)" }}>

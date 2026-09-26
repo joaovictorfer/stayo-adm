@@ -278,7 +278,7 @@ function Wizard({
                   style={{ background: n <= step ? "var(--stayo-forest)" : "var(--stayo-border)" }}
                 />
                 <p
-                  className={`mt-1.5 truncate text-[11px] ${n === step ? "font-semibold text-[var(--stayo-ink)]" : "text-[var(--stayo-ink-muted)]"}`}
+                  className={`mt-1.5 text-center text-[10px] leading-tight sm:text-left sm:text-[11px] ${n === step ? "font-semibold text-[var(--stayo-ink)]" : "text-[var(--stayo-ink-muted)]"}`}
                 >
                   {s.title}
                 </p>

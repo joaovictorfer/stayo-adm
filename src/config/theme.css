@@ -4174,16 +4174,18 @@ a.admin-data-row:hover,
     position: static;
   }
   .portal-tabs-list {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    overflow: visible !important;
-    mask-image: none !important;
+    display: flex !important;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    mask-image: linear-gradient(to right, transparent, black 0.75rem, black calc(100% - 1.25rem), transparent) !important;
   }
   .portal-tabs-list .stayo-tab {
-    min-height: 42px;
-    padding: 0.5rem 0.25rem;
+    min-height: 44px;
+    flex: 0 0 auto;
+    padding: 0.5rem 0.75rem;
     font-size: 0.74rem;
-    white-space: normal;
+    white-space: nowrap;
     line-height: 1.15;
   }
 }
