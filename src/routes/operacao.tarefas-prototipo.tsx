@@ -161,9 +161,19 @@ function TasksPrototype() {
     <div className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
         <span className="font-medium">Ferramenta de protótipo · estado da tela</span>
-        <div className="ml-auto max-w-full overflow-x-auto">
+        <div className="ml-auto hidden sm:block">
           <PeriodFilter value={demo} onChange={setDemo} options={demoOptions} />
         </div>
+        <select
+          aria-label="Estado da tela"
+          value={demo}
+          onChange={(e) => setDemo(e.target.value as Demo)}
+          className="admin-input h-10 w-full px-2 text-sm sm:hidden"
+        >
+          {demoOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
       <nav aria-label="Operação" className="mb-2 flex flex-wrap gap-1 text-sm">
@@ -208,6 +218,9 @@ function TasksPrototype() {
                     ) : (
                       <span className="block text-xl font-semibold tabular-nums text-[var(--admin-text)]">
                         {demo === "parcial" && i.key !== "hoje" ? `${i.value}*` : i.value}
+                        {demo === "parcial" && i.key !== "hoje" && (
+                          <span className="ml-1.5 align-middle text-[11px] font-medium text-[var(--admin-muted)]">pode estar incompleto</span>
+                        )}
                       </span>
                     )}
                   </span>
@@ -243,7 +256,20 @@ function TasksPrototype() {
           </div>
 
           {/* Abas de status */}
-          <div role="tablist" aria-label="Status" className="mb-3 flex gap-1 overflow-x-auto border-b border-[var(--admin-border)]">
+          <label className="mb-3 flex items-center gap-2 lg:hidden">
+            <span className="shrink-0 text-sm font-medium text-[var(--admin-text)]">Status:</span>
+            <select
+              aria-label="Status"
+              value={tab}
+              onChange={(e) => setTab(e.target.value as Tab)}
+              className="admin-input h-11 min-w-0 flex-1 px-3 text-sm"
+            >
+              {TABS.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </label>
+          <div role="tablist" aria-label="Status" className="mb-3 hidden gap-1 border-b lg:flex border-[var(--admin-border)]">
             {TABS.map((t) => (
               <button
                 key={t.value}
@@ -258,9 +284,9 @@ function TasksPrototype() {
           </div>
 
           {demo === "parcial" && (
-            <p role="status" className="mb-3 flex items-center gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
+            <p role="status" className="mb-3 flex items-start gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] px-3 py-2 text-sm text-[var(--admin-muted)]">
               <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Dados parciais: tarefas de manutenção não foram carregadas. Números com * podem estar incompletos.
+              <span><strong className="text-[var(--admin-text)]">Dados parciais:</strong> a atualização de tarefas de manutenção está indisponível. Tarefas de manutenção não aparecem na lista, e os indicadores marcados com * (Críticas, Atrasadas e Sem responsável) podem estar incompletos.</span>
             </p>
           )}
 
@@ -342,7 +368,7 @@ function TaskRow({ t, onOpen }: { t: Task; onOpen: (t: Task) => void }) {
     <button
       type="button"
       onClick={() => onOpen(t)}
-      className={`grid w-full gap-x-4 gap-y-2 px-4 py-3 text-left lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] lg:items-center ${urgent || overdue ? "border-l-4 border-l-[var(--admin-danger,currentColor)]" : "border-l-4 border-l-transparent"} ${t.status === "concluida" ? "opacity-70" : ""}`}
+      className={`grid w-full gap-x-4 gap-y-2 px-4 py-3 text-left lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] lg:items-center ${urgent || overdue ? "border-l-4 border-l-[var(--admin-danger,currentColor)]" : "border-l-4 border-l-transparent"} ${t.status === "concluida" ? "bg-[var(--admin-bg,transparent)]" : ""}`}
     >
       <span className="min-w-0">
         <span className="block text-sm font-semibold text-[var(--admin-text)]">{t.title}</span>
