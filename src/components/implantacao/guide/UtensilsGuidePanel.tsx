@@ -1,3 +1,4 @@
+import { sortCategories } from "@/lib/guides";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Circle, Loader2, Package, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -88,7 +89,7 @@ export function UtensilsGuidePanel({ implementationId }: { implementationId: str
   });
 
   const items = q.data ?? [];
-  const categories = useMemo(() => [...new Set(items.map((i) => i.category))], [items]);
+  const categories = useMemo(() => sortCategories([...new Set(items.map((i) => i.category))]), [items]);
   const activeCategory = category ?? categories[0] ?? null;
   const summary = summarizeGuide(items.filter((i) => i.enabled).map(toRow));
   const visible = items.filter(

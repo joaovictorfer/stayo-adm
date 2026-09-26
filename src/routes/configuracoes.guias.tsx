@@ -1,3 +1,4 @@
+import { sortCategories } from "@/lib/guides";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Loader2, Package, Plus } from "lucide-react";
@@ -27,7 +28,7 @@ function CatalogPage() {
   const [editing, setEditing] = useState<CatalogItem | "new" | null>(null);
   const [category, setCategory] = useState<string | null>(null);
   const items = q.data ?? [];
-  const categories = [...new Set(items.map((i) => i.category))];
+  const categories = sortCategories([...new Set(items.map((i) => i.category))]);
   const active = category ?? categories[0];
 
   return (

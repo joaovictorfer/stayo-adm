@@ -1,3 +1,4 @@
+import { sortCategories } from "@/lib/guides";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, ChevronLeft, ExternalLink, Loader2, Minus, Package, Plus } from "lucide-react";
@@ -47,7 +48,7 @@ export function OwnerUtensilsGuide({ token }: { token: string }) {
   if (!q.data || q.data.length === 0) return null;
   const items = q.data;
   const informed = items.filter((i) => i.answer !== "nao_informado").length;
-  const categories = [...new Set(items.map((i) => i.category))];
+  const categories = sortCategories([...new Set(items.map((i) => i.category))]);
   const active = category ?? categories[0]!;
 
   if (!open)

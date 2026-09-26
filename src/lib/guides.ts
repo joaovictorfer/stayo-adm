@@ -73,3 +73,12 @@ export function validateImage(file: { type: string; size: number; name: string }
   if (file.size > IMAGE_MAX_BYTES) return "A imagem deve ter até 5 MB.";
   return null;
 }
+
+const CATEGORY_ORDER = ["Cozinha", "Quartos", "Banheiros"];
+export function sortCategories(list: string[]): string[] {
+  const rank = (c: string) => {
+    const i = CATEGORY_ORDER.indexOf(c);
+    return i === -1 ? CATEGORY_ORDER.length : i;
+  };
+  return [...list].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
