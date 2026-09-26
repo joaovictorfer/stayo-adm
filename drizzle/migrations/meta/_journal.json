@@ -225,6 +225,13 @@
       "when": 1790382519518,
       "tag": "0031_opportunity_autosave_conflict_normalize",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790383145806,
+      "tag": "0032_owner_use_assignment_cleaning",
+      "breakpoints": true
     }
   ]
 }
