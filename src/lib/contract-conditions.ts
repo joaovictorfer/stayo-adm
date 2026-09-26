@@ -264,7 +264,7 @@ export function contractRowToSnapshot(v: Record<string, unknown> | null | undefi
     cleaningResponsibility: t("cleaning_responsibility"),
     payoutRule: t("payout_rule"),
     maintenanceLimit: n("maintenance_limit"),
-    exclusivity: v.exclusivity == null ? null : Boolean(v.exclusivity),
+    exclusivity: v["exclusivity"] == null ? null : Boolean(v["exclusivity"]),
     durationMonths: n("duration_months"),
     noticePeriodDays: n("notice_period_days"),
     initialCleaningOption: t("initial_cleaning_option"),
