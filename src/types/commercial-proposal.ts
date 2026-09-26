@@ -36,6 +36,14 @@ export interface ProposalSnapshotContractConditions {
   assignmentWho?: string | null;
   assignmentProcedure?: string | null;
   assignmentNoticeDays?: number | null;
+  initialCleaningNotes?: string | null;
+  linenMode?: string | null;
+  linenNotes?: string | null;
+  linenMissingItems?: Array<{ name: string; qty: number; unitCost: number | null }> | null;
+  advisoryMode?: string | null;
+  advisoryImplementationDesc?: string | null;
+  advisoryFullDesc?: string | null;
+  advisoryServices?: Array<{ label: string; value: number | null }> | null;
 }
 
 export interface ProposalSnapshotContentBlock {
