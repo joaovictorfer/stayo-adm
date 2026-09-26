@@ -6,8 +6,9 @@ const ACTIVE = [
   { to: "/financeiro/despesas-prototipo", label: "Despesas" },
   { to: "/financeiro/fechamentos-prototipo", label: "Fechamentos" },
   { to: "/financeiro/repasses-prototipo", label: "Repasses" },
+  { to: "/financeiro/faturas-prototipo", label: "Faturas de serviços" },
 ] as const;
-const SOON = ["Faturas de serviços", "Orçamentos"];
+const SOON = ["Orçamentos"];
 
 /** Menu demonstrativo do Financeiro. Grade fixa no celular: nunca rola de lado. */
 export function FinanceiroPrototypeNav() {
