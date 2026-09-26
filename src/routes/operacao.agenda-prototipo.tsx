@@ -442,7 +442,7 @@ function EventDetail({ ev, date }: { ev: Ev; date: string }) {
   const rows: [string, React.ReactNode][] = [
     ["Imóvel", ev.property],
     ["Data e hora", `${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long" }).format(addDays(date, ev.day))} · ${ev.time}`],
-    ["Status", <AdminStatusBadge key="s" tone={STATUS[ev.status].tone}>{STATUS[ev.status].label}</AdminStatusBadge>],
+    ["Status", STATUS[ev.status].label],
     ["Prioridade", PRIORITY[ev.priority]],
     ["Responsável", ev.owner ?? "Sem responsável"],
     ["Observação operacional", ev.note],
