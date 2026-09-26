@@ -152,6 +152,29 @@ function ImplementationDetailPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const wizardStep = search.etapa;
+  // Rascunho reaberto sem etapa na URL: volta para a última etapa salva.
+  useEffect(() => {
+    if (search.etapa || typeof window === "undefined") return;
+    if (window.sessionStorage.getItem(`opp-wizard-exit:${id}`)) return;
+    let cancelled = false;
+    void (async () => {
+      const [{ getOpportunityDraftState }, { loadOpportunityForm }, { isWizardStep: valid }] =
+        await Promise.all([
+          import("../lib/api/opportunities"),
+          import("../lib/api/opportunity-form"),
+          import("../components/implantacao/OpportunityWizard"),
+        ]);
+      const st = await getOpportunityDraftState(id);
+      if (!st.isDraft || cancelled) return;
+      const form = await loadOpportunityForm(id);
+      if (cancelled) return;
+      const etapa = valid(form.draftStep) ? form.draftStep : "proprietario";
+      void navigate({ search: { etapa }, replace: true });
+    })().catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, search.etapa, navigate]);
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<
     "resumo" | "proprietario" | "imovel" | "enxoval" | "itens_faltantes" | "checklist" | "proposta"
@@ -421,7 +444,11 @@ function ImplementationDetailPage() {
               onStepChange={(etapa) =>
                 void navigate({ search: { etapa, acao: undefined }, replace: true, resetScroll: false })
               }
-              onExit={() => void navigate({ search: {}, replace: true })}
+              onExit={() => {
+                window.sessionStorage.setItem(`opp-wizard-exit:${id}`, "1");
+                void queryClient.invalidateQueries({ queryKey: ["implementations"] });
+                void navigate({ search: {}, replace: true });
+              }}
               renderStep={(step) =>
                 step === "proprietario" ? (
                   <OwnerTab implementation={implementation} />
@@ -433,8 +460,6 @@ function ImplementationDetailPage() {
                   <EnxovalTab implementationId={implementation.id} mode="inventory" />
                 ) : step === "faltantes" ? (
                   <MissingItemsTab implementationId={implementation.id} />
-                ) : step === "observacoes" ? (
-                  <NotesStep implementation={implementation} />
                 ) : step === "condicoes" ? (
                   <div className="space-y-4">
                     <CommercialTermsPanel implementationId={implementation.id} />
@@ -453,7 +478,10 @@ function ImplementationDetailPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => void navigate({ search: { etapa: "proprietario" } })}
+              onClick={() => {
+                window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
+                void navigate({ search: { etapa: "proprietario" } });
+              }}
             >
               Abrir formulário da oportunidade
             </Button>
@@ -740,45 +768,6 @@ function ImplementationDetailPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function NotesStep({ implementation }: { implementation: ImplementationProject }) {
-  const queryClient = useQueryClient();
-  const [notes, setNotes] = useState(implementation.notes ?? "");
-  const dirty = notes !== (implementation.notes ?? "");
-  const save = useMutation({
-    mutationFn: () => coreApi.implementations.update(implementation.id, { notes: notes || null }),
-    onSuccess: async () => {
-      toast.success("Observações salvas");
-      await queryClient.invalidateQueries({ queryKey: ["implementations"] });
-    },
-    onError: (error) =>
-      toast.error("Não foi possível salvar", {
-        description: error instanceof Error ? error.message : "O texto continua no campo.",
-      }),
-  });
-  return (
-    <section className="rounded-[var(--radius-card)] border p-4" style={surface}>
-      <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
-        Observações internas
-      </h2>
-      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-        Opcional. Só a equipe vê.
-      </p>
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        rows={6}
-        className="mt-3 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
-        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
-      />
-      <div className="mt-2 flex justify-end">
-        <Button type="button" size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate()}>
-          {save.isPending ? "Salvando…" : "Salvar observações"}
-        </Button>
-      </div>
-    </section>
   );
 }
 
