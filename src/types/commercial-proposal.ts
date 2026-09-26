@@ -49,6 +49,7 @@ export interface ProposalItemOption {
   templateKey?: string | null;
   details?: string | null;
   scope?: string[];
+  pricing?: "fixed" | "optional" | "conditional" | "tbd" | null;
 }
 
 export interface CommercialProposalSnapshot {

@@ -21,6 +21,13 @@ import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
 import { generatePublishedProposalPdf } from "../../lib/pdf/proposal-pdf";
 import { formatBRL, roundCents } from "../../lib/money";
 import { MoneyInput } from "./MoneyInput";
+import {
+  PRICING_LABELS,
+  countsInDefinedTotal,
+  pricingIssues,
+  resolvePricing,
+  type ItemPricing,
+} from "../../lib/proposal-pricing";
 import { ContractConditionsPanel } from "./ContractConditionsPanel";
 import { ProposalPresentationView } from "./ProposalPresentationView";
 import {
@@ -120,6 +127,7 @@ function toProposalItems(items: DraftItem[]): ProposalItem[] {
       total: lineTotal(i),
       details: i.details?.trim() || null,
       scope: cleanScope(i.scope),
+      pricing: resolvePricing(i),
     }));
 }
 
@@ -154,6 +162,7 @@ function fromVersion(
         templateKey: null,
         details: i.details ?? "",
         scope: i.scope ?? [],
+        pricing: i.pricing ?? null,
       }))
     : [];
 }
@@ -263,7 +272,13 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const included = items.filter((i) => i.included && i.description.trim());
   const subtotal = roundCents(included.reduce((a, i) => a + gross(i), 0));
   const discounts = roundCents(included.reduce((a, i) => a + Math.min(i.discount, gross(i)), 0));
-  const total = roundCents(proposalItems.reduce((a, i) => a + i.total, 0));
+  // Só preço fixo entra no total; opcional, condicional e a definir ficam à parte.
+  const total = roundCents(
+    proposalItems.filter((i) => countsInDefinedTotal(i)).reduce((a, i) => a + i.total, 0),
+  );
+  const pricingWarnings = included.flatMap((i) =>
+    pricingIssues(i).map((msg) => `${i.description.trim()}: ${msg}`),
+  );
   const usedKeys = new Set(items.map((i) => i.templateKey).filter(Boolean));
   const missingTemplates = PROPOSAL_ITEM_TEMPLATES.filter((t) => !usedKeys.has(t.key));
   const excludedCount = items.filter((i) => !i.included && i.description.trim()).length;
@@ -797,7 +812,13 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                 <div className="text-[11px] font-medium text-muted-foreground">
                   Total
                   <p className="mt-1 flex h-10 items-center justify-end font-semibold tabular-nums text-foreground">
-                    {item.included ? formatBRL(lineTotal(item)) : "Fora do total"}
+                    {!item.included
+                      ? "Fora do total"
+                      : resolvePricing(item) === "tbd"
+                        ? "A definir"
+                        : resolvePricing(item) === "fixed"
+                          ? formatBRL(lineTotal(item))
+                          : `${formatBRL(lineTotal(item))}*`}
                   </p>
                 </div>
                 <div className="flex items-center justify-end gap-1">
@@ -834,14 +855,28 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                 <label className="flex items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={item.optional}
-                    onChange={(e) => updateItem(item.uid, { optional: e.target.checked })}
-                    className="size-3.5"
-                  />
-                  Item opcional
+                  Tipo de valor
+                  <select
+                    value={resolvePricing(item)}
+                    onChange={(e) => {
+                      const pricing = e.target.value as ItemPricing;
+                      updateItem(item.uid, { pricing, optional: pricing === "optional" });
+                    }}
+                    className="h-8 rounded-md border bg-background px-2 text-[11px] text-foreground"
+                  >
+                    {(Object.keys(PRICING_LABELS) as ItemPricing[]).map((k) => (
+                      <option key={k} value={k}>
+                        {PRICING_LABELS[k]}
+                      </option>
+                    ))}
+                  </select>
                 </label>
+                {item.included &&
+                  pricingIssues(item).map((msg) => (
+                    <span key={msg} className="text-[var(--stayo-warning)]">
+                      {msg}
+                    </span>
+                  ))}
                 {item.templateKey && <span>Cópia do modelo — editar aqui não muda o modelo.</span>}
                 {item.discount > gross(item) && (
                   <span className="text-[var(--stayo-warning)]">
@@ -894,7 +929,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </dd>
           </div>
           <div className="flex justify-between border-t pt-2 text-base font-semibold">
-            <dt>Total</dt>
+            <dt>Total definido (só preço fixo)</dt>
             <dd className="tabular-nums">{formatBRL(total)}</dd>
           </div>
         </dl>
@@ -996,6 +1031,11 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
                 ? ` e a versão ${latestPublished.version} passa a ser substituída`
                 : ""}
               . Nenhuma cobrança é emitida ao publicar.
+              {pricingWarnings.length > 0 && (
+                <span className="mt-3 block rounded-md bg-[var(--stayo-gold-soft)] p-2 text-xs text-[var(--stayo-warning)]">
+                  Revise antes de publicar: {pricingWarnings.join(" ")}
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
