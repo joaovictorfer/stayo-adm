@@ -1,3 +1,5 @@
+import { commercialProposalsApi } from "../lib/api/commercial-proposals";
+import type { CommercialProposalVersion } from "../types/commercial-proposal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
@@ -826,9 +828,10 @@ function ProposalGate({
   published: CommercialProposalVersion | null;
   hasDraftChanges: boolean;
 }) {
-  const navigate = useNavigate();
+  const navigate = Route.useNavigate();
   const goToConditions = () =>
-    void navigate({ to: "/implantacao/$id", params: { id: implementationId }, search: { etapa: "condicoes" } });
+    void navigate({ search: { etapa: "condicoes" } });
+  void implementationId;
   const box = "rounded-[var(--radius-control)] border p-3 text-sm";
   if (pending)
     return <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Conferindo a proposta publicada…</p>;
