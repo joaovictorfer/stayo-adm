@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -301,6 +301,10 @@ export function EnxovalTab({ implementationId, mode = "inventory" }: EnxovalTabP
           {mode === "inventory" ? "Adicionar item" : "Adicionar item manual"}
         </Button>
       </div>
+
+      {mode === "inventory" && (
+        <QuickAddRow implementationId={implementationId} />
+      )}
 
       {/* CONTEÚDO 1: INVENTÁRIO POR AMBIENTE */}
       {mode === "inventory" && (
@@ -684,5 +688,73 @@ export function EnxovalTab({ implementationId, mode = "inventory" }: EnxovalTabP
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Inclusão rápida em linha, um item por vez, sem sair da tela. */
+function QuickAddRow({ implementationId }: { implementationId: string }) {
+  const queryClient = useQueryClient();
+  const [row, setRow] = useState({ name: "", room: "", required: "1", existing: "0" });
+  const nameRef = useRef<HTMLInputElement>(null);
+  const add = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("implementation_supply_items").insert([
+        {
+          implementation_id: implementationId,
+          module: "enxoval",
+          name: row.name.trim(),
+          room: row.room.trim() || "Geral",
+          required_qty: Number(row.required) || 0,
+          existing_qty: Number(row.existing) || 0,
+          priority: "media" as const,
+          responsible: "stayo",
+          status: "pendente" as const,
+          blocks_readiness: false,
+        },
+      ]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setRow((r) => ({ ...r, name: "", required: "1", existing: "0" }));
+      void queryClient.invalidateQueries({ queryKey: ["supply_items", implementationId] });
+      nameRef.current?.focus();
+    },
+    onError: (e: unknown) =>
+      toast.error("Item não salvo", {
+        description: e instanceof Error ? e.message : "O que você digitou continua no campo.",
+      }),
+  });
+  const submit = () => {
+    if (!row.name.trim() || add.isPending) return;
+    add.mutate();
+  };
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+      className="grid gap-2 rounded-lg border bg-white p-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_90px_90px_auto] sm:items-end"
+    >
+      <label className="text-xs font-medium text-slate-600">
+        Item
+        <Input ref={nameRef} value={row.name} onChange={(e) => setRow({ ...row, name: e.target.value })} placeholder="Ex.: Toalha de banho" className="mt-1" />
+      </label>
+      <label className="text-xs font-medium text-slate-600">
+        Ambiente
+        <Input value={row.room} onChange={(e) => setRow({ ...row, room: e.target.value })} placeholder="Ex.: Suíte" className="mt-1" />
+      </label>
+      <label className="text-xs font-medium text-slate-600">
+        Necessário
+        <Input inputMode="numeric" value={row.required} onChange={(e) => setRow({ ...row, required: e.target.value.replace(/\D/g, "") })} className="mt-1" />
+      </label>
+      <label className="text-xs font-medium text-slate-600">
+        Já tem
+        <Input inputMode="numeric" value={row.existing} onChange={(e) => setRow({ ...row, existing: e.target.value.replace(/\D/g, "") })} className="mt-1" />
+      </label>
+      <Button type="submit" size="sm" className="h-9 gap-1" disabled={!row.name.trim() || add.isPending}>
+        <Plus className="h-4 w-4" /> {add.isPending ? "Salvando…" : "Adicionar"}
+      </Button>
+    </form>
   );
 }
