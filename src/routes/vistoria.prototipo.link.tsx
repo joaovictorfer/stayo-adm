@@ -227,7 +227,7 @@ function SaveStatus({ s }: { s: Save }) {
 }
 
 function ItemScreen({ item, idx, answer, save, onPhoto, onValue, onCond, onSkip, onPrev, onNext, onRooms }: {
-  item: Item; idx: number; answer?: Answer; save: Save;
+  item: Item; idx: number; answer?: Answer | undefined; save: Save;
   onPhoto: () => void; onValue: (v: string) => void; onCond: (c: Cond) => void; onSkip: () => void; onPrev: () => void; onNext: () => void; onRooms: () => void;
 }) {
   const needPhoto = item.type === "condition" && (answer?.cond === "atencao" || answer?.cond === "problema");
