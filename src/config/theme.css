@@ -5020,6 +5020,18 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pj-review-link { display: inline-block; margin-top: 0.45rem; color: var(--portal-navy); font-size: 0.8rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .pj-agree { align-items: center; min-height: 3rem; padding: 0.65rem 0.75rem; font-size: 0.86rem; line-height: 1.25; }
 
+.pj-faq { display: grid; gap: 0.55rem; }
+.pj-faq-lead { margin-top: -0.35rem; font-size: 0.85rem; line-height: 1.45; color: var(--portal-muted); }
+.pj-faq-acc { border-radius: 8px; }
+.pj-faq-acc > summary { min-height: 3rem; padding: 0.6rem 0.75rem; gap: 0.6rem; font-size: 0.9rem; }
+.pj-faq-icon { flex: 0 0 auto; width: 1rem; height: 1rem; color: var(--portal-gold); }
+.pj-faq-question { flex: 1; min-width: 0; font-weight: 500; line-height: 1.35; color: var(--portal-navy); }
+.pj-faq-acc[open] .pj-faq-question { font-weight: 600; }
+.pj-faq-body { padding: 0 0.75rem 0.75rem 2.35rem; }
+.pj-faq-body p { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--portal-muted); }
+.pj-faq-note { margin-top: 0.35rem; padding-top: 0.85rem; border-top: 1px solid var(--portal-border); font-size: 0.82rem; line-height: 1.5; color: var(--portal-muted); }
+
+
 @media (max-width: 639px) {
   .portal-onboarding-header.is-compact .portal-onboarding-header-content { padding: 0.75rem 1rem 0.95rem; }
   .portal-onboarding-header.is-compact .portal-onboarding-brand-row { margin-bottom: 0.5rem; }
