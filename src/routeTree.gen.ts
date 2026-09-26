@@ -25,6 +25,7 @@ import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
 import { Route as FinanceiroIdRouteImport } from './routes/financeiro.$id'
 import { Route as FinanceiroPrototipoRouteImport } from './routes/financeiro.prototipo'
+import { Route as FinanceiroReceberPrototipoRouteImport } from './routes/financeiro.receber-prototipo'
 import { Route as GuiaIndexRouteImport } from './routes/guia.index'
 import { Route as GuiaIdRouteImport } from './routes/guia.$id'
 import { Route as HospedesIndexRouteImport } from './routes/hospedes.index'
@@ -142,6 +143,12 @@ const FinanceiroPrototipoRoute = FinanceiroPrototipoRouteImport.update({
   path: '/financeiro/prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceiroReceberPrototipoRoute =
+  FinanceiroReceberPrototipoRouteImport.update({
+    id: '/financeiro/receber-prototipo',
+    path: '/financeiro/receber-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const GuiaIndexRoute = GuiaIndexRouteImport.update({
   id: '/guia/',
   path: '/guia/',
@@ -333,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
+  '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -386,6 +394,7 @@ export interface FileRoutesByTo {
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
+  '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -440,6 +449,7 @@ export interface FileRoutesById {
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
+  '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -495,6 +505,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/prototipo'
+    | '/financeiro/receber-prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -548,6 +559,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/prototipo'
+    | '/financeiro/receber-prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -601,6 +613,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/financeiro/$id'
     | '/financeiro/prototipo'
+    | '/financeiro/receber-prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -655,6 +668,7 @@ export interface RootRouteChildren {
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
   FinanceiroPrototipoRoute: typeof FinanceiroPrototipoRoute
+  FinanceiroReceberPrototipoRoute: typeof FinanceiroReceberPrototipoRoute
   GuiaIdRoute: typeof GuiaIdRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
@@ -808,6 +822,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/prototipo'
       fullPath: '/financeiro/prototipo'
       preLoaderRoute: typeof FinanceiroPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/receber-prototipo': {
+      id: '/financeiro/receber-prototipo'
+      path: '/financeiro/receber-prototipo'
+      fullPath: '/financeiro/receber-prototipo'
+      preLoaderRoute: typeof FinanceiroReceberPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guia/': {
@@ -1071,6 +1092,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
   FinanceiroPrototipoRoute: FinanceiroPrototipoRoute,
+  FinanceiroReceberPrototipoRoute: FinanceiroReceberPrototipoRoute,
   GuiaIdRoute: GuiaIdRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
