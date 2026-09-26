@@ -813,6 +813,76 @@ const chargeTypeLabels: Record<ChargeType, string> = {
 };
 
 /** Snapshot das condições comerciais desta implantação — copiado dos defaults na criação. */
+function ProposalGate({
+  implementationId,
+  pending,
+  error,
+  published,
+  hasDraftChanges,
+}: {
+  implementationId: EntityId;
+  pending: boolean;
+  error: boolean;
+  published: CommercialProposalVersion | null;
+  hasDraftChanges: boolean;
+}) {
+  const navigate = useNavigate();
+  const goToConditions = () =>
+    void navigate({ to: "/implantacao/$id", params: { id: implementationId }, search: { etapa: "condicoes" } });
+  const box = "rounded-[var(--radius-control)] border p-3 text-sm";
+  if (pending)
+    return <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Conferindo a proposta publicada…</p>;
+  if (error)
+    return (
+      <p role="alert" className={box} style={{ borderColor: "var(--stayo-danger)" }}>
+        Não foi possível conferir a proposta publicada. O envio fica bloqueado até confirmar.
+      </p>
+    );
+  if (!published)
+    return (
+      <div role="status" className={box} style={{ borderColor: "var(--stayo-warning)", backgroundColor: "var(--stayo-gold-soft)" }}>
+        <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+          Falta publicar as condições comerciais
+        </p>
+        <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+          A oportunidade continua em rascunho. Para enviar o convite com proposta, revise e publique
+          as condições; é a versão publicada que o proprietário verá no link.
+        </p>
+        <Button size="sm" variant="outline" className="mt-2 min-h-10" onClick={goToConditions}>
+          Revisar e publicar condições
+        </Button>
+      </div>
+    );
+  const fixedTotal = published.snapshot?.items
+    ? published.snapshot.items.reduce((sum, i) => sum + (i.optional ? 0 : Number(i.total) || 0), 0)
+    : published.total;
+  return (
+    <div className={box} style={{ borderColor: "var(--stayo-border)" }}>
+      <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
+        O proprietário verá a proposta versão {published.version}
+        {published.status === "accepted" ? " (já confirmada)" : ""}
+      </p>
+      <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        Publicada em{" "}
+        {published.publishedAt
+          ? new Date(published.publishedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
+          : "—"}{" "}
+        · {(published.snapshot?.items ?? published.items).length} serviço(s) · valor definido{" "}
+        {fixedTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+      </p>
+      {hasDraftChanges && (
+        <p className="mt-1 text-xs" style={{ color: "var(--stayo-warning)" }}>
+          Há alterações em rascunho que ainda não aparecem no link. Publique uma nova versão para
+          mostrá-las.
+        </p>
+      )}
+      <button type="button" className="mt-1 text-xs font-medium underline" onClick={goToConditions}>
+        Ver ou revisar condições
+      </button>
+    </div>
+  );
+}
+
 function CommercialTermsPanel({ implementationId }: { implementationId: EntityId }) {
   const queryClient = useQueryClient();
   const query = useQuery(commercialTermsQuery(implementationId));
@@ -1242,6 +1312,19 @@ function OwnerPortalPanel({
     }
   };
 
+  const proposalsQuery = useQuery({
+    queryKey: ["commercial-proposals", implementationId],
+    queryFn: () => commercialProposalsApi.list(implementationId),
+  });
+  const versions = proposalsQuery.data ?? [];
+  const published = versions
+    .filter((v) => v.status === "published" || v.status === "accepted")
+    .sort((a, b) => b.version - a.version)[0];
+  const hasDraftChanges = versions.some(
+    (v) => v.status === "draft" && (!published || v.updatedAt > (published.publishedAt ?? "")),
+  );
+  const canSend = Boolean(published);
+
   const submission = submissionQuery.data;
   const fmt = (iso: string | null | undefined) =>
     iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : null;
@@ -1334,20 +1417,37 @@ function OwnerPortalPanel({
           </div>
         ) : ownerUrl ? (
           <>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <Button className="min-h-11" onClick={() => void copy(ownerUrl, "Link copiado")}>
+            <ProposalGate
+              implementationId={implementationId}
+              pending={proposalsQuery.isPending}
+              error={proposalsQuery.isError}
+              published={published ?? null}
+              hasDraftChanges={hasDraftChanges}
+            />
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <Button
+                className="min-h-11"
+                disabled={!canSend}
+                onClick={() => void copy(ownerUrl, "Link copiado")}
+              >
                 <Copy /> Copiar link
               </Button>
               <Button
                 variant="outline"
                 className="min-h-11"
-                onClick={() => void copy(message, "Convite copiado")}
+                disabled={!canSend}
+                onClick={() => void copy(message, "Mensagem copiada")}
               >
-                <Copy /> Copiar convite
+                <Copy /> Copiar mensagem
               </Button>
               <Button asChild variant="outline" className="min-h-11">
-                <a href={ownerUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink /> Acessar painel
+                <a
+                  href={ownerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abre a jornada real deste proprietário em nova aba"
+                >
+                  <ExternalLink /> Acessar como administrador
                 </a>
               </Button>
             </div>
