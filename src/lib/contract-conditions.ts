@@ -110,7 +110,7 @@ export interface ConditionItem {
   tbd?: boolean;
 }
 export interface ConditionSection {
-  key: "management" | "cleaning" | "owner_use" | "assignment";
+  key: "management" | "cleaning" | "owner_use" | "assignment" | "implementation";
   title: string;
   items: ConditionItem[];
   note?: string;
@@ -169,22 +169,6 @@ export function conditionSections(c: ProposalSnapshotContractConditions): Condit
   } else if (c.cleaningResponsibility?.trim()) {
     cleaning.push({ label: "Limpeza entre hospedagens", value: c.cleaningResponsibility.trim() });
   }
-  const opt = c.initialCleaningOption as InitialCleaningOption | null | undefined;
-  if (opt) {
-    const bearer = c.initialCleaningCostBearer as CostBearer | null | undefined;
-    const helps: string[] = [];
-    if (opt !== "owner_delivers" && opt !== "tbd") {
-      helps.push(c.initialCleaningFee != null ? `Valor: ${formatBRL(c.initialCleaningFee)}` : "Valor a definir");
-      if (bearer) helps.push(bearer === "owner" ? "paga pelo proprietário" : "paga pela STAYO");
-    }
-    cleaning.push({
-      label: "Limpeza de implantação",
-      value: opt === "other" ? c.initialCleaningOther?.trim() || "Outra condição" : INITIAL_CLEANING_LABELS[opt],
-      ...(helps.length ? { help: `${helps.join(" · ")}. Preparação inicial, separada da limpeza comercial.` } : {}),
-      ...(opt === "tbd" ? { tbd: true } : {}),
-    });
-  }
-
   const ownerUse: ConditionItem[] = [];
   if (ownerUseSet) {
     const mode = c.ownerUseLimitMode as OwnerUseLimitMode | null | undefined;
@@ -386,5 +370,14 @@ export function contractRowToSnapshot(v: Record<string, unknown> | null | undefi
     assignmentWho: t("assignment_who"),
     assignmentProcedure: t("assignment_procedure"),
     assignmentNoticeDays: n("assignment_notice_days"),
+    initialCleaningNotes: t("initial_cleaning_notes"),
+    linenMode: t("linen_mode"),
+    linenNotes: t("linen_notes"),
+    advisoryMode: t("advisory_mode"),
+    advisoryImplementationDesc: t("advisory_implementation_desc"),
+    advisoryFullDesc: t("advisory_full_desc"),
+    advisoryServices: Array.isArray(v["advisory_services"])
+      ? (v["advisory_services"] as Array<{ label: string; value: number | null }>)
+      : [],
   };
 }
