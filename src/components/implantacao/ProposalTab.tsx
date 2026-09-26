@@ -181,7 +181,13 @@ const serializeSignatories = (list: Signatory[]): ProposalRequiredSignatory[] =>
   list.filter((s) => s.label.trim()).map((s) => ({ label: s.label.trim(), role: s.role || null }));
 
 function proposalError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const raw =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === "object" && "message" in error
+        ? String((error as { message: unknown }).message ?? "")
+        : String(error ?? "");
+  const message = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) + (raw.endsWith(".") ? "" : ".") : "";
   if (message.toLowerCase().includes("sem permissão"))
     return "Você não tem permissão para acessar ou alterar propostas comerciais.";
   if (message.toLowerCase().includes("conflito"))
