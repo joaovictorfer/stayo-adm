@@ -576,3 +576,11 @@
     animation: none;
   }
 }
+
+/* Acoes do cabecalho nao esticam: so o bloco do titulo ocupa o espaco */
+.implementation-mobile-heading > div:last-of-type {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
