@@ -162,7 +162,7 @@ function AgendaPrototype() {
         <div className="ml-auto hidden sm:block">
           <PeriodFilter value={demo} onChange={setDemo} options={demoOptions} />
         </div>
-        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
+        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as Demo)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
           {demoOptions.map((o) => <option key={o.value} value={o.value}>Estado: {o.label}</option>)}
         </select>
       </div>

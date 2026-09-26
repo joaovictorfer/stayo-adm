@@ -142,7 +142,7 @@ function ReceberPrototype() {
         meta={<AdminStatusBadge tone="info">Dados demonstrativos</AdminStatusBadge>}
       />
 
-      <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
+      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
         <label className="admin-input flex h-11 min-w-0 items-center gap-2 px-3">
           <Search className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" aria-hidden="true" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar imóvel ou código (ex.: CR-1042)" aria-label="Buscar imóvel ou código" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
