@@ -113,6 +113,20 @@ function buildRows(items: SupplyItem[]): Row[] {
   });
 }
 
+/** Itens fixos da implantação: sempre visíveis; só entram na lista quando ativados. */
+const PRESET_ITEMS: { name: string; room: string }[] = [
+  { name: "Lareira", room: "Sala" },
+  { name: "Ar condicionado", room: "Geral" },
+  { name: "Cama", room: "Quarto" },
+  { name: "Sofá", room: "Sala" },
+  { name: "TV sala", room: "Sala" },
+  { name: "TV quarto 01", room: "Quarto 01" },
+  { name: "TV quarto 02", room: "Quarto 02" },
+  { name: "Churrasqueira", room: "Área externa" },
+  { name: "Kit churrasco", room: "Área externa" },
+  { name: "Utensílios", room: "Cozinha" },
+];
+
 const emptyDraft = {
   name: "",
   qty: "1",
@@ -267,6 +281,63 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
       }),
   });
 
+  const togglePreset = useMutation({
+    mutationFn: async (preset: { name: string; room: string }) => {
+      const k = keyOf(preset.name, preset.room);
+      const existing = rows.find((r) => r.key === k);
+      if (existing && !existing.resolved) {
+        const manual = existing.items.filter((i) => i.module === "faltante" && !isClosed(i));
+        const removable = manual.filter((i) => i.status === "pendente");
+        if (removable.length !== manual.length || manual.length === 0) {
+          throw new Error(
+            `"${preset.name}" já tem andamento. Use Resolver ou Dispensar na lista abaixo.`,
+          );
+        }
+        const { error } = await supabase
+          .from("implementation_supply_items")
+          .delete()
+          .in("id", removable.map((i) => i.id));
+        if (error) throw error;
+        return;
+      }
+      if (existing?.resolved) {
+        // Reativa: volta o item manual fechado para pendente.
+        const manual = existing.items.filter((i) => i.module === "faltante");
+        if (manual.length) {
+          const { error } = await supabase
+            .from("implementation_supply_items")
+            .update({ status: "pendente", updated_at: new Date().toISOString() } as never)
+            .in("id", manual.map((i) => i.id));
+          if (error) throw error;
+          return;
+        }
+      }
+      const { error } = await supabase.from("implementation_supply_items").insert([
+        {
+          implementation_id: implementationId,
+          module: "faltante",
+          name: preset.name,
+          room: preset.room,
+          required_qty: 1,
+          existing_qty: 0,
+          priority: "media",
+          responsible: "stayo",
+          status: "pendente",
+          blocks_readiness: false,
+          display_order: (query.data?.length ?? 0) + 1,
+        },
+      ]);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+    onError: (err: unknown) =>
+      toast.error("Não foi possível atualizar o item", {
+        description: err instanceof Error ? err.message : undefined,
+      }),
+  });
+
+  const activePresetKeys = new Set(rows.filter((r) => !r.resolved).map((r) => r.key));
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-1">
@@ -274,6 +345,34 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
         <p className="text-xs text-[var(--stayo-ink-muted)]">
           Faltas do enxoval somadas aos itens manuais. O mesmo item aparece uma vez só.
         </p>
+      </div>
+
+      {/* Itens fixos: ative apenas os que estão faltando */}
+      <div className="rounded-lg border bg-white p-3">
+        <p className="text-[11px] font-medium text-[var(--stayo-ink-muted)]">
+          Itens do imóvel — ative só os que estão faltando
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Itens fixos">
+          {PRESET_ITEMS.map((p) => {
+            const active = activePresetKeys.has(keyOf(p.name, p.room));
+            return (
+              <button
+                key={p.name}
+                type="button"
+                aria-pressed={active}
+                disabled={togglePreset.isPending}
+                onClick={() => togglePreset.mutate(p)}
+                className={`min-h-9 rounded-full border px-3 text-xs font-medium transition-colors ${
+                  active
+                    ? "border-[var(--stayo-forest)] bg-[var(--stayo-forest)] text-white"
+                    : "bg-white text-[var(--stayo-ink-muted)] hover:bg-slate-50"
+                }`}
+              >
+                {p.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtros">
