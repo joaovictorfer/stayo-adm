@@ -4948,14 +4948,14 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pj-summary-title { color: var(--portal-muted); }
 .pj-stats {
   margin-top: 0.65rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 0.75fr) minmax(0, 1.4fr);
   gap: 0;
 }
 .pj-stat { min-width: 0; padding-inline: 0.65rem; border-left: 1px solid var(--portal-border); }
 .pj-stat:first-child { padding-left: 0; border-left: 0; }
 .pj-stat:last-child { padding-right: 0; }
 .pj-stat dt { overflow-wrap: anywhere; color: var(--portal-muted); }
-.pj-stat-value { font-size: clamp(1rem, 4.4vw, 1.35rem); color: var(--portal-navy); overflow-wrap: anywhere; }
+.pj-stat-value { font-size: clamp(0.92rem, 3.8vw, 1.35rem); color: var(--portal-navy); white-space: nowrap; }
 .pj-summary-note {
   margin-top: 0.65rem;
   padding-top: 0.55rem;
@@ -5034,6 +5034,7 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
   .portal-journey-ruler-wrap .portal-journey-step-label { min-width: 0; overflow: hidden; font-size: 0.62rem; text-overflow: ellipsis; white-space: nowrap; }
   .pj-stat { padding-inline: 0.45rem; }
   .pj-stat dt { font-size: 0.66rem; }
+  .pj-stat-value { font-size: 0.92rem; }
   .pj-acc-title { flex-basis: 100%; }
   .pj-item-value { max-width: 5.8rem; font-size: 0.8rem; }
   .pj-agree span { white-space: normal; }
