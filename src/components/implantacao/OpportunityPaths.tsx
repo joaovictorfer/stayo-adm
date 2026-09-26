@@ -37,19 +37,19 @@ export function PathChooser({ onChoose }: { onChoose: (path: OpportunityPath) =>
       path: "manual",
       icon: UserPlus,
       title: "Cadastrar proprietário",
-      text: "Preencha nome, telefone e título agora.",
+      text: "Abre o rascunho na etapa Proprietário para preencher o que você já sabe.",
     },
     {
       path: "meeting",
       icon: CalendarClock,
       title: "Agendar reunião",
-      text: "Crie ou escolha uma oportunidade e registre a reunião.",
+      text: "Registre a reunião numa oportunidade nova ou existente.",
     },
     {
       path: "invite",
       icon: Mail,
       title: "Convidar proprietário para cadastro",
-      text: "Prepare a oportunidade sem dados do proprietário ou do imóvel.",
+      text: "Abre o rascunho já com o link do proprietário à mão.",
     },
   ];
   return (
