@@ -293,7 +293,59 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
         </Badge>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
+      <div className="grid gap-3 md:hidden">
+        {itemsQuery.isLoading && <p className="py-6 text-center text-sm text-slate-500">Carregando planilha...</p>}
+        {grouped.map(([room, rows]) => (
+          <section key={`mobile-${room}`} className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {room} · {rows.length} {rows.length === 1 ? "item" : "itens"}
+            </h3>
+            {rows.map((item) => (
+              <MobileSupplyRow
+                key={item.id}
+                item={item}
+                docCount={docCounts[item.id] ?? 0}
+                onPatch={(patch) => updateMutation.mutate({ id: item.id, patch })}
+                onDelete={() => deleteMutation.mutate(item.id)}
+                onOpenDocs={() => setDocsItem(item)}
+                onOpenPayment={() => setPayItem(item)}
+              />
+            ))}
+          </section>
+        ))}
+        <section className="space-y-3 rounded-lg border bg-white p-3 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-900">Adicionar item</h3>
+          <div className="grid gap-3">
+            <Label className="space-y-1.5 text-xs">
+              Ambiente
+              <Input list="supply-rooms" value={draft.room} placeholder="Quarto 01" onChange={(event) => setDraft({ ...draft, room: event.target.value })} />
+            </Label>
+            <Label className="relative space-y-1.5 text-xs">
+              Item
+              <Input value={draft.name} placeholder="Travesseiro" onChange={(event) => { setDraft({ ...draft, name: event.target.value }); setSuggestOpen(true); }} onFocus={() => setSuggestOpen(true)} onBlur={() => window.setTimeout(() => setSuggestOpen(false), 150)} />
+              {suggestOpen && suggestions.length > 0 && (
+                <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-md border bg-white shadow-lg">
+                  {suggestions.map((entry) => (
+                    <button key={entry.id} type="button" className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs" onMouseDown={(event) => { event.preventDefault(); setSuggestOpen(false); createMutation.mutate({ room: draft.room.trim() || entry.room || "Geral", name: entry.name, qty: Number(draft.qty) || 1, supplier: entry.supplier ?? "", size: entry.size, unitCost: entry.unit_cost }); }}>
+                      <span className="font-medium text-slate-800">{entry.name}</span>
+                      <span className="text-right text-slate-500">{entry.supplier ?? "sem fornecedor"}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Label>
+            <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3">
+              <Label className="space-y-1.5 text-xs">Quantidade<Input type="number" min={1} inputMode="numeric" value={draft.qty} onChange={(event) => setDraft({ ...draft, qty: event.target.value })} /></Label>
+              <Label className="space-y-1.5 text-xs">Fornecedor<Input list="supply-suppliers" value={draft.supplier} placeholder="Fornecedor" onChange={(event) => setDraft({ ...draft, supplier: event.target.value })} /></Label>
+            </div>
+          </div>
+          <Button className="min-h-11 w-full" onClick={commitDraft} disabled={!draft.name.trim() || createMutation.isPending}>
+            {createMutation.isPending ? <Loader2 className="animate-spin" /> : <Plus />} Adicionar item
+          </Button>
+        </section>
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-lg border bg-white shadow-sm md:block">
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <thead>
             <tr className="border-b bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500">
@@ -461,6 +513,43 @@ export function SupplySheet({ implementationId }: SupplySheetProps) {
         />
       ) : null}
     </div>
+  );
+}
+
+function MobileSupplyRow({
+  item,
+  docCount,
+  onPatch,
+  onDelete,
+  onOpenDocs,
+  onOpenPayment,
+}: {
+  item: SupplyRow;
+  docCount: number;
+  onPatch: (patch: Record<string, unknown>) => void;
+  onDelete: () => void;
+  onOpenDocs: () => void;
+  onOpenPayment: () => void;
+}) {
+  const stage = STAGES.find((entry) => entry.value === item.procurement_stage) ?? STAGES[0];
+  return (
+    <article className="rounded-lg border bg-white p-3 shadow-sm">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <div className="min-w-0">
+          <strong className="block break-words text-sm text-slate-900">{item.name}</strong>
+          <span className="mt-0.5 block text-xs text-slate-500">{item.required_qty} un. · {item.supplier || "Sem fornecedor"}</span>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onDelete} aria-label={`Remover ${item.name}`} className="text-slate-500 hover:text-red-600"><Trash2 /></Button>
+      </div>
+      <Select value={item.procurement_stage} onValueChange={(value) => onPatch({ procurement_stage: value })}>
+        <SelectTrigger className={`mt-3 min-h-11 w-full text-xs ${stage.class}`} aria-label={`Status de ${item.name}`}><SelectValue /></SelectTrigger>
+        <SelectContent>{STAGES.map((entry) => <SelectItem key={entry.value} value={entry.value}>{entry.label}</SelectItem>)}</SelectContent>
+      </Select>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button variant="outline" className="min-w-0" onClick={onOpenPayment}><Wallet /><span className="truncate">Pagamento</span></Button>
+        <Button variant="outline" className="min-w-0" onClick={onOpenDocs}><Paperclip /><span className="truncate">{docCount > 0 ? `${docCount} arquivo(s)` : "Arquivos"}</span></Button>
+      </div>
+    </article>
   );
 }
 

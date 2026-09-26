@@ -215,7 +215,7 @@ function Presentation({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
         </Card>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-[var(--stayo-border)] bg-[var(--stayo-surface)]/95 px-4 py-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 border-t border-[var(--stayo-border)] bg-[var(--stayo-surface)]/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center gap-3 md:max-w-2xl">
           <MessageCircle className="size-5 shrink-0 text-[var(--stayo-forest)]" />
           <p className="text-sm">

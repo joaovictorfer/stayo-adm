@@ -185,7 +185,7 @@ export function OwnerIntakeReview({
         ) : (
           <span>Nenhum link de cadastro gerado.</span>
         )}
-        <div className="ml-auto flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row">
           {link && linkState === "Ativo" && (
             <Button
               size="sm"
@@ -284,7 +284,32 @@ export function OwnerIntakeReview({
             </p>
           )}
 
-          <div className="mt-3 overflow-x-auto rounded-[var(--radius-card)] border border-[var(--stayo-border)]">
+          <div className="mt-3 space-y-2 sm:hidden">
+            {FIELDS.map(({ key, label }) => {
+              const received = sub.data[key];
+              const current = official?.[key];
+              const differs = received !== undefined && received !== "" && norm(received) !== norm(current);
+              return (
+                <div key={key} className="rounded-[var(--radius-card)] border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-3 text-sm">
+                  <p className="text-xs font-medium text-[var(--stayo-ink-muted)]">{label}</p>
+                  <dl className="mt-2 grid grid-cols-2 gap-3">
+                    <div className="min-w-0">
+                      <dt className="text-[10px] uppercase text-[var(--stayo-ink-muted)]">Recebido</dt>
+                      <dd className={`break-words ${differs ? "font-semibold text-[var(--stayo-ink)]" : ""}`}>
+                        {show(key, received)}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[10px] uppercase text-[var(--stayo-ink-muted)]">Atual na ficha</dt>
+                      <dd className="break-words text-[var(--stayo-ink-muted)]">{officialQ.isPending ? "…" : show(key, current)}</dd>
+                    </div>
+                  </dl>
+                  {differs && <span className="mt-2 block text-[10px] font-medium text-[var(--stayo-warning)]">Informação diferente</span>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 hidden overflow-x-auto rounded-[var(--radius-card)] border border-[var(--stayo-border)] sm:block">
             <table className="w-full min-w-[420px] text-sm">
               <thead className="bg-[var(--stayo-bg)] text-left text-xs text-[var(--stayo-ink-muted)]">
                 <tr>

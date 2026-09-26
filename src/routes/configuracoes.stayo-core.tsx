@@ -62,7 +62,7 @@ function StayoCoreSettingsPage() {
             key={s.id}
             type="button"
             onClick={() => setSection(s.id)}
-            className="whitespace-nowrap px-3 py-2 text-sm"
+            className="min-h-11 shrink-0 whitespace-nowrap px-3 py-2 text-sm"
             style={{
               color: section === s.id ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
               borderBottom:
@@ -355,7 +355,31 @@ function ScopesSection() {
       ) : (scopesQuery.data ?? []).length === 0 ? (
         <EmptyText>Nenhum scope definido</EmptyText>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="grid gap-3 md:hidden">
+          {(scopesQuery.data ?? []).map((scope) => (
+            <article key={`mobile-${scope.name}`} className="rounded-[var(--radius-card)] border p-3" style={surface}>
+              <div className="flex flex-wrap items-center gap-2">
+                <strong className="break-all text-sm" style={{ color: "var(--stayo-ink)" }}>{scope.name}</strong>
+                {scope.sensitive && (
+                  <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-warning)" }}>sensível</span>
+                )}
+              </div>
+              <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{scope.description}</p>
+              <dl className="mt-3 grid gap-2">
+                {apps.map((app) => (
+                  <div key={app.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-xs">
+                    <dt className="min-w-0 break-words" style={{ color: "var(--stayo-ink)" }}>{app.name}</dt>
+                    <dd style={{ color: app.scopes.includes(scope.name) ? "var(--stayo-forest)" : "var(--stayo-ink-muted)" }}>
+                      {app.scopes.includes(scope.name) ? "Permitido" : "Sem acesso"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[40rem] text-sm">
             <thead>
               <tr style={{ color: "var(--stayo-ink-muted)" }}>
@@ -405,6 +429,7 @@ function ScopesSection() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </SectionCard>
   );
@@ -503,7 +528,27 @@ function LogsSection() {
       ) : rows.length === 0 ? (
         <EmptyText>Nenhum registro de log disponível</EmptyText>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <ul className="divide-y md:hidden" style={{ borderColor: "var(--stayo-border)" }}>
+          {rows.map((entry) => (
+            <li key={`mobile-${entry.id}`} className="space-y-3 py-3 text-sm">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">
+                  <strong className="block break-all" style={{ color: "var(--stayo-ink)" }}>{entry.endpoint}</strong>
+                  <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{entry.appName ?? "Aplicativo não identificado"}</span>
+                </div>
+                <span className="shrink-0 text-xs" style={{ color: "var(--stayo-ink)" }}>Status {entry.status}</span>
+              </div>
+              <dl className="grid grid-cols-2 gap-3 text-xs">
+                <div><dt style={{ color: "var(--stayo-ink-muted)" }}>Data/hora</dt><dd className="break-words" style={{ color: "var(--stayo-ink)" }}>{entry.occurredAt}</dd></div>
+                <div><dt style={{ color: "var(--stayo-ink-muted)" }}>Latência</dt><dd style={{ color: "var(--stayo-ink)" }}>{entry.latencyMs ?? "—"}</dd></div>
+                <div className="col-span-2"><dt style={{ color: "var(--stayo-ink-muted)" }}>Correlation ID</dt><dd className="break-all font-mono" style={{ color: "var(--stayo-ink)" }}>{entry.correlationId}</dd></div>
+                {entry.errorSummary && <div className="col-span-2"><dt style={{ color: "var(--stayo-ink-muted)" }}>Erro</dt><dd className="break-words" style={{ color: "var(--stayo-ink)" }}>{entry.errorSummary}</dd></div>}
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[52rem] text-sm">
             <thead>
               <tr style={{ color: "var(--stayo-ink-muted)" }}>
@@ -533,6 +578,7 @@ function LogsSection() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </SectionCard>
   );

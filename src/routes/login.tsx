@@ -161,7 +161,7 @@ function LoginPage() {
         <button
           type="submit"
           disabled={login.isPending || signup.isPending}
-          className="mt-1 rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
+          className="mt-1 min-h-11 rounded-[var(--radius-control)] px-4 py-2.5 text-sm disabled:opacity-60"
           style={{ backgroundColor: "var(--stayo-forest)", color: "#fdfdfb" }}
         >
           {mode === "login"
