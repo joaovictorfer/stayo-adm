@@ -25,6 +25,17 @@ export interface ProposalSnapshotContractConditions {
   turnoverCleaningTeam?: string | null;
   turnoverCleaningFee?: number | null;
   turnoverCleaningPayer?: string | null;
+  commercialCleaningFee?: number | null;
+  initialCleaningFee?: number | null;
+  ownerUseLimitMode?: string | null;
+  ownerUseLimitDays?: number | null;
+  ownerUseLimitPeriod?: string | null;
+  ownerUseNoticeDays?: number | null;
+  ownerUseNotes?: string | null;
+  assignmentMode?: string | null;
+  assignmentWho?: string | null;
+  assignmentProcedure?: string | null;
+  assignmentNoticeDays?: number | null;
 }
 
 export interface ProposalSnapshotContentBlock {
