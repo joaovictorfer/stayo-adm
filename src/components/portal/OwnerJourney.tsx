@@ -2,7 +2,7 @@ import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSect
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  CircleHelp,
+  Building2,
   Check,
   CheckCircle2,
   ChevronLeft,
