@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   Camera,
@@ -148,6 +148,11 @@ function InspectionsPrototype() {
         title="Vistorias"
         description="Acompanhe inspeções, pendências e revisões dos imóveis."
         meta={<AdminStatusBadge tone="info">Dados demonstrativos</AdminStatusBadge>}
+        actions={
+          <Link to="/operacao/vistorias-links-prototipo" className="admin-input inline-flex min-h-11 items-center gap-2 px-3 text-sm">
+            <Link2 className="h-4 w-4" aria-hidden="true" /> Vistorias e links
+          </Link>
+        }
       />
 
       {demo === "indisponivel" ? (
