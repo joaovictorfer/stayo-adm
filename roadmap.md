@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Unificar a limpeza pós-obra na proposta pública por versão publicada
+- [ ] Validar no celular e publicar uma nova versão sem alterar aceite anterior
+
 - [x] Centralizar ciclo e módulos progressivos do Portal do Proprietário
 - [x] Criar transição visual entre implantação, imóvel pronto e operação
 - [x] Liberar visão operacional somente com imóvel oficial vinculado
