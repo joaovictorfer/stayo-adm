@@ -125,9 +125,12 @@ function CentralPrototype() {
     <div className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
         <span className="font-medium">Protótipo visual · dados ilustrativos, somente leitura</span>
-        <div className="ml-auto overflow-x-auto">
+        <div className="ml-auto hidden sm:block">
           <PeriodFilter value={demo} onChange={setDemo} options={stateOptions} />
         </div>
+        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
+          {stateOptions.map((o) => <option key={o.value} value={o.value}>Estado: {o.label}</option>)}
+        </select>
       </div>
 
       <OperacaoPrototypeNav />

@@ -129,7 +129,7 @@ function ReceberPrototype() {
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
         <span className="font-medium">Protótipo visual · somente leitura</span>
         <div className="ml-auto hidden sm:block"><PeriodFilter value={demo} onChange={setDemo} options={stateOptions} /></div>
-        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input ml-auto h-9 px-2 text-xs sm:hidden">
+        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
           {stateOptions.map((o) => <option key={o.value} value={o.value}>Estado: {o.label}</option>)}
         </select>
       </div>
@@ -142,7 +142,7 @@ function ReceberPrototype() {
         meta={<AdminStatusBadge tone="info">Dados demonstrativos</AdminStatusBadge>}
       />
 
-      <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
+      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
         <label className="admin-input flex h-11 min-w-0 items-center gap-2 px-3">
           <Search className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" aria-hidden="true" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar imóvel ou código (ex.: CR-1042)" aria-label="Buscar imóvel ou código" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
