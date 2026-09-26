@@ -92,7 +92,7 @@ function OrcamentosPrototype() {
   const stats = [
     { icon: FilePen, label: "Em preparação", value: count((x) => x.status === "preparacao"), detail: "Proposta ainda não apresentada", tone: "neutral" as AdminTone },
     { icon: Hourglass, label: "Aguardando decisão", value: count(open), detail: "Apresentado ou aguardando" + inc, tone: "warning" as AdminTone, mark: true },
-    { icon: CalendarClock, label: "Vencem nos próximos 7 dias", value: count(soon), detail: "Sem decisão registrada" + inc, tone: "danger" as AdminTone, mark: true },
+    { icon: CalendarClock, label: "Vencem nos próximos 7 dias", value: count(soon), detail: "Validade próxima", tone: "danger" as AdminTone },
     { icon: CheckCircle2, label: "Aprovados", value: count((x) => x.status === "aprovado"), detail: "Aprovado" + inc, tone: "success" as AdminTone, mark: true },
     { icon: History, label: "Expirados ou substituídos", value: count((x) => x.status === "expirado" || x.status === "substituido"), detail: "Expirado ou Substituído", tone: "neutral" as AdminTone },
   ];
@@ -140,7 +140,7 @@ function OrcamentosPrototype() {
       {demo === "parcial" && (
         <div role="status" className="mb-4 flex items-start gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] px-3 py-2.5 text-sm text-[var(--admin-text)]">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <p><strong>Dados parciais:</strong> o status de decisão do proprietário não foi atualizado. Fornecedores, valores e anexos permanecem atualizados. Nos orçamentos <strong>Apresentado</strong> e <strong>Aguardando decisão</strong>, o status aparece como “Decisão não carregada”. Os indicadores <strong>Aguardando decisão</strong>, <strong>Vencem nos próximos 7 dias</strong> e <strong>Aprovados</strong> (marcados com “*”) podem estar incompletos.</p>
+          <p><strong>Dados parciais:</strong> a decisão do proprietário não foi atualizada. Fornecedor, valor, validade e anexos permanecem atualizados. Nos orçamentos <strong>Apresentado</strong> e <strong>Aguardando decisão</strong>, o status aparece como “Decisão não carregada”. Os indicadores <strong>Aguardando decisão</strong> e <strong>Aprovados</strong> (marcados com “*”) podem estar incompletos.</p>
         </div>
       )}
 
