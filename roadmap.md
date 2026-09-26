@@ -1,5 +1,6 @@
 # Roadmap
 
+- [x] Refinar a proposta pública em 360–390 px e impedir que palavras quebrem no meio
 - [ ] Excluir todas as implantações, preservando somente a IMP-00003 Canela Residence
 - [ ] Disponibilizar exclusão segura em cada item da listagem completa
 - [x] Corrigir carregamento da capa, cabeçalho, FAQ recolhida e linha do tempo da proposta pública
