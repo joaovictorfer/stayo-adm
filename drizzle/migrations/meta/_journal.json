@@ -218,6 +218,13 @@
       "when": 1790382226447,
       "tag": "0030_opportunity_autosave_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790382519518,
+      "tag": "0031_opportunity_autosave_conflict_normalize",
+      "breakpoints": true
     }
   ]
 }
