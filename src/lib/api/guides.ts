@@ -1,11 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { GuideAnswer, GuideClassification, GuideReview } from "../guides";
+import type { GuideAnswer, GuideClassification, GuideReview, GuideType } from "../guides";
+import { guideBlock } from "../guides";
 
 export interface GuideItemInput {
   category: string;
   name: string;
   recommended_quantity: number;
   quantity_text: string | null;
+  size_text: string | null;
   description: string | null;
   tip: string | null;
   purchase_url: string | null;
@@ -36,13 +38,13 @@ export interface CatalogItem extends GuideItemInput {
 
 const BUCKET = "guide-images";
 
-export async function listGuide(implementationId: string): Promise<ImplementationGuideItem[]> {
+export async function listGuide(implementationId: string, guideType: GuideType = "utensilios"): Promise<ImplementationGuideItem[]> {
   const [items, responses] = await Promise.all([
     supabase
       .from("implementation_guide_items")
       .select("*")
       .eq("implementation_id", implementationId)
-      .eq("guide_type", "utensilios")
+      .eq("guide_type", guideType)
       .order("category")
       .order("display_order"),
     supabase
@@ -71,10 +73,10 @@ export async function listGuide(implementationId: string): Promise<Implementatio
   });
 }
 
-export async function applyGuide(implementationId: string): Promise<number> {
+export async function applyGuide(implementationId: string, guideType: GuideType = "utensilios"): Promise<number> {
   const { data, error } = await supabase.rpc("admin_apply_guide", {
     p_implementation_id: implementationId,
-    p_guide_type: "utensilios",
+    p_guide_type: guideType,
   });
   if (error) throw error;
   return (data as number) ?? 0;
@@ -85,6 +87,7 @@ export async function saveGuideItem(
   id: string | null,
   input: GuideItemInput & { enabled: boolean },
   alsoCatalog: boolean,
+  guideType: GuideType = "utensilios",
 ) {
   if (id) {
     const { error } = await supabase.from("implementation_guide_items").update(input).eq("id", id);
@@ -95,7 +98,7 @@ export async function saveGuideItem(
       const { enabled: _e, ...rest } = input;
       const { data, error } = await supabase
         .from("guide_catalog_items")
-        .insert({ ...rest, guide_type: "utensilios" })
+        .insert({ ...rest, guide_type: guideType })
         .select("id")
         .single();
       if (error) throw error;
@@ -103,14 +106,14 @@ export async function saveGuideItem(
     }
     const { error } = await supabase
       .from("implementation_guide_items")
-      .insert({ ...input, implementation_id: implementationId, guide_type: "utensilios", catalog_item_id: catalogId });
+      .insert({ ...input, implementation_id: implementationId, guide_type: guideType, catalog_item_id: catalogId });
     if (error) throw error;
   }
   await supabase.from("audit_logs").insert({
     event: id ? "guide.item_updated" : "guide.item_created",
     entity_type: "implementation",
     entity_id: implementationId,
-    metadata: { name: input.name },
+    metadata: { name: input.name, guideType },
   });
 }
 
@@ -129,26 +132,26 @@ export async function reviewResponse(input: {
   if (error) throw error;
 }
 
-export async function isGuideReleased(implementationId: string): Promise<boolean> {
+export async function isGuideReleased(implementationId: string, guideType: GuideType = "utensilios"): Promise<boolean> {
   const { data, error } = await supabase
     .from("portal_visibility_releases")
     .select("id")
     .eq("implementation_id", implementationId)
-    .eq("block", "utensils_guide")
+    .eq("block", guideBlock[guideType])
     .is("revoked_at", null)
     .limit(1);
   if (error) throw error;
   return (data ?? []).length > 0;
 }
 
-export async function setGuideReleased(implementationId: string, released: boolean) {
+export async function setGuideReleased(implementationId: string, released: boolean, guideType: GuideType = "utensilios") {
   const { error } = released
     ? await supabase.rpc("admin_release_portal_block", {
-        p_data: { implementationId, block: "utensils_guide", content: {} } as never,
+        p_data: { implementationId, block: guideBlock[guideType], content: {} } as never,
       })
     : await supabase.rpc("admin_hide_portal_block", {
         p_implementation_id: implementationId,
-        p_block: "utensils_guide",
+        p_block: guideBlock[guideType],
       });
   if (error) throw error;
 }
@@ -176,20 +179,20 @@ export async function signGuideImages(paths: string[]): Promise<Record<string, s
   return out;
 }
 
-export async function listCatalog(): Promise<CatalogItem[]> {
+export async function listCatalog(guideType: GuideType = "utensilios"): Promise<CatalogItem[]> {
   const { data, error } = await supabase
     .from("guide_catalog_items")
     .select("*")
-    .eq("guide_type", "utensilios")
+    .eq("guide_type", guideType)
     .order("category")
     .order("display_order");
   if (error) throw error;
   return (data ?? []) as unknown as CatalogItem[];
 }
 
-export async function saveCatalogItem(id: string | null, input: GuideItemInput & { active: boolean }) {
+export async function saveCatalogItem(id: string | null, input: GuideItemInput & { active: boolean }, guideType: GuideType = "utensilios") {
   const { error } = id
     ? await supabase.from("guide_catalog_items").update(input).eq("id", id)
-    : await supabase.from("guide_catalog_items").insert({ ...input, guide_type: "utensilios" });
+    : await supabase.from("guide_catalog_items").insert({ ...input, guide_type: guideType });
   if (error) throw error;
 }
