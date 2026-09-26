@@ -24,6 +24,7 @@ import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
 import { Route as FinanceiroIdRouteImport } from './routes/financeiro.$id'
+import { Route as FinanceiroPrototipoRouteImport } from './routes/financeiro.prototipo'
 import { Route as GuiaIndexRouteImport } from './routes/guia.index'
 import { Route as GuiaIdRouteImport } from './routes/guia.$id'
 import { Route as HospedesIndexRouteImport } from './routes/hospedes.index'
@@ -134,6 +135,11 @@ const FinanceiroIndexRoute = FinanceiroIndexRouteImport.update({
 const FinanceiroIdRoute = FinanceiroIdRouteImport.update({
   id: '/financeiro/$id',
   path: '/financeiro/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroPrototipoRoute = FinanceiroPrototipoRouteImport.update({
+  id: '/financeiro/prototipo',
+  path: '/financeiro/prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuiaIndexRoute = GuiaIndexRouteImport.update({
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByTo {
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -431,6 +439,7 @@ export interface FileRoutesById {
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/guia/$id': typeof GuiaIdRoute
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/configuracoes/stayo-core'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/prototipo'
     | '/guia/$id'
     | '/hospedes/$id'
     | '/imoveis/$id'
@@ -642,6 +654,7 @@ export interface RootRouteChildren {
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
+  FinanceiroPrototipoRoute: typeof FinanceiroPrototipoRoute
   GuiaIdRoute: typeof GuiaIdRoute
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
@@ -788,6 +801,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/$id'
       fullPath: '/financeiro/$id'
       preLoaderRoute: typeof FinanceiroIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/prototipo': {
+      id: '/financeiro/prototipo'
+      path: '/financeiro/prototipo'
+      fullPath: '/financeiro/prototipo'
+      preLoaderRoute: typeof FinanceiroPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guia/': {
@@ -1050,6 +1070,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
+  FinanceiroPrototipoRoute: FinanceiroPrototipoRoute,
   GuiaIdRoute: GuiaIdRoute,
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
