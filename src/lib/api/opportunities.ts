@@ -138,3 +138,64 @@ export async function createInviteOpportunity(
   if (!implementationId) throw new Error("O banco não devolveu a oportunidade criada.");
   return { implementationId };
 }
+
+/* ---------- Formulário progressivo único (rascunho) ---------- */
+
+export async function createDraftOpportunity(input: {
+  title?: string;
+  responsibleUserId: string | null;
+  requestId: string;
+}): Promise<CreateOpportunityResult> {
+  const { data, error } = await client().rpc("admin_create_draft_opportunity", {
+    p_data: {
+      title: (input.title ?? "").trim(),
+      responsibleUserId: input.responsibleUserId,
+      requestId: input.requestId,
+    },
+  });
+  if (error) throw new Error(error.message || "Não foi possível abrir a oportunidade.");
+  const implementationId = firstOpportunityId(data as OpportunityRow);
+  if (!implementationId) throw new Error("O banco não devolveu a oportunidade criada.");
+  return { implementationId };
+}
+
+export async function saveOpportunityContact(
+  implementationId: string,
+  input: { contactName: string; phone: string; title: string; existingOwnerId: string | null },
+): Promise<void> {
+  const { error } = await client().rpc("admin_save_opportunity_contact", {
+    p_implementation_id: implementationId,
+    p_data: {
+      contactName: input.contactName.trim(),
+      phone: input.phone.trim() ? normalizePhone(input.phone) : "",
+      title: input.title.trim(),
+      existingOwnerId: input.existingOwnerId,
+    },
+  });
+  if (error) throw new Error(error.message || "Não foi possível salvar os dados.");
+}
+
+export async function completeOpportunityDraft(implementationId: string): Promise<void> {
+  const { error } = await client().rpc("admin_complete_opportunity_draft", {
+    p_implementation_id: implementationId,
+  });
+  if (error) throw new Error(error.message || "Não foi possível concluir.");
+}
+
+export async function getOpportunityDraftState(
+  implementationId: string,
+): Promise<{ isDraft: boolean; completedAt: string | null }> {
+  const sb = getSupabaseBrowserClient();
+  if (!sb) return { isDraft: false, completedAt: null };
+  const { data, error } = await sb
+    .from("implementation_projects")
+    .select("origin, draft_completed_at")
+    .eq("id", implementationId)
+    .maybeSingle();
+  if (error || !data) return { isDraft: false, completedAt: null };
+  const row = data as { origin: string | null; draft_completed_at: string | null };
+  return {
+    isDraft: (row.origin ?? "").startsWith("admin_draft:") && !row.draft_completed_at,
+    completedAt: row.draft_completed_at,
+  };
+}
