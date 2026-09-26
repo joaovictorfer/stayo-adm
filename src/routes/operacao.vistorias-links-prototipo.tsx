@@ -279,9 +279,9 @@ function LinksPrototype() {
               <p className="text-xs text-[var(--admin-muted)]">Protótipo visual — nenhuma ação real é executada.</p>
               <DialogFooter className="gap-2">
                 {(action.a === "revogar" || action.a === "reabrir") && (
-                  <button type="button" onClick={() => setAction(null)} className="admin-input min-h-11 px-4 text-sm">Cancelar</button>
+                  <button type="button" onClick={() => setAction(null)} className="min-h-11 rounded-md border border-input bg-background px-4 text-sm">Cancelar</button>
                 )}
-                <button type="button" onClick={() => setAction(null)} className="min-h-11 rounded-[var(--admin-radius)] bg-[var(--admin-primary)] px-4 text-sm font-semibold text-[var(--admin-primary-foreground,white)]">{ACTION_TEXT[action.a].cta}</button>
+                <button type="button" onClick={() => setAction(null)} className="min-h-11 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground">{ACTION_TEXT[action.a].cta}</button>
               </DialogFooter>
             </>
           )}
@@ -472,9 +472,9 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
           </div>
         )}
         <DialogFooter className="gap-2">
-          <button type="button" onClick={close} className="admin-input min-h-11 px-4 text-sm">{done ? "Fechar" : "Cancelar"}</button>
+          <button type="button" onClick={close} className="min-h-11 rounded-md border border-input bg-background px-4 text-sm">{done ? "Fechar" : "Cancelar"}</button>
           {!done && origin !== "reserva" && (
-            <button type="button" onClick={() => setDone(true)} className="min-h-11 rounded-[var(--admin-radius)] bg-[var(--admin-primary)] px-4 text-sm font-semibold text-[var(--admin-primary-foreground,white)]">Gerar (demonstração)</button>
+            <button type="button" onClick={() => setDone(true)} className="min-h-11 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground">Gerar (demonstração)</button>
           )}
         </DialogFooter>
       </DialogContent>
