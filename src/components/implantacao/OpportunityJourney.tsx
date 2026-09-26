@@ -37,7 +37,21 @@ const inputStyle = {
 };
 const muted = { color: "var(--stayo-ink-muted)" };
 
-type Cond = Record<string, unknown>;
+type Cond = Partial<
+  Record<
+    | "administration_fee"
+    | "turnover_cleaning_fee"
+    | "initial_cleaning_option"
+    | "linen_mode"
+    | "advisory_mode"
+    | "exclusivity"
+    | "duration_months"
+    | "notice_period_days"
+    | "owner_use_limit_mode"
+    | "assignment_mode",
+    unknown
+  >
+>;
 
 export function OpportunityJourney(props: {
   implementation: ImplementationProject;
