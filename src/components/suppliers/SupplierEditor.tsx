@@ -92,7 +92,7 @@ function CategoryBlock({
   onChoose: (a: SupplierAnswer, catalogId?: string) => void;
   onUpdate: (id: string, patch: Partial<SupplierEntry>) => void;
   onRemove: (id: string) => void;
-  onRemoveCategory?: () => void;
+  onRemoveCategory?: (() => void) | undefined;
 }) {
   const [searching, setSearching] = useState(false);
   const companies = entries.filter((e) => e.answer === "catalog" || e.answer === "other");
