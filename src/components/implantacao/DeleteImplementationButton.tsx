@@ -21,10 +21,14 @@ export function DeleteImplementationButton({
   id,
   code,
   locked,
+  navigateAfterDelete = true,
+  compact = false,
 }: {
   id: string;
   code: string;
   locked: boolean;
+  navigateAfterDelete?: boolean;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -39,7 +43,7 @@ export function DeleteImplementationButton({
       await qc.invalidateQueries({ queryKey: ["implementations"] });
       toast.success(`${code} excluída.`);
       setOpen(false);
-      void navigate({ to: "/implantacao" });
+      if (navigateAfterDelete) void navigate({ to: "/implantacao" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível excluir.");
     } finally {
@@ -50,9 +54,15 @@ export function DeleteImplementationButton({
   return (
     <AlertDialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setTyped(""); }}>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-[var(--stayo-danger)]" aria-label="Excluir implantação">
+        <Button
+          variant="ghost"
+          size={compact ? "icon" : "sm"}
+          className="text-[var(--stayo-danger)]"
+          aria-label={`Excluir ${code}`}
+          title={`Excluir ${code}`}
+        >
           <Trash2 className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Excluir</span>
+          {!compact && <span className="hidden sm:inline">Excluir</span>}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

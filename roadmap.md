@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Excluir todas as implantações, preservando somente a IMP-00003 Canela Residence
+- [ ] Disponibilizar exclusão segura em cada item da listagem completa
 - [x] Corrigir carregamento da capa, cabeçalho, FAQ recolhida e linha do tempo da proposta pública
 - [x] Unificar a limpeza pós-obra na proposta pública por versão publicada
 - [x] Validar a revisão visual no celular sem alterar a versão publicada nem o aceite anterior

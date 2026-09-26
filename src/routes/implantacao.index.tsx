@@ -15,6 +15,7 @@ import {
   AdminFilterBar,
   AdminStatusBadge,
 } from "@/components/admin/AdminPrimitives";
+import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { NewOpportunityDrawer } from "../components/implantacao/NewOpportunityDrawer";
 import {
   EmptyRows,
@@ -49,6 +50,8 @@ export const Route = createFileRoute("/implantacao/")({
         property: "og:description",
         content: "Oportunidades comerciais e implantações de novos imóveis.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ImplementationsPage,
@@ -275,7 +278,7 @@ function OpportunityList({
               <Link
                 to="/implantacao/$id"
                 params={{ id: item.id }}
-                className="group block px-4 py-4 transition-colors duration-200 hover:bg-[var(--admin-surface-subtle)] focus-visible:bg-[var(--admin-surface-subtle)] focus-visible:outline-none active:bg-[var(--admin-surface-subtle)] sm:grid sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center sm:gap-4"
+                className="group block py-4 pl-4 pr-14 transition-colors duration-200 hover:bg-[var(--admin-surface-subtle)] focus-visible:bg-[var(--admin-surface-subtle)] focus-visible:outline-none active:bg-[var(--admin-surface-subtle)] sm:grid sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center sm:gap-4 sm:pl-4 sm:pr-16"
               >
                 {/* Mobile card */}
                 <div className="flex flex-col gap-3 sm:hidden">
@@ -361,6 +364,19 @@ function OpportunityList({
                   />
                 </div>
               </Link>
+              <div className="absolute right-3 top-3 sm:top-1/2 sm:-translate-y-1/2">
+                <DeleteImplementationButton
+                  id={item.id}
+                  code={item.code}
+                  locked={
+                    item.status === "ativo" ||
+                    Boolean(item.corePropertyId) ||
+                    Boolean(item.coreOwnerId)
+                  }
+                  navigateAfterDelete={false}
+                  compact
+                />
+              </div>
             </li>
           );
         })}
