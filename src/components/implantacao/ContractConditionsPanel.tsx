@@ -146,10 +146,9 @@ function toSnapshot(f: ContractForm): ProposalSnapshotContractConditions {
   return {
     administrationFee: fee === null || Number.isNaN(fee) || fee < 0 || fee > 100 ? null : fee,
     maintenanceLimit: f.maintenance_limit,
-    initialCleaningOption: f.initial_cleaning_option || null,
-    initialCleaningOther: f.initial_cleaning_other.trim() || null,
-    initialCleaningCostBearer:
-      f.initial_cleaning_option === "owner_delivers" ? null : f.initial_cleaning_cost_bearer || null,
+    initialCleaningOption: null,
+    initialCleaningOther: null,
+    initialCleaningCostBearer: null,
     turnoverCleaningTeam: f.turnover_cleaning_team.trim() || null,
     turnoverCleaningFee: f.turnover_cleaning_fee,
     turnoverCleaningPayer: f.turnover_cleaning_fee == null ? null : f.turnover_cleaning_payer || null,
@@ -159,10 +158,7 @@ function toSnapshot(f: ContractForm): ProposalSnapshotContractConditions {
     durationMonths: f.duration_months ? Number(f.duration_months) : null,
     noticePeriodDays: f.notice_period_days ? Number(f.notice_period_days) : null,
     commercialCleaningFee: f.turnover_cleaning_fee,
-    initialCleaningFee:
-      f.initial_cleaning_option === "owner_delivers" || f.initial_cleaning_option === "tbd"
-        ? null
-        : f.initial_cleaning_fee,
+    initialCleaningFee: null,
     ownerUseLimitMode: f.owner_use_limit_mode || null,
     ownerUseLimitDays: f.owner_use_limit_mode === "limited" && f.owner_use_limit_days ? Number(f.owner_use_limit_days) : null,
     ownerUseLimitPeriod: f.owner_use_limit_mode === "limited" ? f.owner_use_limit_period.trim() || null : null,
@@ -185,8 +181,6 @@ function validate(f: ContractForm): Partial<Record<keyof ContractForm, string>> 
   const fee = parsePercent(f.administration_fee);
   if (fee !== null && (Number.isNaN(fee) || fee < 0 || fee > 100))
     e.administration_fee = "Informe um percentual entre 0% e 100%.";
-  if (f.initial_cleaning_option === "other" && !f.initial_cleaning_other.trim())
-    e.initial_cleaning_other = "Descreva a condição.";
   if (f.owner_use_limit_mode === "limited" && !f.owner_use_limit_days.trim())
     e.owner_use_limit_days = "Informe a quantidade de dias.";
   for (const key of [

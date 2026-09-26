@@ -238,7 +238,7 @@ export const INITIAL_CLEANING_CHOICES: Array<{ value: InitialCleaningOption; lab
   { value: "owner_delivers", label: "Imóvel já será entregue limpo pelo proprietário", help: "Sem limpeza inicial pela STAYO." },
   { value: "stayo_initial", label: "Limpeza comercial de implantação", help: "Limpeza completa antes da primeira hospedagem." },
   { value: "stayo_post_construction", label: "Limpeza pós-obra", help: "Para imóvel novo ou reformado, com resíduos de obra." },
-  { value: "tbd", label: "A decidir", help: "Será definida depois, por exemplo após a vistoria." },
+  { value: "tbd", label: "A decidir", help: "Ainda não definida. O tipo, o valor e quem paga serão combinados depois (por exemplo, após a vistoria); não há cobrança acordada." },
 ];
 
 export type LinenMode = "complete" | "partial" | "stayo_supplier" | "tbd";
@@ -246,14 +246,14 @@ export const LINEN_CHOICES: Array<{ value: LinenMode; label: string; help: strin
   { value: "complete", label: "O apartamento já possui enxoval completo", help: "Nada a comprar." },
   { value: "partial", label: "Possui enxoval, mas faltam itens a comprar", help: "Liste abaixo o que falta." },
   { value: "stayo_supplier", label: "Será comprado com fornecedor indicado pela STAYO", help: "Valor depende do orçamento do fornecedor." },
-  { value: "tbd", label: "A decidir", help: "Será definido depois." },
+  { value: "tbd", label: "A decidir", help: "Ainda não definido. O que comprar, o fornecedor e o valor serão combinados depois; não há compra nem valor acordados." },
 ];
 
 export type AdvisoryMode = "implementation_only" | "full" | "tbd";
-export const ADVISORY_CHOICES: Array<{ value: AdvisoryMode; label: string }> = [
+export const ADVISORY_CHOICES: Array<{ value: AdvisoryMode; label: string; help?: string }> = [
   { value: "implementation_only", label: "Apenas assessoria de implantação" },
   { value: "full", label: "Assessoria completa" },
-  { value: "tbd", label: "A decidir" },
+  { value: "tbd", label: "A decidir", help: "Ainda não definido. A modalidade, os serviços e os valores serão combinados depois; nenhum serviço está contratado." },
 ];
 
 const label = <T extends string>(list: Array<{ value: T; label: string }>, v: string | null | undefined) =>
@@ -264,7 +264,7 @@ export function implementationDecisionItems(c: ProposalSnapshotContractCondition
   const opt = c.initialCleaningOption as InitialCleaningOption | null | undefined;
   if (opt) {
     const helps: string[] = [];
-    if (opt === "tbd") helps.push("Será definida depois.");
+    if (opt === "tbd") helps.push("Ainda não definida. O tipo, o valor e quem paga serão combinados depois (por exemplo, após a vistoria); não há cobrança acordada");
     else if (opt !== "owner_delivers") {
       helps.push(c.initialCleaningFee != null ? `Valor: ${formatBRL(c.initialCleaningFee)}` : "Valor a definir");
       const bearer = c.initialCleaningCostBearer as CostBearer | null | undefined;
@@ -284,7 +284,7 @@ export function implementationDecisionItems(c: ProposalSnapshotContractCondition
   const linen = c.linenMode as LinenMode | null | undefined;
   if (linen) {
     const helps: string[] = [];
-    if (linen === "tbd") helps.push("Será definido depois.");
+    if (linen === "tbd") helps.push("Ainda não definido. O que comprar, o fornecedor e o valor serão combinados depois; não há compra nem valor acordados");
     const missing = c.linenMissingItems ?? [];
     if ((linen === "partial" || linen === "stayo_supplier") && missing.length)
       helps.push(`Itens a comprar: ${missing.map((m) => `${m.qty}× ${m.name}`).join(", ")}`);
@@ -309,7 +309,7 @@ export function implementationDecisionItems(c: ProposalSnapshotContractCondition
     const desc =
       adv === "full" ? c.advisoryFullDesc : adv === "implementation_only" ? c.advisoryImplementationDesc : null;
     const helps: string[] = [];
-    if (adv === "tbd") helps.push("Será definido depois.");
+    if (adv === "tbd") helps.push("Ainda não definido. A modalidade, os serviços e os valores serão combinados depois; nenhum serviço está contratado.");
     if (desc?.trim()) helps.push(desc.trim());
     const services = (c.advisoryServices ?? []).filter((s) => s.label?.trim());
     if (adv !== "tbd" && services.length)
