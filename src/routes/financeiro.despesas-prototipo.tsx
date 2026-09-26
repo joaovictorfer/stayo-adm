@@ -145,7 +145,7 @@ function DespesasPrototype() {
 
       <label className="admin-input mb-2 flex h-11 min-w-0 items-center gap-2 px-3">
         <Search className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" aria-hidden="true" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar imóvel, fornecedor ou código (ex.: DP-2081)" aria-label="Buscar imóvel, fornecedor ou código" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar imóvel, fornecedor ou código" aria-label="Buscar imóvel, fornecedor ou código" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
       </label>
       <div className="mb-4 hidden gap-2 md:grid md:grid-cols-3 xl:grid-cols-6">{filters}</div>
       <details className="admin-panel mb-4 md:hidden">
