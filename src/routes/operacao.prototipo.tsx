@@ -206,7 +206,15 @@ function CentralPrototype() {
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <AdminSection title="O que exige atenção agora" description="Ordenado por criticidade.">
+            <AdminSection
+              title="O que exige atenção agora"
+              description="Ordenado por criticidade."
+              action={
+                <Link to="/operacao/tarefas-prototipo" className="text-sm font-medium text-[var(--admin-primary)] hover:underline">
+                  Ver tarefas
+                </Link>
+              }
+            >
               <div className="admin-panel">
                 {demo === "carregando" ? (
                   <SkeletonRows />

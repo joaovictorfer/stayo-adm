@@ -164,12 +164,13 @@ function AgendaPrototype() {
         </div>
       </div>
 
-      <Link
-        to="/operacao/prototipo"
-        className="mb-2 inline-flex min-h-10 items-center gap-1 text-sm text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Visão geral
-      </Link>
+      <nav aria-label="Operação" className="mb-2 flex flex-wrap items-center gap-1 text-sm">
+        <Link to="/operacao/prototipo" className="inline-flex min-h-10 items-center gap-1 rounded-md px-3 text-[var(--admin-muted)] hover:text-[var(--admin-text)]">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Visão geral
+        </Link>
+        <span aria-current="page" className="inline-flex min-h-10 items-center border-b-2 border-[var(--admin-primary)] px-3 font-medium text-[var(--admin-text)]">Agenda</span>
+        <Link to="/operacao/tarefas-prototipo" className="inline-flex min-h-10 items-center rounded-md px-3 text-[var(--admin-muted)] hover:text-[var(--admin-text)]">Tarefas</Link>
+      </nav>
 
       <AdminPageHeader
         title="Agenda operacional"
