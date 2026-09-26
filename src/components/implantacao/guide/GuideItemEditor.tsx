@@ -25,6 +25,8 @@ export function GuideItemEditor({
   onSave,
   onDelete,
   onUpload,
+  eyebrow = "Guia de utensílios",
+  showSize = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -36,6 +38,8 @@ export function GuideItemEditor({
   onSave: (v: EditorValue, alsoCatalog: boolean) => Promise<void>;
   onDelete?: () => Promise<void>;
   onUpload: (file: File) => Promise<string>;
+  eyebrow?: string;
+  showSize?: boolean;
 }) {
   const [v, setV] = useState(initial);
   const [alsoCatalog, setAlsoCatalog] = useState(false);
@@ -76,6 +80,7 @@ export function GuideItemEditor({
           description: v.description?.trim() || null,
           tip: v.tip?.trim() || null,
           quantity_text: v.quantity_text?.trim() || null,
+          size_text: v.size_text?.trim() || null,
         },
         alsoCatalog,
       );
@@ -97,7 +102,7 @@ export function GuideItemEditor({
   );
 
   return (
-    <Drawer open={open} onClose={onClose} eyebrow="Guia de utensílios" title={isNew ? "Novo item" : "Editar item"}>
+    <Drawer open={open} onClose={onClose} eyebrow={eyebrow} title={isNew ? "Novo item" : "Editar item"}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-[var(--radius-control)] border" style={style}>
@@ -128,8 +133,9 @@ export function GuideItemEditor({
         {field("Nome", <input value={v.name} onChange={(e) => set("name", e.target.value)} className={input} style={style} maxLength={120} />, true)}
         <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-3">
           {field("Quantidade", <input type="number" min={0} value={v.recommended_quantity} onChange={(e) => set("recommended_quantity", Math.max(0, Number(e.target.value) || 0))} className={input} style={style} />, true)}
-          {field("Descrição da quantidade", <input value={v.quantity_text ?? ""} placeholder="Ex.: Jogo com 6 peças" onChange={(e) => set("quantity_text", e.target.value)} className={input} style={style} />)}
+          {field("Unidade (texto)", <input value={v.quantity_text ?? ""} placeholder={showSize ? "Ex.: 8 unidades" : "Ex.: Jogo com 6 peças"} onChange={(e) => set("quantity_text", e.target.value)} className={input} style={style} />)}
         </div>
+        {(showSize || v.size_text) && field("Tamanho / medida / padrão", <input value={v.size_text ?? ""} placeholder="Ex.: 70 × 140 cm, 100% algodão" onChange={(e) => set("size_text", e.target.value)} className={input} style={style} maxLength={160} />)}
         <div>
           <span className="mb-1 block text-sm font-medium">Classificação</span>
           <div className="flex flex-wrap gap-2">
@@ -181,6 +187,7 @@ export const emptyItem = (category = "Cozinha"): EditorValue => ({
   name: "",
   recommended_quantity: 1,
   quantity_text: null,
+  size_text: null,
   description: null,
   tip: null,
   purchase_url: null,

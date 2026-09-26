@@ -82,10 +82,10 @@ export function validateImage(file: { type: string; size: number; name: string }
 }
 
 const CATEGORY_ORDER = ["Cozinha", "Quartos", "Banheiros", "Cama", "Banho", "Complementos"];
-export function sortCategories(list: string[]): string[] {
+export function sortCategories(list: string[], order: string[] = CATEGORY_ORDER): string[] {
   const rank = (c: string) => {
-    const i = CATEGORY_ORDER.indexOf(c);
-    return i === -1 ? CATEGORY_ORDER.length : i;
+    const i = order.indexOf(c);
+    return i === -1 ? order.length : i;
   };
   return [...list].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 }
