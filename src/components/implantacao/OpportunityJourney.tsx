@@ -177,7 +177,7 @@ function JourneyBody({
 
   useEffect(() => {
     void autosaveOpportunity(id, { draft_step: step }, {}).catch(() => undefined);
-    topRef.current?.scrollIntoView({ block: "start" });
+    window.scrollTo({ top: 0 });
   }, [id, step]);
 
   const saveState: SaveState = [auto.state, contactState, condState].includes("error")
