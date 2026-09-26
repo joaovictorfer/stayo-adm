@@ -284,7 +284,7 @@ function TasksPrototype() {
           </div>
 
           {demo === "parcial" && (
-            <p role="status" className="mb-3 flex items-center gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
+            <p role="status" className="mb-3 flex items-start gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] px-3 py-2 text-sm text-[var(--admin-muted)]">
               <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span><strong className="text-[var(--admin-text)]">Dados parciais:</strong> a atualização de tarefas de manutenção está indisponível. Tarefas de manutenção não aparecem na lista, e os indicadores marcados com * (Críticas, Atrasadas e Sem responsável) podem estar incompletos.</span>
             </p>
