@@ -59,6 +59,12 @@ import { CoverPicker, useAdminCoverUrl } from "../components/implantacao/CoverPi
 import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
 import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
+import { EnxovalTab } from "../components/implantacao/EnxovalTab";
+import {
+  OpportunityWizard,
+  isWizardStep,
+  type WizardStep,
+} from "../components/implantacao/OpportunityWizard";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -129,6 +135,10 @@ export const Route = createFileRoute("/implantacao/$id")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { etapa?: WizardStep; acao?: string } => ({
+    etapa: isWizardStep(search.etapa) ? search.etapa : undefined,
+    acao: typeof search.acao === "string" ? search.acao : undefined,
+  }),
   component: ImplementationDetailPage,
 });
 
@@ -139,6 +149,9 @@ const surface = {
 
 function ImplementationDetailPage() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const wizardStep = search.etapa;
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<
     "resumo" | "proprietario" | "imovel" | "enxoval" | "itens_faltantes" | "checklist" | "proposta"
@@ -400,6 +413,51 @@ function ImplementationDetailPage() {
             </dl>
           </section>
 
+          {wizardStep ? (
+            <OpportunityWizard
+              implementation={implementation}
+              step={wizardStep}
+              initialAction={search.acao}
+              onStepChange={(etapa) =>
+                void navigate({ search: { etapa, acao: undefined }, replace: true, resetScroll: false })
+              }
+              onExit={() => void navigate({ search: {}, replace: true })}
+              renderStep={(step) =>
+                step === "proprietario" ? (
+                  <OwnerTab implementation={implementation} />
+                ) : step === "imovel" ? (
+                  <PropertyTab implementation={implementation} />
+                ) : step === "enxoval" ? (
+                  <SupplySheet implementationId={implementation.id} />
+                ) : step === "itens" ? (
+                  <EnxovalTab implementationId={implementation.id} mode="inventory" />
+                ) : step === "faltantes" ? (
+                  <MissingItemsTab implementationId={implementation.id} />
+                ) : step === "observacoes" ? (
+                  <NotesStep implementation={implementation} />
+                ) : step === "condicoes" ? (
+                  <div className="space-y-4">
+                    <CommercialTermsPanel implementationId={implementation.id} />
+                    <ContractConditionsPanel
+                      implementationId={implementation.id}
+                      showMeetings={false}
+                    />
+                  </div>
+                ) : null
+              }
+            />
+          ) : (
+            <>
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void navigate({ search: { etapa: "proprietario" } })}
+            >
+              Abrir formulário da oportunidade
+            </Button>
+          </div>
           <StatusStepper
             status={implementation.status}
             onChange={(status) => changeStatus.mutate(status)}
@@ -677,9 +735,50 @@ function ImplementationDetailPage() {
           ) : (
             <ProposalTab implementationId={implementation.id} />
           )}
+            </>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function NotesStep({ implementation }: { implementation: ImplementationProject }) {
+  const queryClient = useQueryClient();
+  const [notes, setNotes] = useState(implementation.notes ?? "");
+  const dirty = notes !== (implementation.notes ?? "");
+  const save = useMutation({
+    mutationFn: () => coreApi.implementations.update(implementation.id, { notes: notes || null }),
+    onSuccess: async () => {
+      toast.success("Observações salvas");
+      await queryClient.invalidateQueries({ queryKey: ["implementations"] });
+    },
+    onError: (error) =>
+      toast.error("Não foi possível salvar", {
+        description: error instanceof Error ? error.message : "O texto continua no campo.",
+      }),
+  });
+  return (
+    <section className="rounded-[var(--radius-card)] border p-4" style={surface}>
+      <h2 className="text-sm font-semibold" style={{ color: "var(--stayo-ink)" }}>
+        Observações internas
+      </h2>
+      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        Opcional. Só a equipe vê.
+      </p>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={6}
+        className="mt-3 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm outline-none"
+        style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink)" }}
+      />
+      <div className="mt-2 flex justify-end">
+        <Button type="button" size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate()}>
+          {save.isPending ? "Salvando…" : "Salvar observações"}
+        </Button>
+      </div>
+    </section>
   );
 }
 
