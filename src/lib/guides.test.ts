@@ -32,3 +32,14 @@ describe("guia de utensílios", () => {
     expect(validateImage({ type: "image/png", size: 6e6, name: "a.png" })).toBeTruthy();
   });
 });
+
+import { guideBlock, guideDefaultCategories, sortCategories as sortCats } from "./guides";
+describe("guia de enxoval", () => {
+  it("usa bloco de portal próprio, separado de utensílios", () => {
+    expect(guideBlock.enxoval).toBe("guia_enxoval");
+    expect(guideBlock.utensilios).toBe("utensils_guide");
+  });
+  it("ordena categorias de enxoval e aceita categorias novas no fim", () => {
+    expect(sortCats(["Toalhas extras", "Banho", "Cama"], guideDefaultCategories.enxoval)).toEqual(["Cama", "Banho", "Toalhas extras"]);
+  });
+});
