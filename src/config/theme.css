@@ -4491,3 +4491,254 @@ a.admin-data-row:hover,
   .portal-journey-ruler-wrap { padding: 0.75rem 1.25rem 0; }
 }
 .portal-onboarding > .portal-onboarding-main { margin-top: 1rem; }
+
+/* ===== Jornada de implantação — refinamento visual e microinterações ===== */
+
+/* Capa: movimento lento e elegante (ken burns sutil). */
+.portal-onboarding-cover {
+  animation:
+    portal-cover-in 700ms ease both,
+    portal-cover-drift 26s ease-in-out 700ms infinite alternate;
+}
+@keyframes portal-cover-drift {
+  from { transform: scale(1) translateX(0); }
+  to { transform: scale(1.05) translateX(-0.6%); }
+}
+
+/* Overlay da capa: brilho dourado discreto no canto inferior esquerdo. */
+.portal-onboarding-header.is-compact .portal-onboarding-cover-overlay {
+  background:
+    radial-gradient(90% 70% at 12% 108%, color-mix(in srgb, var(--portal-gold) 18%, transparent), transparent 60%),
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--portal-navy) 94%, transparent) 0%,
+      color-mix(in srgb, var(--portal-navy) 82%, transparent) 55%,
+      color-mix(in srgb, var(--portal-navy) 50%, transparent) 100%
+    );
+}
+
+/* Logo com leve sombra para leitura sobre qualquer foto. */
+.portal-onboarding-brand-row img,
+.portal-onboarding-brand-row svg {
+  filter: drop-shadow(0 2px 10px color-mix(in srgb, var(--portal-navy-strong, #000) 45%, transparent));
+}
+
+/* Etiqueta da origem da imagem com vidro fosco. */
+.portal-onboarding-cover-tag {
+  background: color-mix(in srgb, var(--portal-navy) 42%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--portal-hero-foreground) 14%, transparent);
+}
+
+/* Eyebrow com filete dourado à esquerda. */
+.portal-onboarding-header.is-compact .portal-onboarding-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.portal-onboarding-header.is-compact .portal-onboarding-eyebrow::before {
+  content: "";
+  width: 1.4rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--portal-gold);
+  flex: none;
+}
+
+/* Título: entra com leve subida e a linha dourada do cabeçalho se expande. */
+.portal-onboarding-header::after {
+  animation: portal-gold-rule 900ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
+}
+@keyframes portal-gold-rule {
+  from { width: 0; opacity: 0; }
+  to { width: 5rem; opacity: 1; }
+}
+
+/* CTA do cabeçalho: gradiente dourado, brilho varrendo no hover. */
+.portal-onboarding-header-cta {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--portal-gold) 88%, #fff 12%), var(--portal-gold));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--portal-navy-strong, #000) 30%, transparent);
+}
+.portal-onboarding-header-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, #fff 55%, transparent) 50%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 600ms ease;
+  pointer-events: none;
+}
+.portal-onboarding-header-cta:not(:disabled):hover::before {
+  transform: translateX(120%);
+}
+.portal-onboarding-header-cta:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* Régua de etapas: linha conectora atrás dos pontos. */
+.portal-journey-ruler-wrap .portal-journey-steps {
+  position: relative;
+}
+.portal-journey-ruler-wrap .portal-journey-steps::before {
+  content: "";
+  position: absolute;
+  top: 0.85rem;
+  left: 0.55rem;
+  right: 0.55rem;
+  height: 1px;
+  background: var(--portal-border);
+  pointer-events: none;
+}
+.portal-journey-ruler-wrap .portal-journey-step {
+  transition: color 220ms ease;
+}
+.portal-journey-ruler-wrap .portal-journey-step-icon {
+  position: relative;
+  transition:
+    background-color 260ms ease,
+    color 260ms ease,
+    transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 260ms ease;
+}
+.portal-journey-ruler-wrap .portal-journey-step.is-current .portal-journey-step-icon {
+  background: var(--portal-gold);
+  color: var(--portal-navy-strong, var(--portal-navy));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--portal-gold) 22%, transparent);
+  animation: portal-step-pulse 2.4s ease-in-out infinite;
+}
+@keyframes portal-step-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-gold) 24%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--portal-gold) 10%, transparent); }
+}
+.portal-journey-ruler-wrap .portal-journey-step:not(:disabled):hover .portal-journey-step-icon {
+  transform: scale(1.12);
+}
+.portal-journey-ruler-wrap .portal-journey-step-bar {
+  transition: background-color 220ms ease;
+}
+
+/* Cartão principal: filete dourado no topo e sombra mais refinada. */
+.portal-onboarding-card {
+  position: relative;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--portal-navy) 4%, transparent),
+    0 18px 44px color-mix(in srgb, var(--portal-navy) 10%, transparent);
+}
+.portal-onboarding-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--portal-gold) 65%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* Seções do formulário: hover sutil além do foco. */
+.portal-onboarding-section:hover {
+  border-color: color-mix(in srgb, var(--portal-navy) 18%, var(--portal-border));
+}
+
+/* Nota de retomada: entra deslizando. */
+.portal-resume-note {
+  animation: portal-resume-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes portal-resume-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Caixa de confirmação da proposta. */
+.portal-confirm-card {
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--portal-navy) 6%, transparent);
+}
+.portal-confirm-agree {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.portal-confirm-agree:hover {
+  border-color: color-mix(in srgb, var(--portal-gold) 55%, var(--portal-border));
+  background: color-mix(in srgb, var(--portal-gold) 5%, var(--portal-surface));
+}
+.portal-confirm-agree:has(input:checked) {
+  border-color: var(--portal-gold);
+  background: color-mix(in srgb, var(--portal-gold) 8%, var(--portal-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--portal-gold) 30%, transparent);
+}
+.portal-confirm-agree input[type="checkbox"] {
+  accent-color: var(--portal-navy);
+}
+
+/* Cartão de confirmação registrada: ícone com pop. */
+.portal-confirmed-card svg:first-child {
+  animation: portal-check-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Botões de escolha (tipo de pessoa, tipo de imóvel etc.): pressão e seleção animadas. */
+.portal-choice-grid button {
+  transition:
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+.portal-choice-grid button:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--portal-gold) 55%, var(--portal-border));
+  color: var(--portal-navy);
+}
+.portal-choice-grid button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.portal-choice-grid button.is-selected {
+  animation: portal-choice-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes portal-choice-pop {
+  from { transform: scale(0.96); }
+  to { transform: scale(1); }
+}
+
+/* CTA principal das etapas: gradiente navy e brilho no hover. */
+.portal-cta {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--portal-navy), color-mix(in srgb, var(--portal-navy) 82%, #000 18%));
+}
+.portal-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, #fff 22%, transparent) 50%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 600ms ease;
+  pointer-events: none;
+}
+.portal-cta:not(:disabled):hover::before {
+  transform: translateX(120%);
+}
+
+/* Indicador de salvamento: ponto pulsante enquanto salva. */
+.portal-autosave.is-saving {
+  border-color: color-mix(in srgb, var(--portal-gold) 45%, transparent);
+}
+
+/* Linha de confiança: ícone com leve brilho. */
+.portal-onboarding-trust svg {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--portal-gold) 45%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-onboarding-cover {
+    animation: portal-cover-in 1ms ease both;
+  }
+  .portal-journey-ruler-wrap .portal-journey-step.is-current .portal-journey-step-icon {
+    animation: none;
+  }
+}

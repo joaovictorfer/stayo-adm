@@ -1003,7 +1003,7 @@ function ProposalStep({
       <ProposalSnapshotSummary snapshot={shown} />
 
       {!needs && confirmation ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+        <div className="portal-confirmed-card rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="flex gap-3">
             <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-700" />
             <div>
@@ -1020,7 +1020,7 @@ function ProposalStep({
           </Button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
+        <div className="portal-confirm-card rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
           <strong className="text-sm">Você está confirmando</strong>
           <ul className="mt-2 space-y-1 text-xs text-[var(--portal-muted)]">
             <li>
@@ -1043,7 +1043,7 @@ function ProposalStep({
               onChange={onAcceptName}
               placeholder="Digite seu nome completo"
             />
-            <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-[var(--portal-border)] p-3 text-sm">
+            <label className="portal-confirm-agree flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-[var(--portal-border)] p-3 text-sm">
               <input
                 type="checkbox"
                 checked={agreed}
