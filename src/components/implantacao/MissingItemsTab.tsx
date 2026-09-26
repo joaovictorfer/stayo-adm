@@ -113,6 +113,20 @@ function buildRows(items: SupplyItem[]): Row[] {
   });
 }
 
+/** Itens fixos da implantação: sempre visíveis; só entram na lista quando ativados. */
+const PRESET_ITEMS: { name: string; room: string }[] = [
+  { name: "Lareira", room: "Sala" },
+  { name: "Ar condicionado", room: "Geral" },
+  { name: "Cama", room: "Quarto" },
+  { name: "Sofá", room: "Sala" },
+  { name: "TV sala", room: "Sala" },
+  { name: "TV quarto 01", room: "Quarto 01" },
+  { name: "TV quarto 02", room: "Quarto 02" },
+  { name: "Churrasqueira", room: "Área externa" },
+  { name: "Kit churrasco", room: "Área externa" },
+  { name: "Utensílios", room: "Cozinha" },
+];
+
 const emptyDraft = {
   name: "",
   qty: "1",
