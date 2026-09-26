@@ -1,3 +1,4 @@
+import { countsInDefinedTotal } from "../lib/proposal-pricing";
 import { commercialProposalsApi } from "../lib/api/commercial-proposals";
 import type { CommercialProposalVersion } from "../types/commercial-proposal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -857,7 +858,7 @@ function ProposalGate({
       </div>
     );
   const fixedTotal = published.snapshot?.items
-    ? published.snapshot.items.reduce((sum, i) => sum + (i.optional ? 0 : Number(i.total) || 0), 0)
+    ? published.snapshot.items.reduce((sum, i) => sum + (countsInDefinedTotal(i) ? Number(i.total) || 0 : 0), 0)
     : published.total;
   return (
     <div className={box} style={{ borderColor: "var(--stayo-border)" }}>
