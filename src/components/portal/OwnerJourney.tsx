@@ -44,6 +44,7 @@ import {
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
 import { contractConditionRows } from "../../lib/contract-conditions";
+import { PRICING_LABELS, resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
 import type {
   CommercialProposalSnapshot,
   ProposalSnapshotCommercialTerm,
