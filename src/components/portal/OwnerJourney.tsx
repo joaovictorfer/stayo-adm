@@ -16,6 +16,8 @@ import {
   Trash2,
   UserRound,
   ArrowRight,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -44,6 +46,7 @@ import {
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
 import { contractConditionRows } from "../../lib/contract-conditions";
+import { PRICING_LABELS, resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
 import type {
   CommercialProposalSnapshot,
   ProposalSnapshotCommercialTerm,
@@ -578,9 +581,21 @@ export function OwnerJourney({
       lead: "Nada foi alterado. Tente novamente em instantes.",
     },
     A: {
-      title: "Conheça as condições da sua proposta",
-      lead: "Leia com calma. O cadastro abre aqui mesmo depois da sua confirmação.",
-      cta: { label: "Ver proposta", onClick: () => openStage(1) },
+      title: "Sua proposta STAYO",
+      lead: "Veja as condições abaixo e confirme para começar o cadastro.",
+      cta: {
+        label: "Ir para a confirmação",
+        onClick: () => {
+          if (stage !== 1) setStage(1);
+          window.setTimeout(
+            () =>
+              document
+                .getElementById("confirmar-proposta")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+            120,
+          );
+        },
+      },
     },
     B: {
       title: "Estamos preparando sua proposta",
@@ -958,7 +973,7 @@ function ProposalStep({
     return (
       <Blocked
         title="Não conseguimos abrir a proposta agora"
-        text="Nada foi alterado. Tente novamente em instantes ou fale com a equipe STAYO."
+        text="Nada foi alterado. Atualize a página em instantes ou fale com a equipe STAYO."
       />
     );
   const current = journey?.current ?? null;
@@ -977,180 +992,329 @@ function ProposalStep({
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const shownVersion = !needs && confirmation ? confirmation.version : current.version;
   const publishedAt = shown.publishedAt || current.publishedAt;
+  const groups = groupItems(current.snapshot.items ?? []);
 
   return (
-    <section className="space-y-5">
-      <Heading
-        eyebrow={`Proposta comercial · versão ${shownVersion}${
-          publishedAt ? ` · publicada em ${formatDate(publishedAt)}` : ""
-        }`}
-        title={needs ? "Conheça as condições da sua proposta" : "Condições da proposta"}
-        text={
-          needs
-            ? "Leia com calma. O cadastro abre depois da sua confirmação."
-            : "Esta é a versão que você confirmou. Fica aqui para consulta durante todo o cadastro."
-        }
-      />
+    <section className="pj-proposal">
+      <div className="pj-intro">
+        <p className="pj-meta">
+          Proposta · versão {shownVersion}
+          {publishedAt ? ` · publicada em ${formatDate(publishedAt)}` : ""}
+        </p>
+        <p className="pj-intro-text">
+          {needs
+            ? "Aqui estão as condições para a STAYO cuidar do seu imóvel: como funciona a gestão, a limpeza e os serviços para deixar tudo pronto. Depois de confirmar, você segue para o cadastro."
+            : "Esta é a versão que você confirmou. Ela fica aqui para consulta durante todo o cadastro."}
+        </p>
+      </div>
+
       {needs && confirmation && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+        <div className="pj-notice" role="status">
           <strong>Há uma nova versão da proposta.</strong>
-          <p className="mt-1 text-xs">
-            Você confirmou a versão {confirmation.version} em {formatDateTime(confirmation.confirmedAt)}.
-            Ela continua guardada. Para seguir com o cadastro, confirme a versão {current.version}.
-          </p>
+          <span>
+            Você confirmou a versão {confirmation.version} em{" "}
+            {formatDateTime(confirmation.confirmedAt)}, e ela continua guardada. Para seguir, confirme
+            a versão {current.version}.
+          </span>
         </div>
       )}
+
       <ProposalSnapshotSummary snapshot={shown} />
 
       {!needs && confirmation ? (
-        <div className="portal-confirmed-card rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="flex gap-3">
-            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-700" />
-            <div>
-              <strong className="text-sm text-emerald-950">Condições confirmadas</strong>
-              <p className="mt-1 text-xs text-emerald-800">
-                Versão {confirmation.version}, confirmada por {confirmation.confirmedName} em{" "}
-                {formatDateTime(confirmation.confirmedAt)}. Isso não é a assinatura do contrato nem
-                gera cobrança.
-              </p>
-            </div>
-          </div>
-          <Button type="button" className="portal-cta mt-4 w-full" onClick={onContinue}>
-            Continuar cadastro <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      ) : (
-        <div className="portal-confirm-card rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
-          <strong className="text-sm">Você está confirmando</strong>
-          <ul className="mt-2 space-y-1 text-xs text-[var(--portal-muted)]">
-            <li>
-              Proposta versão {current.version}
-              {current.publishedAt ? `, publicada em ${formatDate(current.publishedAt)}` : ""}.
-            </li>
-            {current.snapshot.items?.length > 0 && (
-              <li>Serviços de implantação: {money.format(current.snapshot.total)}.</li>
-            )}
-            <li>As condições recorrentes mostradas acima.</li>
-          </ul>
-          <p className="mt-2 text-xs text-[var(--portal-muted)]">
-            É uma confirmação comercial. Não é a assinatura do contrato, que a equipe STAYO trata à
-            parte, e não gera cobrança.
-          </p>
-          <div className="mt-4 space-y-3">
-            <Field
-              label="Seu nome completo"
-              value={acceptName}
-              onChange={onAcceptName}
-              placeholder="Digite seu nome completo"
-            />
-            <label className="portal-confirm-agree flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-[var(--portal-border)] p-3 text-sm">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(event) => onAgree(event.target.checked)}
-                className="mt-0.5 size-4"
-              />
-              <span>Li e confirmo as condições comerciais da proposta</span>
-            </label>
-            <Button
-              type="button"
-              className="portal-cta w-full"
-              disabled={accepting || !agreed || acceptName.trim().length < 3}
-              onClick={onAccept}
-            >
-              {accepting ? "Registrando..." : "Confirmar e começar cadastro"}
-              {!accepting && <ChevronRight className="size-4" />}
+        <div className="pj-confirmed">
+          <CheckCircle2 aria-hidden="true" />
+          <div>
+            <strong>Condições confirmadas</strong>
+            <p>
+              Versão {confirmation.version}, confirmada por {confirmation.confirmedName} em{" "}
+              {formatDateTime(confirmation.confirmedAt)}. Não é a assinatura do contrato e não gera
+              cobrança.
+            </p>
+            <Button type="button" className="portal-cta mt-4 w-full sm:w-auto" onClick={onContinue}>
+              Voltar ao cadastro <ChevronRight className="size-4" />
             </Button>
           </div>
+        </div>
+      ) : (
+        <div id="confirmar-proposta" className="pj-confirm">
+          <h2 className="pj-block-title">Antes de confirmar</h2>
+          <ul className="pj-confirm-list">
+            <li>
+              <span>Proposta</span>
+              <strong>
+                Versão {current.version}
+                {current.publishedAt ? ` · ${formatDate(current.publishedAt)}` : ""}
+              </strong>
+            </li>
+            <li>
+              <span>Gestão, limpeza e repasses</span>
+              <strong>Conforme descrito acima</strong>
+            </li>
+            {groups.fixed.length > 0 && (
+              <li>
+                <span>Valor definido da implantação</span>
+                <strong>{money.format(groups.fixedTotal)}</strong>
+              </li>
+            )}
+            {groups.pending.length > 0 && (
+              <li>
+                <span>Sujeitos à avaliação</span>
+                <strong>
+                  {groups.pending.length} {groups.pending.length === 1 ? "item" : "itens"}, valor
+                  combinado antes
+                </strong>
+              </li>
+            )}
+            {groups.optional.length > 0 && (
+              <li>
+                <span>Opcionais</span>
+                <strong>
+                  {groups.optional.length} {groups.optional.length === 1 ? "serviço" : "serviços"},
+                  só se você quiser
+                </strong>
+              </li>
+            )}
+          </ul>
+          <p className="pj-fineprint">
+            É uma confirmação comercial da proposta. Não é a assinatura do contrato, que a equipe
+            STAYO envia à parte, e não gera cobrança.
+          </p>
+          <label className="pj-field">
+            <span>Seu nome completo</span>
+            <input
+              value={acceptName}
+              onChange={(e) => onAcceptName(e.target.value)}
+              autoComplete="name"
+              placeholder="Como está no seu documento"
+            />
+          </label>
+          <label className={`pj-agree${agreed ? " is-checked" : ""}`}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(event) => onAgree(event.target.checked)}
+            />
+            <span>Li e confirmo as condições comerciais da versão {current.version}.</span>
+          </label>
+          <Button
+            type="button"
+            className="portal-cta w-full"
+            disabled={accepting || !agreed || acceptName.trim().length < 3}
+            onClick={onAccept}
+          >
+            {accepting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" /> Registrando sua confirmação…
+              </>
+            ) : (
+              <>
+                Confirmar e começar cadastro <ChevronRight className="size-4" />
+              </>
+            )}
+          </Button>
+          {(!agreed || acceptName.trim().length < 3) && !accepting && (
+            <p className="pj-hint">Preencha seu nome e marque a confirmação para continuar.</p>
+          )}
         </div>
       )}
     </section>
   );
 }
 
+type SnapItem = CommercialProposalSnapshot["items"][number];
+
+function groupItems(items: SnapItem[]) {
+  const fixed = items.filter((i) => resolvePricing(i) === "fixed");
+  const optional = items.filter((i) => resolvePricing(i) === "optional");
+  const pending = items.filter((i) => {
+    const p = resolvePricing(i);
+    return p === "conditional" || p === "tbd";
+  });
+  const fixedTotal = fixed.reduce((a, i) => a + (Number(i.total) || 0), 0);
+  return { fixed, optional, pending, fixedTotal };
+}
+
+const TERM_HELP: Array<[RegExp, string]> = [
+  [/^Taxa de administração/, "Percentual das receitas das reservas que remunera a gestão da STAYO."],
+  [/^Manutenção/, "Pequenos reparos até esse valor podem ser feitos sem consultar você. Não é uma cobrança."],
+  [/^Repasse — Airbnb/, "Quando o valor das reservas do Airbnb chega até você."],
+  [/^Repasse — Booking/, "Quando o valor das reservas pelo Booking e diretas chega até você."],
+  [/^Repasse/, "Quando e como o valor das reservas chega até você."],
+  [/^Exclusividade/, "Indica se a STAYO será a única responsável pelas locações por temporada deste imóvel durante o acordo."],
+  [/^Vigência/, "Por quanto tempo o acordo vale."],
+  [/^Aviso prévio/, "Com quanta antecedência qualquer uma das partes avisa para encerrar."],
+  [/^Limpeza inicial/, "Como o imóvel fica pronto para a primeira hospedagem."],
+  [/^Limpeza entre/, "Quem faz a limpeza a cada troca de hóspede e quem paga por ela."],
+];
+
+function helpFor(label: string) {
+  return TERM_HELP.find(([re]) => re.test(label))?.[1] ?? null;
+}
+
+function TermRow({ label, value }: { label: string; value: string }) {
+  const help = helpFor(label);
+  return (
+    <div className="pj-term">
+      <dt>{label.replace(/^Repasse — /, "Repasse · ")}</dt>
+      <dd className="pj-term-value">{value}</dd>
+      {help && <dd className="pj-term-help">{help}</dd>}
+    </div>
+  );
+}
+
+function ItemRow({ item, badge }: { item: SnapItem; badge: ItemPricing }) {
+  const hasDetails = Boolean(item.details || (item.scope && item.scope.length > 0));
+  const value =
+    badge === "tbd"
+      ? "Valor a definir"
+      : badge === "conditional"
+        ? Number(item.total) > 0
+          ? `a partir de ${money.format(item.total)}`
+          : "Conforme avaliação"
+        : money.format(item.total);
+  const head = (
+    <>
+      <span className="pj-item-name">
+        {item.quantity > 1 ? `${item.quantity}× ` : ""}
+        {item.description}
+        {badge !== "fixed" && <em className={`pj-badge is-${badge}`}>{PRICING_LABELS[badge]}</em>}
+      </span>
+      <span className={`pj-item-value${badge === "fixed" ? "" : " is-soft"}`}>{value}</span>
+    </>
+  );
+  if (!hasDetails) return <li className="pj-item"><div className="pj-item-head">{head}</div></li>;
+  return (
+    <li className="pj-item">
+      <details>
+        <summary className="pj-item-head">
+          {head}
+          <ChevronDown className="pj-chevron" aria-hidden="true" />
+        </summary>
+        <div className="pj-item-body">
+          {item.details && <p>{item.details}</p>}
+          {item.scope && item.scope.length > 0 && (
+            <ul>
+              {item.scope.map((s, j) => (
+                <li key={j}>{s}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </details>
+    </li>
+  );
+}
+
 function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
   const conditions = contractConditionRows(snapshot.contractConditions ?? {});
+  const management = conditions.filter(([l]) => !/^Limpeza/.test(l));
+  const cleaning = conditions.filter(([l]) => /^Limpeza/.test(l));
   const terms = [...(snapshot.commercialTerms ?? [])].sort(
     (a, b) => a.displayOrder - b.displayOrder,
   );
-  const items = snapshot.items ?? [];
+  const { fixed, optional, pending, fixedTotal } = groupItems(snapshot.items ?? []);
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   const responsibilities = (snapshot.responsibilities ?? []).filter((r) => r?.trim());
   const signatories = snapshot.requiredSignatories ?? [];
   return (
-    <div className="space-y-4">
-      {(conditions.length > 0 || terms.length > 0) && (
-        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
-          <strong className="text-sm">Condições recorrentes</strong>
-          <dl className="mt-2 divide-y divide-[var(--portal-border)] text-sm">
-            {conditions.map(([label, value]) => (
-              <div key={label} className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4">
-                <dt className="text-[var(--portal-muted)]">{label}</dt>
-                <dd className="whitespace-pre-line font-medium sm:text-right">{value}</dd>
-              </div>
+    <div className="pj-blocks">
+      {(management.length > 0 || terms.length > 0) && (
+        <section className="pj-block">
+          <h2 className="pj-block-title">Gestão do imóvel</h2>
+          <dl className="pj-terms">
+            {management.map(([label, value]) => (
+              <TermRow key={label} label={label} value={value} />
             ))}
             {terms.map((term, i) => (
-              <div key={`t${i}`} className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4">
-                <dt className="text-[var(--portal-muted)]">{term.label}</dt>
-                <dd className="font-medium sm:text-right">{formatSnapshotTerm(term)}</dd>
+              <div key={`t${i}`} className="pj-term">
+                <dt>{term.label}</dt>
+                <dd className="pj-term-value">{formatSnapshotTerm(term)}</dd>
+                {term.notes && term.chargeType !== "informational" && (
+                  <dd className="pj-term-help">{term.notes}</dd>
+                )}
               </div>
             ))}
           </dl>
-        </div>
+        </section>
       )}
-      {items.length > 0 && (
-        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
-          <strong className="text-sm">Serviços e valores da implantação</strong>
-          <ul className="mt-2 divide-y divide-[var(--portal-border)] text-sm">
-            {items.map((item, i) => (
-              <li key={i} className="py-2">
-                <div className="flex justify-between gap-3">
-                  <span>
-                    {item.quantity > 1 ? `${item.quantity}× ` : ""}
-                    {item.description}
-                  </span>
-                  <span className="shrink-0 font-medium">{money.format(item.total)}</span>
-                </div>
-                {(item.details || (item.scope && item.scope.length > 0)) && (
-                  <details className="mt-1 text-xs text-[var(--portal-muted)]">
-                    <summary className="cursor-pointer py-1 font-medium text-[var(--portal-navy)]">
-                      Ver detalhes
-                    </summary>
-                    {item.details && <p className="whitespace-pre-line">{item.details}</p>}
-                    {item.scope && item.scope.length > 0 && (
-                      <ul className="mt-1 list-disc pl-5">
-                        {item.scope.map((s, j) => (
-                          <li key={j}>{s}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </details>
-                )}
-              </li>
+      {cleaning.length > 0 && (
+        <section className="pj-block">
+          <h2 className="pj-block-title">Limpeza e operação</h2>
+          <dl className="pj-terms">
+            {cleaning.map(([label, value]) => (
+              <TermRow key={label} label={label} value={value} />
             ))}
-          </ul>
-          <div className="mt-2 flex justify-between border-t border-[var(--portal-border)] pt-2 text-sm font-semibold">
-            <span>Total da implantação</span>
-            <span>{money.format(snapshot.total)}</span>
-          </div>
-        </div>
+          </dl>
+        </section>
       )}
-      {(snapshot.partnershipObject || responsibilities.length > 0 || content.length > 0 || signatories.length > 0) && (
-        <details className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 text-sm">
-          <summary className="cursor-pointer font-semibold">
-            Ver detalhes: objeto, responsabilidades e demais condições
+      {fixed.length + optional.length + pending.length > 0 && (
+        <section className="pj-block">
+          <h2 className="pj-block-title">Serviços de implantação</h2>
+          <p className="pj-block-lead">
+            O que a STAYO faz para deixar o imóvel pronto para receber hóspedes. Toque num serviço
+            para ver o que está incluído.
+          </p>
+          {fixed.length > 0 && (
+            <>
+              <ul className="pj-items">
+                {fixed.map((item, i) => (
+                  <ItemRow key={`f${i}`} item={item} badge="fixed" />
+                ))}
+              </ul>
+              <div className="pj-total">
+                <span>Valor definido nesta proposta</span>
+                <strong>{money.format(fixedTotal)}</strong>
+              </div>
+            </>
+          )}
+          {pending.length > 0 && (
+            <div className="pj-subgroup">
+              <h3>Itens sujeitos à avaliação</h3>
+              <p>
+                O valor depende do que o imóvel precisar. A equipe combina com você antes de qualquer
+                cobrança, e eles não entram no valor acima.
+              </p>
+              <ul className="pj-items">
+                {pending.map((item, i) => (
+                  <ItemRow key={`p${i}`} item={item} badge={resolvePricing(item)} />
+                ))}
+              </ul>
+            </div>
+          )}
+          {optional.length > 0 && (
+            <div className="pj-subgroup">
+              <h3>Opcionais</h3>
+              <p>Só são feitos se você quiser. Não entram no valor definido.</p>
+              <ul className="pj-items">
+                {optional.map((item, i) => (
+                  <ItemRow key={`o${i}`} item={item} badge="optional" />
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+      {(snapshot.partnershipObject ||
+        responsibilities.length > 0 ||
+        content.length > 0 ||
+        signatories.length > 0) && (
+        <details className="pj-block pj-more">
+          <summary>
+            <span>Objeto, responsabilidades e demais condições</span>
+            <ChevronDown className="pj-chevron" aria-hidden="true" />
           </summary>
-          <div className="mt-3 space-y-3 text-[var(--portal-muted)]">
+          <div className="pj-more-body">
             {snapshot.partnershipObject && (
               <div>
-                <strong className="text-[var(--portal-navy)]">Objeto da parceria</strong>
-                <p className="mt-1 whitespace-pre-line">{snapshot.partnershipObject}</p>
+                <h3>Objeto da parceria</h3>
+                <p>{snapshot.partnershipObject}</p>
               </div>
             )}
             {responsibilities.length > 0 && (
               <div>
-                <strong className="text-[var(--portal-navy)]">Responsabilidades</strong>
-                <ul className="mt-1 list-disc pl-5">
+                <h3>Responsabilidades</h3>
+                <ul>
                   {responsibilities.map((r, i) => (
                     <li key={i}>{r}</li>
                   ))}
@@ -1159,14 +1323,14 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
             )}
             {content.map((block, i) => (
               <div key={i}>
-                <strong className="text-[var(--portal-navy)]">{block.title}</strong>
-                <p className="mt-1 whitespace-pre-line">{block.body}</p>
+                <h3>{block.title}</h3>
+                <p>{block.body}</p>
               </div>
             ))}
             {signatories.length > 0 && (
               <div>
-                <strong className="text-[var(--portal-navy)]">Partes que assinam o contrato</strong>
-                <ul className="mt-1 list-disc pl-5">
+                <h3>Quem assina o contrato</h3>
+                <ul>
                   {signatories.map((s, i) => (
                     <li key={i}>{s.label}</li>
                   ))}

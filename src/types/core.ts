@@ -181,6 +181,8 @@ export interface ProposalItem {
   details?: string | null;
   /** Escopo descritivo (subitens). Nunca representa cobrança extra. */
   scope?: string[];
+  /** Tipo de valor (aditivo). Ausente em versões antigas; ver resolvePricing. */
+  pricing?: "fixed" | "optional" | "conditional" | "tbd" | null;
 }
 
 export interface Proposal {
