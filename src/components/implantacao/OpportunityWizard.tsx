@@ -52,7 +52,7 @@ export function OpportunityWizard({
 }: {
   implementation: ImplementationProject;
   step: WizardStep;
-  initialAction?: string;
+  initialAction?: string | undefined;
   onStepChange: (step: WizardStep) => void;
   onExit: () => void;
   renderStep: (step: WizardStep) => ReactNode;
@@ -78,6 +78,7 @@ export function OpportunityWizard({
       );
       return () => window.clearTimeout(t);
     }
+    return undefined;
   }, [initialAction, step]);
 
   const goTo = async (target: WizardStep) => {
@@ -132,7 +133,7 @@ export function OpportunityWizard({
               {implementation.code}
             </p>
             <p className="mt-1 text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-              Etapa {index + 1} de {WIZARD_STEPS.length}: {WIZARD_STEPS[index].label}
+              Etapa {index + 1} de {WIZARD_STEPS.length}: {WIZARD_STEPS[index]?.label}
             </p>
             <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
               Todos os campos são opcionais. O que ficar em branco pode ser completado depois ou pelo
@@ -224,7 +225,7 @@ export function OpportunityWizard({
           type="button"
           variant="outline"
           disabled={index === 0}
-          onClick={() => void goTo(WIZARD_STEPS[index - 1].id)}
+          onClick={() => void goTo(WIZARD_STEPS[index - 1]?.id ?? "proprietario")}
         >
           <ChevronLeft className="size-4" /> Voltar
         </Button>
@@ -232,7 +233,7 @@ export function OpportunityWizard({
           <Button
             type="button"
             className="bg-[var(--stayo-forest)] text-white hover:bg-[var(--stayo-forest)]/90"
-            onClick={() => void goTo(WIZARD_STEPS[index + 1].id)}
+            onClick={() => void goTo(WIZARD_STEPS[index + 1]?.id ?? "revisao")}
           >
             Continuar <ChevronRight className="size-4" />
           </Button>

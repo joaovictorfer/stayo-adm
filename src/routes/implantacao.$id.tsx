@@ -135,9 +135,9 @@ export const Route = createFileRoute("/implantacao/$id")({
       },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { etapa?: WizardStep; acao?: string } => ({
-    etapa: isWizardStep(search.etapa) ? search.etapa : undefined,
-    acao: typeof search.acao === "string" ? search.acao : undefined,
+  validateSearch: (search: Record<string, unknown>): { etapa?: WizardStep | undefined; acao?: string | undefined } => ({
+    etapa: isWizardStep(search["etapa"]) ? search["etapa"] : undefined,
+    acao: typeof search["acao"] === "string" ? search["acao"] : undefined,
   }),
   component: ImplementationDetailPage,
 });
