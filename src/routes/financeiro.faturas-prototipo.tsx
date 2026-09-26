@@ -196,7 +196,7 @@ function FaturasPrototype() {
                           className={`cursor-pointer border-l-4 align-top ${fl2?.strong ? "border-l-[var(--admin-danger,#b42318)]" : "border-l-transparent"}`}>
                           <td className="px-4 py-3">
                             <p className="font-medium text-[var(--admin-text)]">{f.code} · v{f.version} · {f.property}</p>
-                            <p className="truncate text-xs text-[var(--admin-muted)]">{f.service} · {f.supplier} · Resp.: {f.resp}</p>
+                            <p className="text-xs text-[var(--admin-muted)]">{f.service} · {f.supplier}</p><p className="text-xs text-[var(--admin-muted)]">Responsável: {f.resp}</p>
                             {fl2 && <p className="mt-1 flex items-center gap-1 text-xs font-medium text-[var(--admin-text)]"><fl2.icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />{fl2.text}</p>}
                           </td>
                           <td className="px-2 py-3"><RotaTag r={f.rota} /></td>
@@ -242,6 +242,7 @@ function MobileCard({ f, money, pagLabel, onOpen }: { f: Fatura; money: (f: Fatu
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--admin-text)]">{f.code} · v{f.version} · {f.property}</p>
             <p className="text-xs text-[var(--admin-muted)]">{f.service} · {f.supplier}</p>
+            <p className="text-xs text-[var(--admin-muted)]">Responsável: {f.resp}</p>
           </div>
           <p className="text-sm font-semibold tabular-nums text-[var(--admin-text)]">{money(f)}</p>
         </div>
