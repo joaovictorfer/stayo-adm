@@ -45,7 +45,7 @@ import {
   validateOwnerField,
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
-import { contractConditionRows } from "../../lib/contract-conditions";
+import { conditionSections } from "../../lib/contract-conditions";
 import { PRICING_LABELS, resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
 import type {
   CommercialProposalSnapshot,
@@ -1207,9 +1207,7 @@ function ItemRow({ item, badge }: { item: SnapItem; badge: ItemPricing }) {
 }
 
 function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
-  const conditions = contractConditionRows(snapshot.contractConditions ?? {});
-  const management = conditions.filter(([l]) => !/^Limpeza/.test(l));
-  const cleaning = conditions.filter(([l]) => /^Limpeza/.test(l));
+  const sections = conditionSections(snapshot.contractConditions ?? {});
   const terms = [...(snapshot.commercialTerms ?? [])].sort(
     (a, b) => a.displayOrder - b.displayOrder,
   );
@@ -1219,35 +1217,38 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
   const signatories = snapshot.requiredSignatories ?? [];
   return (
     <div className="pj-blocks">
-      {(management.length > 0 || terms.length > 0) && (
-        <section className="pj-block">
-          <h2 className="pj-block-title">Gestão do imóvel</h2>
+      {sections.map((sec) => (
+        <section key={sec.key} className="pj-block">
+          <h2 className="pj-block-title">{sec.title}</h2>
           <dl className="pj-terms">
-            {management.map(([label, value]) => (
-              <TermRow key={label} label={label} value={value} />
-            ))}
-            {terms.map((term, i) => (
-              <div key={`t${i}`} className="pj-term">
-                <dt>{term.label}</dt>
-                <dd className="pj-term-value">{formatSnapshotTerm(term)}</dd>
-                {term.notes && term.chargeType !== "informational" && (
-                  <dd className="pj-term-help">{term.notes}</dd>
-                )}
+            {sec.items.map((it, i) => (
+              <div key={`${it.label}${i}`} className="pj-term">
+                <dt>{it.label}</dt>
+                <dd className="pj-term-value" data-tbd={it.tbd ? "true" : undefined}>
+                  {it.value}
+                </dd>
+                {it.help && <dd className="pj-term-help">{it.help}</dd>}
               </div>
             ))}
+            {sec.key === "management" &&
+              terms.map((term, i) => (
+                <div key={`t${i}`} className="pj-term">
+                  <dt>{term.label}</dt>
+                  <dd className="pj-term-value">{formatSnapshotTerm(term)}</dd>
+                  {term.notes && term.chargeType !== "informational" && (
+                    <dd className="pj-term-help">{term.notes}</dd>
+                  )}
+                </div>
+              ))}
           </dl>
+          {sec.note && <p className="pj-block-lead" style={{ marginTop: 12 }}>{sec.note}</p>}
+          {sec.items.some((it) => it.tbd) && (
+            <p className="pj-block-lead" style={{ marginTop: 8 }}>
+              Itens “a decidir” ainda serão combinados com você e não fazem parte do que você confirma agora.
+            </p>
+          )}
         </section>
-      )}
-      {cleaning.length > 0 && (
-        <section className="pj-block">
-          <h2 className="pj-block-title">Limpeza e operação</h2>
-          <dl className="pj-terms">
-            {cleaning.map(([label, value]) => (
-              <TermRow key={label} label={label} value={value} />
-            ))}
-          </dl>
-        </section>
-      )}
+      ))}
       {fixed.length + optional.length + pending.length > 0 && (
         <section className="pj-block">
           <h2 className="pj-block-title">Serviços de implantação</h2>
