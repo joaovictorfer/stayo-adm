@@ -587,6 +587,38 @@ export type Database = {
           },
         ]
       }
+      implementation_field_sources: {
+        Row: {
+          actor_id: string | null
+          field: string
+          implementation_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          field: string
+          implementation_id: string
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          field?: string
+          implementation_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_field_sources_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_inspections: {
         Row: {
           completed_at: string | null
@@ -863,10 +895,12 @@ export type Database = {
           cover_source: string | null
           created_at: string
           draft_completed_at: string | null
+          draft_step: string | null
           id: string
           nickname: string | null
           notes: string | null
           origin: string | null
+          owner_facing_notes: string | null
           owner_id: string | null
           postal_code: string | null
           property_type: string | null
@@ -894,10 +928,12 @@ export type Database = {
           cover_source?: string | null
           created_at?: string
           draft_completed_at?: string | null
+          draft_step?: string | null
           id?: string
           nickname?: string | null
           notes?: string | null
           origin?: string | null
+          owner_facing_notes?: string | null
           owner_id?: string | null
           postal_code?: string | null
           property_type?: string | null
@@ -925,10 +961,12 @@ export type Database = {
           cover_source?: string | null
           created_at?: string
           draft_completed_at?: string | null
+          draft_step?: string | null
           id?: string
           nickname?: string | null
           notes?: string | null
           origin?: string | null
+          owner_facing_notes?: string | null
           owner_id?: string | null
           postal_code?: string | null
           property_type?: string | null
@@ -2369,6 +2407,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_autosave_opportunity: {
+        Args: { p_base: Json; p_implementation_id: string; p_patch: Json }
+        Returns: Json
+      }
       admin_close_implementation_next_action: {
         Args: { p_data: Json }
         Returns: Json
@@ -2392,10 +2434,12 @@ export type Database = {
           cover_source: string | null
           created_at: string
           draft_completed_at: string | null
+          draft_step: string | null
           id: string
           nickname: string | null
           notes: string | null
           origin: string | null
+          owner_facing_notes: string | null
           owner_id: string | null
           postal_code: string | null
           property_type: string | null
@@ -2432,10 +2476,12 @@ export type Database = {
           cover_source: string | null
           created_at: string
           draft_completed_at: string | null
+          draft_step: string | null
           id: string
           nickname: string | null
           notes: string | null
           origin: string | null
+          owner_facing_notes: string | null
           owner_id: string | null
           postal_code: string | null
           property_type: string | null
@@ -2472,10 +2518,12 @@ export type Database = {
           cover_source: string | null
           created_at: string
           draft_completed_at: string | null
+          draft_step: string | null
           id: string
           nickname: string | null
           notes: string | null
           origin: string | null
+          owner_facing_notes: string | null
           owner_id: string | null
           postal_code: string | null
           property_type: string | null
@@ -2512,10 +2560,12 @@ export type Database = {
           cover_source: string | null
           created_at: string
           draft_completed_at: string | null
+          draft_step: string | null
           id: string
           nickname: string | null
           notes: string | null
           origin: string | null
+          owner_facing_notes: string | null
           owner_id: string | null
           postal_code: string | null
           property_type: string | null
@@ -2606,10 +2656,12 @@ export type Database = {
           cover_source: string | null
           created_at: string
           draft_completed_at: string | null
+          draft_step: string | null
           id: string
           nickname: string | null
           notes: string | null
           origin: string | null
+          owner_facing_notes: string | null
           owner_id: string | null
           postal_code: string | null
           property_type: string | null
