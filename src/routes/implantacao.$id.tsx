@@ -1,3 +1,4 @@
+import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";
 import { commercialProposalsApi } from "../lib/api/commercial-proposals";
 import type { CommercialProposalVersion } from "../types/commercial-proposal";
@@ -2462,6 +2463,13 @@ function PropertyTab({ implementation }: { implementation: ImplementationProject
               {implementation.notes || "Nenhuma observação interna cadastrada."}
             </p>
           )}
+        </Section>
+        <Section
+          id="fornecedores"
+          title="Fornecedores e instalações"
+          description="Quem forneceu, instalou ou atende os principais sistemas do imóvel. Uso interno e da implantação; não entra na proposta nem no guia do hóspede."
+        >
+          <PropertySuppliersPanel implementationId={implementation.id} />
         </Section>
       </div>
     </PropertySectionContext.Provider>

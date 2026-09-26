@@ -1,3 +1,4 @@
+import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -733,6 +734,7 @@ export function OwnerJourney({
             )}
             {stage === 3 && !reviewing && (
               <PropertyStep
+                token={token}
                 form={form}
                 implementationName={
                   implementationQ.data?.condominiumName || implementationQ.data?.nickname || null
@@ -1687,6 +1689,7 @@ function PersonEditor({
 }
 
 function PropertyStep({
+  token,
   form,
   implementationName,
   errors,
@@ -1695,6 +1698,7 @@ function PropertyStep({
   onBack,
   onContinue,
 }: {
+  token: string;
   form: OwnerOnboardingSubmissionInput;
   implementationName: string | null;
   errors: PropertyErrors;
@@ -1842,6 +1846,7 @@ function PropertyStep({
           automaticamente no Guia do Hóspede sem revisão da equipe STAYO.
         </p>
       </div>
+      <OwnerSuppliersSection token={token} />
       <Actions
         onBack={onBack}
         onContinue={onContinue}
