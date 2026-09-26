@@ -301,6 +301,60 @@ export type Database = {
         }
         Relationships: []
       }
+      guide_catalog_items: {
+        Row: {
+          active: boolean
+          category: string
+          classification: string
+          created_at: string
+          description: string | null
+          display_order: number
+          guide_type: string
+          id: string
+          image_path: string | null
+          name: string
+          purchase_url: string | null
+          quantity_text: string | null
+          recommended_quantity: number
+          tip: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          classification?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          guide_type?: string
+          id?: string
+          image_path?: string | null
+          name: string
+          purchase_url?: string | null
+          quantity_text?: string | null
+          recommended_quantity?: number
+          tip?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          classification?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          guide_type?: string
+          id?: string
+          image_path?: string | null
+          name?: string
+          purchase_url?: string | null
+          quantity_text?: string | null
+          recommended_quantity?: number
+          tip?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       implementation_commercial_meeting_events: {
         Row: {
           actor_id: string
@@ -666,6 +720,154 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_guide_items: {
+        Row: {
+          catalog_item_id: string | null
+          category: string
+          classification: string
+          created_at: string
+          description: string | null
+          display_order: number
+          enabled: boolean
+          guide_type: string
+          id: string
+          image_path: string | null
+          implementation_id: string
+          name: string
+          purchase_url: string | null
+          quantity_text: string | null
+          recommended_quantity: number
+          tip: string | null
+          updated_at: string
+        }
+        Insert: {
+          catalog_item_id?: string | null
+          category: string
+          classification?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          enabled?: boolean
+          guide_type?: string
+          id?: string
+          image_path?: string | null
+          implementation_id: string
+          name: string
+          purchase_url?: string | null
+          quantity_text?: string | null
+          recommended_quantity?: number
+          tip?: string | null
+          updated_at?: string
+        }
+        Update: {
+          catalog_item_id?: string | null
+          category?: string
+          classification?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          enabled?: boolean
+          guide_type?: string
+          id?: string
+          image_path?: string | null
+          implementation_id?: string
+          name?: string
+          purchase_url?: string | null
+          quantity_text?: string | null
+          recommended_quantity?: number
+          tip?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_guide_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "guide_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_guide_items_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_guide_responses: {
+        Row: {
+          answer: string
+          confirmed_quantity: number | null
+          created_at: string
+          guide_item_id: string
+          id: string
+          implementation_id: string
+          quantity: number | null
+          review_note: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          supply_item_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer?: string
+          confirmed_quantity?: number | null
+          created_at?: string
+          guide_item_id: string
+          id?: string
+          implementation_id: string
+          quantity?: number | null
+          review_note?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          supply_item_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          confirmed_quantity?: number | null
+          created_at?: string
+          guide_item_id?: string
+          id?: string
+          implementation_id?: string
+          quantity?: number | null
+          review_note?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          supply_item_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_guide_responses_guide_item_id_fkey"
+            columns: ["guide_item_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_guide_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_guide_responses_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_guide_responses_supply_item_id_fkey"
+            columns: ["supply_item_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_supply_items"
             referencedColumns: ["id"]
           },
         ]
@@ -2645,6 +2847,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_apply_guide: {
+        Args: { p_guide_type?: string; p_implementation_id: string }
+        Returns: number
+      }
       admin_autosave_opportunity: {
         Args: { p_base: Json; p_implementation_id: string; p_patch: Json }
         Returns: Json
@@ -2878,6 +3084,7 @@ export type Database = {
         Args: { p_data: Json }
         Returns: Json
       }
+      admin_review_guide_response: { Args: { p_data: Json }; Returns: Json }
       admin_review_owner_intake: { Args: { p_data: Json }; Returns: Json }
       admin_save_opportunity_contact: {
         Args: { p_data: Json; p_implementation_id: string }
@@ -2971,6 +3178,17 @@ export type Database = {
       owner_cover_by_token: { Args: { p_token: string }; Returns: Json }
       owner_cover_for_implementation: {
         Args: { p_implementation_id: string }
+        Returns: Json
+      }
+      owner_guide_image_paths: { Args: { p_token: string }; Returns: Json }
+      owner_guide_resolve: { Args: { p_token: string }; Returns: Json }
+      owner_guide_save: {
+        Args: {
+          p_answer: string
+          p_item_id: string
+          p_quantity: number
+          p_token: string
+        }
         Returns: Json
       }
       owner_intake_link_by_token: {

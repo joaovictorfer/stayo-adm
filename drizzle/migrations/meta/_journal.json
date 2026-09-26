@@ -267,6 +267,13 @@
       "when": 1790450895625,
       "tag": "0037_require_commercial_minimum_for_new_opportunity",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790452613982,
+      "tag": "0038_utensils_guide",
+      "breakpoints": true
     }
   ]
 }
