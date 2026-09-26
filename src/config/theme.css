@@ -3438,7 +3438,7 @@ a.admin-data-row:hover,
 .portal-welcome-card {
   width: 100%;
   max-width: 44rem;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   border: 1px solid var(--portal-border);
   border-radius: 18px;
@@ -3686,6 +3686,43 @@ a.admin-data-row:hover,
 }
 
 @media (max-width: 639px) {
+  .portal-welcome-overlay {
+    align-items: stretch;
+    padding: 0;
+  }
+  .portal-welcome-card {
+    max-height: 100dvh;
+    border-width: 0;
+    border-radius: 0;
+  }
+  .portal-welcome-hero {
+    border-radius: 0;
+    padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem 1.25rem;
+  }
+  .portal-welcome-brand {
+    margin-bottom: 1rem;
+  }
+  .portal-welcome-title {
+    font-size: 1.55rem;
+  }
+  .portal-welcome-body {
+    padding: 1.25rem;
+  }
+  .portal-welcome-features ul,
+  .portal-welcome-columns {
+    grid-template-columns: 1fr;
+  }
+  .portal-welcome-columns {
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .portal-welcome-feature,
+  .portal-welcome-section {
+    padding: 0.9rem;
+  }
+  .portal-welcome-actions {
+    padding: 0.85rem 1.25rem max(0.85rem, env(safe-area-inset-bottom));
+  }
   .portal-property-switcher {
     grid-template-columns: auto minmax(0, 1fr);
   }

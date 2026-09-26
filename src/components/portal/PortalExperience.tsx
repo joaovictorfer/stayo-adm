@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -152,6 +152,17 @@ export function OwnerWelcomeOverlay({
   propertyName,
   onStart,
 }: OwnerWelcomeOverlayProps) {
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    startButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const steps = [
     {
       icon: <ClipboardList aria-hidden="true" />,
@@ -283,6 +294,7 @@ export function OwnerWelcomeOverlay({
 
         <div className="portal-welcome-actions">
           <Button
+            ref={startButtonRef}
             type="button"
             onClick={onStart}
             className="portal-action portal-welcome-cta h-12 w-full rounded-xl bg-[var(--portal-navy)] px-7 text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)] sm:w-auto"

@@ -87,7 +87,36 @@ function AuditoriaPage() {
         ) : rows.length === 0 ? (
           <EmptyRows message="Nenhum evento de auditoria registrado ainda" />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <ul className="divide-y divide-[var(--stayo-border)] md:hidden">
+              {rows.map((entry) => (
+                <li key={entry.id} className="space-y-3 px-4 py-4 text-sm">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                    <strong className="min-w-0 break-words font-medium text-[var(--stayo-ink)]">
+                      {eventLabels[entry.event] ?? entry.event}
+                    </strong>
+                    <time className="shrink-0 text-right text-xs text-[var(--stayo-ink-muted)]">
+                      {new Date(entry.createdAt).toLocaleString("pt-BR")}
+                    </time>
+                  </div>
+                  <dl className="grid gap-2 text-xs">
+                    <div>
+                      <dt className="text-[var(--stayo-ink-muted)]">Entidade</dt>
+                      <dd className="break-all text-[var(--stayo-ink)]">
+                        {entry.entityType}{entry.entityId ? ` · ${entry.entityId}` : ""}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[var(--stayo-ink-muted)]">Detalhes</dt>
+                      <dd className="break-all text-[var(--stayo-ink)]">
+                        {Object.keys(entry.metadata).length > 0 ? JSON.stringify(entry.metadata) : "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[42rem] text-sm">
               <thead>
                 <tr style={{ color: "var(--stayo-ink-muted)" }}>
@@ -117,7 +146,8 @@ function AuditoriaPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </Panel>
     </>
