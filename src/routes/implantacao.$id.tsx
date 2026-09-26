@@ -67,6 +67,7 @@ import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
 import { Collapsible, DomainHub, FichaNav, OverviewCard } from "../components/implantacao/ficha/FichaParts";
 import { FICHA_SECTIONS, nextAction, proposalStatusLabel, toFichaSection, type FichaSection } from "../lib/ficha-next-action";
+import { UtensilsGuidePanel } from "../components/implantacao/guide/UtensilsGuidePanel";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -560,6 +561,7 @@ function ImplementationDetailPage() {
                     { id: "enxoval", label: "Enxoval", summary: "Peças por ambiente, compra e entrega", content: <SupplySheet implementationId={implementation.id} /> },
                     { id: "itens", label: "Itens do imóvel", summary: "Inventário do que já existe", content: <EnxovalTab implementationId={implementation.id} mode="inventory" /> },
                     { id: "faltantes", label: "Itens faltantes", summary: "O que precisa ser comprado ou instalado", content: <MissingItemsTab implementationId={implementation.id} /> },
+                    { id: "guia", label: "Guia de utensílios", summary: "Recomendações STAYO e respostas do proprietário", content: <UtensilsGuidePanel implementationId={implementation.id} /> },
                     { id: "fornecedores", label: "Fornecedores e instalações", summary: "Quem forneceu, instalou ou atende o imóvel", content: <PropertySuppliersPanel implementationId={implementation.id} /> },
                   ]}
                 />

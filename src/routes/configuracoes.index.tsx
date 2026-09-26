@@ -62,6 +62,12 @@ const links: SettingsLink[] = [
   },
   {
     icon: ClipboardList,
+    to: "/configuracoes/guias",
+    title: "Catálogo de guias",
+    description: "Recomendações reutilizáveis do Guia de Utensílios aplicadas às implantações.",
+  },
+  {
+    icon: ClipboardList,
     to: "/configuracoes/vistorias-prototipo",
     title: "Vistorias (protótipo)",
     description: "Modelos, ambientes e itens de vistoria — protótipo visual, sem persistência.",
