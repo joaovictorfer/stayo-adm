@@ -750,9 +750,13 @@ function Review({
 }) {
   const sourcesQ = useQuery({
     queryKey: ["opportunity", "sources", i.id],
-    queryFn: () => loadOpportunityForm(i.id).then((r) => r.sources),
+    queryFn: () => loadOpportunityForm(i.id),
+    refetchOnMount: "always",
   });
-  const sourceOf = (f: string) => sourcesQ.data?.find((s) => s.field === f)?.source;
+  const sourceOf = (f: string) => sourcesQ.data?.sources.find((s) => s.field === f)?.source;
+  // Etapas da ficha salvam direto no banco; a revisão lê o valor atual salvo.
+  const fresh = sourcesQ.data?.values;
+  const val = (f: FormField) => fresh?.[f] || values[f] || null;
   const decisionsQ = useQuery({
     queryKey: ["implementation-decisions", "review", i.id],
     queryFn: async () => {
@@ -770,18 +774,18 @@ function Review({
   });
   const decisionValue = (label: string) => decisionsQ.data?.find((d) => d.label === label)?.value ?? null;
   const rows: Array<{ step: WizardStep; field?: FormField; label: string; value: string | null }> = [
-    { step: "proprietario", field: "nickname", label: "Título", value: values.nickname || i.nickname || null },
+    { step: "proprietario", field: "nickname", label: "Título", value: val("nickname") || i.nickname || null },
     { step: "proprietario", label: "Proprietário", value: i.ownerName || null },
     { step: "proprietario", label: "Telefone", value: i.ownerPhone ? formatBrazilianPhone(i.ownerPhone) : null },
     ...(
       ["condominium_name", "unit", "address", "city", "property_type", "bedrooms", "capacity"] as FormField[]
-    ).map((f) => ({ step: "imovel" as WizardStep, field: f, label: FIELD_LABELS[f], value: values[f] || null })),
-    { step: "observacoes", field: "notes", label: FIELD_LABELS.notes, value: values.notes || null },
+    ).map((f) => ({ step: "imovel" as WizardStep, field: f, label: FIELD_LABELS[f], value: val(f) })),
+    { step: "observacoes", field: "notes", label: FIELD_LABELS.notes, value: val("notes") },
     {
       step: "observacoes",
       field: "owner_facing_notes",
       label: FIELD_LABELS.owner_facing_notes,
-      value: values.owner_facing_notes || null,
+      value: val("owner_facing_notes"),
     },
     { step: "condicoes", label: "Limpeza de implantação", value: decisionValue("Limpeza de implantação") },
     { step: "condicoes", label: "Enxoval", value: decisionValue("Enxoval") },
