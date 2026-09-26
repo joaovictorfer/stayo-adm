@@ -355,6 +355,7 @@ function ScopesSection() {
       ) : (scopesQuery.data ?? []).length === 0 ? (
         <EmptyText>Nenhum scope definido</EmptyText>
       ) : (
+        <>
         <div className="grid gap-3 md:hidden">
           {(scopesQuery.data ?? []).map((scope) => (
             <article key={`mobile-${scope.name}`} className="rounded-[var(--radius-card)] border p-3" style={surface}>
@@ -428,6 +429,7 @@ function ScopesSection() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </SectionCard>
   );
@@ -526,6 +528,7 @@ function LogsSection() {
       ) : rows.length === 0 ? (
         <EmptyText>Nenhum registro de log disponível</EmptyText>
       ) : (
+        <>
         <ul className="divide-y md:hidden" style={{ borderColor: "var(--stayo-border)" }}>
           {rows.map((entry) => (
             <li key={`mobile-${entry.id}`} className="space-y-3 py-3 text-sm">
@@ -575,6 +578,7 @@ function LogsSection() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </SectionCard>
   );
