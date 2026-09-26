@@ -2124,6 +2124,157 @@ export type Database = {
           },
         ]
       }
+      property_supplier_categories: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          implementation_id: string
+          key: string
+          label: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id: string
+          key: string
+          label: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id?: string
+          key?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_supplier_categories_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_supplier_entries: {
+        Row: {
+          admin_notes: string | null
+          answer: string
+          approx_date: string | null
+          catalog_id: string | null
+          category_key: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          implementation_id: string
+          notes: string | null
+          other_name: string | null
+          phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role: string | null
+          service: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          answer: string
+          approx_date?: string | null
+          catalog_id?: string | null
+          category_key: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          implementation_id: string
+          notes?: string | null
+          other_name?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role?: string | null
+          service?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          answer?: string
+          approx_date?: string | null
+          catalog_id?: string | null
+          category_key?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          implementation_id?: string
+          notes?: string | null
+          other_name?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role?: string | null
+          service?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_supplier_entries_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_supplier_entries_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_supplier_entry_history: {
+        Row: {
+          actor_id: string | null
+          data: Json
+          entry_id: string
+          id: string
+          implementation_id: string
+          recorded_at: string
+          source: string
+        }
+        Insert: {
+          actor_id?: string | null
+          data: Json
+          entry_id: string
+          id?: string
+          implementation_id: string
+          recorded_at?: string
+          source: string
+        }
+        Update: {
+          actor_id?: string | null
+          data?: Json
+          entry_id?: string
+          id?: string
+          implementation_id?: string
+          recorded_at?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_supplier_entry_history_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "property_supplier_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_content_blocks: {
         Row: {
           body: string
@@ -2300,6 +2451,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      supplier_catalog: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          specialties: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          specialties?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          specialties?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       supply_catalog_items: {
         Row: {
@@ -2901,6 +3088,12 @@ export type Database = {
       }
       owner_property_details_save_by_token: {
         Args: { p_data: Json; p_token: string }
+        Returns: Json
+      }
+      owner_suppliers_invitation: { Args: { p_token: string }; Returns: string }
+      owner_suppliers_resolve: { Args: { p_token: string }; Returns: Json }
+      owner_suppliers_save: {
+        Args: { p_entries: Json; p_token: string }
         Returns: Json
       }
       portal_attachment_released: {
