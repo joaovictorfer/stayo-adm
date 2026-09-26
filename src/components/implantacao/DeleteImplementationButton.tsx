@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -55,18 +55,26 @@ export function DeleteImplementationButton({
     <AlertDialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setTyped(""); }}>
       <AlertDialogTrigger asChild>
         <Button
-          variant="ghost"
-          size={compact ? "icon" : "sm"}
-          className="text-[var(--stayo-danger)]"
+          variant="outline"
+          size={compact ? "icon" : "sm"
+          }
+          className={
+            compact
+              ? "size-9 rounded-[var(--radius-control)] border-[var(--stayo-border)] bg-[var(--stayo-surface)] text-[var(--stayo-danger)] shadow-sm hover:border-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
+              : "gap-2 rounded-[var(--radius-control)] border-[var(--stayo-danger)]/40 text-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
+          }
           aria-label={`Excluir ${code}`}
           title={`Excluir ${code}`}
         >
           <Trash2 className="size-4" aria-hidden="true" />
-          {!compact && <span className="hidden sm:inline">Excluir</span>}
+          {!compact && <span>Excluir</span>}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
+          <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-[var(--stayo-danger)]/10">
+            <AlertTriangle className="size-5 text-[var(--stayo-danger)]" aria-hidden="true" />
+          </div>
           <AlertDialogTitle>Excluir {code} definitivamente?</AlertDialogTitle>
           <AlertDialogDescription>
             {locked
@@ -75,9 +83,17 @@ export function DeleteImplementationButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         {!locked && (
-          <label className="grid gap-1 text-sm">
-            Digite <strong>{code}</strong> para confirmar
-            <Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
+          <label className="grid gap-1.5 text-sm">
+            <span>
+              Digite <strong className="font-mono">{code}</strong> para confirmar
+            </span>
+            <Input
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              autoComplete="off"
+              placeholder={code}
+              className="font-mono"
+            />
           </label>
         )}
         <AlertDialogFooter>
