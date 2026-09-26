@@ -1,3 +1,4 @@
+import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -409,6 +410,13 @@ function WizardBody({
             </summary>
             <div className="mt-3">{renderStep("imovel")}</div>
           </details>
+          <section className="rounded-[var(--radius-card)] border p-4" style={card}>
+            <h3 className="text-sm font-semibold">Fornecedores e instalações</h3>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Opcional. Quem forneceu ou instalou os principais sistemas do imóvel.
+            </p>
+            <PropertySuppliersPanel implementationId={implementation.id} />
+          </section>
         </div>
       ) : step === "observacoes" ? (
         <div className="grid gap-4 lg:grid-cols-2">
