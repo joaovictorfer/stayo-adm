@@ -67,6 +67,7 @@ import { Route as PortalCadastroTokenRouteImport } from './routes/portal.cadastr
 import { Route as PortalImplantacaoTokenRouteImport } from './routes/portal.implantacao.$token'
 import { Route as PortalPreviaIdRouteImport } from './routes/portal.previa.$id'
 import { Route as PortalPropostaTokenRouteImport } from './routes/portal.proposta.$token'
+import { Route as VistoriaPrototipoLinkRouteImport } from './routes/vistoria.prototipo.link'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -368,6 +369,11 @@ const PortalPropostaTokenRoute = PortalPropostaTokenRouteImport.update({
   path: '/portal/proposta/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VistoriaPrototipoLinkRoute = VistoriaPrototipoLinkRouteImport.update({
+  id: '/vistoria/prototipo/link',
+  path: '/vistoria/prototipo/link',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -428,6 +434,7 @@ export interface FileRoutesByFullPath {
   '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
+  '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -488,6 +495,7 @@ export interface FileRoutesByTo {
   '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
+  '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -549,6 +557,7 @@ export interface FileRoutesById {
   '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
+  '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -611,6 +620,7 @@ export interface FileRouteTypes {
     | '/portal/implantacao/$token'
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
+    | '/vistoria/prototipo/link'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -671,6 +681,7 @@ export interface FileRouteTypes {
     | '/portal/implantacao/$token'
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
+    | '/vistoria/prototipo/link'
   id:
     | '__root__'
     | '/'
@@ -731,6 +742,7 @@ export interface FileRouteTypes {
     | '/portal/implantacao/$token'
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
+    | '/vistoria/prototipo/link'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -792,6 +804,7 @@ export interface RootRouteChildren {
   PortalImplantacaoTokenRoute: typeof PortalImplantacaoTokenRoute
   PortalPreviaIdRoute: typeof PortalPreviaIdRoute
   PortalPropostaTokenRoute: typeof PortalPropostaTokenRoute
+  VistoriaPrototipoLinkRoute: typeof VistoriaPrototipoLinkRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1202,6 +1215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalPropostaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vistoria/prototipo/link': {
+      id: '/vistoria/prototipo/link'
+      path: '/vistoria/prototipo/link'
+      fullPath: '/vistoria/prototipo/link'
+      preLoaderRoute: typeof VistoriaPrototipoLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1264,6 +1284,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalImplantacaoTokenRoute: PortalImplantacaoTokenRoute,
   PortalPreviaIdRoute: PortalPreviaIdRoute,
   PortalPropostaTokenRoute: PortalPropostaTokenRoute,
+  VistoriaPrototipoLinkRoute: VistoriaPrototipoLinkRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
