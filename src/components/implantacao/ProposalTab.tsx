@@ -93,14 +93,14 @@ const cleanScope = (scope: string[] | undefined) =>
   (scope ?? []).map((x) => x.trim()).filter(Boolean);
 
 function fromTemplate(t: ProposalItemTemplate): DraftItem {
-  // Cópia independente do modelo, desligada: nada entra no total sem ação da equipe.
+  // Cópia independente do modelo; adicionar já inclui na proposta (dá para desligar depois).
   return {
     uid: uid(),
     description: t.description,
     quantity: 1,
     unitValue: t.unitValue,
     discount: 0,
-    included: false,
+    included: true,
     optional: false,
     templateKey: t.key,
     details: t.details,
@@ -421,13 +421,13 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
     previewId && previewId !== "draft" ? (versions.find((v) => v.id === previewId) ?? null) : null;
   const busy = saveDraft.isPending || publish.isPending;
   const hasAnyItem = items.some((i) => i.description.trim()) || partnershipObject.trim() !== "";
-  const canSaveDraft = hasAnyItem && !busy;
+  const canSaveDraft = hasAnyItem && proposalItems.length > 0 && !busy;
   const canSave = proposalItems.length > 0 && !busy;
   const publishHint =
     proposalItems.length === 0
       ? items.length > 0
-        ? "Para publicar, ligue pelo menos um serviço em “Incluir na proposta”."
-        : "Para publicar, adicione e ligue pelo menos um serviço."
+        ? "Para salvar ou publicar, ligue pelo menos um serviço em “Incluir na proposta”."
+        : "Para salvar ou publicar, adicione pelo menos um serviço."
       : null;
 
   return (
