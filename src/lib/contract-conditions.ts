@@ -29,7 +29,7 @@ export const TURNOVER_PAYER_LABELS: Record<TurnoverPayer, string> = {
 export const DEFAULT_TURNOVER_TEAM = "Equipe própria STAYO";
 
 export const DEFAULT_PAYOUT_RULE =
-  "Reservas pelo Airbnb: repasse automático pela plataforma. Reservas pelo Booking e reservas diretas: repasse até o dia 10 do mês subsequente, conforme os valores efetivamente recebidos e conciliados.";
+  "Automático pela plataforma (Airbnb); demais locações até o dia 10 (Booking, reservas diretas etc.)";
 
 export function formatPercent(value: number | null | undefined): string | null {
   if (value === null || value === undefined) return null;
