@@ -1,3 +1,4 @@
+import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";
 import { commercialProposalsApi } from "../lib/api/commercial-proposals";
@@ -276,9 +277,21 @@ function ImplementationDetailPage() {
           <span>Implantação</span>
           <strong>{implementation?.code ?? "Carregando"}</strong>
         </div>
-        <Link to="/implantacao" className="implementation-back-link">
-          Ver todas
-        </Link>
+        <div className="flex items-center gap-1">
+          {implementation && (
+            <DeleteImplementationButton
+              id={implementation.id}
+              code={implementation.code}
+              locked={
+                implementation.status === "ativo" ||
+                Boolean((implementation as { corePropertyId?: string | null }).corePropertyId)
+              }
+            />
+          )}
+          <Link to="/implantacao" className="implementation-back-link">
+            Ver todas
+          </Link>
+        </div>
       </header>
 
       {query.isPending ? (

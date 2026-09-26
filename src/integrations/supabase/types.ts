@@ -2821,6 +2821,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_delete_implementation: {
+        Args: { _confirm_code: string; _id: string }
+        Returns: undefined
+      }
       admin_find_owner_phone_duplicates: {
         Args: { p_phone: string }
         Returns: {

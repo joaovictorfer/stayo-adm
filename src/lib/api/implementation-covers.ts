@@ -12,16 +12,64 @@ function requireClient() {
 
 function validate(file: File) {
   if (!ALLOWED.includes(file.type)) throw new Error("Use uma foto JPG, PNG ou WebP.");
-  if (file.size > MAX_BYTES) throw new Error("A foto deve ter no máximo 8 MB.");
+  if (file.size > MAX_BYTES * 3) throw new Error("A foto deve ter no máximo 24 MB.");
 }
 
 function extension(file: File) {
   return file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
 }
 
+/** Reduz a capa para no máximo 1600 px e WebP ~82% antes do envio. */
+export async function compressCover(file: File, maxSide = 1600, quality = 0.82): Promise<File> {
+  if (typeof document === "undefined") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d")!.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/webp", quality));
+    if (!blob || (blob.size >= file.size && scale === 1)) return file;
+    return new File([blob], "cover.webp", { type: "image/webp" });
+  } catch {
+    return file;
+  }
+}
+
+async function prepare(file: File) {
+  validate(file);
+  const out = await compressCover(file);
+  if (out.size > MAX_BYTES) throw new Error("A foto ficou grande demais mesmo após compactar.");
+  return out;
+}
+
+/** Exclui a implantação (somente admins; bloqueado se ativa/vinculada ao Core). */
+export async function deleteImplementation(implementationId: string, confirmCode: string) {
+  const client = requireClient();
+  const { data: row } = await client
+    .from("implementation_projects")
+    .select("cover_image")
+    .eq("id", implementationId)
+    .maybeSingle();
+  const { error } = await client.rpc("admin_delete_implementation", {
+    _id: implementationId,
+    _confirm_code: confirmCode,
+  });
+  if (error) throw new Error(error.message);
+  const prefix = `implementations/${implementationId}/`;
+  const { data: files } = await client.storage.from(BUCKET).list(prefix.slice(0, -1));
+  const paths = (files ?? []).map((f) => `${prefix}${f.name}`);
+  if (row?.cover_image?.startsWith(prefix) && !paths.includes(row.cover_image)) paths.push(row.cover_image);
+  if (paths.length) await client.storage.from(BUCKET).remove(paths);
+}
+
 /** Upload legado (rascunho do cadastro). Mantido por compatibilidade. */
 export async function uploadImplementationCover(file: File, kind: "property" | "condominium") {
-  validate(file);
+  file = await prepare(file);
   const client = requireClient();
   const path = `drafts/${kind}/${crypto.randomUUID()}.${extension(file)}`;
   const { error } = await client.storage
@@ -90,7 +138,7 @@ async function removeOwnedFile(path: string | null | undefined, prefix: string) 
 }
 
 export async function uploadImplementationCoverFor(implementationId: string, file: File) {
-  validate(file);
+  file = await prepare(file);
   const client = requireClient();
   const prefix = `implementations/${implementationId}/`;
   const path = `${prefix}${crypto.randomUUID()}.${extension(file)}`;
@@ -172,7 +220,7 @@ export async function getCondominiumCover(condominiumId: string) {
 }
 
 export async function uploadCondominiumCover(condominiumId: string, file: File) {
-  validate(file);
+  file = await prepare(file);
   const client = requireClient();
   const prefix = `condominiums/${condominiumId}/`;
   const path = `${prefix}${crypto.randomUUID()}.${extension(file)}`;
