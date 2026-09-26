@@ -144,7 +144,7 @@ function InspectionConfigPrototype() {
       <AdminSection
         title="Modelos"
         description="Ao gerar uma vistoria, ela guarda a versão do modelo usada."
-        action={<button type="button" onClick={() => undefined} className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-control)] bg-[var(--admin-primary)] px-3 text-sm text-[var(--admin-primary-foreground,white)]"><Plus size={16} /> Criar modelo</button>}
+        action={<button type="button" onClick={() => undefined} className="inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] bg-[var(--admin-primary)] px-3 text-sm text-[var(--admin-primary-foreground,white)]"><Plus size={16} /> Criar modelo</button>}
       >
         <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {MODELS.map((m) => {
@@ -219,7 +219,7 @@ function InspectionConfigPrototype() {
                   <div className={`flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] border p-2 ${i === roomIdx ? "border-[var(--admin-primary)]" : "border-[var(--admin-border)]"} ${r.active ? "" : "opacity-70"}`}>
                     <span className="flex flex-col"><ArrowUp size={14} className={muted} /><ArrowDown size={14} className={muted} /></span>
                     <span className="w-5 text-xs text-center">{i + 1}</span>
-                    <span className="min-w-0 flex-1 font-medium">{r.name}</span>
+                    <span className="min-w-0 flex-1 basis-[60%] font-medium sm:basis-auto">{r.name}</span>
                     <AdminStatusBadge tone={r.required ? "info" : "neutral"}>{r.required ? "Obrigatório" : "Opcional"}</AdminStatusBadge>
                     <span className={`text-xs ${muted}`}>{r.items.length} itens</span>
                     <AdminStatusBadge tone={r.active ? "success" : "neutral"}>{r.active ? "Ativo" : "Inativo"}</AdminStatusBadge>
