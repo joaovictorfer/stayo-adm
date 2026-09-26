@@ -43,7 +43,11 @@ import {
   validateOwnerField,
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
-import type { CommercialTerm } from "../../types/admin";
+import { contractConditionRows } from "../../lib/contract-conditions";
+import type {
+  CommercialProposalSnapshot,
+  ProposalSnapshotCommercialTerm,
+} from "../../types/commercial-proposal";
 import type {
   OwnerOnboardingPerson,
   OwnerOnboardingSubmissionInput,
@@ -177,7 +181,10 @@ export function OwnerJourney({
   const queue = useRef<Promise<void>>(Promise.resolve());
   const finalizing = useRef(false);
 
-  const proposalAccepted = Boolean(journeyQ.data?.proposal.acceptedAt);
+  const proposalAccepted = Boolean(
+    journeyQ.data?.confirmation && !journeyQ.data.needsConfirmation,
+  );
+  const commandId = useRef<string>(crypto.randomUUID());
   const submitted = Boolean(submissionQ.data?.submittedAt || draftQ.data?.submittedAt);
 
   useEffect(() => {
@@ -252,8 +259,8 @@ export function OwnerJourney({
     stageRef.current = current;
     setMaxStage(reached);
     maxStageRef.current = reached;
-    setAcceptName(journeyQ.data?.proposal.acceptedName ?? owner?.name ?? "");
-    setAgreed(Boolean(journeyQ.data?.proposal.acceptedAt));
+    setAcceptName(journeyQ.data?.confirmation?.confirmedName ?? owner?.name ?? "");
+    setAgreed(false);
     hydrated.current = true;
   }, [
     draftQ.data,
@@ -411,17 +418,22 @@ export function OwnerJourney({
   const propertyValid = Object.keys(propertyErrors).length === 0;
 
   const acceptProposal = useMutation({
-    mutationFn: () => ownerJourneyApi.acceptProposal(token, acceptName.trim()),
+    mutationFn: () => {
+      const proposalId = journeyQ.data?.current?.proposalId;
+      if (!proposalId) throw new Error("Proposta indisponível.");
+      return ownerJourneyApi.acceptProposal(token, acceptName.trim(), proposalId, commandId.current);
+    },
     onSuccess: (journey) => {
+      commandId.current = crypto.randomUUID();
       queryClient.setQueryData(["owner-journey", "proposal", token], journey);
       setMaxStage((value) => (value < 2 ? 2 : value));
       setStage(2);
-      toast.success("Proposta aceita", {
-        description: "Agora vamos concluir seus dados e preparar o imóvel.",
+      toast.success("Condições confirmadas", {
+        description: "Agora vamos ao seu cadastro.",
       });
     },
     onError: (error) =>
-      toast.error("Não foi possível registrar o aceite", {
+      toast.error("Não foi possível registrar a confirmação", {
         description: error instanceof Error ? error.message : "Tente novamente em instantes.",
       }),
   });
@@ -526,7 +538,7 @@ export function OwnerJourney({
         ? "D"
         : proposalAccepted
           ? "C"
-          : journeyQ.data
+          : journeyQ.data?.current
             ? "A"
             : "B";
   const hasSavedDraft = Boolean(draftQ.data && (draftQ.data.currentStep ?? 0) > 0);
@@ -815,7 +827,7 @@ function ProposalStep({
       <Blocked
         icon={<Cloud />}
         title="Carregando sua proposta"
-        text="Estamos buscando a versão vinculada a este acesso."
+        text="Estamos buscando a versão publicada para você."
       />
     );
   if (failed)
@@ -825,139 +837,96 @@ function ProposalStep({
         text="Nada foi alterado. Tente novamente em instantes ou fale com a equipe STAYO."
       />
     );
-  if (!journey)
+  const current = journey?.current ?? null;
+  const confirmation = journey?.confirmation ?? null;
+  if (!current)
     return (
       <Blocked
         icon={<Cloud />}
-        title="O que acontece agora"
-        text="A equipe STAYO está finalizando as condições. Quando a proposta for publicada, ela aparece aqui e o cadastro abre logo depois do seu aceite. Não é preciso fazer nada agora."
+        title="Estamos preparando sua proposta"
+        text="A equipe STAYO avisa você quando ela estiver disponível. Não é preciso fazer nada agora."
       />
     );
 
-  const accepted = Boolean(journey.proposal.acceptedAt);
-  const terms = [...journey.commercialTerms].sort((a, b) => a.displayOrder - b.displayOrder);
+  const needs = Boolean(journey?.needsConfirmation);
+  // Após confirmar, mostra exatamente o texto confirmado.
+  const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
+  const shownVersion = !needs && confirmation ? confirmation.version : current.version;
+  const publishedAt = shown.publishedAt || current.publishedAt;
+
   return (
     <section className="space-y-5">
       <Heading
-        eyebrow={`Proposta comercial · versão ${journey.proposal.version}`}
-        title="Confira o que combinamos"
-        text="Este resumo registra as condições comerciais desta versão antes do início do seu cadastro."
+        eyebrow={`Proposta comercial · versão ${shownVersion}${
+          publishedAt ? ` · publicada em ${formatDate(publishedAt)}` : ""
+        }`}
+        title={needs ? "Conheça as condições da sua proposta" : "Condições da proposta"}
+        text={
+          needs
+            ? "Leia com calma. O cadastro abre depois da sua confirmação."
+            : "Esta é a versão que você confirmou. Fica aqui para consulta durante todo o cadastro."
+        }
       />
-      {terms.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {terms.map((term) => (
-            <TermCard key={term.id} term={term} />
-          ))}
+      {needs && confirmation && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <strong>Há uma nova versão da proposta.</strong>
+          <p className="mt-1 text-xs">
+            Você confirmou a versão {confirmation.version} em {formatDateTime(confirmation.confirmedAt)}.
+            Ela continua guardada. Para seguir com o cadastro, confirme a versão {current.version}.
+          </p>
         </div>
       )}
-      {journey.proposal.items.length > 0 && (
-        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <strong className="text-sm">Itens desta versão</strong>
-            <strong className="text-sm text-[var(--portal-navy)]">
-              {money.format(journey.proposal.total)}
-            </strong>
-          </div>
-          <div className="divide-y divide-[var(--portal-border)]">
-            {journey.proposal.items.map((item, index) => (
-              <div
-                key={`${item.description}-${index}`}
-                className="flex justify-between gap-4 py-2.5 text-sm"
-              >
-                <span>
-                  {item.description}
-                  {item.quantity > 1 ? ` · x${item.quantity}` : ""}
-                </span>
-                <span className="shrink-0 font-medium">{money.format(item.total)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {journey.contractConditions && (
-        <div className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-surface-soft)] p-4">
-          <strong className="text-sm">Condições operacionais</strong>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Summary label="Repasse" value={journey.contractConditions.payoutRule} />
-            <Summary
-              label="Manutenção sem autorização"
-              value={
-                journey.contractConditions.maintenanceLimit === null
-                  ? null
-                  : `Até ${money.format(journey.contractConditions.maintenanceLimit)}`
-              }
-            />
-            <Summary
-              label="Exclusividade"
-              value={
-                journey.contractConditions.exclusivity === null
-                  ? null
-                  : journey.contractConditions.exclusivity
-                    ? "Sim"
-                    : "Não"
-              }
-            />
-            <Summary
-              label="Vigência"
-              value={
-                journey.contractConditions.durationMonths === null
-                  ? null
-                  : `${journey.contractConditions.durationMonths} meses`
-              }
-            />
-            <Summary
-              label="Aviso prévio"
-              value={
-                journey.contractConditions.noticePeriodDays === null
-                  ? null
-                  : `${journey.contractConditions.noticePeriodDays} dias`
-              }
-            />
-          </div>
-        </div>
-      )}
-      {accepted ? (
+      <ProposalSnapshotSummary snapshot={shown} />
+
+      {!needs && confirmation ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="flex gap-3">
             <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-700" />
             <div>
-              <strong className="text-sm text-emerald-950">Proposta aceita</strong>
+              <strong className="text-sm text-emerald-950">Condições confirmadas</strong>
               <p className="mt-1 text-xs text-emerald-800">
-                Aceite registrado
-                {journey.proposal.acceptedName ? ` por ${journey.proposal.acceptedName}` : ""}
-                {journey.proposal.acceptedAt
-                  ? ` em ${new Date(journey.proposal.acceptedAt).toLocaleString("pt-BR")}`
-                  : ""}
-                .
+                Versão {confirmation.version}, confirmada por {confirmation.confirmedName} em{" "}
+                {formatDateTime(confirmation.confirmedAt)}. Isso não é a assinatura do contrato nem
+                gera cobrança.
               </p>
             </div>
           </div>
-          <Button type="button" className="mt-4 w-full" onClick={onContinue}>
-            Continuar para meus dados <ChevronRight className="size-4" />
+          <Button type="button" className="portal-cta mt-4 w-full" onClick={onContinue}>
+            Continuar cadastro <ChevronRight className="size-4" />
           </Button>
         </div>
       ) : (
         <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
-          <strong className="text-sm">Confirme para continuar</strong>
-          <p className="mt-1 text-xs text-[var(--portal-muted)]">
-            Este aceite registra concordância comercial com esta versão. O contrato formal é tratado
-            separadamente pela equipe STAYO.
+          <strong className="text-sm">Você está confirmando</strong>
+          <ul className="mt-2 space-y-1 text-xs text-[var(--portal-muted)]">
+            <li>
+              Proposta versão {current.version}
+              {current.publishedAt ? `, publicada em ${formatDate(current.publishedAt)}` : ""}.
+            </li>
+            {current.snapshot.items?.length > 0 && (
+              <li>Serviços de implantação: {money.format(current.snapshot.total)}.</li>
+            )}
+            <li>As condições recorrentes mostradas acima.</li>
+          </ul>
+          <p className="mt-2 text-xs text-[var(--portal-muted)]">
+            É uma confirmação comercial. Não é a assinatura do contrato, que a equipe STAYO trata à
+            parte, e não gera cobrança.
           </p>
           <div className="mt-4 space-y-3">
             <Field
-              label="Nome completo para confirmação"
+              label="Seu nome completo"
               value={acceptName}
               onChange={onAcceptName}
               placeholder="Digite seu nome completo"
             />
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--portal-border)] p-3 text-sm">
+            <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-[var(--portal-border)] p-3 text-sm">
               <input
                 type="checkbox"
                 checked={agreed}
                 onChange={(event) => onAgree(event.target.checked)}
                 className="mt-0.5 size-4"
               />
-              <span>Li a proposta e estou de acordo com as condições apresentadas.</span>
+              <span>Li e confirmo as condições comerciais da proposta</span>
             </label>
             <Button
               type="button"
@@ -965,7 +934,7 @@ function ProposalStep({
               disabled={accepting || !agreed || acceptName.trim().length < 3}
               onClick={onAccept}
             >
-              {accepting ? "Registrando aceite..." : "Aceitar proposta e continuar"}
+              {accepting ? "Registrando..." : "Confirmar e começar cadastro"}
               {!accepting && <ChevronRight className="size-4" />}
             </Button>
           </div>
@@ -975,28 +944,138 @@ function ProposalStep({
   );
 }
 
-function TermCard({ term }: { term: CommercialTerm }) {
+function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
+  const conditions = contractConditionRows(snapshot.contractConditions ?? {});
+  const terms = [...(snapshot.commercialTerms ?? [])].sort(
+    (a, b) => a.displayOrder - b.displayOrder,
+  );
+  const items = snapshot.items ?? [];
+  const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
+  const responsibilities = (snapshot.responsibilities ?? []).filter((r) => r?.trim());
+  const signatories = snapshot.requiredSignatories ?? [];
   return (
-    <div className="portal-term-card rounded-2xl border border-[var(--portal-border)] bg-white p-4">
-      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--portal-muted)]">
-        {term.label}
-      </span>
-      <strong className="mt-1 block text-lg text-[var(--portal-navy)]">{formatTerm(term)}</strong>
-      {term.notes && <p className="mt-1 text-xs text-[var(--portal-muted)]">{term.notes}</p>}
+    <div className="space-y-4">
+      {(conditions.length > 0 || terms.length > 0) && (
+        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
+          <strong className="text-sm">Condições recorrentes</strong>
+          <dl className="mt-2 divide-y divide-[var(--portal-border)] text-sm">
+            {conditions.map(([label, value]) => (
+              <div key={label} className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4">
+                <dt className="text-[var(--portal-muted)]">{label}</dt>
+                <dd className="whitespace-pre-line font-medium sm:text-right">{value}</dd>
+              </div>
+            ))}
+            {terms.map((term, i) => (
+              <div key={`t${i}`} className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4">
+                <dt className="text-[var(--portal-muted)]">{term.label}</dt>
+                <dd className="font-medium sm:text-right">{formatSnapshotTerm(term)}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
+          <strong className="text-sm">Serviços e valores da implantação</strong>
+          <ul className="mt-2 divide-y divide-[var(--portal-border)] text-sm">
+            {items.map((item, i) => (
+              <li key={i} className="py-2">
+                <div className="flex justify-between gap-3">
+                  <span>
+                    {item.quantity > 1 ? `${item.quantity}× ` : ""}
+                    {item.description}
+                  </span>
+                  <span className="shrink-0 font-medium">{money.format(item.total)}</span>
+                </div>
+                {(item.details || (item.scope && item.scope.length > 0)) && (
+                  <details className="mt-1 text-xs text-[var(--portal-muted)]">
+                    <summary className="cursor-pointer py-1 font-medium text-[var(--portal-navy)]">
+                      Ver detalhes
+                    </summary>
+                    {item.details && <p className="whitespace-pre-line">{item.details}</p>}
+                    {item.scope && item.scope.length > 0 && (
+                      <ul className="mt-1 list-disc pl-5">
+                        {item.scope.map((s, j) => (
+                          <li key={j}>{s}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </details>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 flex justify-between border-t border-[var(--portal-border)] pt-2 text-sm font-semibold">
+            <span>Total da implantação</span>
+            <span>{money.format(snapshot.total)}</span>
+          </div>
+        </div>
+      )}
+      {(snapshot.partnershipObject || responsibilities.length > 0 || content.length > 0 || signatories.length > 0) && (
+        <details className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 text-sm">
+          <summary className="cursor-pointer font-semibold">
+            Ver detalhes: objeto, responsabilidades e demais condições
+          </summary>
+          <div className="mt-3 space-y-3 text-[var(--portal-muted)]">
+            {snapshot.partnershipObject && (
+              <div>
+                <strong className="text-[var(--portal-navy)]">Objeto da parceria</strong>
+                <p className="mt-1 whitespace-pre-line">{snapshot.partnershipObject}</p>
+              </div>
+            )}
+            {responsibilities.length > 0 && (
+              <div>
+                <strong className="text-[var(--portal-navy)]">Responsabilidades</strong>
+                <ul className="mt-1 list-disc pl-5">
+                  {responsibilities.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {content.map((block, i) => (
+              <div key={i}>
+                <strong className="text-[var(--portal-navy)]">{block.title}</strong>
+                <p className="mt-1 whitespace-pre-line">{block.body}</p>
+              </div>
+            ))}
+            {signatories.length > 0 && (
+              <div>
+                <strong className="text-[var(--portal-navy)]">Partes que assinam o contrato</strong>
+                <ul className="mt-1 list-disc pl-5">
+                  {signatories.map((s, i) => (
+                    <li key={i}>{s.label}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
 
-function formatTerm(term: CommercialTerm) {
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function formatSnapshotTerm(term: ProposalSnapshotCommercialTerm) {
+  const value = Number(term.value);
   if (term.chargeType === "percentage")
-    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(term.value)}%`;
-  if (term.chargeType === "fixed_once") return `${money.format(term.value)} · uma vez`;
-  if (term.chargeType === "per_reservation") return `${money.format(term.value)} · por reserva`;
-  if (term.chargeType === "monthly") return `${money.format(term.value)} · por mês`;
-  if (term.chargeType === "optional")
-    return term.value ? `${money.format(term.value)} · opcional` : "Opcional";
-  if (term.chargeType === "informational") return term.notes || "Condição informativa";
-  return String(term.value);
+    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value)}%`;
+  if (term.chargeType === "fixed_once") return `${money.format(value)} · uma vez`;
+  if (term.chargeType === "per_reservation") return `${money.format(value)} · por reserva`;
+  if (term.chargeType === "monthly") return `${money.format(value)} · por mês`;
+  if (term.chargeType === "optional") return value ? `${money.format(value)} · opcional` : "Opcional";
+  return term.notes || "Condição informativa";
 }
 
 function OwnerStep({
