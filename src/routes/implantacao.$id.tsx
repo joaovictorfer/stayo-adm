@@ -604,7 +604,7 @@ function ImplementationDetailPage() {
                       <SummaryHeading>Implantação</SummaryHeading>
                       <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
                         <SummaryRow label="Etapa" value={statusLabels[implementation.status]} />
-                        <SummaryRow label="Responsável" value={implementation.responsibleUserId} />
+                        <SummaryRow label="Responsável" value={responsibleName} />
                         <SummaryRow
                           label="Previsão"
                           value={implementation.completionDateEstimate}
