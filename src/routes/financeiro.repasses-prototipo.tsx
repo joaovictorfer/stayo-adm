@@ -118,7 +118,7 @@ function RepassesPrototype() {
         <option value="todos">Todos os status</option>{Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
       </select>
       <select aria-label="Período de pagamento" value={payMonth} onChange={(e) => setPayMonth(e.target.value)} className={cls}>
-        <option value="todos">Qualquer data de pagamento</option><option value="2026-09">Pagamento em 09/2026</option>
+        <option value="todos">Pagamento: todos</option><option value="2026-09">Pagamento em 09/2026</option>
       </select>
     </>
   );
