@@ -327,18 +327,29 @@ function Detail({ i, partial }: { i: Insp; partial: boolean }) {
           <dt className="text-xs text-[var(--admin-muted)]">Resumo por ambiente</dt>
           <dd className="mt-1 text-sm text-[var(--admin-text)]">
             <p className="mb-2">{totals.ok} verificados · {totals.pending} pendentes · {totals.na} não aplicáveis</p>
-            <ul className="divide-y divide-[var(--admin-border)] rounded-md border border-[var(--admin-border)]">
-              {i.rooms.map((r) => (
-                <li key={r.name} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-2">
-                  <span className="min-w-24 font-medium">{r.name}</span>
-                  <span className="text-xs text-[var(--admin-muted)]">{r.ok} verificados</span>
-                  <span className={`text-xs ${r.pending ? "font-semibold text-[var(--admin-danger,currentColor)]" : "text-[var(--admin-muted)]"}`}>
-                    {r.pending > 0 && <AlertTriangle className="mr-0.5 inline h-3 w-3" aria-hidden="true" />}{r.pending} pendentes
-                  </span>
-                  <span className="text-xs text-[var(--admin-muted)]">{r.na} n/a</span>
-                </li>
-              ))}
-            </ul>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-[var(--admin-muted)]">
+                  <th className="py-1 font-normal">Ambiente</th>
+                  <th className="py-1 text-right font-normal">Verificados</th>
+                  <th className="py-1 text-right font-normal">Pendentes</th>
+                  <th className="py-1 text-right font-normal">N/A</th>
+                </tr>
+              </thead>
+              <tbody>
+                {i.rooms.map((r) => (
+                  <tr key={r.name} className="border-t border-[var(--admin-border)]">
+                    <td className="py-2 font-medium">{r.name}</td>
+                    <td className="py-2 text-right tabular-nums">{r.ok}</td>
+                    <td className={`py-2 text-right tabular-nums ${r.pending ? "font-semibold" : ""}`}>
+                      {r.pending > 0 && <AlertTriangle className="mr-1 inline h-3 w-3" aria-label="Com pendência" />}
+                      {r.pending}
+                    </td>
+                    <td className="py-2 text-right tabular-nums">{r.na}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </dd>
         </div>
         <div className="flex flex-col gap-0.5 py-3">
