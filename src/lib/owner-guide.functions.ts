@@ -6,10 +6,10 @@ import { z } from "zod";
  * A checagem de token e liberação acontece no banco (owner_guide_image_paths).
  */
 export const getOwnerGuideImages = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ token: z.string().min(32).max(200) }).parse(data))
+  .inputValidator((data) => z.object({ token: z.string().min(32).max(200), guideType: z.enum(["utensilios", "enxoval"]).default("utensilios") }).parse(data))
   .handler(async ({ data }): Promise<Record<string, string>> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: paths, error } = await supabaseAdmin.rpc("owner_guide_image_paths", { p_token: data.token });
+    const { data: paths, error } = await supabaseAdmin.rpc("owner_guide_image_paths", { p_token: data.token, p_guide_type: data.guideType });
     if (error || !paths) return {};
     const entries = Object.entries(paths as Record<string, string>);
     if (!entries.length) return {};

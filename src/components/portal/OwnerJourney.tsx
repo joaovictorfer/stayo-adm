@@ -1,4 +1,4 @@
-import { OwnerUtensilsGuide } from "@/components/portal/OwnerUtensilsGuide";
+import { OwnerGuide } from "@/components/portal/OwnerGuide";
 import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -1992,7 +1992,8 @@ function PropertyStep({
         </p>
       </div>
       <OwnerSuppliersSection token={token} />
-      <OwnerUtensilsGuide token={token} />
+      <OwnerGuide token={token} guideType="utensilios" />
+      <OwnerGuide token={token} guideType="enxoval" />
       <Actions
         onBack={onBack}
         onContinue={onContinue}

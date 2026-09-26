@@ -1,4 +1,4 @@
-import { sortCategories } from "@/lib/guides";
+import { guideDefaultCategories, guideTitle, sortCategories, type GuideType } from "@/lib/guides";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Circle, Loader2, Package, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -10,6 +10,7 @@ import {
   applyGuide,
   deleteGuideItem,
   isGuideReleased,
+  listCatalog,
   listGuide,
   reviewResponse,
   saveGuideItem,
@@ -46,16 +47,22 @@ const FILTERS: Array<{ id: GuideFilter; label: string }> = [
   { id: "nao_informados", label: "Não informados" },
 ];
 
-export function UtensilsGuidePanel({ implementationId }: { implementationId: string }) {
+export function GuidePanel({ implementationId, guideType = "utensilios" }: { implementationId: string; guideType?: GuideType }) {
   const qc = useQueryClient();
-  const key = ["guide", implementationId];
-  const q = useQuery({ queryKey: key, queryFn: () => listGuide(implementationId) });
-  const released = useQuery({ queryKey: [...key, "released"], queryFn: () => isGuideReleased(implementationId) });
+  const key = ["guide", implementationId, guideType];
+  const defaults = guideDefaultCategories[guideType];
+  const q = useQuery({ queryKey: key, queryFn: () => listGuide(implementationId, guideType) });
+  const released = useQuery({ queryKey: [...key, "released"], queryFn: () => isGuideReleased(implementationId, guideType) });
   const images = useQuery({
     queryKey: [...key, "images", (q.data ?? []).map((i) => i.image_path).join("|")],
     queryFn: () => signGuideImages((q.data ?? []).map((i) => i.image_path ?? "")),
     enabled: Boolean(q.data?.some((i) => i.image_path)),
     staleTime: 30 * 60_000,
+  });
+  const catalogCount = useQuery({
+    queryKey: ["guide-catalog", guideType, "count"],
+    queryFn: async () => (await listCatalog(guideType)).filter((c) => c.active).length,
+    enabled: q.data?.length === 0,
   });
   const [category, setCategory] = useState<string | null>(null);
   const [filter, setFilter] = useState<GuideFilter>("todos");
@@ -65,15 +72,15 @@ export function UtensilsGuidePanel({ implementationId }: { implementationId: str
   const invalidate = () => qc.invalidateQueries({ queryKey: key });
 
   const apply = useMutation({
-    mutationFn: () => applyGuide(implementationId),
+    mutationFn: () => applyGuide(implementationId, guideType),
     onSuccess: (n) => {
-      toast.success(n ? `${n} itens aplicados` : "Guia já estava aplicado");
+      toast.success(n ? `${n} itens aplicados` : "Nenhum item novo no catálogo");
       void invalidate();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível aplicar."),
   });
   const release = useMutation({
-    mutationFn: (v: boolean) => setGuideReleased(implementationId, v),
+    mutationFn: (v: boolean) => setGuideReleased(implementationId, v, guideType),
     onSuccess: () => void invalidate(),
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível alterar."),
   });
@@ -89,7 +96,7 @@ export function UtensilsGuidePanel({ implementationId }: { implementationId: str
   });
 
   const items = q.data ?? [];
-  const categories = useMemo(() => sortCategories([...new Set(items.map((i) => i.category))]), [items]);
+  const categories = useMemo(() => sortCategories([...new Set(items.map((i) => i.category))], defaults), [items]);
   const activeCategory = category ?? categories[0] ?? null;
   const summary = summarizeGuide(items.filter((i) => i.enabled).map(toRow));
   const visible = items.filter(
@@ -110,15 +117,19 @@ export function UtensilsGuidePanel({ implementationId }: { implementationId: str
     return (
       <div className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] border p-5" style={surface}>
         <Package className="size-6" style={{ color: "var(--stayo-forest)" }} />
-        <p className="font-medium">Nenhum item no guia desta implantação.</p>
-        <p className="text-sm" style={muted}>Aplique as recomendações da STAYO e personalize depois.</p>
-        <div className="flex gap-2">
-          <Button className="min-h-11" disabled={apply.isPending} onClick={() => apply.mutate()}>
-            {apply.isPending && <Loader2 className="animate-spin" />} Aplicar guia STAYO
+        <p className="font-medium">Nenhum {guideTitle[guideType].toLowerCase()} aplicado.</p>
+        <p className="text-sm" style={muted}>
+          {catalogCount.data === 0
+            ? "O catálogo STAYO deste guia ainda está vazio. Comece vazio ou cadastre o catálogo em Configurações."
+            : `Modelo padrão STAYO${catalogCount.data ? ` · ${catalogCount.data} itens` : ""}. A aplicação gera uma cópia; mudanças futuras no catálogo não alteram esta implantação.`}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button className="min-h-11" disabled={apply.isPending || !catalogCount.data} onClick={() => apply.mutate()}>
+            {apply.isPending && <Loader2 className="animate-spin" />} Aplicar modelo STAYO
           </Button>
-          <Button variant="outline" className="min-h-11" onClick={() => setEditing("new")}><Plus /> Item</Button>
+          <Button variant="outline" className="min-h-11" onClick={() => setEditing("new")}><Plus /> Começar vazio</Button>
         </div>
-        {editing && <EditorFor implementationId={implementationId} item={null} categories={categories} imageUrl={null} onClose={() => setEditing(null)} onSaved={invalidate} />}
+        {editing && <EditorFor implementationId={implementationId} guideType={guideType} item={null} categories={categories} imageUrl={null} defaultCategory={defaults[0]!} onClose={() => setEditing(null)} onSaved={invalidate} />}
       </div>
     );
 
@@ -178,7 +189,7 @@ export function UtensilsGuidePanel({ implementationId }: { implementationId: str
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{i.name}</span>
                     <span className="block truncate text-xs" style={muted}>
-                      {i.quantity_text || `${i.recommended_quantity} un.`} · {classificationLabel[i.classification]}
+                      {i.quantity_text || `${i.recommended_quantity} un.`}{i.size_text ? ` · ${i.size_text}` : ""} · {classificationLabel[i.classification]}
                     </span>
                     <StatusLine item={i} status={st} />
                   </span>
@@ -203,10 +214,11 @@ export function UtensilsGuidePanel({ implementationId }: { implementationId: str
       {editing && (
         <EditorFor
           implementationId={implementationId}
+          guideType={guideType}
           item={editing === "new" ? null : editing}
           categories={categories}
           imageUrl={editing !== "new" ? imageOf(editing) : null}
-          defaultCategory={activeCategory ?? "Cozinha"}
+          defaultCategory={activeCategory ?? defaults[0]!}
           onClose={() => setEditing(null)}
           onSaved={invalidate}
         />
@@ -258,6 +270,7 @@ function DetailSheet({
         <p className="text-xs" style={muted}>{item.category} · {classificationLabel[item.classification]}</p>
         <h3 className="text-lg font-semibold">{item.name}</h3>
         <p className="text-sm">Recomendado: {item.quantity_text || item.recommended_quantity}</p>
+        {item.size_text && <p className="text-sm">Tamanho/especificação: {item.size_text}</p>}
         {item.description && <p className="mt-2 text-sm" style={muted}>{item.description}</p>}
         {item.tip && <p className="mt-2 rounded-lg p-3 text-sm" style={{ backgroundColor: "var(--stayo-forest-soft)" }}><strong>Dica STAYO:</strong> {item.tip}</p>}
         {item.purchase_url && <a href={item.purchase_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline">Indicação de compra ↗</a>}
@@ -304,6 +317,7 @@ function DetailSheet({
 
 function EditorFor({
   implementationId,
+  guideType,
   item,
   categories,
   imageUrl,
@@ -312,6 +326,7 @@ function EditorFor({
   onSaved,
 }: {
   implementationId: string;
+  guideType: GuideType;
   item: ImplementationGuideItem | null;
   categories: string[];
   imageUrl: string | null;
@@ -325,6 +340,7 @@ function EditorFor({
         name: item.name,
         recommended_quantity: item.recommended_quantity,
         quantity_text: item.quantity_text,
+        size_text: item.size_text,
         description: item.description,
         tip: item.tip,
         purchase_url: item.purchase_url,
@@ -339,13 +355,15 @@ function EditorFor({
       open
       onClose={onClose}
       initial={initial}
-      categories={[...new Set(["Cozinha", "Quartos", "Banheiros", ...categories])]}
+      categories={[...new Set([...guideDefaultCategories[guideType], ...categories])]}
+      eyebrow={guideTitle[guideType]}
+      showSize={guideType === "enxoval"}
       imageUrl={imageUrl}
       isNew={!item}
       mode="implementation"
       onUpload={(file) => uploadGuideImage("implementations", implementationId, file)}
       onSave={async (v, also) => {
-        await saveGuideItem(implementationId, item?.id ?? null, v, also);
+        await saveGuideItem(implementationId, item?.id ?? null, v, also, guideType);
         toast.success("Item salvo");
         onSaved();
       }}
@@ -358,5 +376,20 @@ function EditorFor({
           }
         : {})}
     />
+  );
+}
+
+/** Resumo compacto para a linha da ficha: recomendações, concluídas, a confirmar e portal. */
+export function GuideSummary({ implementationId, guideType }: { implementationId: string; guideType: GuideType }) {
+  const key = ["guide", implementationId, guideType];
+  const q = useQuery({ queryKey: key, queryFn: () => listGuide(implementationId, guideType) });
+  const released = useQuery({ queryKey: [...key, "released"], queryFn: () => isGuideReleased(implementationId, guideType) });
+  if (!q.data) return <>Carregando…</>;
+  if (!q.data.length) return <>Nenhum guia aplicado</>;
+  const s = summarizeGuide(q.data.filter((i) => i.enabled).map(toRow));
+  return (
+    <>
+      {s.total} recomendações · {s.confirmadas} concluídas · {s.aConfirmar} a confirmar · Portal: {released.data ? "Visível" : "Privado"}
+    </>
   );
 }

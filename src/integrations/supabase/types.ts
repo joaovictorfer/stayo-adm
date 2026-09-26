@@ -316,6 +316,7 @@ export type Database = {
           purchase_url: string | null
           quantity_text: string | null
           recommended_quantity: number
+          size_text: string | null
           tip: string | null
           updated_at: string
         }
@@ -333,6 +334,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          size_text?: string | null
           tip?: string | null
           updated_at?: string
         }
@@ -350,6 +352,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          size_text?: string | null
           tip?: string | null
           updated_at?: string
         }
@@ -741,6 +744,7 @@ export type Database = {
           purchase_url: string | null
           quantity_text: string | null
           recommended_quantity: number
+          size_text: string | null
           tip: string | null
           updated_at: string
         }
@@ -760,6 +764,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          size_text?: string | null
           tip?: string | null
           updated_at?: string
         }
@@ -779,6 +784,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          size_text?: string | null
           tip?: string | null
           updated_at?: string
         }
@@ -3145,6 +3151,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["admin_role"]
       }
+      guide_block_for: { Args: { p_guide_type: string }; Returns: string }
       has_admin_role: {
         Args: { roles: Database["public"]["Enums"]["admin_role"][] }
         Returns: boolean
@@ -3180,8 +3187,12 @@ export type Database = {
         Args: { p_implementation_id: string }
         Returns: Json
       }
-      owner_guide_image_paths: { Args: { p_token: string }; Returns: Json }
-      owner_guide_resolve: { Args: { p_token: string }; Returns: Json }
+      owner_guide_image_paths:
+        | { Args: { p_token: string }; Returns: Json }
+        | { Args: { p_guide_type: string; p_token: string }; Returns: Json }
+      owner_guide_resolve:
+        | { Args: { p_token: string }; Returns: Json }
+        | { Args: { p_guide_type: string; p_token: string }; Returns: Json }
       owner_guide_save: {
         Args: {
           p_answer: string

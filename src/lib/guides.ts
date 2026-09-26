@@ -1,5 +1,12 @@
 export type GuideClassification = "essencial" | "recomendado" | "opcional";
 export type GuideAnswer = "nao_informado" | "ja_tenho" | "ja_comprei";
+export type GuideType = "utensilios" | "enxoval";
+export const guideBlock: Record<GuideType, "utensils_guide" | "guia_enxoval"> = { utensilios: "utensils_guide", enxoval: "guia_enxoval" };
+export const guideTitle: Record<GuideType, string> = { utensilios: "Guia de utensílios", enxoval: "Guia de enxoval" };
+export const guideDefaultCategories: Record<GuideType, string[]> = {
+  utensilios: ["Cozinha", "Quartos", "Banheiros"],
+  enxoval: ["Cama", "Banho", "Cozinha", "Complementos"],
+};
 export type GuideReview = "pendente" | "confirmado" | "corrigido" | "rejeitado";
 
 export const classificationLabel: Record<GuideClassification, string> = {
@@ -74,11 +81,11 @@ export function validateImage(file: { type: string; size: number; name: string }
   return null;
 }
 
-const CATEGORY_ORDER = ["Cozinha", "Quartos", "Banheiros"];
-export function sortCategories(list: string[]): string[] {
+const CATEGORY_ORDER = ["Cozinha", "Quartos", "Banheiros", "Cama", "Banho", "Complementos"];
+export function sortCategories(list: string[], order: string[] = CATEGORY_ORDER): string[] {
   const rank = (c: string) => {
-    const i = CATEGORY_ORDER.indexOf(c);
-    return i === -1 ? CATEGORY_ORDER.length : i;
+    const i = order.indexOf(c);
+    return i === -1 ? order.length : i;
   };
   return [...list].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 }
