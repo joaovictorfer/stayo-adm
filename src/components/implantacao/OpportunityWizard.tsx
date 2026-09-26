@@ -33,6 +33,8 @@ import {
 import { useOpportunityAutosave, type SaveState } from "../../hooks/use-opportunity-autosave";
 import { formatBrazilianPhone } from "../../lib/owner-form-validation";
 import type { ImplementationProject } from "../../types/core";
+import { supabase } from "@/integrations/supabase/client";
+import { contractRowToSnapshot, implementationDecisionItems } from "../../lib/contract-conditions";
 
 export const WIZARD_STEPS = [
   { id: "proprietario", label: "Proprietário" },
@@ -743,6 +745,22 @@ function Review({
     queryFn: () => loadOpportunityForm(i.id).then((r) => r.sources),
   });
   const sourceOf = (f: string) => sourcesQ.data?.find((s) => s.field === f)?.source;
+  const decisionsQ = useQuery({
+    queryKey: ["implementation-decisions", "review", i.id],
+    queryFn: async () => {
+      const [{ data }, { data: linen }] = await Promise.all([
+        supabase.from("implementation_contract_conditions").select("*").eq("implementation_id", i.id).maybeSingle(),
+        supabase.from("implementation_supply_items").select("name,required_qty,existing_qty,unit_cost")
+          .eq("implementation_id", i.id).eq("module", "enxoval"),
+      ]);
+      const snap = contractRowToSnapshot(data as Record<string, unknown> | null);
+      snap.linenMissingItems = (linen ?? [])
+        .filter((l) => l.required_qty > l.existing_qty)
+        .map((l) => ({ name: l.name, qty: l.required_qty - l.existing_qty, unitCost: l.unit_cost }));
+      return implementationDecisionItems(snap);
+    },
+  });
+  const decisionValue = (label: string) => decisionsQ.data?.find((d) => d.label === label)?.value ?? null;
   const rows: Array<{ step: WizardStep; field?: FormField; label: string; value: string | null }> = [
     { step: "proprietario", field: "nickname", label: "Título", value: values.nickname || i.nickname || null },
     { step: "proprietario", label: "Proprietário", value: i.ownerName || null },
@@ -757,6 +775,9 @@ function Review({
       label: FIELD_LABELS.owner_facing_notes,
       value: values.owner_facing_notes || null,
     },
+    { step: "condicoes", label: "Limpeza de implantação", value: decisionValue("Limpeza de implantação") },
+    { step: "condicoes", label: "Enxoval", value: decisionValue("Enxoval") },
+    { step: "condicoes", label: "Assessoria", value: decisionValue("Assessoria") },
   ];
   const filled = rows.filter((r) => r.value).length;
   return (
