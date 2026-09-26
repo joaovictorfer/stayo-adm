@@ -27,6 +27,7 @@ import { Route as FinanceiroIdRouteImport } from './routes/financeiro.$id'
 import { Route as FinanceiroDespesasPrototipoRouteImport } from './routes/financeiro.despesas-prototipo'
 import { Route as FinanceiroFaturasPrototipoRouteImport } from './routes/financeiro.faturas-prototipo'
 import { Route as FinanceiroFechamentosPrototipoRouteImport } from './routes/financeiro.fechamentos-prototipo'
+import { Route as FinanceiroOrcamentosPrototipoRouteImport } from './routes/financeiro.orcamentos-prototipo'
 import { Route as FinanceiroPrototipoRouteImport } from './routes/financeiro.prototipo'
 import { Route as FinanceiroReceberPrototipoRouteImport } from './routes/financeiro.receber-prototipo'
 import { Route as FinanceiroRepassesPrototipoRouteImport } from './routes/financeiro.repasses-prototipo'
@@ -158,6 +159,12 @@ const FinanceiroFechamentosPrototipoRoute =
   FinanceiroFechamentosPrototipoRouteImport.update({
     id: '/financeiro/fechamentos-prototipo',
     path: '/financeiro/fechamentos-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const FinanceiroOrcamentosPrototipoRoute =
+  FinanceiroOrcamentosPrototipoRouteImport.update({
+    id: '/financeiro/orcamentos-prototipo',
+    path: '/financeiro/orcamentos-prototipo',
     getParentRoute: () => rootRouteImport,
   } as any)
 const FinanceiroPrototipoRoute = FinanceiroPrototipoRouteImport.update({
@@ -370,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
+  '/financeiro/orcamentos-prototipo': typeof FinanceiroOrcamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/financeiro/repasses-prototipo': typeof FinanceiroRepassesPrototipoRoute
@@ -428,6 +436,7 @@ export interface FileRoutesByTo {
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
+  '/financeiro/orcamentos-prototipo': typeof FinanceiroOrcamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/financeiro/repasses-prototipo': typeof FinanceiroRepassesPrototipoRoute
@@ -487,6 +496,7 @@ export interface FileRoutesById {
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
+  '/financeiro/orcamentos-prototipo': typeof FinanceiroOrcamentosPrototipoRoute
   '/financeiro/prototipo': typeof FinanceiroPrototipoRoute
   '/financeiro/receber-prototipo': typeof FinanceiroReceberPrototipoRoute
   '/financeiro/repasses-prototipo': typeof FinanceiroRepassesPrototipoRoute
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
     | '/financeiro/fechamentos-prototipo'
+    | '/financeiro/orcamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
     | '/financeiro/repasses-prototipo'
@@ -605,6 +616,7 @@ export interface FileRouteTypes {
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
     | '/financeiro/fechamentos-prototipo'
+    | '/financeiro/orcamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
     | '/financeiro/repasses-prototipo'
@@ -663,6 +675,7 @@ export interface FileRouteTypes {
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
     | '/financeiro/fechamentos-prototipo'
+    | '/financeiro/orcamentos-prototipo'
     | '/financeiro/prototipo'
     | '/financeiro/receber-prototipo'
     | '/financeiro/repasses-prototipo'
@@ -722,6 +735,7 @@ export interface RootRouteChildren {
   FinanceiroDespesasPrototipoRoute: typeof FinanceiroDespesasPrototipoRoute
   FinanceiroFaturasPrototipoRoute: typeof FinanceiroFaturasPrototipoRoute
   FinanceiroFechamentosPrototipoRoute: typeof FinanceiroFechamentosPrototipoRoute
+  FinanceiroOrcamentosPrototipoRoute: typeof FinanceiroOrcamentosPrototipoRoute
   FinanceiroPrototipoRoute: typeof FinanceiroPrototipoRoute
   FinanceiroReceberPrototipoRoute: typeof FinanceiroReceberPrototipoRoute
   FinanceiroRepassesPrototipoRoute: typeof FinanceiroRepassesPrototipoRoute
@@ -892,6 +906,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/fechamentos-prototipo'
       fullPath: '/financeiro/fechamentos-prototipo'
       preLoaderRoute: typeof FinanceiroFechamentosPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/orcamentos-prototipo': {
+      id: '/financeiro/orcamentos-prototipo'
+      path: '/financeiro/orcamentos-prototipo'
+      fullPath: '/financeiro/orcamentos-prototipo'
+      preLoaderRoute: typeof FinanceiroOrcamentosPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro/prototipo': {
@@ -1178,6 +1199,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroDespesasPrototipoRoute: FinanceiroDespesasPrototipoRoute,
   FinanceiroFaturasPrototipoRoute: FinanceiroFaturasPrototipoRoute,
   FinanceiroFechamentosPrototipoRoute: FinanceiroFechamentosPrototipoRoute,
+  FinanceiroOrcamentosPrototipoRoute: FinanceiroOrcamentosPrototipoRoute,
   FinanceiroPrototipoRoute: FinanceiroPrototipoRoute,
   FinanceiroReceberPrototipoRoute: FinanceiroReceberPrototipoRoute,
   FinanceiroRepassesPrototipoRoute: FinanceiroRepassesPrototipoRoute,
