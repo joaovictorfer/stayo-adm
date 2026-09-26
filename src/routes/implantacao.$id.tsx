@@ -604,7 +604,7 @@ function ImplementationDetailPage() {
                       <SummaryHeading>Implantação</SummaryHeading>
                       <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
                         <SummaryRow label="Etapa" value={statusLabels[implementation.status]} />
-                        <SummaryRow label="Responsável" value={implementation.responsibleUserId} />
+                        <SummaryRow label="Responsável" value={responsibleName} />
                         <SummaryRow
                           label="Previsão"
                           value={implementation.completionDateEstimate}
@@ -1574,11 +1574,14 @@ function OwnerPortalPanel({
 
       {submission && (
         <details
+          open
           className="mt-3 rounded-[var(--radius-control)] border p-3"
           style={{ borderColor: "var(--stayo-border)" }}
         >
           <summary className="cursor-pointer text-xs font-medium">
-            Ver dados recebidos pelo link
+            {submission.submittedAt
+              ? "Dados enviados pelo proprietário — revisar"
+              : "Preenchido pelo proprietário (em andamento) — revisar"}
           </summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="Nome completo" value={submission.fullName} />
