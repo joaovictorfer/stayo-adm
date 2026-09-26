@@ -487,6 +487,10 @@ export type Database = {
       implementation_contract_conditions: {
         Row: {
           administration_fee: number | null
+          advisory_full_desc: string | null
+          advisory_implementation_desc: string | null
+          advisory_mode: string | null
+          advisory_services: Json
           assignment_mode: string | null
           assignment_notice_days: number | null
           assignment_procedure: string | null
@@ -497,8 +501,11 @@ export type Database = {
           implementation_id: string
           initial_cleaning_cost_bearer: string | null
           initial_cleaning_fee: number | null
+          initial_cleaning_notes: string | null
           initial_cleaning_option: string | null
           initial_cleaning_other: string | null
+          linen_mode: string | null
+          linen_notes: string | null
           maintenance_limit: number | null
           notice_period_days: number | null
           owner_use_limit_days: number | null
@@ -514,6 +521,10 @@ export type Database = {
         }
         Insert: {
           administration_fee?: number | null
+          advisory_full_desc?: string | null
+          advisory_implementation_desc?: string | null
+          advisory_mode?: string | null
+          advisory_services?: Json
           assignment_mode?: string | null
           assignment_notice_days?: number | null
           assignment_procedure?: string | null
@@ -524,8 +535,11 @@ export type Database = {
           implementation_id: string
           initial_cleaning_cost_bearer?: string | null
           initial_cleaning_fee?: number | null
+          initial_cleaning_notes?: string | null
           initial_cleaning_option?: string | null
           initial_cleaning_other?: string | null
+          linen_mode?: string | null
+          linen_notes?: string | null
           maintenance_limit?: number | null
           notice_period_days?: number | null
           owner_use_limit_days?: number | null
@@ -541,6 +555,10 @@ export type Database = {
         }
         Update: {
           administration_fee?: number | null
+          advisory_full_desc?: string | null
+          advisory_implementation_desc?: string | null
+          advisory_mode?: string | null
+          advisory_services?: Json
           assignment_mode?: string | null
           assignment_notice_days?: number | null
           assignment_procedure?: string | null
@@ -551,8 +569,11 @@ export type Database = {
           implementation_id?: string
           initial_cleaning_cost_bearer?: string | null
           initial_cleaning_fee?: number | null
+          initial_cleaning_notes?: string | null
           initial_cleaning_option?: string | null
           initial_cleaning_other?: string | null
+          linen_mode?: string | null
+          linen_notes?: string | null
           maintenance_limit?: number | null
           notice_period_days?: number | null
           owner_use_limit_days?: number | null
