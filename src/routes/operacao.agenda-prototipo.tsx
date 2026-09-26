@@ -159,9 +159,12 @@ function AgendaPrototype() {
     <div className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
         <span className="font-medium">Ferramenta de protótipo · estado da tela</span>
-        <div className="ml-auto max-w-full overflow-x-auto">
+        <div className="ml-auto hidden sm:block">
           <PeriodFilter value={demo} onChange={setDemo} options={demoOptions} />
         </div>
+        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
+          {demoOptions.map((o) => <option key={o.value} value={o.value}>Estado: {o.label}</option>)}
+        </select>
       </div>
 
       <OperacaoPrototypeNav />
@@ -184,7 +187,7 @@ function AgendaPrototype() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <Filter label="Imóvel" value={fProp} onChange={setFProp} options={PROPS.map((p) => [p, p])} all="Todos os imóveis" />
         <Filter label="Tipo de evento" value={fKind} onChange={setFKind} options={Object.entries(KIND).map(([k, v]) => [k, v.label])} all="Todos os tipos" />
         <Filter label="Status" value={fStatus} onChange={setFStatus} options={Object.entries(STATUS).map(([k, v]) => [k, v.label])} all="Todos os status" />

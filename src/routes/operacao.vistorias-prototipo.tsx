@@ -191,7 +191,7 @@ function InspectionsPrototype() {
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
             Filtros{activeFilters > 0 ? ` (${activeFilters})` : ""}
           </button>
-          <div className={`${showFilters ? "grid" : "hidden"} mb-4 grid-cols-2 gap-2 lg:grid lg:grid-cols-5`}>
+          <div className={`${showFilters ? "grid" : "hidden"} mb-4 grid-cols-2 gap-2 lg:grid lg:grid-cols-3 xl:grid-cols-5`}>
             <Filter label="Imóvel" value={f.prop} onChange={set("prop")} all="Todos os imóveis" options={PROPS.map((p) => [p, p])} />
             <Filter label="Tipo" value={f.kind} onChange={set("kind")} all="Todos os tipos" options={Object.entries(KIND)} />
             <Filter label="Status" value={f.status} onChange={set("status")} all="Todos os status" options={Object.entries(STATUS).map(([k, v]) => [k, v.label])} />

@@ -134,7 +134,7 @@ function DespesasPrototype() {
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
         <span className="font-medium">Protótipo visual · somente leitura</span>
         <div className="ml-auto hidden sm:block"><PeriodFilter value={demo} onChange={setDemo} options={stateOptions} /></div>
-        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input ml-auto h-9 px-2 text-xs sm:hidden">
+        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
           {stateOptions.map((o) => <option key={o.value} value={o.value}>Estado: {o.label}</option>)}
         </select>
       </div>
@@ -147,7 +147,7 @@ function DespesasPrototype() {
         <Search className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" aria-hidden="true" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar imóvel, fornecedor ou código" aria-label="Buscar imóvel, fornecedor ou código" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
       </label>
-      <div className="mb-4 hidden gap-2 md:grid md:grid-cols-3 xl:grid-cols-6">{filters}</div>
+      <div className="mb-4 hidden gap-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{filters}</div>
       <details className="admin-panel mb-4 md:hidden">
         <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 text-sm font-medium text-[var(--admin-text)]">
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Filtros
@@ -217,9 +217,9 @@ function DespesasPrototype() {
                           className={`cursor-pointer border-l-4 ${f?.priority.tone === "danger" ? "border-l-[var(--admin-danger,#b42318)]" : "border-l-transparent"}`}>
                           <td className="px-4 py-3">
                             <p className="font-medium text-[var(--admin-text)]">{e.code} · {CATEGORY[e.category]}</p>
-                            <p className="truncate text-xs text-[var(--admin-muted)]">{e.property} · Responsável: {RESP[e.resp]}</p>
+                            <p className="text-xs text-[var(--admin-muted)]">{e.property} · Responsável: {RESP[e.resp]}</p>
                           </td>
-                          <td className="truncate px-2 py-3 text-[var(--admin-text)]">{e.supplier}</td>
+                          <td className="break-words px-2 py-3 text-[var(--admin-text)]">{e.supplier}</td>
                           <td className="px-2 py-3 tabular-nums">{e.due}</td>
                           <td className="px-2 py-3 text-right font-semibold tabular-nums">{brl(e.amount)}</td>
                           <td className="px-4 py-3">

@@ -121,7 +121,7 @@ function FechamentosPrototype() {
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
         <span className="font-medium">Protótipo visual · somente leitura</span>
         <div className="ml-auto hidden sm:block"><PeriodFilter value={demo} onChange={setDemo} options={stateOptions} /></div>
-        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input ml-auto h-9 px-2 text-xs sm:hidden">
+        <select aria-label="Estado do protótipo" value={demo} onChange={(e) => setDemo(e.target.value as DemoState)} className="admin-input h-9 w-full px-2 text-xs sm:hidden">
           {stateOptions.map((o) => <option key={o.value} value={o.value}>Estado: {o.label}</option>)}
         </select>
       </div>
@@ -134,7 +134,7 @@ function FechamentosPrototype() {
         <Search className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" aria-hidden="true" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar imóvel ou código" aria-label="Buscar imóvel ou código" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
       </label>
-      <div className="mb-4 hidden gap-2 md:grid md:grid-cols-4">{filters}</div>
+      <div className="mb-4 hidden gap-2 md:grid md:grid-cols-2 xl:grid-cols-4">{filters}</div>
       <details className="admin-panel mb-4 md:hidden">
         <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 text-sm font-medium text-[var(--admin-text)]">
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Filtros
@@ -190,7 +190,7 @@ function FechamentosPrototype() {
                           className={`cursor-pointer border-l-4 ${f?.strong ? "border-l-[var(--admin-warning,#b54708)]" : "border-l-transparent"} ${c.status === "substituido" ? "bg-[var(--admin-surface-muted,transparent)]" : ""}`}>
                           <td className="px-4 py-3">
                             <p className="font-medium text-[var(--admin-text)]">{c.code} · {c.property}</p>
-                            <p className="truncate text-xs text-[var(--admin-muted)]">Competência {c.period} · {c.owner}</p>
+                            <p className="text-xs text-[var(--admin-muted)]">Competência {c.period} · {c.owner}</p>
                           </td>
                           <td className="px-2 py-3 text-right tabular-nums">{money(c, c.gross)}</td>
                           <td className="px-2 py-3 text-right tabular-nums">{money(c, c.deductions)}</td>

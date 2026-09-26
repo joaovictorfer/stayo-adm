@@ -243,7 +243,7 @@ function TasksPrototype() {
               Filtros{activeFilters > 0 ? ` (${activeFilters})` : ""}
             </button>
           </div>
-          <div className={`${showFilters ? "grid" : "hidden"} mb-3 grid-cols-2 gap-2 lg:grid lg:grid-cols-6`}>
+          <div className={`${showFilters ? "grid" : "hidden"} mb-3 grid-cols-2 gap-2 lg:grid lg:grid-cols-3 xl:grid-cols-6`}>
             <Filter label="Imóvel" value={f.prop} onChange={set("prop")} all="Todos os imóveis" options={PROPS.map((p) => [p, p])} />
             <Filter label="Tipo" value={f.kind} onChange={set("kind")} all="Todos os tipos" options={Object.entries(KIND)} />
             <Filter label="Status" value={f.status} onChange={set("status")} all="Todos os status" options={Object.entries(STATUS).map(([k, v]) => [k, v.label])} />
