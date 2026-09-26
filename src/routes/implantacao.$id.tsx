@@ -234,6 +234,57 @@ function ImplementationDetailPage() {
         ? "Item do checklist"
         : null;
 
+  const section: FichaSection = search.secao ?? "visao";
+  const goSection = (secao: FichaSection) => {
+    setProposalEditing(false);
+    void navigate({ search: { secao: secao === "visao" ? undefined : secao }, resetScroll: false });
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  };
+  const [proposalEditing, setProposalEditing] = useState(false);
+  const proposalsQuery = useQuery({
+    queryKey: ["commercial-proposals", id],
+    queryFn: () => commercialProposalsApi.list(id),
+    retry: 1,
+  });
+  const latestProposal = [...(proposalsQuery.data ?? [])]
+    .filter((p) => p.status !== "superseded")
+    .sort((a, b) => b.version - a.version)[0];
+  const submissionQuery = useQuery(ownerOnboardingSubmissionQuery(id));
+  const intakeSubmitted = Boolean(submissionQuery.data?.submittedAt);
+  const conditionsQuery = useQuery({
+    queryKey: ["implementation-contract-conditions", id, "summary"],
+    queryFn: async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("implementation_contract_conditions")
+        .select("administration_fee, turnover_cleaning_fee")
+        .eq("implementation_id", id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const conditions = conditionsQuery.data;
+  const action = nextAction({
+    hasOwnerName: Boolean(implementation?.ownerName),
+    hasOwnerPhone: Boolean(implementation?.ownerPhone),
+    missingPropertyFields,
+    proposalStatus: latestProposal?.status ?? null,
+    intakeSubmitted,
+    pendingItems: pendingItems.length,
+    pendingBlockers: readiness.pendingBlockers,
+    commercialAction: commercial?.nextActionTitle ?? null,
+  });
+  const history: TimelineEntry[] = [
+    ...(implementation ? [{ id: "created", label: "Oportunidade criada", timestamp: implementation.createdAt, actor: null }] : []),
+    ...(proposalsQuery.data ?? []).flatMap((p) => [
+      { id: `p-${p.id}`, label: `Proposta v${p.version} criada`, timestamp: p.createdAt, actor: null },
+      ...(p.publishedAt ? [{ id: `pp-${p.id}`, label: `Proposta v${p.version} publicada`, timestamp: p.publishedAt, actor: null }] : []),
+      ...(p.acceptedAt ? [{ id: `pa-${p.id}`, label: `Proposta v${p.version} aceita por ${p.acceptedName ?? "proprietário"}`, timestamp: p.acceptedAt, actor: null }] : []),
+    ]),
+    ...(submissionQuery.data?.submittedAt ? [{ id: "intake", label: "Cadastro do proprietário enviado", timestamp: submissionQuery.data.submittedAt, actor: null }] : []),
+    ...recentActivity(items),
+  ].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+
   const shareWorkspace = async () => {
     if (typeof window === "undefined") return;
     if (navigator.share) {
@@ -312,452 +363,234 @@ function ImplementationDetailPage() {
           }}
         />
       ) : (
-        <div className="implementation-workspace-stack">
-          <section
-            className="overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm"
+        <div className="flex flex-col gap-4">
+          <header
+            className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm sm:p-5"
             style={{ borderColor: "var(--stayo-border)" }}
             aria-label="Resumo da implantação"
           >
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 p-4 sm:p-5">
-              <div className="flex min-w-0 items-start gap-3">
-                <div className="relative hidden size-14 shrink-0 overflow-hidden rounded-[var(--radius-control)] bg-[var(--stayo-forest)] sm:block">
-                  {adminCover && (
-                    <img
-                      src={adminCover}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p
-                    className="text-[11px] font-medium uppercase tracking-[0.12em]"
-                    style={{ color: "var(--stayo-ink-muted)" }}
-                  >
-                    {implementation.code}
-                  </p>
-                  <h1
-                    className="truncate text-lg font-semibold sm:text-xl"
-                    style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-                  >
-                    {propertyName}
-                  </h1>
-                  <p
-                    className="mt-0.5 truncate text-xs sm:text-sm"
-                    style={{ color: "var(--stayo-ink-muted)" }}
-                  >
-                    {implementation.ownerName
-                      ? `Proprietário: ${implementation.ownerName}`
-                      : "Proprietário ainda não informado"}
-                    {" · "}
-                    Responsável: {responsibleName}
-                  </p>
-                </div>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}>
+                  {propertyName}
+                </h1>
+                <p className="truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                  {implementation.code} · {statusLabels[implementation.status]} · Responsável: {responsibleName}
+                </p>
+                <p className="mt-1 truncate text-sm" style={{ color: "var(--stayo-ink)" }}>
+                  {implementation.ownerName || "Proprietário não informado"}
+                  {implementation.ownerPhone ? ` · ${formatBrazilianPhone(implementation.ownerPhone.replace(/^55/, ""))}` : ""}
+                </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="implementation-status-pill">
-                  <span aria-hidden="true" />
-                  {statusLabels[implementation.status]}
-                </span>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="size-9"
-                  onClick={() => void shareWorkspace()}
-                  aria-label="Compartilhar ficha com a equipe"
+                  size="sm"
+                  onClick={() => {
+                    window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
+                    void navigate({ search: { etapa: "contato" } });
+                  }}
                 >
+                  <Pencil /> <span className="hidden sm:inline">Editar</span>
+                </Button>
+                <Button variant="outline" size="icon" className="size-9" onClick={() => void shareWorkspace()} aria-label="Compartilhar ficha com a equipe">
                   <Share2 />
                 </Button>
               </div>
             </div>
-            <dl
-              className="grid grid-cols-2 border-t text-sm sm:grid-cols-4"
-              style={{ borderColor: "var(--stayo-border)" }}
-            >
-              <div
-                className="col-span-2 min-w-0 border-b p-3 sm:col-span-1 sm:border-b-0 sm:border-r sm:px-5"
-                style={{ borderColor: "var(--stayo-border)" }}
-              >
-                <dt
-                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-                  style={{ color: "var(--stayo-ink-muted)" }}
-                >
-                  Próxima ação
-                </dt>
-                <dd className="mt-1 truncate font-medium" style={{ color: "var(--stayo-ink)" }}>
-                  {nextActionLabel}
-                </dd>
-                {nextActionDetail && (
-                  <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {nextActionDetail}
-                  </dd>
-                )}
-              </div>
-              <div
-                className="min-w-0 border-r p-3 sm:px-5"
-                style={{ borderColor: "var(--stayo-border)" }}
-              >
-                <dt
-                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-                  style={{ color: "var(--stayo-ink-muted)" }}
-                >
-                  Pendências
-                </dt>
-                <dd
-                  className="mt-1 font-medium"
-                  style={{
-                    color: readiness.pendingBlockers ? "var(--stayo-danger)" : "var(--stayo-ink)",
-                  }}
-                >
-                  {itemsQuery.isPending
-                    ? "—"
-                    : itemsQuery.isError
-                      ? "Indisponível"
-                      : pendingItems.length}
-                </dd>
-                {!itemsQuery.isPending && !itemsQuery.isError && (
-                  <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {readiness.pendingMandatory} obrigatória(s) · {readiness.pendingBlockers}{" "}
-                    bloqueador(es)
-                  </dd>
-                )}
-              </div>
-              <div
-                className="min-w-0 p-3 sm:border-r sm:px-5"
-                style={{ borderColor: "var(--stayo-border)" }}
-              >
-                <dt
-                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-                  style={{ color: "var(--stayo-ink-muted)" }}
-                >
-                  Progresso
-                </dt>
-                <dd className="mt-1 font-medium" style={{ color: "var(--stayo-ink)" }}>
-                  {itemsQuery.isPending ? "—" : `${progress.percent}%`}
-                </dd>
-                <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-                  {progress.done} de {progress.total} itens
-                </dd>
-              </div>
-              <div
-                className="col-span-2 min-w-0 border-t p-3 sm:col-span-1 sm:border-t-0 sm:px-5"
-                style={{ borderColor: "var(--stayo-border)" }}
-              >
-                <dt
-                  className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-                  style={{ color: "var(--stayo-ink-muted)" }}
-                >
-                  Prontidão para operar
-                </dt>
-                <dd
-                  className="mt-1 font-medium"
-                  style={{
-                    color: itemsQuery.isPending ? undefined : readinessColors[readiness.state],
-                  }}
-                >
-                  {itemsQuery.isPending ? "—" : readinessLabels[readiness.state]}
-                </dd>
-                <dd className="truncate text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>
-                  Separada do progresso
-                </dd>
-              </div>
-            </dl>
-          </section>
+            <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+              <span className="rounded-full px-2.5 py-1" style={{ backgroundColor: "var(--stayo-bg)" }}>
+                Proposta: {latestProposal ? proposalStatusLabel[latestProposal.status] : "não criada"}
+              </span>
+              <span className="rounded-full px-2.5 py-1" style={{ backgroundColor: "var(--stayo-bg)" }}>
+                Cadastro: {intakeSubmitted ? "recebido" : "aguardando"}
+              </span>
+              <span className="rounded-full px-2.5 py-1" style={{ backgroundColor: "var(--stayo-bg)", color: readiness.pendingBlockers ? "var(--stayo-danger)" : undefined }}>
+                Prontidão {itemsQuery.isPending ? "—" : `${progress.percent}%`}
+                {readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}
+              </span>
+            </div>
+          </header>
 
-          {(
-            <>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
-                void navigate({ search: { etapa: "contato" } });
-              }}
-            >
-              Continuar cadastro da oportunidade
-            </Button>
-          </div>
-          <StatusStepper
-            status={implementation.status}
-            onChange={(status) => changeStatus.mutate(status)}
-            pending={changeStatus.isPending}
-          />
-
-          <nav className="implementation-tabs" aria-label="Seções da implantação">
-            {(
-              [
-                "resumo",
-                "proprietario",
-                "imovel",
-                "enxoval",
-                "itens_faltantes",
-                "checklist",
-                "proposta",
-              ] as const
-            ).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTab(t)}
-                className={tab === t ? "is-active" : undefined}
-                aria-current={tab === t ? "page" : undefined}
-              >
-                {t === "resumo"
-                  ? "Resumo"
-                  : t === "proprietario"
-                    ? "Proprietário"
-                    : t === "imovel"
-                      ? "Imóvel"
-                      : t === "enxoval"
-                        ? "Enxoval"
-                        : t === "itens_faltantes"
-                          ? "Itens faltantes"
-                          : t === "checklist"
-                            ? "Checklist"
-                            : "Proposta"}
-              </button>
-            ))}
-          </nav>
-
-          {tab === "resumo" ? (
-            <div className="implementation-summary">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)]">
-                <div className="min-w-0 space-y-6">
-                  <section>
-                    <p className="implementation-section-label">Recomendação</p>
-                    <div className="implementation-next-action">
-                      <h2
-                        className="text-xl font-semibold leading-snug sm:text-2xl"
-                        style={{
-                          fontFamily: "var(--stayo-font-display)",
-                          color: "var(--stayo-forest)",
-                        }}
-                      >
-                        {nextItem?.title ?? "Tudo em dia por enquanto"}
-                      </h2>
-                      <p
-                        className="mt-2 max-w-2xl text-sm leading-relaxed"
-                        style={{ color: "var(--stayo-ink-muted)" }}
-                      >
-                        {nextItem?.description ||
-                          "Revise o progresso e acompanhe as próximas etapas da implantação."}
-                      </p>
-                      {nextItem && (
-                        <Button size="sm" className="mt-3" onClick={() => setTab("checklist")}>
-                          <ListChecks /> Resolver agora <ChevronRight />
-                        </Button>
-                      )}
-                    </div>
-                  </section>
-
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <section>
-                      <SummaryHeading>Imóvel</SummaryHeading>
-                      <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-                        <SummaryRow label="Condomínio" value={implementation.condominiumName} />
-                        <SummaryRow label="Unidade" value={implementation.unit} />
-                        <SummaryRow label="Cidade" value={implementation.city} />
-                        <SummaryRow
-                          label="Perfil"
-                          value={
-                            [
-                              implementation.propertyType,
-                              implementation.bedrooms != null
-                                ? `${implementation.bedrooms} quarto(s)`
-                                : null,
-                              implementation.capacity != null
-                                ? `${implementation.capacity} hóspedes`
-                                : null,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ") || null
-                          }
-                        />
-                      </dl>
-                    </section>
-                    <section>
-                      <SummaryHeading>Proprietário</SummaryHeading>
-                      <div className="space-y-2 text-sm">
-                        {implementation.ownerId ? (
-                          <LinkedField
-                            to="/proprietarios/$id"
-                            id={implementation.ownerId}
-                            label={implementation.ownerName}
-                          />
-                        ) : (
-                          <p className="font-semibold" style={{ color: "var(--stayo-forest)" }}>
-                            {implementation.ownerName || "Não informado"}
-                          </p>
-                        )}
-                        <p style={{ color: "var(--stayo-ink-muted)" }}>
-                          {implementation.ownerPhone || "Telefone não informado"}
-                        </p>
-                      </div>
-                    </section>
-                    <section>
-                      <SummaryHeading>Implantação</SummaryHeading>
-                      <dl className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-                        <SummaryRow label="Etapa" value={statusLabels[implementation.status]} />
-                        <SummaryRow label="Responsável" value={responsibleName} />
-                        <SummaryRow
-                          label="Previsão"
-                          value={implementation.completionDateEstimate}
-                        />
-                      </dl>
-                    </section>
-                  </div>
-
-                  <CommercialTermsPanel implementationId={implementation.id} />
-                  <ContractConditionsPanel implementationId={implementation.id} />
-                </div>
-
-                <aside className="space-y-6">
-                  <section>
-                    <SummaryHeading>Pendências</SummaryHeading>
-                    {pendingItems.length === 0 && missingPropertyFields === 0 ? (
-                      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                        Nenhuma pendência aberta.
-                      </p>
-                    ) : (
-                      <ul className="space-y-4">
-                        {missingPropertyFields > 0 && (
-                          <li className="border-l-2 border-[var(--stayo-gold)] pl-3">
-                            <p
-                              className="text-sm font-medium"
-                              style={{ color: "var(--stayo-ink)" }}
-                            >
-                              {missingPropertyFields}{" "}
-                              {missingPropertyFields === 1
-                                ? "informação ainda precisa"
-                                : "informações ainda precisam"}{" "}
-                              ser completada{missingPropertyFields === 1 ? "" : "s"}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setTab("imovel")}
-                              className="mt-1 text-xs underline"
-                              style={{ color: "var(--stayo-forest)" }}
-                            >
-                              Completar dados do imóvel
-                            </button>
-                          </li>
-                        )}
-                        {pendingItems.slice(0, 5).map((item) => (
-                          <li
-                            key={item.id}
-                            className="border-l-2 pl-3"
-                            style={{
-                              borderColor: item.blocker
-                                ? "var(--stayo-danger)"
-                                : "var(--stayo-border)",
-                            }}
-                          >
-                            <p
-                              className="text-sm font-medium"
-                              style={{ color: "var(--stayo-ink)" }}
-                            >
-                              {item.title}
-                            </p>
-                            <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                              {item.blocker
-                                ? "Bloqueador crítico"
-                                : item.mandatory
-                                  ? "Obrigatório"
-                                  : itemStatusLabels[item.status]}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
+          <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-6">
+            <FichaNav
+              current={section}
+              onChange={goSection}
+              badges={{ implantacao: pendingItems.length ? String(pendingItems.length) : "" }}
+            />
+            <main className="min-w-0" aria-label={FICHA_SECTIONS.find((s) => s.id === section)?.label}>
+              {section === "visao" ? (
+                <div className="flex flex-col gap-4">
+                  <section className="rounded-[var(--radius-card)] border p-5" style={{ borderColor: "var(--stayo-forest)", backgroundColor: "var(--stayo-forest-soft)" }}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-forest)" }}>
+                      Próxima ação
+                    </p>
+                    <h2 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                      {action.title}
+                    </h2>
+                    <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                      {action.detail}
+                    </p>
+                    {action.cta && action.section !== "visao" && (
+                      <Button className="mt-3 min-h-11" onClick={() => goSection(action.section)}>
+                        {action.cta} <ChevronRight />
+                      </Button>
                     )}
                   </section>
-                  <section>
-                    <SummaryHeading>Reuniões</SummaryHeading>
-                    <MeetingSummary implementationId={implementation.id} />
-                  </section>
-                  <section>
-                    <SummaryHeading>Atividade recente</SummaryHeading>
-                    <Timeline entries={recentActivity(items).slice(0, 4)} />
-                  </section>
-                </aside>
-              </div>
-
-              <div className="mt-6 border-t pt-4" style={{ borderColor: "var(--stayo-border)" }}>
-                <details>
-                  <summary
-                    className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.14em]"
-                    style={{ color: "var(--stayo-ink-muted)" }}
-                  >
-                    Configurações operacionais
-                  </summary>
-                  <div className="mt-4 grid gap-4">
-                    <InitialChargesPanel implementationId={implementation.id} />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <OverviewCard
+                      title="Comercial"
+                      onOpen={() => goSection("proposta")}
+                      lines={[
+                        latestProposal ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}` : "Proposta não criada",
+                        latestProposal ? `Valor definido ${formatMoney(latestProposal.total)}` : null,
+                      ]}
+                    />
+                    <OverviewCard
+                      title="Imóvel"
+                      onOpen={() => goSection("imovel")}
+                      lines={[
+                        [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Sem identificação",
+                        [implementation.propertyType, implementation.bedrooms != null ? `${implementation.bedrooms} quarto(s)` : null].filter(Boolean).join(" · ") || null,
+                        missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos",
+                      ]}
+                    />
+                    <OverviewCard
+                      title="Implantação"
+                      onOpen={() => goSection("implantacao")}
+                      lines={[
+                        `Prontidão: ${itemsQuery.isPending ? "—" : readinessLabels[readiness.state]}`,
+                        `${pendingItems.length} pendência(s) · ${readiness.pendingBlockers} bloqueador(es)`,
+                      ]}
+                    />
+                    <OverviewCard
+                      title="Proprietário"
+                      onOpen={() => goSection("proprietario")}
+                      lines={[implementation.ownerName || "Não informado", `Cadastro ${intakeSubmitted ? "recebido" : "aguardando"}`]}
+                    />
                   </div>
-                </details>
-              </div>
-
-              <details
-                className="rounded-[var(--radius-card)] border bg-white shadow-sm"
-                style={{ borderColor: "var(--stayo-border)" }}
-              >
-                <summary
-                  className="cursor-pointer list-none px-4 py-3 text-sm font-medium"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  Detalhes técnicos e Integração (IDs e Registros)
-                </summary>
-                <div
-                  className="grid gap-3 border-t px-4 py-4 sm:grid-cols-2 text-xs"
-                  style={{ borderColor: "var(--stayo-border)" }}
-                >
-                  <Field label="ID da Implantação" value={implementation.id} />
-                  <Field label="Código" value={implementation.code} />
-                  {implementation.origin && <Field label="Origem" value={implementation.origin} />}
-                  {implementation.notes && (
-                    <Field label="Observações técnicas" value={implementation.notes} />
-                  )}
-                  {implementation.corePropertyId && (
-                    <Field label="Imóvel no Core" value={implementation.corePropertyId} />
-                  )}
-                  {implementation.coreOwnerId && (
-                    <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
-                  )}
-                  <Field label="Criada em" value={implementation.createdAt} />
-                  <Field label="Atualizada em" value={implementation.updatedAt} />
+                  <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
+                    <MeetingSummary implementationId={implementation.id} />
+                  </Collapsible>
+                  <Collapsible title="Etapa da implantação" summary={statusLabels[implementation.status]}>
+                    <StatusStepper status={implementation.status} onChange={(status) => changeStatus.mutate(status)} pending={changeStatus.isPending} />
+                  </Collapsible>
                 </div>
-                <div
-                  className="border-t p-4"
-                  style={{
-                    borderColor: "var(--stayo-border)",
-                    backgroundColor: "var(--stayo-surface)",
-                  }}
-                >
-                  <CoreConversionPanel implementation={implementation} />
+              ) : section === "proposta" ? (
+                proposalEditing ? (
+                  <div className="flex flex-col gap-4">
+                    <button type="button" onClick={() => setProposalEditing(false)} className="flex min-h-11 items-center gap-1 self-start text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
+                      <ArrowLeft className="size-4" /> Voltar ao resumo
+                    </button>
+                    <ProposalTab implementationId={implementation.id} />
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <section className="rounded-[var(--radius-card)] border bg-white p-5" style={{ borderColor: "var(--stayo-border)" }}>
+                      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {latestProposal ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}` : "Nenhuma versão criada"}
+                      </p>
+                      <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <div>
+                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Valor definido</dt>
+                          <dd className="text-lg font-semibold">{latestProposal ? formatMoney(latestProposal.total) : "—"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Taxa de administração</dt>
+                          <dd className="text-lg font-semibold">{conditions?.administration_fee != null ? `${conditions.administration_fee}%` : "A definir"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Limpeza comercial</dt>
+                          <dd className="text-lg font-semibold">{conditions?.turnover_cleaning_fee != null ? formatMoney(Number(conditions.turnover_cleaning_fee)) : "A definir"}</dd>
+                        </div>
+                      </dl>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button className="min-h-11" onClick={() => setProposalEditing(true)}>
+                          <Pencil /> {latestProposal?.status === "draft" ? "Editar e publicar" : "Editar proposta"}
+                        </Button>
+                        <Button asChild variant="outline" className="min-h-11">
+                          <Link to="/portal/previa/$id" params={{ id: implementation.id }} target="_blank">
+                            <Eye /> Ver como proprietário
+                          </Link>
+                        </Button>
+                      </div>
+                    </section>
+                    <Collapsible title="Condições comerciais e contratuais" summary="Taxas, limpeza, vigência, uso próprio">
+                      <ContractConditionsPanel implementationId={implementation.id} />
+                    </Collapsible>
+                    <Collapsible title="Termos comerciais" summary="Cobranças e percentuais">
+                      <CommercialTermsPanel implementationId={implementation.id} />
+                    </Collapsible>
+                    <Collapsible title="Cobranças iniciais" summary="Geradas após o aceite">
+                      <InitialChargesPanel implementationId={implementation.id} />
+                    </Collapsible>
+                  </div>
+                )
+              ) : section === "imovel" ? (
+                <PropertyTab implementation={implementation} />
+              ) : section === "implantacao" ? (
+                <DomainHub
+                  intro={
+                    <section className="rounded-[var(--radius-card)] border bg-white p-5" style={{ borderColor: "var(--stayo-border)" }}>
+                      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Prontidão</p>
+                      <p className="text-3xl font-semibold" style={{ color: readinessColors[readiness.state] }}>
+                        {itemsQuery.isPending ? "—" : `${progress.percent}%`}
+                      </p>
+                      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {readinessLabels[readiness.state]} · {pendingItems.length} pendência(s) · {readiness.pendingBlockers} bloqueador(es)
+                      </p>
+                    </section>
+                  }
+                  rows={[
+                    {
+                      id: "checklist",
+                      label: "Checklist e prontidão",
+                      summary: `${progress.done} de ${progress.total} concluídos`,
+                      tone: readiness.pendingBlockers ? "danger" : "muted",
+                      content: (
+                        <Checklist
+                          implementationId={implementation.id}
+                          items={itemsQuery.data ?? []}
+                          loading={itemsQuery.isPending}
+                          error={itemsQuery.isError}
+                          onRetry={() => void itemsQuery.refetch()}
+                        />
+                      ),
+                    },
+                    { id: "enxoval", label: "Enxoval", summary: "Peças por ambiente, compra e entrega", content: <SupplySheet implementationId={implementation.id} /> },
+                    { id: "itens", label: "Itens do imóvel", summary: "Inventário do que já existe", content: <EnxovalTab implementationId={implementation.id} mode="inventory" /> },
+                    { id: "faltantes", label: "Itens faltantes", summary: "O que precisa ser comprado ou instalado", content: <MissingItemsTab implementationId={implementation.id} /> },
+                    { id: "fornecedores", label: "Fornecedores e instalações", summary: "Quem forneceu, instalou ou atende o imóvel", content: <PropertySuppliersPanel implementationId={implementation.id} /> },
+                  ]}
+                />
+              ) : section === "proprietario" ? (
+                <OwnerTab implementation={implementation} part="owner" />
+              ) : section === "portal" ? (
+                <OwnerTab implementation={implementation} part="portal" />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <section className="rounded-[var(--radius-card)] border bg-white p-5" style={{ borderColor: "var(--stayo-border)" }}>
+                    <h2 className="mb-3 text-lg font-semibold">Histórico</h2>
+                    <Timeline entries={history} />
+                  </section>
+                  <Collapsible title="Detalhes técnicos e integração" summary="IDs, origem e conversão para o Core">
+                    <div className="grid gap-3 text-xs sm:grid-cols-2">
+                      <Field label="ID da Implantação" value={implementation.id} />
+                      <Field label="Código" value={implementation.code} />
+                      {implementation.origin && <Field label="Origem" value={implementation.origin} />}
+                      {implementation.corePropertyId && <Field label="Imóvel no Core" value={implementation.corePropertyId} />}
+                      {implementation.coreOwnerId && <Field label="Proprietário no Core" value={implementation.coreOwnerId} />}
+                      <Field label="Criada em" value={implementation.createdAt} />
+                      <Field label="Atualizada em" value={implementation.updatedAt} />
+                    </div>
+                    <div className="mt-4">
+                      <CoreConversionPanel implementation={implementation} />
+                    </div>
+                  </Collapsible>
                 </div>
-              </details>
-            </div>
-          ) : tab === "proprietario" ? (
-            <OwnerTab implementation={implementation} />
-          ) : tab === "imovel" ? (
-            <PropertyTab implementation={implementation} />
-          ) : tab === "enxoval" ? (
-            <SupplySheet implementationId={implementation.id} />
-          ) : tab === "itens_faltantes" ? (
-            <MissingItemsTab implementationId={implementation.id} />
-          ) : tab === "checklist" ? (
-            <Checklist
-              implementationId={implementation.id}
-              items={itemsQuery.data ?? []}
-              loading={itemsQuery.isPending}
-              error={itemsQuery.isError}
-              onRetry={() => void itemsQuery.refetch()}
-            />
-          ) : (
-            <ProposalTab implementationId={implementation.id} />
-          )}
-            </>
-          )}
+              )}
+            </main>
+          </div>
         </div>
       )}
     </div>
