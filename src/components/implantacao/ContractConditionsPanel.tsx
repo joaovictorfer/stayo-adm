@@ -459,8 +459,7 @@ export function ContractConditionsPanel({
                         <Label htmlFor="exclusivity">Exclusividade da gestão de locações por temporada</Label>
                         <p className="mt-1 text-[11px] text-muted-foreground">
                           Durante o contrato, só a STAYO anuncia e administra o imóvel para aluguel
-                          por temporada (Airbnb, Booking, reservas diretas). O proprietário continua
-                          livre para usar o imóvel nas datas que reservar.
+                          por temporada (Airbnb, Booking, reservas diretas).
                         </p>
                       </div>
                       <Switch
