@@ -23,6 +23,7 @@ import {
   AdminStatusBadge,
   type AdminTone,
 } from "@/components/admin/AdminPrimitives";
+import { FinanceiroPrototypeNav } from "@/components/admin/FinanceiroPrototypeNav";
 import { PeriodFilter } from "@/components/patterns/IndicatorCard";
 
 export const Route = createFileRoute("/financeiro/prototipo")({
@@ -40,27 +41,6 @@ export const Route = createFileRoute("/financeiro/prototipo")({
 });
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const NAV = ["Visão geral", "Contas a receber", "Despesas", "Fechamentos", "Repasses", "Faturas de serviços", "Orçamentos"];
-
-function FinanceNav() {
-  return (
-    <nav aria-label="Financeiro" className="mb-3 grid grid-cols-2 gap-1 border-b border-[var(--admin-border)] pb-1 sm:grid-cols-4 lg:flex lg:gap-2 lg:pb-0">
-      {NAV.map((label, i) =>
-        i === 0 ? (
-          <span key={label} aria-current="page" className="inline-flex min-h-11 items-center justify-center border-b-2 border-[var(--admin-primary)] px-2 text-center text-sm font-semibold leading-tight text-[var(--admin-text)] lg:-mb-px">
-            {label}
-          </span>
-        ) : (
-          <span key={label} aria-disabled="true" title="Próxima fase do protótipo" className="inline-flex min-h-11 flex-col items-center justify-center px-2 text-center text-[13px] leading-tight text-[var(--admin-muted)] lg:-mb-px lg:text-sm">
-            {label}
-            <span className="text-[10px] uppercase tracking-wide">em breve</span>
-          </span>
-        ),
-      )}
-    </nav>
-  );
-}
 
 type Priority = "alta" | "media" | "baixa";
 const PRIORITY: Record<Priority, { label: string; tone: AdminTone; rank: number }> = {
@@ -165,7 +145,7 @@ function FinanceiroPrototype() {
         </select>
       </div>
 
-      <FinanceNav />
+      <FinanceiroPrototypeNav />
 
       <AdminPageHeader
         title="Financeiro"
