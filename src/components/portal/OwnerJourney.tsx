@@ -19,6 +19,10 @@ import {
   ArrowRight,
   ChevronDown,
   Loader2,
+  BedDouble,
+  Clock3,
+  Compass,
+  Sparkles,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -46,7 +50,13 @@ import {
   validateOwnerField,
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
-import { conditionSections } from "../../lib/contract-conditions";
+import {
+  commercialCleaningFee,
+  conditionSections,
+  formatPercent,
+  implementationDecisionItems,
+  type ConditionItem,
+} from "../../lib/contract-conditions";
 import { PRICING_LABELS, resolvePricing, type ItemPricing } from "../../lib/proposal-pricing";
 import type {
   CommercialProposalSnapshot,
@@ -543,6 +553,7 @@ export function OwnerJourney({
 
   const firstName = (form.fullName || ownerQ.data?.name || "").trim().split(/\s+/)[0] ?? "";
   const impl = implementationQ.data;
+  const ownerFullName = (ownerQ.data?.name || form.fullName || "").trim();
   const propertyTitle =
     impl?.nickname ||
     [impl?.condominiumName, impl?.unit].filter(Boolean).join(" · ") ||
@@ -582,8 +593,8 @@ export function OwnerJourney({
       lead: "Nada foi alterado. Tente novamente em instantes.",
     },
     A: {
-      title: "Sua proposta STAYO",
-      lead: "Veja as condições abaixo e confirme para começar o cadastro.",
+      title: "Sua proposta de gestão STAYO",
+      lead: "Confira as condições preparadas para o seu imóvel. Após a confirmação, você poderá completar os dados da implantação.",
       cta: {
         label: "Ir para a confirmação",
         onClick: () => {
@@ -644,13 +655,20 @@ export function OwnerJourney({
               <span className="portal-onboarding-cover-tag">{coverNote}</span>
             ) : null}
           </div>
+          {journeyState === "A" && <span className="pj-hero-badge">Proposta personalizada</span>}
           <p className="portal-onboarding-eyebrow">
-            {firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
+            {journeyState === "A" && ownerFullName ? ownerFullName : firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
           </p>
           <h1 key={journeyState} className="portal-onboarding-headline">
             {copy.title}
           </h1>
           <p className="portal-onboarding-lead">{copy.lead}</p>
+          {journeyState === "A" && journeyQ.data?.current && (
+            <p className="pj-hero-meta">
+              Versão {journeyQ.data.current.version}
+              {journeyQ.data.current.publishedAt ? ` · ${formatDate(journeyQ.data.current.publishedAt)}` : ""}
+            </p>
+          )}
           {copy.cta && (
             <button type="button" className="portal-onboarding-header-cta" onClick={copy.cta.onClick}>
               {copy.cta.label}
@@ -992,31 +1010,16 @@ function ProposalStep({
   const needs = Boolean(journey?.needsConfirmation);
   // Após confirmar, mostra exatamente o texto confirmado.
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
-  const shownVersion = !needs && confirmation ? confirmation.version : current.version;
-  const publishedAt = shown.publishedAt || current.publishedAt;
-  const groups = groupItems(current.snapshot.items ?? []);
+  const facts = proposalFacts(current.snapshot);
 
   return (
     <section className="pj-proposal">
-      <div className="pj-intro">
-        <p className="pj-meta">
-          Proposta · versão {shownVersion}
-          {publishedAt ? ` · publicada em ${formatDate(publishedAt)}` : ""}
-        </p>
-        <p className="pj-intro-text">
-          {needs
-            ? "Aqui estão as condições para a STAYO cuidar do seu imóvel: como funciona a gestão, a limpeza e os serviços para deixar tudo pronto. Depois de confirmar, você segue para o cadastro."
-            : "Esta é a versão que você confirmou. Ela fica aqui para consulta durante todo o cadastro."}
-        </p>
-      </div>
-
       {needs && confirmation && (
         <div className="pj-notice" role="status">
           <strong>Há uma nova versão da proposta.</strong>
           <span>
-            Você confirmou a versão {confirmation.version} em{" "}
-            {formatDateTime(confirmation.confirmedAt)}, e ela continua guardada. Para seguir, confirme
-            a versão {current.version}.
+            Você confirmou a versão {confirmation.version} em {formatDateTime(confirmation.confirmedAt)}, e ela
+            continua guardada. Para seguir, confirme a versão {current.version}.
           </span>
         </div>
       )}
@@ -1027,11 +1030,10 @@ function ProposalStep({
         <div className="pj-confirmed">
           <CheckCircle2 aria-hidden="true" />
           <div>
-            <strong>Condições confirmadas</strong>
+            <strong>Você confirmou a versão {confirmation.version}</strong>
             <p>
-              Versão {confirmation.version}, confirmada por {confirmation.confirmedName} em{" "}
-              {formatDateTime(confirmation.confirmedAt)}. Não é a assinatura do contrato e não gera
-              cobrança.
+              Confirmada por {confirmation.confirmedName} em {formatDateTime(confirmation.confirmedAt)}. Esta é a
+              versão exibida acima. A formalização contratual será realizada em etapa própria.
             </p>
             <Button type="button" className="portal-cta mt-4 w-full sm:w-auto" onClick={onContinue}>
               Voltar ao cadastro <ChevronRight className="size-4" />
@@ -1040,50 +1042,20 @@ function ProposalStep({
         </div>
       ) : (
         <div id="confirmar-proposta" className="pj-confirm">
-          <h2 className="pj-block-title">Antes de confirmar</h2>
+          <p className="pj-confirm-eyebrow">Confirmação</p>
+          <h2 className="pj-confirm-title">Você está confirmando a proposta versão {current.version}</h2>
           <ul className="pj-confirm-list">
-            <li>
-              <span>Proposta</span>
-              <strong>
-                Versão {current.version}
-                {current.publishedAt ? ` · ${formatDate(current.publishedAt)}` : ""}
-              </strong>
-            </li>
-            <li>
-              <span>Gestão, limpeza e repasses</span>
-              <strong>Conforme descrito acima</strong>
-            </li>
-            {groups.fixed.length > 0 && (
-              <li>
-                <span>Valor definido da implantação</span>
-                <strong>{money.format(groups.fixedTotal)}</strong>
-              </li>
-            )}
-            {groups.pending.length > 0 && (
-              <li>
-                <span>Sujeitos à avaliação</span>
-                <strong>
-                  {groups.pending.length} {groups.pending.length === 1 ? "item" : "itens"}, valor
-                  combinado antes
-                </strong>
-              </li>
-            )}
-            {groups.optional.length > 0 && (
-              <li>
-                <span>Opcionais</span>
-                <strong>
-                  {groups.optional.length} {groups.optional.length === 1 ? "serviço" : "serviços"},
-                  só se você quiser
-                </strong>
-              </li>
-            )}
+            <li><span>Taxa de administração</span><strong>{facts.admin ?? "A definir"}</strong></li>
+            <li><span>Limpeza comercial</span><strong>{facts.cleaning ? `${facts.cleaning} por utilização` : "Valor a definir"}</strong></li>
+            <li><span>Prazo da parceria</span><strong>{facts.duration ?? "A definir"}</strong></li>
+            <li><span>Valor definido da implantação</span><strong>{facts.implementation ?? "A definir"}</strong></li>
           </ul>
           <p className="pj-fineprint">
-            É uma confirmação comercial da proposta. Não é a assinatura do contrato, que a equipe
-            STAYO envia à parte, e não gera cobrança.
+            Esta confirmação registra seu aceite comercial das condições apresentadas. A formalização contratual
+            será realizada em etapa própria.
           </p>
           <label className="pj-field">
-            <span>Seu nome completo</span>
+            <span>Nome completo</span>
             <input
               value={acceptName}
               onChange={(e) => onAcceptName(e.target.value)}
@@ -1092,31 +1064,24 @@ function ProposalStep({
             />
           </label>
           <label className={`pj-agree${agreed ? " is-checked" : ""}`}>
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(event) => onAgree(event.target.checked)}
-            />
-            <span>Li e confirmo as condições comerciais da versão {current.version}.</span>
+            <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} />
+            <span>Li e confirmo as condições comerciais desta proposta</span>
           </label>
           <Button
             type="button"
             className="portal-cta w-full"
             disabled={accepting || !agreed || acceptName.trim().length < 3}
+            aria-busy={accepting}
             onClick={onAccept}
           >
             {accepting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Registrando sua confirmação…
-              </>
+              <><Loader2 className="size-4 animate-spin" /> Registrando sua confirmação…</>
             ) : (
-              <>
-                Confirmar e começar cadastro <ChevronRight className="size-4" />
-              </>
+              <>Confirmar proposta e iniciar cadastro <ChevronRight className="size-4" /></>
             )}
           </Button>
           {(!agreed || acceptName.trim().length < 3) && !accepting && (
-            <p className="pj-hint">Preencha seu nome e marque a confirmação para continuar.</p>
+            <p className="pj-hint">Informe seu nome completo e marque a confirmação para continuar.</p>
           )}
         </div>
       )}
@@ -1208,137 +1173,204 @@ function ItemRow({ item, badge }: { item: SnapItem; badge: ItemPricing }) {
   );
 }
 
-function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
-  const sections = conditionSections(snapshot.contractConditions ?? {});
-  const terms = [...(snapshot.commercialTerms ?? [])].sort(
-    (a, b) => a.displayOrder - b.displayOrder,
+type DecisionState = "defined" | "tbd" | "quote";
+const DECISION_STATE_LABEL: Record<DecisionState, string> = {
+  defined: "Definido",
+  tbd: "A definir",
+  quote: "Depende de orçamento",
+};
+
+function decisionState(it: ConditionItem): DecisionState {
+  if (it.tbd) return "tbd";
+  if (/valor a definir|depende de orçamento|conforme orçamento/i.test(it.help ?? "")) return "quote";
+  return "defined";
+}
+
+function publicBlocks(snapshot: CommercialProposalSnapshot) {
+  const c = snapshot.contractConditions ?? {};
+  const sections = conditionSections(c);
+  const decisions = implementationDecisionItems(c);
+  const terms = [...(snapshot.commercialTerms ?? [])]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map<ConditionItem>((t) => ({
+      label: t.label,
+      value: formatSnapshotTerm(t),
+      ...(t.notes && t.chargeType !== "informational" ? { help: t.notes } : {}),
+    }));
+  const get = (k: string) => sections.find((s) => s.key === k);
+  const management = [...(get("management")?.items ?? []), ...terms];
+  const implCleaning = decisions.find((d) => d.label === "Limpeza de implantação");
+  const cleaning = [...(get("cleaning")?.items ?? []), ...(implCleaning ? [implCleaning] : [])];
+  const use = get("owner_use")?.items ?? [];
+  const cut = use.findIndex((i) => i.label === "Cessão de uso");
+  const ownerUse = cut < 0 ? use : use.slice(0, cut);
+  const assignment = cut < 0 ? [] : use.slice(cut);
+  const rule = get("owner_use")?.note;
+  return [
+    { key: "management", title: "Gestão comercial", lead: "Taxa, repasses, vigência e exclusividade.", items: management },
+    { key: "cleaning", title: "Limpeza e operação", lead: "Valor da limpeza, quem faz e como é cobrada.", items: cleaning },
+    { key: "owner_use", title: "Uso do imóvel pelo proprietário", lead: "Como reservar datas para você usar o imóvel.", items: ownerUse, note: rule },
+    { key: "assignment", title: "Cessão para familiares ou convidados", lead: "Quando outra pessoa usa o imóvel com sua autorização.", items: assignment, note: assignment.length > 1 ? rule : undefined },
+  ].filter((b) => b.items.length > 0);
+}
+
+function proposalFacts(snapshot: CommercialProposalSnapshot) {
+  const c = snapshot.contractConditions ?? {};
+  const groups = groupItems(snapshot.items ?? []);
+  const decisions = implementationDecisionItems(c);
+  const fee = commercialCleaningFee(c);
+  const hasPending =
+    groups.pending.length > 0 || fee == null || decisions.some((d) => decisionState(d) !== "defined");
+  return {
+    admin: formatPercent(c.administrationFee),
+    duration: c.durationMonths ? `${c.durationMonths} meses` : null,
+    cleaning: fee != null ? money.format(fee) : null,
+    implementation: groups.fixed.length > 0 ? money.format(groups.fixedTotal) : null,
+    hasPending,
+    groups,
+    decisions,
+  };
+}
+
+function ExecutiveSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
+  const f = proposalFacts(snapshot);
+  const stats = [
+    { label: "Taxa de administração", value: f.admin, hint: "sobre as hospedagens" },
+    { label: "Prazo da parceria", value: f.duration, hint: null },
+    { label: "Limpeza comercial", value: f.cleaning, hint: "por utilização" },
+    { label: "Serviços de implantação", value: f.implementation, hint: "valor definido" },
+  ];
+  return (
+    <section className="pj-summary" aria-labelledby="pj-summary-title">
+      <h2 id="pj-summary-title" className="pj-summary-title">Resumo da proposta</h2>
+      <dl className="pj-stats">
+        {stats.map((s) => (
+          <div key={s.label} className="pj-stat">
+            <dt>{s.label}</dt>
+            <dd className={s.value ? "pj-stat-value" : "pj-stat-value is-soft"}>{s.value ?? "A definir"}</dd>
+            {s.value && s.hint && <dd className="pj-stat-hint">{s.hint}</dd>}
+          </div>
+        ))}
+      </dl>
+      {f.hasPending && (
+        <p className="pj-summary-note">
+          <Clock3 aria-hidden="true" /> Alguns valores serão definidos após avaliação e não entram no total.
+        </p>
+      )}
+    </section>
   );
-  const { fixed, optional, pending, fixedTotal } = groupItems(snapshot.items ?? []);
+}
+
+function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
+  const blocks = publicBlocks(snapshot);
+  const { groups, decisions } = proposalFacts(snapshot);
+  const { fixed, optional, pending, fixedTotal } = groups;
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   const responsibilities = (snapshot.responsibilities ?? []).filter((r) => r?.trim());
   const signatories = snapshot.requiredSignatories ?? [];
+  const decisionIcon = (l: string) =>
+    l === "Enxoval" ? <BedDouble aria-hidden="true" /> : l === "Assessoria" ? <Compass aria-hidden="true" /> : <Sparkles aria-hidden="true" />;
   return (
     <div className="pj-blocks">
-      {sections.map((sec) => (
-        <section key={sec.key} className="pj-block">
-          <h2 className="pj-block-title">{sec.title}</h2>
-          <dl className="pj-terms">
-            {sec.items.map((it, i) => (
-              <div key={`${it.label}${i}`} className="pj-term">
-                <dt>{it.label}</dt>
-                <dd className="pj-term-value" data-tbd={it.tbd ? "true" : undefined}>
-                  {it.value}
-                </dd>
-                {it.help && <dd className="pj-term-help">{it.help}</dd>}
-              </div>
+      <ExecutiveSummary snapshot={snapshot} />
+
+      {blocks.length > 0 && (
+        <section aria-labelledby="pj-cond-title">
+          <h2 id="pj-cond-title" className="pj-section-title">Condições comerciais e contratuais</h2>
+          <div className="pj-accordion">
+            {blocks.map((b, bi) => (
+              <details key={b.key} className="pj-acc" open={bi === 0}>
+                <summary>
+                  <span className="pj-acc-text">
+                    <span className="pj-acc-title">{b.title}</span>
+                    <span className="pj-acc-lead">{b.lead}</span>
+                  </span>
+                  <ChevronDown className="pj-chevron" aria-hidden="true" />
+                </summary>
+                <dl className="pj-acc-body">
+                  {b.items.map((it, i) => (
+                    <div key={`${it.label}${i}`} className="pj-fact">
+                      <dt>{it.label}</dt>
+                      <dd className="pj-fact-value" data-tbd={it.tbd ? "true" : undefined}>{it.value}</dd>
+                      {it.help && <dd className="pj-fact-help">{it.help}</dd>}
+                    </div>
+                  ))}
+                  {b.note && <p className="pj-rule"><ShieldCheck aria-hidden="true" /> {b.note}</p>}
+                </dl>
+              </details>
             ))}
-            {sec.key === "management" &&
-              terms.map((term, i) => (
-                <div key={`t${i}`} className="pj-term">
-                  <dt>{term.label}</dt>
-                  <dd className="pj-term-value">{formatSnapshotTerm(term)}</dd>
-                  {term.notes && term.chargeType !== "informational" && (
-                    <dd className="pj-term-help">{term.notes}</dd>
-                  )}
-                </div>
-              ))}
-          </dl>
-          {sec.note && <p className="pj-block-lead" style={{ marginTop: 12 }}>{sec.note}</p>}
-          {sec.items.some((it) => it.tbd) && (
-            <p className="pj-block-lead" style={{ marginTop: 8 }}>
-              Itens “a decidir” ainda serão combinados com você e não fazem parte do que você confirma agora.
-            </p>
-          )}
-        </section>
-      ))}
-      {fixed.length + optional.length + pending.length > 0 && (
-        <section className="pj-block">
-          <h2 className="pj-block-title">Serviços de implantação</h2>
-          <p className="pj-block-lead">
-            O que a STAYO faz para deixar o imóvel pronto para receber hóspedes. Toque num serviço
-            para ver o que está incluído.
-          </p>
-          {fixed.length > 0 && (
-            <>
-              <ul className="pj-items">
-                {fixed.map((item, i) => (
-                  <ItemRow key={`f${i}`} item={item} badge="fixed" />
-                ))}
-              </ul>
-              <div className="pj-total">
-                <span>Valor definido nesta proposta</span>
-                <strong>{money.format(fixedTotal)}</strong>
-              </div>
-            </>
-          )}
-          {pending.length > 0 && (
-            <div className="pj-subgroup">
-              <h3>Itens sujeitos à avaliação</h3>
-              <p>
-                O valor depende do que o imóvel precisar. A equipe combina com você antes de qualquer
-                cobrança, e eles não entram no valor acima.
-              </p>
-              <ul className="pj-items">
-                {pending.map((item, i) => (
-                  <ItemRow key={`p${i}`} item={item} badge={resolvePricing(item)} />
-                ))}
-              </ul>
-            </div>
-          )}
-          {optional.length > 0 && (
-            <div className="pj-subgroup">
-              <h3>Opcionais</h3>
-              <p>Só são feitos se você quiser. Não entram no valor definido.</p>
-              <ul className="pj-items">
-                {optional.map((item, i) => (
-                  <ItemRow key={`o${i}`} item={item} badge="optional" />
-                ))}
-              </ul>
-            </div>
-          )}
+          </div>
         </section>
       )}
-      {(snapshot.partnershipObject ||
-        responsibilities.length > 0 ||
-        content.length > 0 ||
-        signatories.length > 0) && (
-        <details className="pj-block pj-more">
+
+      {fixed.length + optional.length + pending.length > 0 && (
+        <section aria-labelledby="pj-prep-title">
+          <h2 id="pj-prep-title" className="pj-section-title">Preparação do imóvel</h2>
+          <p className="pj-section-lead">Serviços para deixar o imóvel pronto. Toque num serviço para ver o que inclui.</p>
+          <ul className="pj-items">
+            {fixed.map((item, i) => <ItemRow key={`f${i}`} item={item} badge="fixed" />)}
+            {pending.map((item, i) => <ItemRow key={`p${i}`} item={item} badge={resolvePricing(item)} />)}
+            {optional.map((item, i) => <ItemRow key={`o${i}`} item={item} badge="optional" />)}
+          </ul>
+          <div className="pj-totals">
+            <div className="pj-total">
+              <span>Valor definido da implantação</span>
+              <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}</strong>
+            </div>
+            {pending.length + optional.length > 0 && (
+              <div className="pj-total is-soft">
+                <span>Itens sujeitos a orçamento ou definição posterior</span>
+                <strong>
+                  {pending.length + optional.length} {pending.length + optional.length === 1 ? "item" : "itens"}
+                </strong>
+                <small>Combinados com você antes de qualquer cobrança; não entram no valor definido.</small>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {decisions.length > 0 && (
+        <section aria-labelledby="pj-dec-title">
+          <h2 id="pj-dec-title" className="pj-section-title">Como vamos preparar seu imóvel</h2>
+          <ul className="pj-decisions">
+            {decisions.map((d) => {
+              const st = decisionState(d);
+              return (
+                <li key={d.label} className="pj-decision">
+                  <span className="pj-decision-icon">{decisionIcon(d.label)}</span>
+                  <div className="min-w-0">
+                    <div className="pj-decision-head">
+                      <span className="pj-decision-label">{d.label}</span>
+                      <em className={`pj-state is-${st}`}>{DECISION_STATE_LABEL[st]}</em>
+                    </div>
+                    <p className="pj-decision-value">{st === "tbd" ? "Decisão ainda não tomada" : d.value}</p>
+                    {d.help && <p className="pj-decision-help">{d.help}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {(snapshot.partnershipObject || responsibilities.length > 0 || content.length > 0 || signatories.length > 0) && (
+        <details className="pj-acc">
           <summary>
-            <span>Objeto, responsabilidades e demais condições</span>
+            <span className="pj-acc-text">
+              <span className="pj-acc-title">Objeto e demais condições</span>
+              <span className="pj-acc-lead">Responsabilidades e quem assina o contrato.</span>
+            </span>
             <ChevronDown className="pj-chevron" aria-hidden="true" />
           </summary>
-          <div className="pj-more-body">
-            {snapshot.partnershipObject && (
-              <div>
-                <h3>Objeto da parceria</h3>
-                <p>{snapshot.partnershipObject}</p>
-              </div>
-            )}
+          <div className="pj-more-body pj-acc-body">
+            {snapshot.partnershipObject && (<div><h3>Objeto da parceria</h3><p>{snapshot.partnershipObject}</p></div>)}
             {responsibilities.length > 0 && (
-              <div>
-                <h3>Responsabilidades</h3>
-                <ul>
-                  {responsibilities.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
+              <div><h3>Responsabilidades</h3><ul>{responsibilities.map((r, i) => <li key={i}>{r}</li>)}</ul></div>
             )}
-            {content.map((block, i) => (
-              <div key={i}>
-                <h3>{block.title}</h3>
-                <p>{block.body}</p>
-              </div>
-            ))}
+            {content.map((block, i) => (<div key={i}><h3>{block.title}</h3><p>{block.body}</p></div>))}
             {signatories.length > 0 && (
-              <div>
-                <h3>Quem assina o contrato</h3>
-                <ul>
-                  {signatories.map((s, i) => (
-                    <li key={i}>{s.label}</li>
-                  ))}
-                </ul>
-              </div>
+              <div><h3>Quem assina o contrato</h3><ul>{signatories.map((s, i) => <li key={i}>{s.label}</li>)}</ul></div>
             )}
           </div>
         </details>
