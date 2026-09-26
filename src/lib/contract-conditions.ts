@@ -59,7 +59,7 @@ export function initialCleaningText(c: ProposalSnapshotContractConditions): stri
   if (opt === "owner_delivers" || opt === "tbd") return base;
   const parts = [base];
   if (c.initialCleaningFee != null) parts.push(formatBRL(c.initialCleaningFee));
-  if (bearer) parts.push(`paga por ${COST_BEARER_LABELS[bearer]}`);
+  if (bearer) parts.push(bearer === "owner" ? "paga pelo proprietário" : "paga pela STAYO");
   return parts.join(" · ");
 }
 
@@ -175,7 +175,7 @@ export function conditionSections(c: ProposalSnapshotContractConditions): Condit
     const helps: string[] = [];
     if (opt !== "owner_delivers" && opt !== "tbd") {
       helps.push(c.initialCleaningFee != null ? `Valor: ${formatBRL(c.initialCleaningFee)}` : "Valor a definir");
-      if (bearer) helps.push(`paga por ${COST_BEARER_LABELS[bearer]}`);
+      if (bearer) helps.push(bearer === "owner" ? "paga pelo proprietário" : "paga pela STAYO");
     }
     cleaning.push({
       label: "Limpeza de implantação",
