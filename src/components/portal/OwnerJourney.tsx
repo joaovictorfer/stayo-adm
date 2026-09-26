@@ -1069,7 +1069,7 @@ function ProposalStep({
           </label>
           <Button
             type="button"
-            className="portal-cta w-full"
+            className="portal-cta h-auto min-h-12 w-full whitespace-normal py-3 text-center"
             disabled={accepting || !agreed || acceptName.trim().length < 3}
             aria-busy={accepting}
             onClick={onAccept}
