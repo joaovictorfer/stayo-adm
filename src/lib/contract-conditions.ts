@@ -12,7 +12,7 @@ export type TurnoverPayer = "guest" | "owner";
 
 export const INITIAL_CLEANING_LABELS: Record<InitialCleaningOption, string> = {
   owner_delivers: "Imóvel entregue limpo pelo proprietário",
-  stayo_initial: "Limpeza inicial convencional",
+  stayo_initial: "Limpeza comercial de implantação",
   stayo_post_construction: "Limpeza pós-obra",
   other: "Outra condição",
   tbd: "A decidir",
