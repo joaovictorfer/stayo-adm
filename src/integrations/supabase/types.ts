@@ -862,6 +862,7 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          draft_completed_at: string | null
           id: string
           nickname: string | null
           notes: string | null
@@ -892,6 +893,7 @@ export type Database = {
           cover_image?: string | null
           cover_source?: string | null
           created_at?: string
+          draft_completed_at?: string | null
           id?: string
           nickname?: string | null
           notes?: string | null
@@ -922,6 +924,7 @@ export type Database = {
           cover_image?: string | null
           cover_source?: string | null
           created_at?: string
+          draft_completed_at?: string | null
           id?: string
           nickname?: string | null
           notes?: string | null
@@ -2370,6 +2373,86 @@ export type Database = {
         Args: { p_data: Json }
         Returns: Json
       }
+      admin_complete_opportunity_draft: {
+        Args: { p_implementation_id: string }
+        Returns: {
+          address: string | null
+          bedrooms: number | null
+          capacity: number | null
+          city: string | null
+          code: string
+          completion_date_estimate: string | null
+          condominium_id: string | null
+          condominium_name: string | null
+          core_owner_id: string | null
+          core_property_id: string | null
+          cover_approved_at: string | null
+          cover_approved_by: string | null
+          cover_image: string | null
+          cover_source: string | null
+          created_at: string
+          draft_completed_at: string | null
+          id: string
+          nickname: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string | null
+          postal_code: string | null
+          property_type: string | null
+          responsible_user_id: string | null
+          start_date_estimate: string | null
+          status: Database["public"]["Enums"]["implementation_status"]
+          tower: string | null
+          unit: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "implementation_projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_create_draft_opportunity: {
+        Args: { p_data: Json }
+        Returns: {
+          address: string | null
+          bedrooms: number | null
+          capacity: number | null
+          city: string | null
+          code: string
+          completion_date_estimate: string | null
+          condominium_id: string | null
+          condominium_name: string | null
+          core_owner_id: string | null
+          core_property_id: string | null
+          cover_approved_at: string | null
+          cover_approved_by: string | null
+          cover_image: string | null
+          cover_source: string | null
+          created_at: string
+          draft_completed_at: string | null
+          id: string
+          nickname: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string | null
+          postal_code: string | null
+          property_type: string | null
+          responsible_user_id: string | null
+          start_date_estimate: string | null
+          status: Database["public"]["Enums"]["implementation_status"]
+          tower: string | null
+          unit: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "implementation_projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_create_implementation: {
         Args: { p_data: Json }
         Returns: {
@@ -2388,6 +2471,7 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          draft_completed_at: string | null
           id: string
           nickname: string | null
           notes: string | null
@@ -2427,6 +2511,7 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          draft_completed_at: string | null
           id: string
           nickname: string | null
           notes: string | null
@@ -2502,6 +2587,46 @@ export type Database = {
         Returns: Json
       }
       admin_review_owner_intake: { Args: { p_data: Json }; Returns: Json }
+      admin_save_opportunity_contact: {
+        Args: { p_data: Json; p_implementation_id: string }
+        Returns: {
+          address: string | null
+          bedrooms: number | null
+          capacity: number | null
+          city: string | null
+          code: string
+          completion_date_estimate: string | null
+          condominium_id: string | null
+          condominium_name: string | null
+          core_owner_id: string | null
+          core_property_id: string | null
+          cover_approved_at: string | null
+          cover_approved_by: string | null
+          cover_image: string | null
+          cover_source: string | null
+          created_at: string
+          draft_completed_at: string | null
+          id: string
+          nickname: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string | null
+          postal_code: string | null
+          property_type: string | null
+          responsible_user_id: string | null
+          start_date_estimate: string | null
+          status: Database["public"]["Enums"]["implementation_status"]
+          tower: string | null
+          unit: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "implementation_projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_save_proposal_draft: { Args: { p_data: Json }; Returns: Json }
       admin_schedule_commercial_meeting: {
         Args: { p_data: Json }
