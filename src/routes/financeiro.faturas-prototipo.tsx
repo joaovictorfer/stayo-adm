@@ -98,7 +98,7 @@ function FaturasPrototype() {
   const count = (fn: (f: Fatura) => boolean) => scoped.filter(fn).length;
   const inc = demo === "parcial" ? " · pode estar incompleto" : "";
   const stats = [
-    { icon: FileText, label: "A emitir ou revisar", value: count((f) => f.doc === "preparacao" || f.pag === "revisao"), detail: "Em preparação ou em revisão" + inc, tone: "neutral" as AdminTone, mark: true },
+    { icon: FileText, label: "A emitir ou revisar", value: count((f) => f.doc === "preparacao" || f.pag === "revisao"), detail: "Em preparação ou em revisão", tone: "neutral" as AdminTone },
     { icon: Send, label: "Enviadas", value: count((f) => f.envio === "enviado" && f.doc === "emitido"), detail: "Envio concluído", tone: "info" as AdminTone },
     { icon: Wallet, label: "Aguardando pagamento", value: count((f) => f.pag === "apagar" || f.pag === "vencido"), detail: "A pagar ou vencido" + inc, tone: "warning" as AdminTone, mark: true },
     { icon: CheckCircle2, label: "Pagas", value: count((f) => f.pag === "pago"), detail: "Pago" + inc, tone: "success" as AdminTone, mark: true },
@@ -120,7 +120,7 @@ function FaturasPrototype() {
   );
 
   const money = (f: Fatura) => (f.doc === "cancelado" ? "—" : brl(total(f)));
-  const pagLabel = (f: Fatura) => (affected(f) ? "Não carregado *" : PAG[f.pag].label);
+  const pagLabel = (f: Fatura) => (affected(f) ? "Não carregado\u00a0*" : PAG[f.pag].label);
 
   return (
     <div className="min-w-0">
@@ -151,7 +151,7 @@ function FaturasPrototype() {
       {demo === "parcial" && (
         <div role="status" className="mb-4 flex items-start gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] px-3 py-2.5 text-sm text-[var(--admin-text)]">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <p><strong>Dados parciais:</strong> a atualização do status de pagamento não respondeu. Nos documentos emitidos com <strong>Cobrança pela STAYO</strong>, o pagamento aparece como “Não carregado”. Os indicadores <strong>A emitir ou revisar</strong>, <strong>Aguardando pagamento</strong> e <strong>Pagas</strong> (marcados com “*”) podem estar incompletos. Documento e envio estão completos.</p>
+          <p><strong>Dados parciais:</strong> o status de pagamento das cobranças pela STAYO não foi atualizado. Situação de documento e envio permanecem atualizadas. Nessas cobranças, o pagamento aparece como “Não carregado”; documentos de pagamento direto ao fornecedor não são afetados. Os indicadores <strong>Aguardando pagamento</strong> e <strong>Pagas</strong> (marcados com “*”) podem estar incompletos.</p>
         </div>
       )}
 
