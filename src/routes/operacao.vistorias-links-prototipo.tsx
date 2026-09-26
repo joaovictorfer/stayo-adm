@@ -321,7 +321,7 @@ function StatusBadges({ i, partial }: { i: Inst; partial: boolean }) {
 function Actions({ i, onAction, full }: { i: Inst; onAction: (a: Action) => void; full?: boolean }) {
   const linkUsable = i.link === "ativo" || i.link === "aberto" || i.link === "nao_enviado";
   const canReopen = ["enviada", "em_revisao", "concluida"].includes(i.status);
-  const btn = "admin-input inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-sm disabled:opacity-40";
+  const btn = "admin-input rounded-md border border-border inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-sm disabled:opacity-40";
   const items: { a: Action | "previa"; label: string; icon: typeof Copy; disabled: boolean }[] = [
     { a: "copiar", label: "Copiar link", icon: Copy, disabled: !linkUsable },
     { a: "compartilhar", label: "Compartilhar link", icon: Share2, disabled: !linkUsable },
@@ -396,8 +396,8 @@ function Detail({ i, partial, onAction }: { i: Inst; partial: boolean; onAction:
       <div className="mt-3"><StatusBadges i={i} partial={partial} /></div>
       <div className="mt-4">
         <p className="mb-1 text-xs text-[var(--admin-muted)]">Progresso</p>
-        <div className="h-2 overflow-hidden rounded-full bg-[var(--admin-border)]" role="progressbar" aria-valuenow={done} aria-valuemax={total} aria-label="Progresso">
-          <div className="h-full bg-[var(--admin-primary)]" style={{ width: `${(done / total) * 100}%` }} />
+        <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={done} aria-valuemax={total} aria-label="Progresso">
+          <div className="h-full bg-primary" style={{ width: `${(done / total) * 100}%` }} />
         </div>
         <p className="mt-1 text-sm text-[var(--admin-text)]">{done} de {total} itens</p>
       </div>
@@ -413,7 +413,7 @@ function Detail({ i, partial, onAction }: { i: Inst; partial: boolean; onAction:
       <ol className="mt-2 border-l border-[var(--admin-border)] pl-4">
         {i.timeline.map(([ev, when]) => (
           <li key={ev + when} className="relative pb-3">
-            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--admin-primary)]" aria-hidden="true" />
+            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" aria-hidden="true" />
             <p className="text-sm text-[var(--admin-text)]">{ev}</p>
             <p className="text-xs text-[var(--admin-muted)]">{when}</p>
           </li>
