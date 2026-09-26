@@ -419,7 +419,16 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
   const selectedVersion =
     previewId && previewId !== "draft" ? (versions.find((v) => v.id === previewId) ?? null) : null;
-  const canSave = proposalItems.length > 0 && !saveDraft.isPending && !publish.isPending;
+  const busy = saveDraft.isPending || publish.isPending;
+  const hasAnyItem = items.some((i) => i.description.trim()) || partnershipObject.trim() !== "";
+  const canSaveDraft = hasAnyItem && !busy;
+  const canSave = proposalItems.length > 0 && !busy;
+  const publishHint =
+    proposalItems.length === 0
+      ? items.length > 0
+        ? "Para publicar, ligue pelo menos um serviço em “Incluir na proposta”."
+        : "Para publicar, adicione e ligue pelo menos um serviço."
+      : null;
 
   return (
     <div className="space-y-4">
@@ -450,7 +459,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </Button>
             <Button
               variant="outline"
-              disabled={!canSave || (!dirty && Boolean(draftVersion))}
+              disabled={!canSaveDraft || (!dirty && Boolean(draftVersion))}
               onClick={() => saveDraft.mutate()}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -462,6 +471,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </Button>
           </div>
         </div>
+        {publishHint && (
+          <p className="mt-3 text-xs text-[var(--stayo-warning)]">{publishHint}</p>
+        )}
         {(saveDraft.isError || publish.isError) && (
           <div
             role="alert"
