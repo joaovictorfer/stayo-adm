@@ -17,6 +17,7 @@ import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
 import { Route as ConfiguracoesAuditoriaRouteImport } from './routes/configuracoes.auditoria'
 import { Route as ConfiguracoesComercialRouteImport } from './routes/configuracoes.comercial'
+import { Route as ConfiguracoesGuiasRouteImport } from './routes/configuracoes.guias'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
 import { Route as ConfiguracoesMigracaoRouteImport } from './routes/configuracoes.migracao'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
@@ -108,6 +109,11 @@ const ConfiguracoesAuditoriaRoute = ConfiguracoesAuditoriaRouteImport.update({
 const ConfiguracoesComercialRoute = ConfiguracoesComercialRouteImport.update({
   id: '/configuracoes/comercial',
   path: '/configuracoes/comercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesGuiasRoute = ConfiguracoesGuiasRouteImport.update({
+  id: '/configuracoes/guias',
+  path: '/configuracoes/guias',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesIntegracoesRoute =
@@ -389,6 +395,7 @@ export interface FileRoutesByFullPath {
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
+  '/configuracoes/guias': typeof ConfiguracoesGuiasRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
@@ -451,6 +458,7 @@ export interface FileRoutesByTo {
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
+  '/configuracoes/guias': typeof ConfiguracoesGuiasRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
@@ -514,6 +522,7 @@ export interface FileRoutesById {
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
+  '/configuracoes/guias': typeof ConfiguracoesGuiasRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
@@ -578,6 +587,7 @@ export interface FileRouteTypes {
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
+    | '/configuracoes/guias'
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
@@ -640,6 +650,7 @@ export interface FileRouteTypes {
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
+    | '/configuracoes/guias'
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
@@ -702,6 +713,7 @@ export interface FileRouteTypes {
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
+    | '/configuracoes/guias'
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
     | '/configuracoes/stayo-core'
@@ -765,6 +777,7 @@ export interface RootRouteChildren {
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
   ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
+  ConfiguracoesGuiasRoute: typeof ConfiguracoesGuiasRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesMigracaoRoute: typeof ConfiguracoesMigracaoRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
@@ -877,6 +890,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes/comercial'
       fullPath: '/configuracoes/comercial'
       preLoaderRoute: typeof ConfiguracoesComercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/guias': {
+      id: '/configuracoes/guias'
+      path: '/configuracoes/guias'
+      fullPath: '/configuracoes/guias'
+      preLoaderRoute: typeof ConfiguracoesGuiasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/integracoes': {
@@ -1253,6 +1273,7 @@ const rootRouteChildren: RootRouteChildren = {
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
   ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,
+  ConfiguracoesGuiasRoute: ConfiguracoesGuiasRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesMigracaoRoute: ConfiguracoesMigracaoRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
