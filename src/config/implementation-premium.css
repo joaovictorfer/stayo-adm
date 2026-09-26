@@ -48,7 +48,7 @@
   width: 2.4rem;
   height: 2.4rem;
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.03);
+  box-shadow: 0 1px 2px rgba(15, 61, 46, 0.03);
 }
 
 /* Identidade do imovel */
@@ -73,9 +73,9 @@
 .implementation-cover:has(img) .implementation-cover-overlay {
   background: linear-gradient(
     to top,
-    rgba(8, 37, 61, 0.72) 0%,
-    rgba(8, 37, 61, 0.2) 48%,
-    rgba(8, 37, 61, 0.04) 100%
+    rgba(15, 61, 46, 0.72) 0%,
+    rgba(15, 61, 46, 0.2) 48%,
+    rgba(15, 61, 46, 0.04) 100%
   );
 }
 
@@ -103,7 +103,7 @@
   border: 4px solid var(--admin-surface);
   border-radius: 13px;
   background: linear-gradient(145deg, #f2f7f4, #e7f1eb);
-  box-shadow: 0 8px 22px rgba(11, 49, 80, 0.12);
+  box-shadow: 0 8px 22px rgba(15, 61, 46, 0.12);
 }
 
 .implementation-property-mark::after {
@@ -150,15 +150,15 @@
   position: relative;
   z-index: 2;
   border-color: var(--implementation-border);
-  border-radius: 14px 14px 0 0;
+  border-radius: 20px 20px 0 0;
   padding: 1rem 1.15rem 0.95rem;
-  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.025);
+  box-shadow: 0 1px 2px rgba(15, 61, 46, 0.025);
 }
 
 .implementation-stepper + .implementation-metrics {
   margin-top: -0.9rem;
   border-top: 0;
-  border-radius: 0 0 14px 14px;
+  border-radius: 0 0 20px 20px;
   box-shadow: var(--implementation-card-shadow);
 }
 
@@ -182,7 +182,7 @@
 .implementation-status-select:hover,
 .implementation-status-select:focus {
   border-color: color-mix(in srgb, var(--admin-primary) 32%, var(--admin-border));
-  box-shadow: 0 0 0 3px rgba(45, 100, 142, 0.08);
+  box-shadow: 0 0 0 3px rgba(27, 94, 75, 0.08);
 }
 
 .implementation-step-segments {
@@ -255,7 +255,7 @@
   border-radius: 12px;
   background: #fff;
   padding: 0.35rem;
-  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.025);
+  box-shadow: 0 1px 2px rgba(15, 61, 46, 0.025);
 }
 
 .implementation-tabs button {
@@ -277,7 +277,7 @@
   border: 0;
   background: var(--admin-primary);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(11, 49, 80, 0.16);
+  box-shadow: 0 4px 12px rgba(15, 61, 46, 0.16);
 }
 
 /* Resumo */
@@ -315,7 +315,7 @@
   border-radius: 11px;
   background: #fff;
   padding: 1rem;
-  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.025);
+  box-shadow: 0 1px 2px rgba(15, 61, 46, 0.025);
 }
 
 .implementation-summary > .grid > aside > section {
@@ -331,7 +331,7 @@
 .implementation-workspace .rounded-lg.border.bg-white {
   border-color: var(--implementation-border) !important;
   border-radius: 11px !important;
-  box-shadow: 0 1px 2px rgba(11, 49, 80, 0.03), 0 8px 22px rgba(11, 49, 80, 0.035) !important;
+  box-shadow: 0 1px 2px rgba(15, 61, 46, 0.03), 0 8px 22px rgba(15, 61, 46, 0.035) !important;
 }
 
 .implementation-workspace [class*="rounded-[var(--radius-card)]"][class~="bg-white"]:hover,
@@ -361,8 +361,8 @@
 .implementation-workspace input:focus,
 .implementation-workspace select:focus,
 .implementation-workspace textarea:focus {
-  border-color: #7ba0bc;
-  box-shadow: 0 0 0 3px rgba(45, 100, 142, 0.08);
+  border-color: #1b5e4b;
+  box-shadow: 0 0 0 3px rgba(27, 94, 75, 0.08);
 }
 
 .implementation-workspace button:not(.is-active) {
