@@ -40,6 +40,7 @@ import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
+import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.tarefas-prototipo'
 import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
 import { Route as PortalLoginRouteImport } from './routes/portal.login'
 import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
@@ -214,6 +215,12 @@ const OperacaoPrototipoRoute = OperacaoPrototipoRouteImport.update({
   path: '/operacao/prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoTarefasPrototipoRoute =
+  OperacaoTarefasPrototipoRouteImport.update({
+    id: '/operacao/tarefas-prototipo',
+    path: '/operacao/tarefas-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PortalInicioRoute = PortalInicioRouteImport.update({
   id: '/portal/inicio',
   path: '/portal/inicio',
@@ -322,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -372,6 +380,7 @@ export interface FileRoutesByTo {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -423,6 +432,7 @@ export interface FileRoutesById {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -475,6 +485,7 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
+    | '/operacao/tarefas-prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -525,6 +536,7 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
+    | '/operacao/tarefas-prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -575,6 +587,7 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
+    | '/operacao/tarefas-prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -626,6 +639,7 @@ export interface RootRouteChildren {
   OperacaoIdRoute: typeof OperacaoIdRoute
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
+  OperacaoTarefasPrototipoRoute: typeof OperacaoTarefasPrototipoRoute
   PortalInicioRoute: typeof PortalInicioRoute
   PortalLoginRoute: typeof PortalLoginRoute
   PrestadoresIdRoute: typeof PrestadoresIdRoute
@@ -874,6 +888,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/tarefas-prototipo': {
+      id: '/operacao/tarefas-prototipo'
+      path: '/operacao/tarefas-prototipo'
+      fullPath: '/operacao/tarefas-prototipo'
+      preLoaderRoute: typeof OperacaoTarefasPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/inicio': {
       id: '/portal/inicio'
       path: '/portal/inicio'
@@ -1018,6 +1039,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoIdRoute: OperacaoIdRoute,
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
+  OperacaoTarefasPrototipoRoute: OperacaoTarefasPrototipoRoute,
   PortalInicioRoute: PortalInicioRoute,
   PortalLoginRoute: PortalLoginRoute,
   PrestadoresIdRoute: PrestadoresIdRoute,
