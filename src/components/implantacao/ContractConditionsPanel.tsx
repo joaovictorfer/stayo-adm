@@ -206,7 +206,6 @@ function validate(f: ContractForm): Partial<Record<keyof ContractForm, string>> 
 export function ContractConditionsPanel({
   implementationId,
   showMeetings = true,
-  cleaningItems,
 }: {
   implementationId: EntityId;
   showMeetings?: boolean;
@@ -255,10 +254,6 @@ export function ContractConditionsPanel({
           implementation_id: implementationId,
           administration_fee: s.administrationFee ?? null,
           maintenance_limit: s.maintenanceLimit ?? null,
-          initial_cleaning_option: s.initialCleaningOption ?? null,
-          initial_cleaning_other:
-            values.initial_cleaning_option === "other" ? (s.initialCleaningOther ?? null) : null,
-          initial_cleaning_cost_bearer: s.initialCleaningCostBearer ?? null,
           turnover_cleaning_team: s.turnoverCleaningTeam ?? null,
           turnover_cleaning_fee: s.turnoverCleaningFee ?? null,
           turnover_cleaning_payer: s.turnoverCleaningPayer ?? null,
@@ -266,7 +261,6 @@ export function ContractConditionsPanel({
           exclusivity: s.exclusivity ?? null,
           duration_months: s.durationMonths ?? null,
           notice_period_days: s.noticePeriodDays ?? null,
-          initial_cleaning_fee: s.initialCleaningFee ?? null,
           owner_use_limit_mode: s.ownerUseLimitMode ?? null,
           owner_use_limit_days: s.ownerUseLimitDays ?? null,
           owner_use_limit_period: s.ownerUseLimitPeriod ?? null,
@@ -301,12 +295,7 @@ export function ContractConditionsPanel({
   const set = <K extends keyof ContractForm>(field: K, value: ContractForm[K]) =>
     setForm((c) => ({ ...c, [field]: value }));
 
-  const sections = conditionSections(fromRow(query.data));
-  const includedCleaning = (cleaningItems ?? []).filter((i) => i.included);
-  const stayoCleans =
-    form.initial_cleaning_option === "stayo_initial" ||
-    form.initial_cleaning_option === "stayo_post_construction" ||
-    form.initial_cleaning_option === "other";
+  const sections = conditionSections(fromRow(query.data)).filter((s) => s.key !== "implementation");
 
   return (
     <div className="space-y-6">
@@ -430,63 +419,9 @@ export function ContractConditionsPanel({
                     </div>
                   </Section>
 
-                  <Section n={4} title="Limpeza de implantação">
-                    <p className="text-[11px] text-muted-foreground">
-                      Preparação inicial do imóvel. Preço separado da limpeza comercial.
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Limpeza de implantação">
-                      {(Object.keys(INITIAL_CLEANING_LABELS) as InitialCleaningOption[]).map((opt) => (
-                        <Choice
-                          key={opt}
-                          name="initial_cleaning"
-                          checked={form.initial_cleaning_option === opt}
-                          onChange={() => set("initial_cleaning_option", opt)}
-                          label={INITIAL_CLEANING_LABELS[opt]}
-                        />
-                      ))}
-                    </div>
-                    {form.initial_cleaning_option === "other" && (
-                      <Field id="initial_cleaning_other" label="Descreva a condição" error={errors.initial_cleaning_other}>
-                        <Input
-                          id="initial_cleaning_other"
-                          maxLength={300}
-                          value={form.initial_cleaning_other}
-                          onChange={(e) => set("initial_cleaning_other", e.target.value)}
-                        />
-                      </Field>
-                    )}
-                    {stayoCleans && (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <Field id="initial_cleaning_fee" label="Preço da limpeza de implantação" hint="Vazio = a definir.">
-                          <NullableMoney
-                            id="initial_cleaning_fee"
-                            value={form.initial_cleaning_fee}
-                            onChange={(v) => set("initial_cleaning_fee", v)}
-                          />
-                        </Field>
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium">Quem paga</p>
-                          <div className="flex flex-wrap gap-2">
-                            {(Object.keys(COST_BEARER_LABELS) as CostBearer[]).map((b) => (
-                              <Choice
-                                key={b}
-                                name="initial_cleaning_cost"
-                                checked={form.initial_cleaning_cost_bearer === b}
-                                onChange={() => set("initial_cleaning_cost_bearer", b)}
-                                label={COST_BEARER_LABELS[b]}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        {includedCleaning.length > 0 && (
-                          <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground sm:col-span-2">
-                            Também há item de limpeza em Serviços de implantação:{" "}
-                            {includedCleaning.map((i) => `${i.description} ${formatBRL(i.total)}`).join("; ")}.
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </Section>
+                  <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                    A limpeza de implantação, o enxoval e a assessoria ficam em “Decisões da implantação”, acima.
+                  </p>
 
                   <Section n={5} title="Uso pelo proprietário">
                     <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Limite de uso próprio">

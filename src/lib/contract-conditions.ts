@@ -12,7 +12,7 @@ export type TurnoverPayer = "guest" | "owner";
 
 export const INITIAL_CLEANING_LABELS: Record<InitialCleaningOption, string> = {
   owner_delivers: "Imóvel entregue limpo pelo proprietário",
-  stayo_initial: "Limpeza inicial convencional",
+  stayo_initial: "Limpeza comercial de implantação",
   stayo_post_construction: "Limpeza pós-obra",
   other: "Outra condição",
   tbd: "A decidir",
@@ -110,7 +110,7 @@ export interface ConditionItem {
   tbd?: boolean;
 }
 export interface ConditionSection {
-  key: "management" | "cleaning" | "owner_use" | "assignment";
+  key: "management" | "cleaning" | "owner_use" | "assignment" | "implementation";
   title: string;
   items: ConditionItem[];
   note?: string;
@@ -169,22 +169,6 @@ export function conditionSections(c: ProposalSnapshotContractConditions): Condit
   } else if (c.cleaningResponsibility?.trim()) {
     cleaning.push({ label: "Limpeza entre hospedagens", value: c.cleaningResponsibility.trim() });
   }
-  const opt = c.initialCleaningOption as InitialCleaningOption | null | undefined;
-  if (opt) {
-    const bearer = c.initialCleaningCostBearer as CostBearer | null | undefined;
-    const helps: string[] = [];
-    if (opt !== "owner_delivers" && opt !== "tbd") {
-      helps.push(c.initialCleaningFee != null ? `Valor: ${formatBRL(c.initialCleaningFee)}` : "Valor a definir");
-      if (bearer) helps.push(bearer === "owner" ? "paga pelo proprietário" : "paga pela STAYO");
-    }
-    cleaning.push({
-      label: "Limpeza de implantação",
-      value: opt === "other" ? c.initialCleaningOther?.trim() || "Outra condição" : INITIAL_CLEANING_LABELS[opt],
-      ...(helps.length ? { help: `${helps.join(" · ")}. Preparação inicial, separada da limpeza comercial.` } : {}),
-      ...(opt === "tbd" ? { tbd: true } : {}),
-    });
-  }
-
   const ownerUse: ConditionItem[] = [];
   if (ownerUseSet) {
     const mode = c.ownerUseLimitMode as OwnerUseLimitMode | null | undefined;
@@ -225,6 +209,7 @@ export function conditionSections(c: ProposalSnapshotContractConditions): Condit
     }
   }
 
+  const decisions = implementationDecisionItems(c);
   const out: ConditionSection[] = [];
   if (management.length) out.push({ key: "management", title: "Gestão e condições comerciais", items: management });
   if (cleaning.length) out.push({ key: "cleaning", title: "Limpeza e operação", items: cleaning });
@@ -237,7 +222,108 @@ export function conditionSections(c: ProposalSnapshotContractConditions): Condit
       ...(showRule ? { note: AVAILABILITY_RULE } : {}),
     });
   }
+  if (decisions.length)
+    out.push({
+      key: "implementation",
+      title: "Decisões da implantação",
+      items: decisions,
+      note: "Itens “a decidir” ou “valor a definir” serão combinados depois e não entram no total fixo.",
+    });
   return out;
+}
+
+// ---------- Decisões da implantação (limpeza inicial, enxoval, assessoria) ----------
+
+export const INITIAL_CLEANING_CHOICES: Array<{ value: InitialCleaningOption; label: string; help: string }> = [
+  { value: "owner_delivers", label: "Imóvel já será entregue limpo pelo proprietário", help: "Sem limpeza inicial pela STAYO." },
+  { value: "stayo_initial", label: "Limpeza comercial de implantação", help: "Limpeza completa antes da primeira hospedagem." },
+  { value: "stayo_post_construction", label: "Limpeza pós-obra", help: "Para imóvel novo ou reformado, com resíduos de obra." },
+  { value: "tbd", label: "A decidir", help: "Será definida depois, por exemplo após a vistoria." },
+];
+
+export type LinenMode = "complete" | "partial" | "stayo_supplier" | "tbd";
+export const LINEN_CHOICES: Array<{ value: LinenMode; label: string; help: string }> = [
+  { value: "complete", label: "O apartamento já possui enxoval completo", help: "Nada a comprar." },
+  { value: "partial", label: "Possui enxoval, mas faltam itens a comprar", help: "Liste abaixo o que falta." },
+  { value: "stayo_supplier", label: "Será comprado com fornecedor indicado pela STAYO", help: "Valor depende do orçamento do fornecedor." },
+  { value: "tbd", label: "A decidir", help: "Será definido depois." },
+];
+
+export type AdvisoryMode = "implementation_only" | "full" | "tbd";
+export const ADVISORY_CHOICES: Array<{ value: AdvisoryMode; label: string }> = [
+  { value: "implementation_only", label: "Apenas assessoria de implantação" },
+  { value: "full", label: "Assessoria completa" },
+  { value: "tbd", label: "A decidir" },
+];
+
+const label = <T extends string>(list: Array<{ value: T; label: string }>, v: string | null | undefined) =>
+  list.find((o) => o.value === v)?.label ?? null;
+
+export function implementationDecisionItems(c: ProposalSnapshotContractConditions): ConditionItem[] {
+  const items: ConditionItem[] = [];
+  const opt = c.initialCleaningOption as InitialCleaningOption | null | undefined;
+  if (opt) {
+    const helps: string[] = [];
+    if (opt === "tbd") helps.push("Será definida depois.");
+    else if (opt !== "owner_delivers") {
+      helps.push(c.initialCleaningFee != null ? `Valor: ${formatBRL(c.initialCleaningFee)}` : "Valor a definir");
+      const bearer = c.initialCleaningCostBearer as CostBearer | null | undefined;
+      if (bearer) helps.push(bearer === "owner" ? "paga pelo proprietário" : "paga pela STAYO");
+    }
+    if (c.initialCleaningNotes?.trim()) helps.push(c.initialCleaningNotes.trim());
+    items.push({
+      label: "Limpeza de implantação",
+      value:
+        opt === "other"
+          ? c.initialCleaningOther?.trim() || "Outra condição"
+          : (label(INITIAL_CLEANING_CHOICES, opt) ?? INITIAL_CLEANING_LABELS[opt]),
+      help: `${helps.join(" · ")}${helps.length ? ". " : ""}Preparação inicial; diferente da limpeza entre hospedagens.`,
+      ...(opt === "tbd" ? { tbd: true } : {}),
+    });
+  }
+  const linen = c.linenMode as LinenMode | null | undefined;
+  if (linen) {
+    const helps: string[] = [];
+    if (linen === "tbd") helps.push("Será definido depois.");
+    const missing = c.linenMissingItems ?? [];
+    if ((linen === "partial" || linen === "stayo_supplier") && missing.length)
+      helps.push(`Itens a comprar: ${missing.map((m) => `${m.qty}× ${m.name}`).join(", ")}`);
+    if (linen === "partial" || linen === "stayo_supplier") {
+      const priced = missing.length > 0 && missing.every((m) => m.unitCost != null);
+      helps.push(
+        priced
+          ? `Estimativa: ${formatBRL(missing.reduce((s, m) => s + m.qty * (m.unitCost ?? 0), 0))}, conforme orçamento`
+          : "Valor a definir (depende de orçamento)",
+      );
+    }
+    if (c.linenNotes?.trim()) helps.push(c.linenNotes.trim());
+    items.push({
+      label: "Enxoval",
+      value: label(LINEN_CHOICES, linen) ?? "A decidir",
+      ...(helps.length ? { help: `${helps.join(" · ")}.` } : {}),
+      ...(linen === "tbd" ? { tbd: true } : {}),
+    });
+  }
+  const adv = c.advisoryMode as AdvisoryMode | null | undefined;
+  if (adv) {
+    const desc =
+      adv === "full" ? c.advisoryFullDesc : adv === "implementation_only" ? c.advisoryImplementationDesc : null;
+    const helps: string[] = [];
+    if (adv === "tbd") helps.push("Será definido depois.");
+    if (desc?.trim()) helps.push(desc.trim());
+    const services = (c.advisoryServices ?? []).filter((s) => s.label?.trim());
+    if (adv !== "tbd" && services.length)
+      helps.push(
+        `Inclui: ${services.map((s) => `${s.label.trim()} (${s.value != null ? formatBRL(s.value) : "valor a definir"})`).join("; ")}`,
+      );
+    items.push({
+      label: "Assessoria",
+      value: label(ADVISORY_CHOICES, adv) ?? "A decidir",
+      ...(helps.length ? { help: helps.join(" · ") } : {}),
+      ...(adv === "tbd" ? { tbd: true } : {}),
+    });
+  }
+  return items;
 }
 
 /** Condições ainda "a decidir": não devem ser apresentadas como obrigação aceita. */
@@ -284,5 +370,14 @@ export function contractRowToSnapshot(v: Record<string, unknown> | null | undefi
     assignmentWho: t("assignment_who"),
     assignmentProcedure: t("assignment_procedure"),
     assignmentNoticeDays: n("assignment_notice_days"),
+    initialCleaningNotes: t("initial_cleaning_notes"),
+    linenMode: t("linen_mode"),
+    linenNotes: t("linen_notes"),
+    advisoryMode: t("advisory_mode"),
+    advisoryImplementationDesc: t("advisory_implementation_desc"),
+    advisoryFullDesc: t("advisory_full_desc"),
+    advisoryServices: Array.isArray(v["advisory_services"])
+      ? (v["advisory_services"] as Array<{ label: string; value: number | null }>)
+      : [],
   };
 }
