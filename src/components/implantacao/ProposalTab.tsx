@@ -93,14 +93,14 @@ const cleanScope = (scope: string[] | undefined) =>
   (scope ?? []).map((x) => x.trim()).filter(Boolean);
 
 function fromTemplate(t: ProposalItemTemplate): DraftItem {
-  // Cópia independente do modelo, desligada: nada entra no total sem ação da equipe.
+  // Cópia independente do modelo; adicionar já inclui na proposta (dá para desligar depois).
   return {
     uid: uid(),
     description: t.description,
     quantity: 1,
     unitValue: t.unitValue,
     discount: 0,
-    included: false,
+    included: true,
     optional: false,
     templateKey: t.key,
     details: t.details,
@@ -181,7 +181,13 @@ const serializeSignatories = (list: Signatory[]): ProposalRequiredSignatory[] =>
   list.filter((s) => s.label.trim()).map((s) => ({ label: s.label.trim(), role: s.role || null }));
 
 function proposalError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const raw =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === "object" && "message" in error
+        ? String((error as { message: unknown }).message ?? "")
+        : String(error ?? "");
+  const message = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) + (raw.endsWith(".") ? "" : ".") : "";
   if (message.toLowerCase().includes("sem permissão"))
     return "Você não tem permissão para acessar ou alterar propostas comerciais.";
   if (message.toLowerCase().includes("conflito"))
@@ -419,7 +425,16 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
   const selectedVersion =
     previewId && previewId !== "draft" ? (versions.find((v) => v.id === previewId) ?? null) : null;
-  const canSave = proposalItems.length > 0 && !saveDraft.isPending && !publish.isPending;
+  const busy = saveDraft.isPending || publish.isPending;
+  const hasAnyItem = items.some((i) => i.description.trim()) || partnershipObject.trim() !== "";
+  const canSaveDraft = hasAnyItem && proposalItems.length > 0 && !busy;
+  const canSave = proposalItems.length > 0 && !busy;
+  const publishHint =
+    proposalItems.length === 0
+      ? items.length > 0
+        ? "Para salvar ou publicar, ligue pelo menos um serviço em “Incluir na proposta”."
+        : "Para salvar ou publicar, adicione pelo menos um serviço."
+      : null;
 
   return (
     <div className="space-y-4">
@@ -450,7 +465,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </Button>
             <Button
               variant="outline"
-              disabled={!canSave || (!dirty && Boolean(draftVersion))}
+              disabled={!canSaveDraft || (!dirty && Boolean(draftVersion))}
               onClick={() => saveDraft.mutate()}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -462,6 +477,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </Button>
           </div>
         </div>
+        {publishHint && (
+          <p className="mt-3 text-xs text-[var(--stayo-warning)]">{publishHint}</p>
+        )}
         {(saveDraft.isError || publish.isError) && (
           <div
             role="alert"
