@@ -120,7 +120,7 @@ function FaturasPrototype() {
   );
 
   const money = (f: Fatura) => (f.doc === "cancelado" ? "—" : brl(total(f)));
-  const pagLabel = (f: Fatura) => (affected(f) ? "Não carregado *" : PAG[f.pag].label);
+  const pagLabel = (f: Fatura) => (affected(f) ? "Não carregado\u00a0*" : PAG[f.pag].label);
 
   return (
     <div className="min-w-0">
