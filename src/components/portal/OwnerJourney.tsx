@@ -2,7 +2,7 @@ import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSect
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  Building2,
+  CircleHelp,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -1084,6 +1084,93 @@ function ProposalStep({
           )}
         </div>
       )}
+
+      <ProposalFaq />
+    </section>
+  );
+}
+
+const FAQ_ITEMS: Array<{ q: string; a: string }> = [
+  {
+    q: "Como funciona a gestão da STAYO?",
+    a: "A STAYO cuida da divulgação, atendimento aos hóspedes, gestão das reservas, limpeza, operação diária e acompanhamento do imóvel para locação por temporada.",
+  },
+  {
+    q: "O que está incluído na limpeza comercial?",
+    a: "A limpeza comercial inclui limpeza completa após cada hospedagem, troca e lavagem do enxoval, reposição básica e conferência visual do imóvel.",
+  },
+  {
+    q: "Como funciona a lavanderia?",
+    a: "A equipe STAYO coleta, lava, confere e repõe o enxoval necessário para a próxima hospedagem.",
+  },
+  {
+    q: "A STAYO faz manutenção do imóvel?",
+    a: "A STAYO identifica a necessidade, orienta e aciona fornecedores quando necessário. Despesas dependem da aprovação do proprietário, salvo o limite previsto na proposta.",
+  },
+  {
+    q: "Quem paga as despesas do imóvel?",
+    a: "O proprietário é responsável por água, gás, energia, internet, IPTU, condomínio, seguro e qualquer outra despesa relacionada ao imóvel que não esteja incluída no contrato.",
+  },
+  {
+    q: "Como funciona o repasse dos valores?",
+    a: "Nas reservas pela Airbnb, o repasse ocorre pela própria plataforma. Nas demais reservas, como Booking e reservas diretas, o repasse segue a regra apresentada na sua proposta.",
+  },
+  {
+    q: "Posso usar meu imóvel?",
+    a: "Sim. Você pode solicitar o uso conforme disponibilidade e com a antecedência indicada na proposta. Datas com reservas confirmadas não podem ser bloqueadas posteriormente.",
+  },
+  {
+    q: "Posso liberar o imóvel para familiares ou convidados?",
+    a: "Sim, conforme as condições da proposta. A utilização depende de disponibilidade e segue as mesmas regras de antecedência e limpeza comercial.",
+  },
+  {
+    q: "O que acontece se forem necessários enxoval, ajustes ou serviços extras?",
+    a: "A STAYO apresenta os orçamentos, orienta e intermedia o processo. O pagamento é feito diretamente pelo proprietário ao fornecedor, após alinhamento prévio.",
+  },
+  {
+    q: "Quem define o valor das diárias?",
+    a: "A STAYO acompanha mercado, eventos, ocupação e demanda para definir a melhor estratégia de precificação do imóvel.",
+  },
+  {
+    q: "Como acompanho a operação do imóvel?",
+    a: "Após a ativação, você terá acesso ao portal do proprietário com as informações liberadas para acompanhar o seu imóvel.",
+  },
+  {
+    q: "O que acontece se houver dano durante uma hospedagem?",
+    a: "A STAYO registra a ocorrência, avalia a situação e busca a solução adequada. Quando a reserva for pela Airbnb, a equipe aciona a proteção AirCover e, conforme o valor obtido na solicitação aprovada, realiza a reposição do item. Em outros canais, a equipe orienta o proprietário sobre as providências necessárias.",
+  },
+  {
+    q: "A confirmação da proposta já é a assinatura do contrato?",
+    a: "Não. A confirmação registra seu aceite comercial das condições apresentadas. O contrato será formalizado em etapa própria.",
+  },
+];
+
+function ProposalFaq() {
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <section aria-labelledby="pj-faq-title" className="pj-faq">
+      <h2 id="pj-faq-title" className="pj-section-title">Dúvidas frequentes</h2>
+      <p className="pj-faq-lead">Entenda como funciona a gestão e a implantação do seu imóvel.</p>
+      <div className="pj-accordion">
+        {FAQ_ITEMS.map((item, i) => (
+          <details key={item.q} className="pj-acc pj-faq-acc" open={open === i}>
+            <summary
+              onClick={(event) => {
+                event.preventDefault();
+                setOpen(open === i ? null : i);
+              }}
+            >
+              <CircleHelp className="pj-faq-icon" aria-hidden="true" />
+              <span className="pj-faq-question">{item.q}</span>
+              <ChevronDown className="pj-chevron" aria-hidden="true" />
+            </summary>
+            <div className="pj-faq-body">
+              <p>{item.a}</p>
+            </div>
+          </details>
+        ))}
+      </div>
+      <p className="pj-faq-note">Ficou com alguma dúvida? Nossa equipe estará ao seu lado durante toda a implantação.</p>
     </section>
   );
 }
