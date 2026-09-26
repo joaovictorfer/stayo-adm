@@ -38,6 +38,7 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
 import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
 import { Route as PortalLoginRouteImport } from './routes/portal.login'
 import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
@@ -202,6 +203,11 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoPrototipoRoute = OperacaoPrototipoRouteImport.update({
+  id: '/operacao/prototipo',
+  path: '/operacao/prototipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalInicioRoute = PortalInicioRouteImport.update({
   id: '/portal/inicio',
   path: '/portal/inicio',
@@ -308,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -405,6 +413,7 @@ export interface FileRoutesById {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -455,6 +464,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -551,6 +562,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -600,6 +612,7 @@ export interface RootRouteChildren {
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
+  OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
   PortalInicioRoute: typeof PortalInicioRoute
   PortalLoginRoute: typeof PortalLoginRoute
   PrestadoresIdRoute: typeof PrestadoresIdRoute
@@ -834,6 +847,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/prototipo': {
+      id: '/operacao/prototipo'
+      path: '/operacao/prototipo'
+      fullPath: '/operacao/prototipo'
+      preLoaderRoute: typeof OperacaoPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/inicio': {
       id: '/portal/inicio'
       path: '/portal/inicio'
@@ -976,6 +996,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
   OperacaoIdRoute: OperacaoIdRoute,
+  OperacaoPrototipoRoute: OperacaoPrototipoRoute,
   PortalInicioRoute: PortalInicioRoute,
   PortalLoginRoute: PortalLoginRoute,
   PrestadoresIdRoute: PrestadoresIdRoute,
