@@ -65,11 +65,8 @@ import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
 import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import { EnxovalTab } from "../components/implantacao/EnxovalTab";
-import {
-  OpportunityWizard,
-  isWizardStep,
-  type WizardStep,
-} from "../components/implantacao/OpportunityWizard";
+import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
+import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
 import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
 import {
@@ -140,8 +137,8 @@ export const Route = createFileRoute("/implantacao/$id")({
       },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { etapa?: WizardStep | undefined; acao?: string | undefined } => ({
-    etapa: isWizardStep(search["etapa"]) ? search["etapa"] : undefined,
+  validateSearch: (search: Record<string, unknown>): { etapa?: JourneyStep | undefined; acao?: string | undefined } => ({
+    etapa: toJourneyStep(search["etapa"]),
     acao: typeof search["acao"] === "string" ? search["acao"] : undefined,
   }),
   component: ImplementationDetailPage,
@@ -163,17 +160,15 @@ function ImplementationDetailPage() {
     if (window.sessionStorage.getItem(`opp-wizard-exit:${id}`)) return;
     let cancelled = false;
     void (async () => {
-      const [{ getOpportunityDraftState }, { loadOpportunityForm }, { isWizardStep: valid }] =
-        await Promise.all([
-          import("../lib/api/opportunities"),
-          import("../lib/api/opportunity-form"),
-          import("../components/implantacao/OpportunityWizard"),
-        ]);
+      const [{ getOpportunityDraftState }, { loadOpportunityForm }] = await Promise.all([
+        import("../lib/api/opportunities"),
+        import("../lib/api/opportunity-form"),
+      ]);
       const st = await getOpportunityDraftState(id);
       if (!st.isDraft || cancelled) return;
       const form = await loadOpportunityForm(id);
       if (cancelled) return;
-      const etapa = valid(form.draftStep) ? form.draftStep : "proprietario";
+      const etapa = toJourneyStep(form.draftStep) ?? "contato";
       void navigate({ search: { etapa }, replace: true });
     })().catch(() => undefined);
     return () => {
@@ -300,6 +295,19 @@ function ImplementationDetailPage() {
         <ErrorRows onRetry={() => void query.refetch()} />
       ) : !implementation ? (
         <NotFoundPanel message="Implantação não encontrada" />
+      ) : wizardStep ? (
+        <OpportunityJourney
+          implementation={implementation}
+          step={wizardStep}
+          onStepChange={(etapa) =>
+            void navigate({ search: { etapa, acao: undefined }, replace: true, resetScroll: false })
+          }
+          onExit={() => {
+            window.sessionStorage.setItem(`opp-wizard-exit:${id}`, "1");
+            void queryClient.invalidateQueries({ queryKey: ["implementations"] });
+            void navigate({ search: {}, replace: true });
+          }}
+        />
       ) : (
         <div className="implementation-workspace-stack">
           <section
@@ -453,36 +461,7 @@ function ImplementationDetailPage() {
             </dl>
           </section>
 
-          {wizardStep ? (
-            <OpportunityWizard
-              implementation={implementation}
-              step={wizardStep}
-              initialAction={search.acao}
-              onStepChange={(etapa) =>
-                void navigate({ search: { etapa, acao: undefined }, replace: true, resetScroll: false })
-              }
-              onExit={() => {
-                window.sessionStorage.setItem(`opp-wizard-exit:${id}`, "1");
-                void queryClient.invalidateQueries({ queryKey: ["implementations"] });
-                void navigate({ search: {}, replace: true });
-              }}
-              renderStep={(step) =>
-                step === "proprietario" ? (
-                  <OwnerTab implementation={implementation} />
-                ) : step === "imovel" ? (
-                  <PropertyTab implementation={implementation} />
-                ) : step === "enxoval" ? (
-                  <SupplySheet implementationId={implementation.id} />
-                ) : step === "itens" ? (
-                  <EnxovalTab implementationId={implementation.id} mode="inventory" />
-                ) : step === "faltantes" ? (
-                  <MissingItemsTab implementationId={implementation.id} />
-                ) : step === "condicoes" ? (
-                  <ProposalTab implementationId={implementation.id} />
-                ) : null
-              }
-            />
-          ) : (
+          {(
             <>
           <div className="flex justify-end">
             <Button
@@ -491,10 +470,10 @@ function ImplementationDetailPage() {
               size="sm"
               onClick={() => {
                 window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
-                void navigate({ search: { etapa: "proprietario" } });
+                void navigate({ search: { etapa: "contato" } });
               }}
             >
-              Abrir formulário da oportunidade
+              Continuar cadastro da oportunidade
             </Button>
           </div>
           <StatusStepper
@@ -845,7 +824,7 @@ function ProposalGate({
 }) {
   const navigate = Route.useNavigate();
   const goToConditions = () =>
-    void navigate({ search: { etapa: "condicoes" } });
+    void navigate({ search: { etapa: "proposta" } });
   void implementationId;
   const box = "rounded-[var(--radius-control)] border p-3 text-sm";
   if (pending)

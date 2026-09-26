@@ -195,7 +195,7 @@ export async function getOpportunityDraftState(
   if (error || !data) return { isDraft: false, completedAt: null };
   const row = data as { origin: string | null; draft_completed_at: string | null };
   return {
-    isDraft: (row.origin ?? "").startsWith("admin_draft:") && !row.draft_completed_at,
+    isDraft: /^admin_(draft|opportunity):/.test(row.origin ?? "") && !row.draft_completed_at,
     completedAt: row.draft_completed_at,
   };
 }
