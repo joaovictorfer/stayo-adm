@@ -183,12 +183,12 @@ function JourneyBody({
     setCondState("saving");
     const request = (async () => {
       try {
-      const { error } = await supabase
-        .from("implementation_contract_conditions")
-        .upsert({ implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never, {
-          onConflict: "implementation_id",
-        });
-      if (error) throw error;
+        const { error } = await supabase
+          .from("implementation_contract_conditions")
+          .upsert({ implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never, {
+            onConflict: "implementation_id",
+          });
+        if (error) throw error;
         setCondState(Object.keys(condPending.current).length ? "saving" : "saved");
         return true;
       } catch {
@@ -820,6 +820,7 @@ function ProposalBlocks({
   const notice = proposalNumberChoice(cond.notice_period_days, [30, 60]);
 
   const blocks: Record<(typeof PROPOSAL_BLOCKS)[number], ReactNode> = {
+    commercial: (
     <section
       key="commercial"
       className="rounded-[var(--radius-card)] border p-4 sm:p-5"
@@ -883,7 +884,9 @@ function ProposalBlocks({
           </div>
         </div>
       </div>
-    </section>,
+    </section>
+    ),
+    preparation: (
     <section
       key="preparation"
       className="rounded-[var(--radius-card)] border p-4 sm:p-5"
@@ -933,7 +936,9 @@ function ProposalBlocks({
           />
         </Question>
       </div>
-    </section>,
+    </section>
+    ),
+    contract: (
     <section
       key="contract"
       className="rounded-[var(--radius-card)] border p-4 sm:p-5"
@@ -1037,7 +1042,8 @@ function ProposalBlocks({
           />
         </Question>
       </div>
-    </section>,
+    </section>
+    ),
   };
 
   const block = PROPOSAL_BLOCKS[sub];
