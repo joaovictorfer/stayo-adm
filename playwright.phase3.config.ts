@@ -14,7 +14,7 @@ export default defineConfig({
   },
   webServer: {
     command: "bun run dev --port 8236 --host 127.0.0.1",
-    url: "http://127.0.0.1:8236/vistoria/prototipo/phase3-suppliers",
+    url: "http://127.0.0.1:8236/phase3-preview.html",
     reuseExistingServer: false,
     timeout: 60_000,
     env: {
