@@ -159,11 +159,16 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
 
       setEntries(
         (currentEntries) =>
-          currentEntries?.map((entry) =>
-            base.current.get(entry.id)?.source === "admin"
-              ? { ...entry, source: "admin", reviewedAt: base.current.get(entry.id)?.reviewedAt }
-              : entry,
-          ) ?? currentEntries,
+          currentEntries?.map((entry) => {
+            const savedEntry = base.current.get(entry.id);
+            return savedEntry?.source === "admin"
+              ? {
+                  ...entry,
+                  source: "admin",
+                  reviewedAt: savedEntry.reviewedAt ?? null,
+                }
+              : entry;
+          }) ?? currentEntries,
       );
       if (latest.current === current) setState("saved");
     } catch {
@@ -247,6 +252,10 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
   );
 
   if (selectedCategory) {
+    const removeCategoryProps = selectedCategory.custom
+      ? { onRemoveCategory: (categoryKey: string) => void removeCategory(categoryKey) }
+      : {};
+
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
@@ -266,9 +275,7 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
           catalog={q.data.catalog}
           entries={currentEntries}
           onChange={change}
-          onRemoveCategory={
-            selectedCategory.custom ? (categoryKey) => void removeCategory(categoryKey) : undefined
-          }
+          {...removeCategoryProps}
         />
       </div>
     );
