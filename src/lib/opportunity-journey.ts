@@ -97,7 +97,8 @@ export function reviewPropertySummary(values: ReviewPropertyValues): {
     .map((value) => value.trim())
     .filter(Boolean)
     .join(" · ");
-  const identification = condominium || address || values.property_type.trim() || "Sem identificação";
+  const identification =
+    condominium || address || values.property_type.trim() || "Sem identificação";
   const checked = [
     values.condominium_name || values.address,
     values.unit,

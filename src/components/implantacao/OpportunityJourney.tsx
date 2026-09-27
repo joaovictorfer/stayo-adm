@@ -628,20 +628,18 @@ function JourneyBody({
         </ReviewCard>
         <ReviewCard title="Proposta" onEdit={() => void go("proposta")}>
           <p className="text-sm" style={muted}>
-                {cond.administration_fee == null
-                  ? "Administração a definir"
-                  : `${cond.administration_fee}% administração`}
-                {cond.turnover_cleaning_fee == null
-                  ? " · Limpeza a definir"
-                  : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
+            {cond.administration_fee == null
+              ? "Administração a definir"
+              : `${cond.administration_fee}% administração`}
+            {cond.turnover_cleaning_fee == null
+              ? " · Limpeza a definir"
+              : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
           </p>
           <p className="mt-1 text-sm" style={muted}>
-                {cond.duration_months == null
-                  ? "Vigência a definir"
-                  : `${cond.duration_months} meses`}
-                {cond.notice_period_days == null
-                  ? " · Aviso a definir"
-                  : ` · ${cond.notice_period_days} dias de aviso`}
+            {cond.duration_months == null ? "Vigência a definir" : `${cond.duration_months} meses`}
+            {cond.notice_period_days == null
+              ? " · Aviso a definir"
+              : ` · ${cond.notice_period_days} dias de aviso`}
           </p>
           <p className="mt-1 text-xs" style={muted}>
             {conditionCount} de 3 grupos de condições · {serviceSummary.count}{" "}
