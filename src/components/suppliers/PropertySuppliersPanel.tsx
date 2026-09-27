@@ -195,7 +195,6 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
       }
     },
     // `save` lê somente refs atuais; o cleanup precisa ser registrado uma única vez.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
