@@ -1,0 +1,69 @@
+name: Phase 2 inventory navigation patch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase2-unify-inventory
+          fetch-depth: 0
+      - name: Patch guided and workspace navigation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str):
+              p = Path(path)
+              text = p.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f"Expected exactly one match in {path}: {old!r}; got {text.count(old)}")
+              p.write_text(text.replace(old, new, 1))
+
+          journey = "src/components/implantacao/OpportunityJourney.tsx"
+          replace_once(journey, '  ShoppingBasket,\n', '')
+          replace_once(journey, '  Sofa,\n', '')
+          replace_once(journey, 'import { MissingItemsTab } from "./MissingItemsTab";\n', '')
+          replace_once(
+              journey,
+              '      { id: "itens", label: "Itens do imóvel", icon: Sofa, node: <EnxovalTab implementationId={id} mode="inventory" /> },\n',
+              '      { id: "inventario", label: "Inventário", icon: Package, node: <EnxovalTab implementationId={id} /> },\n',
+          )
+          replace_once(
+              journey,
+              '      { id: "faltantes", label: "Itens faltantes", icon: ShoppingBasket, node: <MissingItemsTab implementationId={id} /> },\n',
+              '',
+          )
+
+          route = "src/routes/implantacao.$id.tsx"
+          replace_once(route, 'import { MissingItemsTab } from "../components/implantacao/MissingItemsTab";\n', '')
+          replace_once(
+              route,
+              '                    { id: "itens", label: "Itens do imóvel", summary: "Inventário do que já existe", content: <EnxovalTab implementationId={implementation.id} mode="inventory" /> },\n',
+              '                    { id: "inventario", label: "Inventário", summary: "Necessário, existente, faltas e bloqueadores em uma única lista", content: <EnxovalTab implementationId={implementation.id} /> },\n',
+          )
+          replace_once(
+              route,
+              '                    { id: "faltantes", label: "Itens faltantes", summary: "O que precisa ser comprado ou instalado", content: <MissingItemsTab implementationId={implementation.id} /> },\n',
+              '',
+          )
+          PY
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bunx prettier --write src/components/implantacao/OpportunityJourney.tsx 'src/routes/implantacao.$id.tsx'
+      - name: Commit patch
+        run: |
+          git config user.name "stayo-phase-executor"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/components/implantacao/OpportunityJourney.tsx 'src/routes/implantacao.$id.tsx'
+          git diff --cached --quiet && exit 0
+          git commit -m "feat(inventory): unify implantation navigation"
+          git push origin HEAD:phase2-unify-inventory
