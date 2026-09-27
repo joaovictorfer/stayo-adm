@@ -58,7 +58,6 @@ import { ContractConditionsPanel } from "../components/implantacao/ContractCondi
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
 import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
 import { formatCommercialDateTime } from "../lib/commercial-meeting-state";
-import { MissingItemsTab } from "../components/implantacao/MissingItemsTab";
 import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
 import { CoverPicker, useAdminCoverUrl } from "../components/implantacao/CoverPicker";
 import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
@@ -563,8 +562,7 @@ function ImplementationDetailPage() {
                     { id: "guia", label: "Guia de utensílios", summary: <GuideSummary implementationId={implementation.id} guideType="utensilios" />, content: <GuidePanel implementationId={implementation.id} guideType="utensilios" /> },
                     { id: "guia-enxoval", label: "Guia de enxoval", summary: <GuideSummary implementationId={implementation.id} guideType="enxoval" />, content: <GuidePanel implementationId={implementation.id} guideType="enxoval" /> },
                     { id: "enxoval", label: "Enxoval (compras)", summary: "Peças por ambiente, compra e entrega", content: <SupplySheet implementationId={implementation.id} /> },
-                    { id: "itens", label: "Itens do imóvel", summary: "Inventário do que já existe", content: <EnxovalTab implementationId={implementation.id} mode="inventory" /> },
-                    { id: "faltantes", label: "Itens faltantes", summary: "O que precisa ser comprado ou instalado", content: <MissingItemsTab implementationId={implementation.id} /> },
+                    { id: "inventario", label: "Inventário", summary: "Necessário, existente, faltas e bloqueadores em uma única lista", content: <EnxovalTab implementationId={implementation.id} /> },
                     { id: "fornecedores", label: "Fornecedores e instalações", summary: "Quem forneceu, instalou ou atende o imóvel", content: <PropertySuppliersPanel implementationId={implementation.id} /> },
                   ]}
                 />

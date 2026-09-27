@@ -8,8 +8,6 @@ import {
   MoreHorizontal,
   NotebookPen,
   Package,
-  ShoppingBasket,
-  Sofa,
   Trash2,
   Wrench,
 } from "lucide-react";
@@ -25,7 +23,6 @@ import {
 } from "../ui/dropdown-menu";
 import { DeleteImplementationButton } from "./DeleteImplementationButton";
 import { EnxovalTab } from "./EnxovalTab";
-import { MissingItemsTab } from "./MissingItemsTab";
 import { ProposalTab } from "./ProposalTab";
 import { SupplySheet } from "./SupplySheet";
 import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
@@ -283,9 +280,8 @@ function JourneyBody({
   } else if (step === "implantacao") {
     const hubs = [
       { id: "enxoval", label: "Enxoval", icon: Package, node: <SupplySheet implementationId={id} /> },
-      { id: "itens", label: "Itens do imóvel", icon: Sofa, node: <EnxovalTab implementationId={id} mode="inventory" /> },
+      { id: "inventario", label: "Inventário", icon: Package, node: <EnxovalTab implementationId={id} /> },
       { id: "fornecedores", label: "Fornecedores", icon: Wrench, node: <PropertySuppliersPanel implementationId={id} /> },
-      { id: "faltantes", label: "Itens faltantes", icon: ShoppingBasket, node: <MissingItemsTab implementationId={id} /> },
       {
         id: "observacoes",
         label: "Observações",
