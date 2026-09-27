@@ -141,11 +141,11 @@ test("link da v2 mostra a v2, isolado da v1", async ({ page }) => {
   await expect(page.locator("text=Setup inicial B")).toHaveCount(0);
 });
 
-test("token inexistente mostra link inválido, nunca vaza qual proposta existe", async ({
+test("token inexistente mostra proposta indisponível, nunca vaza qual proposta existe", async ({
   page,
 }) => {
   await page.goto("/portal/proposta/token-que-nunca-existiu");
-  await page.waitForSelector("text=Link inválido");
+  await page.waitForSelector("text=Esta proposta não está disponível");
   await settle(page);
 
   await expect(page.locator("text=Proposta comercial")).toHaveCount(0);
