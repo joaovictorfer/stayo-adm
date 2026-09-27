@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const implementationId = "11111111-1111-4111-8111-111111111111";
+const previewPath = "/portal/phase3-suppliers-preview";
 
 const catalog = [
   {
@@ -119,8 +120,11 @@ async function mockSupabase(page: import("@playwright/test").Page) {
       return;
     }
     if (route.request().method() === "POST") {
-      const payload = route.request().postDataJSON() as { key?: string; label?: string };
-      if (payload.key && payload.label) {
+      const raw = route.request().postDataJSON() as
+        | { key?: string; label?: string }
+        | Array<{ key?: string; label?: string }>;
+      const payload = Array.isArray(raw) ? raw[0] : raw;
+      if (payload?.key && payload.label) {
         customCategories = [...customCategories, { key: payload.key, label: payload.label }];
       }
       await route.fulfill({ status: 201, contentType: "application/json", body: "[]" });
@@ -159,7 +163,7 @@ async function expectNoHorizontalOverflow(page: import("@playwright/test").Page)
 test("Fase 3 mostra lista compacta e detalhe sob demanda em 390px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockSupabase(page);
-  await page.goto("/phase3-suppliers-preview", { waitUntil: "networkidle" });
+  await page.goto(previewPath, { waitUntil: "networkidle" });
 
   await expect(page.getByRole("heading", { name: "Fornecedores" })).toBeVisible();
   await expect(page.getByText("ON Instaladora")).toBeVisible();
@@ -187,7 +191,7 @@ test("Fase 3 mostra lista compacta e detalhe sob demanda em 390px", async ({ pag
 test("Fase 3 preserva outra empresa, estados, categoria customizada e edição existente", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockSupabase(page);
-  await page.goto("/phase3-suppliers-preview", { waitUntil: "networkidle" });
+  await page.goto(previewPath, { waitUntil: "networkidle" });
 
   await page.locator('[data-supplier-category="ar_condicionado"]').click();
   await expect(page.getByText("ON Instaladora")).toBeVisible();
