@@ -335,10 +335,7 @@ function ImplementationDetailPage() {
                 code={implementation.code}
                 locked={
                   implementation.status === "ativo" ||
-                  Boolean(
-                    (implementation as { corePropertyId?: string | null })
-                      .corePropertyId,
-                  )
+                  Boolean((implementation as { corePropertyId?: string | null }).corePropertyId)
                 }
               />
             )}

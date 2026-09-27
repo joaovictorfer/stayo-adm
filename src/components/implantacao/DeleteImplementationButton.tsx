@@ -82,10 +82,7 @@ export function DeleteImplementationButton({
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-[var(--stayo-danger)]/10">
-            <AlertTriangle
-              className="size-5 text-[var(--stayo-danger)]"
-              aria-hidden="true"
-            />
+            <AlertTriangle className="size-5 text-[var(--stayo-danger)]" aria-hidden="true" />
           </div>
           <AlertDialogTitle>Excluir {code} definitivamente?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -97,8 +94,7 @@ export function DeleteImplementationButton({
         {!locked && (
           <label className="grid gap-1.5 text-sm">
             <span>
-              Digite <strong className="font-mono">{code}</strong> para
-              confirmar
+              Digite <strong className="font-mono">{code}</strong> para confirmar
             </span>
             <Input
               value={typed}
