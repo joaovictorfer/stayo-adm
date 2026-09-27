@@ -8,16 +8,15 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
-- Cadastro comercial do proprietário usa `owner_intake_links` (token próprio, separado por trigger dos links de proposta e onboarding) e grava só em `owner_intake_submissions` via RPC com whitelist; nada chega à ficha sem `admin_review_owner_intake`. Por quê: isolamento de capacidade por construção.
-- O portal do proprietário mostra Resumo/Proposta/Documentos só a partir de `portal_visibility_releases` ativos (RLS por `owner_can_access_implementation`), liberados por RPC com autor e data; revisão de dado e liberação são decisões separadas. Por quê: nada vira público por padrão.
-- `has_admin_role` sempre retorna booleano (coalesce false); RPCs administrativas não têm EXECUTE para anon. Por quê: NULL passava por `IF NOT has_admin_role(...)`.
-- Área operacional do portal (`phase = operation`) exige implantação `ativo` + `core_property_id` + `core_owner_id`; convite ou conta de implantação nunca viram acesso operacional por si. Por quê: ativação controlada vinculada ao Core oficial.
-- Marca: sempre `StayoLogo` (src/components/brand/StayoLogo.tsx) com as logos oficiais em src/assets/stayo-logo-*.asset.json (green claro, white escuro, black impressão, sand marca d'água, square-* selos); nunca o nome em texto como logo. Por quê: identidade oficial única.
-- Capa do proprietário fica privada; `getOwnerCover` e `/api/public/owner-cover/$token` validam o acesso e entregam URL assinada ou fallback social. Por quê: nunca expor bucket nem foto alheia.
-- Nova oportunidade: as três entradas abrem uma única oportunidade em rascunho (`admin_create_draft_opportunity`, idempotente por requestId, origin `admin_draft:*`) e o formulário progressivo em `/implantacao/$id?etapa=...` reutiliza as seções da ficha; concluir grava `draft_completed_at`. Por quê: evitar duplicidade e nenhum campo obrigatório.
-- Formulário da oportunidade salva por `admin_autosave_opportunity` (whitelist, conflito por campo contra o valor carregado) e a origem de cada campo fica em `implementation_field_sources` via trigger. Por quê: nunca sobrescrever silenciosamente edição do proprietário.
-- Condições da proposta (limpeza comercial, implantação, entre hospedagens, uso próprio, cessão) vivem só em `implementation_contract_conditions`; `turnover_cleaning_fee` é o valor da limpeza comercial, e ficha, prévia e link público usam `conditionSections` sobre a versão publicada. Por quê: uma única fonte e a versão aceita preservada.
-- Decisões da implantação vivem em `implementation_contract_conditions`; cada snapshot reconcilia a limpeza pós-obra: fixa aparece e soma uma vez, condicional não expõe preço nem soma. Por quê: uma fonte sem contradição entre decisão, serviço e total.
-- Fornecedores do imóvel vivem em `property_supplier_entries` (+ histórico imutável por trigger e categorias extras em `property_supplier_categories`); catálogo `supplier_catalog` só sugere e o proprietário vê apenas empresas `approved`, via RPCs `owner_suppliers_resolve/save` pelo token do convite. Correção da STAYO vira `source=admin` e trava a resposta para o proprietário. Por quê: prestadores do Core são operacionais e não cobrem este caso; nunca perder o que o proprietário informou.
-
-- Guias da implantação (utensílios, enxoval) compartilham as mesmas tabelas/RPCs por `guide_type`; cada tipo tem bloco de portal próprio (`utensils_guide`, `guia_enxoval`) via `guide_block_for`. Por quê: uma única arquitetura com liberação independente.
+- Cadastro comercial usa token próprio em `owner_intake_links`, grava só em `owner_intake_submissions` por RPC whitelist e só chega à ficha por `admin_review_owner_intake`; mantém capacidades isoladas.
+- Portal mostra Resumo/Proposta/Documentos só com `portal_visibility_releases` ativo via RPC auditada; revisão e liberação são decisões separadas, logo nada é público por padrão.
+- `has_admin_role` retorna booleano com `coalesce false`; RPCs administrativas não concedem EXECUTE a anon, evitando autorização por NULL.
+- Operação do portal exige implantação `ativo`, `core_property_id` e `core_owner_id`; convite/conta de implantação não concede acesso operacional.
+- Marca usa sempre `StayoLogo` e os assets oficiais `stayo-logo-*`; nunca texto como logo.
+- Capa do proprietário é privada; `getOwnerCover` e `/api/public/owner-cover/$token` validam acesso e entregam URL assinada ou fallback.
+- Nova oportunidade cria um único rascunho idempotente e usa `/implantacao/$id?etapa=...`; conclusão grava `draft_completed_at`.
+- Oportunidade salva por `admin_autosave_opportunity` com whitelist/conflito por campo; origem fica em `implementation_field_sources`, evitando sobrescrita silenciosa.
+- Condições e decisões vivem só em `implementation_contract_conditions`; snapshots preservam a versão aceita e reconciliam limpeza pós-obra sem duplicidade.
+- Fornecedores vivem em `property_supplier_entries`, histórico imutável e categorias próprias; catálogo só sugere aprovados e correção admin trava a resposta.
+- Guias utensílios/enxoval compartilham tabelas/RPCs por `guide_type` e têm liberação independente via `guide_block_for`.
+- Inventário e pendências manuais compartilham `implementation_supply_items`; falta deriva de quantidades e `module=faltante` só identifica origem manual na mesma experiência.
