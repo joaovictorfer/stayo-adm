@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { SupplierEditor } from "./SupplierEditor";
+import { SupplierCategoryDetail } from "./SupplierEditor";
 import {
   DEFAULT_SUPPLIER_CATEGORIES,
   SPECIALTY_LABELS,
   isPendingOther,
   mergeCategories,
   slugCategory,
+  summarizeSupplierCategory,
   type SupplierCatalogItem,
   type SupplierCategory,
   type SupplierEntry,
@@ -77,6 +79,8 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef<SupplierEntry[]>([]);
   const [newCat, setNewCat] = useState("");
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
+  const [showNewCategory, setShowNewCategory] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
 
   useEffect(() => {
@@ -170,13 +174,48 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
 
   const pending = (entries ?? []).filter(isPendingOther).length;
   const fromOwner = (entries ?? []).filter((e) => e.source === "owner").length;
+  const categories = mergeCategories(q.data.categories);
+  const selectedCategory = categories.find((category) => category.key === selectedCategoryKey) ?? null;
+
+  if (selectedCategory) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between">
+          <Button type="button" variant="ghost" className="min-w-0 justify-start px-2" onClick={() => setSelectedCategoryKey(null)}>
+            <ArrowLeft className="shrink-0" />
+            <span className="truncate">Voltar para fornecedores</span>
+          </Button>
+          <span className="shrink-0 text-xs text-muted-foreground" aria-live="polite">
+            {state === "saving" ? "Salvando…" : state === "saved" ? "Salvo" : state === "error" ? (
+              <button type="button" className="underline" onClick={() => void save()}>Tentar novamente</button>
+            ) : null}
+          </span>
+        </div>
+        <div>
+          <p className="text-xs font-medium uppercase text-muted-foreground">Fornecedor ou instalação</p>
+          <h3 className="text-lg font-semibold text-foreground">{selectedCategory.label}</h3>
+        </div>
+        <SupplierCategoryDetail
+          mode="admin"
+          category={selectedCategory}
+          catalog={q.data.catalog}
+          entries={entries ?? []}
+          onChange={change}
+          onRemoveCategory={async (categoryKey) => {
+            await removeCategory(categoryKey);
+            setSelectedCategoryKey(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="space-y-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:flex sm:flex-wrap sm:justify-between">
         <div className="flex flex-wrap gap-2 text-xs">
           {pending > 0 && (
-            <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-900">
+            <span className="rounded bg-muted px-2 py-1 font-medium text-foreground">
               {pending} {pending === 1 ? "empresa com nome pendente" : "empresas com nome pendente"}
             </span>
           )}
@@ -190,25 +229,56 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
           ) : null}
         </span>
       </div>
-      <SupplierEditor
-        mode="admin"
-        categories={mergeCategories(q.data.categories)}
-        catalog={q.data.catalog}
-        entries={entries ?? []}
-        onChange={change}
-        onRemoveCategory={removeCategory}
-      />
-      <div className="flex flex-wrap gap-2">
-        <input
-          aria-label="Nova categoria"
-          placeholder="Nova categoria (ex.: Portão eletrônico)"
-          className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm"
-          value={newCat}
-          onChange={(e) => setNewCat(e.target.value)}
-        />
-        <Button type="button" variant="outline" onClick={() => void addCategory()} disabled={!newCat.trim()}>
-          Adicionar categoria
-        </Button>
+      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-background">
+        {categories.map((category) => {
+          const summary = summarizeSupplierCategory(
+            (entries ?? []).filter((entry) => entry.categoryKey === category.key),
+            q.data.catalog,
+          );
+          return (
+            <li key={category.key}>
+              <button
+                type="button"
+                className="grid min-h-16 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2"
+                onClick={() => setSelectedCategoryKey(category.key)}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-foreground">{category.label}</span>
+                  <span className="block truncate text-sm text-muted-foreground">{summary.description}</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">{summary.stateLabel}</span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="space-y-3">
+        {!showNewCategory ? (
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setShowNewCategory(true)}>
+            <Plus /> Adicionar categoria
+          </Button>
+        ) : (
+          <div className="rounded-lg border border-border p-3">
+            <label className="mb-2 block text-sm font-medium text-foreground" htmlFor="new-supplier-category">Nome da categoria</label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                id="new-supplier-category"
+                placeholder="Ex.: Portão eletrônico"
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm"
+                value={newCat}
+                onChange={(e) => setNewCat(e.target.value)}
+                autoFocus
+              />
+              <Button type="button" onClick={() => void addCategory().then(() => setShowNewCategory(false))} disabled={!newCat.trim()}>
+                Adicionar
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => { setNewCat(""); setShowNewCategory(false); }}>Cancelar</Button>
+            </div>
+          </div>
+        )}
         <Button type="button" variant="ghost" onClick={() => setShowCatalog((s) => !s)}>
           {showCatalog ? "Fechar catálogo" : "Catálogo de empresas"}
         </Button>
