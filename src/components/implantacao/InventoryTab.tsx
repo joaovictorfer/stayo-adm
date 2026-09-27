@@ -535,11 +535,15 @@ export function InventoryTab({ implementationId }: { implementationId: string })
                 />
                 <span className="text-sm font-medium">Marcar como bloqueador do inventário</span>
               </label>
-            {editing?.blocks_readiness && !form.blocks_readiness && (
-              <Field label="Justificativa para retirar o bloqueio *" id="inv-unblock-reason">
-                <Input id="inv-unblock-reason" value={unblockReason} onChange={(e) => setUnblockReason(e.target.value)} />
-              </Field>
-            )}
+              {editing?.blocks_readiness && !form.blocks_readiness && (
+                <Field label="Justificativa para retirar o bloqueio *" id="inv-unblock-reason">
+                  <Input
+                    id="inv-unblock-reason"
+                    value={unblockReason}
+                    onChange={(e) => setUnblockReason(e.target.value)}
+                  />
+                </Field>
+              )}
               <Field label="Observações" id="inv-notes">
                 <Input
                   id="inv-notes"
