@@ -49,10 +49,7 @@ export function supplierCategorySummary(
     return {
       state: "confirm",
       stateLabel: SUPPLIER_CATEGORY_STATE_LABELS.confirm,
-      display:
-        pendingCompany != null
-          ? entryDisplayName(pendingCompany, catalog)
-          : "Não sei informar",
+      display: pendingCompany != null ? entryDisplayName(pendingCompany, catalog) : "Não sei informar",
       companyCount: companies.length,
     };
   }
@@ -62,8 +59,7 @@ export function supplierCategorySummary(
     return {
       state: "defined",
       stateLabel: SUPPLIER_CATEGORY_STATE_LABELS.defined,
-      display:
-        companies.length === 1 ? firstName : `${firstName} + ${companies.length - 1}`,
+      display: companies.length === 1 ? firstName : `${firstName} + ${companies.length - 1}`,
       companyCount: companies.length,
     };
   }
