@@ -28,6 +28,7 @@
    - Pendência manual continuará resolvida/dispensada/reaberta por status, pois não representa contagem de um item de inventário preexistente.
    - Prevenir nova pendência manual duplicada para o mesmo nome e ambiente; registros históricos existentes continuam visíveis e editáveis.
    - Preservar os eventos de auditoria e atualizar apenas seus rótulos visíveis para “Inventário”, sem alterar o contrato persistido.
+   - Fechar o atalho atual que permite apagar um bloqueador sem justificativa pela tela de inventário; ações sensíveis seguirão a mesma confirmação e auditoria da área unificada.
 
 4. **Cadastro e ficha**
    - Na Etapa 4, substituir “Itens do imóvel” e “Itens faltantes” por uma entrada `Inventário`.
