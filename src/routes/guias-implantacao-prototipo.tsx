@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  Check,
   ChevronRight,
-  ImagePlus,
   Library,
   Link as LinkIcon,
   PackageOpen,
@@ -563,13 +561,17 @@ function ItemEditor({
       tip,
       reference,
       ownerStatus: item?.ownerStatus ?? "Não informado",
-      exclusive: exclusive || item?.exclusive,
+      exclusive: Boolean(exclusive || item?.exclusive),
       hidden,
     });
   };
 
   return (
-    <Sheet title={exclusive ? "Item exclusivo" : "Editar item"} eyebrow={exclusive ? "Somente neste imóvel" : item?.name} onClose={onClose}>
+    <Sheet
+      title={exclusive ? "Item exclusivo" : "Editar item"}
+      onClose={onClose}
+      {...(exclusive ? { eyebrow: "Somente neste imóvel" } : item?.name ? { eyebrow: item.name } : {})}
+    >
       <form
         className="space-y-5 p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         onSubmit={(event) => {
