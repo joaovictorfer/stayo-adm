@@ -373,13 +373,46 @@ const INSPECTIONS_KEY = "stayo-admin:inspections";
 const IMPLEMENTATIONS_KEY = "stayo-admin:implementations";
 const IMPLEMENTATION_ITEMS_KEY = "stayo-admin:implementation-items";
 
+const MOCK_TEST_CONDOMINIUM: Condominium = {
+  id: "2f42cc75-34c8-46a0-9990-108946882a8f",
+  name: "Condomínio Teste",
+  city: "Gramado",
+  createdAt: "2026-09-27T22:49:00.000Z",
+  updatedAt: "2026-09-27T22:49:00.000Z",
+};
+
+const MOCK_TEST_PROPERTY: Property = {
+  id: "7f7cf6de-6e96-4c41-8fb3-71ddb9b4e620",
+  externalCode: "TESTE-001",
+  name: "Imóvel Teste · Unidade 101",
+  condominiumId: MOCK_TEST_CONDOMINIUM.id,
+  condominiumName: MOCK_TEST_CONDOMINIUM.name,
+  unit: "101",
+  city: "Gramado",
+  status: "teste",
+  capacity: 4,
+  checkinTime: null,
+  checkoutTime: null,
+  ownerId: null,
+  ownerName: null,
+  createdAt: "2026-09-27T22:49:00.000Z",
+  updatedAt: "2026-09-27T22:49:00.000Z",
+};
+
 export function createMockCoreApiClient(): CoreApiClient {
   const empty = <T>(): Promise<Page<T>> => Promise.resolve({ data: [], nextCursor: null });
 
   return {
     health: () => Promise.resolve({ status: "ok", version: "mock" }),
-    properties: { list: () => empty(), get: () => Promise.resolve(null) },
-    condominiums: { list: () => empty(), get: () => Promise.resolve(null) },
+    properties: {
+      list: () => Promise.resolve({ data: [MOCK_TEST_PROPERTY], nextCursor: null }),
+      get: (id) => Promise.resolve(id === MOCK_TEST_PROPERTY.id ? MOCK_TEST_PROPERTY : null),
+    },
+    condominiums: {
+      list: () => Promise.resolve({ data: [MOCK_TEST_CONDOMINIUM], nextCursor: null }),
+      get: (id) =>
+        Promise.resolve(id === MOCK_TEST_CONDOMINIUM.id ? MOCK_TEST_CONDOMINIUM : null),
+    },
     reservations: { list: () => empty(), get: () => Promise.resolve(null) },
     guests: { list: () => empty(), get: () => Promise.resolve(null) },
     owners: {
