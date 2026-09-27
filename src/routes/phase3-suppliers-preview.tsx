@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 
+// Rota efêmera de QA: será removida antes do diff final e não entra no routeTree versionado.
+// @ts-expect-error caminho temporário fora do FileRoutesByPath gerado
 export const Route = createFileRoute("/phase3-suppliers-preview")({
   ssr: false,
   component: Phase3SuppliersPreview,
