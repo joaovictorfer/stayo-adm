@@ -489,7 +489,13 @@ function JourneyActions({ implementation }: { implementation: ImplementationProj
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label="Mais ações">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          aria-label="Mais ações"
+        >
           <MoreHorizontal className="size-5" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
@@ -527,7 +533,11 @@ function SaveStatus({
     return (
       <p
         role="status"
-        className={compact ? "flex items-center gap-1 text-xs whitespace-nowrap" : "flex items-center gap-1.5 text-xs"}
+        className={
+          compact
+            ? "flex items-center gap-1 text-xs whitespace-nowrap"
+            : "flex items-center gap-1.5 text-xs"
+        }
         style={{ color: "var(--stayo-danger)" }}
       >
         <CloudOff className="size-3.5" /> Não foi possível salvar ·{" "}
@@ -539,10 +549,18 @@ function SaveStatus({
   return (
     <p
       role="status"
-      className={compact ? "flex items-center gap-1 text-xs whitespace-nowrap" : "flex items-center gap-1.5 text-xs"}
+      className={
+        compact
+          ? "flex items-center gap-1 text-xs whitespace-nowrap"
+          : "flex items-center gap-1.5 text-xs"
+      }
       style={muted}
     >
-      {state === "saving" ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+      {state === "saving" ? (
+        <Loader2 className="size-3.5 animate-spin" />
+      ) : (
+        <Check className="size-3.5" />
+      )}
       {state === "saving" ? "Salvando…" : "Salvo"}
     </p>
   );
