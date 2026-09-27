@@ -70,6 +70,7 @@ import { Route as PortalImplantacaoTokenRouteImport } from './routes/portal.impl
 import { Route as PortalPreviaIdRouteImport } from './routes/portal.previa.$id'
 import { Route as PortalPropostaTokenRouteImport } from './routes/portal.proposta.$token'
 import { Route as VistoriaPrototipoLinkRouteImport } from './routes/vistoria.prototipo.link'
+import { Route as ApiPublicOwnerCoverTokenRouteImport } from './routes/api/public/owner-cover.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -387,6 +388,12 @@ const VistoriaPrototipoLinkRoute = VistoriaPrototipoLinkRouteImport.update({
   path: '/vistoria/prototipo/link',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOwnerCoverTokenRoute =
+  ApiPublicOwnerCoverTokenRouteImport.update({
+    id: '/api/public/owner-cover/$token',
+    path: '/api/public/owner-cover/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -450,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
+  '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -513,6 +521,7 @@ export interface FileRoutesByTo {
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
+  '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -577,6 +586,7 @@ export interface FileRoutesById {
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
+  '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -642,6 +652,7 @@ export interface FileRouteTypes {
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
+    | '/api/public/owner-cover/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -705,6 +716,7 @@ export interface FileRouteTypes {
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
+    | '/api/public/owner-cover/$token'
   id:
     | '__root__'
     | '/'
@@ -768,6 +780,7 @@ export interface FileRouteTypes {
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
+    | '/api/public/owner-cover/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -832,6 +845,7 @@ export interface RootRouteChildren {
   PortalPreviaIdRoute: typeof PortalPreviaIdRoute
   PortalPropostaTokenRoute: typeof PortalPropostaTokenRoute
   VistoriaPrototipoLinkRoute: typeof VistoriaPrototipoLinkRoute
+  ApiPublicOwnerCoverTokenRoute: typeof ApiPublicOwnerCoverTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1263,6 +1277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VistoriaPrototipoLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/owner-cover/$token': {
+      id: '/api/public/owner-cover/$token'
+      path: '/api/public/owner-cover/$token'
+      fullPath: '/api/public/owner-cover/$token'
+      preLoaderRoute: typeof ApiPublicOwnerCoverTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1328,6 +1349,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalPreviaIdRoute: PortalPreviaIdRoute,
   PortalPropostaTokenRoute: PortalPropostaTokenRoute,
   VistoriaPrototipoLinkRoute: VistoriaPrototipoLinkRoute,
+  ApiPublicOwnerCoverTokenRoute: ApiPublicOwnerCoverTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
