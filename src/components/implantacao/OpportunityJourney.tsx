@@ -54,7 +54,7 @@ import {
   JOURNEY_STEPS,
   PROPOSAL_BLOCKS,
   proposalNumberChoice,
-  summarize,
+  reviewPropertySummary,
   validateContact,
   type JourneyStep,
 } from "../../lib/opportunity-journey";
@@ -392,6 +392,16 @@ function JourneyBody({
     else void exit();
   };
 
+  const proposalBlock = step === "proposta" ? PROPOSAL_BLOCKS[sub] : undefined;
+  const proposalBlockLabel =
+    proposalBlock === "commercial"
+      ? "Condições comerciais"
+      : proposalBlock === "preparation"
+        ? "Preparação do imóvel"
+        : proposalBlock === "contract"
+          ? "Condições do contrato"
+          : null;
+
   const complete = useMutation({
     mutationFn: async () => {
       await flushAll();
@@ -595,120 +605,54 @@ function JourneyBody({
         });
       }
     };
-    const groups = [
-      {
-        title: "Contato",
-        step: "contato" as const,
-        lines: [
-          { label: "Título", value: v.nickname },
-          { label: "Proprietário", value: contact.name },
-          { label: "Telefone", value: contact.phone },
-        ],
-      },
-      {
-        title: "Imóvel",
-        step: "imovel" as const,
-        lines: (
-          [
-            "condominium_name",
-            "unit",
-            "address",
-            "city",
-            "property_type",
-            "bedrooms",
-            "capacity",
-          ] as FormField[]
-        ).map((f) => ({ label: f, value: v[f] })),
-        headline: [v.condominium_name, v.tower, v.unit].filter(Boolean).join(" · "),
-      },
-      {
-        title: "Proposta",
-        step: "proposta" as const,
-        lines: proposalBlocks,
-      },
-    ];
+    const propertySummary = reviewPropertySummary(v);
+    const conditionCount = proposalBlocks.filter((block) => block.value).length;
     content = (
       <div className="flex flex-col gap-3">
-        {groups.map((g) => {
-          const s = summarize(g.lines);
-          return (
-            <button
-              key={g.title}
-              type="button"
-              onClick={() => void go(g.step)}
-              className="rounded-[var(--radius-card)] border p-4 text-left"
-              style={inputStyle}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">{g.title}</span>
-                <span className="text-xs font-medium" style={{ color: "var(--stayo-forest)" }}>
-                  Editar
-                </span>
-              </div>
-              {g.title === "Contato" ? (
-                s.filled.map((l) => (
-                  <p key={l.label} className="mt-1 flex items-center gap-1.5 text-sm">
-                    <Check className="size-3.5" style={{ color: "var(--stayo-forest)" }} />{" "}
-                    {l.value}
-                  </p>
-                ))
-              ) : g.title === "Imóvel" ? (
-                <p className="mt-1 text-sm">
-                  {"headline" in g && g.headline ? g.headline : "Sem identificação"}
-                </p>
-              ) : (
-                <p className="mt-1 flex items-center gap-1.5 text-sm">
-                  <Check className="size-3.5" style={{ color: "var(--stayo-forest)" }} />{" "}
-                  {s.filled.length} condições registradas
-                </p>
-              )}
-              {s.missing > 0 && (
-                <p className="mt-1 text-xs" style={muted}>
-                  {s.missing}{" "}
-                  {s.missing === 1 ? "item para completar depois" : "itens para completar depois"}
-                </p>
-              )}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => void go("implantacao")}
-          className="rounded-[var(--radius-card)] border p-4 text-left"
-          style={inputStyle}
-        >
-          <span className="font-semibold">Implantação</span>
+        <ReviewCard title="Contato" onEdit={() => void go("contato")}>
+          <p className="text-sm">{contact.name || "Nome a completar"}</p>
           <p className="mt-1 text-sm" style={muted}>
-            Enxoval, inventário, fornecedores e observações — registre quando quiser.
+            {contact.phone || "Telefone a completar"}
           </p>
-        </button>
-        <section className="rounded-[var(--radius-card)] border p-4" style={inputStyle}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold">Resumo da proposta</p>
-              <p className="mt-1 text-sm" style={muted}>
+        </ReviewCard>
+        <ReviewCard title="Imóvel" onEdit={() => void go("imovel")}>
+          <p className="text-sm">{propertySummary.identification}</p>
+          {propertySummary.missing > 0 && (
+            <p className="mt-1 text-xs" style={muted}>
+              {propertySummary.missing}{" "}
+              {propertySummary.missing === 1
+                ? "dado pode ser completado depois"
+                : "dados podem ser completados depois"}
+            </p>
+          )}
+        </ReviewCard>
+        <ReviewCard title="Proposta" onEdit={() => void go("proposta")}>
+          <p className="text-sm" style={muted}>
                 {cond.administration_fee == null
                   ? "Administração a definir"
                   : `${cond.administration_fee}% administração`}
                 {cond.turnover_cleaning_fee == null
                   ? " · Limpeza a definir"
                   : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
-              </p>
-              <p className="mt-1 text-sm" style={muted}>
+          </p>
+          <p className="mt-1 text-sm" style={muted}>
                 {cond.duration_months == null
                   ? "Vigência a definir"
                   : `${cond.duration_months} meses`}
                 {cond.notice_period_days == null
                   ? " · Aviso a definir"
                   : ` · ${cond.notice_period_days} dias de aviso`}
-                {` · ${serviceSummary.count} serviço(s)`}
-              </p>
-            </div>
-            <Button type="button" variant="ghost" size="sm" onClick={() => void go("proposta")}>
-              Editar
-            </Button>
-          </div>
-        </section>
+          </p>
+          <p className="mt-1 text-xs" style={muted}>
+            {conditionCount} de 3 grupos de condições · {serviceSummary.count}{" "}
+            {serviceSummary.count === 1 ? "serviço" : "serviços"}
+          </p>
+        </ReviewCard>
+        <ReviewCard title="Implantação" onEdit={() => void go("implantacao")}>
+          <p className="text-sm" style={muted}>
+            Enxoval, inventário, fornecedores e observações.
+          </p>
+        </ReviewCard>
         {proposalIssue && (
           <div
             role="alert"
@@ -762,14 +706,6 @@ function JourneyBody({
               {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
               enviar
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-12"
-              onClick={() => void go("contato")}
-            >
-              Continuar editando
-            </Button>
           </div>
         )}
       </div>
@@ -807,9 +743,16 @@ function JourneyBody({
             </Button>
           </div>
         </div>
-        <h2 className="text-lg font-semibold">
-          {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de {JOURNEY_STEPS.length}
-        </h2>
+        <div>
+          <h2 className="text-lg font-semibold">
+            {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de {JOURNEY_STEPS.length}
+          </h2>
+          {proposalBlockLabel && (
+            <p className="mt-0.5 text-xs" style={muted}>
+              {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
+            </p>
+          )}
+        </div>
         <div
           className="flex gap-1"
           role="progressbar"
@@ -833,11 +776,11 @@ function JourneyBody({
 
       {!(step === "revisao") && !hub && (
         <footer
-          className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t px-4 py-3 sm:static sm:border-0 sm:p-0"
+          className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:border-0 sm:p-0"
           style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
         >
           <Button type="button" variant="outline" className="min-h-12" onClick={back}>
-            Voltar
+            {step === "proposta" && sub > 0 ? "Voltar ao bloco anterior" : "Voltar etapa"}
           </Button>
           <Button
             type="button"
