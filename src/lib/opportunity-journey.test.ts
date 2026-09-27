@@ -4,6 +4,7 @@ import {
   isContactValid,
   PROPOSAL_BLOCKS,
   proposalNumberChoice,
+  reviewPropertySummary,
   summarize,
   toJourneyStep,
   validateContact,
@@ -51,5 +52,32 @@ describe("jornada da nova oportunidade", () => {
     expect(proposalNumberChoice("60", [30, 60])).toBe("60");
     expect(proposalNumberChoice(18, [12, 24])).toBe("outro");
     expect(proposalNumberChoice(null, [12, 24])).toBe("tbd");
+  });
+
+  it("resume o imóvel sem listar cada campo ausente", () => {
+    expect(
+      reviewPropertySummary({
+        condominium_name: "Vêneto",
+        tower: "A",
+        unit: "201",
+        address: "",
+        city: "Gramado",
+        property_type: "apartamento",
+        bedrooms: "2",
+        capacity: "4",
+      }),
+    ).toEqual({ identification: "Vêneto · A · 201", missing: 0 });
+    expect(
+      reviewPropertySummary({
+        condominium_name: "",
+        tower: "",
+        unit: "",
+        address: "",
+        city: "",
+        property_type: "",
+        bedrooms: "",
+        capacity: "",
+      }),
+    ).toEqual({ identification: "Sem identificação", missing: 6 });
   });
 });

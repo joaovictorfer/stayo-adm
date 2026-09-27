@@ -60,7 +60,7 @@ test("link da v1 continua mostrando a v1 mesmo depois de existir uma v2", async 
   await page.waitForSelector("text=Proposta comercial");
   await settle(page);
 
-  await expect(page.locator("text=Versão 1")).toBeVisible();
+  await expect(page.getByText(/Versão 1/)).toBeVisible();
   await expect(page.locator("text=Setup inicial")).toBeVisible();
   await expect(page.locator("text=Setup revisado")).toHaveCount(0);
   await expect(page.locator("text=Versão 2")).toHaveCount(0);
@@ -141,12 +141,12 @@ test("link da v2 mostra a v2, isolado da v1", async ({ page }) => {
   await expect(page.locator("text=Setup inicial B")).toHaveCount(0);
 });
 
-test("token inexistente mostra link inválido, nunca vaza qual proposta existe", async ({
+test("token inexistente mostra proposta indisponível, nunca vaza qual proposta existe", async ({
   page,
 }) => {
   await page.goto("/portal/proposta/token-que-nunca-existiu");
-  await page.waitForSelector("text=Link inválido");
+  await page.waitForSelector("text=Esta proposta não está disponível");
   await settle(page);
 
-  await expect(page.locator("text=Proposta comercial")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Proposta comercial" })).toHaveCount(0);
 });

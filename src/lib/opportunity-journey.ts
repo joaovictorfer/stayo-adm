@@ -73,3 +73,42 @@ export function summarize(lines: ReviewLine[]): { filled: ReviewLine[]; missing:
   const filled = lines.filter((l) => (l.value ?? "").toString().trim() !== "");
   return { filled, missing: lines.length - filled.length };
 }
+
+type ReviewPropertyValues = {
+  condominium_name: string;
+  tower: string;
+  unit: string;
+  address: string;
+  city: string;
+  property_type: string;
+  bedrooms: string;
+  capacity: string;
+};
+
+export function reviewPropertySummary(values: ReviewPropertyValues): {
+  identification: string;
+  missing: number;
+} {
+  const condominium = [values.condominium_name, values.tower, values.unit]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(" · ");
+  const address = [values.address, values.city]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(" · ");
+  const identification =
+    condominium || address || values.property_type.trim() || "Sem identificação";
+  const checked = [
+    values.condominium_name || values.address,
+    values.unit,
+    values.city,
+    values.property_type,
+    values.bedrooms,
+    values.capacity,
+  ];
+  return {
+    identification,
+    missing: checked.filter((value) => !value.trim()).length,
+  };
+}
