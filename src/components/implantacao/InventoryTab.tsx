@@ -65,6 +65,7 @@ export function InventoryTab({ implementationId }: { implementationId: string })
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
+  const [unblockReason, setUnblockReason] = useState("");
   const [dismissItem, setDismissItem] = useState<InventoryItem | null>(null);
   const [dismissReason, setDismissReason] = useState("");
   const query = useQuery({
@@ -80,7 +81,7 @@ export function InventoryTab({ implementationId }: { implementationId: string })
       return data as unknown as InventoryItem[];
     },
   });
-  const items = query.data ?? [];
+  const items = useMemo(() => query.data ?? [], [query.data]);
   const states = useMemo(() => items.map(deriveInventoryState), [items]);
   const visible = useMemo(() => filterInventory(items, filter), [items, filter]);
   const counts = {
@@ -105,6 +106,9 @@ export function InventoryTab({ implementationId }: { implementationId: string })
       const room = form.room.trim() || "Geral";
       if (hasOpenInventoryDuplicate(items, form.name, room, editing?.id))
         throw new Error(`“${form.name.trim()}” em ${room} já está no inventário.`);
+      const removingBlocker = Boolean(editing?.blocks_readiness && !form.blocks_readiness);
+      if (removingBlocker && unblockReason.trim().length < 5)
+        throw new Error("Informe uma justificativa para retirar o bloqueio.");
       const payload = {
         implementation_id: implementationId,
         module: form.module,
@@ -120,6 +124,9 @@ export function InventoryTab({ implementationId }: { implementationId: string })
         status: editing?.status ?? "pendente",
         updated_at: new Date().toISOString(),
       };
+      if (editing && removingBlocker) {
+        await audit("supply.blocker_removed", editing, { reason: unblockReason.trim() });
+      }
       const result = editing
         ? await supabase
             .from("implementation_supply_items")
@@ -137,6 +144,7 @@ export function InventoryTab({ implementationId }: { implementationId: string })
       setEditing(null);
       setForm(emptyForm);
       setFormError(null);
+      setUnblockReason("");
     },
     onError: (error: unknown) =>
       setFormError(error instanceof Error ? error.message : "Não foi possível salvar o item."),
@@ -182,6 +190,7 @@ export function InventoryTab({ implementationId }: { implementationId: string })
     setEditing(null);
     setForm(emptyForm);
     setFormError(null);
+    setUnblockReason("");
     setFormOpen(true);
   };
   const openEdit = (item: InventoryItem) => {
@@ -199,6 +208,7 @@ export function InventoryTab({ implementationId }: { implementationId: string })
       notes: item.notes ?? "",
     });
     setFormError(null);
+    setUnblockReason("");
     setFormOpen(true);
   };
   const resolve = (item: InventoryItem) =>
@@ -525,6 +535,11 @@ export function InventoryTab({ implementationId }: { implementationId: string })
                 />
                 <span className="text-sm font-medium">Marcar como bloqueador do inventário</span>
               </label>
+            {editing?.blocks_readiness && !form.blocks_readiness && (
+              <Field label="Justificativa para retirar o bloqueio *" id="inv-unblock-reason">
+                <Input id="inv-unblock-reason" value={unblockReason} onChange={(e) => setUnblockReason(e.target.value)} />
+              </Field>
+            )}
               <Field label="Observações" id="inv-notes">
                 <Input
                   id="inv-notes"
