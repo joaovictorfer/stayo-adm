@@ -4,6 +4,9 @@ import {
   Check,
   ChevronRight,
   CloudOff,
+  Copy,
+  ExternalLink,
+  Link2,
   Loader2,
   MoreHorizontal,
   NotebookPen,
@@ -16,6 +19,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { toast } from "sonner";
 
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +40,15 @@ import {
   type FormValues,
 } from "../../lib/api/opportunity-form";
 import { completeOpportunityDraft, saveOpportunityContact } from "../../lib/api/opportunities";
+import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
+import { presentationInvitesApi, presentationUrl } from "../../lib/api/presentation-invites";
+import {
+  buildGuidedDraftInput,
+  guidedOptionsFromVersion,
+  guidedProposalIssue,
+  optionFromTemplate,
+  proposalServiceSummary,
+} from "../../lib/guided-proposal";
 import { formatBrazilianPhone } from "../../lib/owner-form-validation";
 import {
   JOURNEY_STEPS,
@@ -46,6 +59,11 @@ import {
   type JourneyStep,
 } from "../../lib/opportunity-journey";
 import type { ImplementationProject } from "../../types/core";
+import { PROPOSAL_ITEM_TEMPLATES } from "../../config/proposal-item-templates";
+import type {
+  CommercialProposalVersion,
+  ProposalItemOption,
+} from "../../types/commercial-proposal";
 
 const inputClass =
   "w-full min-h-12 rounded-[var(--radius-control)] border px-3 py-3 text-base outline-none transition focus:ring-2 focus:ring-[var(--stayo-forest)]/25";
@@ -223,36 +241,116 @@ function JourneyBody({
     void runCondSave();
   };
 
+  const proposalsQ = useQuery({
+    queryKey: ["commercial-proposals", id],
+    queryFn: () => commercialProposalsApi.list(id),
+  });
+  const versions = proposalsQ.data ?? [];
+  const draftProposal = versions.find((version) => version.status === "draft") ?? null;
+  const latestPublished = versions.find((version) => version.status !== "draft") ?? null;
+  const proposalSource = draftProposal ?? latestPublished;
+  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>([]);
+  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(null);
+  const [proposalState, setProposalState] = useState<SaveState>("idle");
+  const proposalDirty = useRef(false);
+  const proposalOptionsRef = useRef<ProposalItemOption[]>([]);
+  const proposalRunning = useRef<Promise<boolean> | null>(null);
+  const proposalTimer = useRef<number | null>(null);
+  useEffect(() => {
+    const key = proposalSource
+      ? `${proposalSource.id}:${proposalSource.status}:${proposalSource.draftRevision}:${proposalSource.updatedAt}`
+      : "empty";
+    if (proposalDirty.current || key === proposalLoadedKey) return;
+    const restored = guidedOptionsFromVersion(proposalSource ?? null);
+    proposalOptionsRef.current = restored;
+    setProposalOptions(restored);
+    setProposalLoadedKey(key);
+  }, [proposalLoadedKey, proposalSource]);
+
+  const saveProposal = useCallback(async (): Promise<boolean> => {
+    if (proposalRunning.current) await proposalRunning.current;
+    const currentOptions = proposalOptionsRef.current;
+    if (!proposalDirty.current || guidedProposalIssue(currentOptions)) return true;
+    setProposalState("saving");
+    const request = (async () => {
+      try {
+        const saved = await commercialProposalsApi.saveDraft(
+          buildGuidedDraftInput({
+            implementationId: id,
+            version: draftProposal ?? latestPublished,
+            options: currentOptions,
+            commandId: crypto.randomUUID(),
+          }),
+        );
+        proposalDirty.current = false;
+        setProposalLoadedKey(
+          `${saved.id}:${saved.status}:${saved.draftRevision}:${saved.updatedAt}`,
+        );
+        setProposalState("saved");
+        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
+        return true;
+      } catch {
+        setProposalState("error");
+        return false;
+      }
+    })();
+    proposalRunning.current = request;
+    const ok = await request;
+    proposalRunning.current = null;
+    return ok;
+  }, [draftProposal, id, latestPublished, queryClient]);
+
+  const changeProposalOptions = (next: ProposalItemOption[]) => {
+    proposalOptionsRef.current = next;
+    setProposalOptions(next);
+    proposalDirty.current = true;
+    setProposalState("saving");
+    if (proposalTimer.current) window.clearTimeout(proposalTimer.current);
+    proposalTimer.current = window.setTimeout(() => void saveProposal(), 900);
+  };
+
   useEffect(() => {
     void autosaveOpportunity(id, { draft_step: step }, {}).catch(() => undefined);
     window.scrollTo({ top: 0 });
   }, [id, step]);
 
-  const saveState: SaveState = [auto.state, contactState, condState].includes("error")
+  const saveState: SaveState = [auto.state, contactState, condState, proposalState].includes(
+    "error",
+  )
     ? "error"
-    : [auto.state, contactState, condState].includes("saving")
+    : [auto.state, contactState, condState, proposalState].includes("saving")
       ? "saving"
-      : [auto.state, contactState, condState].includes("saved")
+      : [auto.state, contactState, condState, proposalState].includes("saved")
         ? "saved"
         : "idle";
   const retry = () => {
     void auto.retry();
     void saveContact();
     if (condState === "error") void runCondSave();
+    if (proposalState === "error") void saveProposal();
   };
 
   const flushAll = async () => {
     if (contactTimer.current) window.clearTimeout(contactTimer.current);
-    const [a, b, c] = await Promise.all([auto.flush(), saveContact(), runCondSave()]);
-    if (!a || !b || !c)
+    if (proposalTimer.current) window.clearTimeout(proposalTimer.current);
+    const [a, b, c, d] = await Promise.all([
+      auto.flush(),
+      saveContact(),
+      runCondSave(),
+      saveProposal(),
+    ]);
+    if (!a || !b || !c || !d)
       toast.error("Não foi possível salvar agora", {
         description: "O que você digitou continua aqui.",
       });
-    return a && b && c;
+    return a && b && c && d;
   };
-  const go = async (next: JourneyStep) => {
+  const go = async (next: JourneyStep, proposalSub = 0) => {
     const ok = await flushAll();
-    if (ok) onStepChange(next);
+    if (ok) {
+      if (next === "proposta") setSub(proposalSub);
+      onStepChange(next);
+    }
   };
   const exit = async () => {
     const ok = await flushAll();
@@ -262,8 +360,12 @@ function JourneyBody({
   const [sub, setSub] = useState(0);
   const [hub, setHub] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [publishedResult, setPublishedResult] = useState<{
+    version: CommercialProposalVersion;
+    link: string | null;
+  } | null>(null);
   useEffect(() => {
-    setSub(0);
+    if (step !== "proposta") setSub(0);
     setHub(null);
     setPublishing(false);
   }, [step]);
@@ -337,7 +439,14 @@ function JourneyBody({
         <Loader2 className="size-4 animate-spin" /> Carregando condições da proposta…
       </div>
     ) : (
-      <ProposalBlocks cond={cond} setC={setC} sub={sub} />
+      <ProposalBlocks
+        cond={cond}
+        setC={setC}
+        sub={sub}
+        proposalOptions={proposalOptions}
+        onProposalOptionsChange={changeProposalOptions}
+        proposalsPending={proposalsQ.isPending}
+      />
     );
   } else if (step === "implantacao") {
     const hubs = [
@@ -425,10 +534,67 @@ function JourneyBody({
         >
           <ArrowLeft className="size-4" /> Voltar para a revisão
         </button>
+        <div>
+          <p className="text-xs font-medium" style={muted}>
+            Opção para casos complexos
+          </p>
+          <h3 className="text-lg font-semibold">Editar proposta avançada</h3>
+        </div>
         <ProposalTab implementationId={id} />
       </div>
     );
   } else {
+    const serviceSummary = proposalServiceSummary(proposalOptions);
+    const proposalIssue = guidedProposalIssue(proposalOptions);
+    const publishGuided = async () => {
+      if (proposalIssue) return;
+      const ok = await flushAll();
+      if (!ok) return;
+      try {
+        const currentVersions = await commercialProposalsApi.list(id);
+        const currentDraft = currentVersions.find((version) => version.status === "draft") ?? null;
+        const currentPublished =
+          currentVersions.find((version) => version.status !== "draft") ?? null;
+        const saved =
+          currentDraft ??
+          (await commercialProposalsApi.saveDraft(
+            buildGuidedDraftInput({
+              implementationId: id,
+              version: currentPublished,
+              options: proposalOptionsRef.current,
+              commandId: crypto.randomUUID(),
+            }),
+          ));
+        const published = await commercialProposalsApi.publish({
+          proposalId: saved.id,
+          expectedRevision: saved.draftRevision,
+          commandId: crypto.randomUUID(),
+        });
+        let link: string | null = null;
+        try {
+          const issued = await presentationInvitesApi.issue({
+            implementationId: id,
+            proposalId: published.id,
+            validDays: 15,
+          });
+          link = presentationUrl(issued.token);
+        } catch {
+          // A versão permanece publicada; o link pode ser gerado novamente na tela de sucesso.
+        }
+        setPublishedResult({ version: published, link });
+        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
+        toast.success("Proposta publicada", {
+          description: link
+            ? "O link está pronto para copiar."
+            : "A versão foi publicada; gere o link novamente.",
+        });
+      } catch (error) {
+        toast.error("Não foi possível publicar a proposta", {
+          description:
+            error instanceof Error ? error.message : "Revise os dados e tente novamente.",
+        });
+      }
+    };
     const groups = [
       {
         title: "Contato",
@@ -516,33 +682,96 @@ function JourneyBody({
             Enxoval, inventário, fornecedores e observações — registre quando quiser.
           </p>
         </button>
-        <div className="mt-2 flex flex-col gap-2">
-          <Button
-            type="button"
-            onClick={() => setPublishing(true)}
-            className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90"
+        <section className="rounded-[var(--radius-card)] border p-4" style={inputStyle}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold">Resumo da proposta</p>
+              <p className="mt-1 text-sm" style={muted}>
+                {cond.administration_fee == null
+                  ? "Administração a definir"
+                  : `${cond.administration_fee}% administração`}
+                {cond.turnover_cleaning_fee == null
+                  ? " · Limpeza a definir"
+                  : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
+              </p>
+              <p className="mt-1 text-sm" style={muted}>
+                {cond.duration_months == null
+                  ? "Vigência a definir"
+                  : `${cond.duration_months} meses`}
+                {cond.notice_period_days == null
+                  ? " · Aviso a definir"
+                  : ` · ${cond.notice_period_days} dias de aviso`}
+                {` · ${serviceSummary.count} serviço(s)`}
+              </p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => void go("proposta")}>
+              Editar
+            </Button>
+          </div>
+        </section>
+        {proposalIssue && (
+          <div
+            role="alert"
+            className="rounded-[var(--radius-card)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-4"
           >
-            Publicar proposta e gerar link
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-12"
-            disabled={complete.isPending}
-            onClick={() => complete.mutate()}
-          >
-            {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
-            enviar
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="min-h-12"
-            onClick={() => void go("contato")}
-          >
-            Continuar editando
-          </Button>
-        </div>
+            <p className="text-sm font-semibold">{proposalIssue}</p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 min-h-11"
+              onClick={() => void go("proposta", 1)}
+            >
+              Resolver
+            </Button>
+          </div>
+        )}
+        {publishedResult ? (
+          <PublishedProposalSuccess
+            result={publishedResult}
+            implementationId={id}
+            onBack={onExit}
+            onLinkGenerated={(link) =>
+              setPublishedResult((current) => (current ? { ...current, link } : current))
+            }
+          />
+        ) : (
+          <div className="mt-2 flex flex-col gap-2">
+            <Button
+              type="button"
+              disabled={Boolean(proposalIssue)}
+              onClick={() => void publishGuided()}
+              className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90"
+            >
+              Publicar proposta e gerar link
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-12"
+              onClick={() => setPublishing(true)}
+            >
+              Editar proposta avançada
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-12"
+              disabled={complete.isPending}
+              onClick={() => complete.mutate()}
+            >
+              {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
+              enviar
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-12"
+              onClick={() => void go("contato")}
+            >
+              Continuar editando
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -951,10 +1180,16 @@ function ProposalBlocks({
   cond,
   setC,
   sub,
+  proposalOptions,
+  onProposalOptionsChange,
+  proposalsPending,
 }: {
   cond: Cond;
   setC: (patch: Cond) => void;
   sub: number;
+  proposalOptions: ProposalItemOption[];
+  onProposalOptionsChange: (options: ProposalItemOption[]) => void;
+  proposalsPending: boolean;
 }) {
   const num = (value: unknown) =>
     value === null || value === undefined || value === "" ? "" : String(value);
@@ -1078,6 +1313,11 @@ function ProposalBlocks({
               ]}
             />
           </Question>
+          <GuidedServices
+            options={proposalOptions}
+            onChange={onProposalOptionsChange}
+            pending={proposalsPending}
+          />
         </div>
       </section>
     ),
@@ -1193,6 +1433,234 @@ function ProposalBlocks({
 
   const block = PROPOSAL_BLOCKS[sub];
   return block ? blocks[block] : null;
+}
+
+function GuidedServices({
+  options,
+  onChange,
+  pending,
+}: {
+  options: ProposalItemOption[];
+  onChange: (options: ProposalItemOption[]) => void;
+  pending: boolean;
+}) {
+  const [addingOther, setAddingOther] = useState(false);
+  const [otherName, setOtherName] = useState("");
+  const [otherValue, setOtherValue] = useState("");
+  const byTemplate = new Map(options.map((option) => [option.templateKey, option]));
+  const custom = options.filter((option) => !option.templateKey);
+  const toggleTemplate = (key: string, checked: boolean) => {
+    const existing = byTemplate.get(key);
+    if (existing) {
+      onChange(
+        options.map((option) => (option === existing ? { ...option, included: checked } : option)),
+      );
+      return;
+    }
+    const template = PROPOSAL_ITEM_TEMPLATES.find((item) => item.key === key);
+    if (template && checked) onChange([...options, optionFromTemplate(template)]);
+  };
+  const addOther = () => {
+    const value = Number(otherValue.replace(".", "").replace(",", "."));
+    if (!otherName.trim() || Number.isNaN(value) || value < 0) return;
+    onChange([
+      ...options,
+      {
+        description: otherName.trim(),
+        quantity: 1,
+        unitValue: value,
+        discount: 0,
+        included: true,
+        optional: false,
+        templateKey: null,
+        details: "",
+        scope: [],
+        pricing: "fixed",
+      },
+    ]);
+    setOtherName("");
+    setOtherValue("");
+    setAddingOther(false);
+  };
+  return (
+    <Question title="Serviços desta proposta">
+      <p className="text-sm" style={muted}>
+        Selecione apenas o que fará parte desta versão.
+      </p>
+      {pending ? (
+        <p className="text-sm" style={muted}>
+          Carregando serviços…
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {PROPOSAL_ITEM_TEMPLATES.map((template) => {
+            const option = byTemplate.get(template.key);
+            return (
+              <label
+                key={template.key}
+                className="flex min-h-14 items-center gap-3 rounded-[var(--radius-control)] border p-3"
+                style={inputStyle}
+              >
+                <Checkbox
+                  className="size-5"
+                  checked={Boolean(option?.included)}
+                  onCheckedChange={(checked) => toggleTemplate(template.key, checked === true)}
+                />
+                <span className="min-w-0 flex-1 text-sm font-medium">{template.description}</span>
+                <span className="shrink-0 text-sm tabular-nums">
+                  {template.unitValue.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </span>
+              </label>
+            );
+          })}
+          {custom.map((option, index) => (
+            <label
+              key={`${option.description}-${index}`}
+              className="flex min-h-14 items-center gap-3 rounded-[var(--radius-control)] border p-3"
+              style={inputStyle}
+            >
+              <Checkbox
+                className="size-5"
+                checked={option.included}
+                onCheckedChange={(checked) =>
+                  onChange(
+                    options.map((item) =>
+                      item === option ? { ...item, included: checked === true } : item,
+                    ),
+                  )
+                }
+              />
+              <span className="min-w-0 flex-1 text-sm font-medium">{option.description}</span>
+              <span className="shrink-0 text-sm tabular-nums">
+                {option.unitValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+      {addingOther ? (
+        <div
+          className="grid gap-3 rounded-[var(--radius-control)] border p-3 sm:grid-cols-[1fr_10rem_auto] sm:items-end"
+          style={inputStyle}
+        >
+          <TextField label="Nome do serviço" value={otherName} onChange={setOtherName} />
+          <TextField
+            label="Valor (R$)"
+            value={otherValue}
+            inputMode="decimal"
+            onChange={setOtherValue}
+          />
+          <Button
+            type="button"
+            className="min-h-12"
+            disabled={!otherName.trim() || !otherValue.trim()}
+            onClick={addOther}
+          >
+            Adicionar
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 self-start"
+          onClick={() => setAddingOther(true)}
+        >
+          Outro serviço
+        </Button>
+      )}
+    </Question>
+  );
+}
+
+function PublishedProposalSuccess({
+  result,
+  implementationId,
+  onBack,
+  onLinkGenerated,
+}: {
+  result: { version: CommercialProposalVersion; link: string | null };
+  implementationId: string;
+  onBack: () => void;
+  onLinkGenerated: (link: string) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const generateLink = async () => {
+    setGenerating(true);
+    try {
+      const issued = await presentationInvitesApi.issue({
+        implementationId,
+        proposalId: result.version.id,
+        validDays: 15,
+      });
+      onLinkGenerated(presentationUrl(issued.token));
+      toast.success("Link gerado");
+    } catch (error) {
+      toast.error("Não foi possível gerar o link", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+  return (
+    <section className="rounded-[var(--radius-card)] border border-[var(--stayo-success)] bg-[var(--stayo-forest-soft)] p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-[var(--stayo-success)]">
+        <Check className="size-5" />
+        <h3 className="font-semibold">Proposta publicada</h3>
+      </div>
+      <p className="mt-1 text-sm">Versão {result.version.version}</p>
+      {result.link ? (
+        <>
+          <label className="mt-4 block text-xs font-medium" style={muted}>
+            Link do proprietário
+          </label>
+          <input
+            readOnly
+            value={result.link}
+            onFocus={(event) => event.target.select()}
+            className={`${inputClass} mt-1`}
+            style={inputStyle}
+          />
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <Button
+              type="button"
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(result.link ?? "")
+                  .then(() => toast.success("Link copiado"))
+              }
+            >
+              <Copy className="size-4" /> Copiar link
+            </Button>
+            <Button asChild type="button" variant="outline">
+              <a href={result.link} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-4" /> Abrir como proprietário
+              </a>
+            </Button>
+            <Button type="button" variant="outline" onClick={onBack}>
+              Voltar para implantação
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="mt-4 rounded-[var(--radius-control)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-3">
+          <p className="text-sm">A proposta foi publicada, mas o link ainda não foi gerado.</p>
+          <Button
+            type="button"
+            className="mt-3"
+            disabled={generating}
+            onClick={() => void generateLink()}
+          >
+            <Link2 className="size-4" /> {generating ? "Gerando…" : "Gerar link"}
+          </Button>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function NumberChoice({
