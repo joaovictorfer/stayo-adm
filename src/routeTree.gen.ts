@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
+import { Route as GuiasImplantacaoPrototipoRouteImport } from './routes/guias-implantacao-prototipo'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
@@ -82,6 +83,12 @@ const BiRoute = BiRouteImport.update({
   path: '/bi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuiasImplantacaoPrototipoRoute =
+  GuiasImplantacaoPrototipoRouteImport.update({
+    id: '/guias-implantacao-prototipo',
+    path: '/guias-implantacao-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -398,6 +405,7 @@ const ApiPublicOwnerCoverTokenRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
@@ -462,6 +470,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
@@ -527,6 +536,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bi': typeof BiRoute
+  '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
@@ -593,6 +603,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bi'
+    | '/guias-implantacao-prototipo'
     | '/login'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bi'
+    | '/guias-implantacao-prototipo'
     | '/login'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
@@ -721,6 +733,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bi'
+    | '/guias-implantacao-prototipo'
     | '/login'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
@@ -786,6 +799,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiRoute: typeof BiRoute
+  GuiasImplantacaoPrototipoRoute: typeof GuiasImplantacaoPrototipoRoute
   LoginRoute: typeof LoginRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
@@ -862,6 +876,13 @@ declare module '@tanstack/react-router' {
       path: '/bi'
       fullPath: '/bi'
       preLoaderRoute: typeof BiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guias-implantacao-prototipo': {
+      id: '/guias-implantacao-prototipo'
+      path: '/guias-implantacao-prototipo'
+      fullPath: '/guias-implantacao-prototipo'
+      preLoaderRoute: typeof GuiasImplantacaoPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1290,6 +1311,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
+  GuiasImplantacaoPrototipoRoute: GuiasImplantacaoPrototipoRoute,
   LoginRoute: LoginRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
