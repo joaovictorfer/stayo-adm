@@ -432,8 +432,8 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
   const publishHint =
     proposalItems.length === 0
       ? items.length > 0
-        ? "Para salvar ou publicar, ligue pelo menos um serviço em “Incluir na proposta”."
-        : "Para salvar ou publicar, adicione pelo menos um serviço."
+        ? "Falta adicionar ao menos um serviço. Ligue um item em “Incluir na proposta”."
+        : "Falta adicionar ao menos um serviço."
       : null;
 
   return (
@@ -443,7 +443,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Proposta comercial
+              Editar proposta avançada
             </p>
             <h2 className="mt-1 text-xl font-semibold text-foreground">
               {draftVersion
