@@ -313,7 +313,10 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
 
       {showAddCategory ? (
         <div className="space-y-2 rounded-xl border border-border p-3">
-          <label className="block text-xs font-medium text-muted-foreground" htmlFor="new-supplier-category">
+          <label
+            className="block text-xs font-medium text-muted-foreground"
+            htmlFor="new-supplier-category"
+          >
             Nome da categoria
           </label>
           <input
@@ -423,8 +426,8 @@ function CatalogManager({
   return (
     <div className="space-y-3 rounded-xl border border-border p-3">
       <p className="text-xs text-muted-foreground">
-        Só empresas &quot;Disponível&quot; aparecem para o proprietário. O catálogo é apenas uma lista de
-        sugestões, sem recomendação ou parceria.
+        Só empresas &quot;Disponível&quot; aparecem para o proprietário. O catálogo é apenas uma
+        lista de sugestões, sem recomendação ou parceria.
       </p>
       <ul className="divide-y divide-border">
         {catalog.map((c) => (
