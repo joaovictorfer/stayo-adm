@@ -316,34 +316,37 @@ function ImplementationDetailPage() {
   return (
     <div className="implementation-workspace">
       {!wizardStep && (
-      <header className="implementation-mobile-heading">
-        <Link
-          to="/implantacao"
-          className="implementation-back-button"
-          aria-label="Voltar para implantações"
-        >
-          <ArrowLeft aria-hidden="true" />
-        </Link>
-        <div>
-          <span>Implantação</span>
-          <strong>{implementation?.code ?? "Carregando"}</strong>
-        </div>
-        <div className="flex items-center gap-1">
-          {implementation && (
-            <DeleteImplementationButton
-              id={implementation.id}
-              code={implementation.code}
-              locked={
-                implementation.status === "ativo" ||
-                Boolean((implementation as { corePropertyId?: string | null }).corePropertyId)
-              }
-            />
-          )}
-          <Link to="/implantacao" className="implementation-back-link">
-            Ver todas
+        <header className="implementation-mobile-heading">
+          <Link
+            to="/implantacao"
+            className="implementation-back-button"
+            aria-label="Voltar para implantações"
+          >
+            <ArrowLeft aria-hidden="true" />
           </Link>
-        </div>
-      </header>
+          <div>
+            <span>Implantação</span>
+            <strong>{implementation?.code ?? "Carregando"}</strong>
+          </div>
+          <div className="flex items-center gap-1">
+            {implementation && (
+              <DeleteImplementationButton
+                id={implementation.id}
+                code={implementation.code}
+                locked={
+                  implementation.status === "ativo" ||
+                  Boolean(
+                    (implementation as { corePropertyId?: string | null })
+                      .corePropertyId,
+                  )
+                }
+              />
+            )}
+            <Link to="/implantacao" className="implementation-back-link">
+              Ver todas
+            </Link>
+          </div>
+        </header>
       )}
 
       {query.isPending ? (

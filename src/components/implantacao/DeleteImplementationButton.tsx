@@ -54,30 +54,38 @@ export function DeleteImplementationButton({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setTyped(""); }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setTyped("");
+      }}
+    >
       <AlertDialogTrigger asChild>
         {trigger ?? (
-        <Button
-          variant="outline"
-          size={compact ? "icon" : "sm"
-          }
-          className={
-            compact
-              ? "size-9 rounded-[var(--radius-control)] border-[var(--stayo-border)] bg-[var(--stayo-surface)] text-[var(--stayo-danger)] shadow-sm hover:border-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
-              : "gap-2 rounded-[var(--radius-control)] border-[var(--stayo-danger)]/40 text-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
-          }
-          aria-label={`Excluir ${code}`}
-          title={`Excluir ${code}`}
-        >
-          <Trash2 className="size-4" aria-hidden="true" />
-          {!compact && <span>Excluir</span>}
-        </Button>
+          <Button
+            variant="outline"
+            size={compact ? "icon" : "sm"}
+            className={
+              compact
+                ? "size-9 rounded-[var(--radius-control)] border-[var(--stayo-border)] bg-[var(--stayo-surface)] text-[var(--stayo-danger)] shadow-sm hover:border-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
+                : "gap-2 rounded-[var(--radius-control)] border-[var(--stayo-danger)]/40 text-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
+            }
+            aria-label={`Excluir ${code}`}
+            title={`Excluir ${code}`}
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+            {!compact && <span>Excluir</span>}
+          </Button>
         )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-[var(--stayo-danger)]/10">
-            <AlertTriangle className="size-5 text-[var(--stayo-danger)]" aria-hidden="true" />
+            <AlertTriangle
+              className="size-5 text-[var(--stayo-danger)]"
+              aria-hidden="true"
+            />
           </div>
           <AlertDialogTitle>Excluir {code} definitivamente?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -89,7 +97,8 @@ export function DeleteImplementationButton({
         {!locked && (
           <label className="grid gap-1.5 text-sm">
             <span>
-              Digite <strong className="font-mono">{code}</strong> para confirmar
+              Digite <strong className="font-mono">{code}</strong> para
+              confirmar
             </span>
             <Input
               value={typed}
@@ -103,7 +112,11 @@ export function DeleteImplementationButton({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           {!locked && (
-            <Button variant="destructive" disabled={typed.trim() !== code || busy} onClick={() => void confirm()}>
+            <Button
+              variant="destructive"
+              disabled={typed.trim() !== code || busy}
+              onClick={() => void confirm()}
+            >
               {busy ? "Excluindo…" : "Excluir definitivamente"}
             </Button>
           )}
