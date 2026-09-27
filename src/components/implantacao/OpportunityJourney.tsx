@@ -8,7 +8,6 @@ import {
   MoreHorizontal,
   NotebookPen,
   Package,
-  ShoppingBasket,
   Sofa,
   Trash2,
   Wrench,
@@ -24,8 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { DeleteImplementationButton } from "./DeleteImplementationButton";
-import { EnxovalTab } from "./EnxovalTab";
-import { MissingItemsTab } from "./MissingItemsTab";
+import { InventoryTab } from "./InventoryTab";
 import { ProposalTab } from "./ProposalTab";
 import { SupplySheet } from "./SupplySheet";
 import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
@@ -350,22 +348,16 @@ function JourneyBody({
         node: <SupplySheet implementationId={id} />,
       },
       {
-        id: "itens",
-        label: "Itens do imóvel",
+        id: "inventario",
+        label: "Inventário",
         icon: Sofa,
-        node: <EnxovalTab implementationId={id} mode="inventory" />,
+        node: <InventoryTab implementationId={id} />,
       },
       {
         id: "fornecedores",
         label: "Fornecedores",
         icon: Wrench,
         node: <PropertySuppliersPanel implementationId={id} />,
-      },
-      {
-        id: "faltantes",
-        label: "Itens faltantes",
-        icon: ShoppingBasket,
-        node: <MissingItemsTab implementationId={id} />,
       },
       {
         id: "observacoes",
@@ -521,7 +513,7 @@ function JourneyBody({
         >
           <span className="font-semibold">Implantação</span>
           <p className="mt-1 text-sm" style={muted}>
-            Enxoval, itens, fornecedores, faltantes e observações — registre quando quiser.
+            Enxoval, inventário, fornecedores e observações — registre quando quiser.
           </p>
         </button>
         <div className="mt-2 flex flex-col gap-2">

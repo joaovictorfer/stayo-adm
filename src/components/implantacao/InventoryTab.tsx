@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, Package, Pencil, Plus, RotateCcw, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -87,6 +87,6 @@ export function InventoryTab({ implementationId }: { implementationId: string })
   </div>;
 }
 
-function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
+function Field({ label, id, children }: { label: string; id: string; children: ReactNode }) {
   return <label className="space-y-1.5"><Label htmlFor={id}>{label}</Label>{children}</label>;
 }
