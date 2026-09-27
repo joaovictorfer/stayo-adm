@@ -1,4 +1,7 @@
-import { PROPOSAL_ITEM_TEMPLATES, type ProposalItemTemplate } from "../config/proposal-item-templates";
+import {
+  PROPOSAL_ITEM_TEMPLATES,
+  type ProposalItemTemplate,
+} from "../config/proposal-item-templates";
 import type { ProposalItem } from "../types/core";
 import type {
   CommercialProposalVersion,
@@ -59,7 +62,8 @@ export function guidedOptionsFromVersion(
       scope: [...(option.scope ?? [])],
     }));
   }
-  const items = version.status === "draft" ? version.items : (version.snapshot?.items ?? version.items);
+  const items =
+    version.status === "draft" ? version.items : (version.snapshot?.items ?? version.items);
   return items.map(optionFromItem);
 }
 

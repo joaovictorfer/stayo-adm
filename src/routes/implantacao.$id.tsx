@@ -657,8 +657,7 @@ function ImplementationDetailPage() {
                       </dl>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Button className="min-h-11" onClick={() => setProposalEditing(true)}>
-                          <Pencil />{" "}
-                          Editar proposta avançada
+                          <Pencil /> Editar proposta avançada
                         </Button>
                         <Button asChild variant="outline" className="min-h-11">
                           <Link

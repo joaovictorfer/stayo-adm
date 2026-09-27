@@ -187,7 +187,9 @@ function proposalError(error: unknown): string {
       : error && typeof error === "object" && "message" in error
         ? String((error as { message: unknown }).message ?? "")
         : String(error ?? "");
-  const message = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) + (raw.endsWith(".") ? "" : ".") : "";
+  const message = raw
+    ? raw.charAt(0).toUpperCase() + raw.slice(1) + (raw.endsWith(".") ? "" : ".")
+    : "";
   if (message.toLowerCase().includes("sem permissão"))
     return "Você não tem permissão para acessar ou alterar propostas comerciais.";
   if (message.toLowerCase().includes("conflito"))
@@ -477,9 +479,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             </Button>
           </div>
         </div>
-        {publishHint && (
-          <p className="mt-3 text-xs text-[var(--stayo-warning)]">{publishHint}</p>
-        )}
+        {publishHint && <p className="mt-3 text-xs text-[var(--stayo-warning)]">{publishHint}</p>}
         {(saveDraft.isError || publish.isError) && (
           <div
             role="alert"
@@ -535,36 +535,36 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
 
           {!(commercialTerms.isSuccess && (commercialTerms.data ?? []).length === 0) && (
-          <div>
-            <h4 className="text-sm font-semibold">Condições comerciais adicionais</h4>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Vêm da ficha (aba Resumo) e são congeladas na publicação.
-            </p>
-            {commercialTerms.isLoading ? (
-              <p className="mt-2 text-sm text-muted-foreground">Carregando…</p>
-            ) : commercialTerms.isError ? (
-              <p className="mt-2 text-sm text-destructive">
-                Não foi possível carregar. Não publique até corrigir.
+            <div>
+              <h4 className="text-sm font-semibold">Condições comerciais adicionais</h4>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Vêm da ficha (aba Resumo) e são congeladas na publicação.
               </p>
-            ) : (commercialTerms.data ?? []).length === 0 ? (
-              <p className="mt-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                Nenhuma condição comercial cadastrada.
-              </p>
-            ) : (
-              <dl className="mt-2 divide-y rounded-lg border">
-                {(commercialTerms.data ?? []).map((t) => (
-                  <div key={t.id} className="flex justify-between gap-3 px-3 py-2 text-sm">
-                    <dt>{t.label}</dt>
-                    <dd className="font-medium tabular-nums">
-                      {t.chargeType === "percentage"
-                        ? `${String(t.value).replace(".", ",")}%`
-                        : formatBRL(t.value)}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
+              {commercialTerms.isLoading ? (
+                <p className="mt-2 text-sm text-muted-foreground">Carregando…</p>
+              ) : commercialTerms.isError ? (
+                <p className="mt-2 text-sm text-destructive">
+                  Não foi possível carregar. Não publique até corrigir.
+                </p>
+              ) : (commercialTerms.data ?? []).length === 0 ? (
+                <p className="mt-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                  Nenhuma condição comercial cadastrada.
+                </p>
+              ) : (
+                <dl className="mt-2 divide-y rounded-lg border">
+                  {(commercialTerms.data ?? []).map((t) => (
+                    <div key={t.id} className="flex justify-between gap-3 px-3 py-2 text-sm">
+                      <dt>{t.label}</dt>
+                      <dd className="font-medium tabular-nums">
+                        {t.chargeType === "percentage"
+                          ? `${String(t.value).replace(".", ",")}%`
+                          : formatBRL(t.value)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
           )}
         </div>
 
@@ -578,7 +578,11 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
             showMeetings={false}
             cleaningItems={items
               .filter((i) => i.templateKey === "limpeza-pos-obra" || /limpeza/i.test(i.description))
-              .map((i) => ({ description: i.description, total: lineTotal(i), included: i.included }))}
+              .map((i) => ({
+                description: i.description,
+                total: lineTotal(i),
+                included: i.included,
+              }))}
           />
         </div>
 
