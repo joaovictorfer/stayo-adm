@@ -132,7 +132,7 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
     },
   });
 
-  const items = query.data ?? [];
+  const items = useMemo(() => query.data ?? [], [query.data]);
   const visibleItems = useMemo(
     () => items.filter((item) => matchesInventoryFilter(item, filter)),
     [filter, items],
@@ -202,7 +202,9 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
           normalizedKey(item.name, item.room) === normalizedKey(name, room),
       );
       if (duplicate) {
-        throw new Error(`Já existe “${duplicate.name}” em ${duplicate.room || "Geral"}. Edite o item existente.`);
+        throw new Error(
+          `Já existe “${duplicate.name}” em ${duplicate.room || "Geral"}. Edite o item existente.`,
+        );
       }
 
       const payload = {
@@ -252,7 +254,10 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (item: SupplyItem) => {
-      const { error } = await supabase.from("implementation_supply_items").delete().eq("id", item.id);
+      const { error } = await supabase
+        .from("implementation_supply_items")
+        .delete()
+        .eq("id", item.id);
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -279,7 +284,8 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-slate-950">Inventário</h2>
           <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
-            Um único lugar para registrar o que o imóvel precisa, o que já possui e o que ainda falta.
+            Um único lugar para registrar o que o imóvel precisa, o que já possui e o que ainda
+            falta.
           </p>
         </div>
         <Button type="button" size="sm" className="w-full gap-1.5 sm:w-auto" onClick={openAdd}>
@@ -373,7 +379,10 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}
+      >
         <DialogContent className="max-h-[92vh] w-[calc(100%-1.5rem)] max-w-xl overflow-y-auto rounded-2xl sm:w-full">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Editar item" : "Adicionar item"}</DialogTitle>
@@ -387,7 +396,9 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
               <Input
                 autoFocus
                 value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, name: event.target.value }))
+                }
                 placeholder="Ex.: Cafeteira"
               />
             </Field>
@@ -395,7 +406,9 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
             <Field label="Ambiente">
               <Input
                 value={form.room}
-                onChange={(event) => setForm((current) => ({ ...current, room: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, room: event.target.value }))
+                }
                 placeholder="Ex.: Cozinha"
               />
             </Field>
@@ -403,7 +416,9 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
             <Field label="Tamanho / variação">
               <Input
                 value={form.size}
-                onChange={(event) => setForm((current) => ({ ...current, size: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, size: event.target.value }))
+                }
                 placeholder="Opcional"
               />
             </Field>
@@ -453,7 +468,10 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
                 className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm"
                 value={form.priority}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, priority: event.target.value as SupplyPriority }))
+                  setForm((current) => ({
+                    ...current,
+                    priority: event.target.value as SupplyPriority,
+                  }))
                 }
               >
                 {Object.entries(priorityLabels).map(([value, label]) => (
@@ -498,7 +516,9 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
               />
               <span>
                 <strong className="block text-slate-800">Bloqueia prontidão</strong>
-                <span className="text-xs text-slate-500">Use quando a falta impede a ativação do imóvel.</span>
+                <span className="text-xs text-slate-500">
+                  Use quando a falta impede a ativação do imóvel.
+                </span>
               </span>
             </label>
 
@@ -506,7 +526,9 @@ export function EnxovalTab({ implementationId }: { implementationId: string }) {
               <textarea
                 rows={3}
                 value={form.notes}
-                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, notes: event.target.value }))
+                }
                 className="w-full resize-y rounded-md border border-input bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 placeholder="Opcional"
               />
@@ -611,7 +633,10 @@ function InventoryRow({
           )}
           {!resolved && missing === 0 ? <span className="sr-only">Pendente</span> : null}
         </span>
-        <Pencil className="hidden size-3.5 text-slate-300 group-hover:text-slate-500 sm:block" aria-hidden="true" />
+        <Pencil
+          className="hidden size-3.5 text-slate-300 group-hover:text-slate-500 sm:block"
+          aria-hidden="true"
+        />
         <ChevronRight className="size-4 text-slate-300 sm:hidden" aria-hidden="true" />
       </span>
     </button>
@@ -658,7 +683,9 @@ function InventoryMessage({
     <div className="rounded-xl border border-dashed border-slate-200 bg-white px-5 py-10 text-center">
       <Package className="mx-auto size-7 text-slate-300" aria-hidden="true" />
       <strong className="mt-3 block text-sm text-slate-800">{title}</strong>
-      {description ? <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">{description}</p> : null}
+      {description ? (
+        <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">{description}</p>
+      ) : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

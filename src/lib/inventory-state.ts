@@ -8,7 +8,9 @@ export interface InventoryStateItem {
   blocks_readiness: boolean;
 }
 
-export function inventoryMissingQuantity(item: Pick<InventoryStateItem, "required_qty" | "existing_qty">) {
+export function inventoryMissingQuantity(
+  item: Pick<InventoryStateItem, "required_qty" | "existing_qty">,
+) {
   return Math.max(item.required_qty - item.existing_qty, 0);
 }
 
