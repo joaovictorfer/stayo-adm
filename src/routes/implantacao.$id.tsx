@@ -58,15 +58,25 @@ import { ContractConditionsPanel } from "../components/implantacao/ContractCondi
 import { MeetingSummary } from "../components/implantacao/MeetingSummary";
 import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
 import { formatCommercialDateTime } from "../lib/commercial-meeting-state";
-import { MissingItemsTab } from "../components/implantacao/MissingItemsTab";
+import { InventoryTab } from "../components/implantacao/InventoryTab";
 import { OwnerInviteSection } from "../components/implantacao/OwnerInviteSection";
 import { CoverPicker, useAdminCoverUrl } from "../components/implantacao/CoverPicker";
 import { OwnerIntakeReview } from "../components/implantacao/OwnerIntakeReview";
 import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityPanel";
 import { SupplySheet } from "../components/implantacao/SupplySheet";
-import { EnxovalTab } from "../components/implantacao/EnxovalTab";
-import { Collapsible, DomainHub, FichaNav, OverviewCard } from "../components/implantacao/ficha/FichaParts";
-import { FICHA_SECTIONS, nextAction, proposalStatusLabel, toFichaSection, type FichaSection } from "../lib/ficha-next-action";
+import {
+  Collapsible,
+  DomainHub,
+  FichaNav,
+  OverviewCard,
+} from "../components/implantacao/ficha/FichaParts";
+import {
+  FICHA_SECTIONS,
+  nextAction,
+  proposalStatusLabel,
+  toFichaSection,
+  type FichaSection,
+} from "../lib/ficha-next-action";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
@@ -140,7 +150,13 @@ export const Route = createFileRoute("/implantacao/$id")({
       },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { etapa?: JourneyStep | undefined; acao?: string | undefined; secao?: FichaSection | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    etapa?: JourneyStep | undefined;
+    acao?: string | undefined;
+    secao?: FichaSection | undefined;
+  } => ({
     etapa: toJourneyStep(search["etapa"]),
     secao: toFichaSection(search["secao"]),
     acao: typeof search["acao"] === "string" ? search["acao"] : undefined,
@@ -276,13 +292,54 @@ function ImplementationDetailPage() {
     commercialAction: commercial?.nextActionTitle ?? null,
   });
   const history: TimelineEntry[] = [
-    ...(implementation ? [{ id: "created", label: "Oportunidade criada", timestamp: implementation.createdAt, actor: null }] : []),
+    ...(implementation
+      ? [
+          {
+            id: "created",
+            label: "Oportunidade criada",
+            timestamp: implementation.createdAt,
+            actor: null,
+          },
+        ]
+      : []),
     ...(proposalsQuery.data ?? []).flatMap((p) => [
-      { id: `p-${p.id}`, label: `Proposta v${p.version} criada`, timestamp: p.createdAt, actor: null },
-      ...(p.publishedAt ? [{ id: `pp-${p.id}`, label: `Proposta v${p.version} publicada`, timestamp: p.publishedAt, actor: null }] : []),
-      ...(p.acceptedAt ? [{ id: `pa-${p.id}`, label: `Proposta v${p.version} aceita por ${p.acceptedName ?? "proprietário"}`, timestamp: p.acceptedAt, actor: null }] : []),
+      {
+        id: `p-${p.id}`,
+        label: `Proposta v${p.version} criada`,
+        timestamp: p.createdAt,
+        actor: null,
+      },
+      ...(p.publishedAt
+        ? [
+            {
+              id: `pp-${p.id}`,
+              label: `Proposta v${p.version} publicada`,
+              timestamp: p.publishedAt,
+              actor: null,
+            },
+          ]
+        : []),
+      ...(p.acceptedAt
+        ? [
+            {
+              id: `pa-${p.id}`,
+              label: `Proposta v${p.version} aceita por ${p.acceptedName ?? "proprietário"}`,
+              timestamp: p.acceptedAt,
+              actor: null,
+            },
+          ]
+        : []),
     ]),
-    ...(submissionQuery.data?.submittedAt ? [{ id: "intake", label: "Cadastro do proprietário enviado", timestamp: submissionQuery.data.submittedAt, actor: null }] : []),
+    ...(submissionQuery.data?.submittedAt
+      ? [
+          {
+            id: "intake",
+            label: "Cadastro do proprietário enviado",
+            timestamp: submissionQuery.data.submittedAt,
+            actor: null,
+          },
+        ]
+      : []),
     ...recentActivity(items),
   ].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
 
@@ -374,15 +431,21 @@ function ImplementationDetailPage() {
           >
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
               <div className="min-w-0">
-                <h1 className="truncate text-xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}>
+                <h1
+                  className="truncate text-xl font-semibold"
+                  style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+                >
                   {propertyName}
                 </h1>
                 <p className="truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                  {implementation.code} · {statusLabels[implementation.status]} · Responsável: {responsibleName}
+                  {implementation.code} · {statusLabels[implementation.status]} · Responsável:{" "}
+                  {responsibleName}
                 </p>
                 <p className="mt-1 truncate text-sm" style={{ color: "var(--stayo-ink)" }}>
                   {implementation.ownerName || "Proprietário não informado"}
-                  {implementation.ownerPhone ? ` · ${formatBrazilianPhone(implementation.ownerPhone.replace(/^55/, ""))}` : ""}
+                  {implementation.ownerPhone
+                    ? ` · ${formatBrazilianPhone(implementation.ownerPhone.replace(/^55/, ""))}`
+                    : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
@@ -396,19 +459,38 @@ function ImplementationDetailPage() {
                 >
                   <Pencil /> <span className="hidden sm:inline">Editar</span>
                 </Button>
-                <Button variant="outline" size="icon" className="size-9" onClick={() => void shareWorkspace()} aria-label="Compartilhar ficha com a equipe">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-9"
+                  onClick={() => void shareWorkspace()}
+                  aria-label="Compartilhar ficha com a equipe"
+                >
                   <Share2 />
                 </Button>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
-              <span className="rounded-full px-2.5 py-1" style={{ backgroundColor: "var(--stayo-bg)" }}>
-                Proposta: {latestProposal ? proposalStatusLabel[latestProposal.status] : "não criada"}
+              <span
+                className="rounded-full px-2.5 py-1"
+                style={{ backgroundColor: "var(--stayo-bg)" }}
+              >
+                Proposta:{" "}
+                {latestProposal ? proposalStatusLabel[latestProposal.status] : "não criada"}
               </span>
-              <span className="rounded-full px-2.5 py-1" style={{ backgroundColor: "var(--stayo-bg)" }}>
+              <span
+                className="rounded-full px-2.5 py-1"
+                style={{ backgroundColor: "var(--stayo-bg)" }}
+              >
                 Cadastro: {intakeSubmitted ? "recebido" : "aguardando"}
               </span>
-              <span className="rounded-full px-2.5 py-1" style={{ backgroundColor: "var(--stayo-bg)", color: readiness.pendingBlockers ? "var(--stayo-danger)" : undefined }}>
+              <span
+                className="rounded-full px-2.5 py-1"
+                style={{
+                  backgroundColor: "var(--stayo-bg)",
+                  color: readiness.pendingBlockers ? "var(--stayo-danger)" : undefined,
+                }}
+              >
                 Prontidão {itemsQuery.isPending ? "—" : `${progress.percent}%`}
                 {readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}
               </span>
@@ -421,14 +503,29 @@ function ImplementationDetailPage() {
               onChange={goSection}
               badges={{ implantacao: pendingItems.length ? String(pendingItems.length) : "" }}
             />
-            <main className="min-w-0" aria-label={FICHA_SECTIONS.find((s) => s.id === section)?.label}>
+            <main
+              className="min-w-0"
+              aria-label={FICHA_SECTIONS.find((s) => s.id === section)?.label}
+            >
               {section === "visao" ? (
                 <div className="flex flex-col gap-4">
-                  <section className="rounded-[var(--radius-card)] border p-5" style={{ borderColor: "var(--stayo-forest)", backgroundColor: "var(--stayo-forest-soft)" }}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-forest)" }}>
+                  <section
+                    className="rounded-[var(--radius-card)] border p-5"
+                    style={{
+                      borderColor: "var(--stayo-forest)",
+                      backgroundColor: "var(--stayo-forest-soft)",
+                    }}
+                  >
+                    <p
+                      className="text-xs font-semibold uppercase tracking-[0.14em]"
+                      style={{ color: "var(--stayo-forest)" }}
+                    >
                       Próxima ação
                     </p>
-                    <h2 className="mt-1 text-xl font-semibold" style={{ color: "var(--stayo-ink)" }}>
+                    <h2
+                      className="mt-1 text-xl font-semibold"
+                      style={{ color: "var(--stayo-ink)" }}
+                    >
                       {action.title}
                     </h2>
                     <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
@@ -445,17 +542,32 @@ function ImplementationDetailPage() {
                       title="Comercial"
                       onOpen={() => goSection("proposta")}
                       lines={[
-                        latestProposal ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}` : "Proposta não criada",
-                        latestProposal ? `Valor definido ${formatMoney(latestProposal.total)}` : null,
+                        latestProposal
+                          ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}`
+                          : "Proposta não criada",
+                        latestProposal
+                          ? `Valor definido ${formatMoney(latestProposal.total)}`
+                          : null,
                       ]}
                     />
                     <OverviewCard
                       title="Imóvel"
                       onOpen={() => goSection("imovel")}
                       lines={[
-                        [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || "Sem identificação",
-                        [implementation.propertyType, implementation.bedrooms != null ? `${implementation.bedrooms} quarto(s)` : null].filter(Boolean).join(" · ") || null,
-                        missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos",
+                        [implementation.condominiumName, implementation.unit]
+                          .filter(Boolean)
+                          .join(" · ") || "Sem identificação",
+                        [
+                          implementation.propertyType,
+                          implementation.bedrooms != null
+                            ? `${implementation.bedrooms} quarto(s)`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || null,
+                        missingPropertyFields
+                          ? `${missingPropertyFields} informação(ões) em aberto`
+                          : "Dados principais completos",
                       ]}
                     />
                     <OverviewCard
@@ -469,56 +581,102 @@ function ImplementationDetailPage() {
                     <OverviewCard
                       title="Proprietário"
                       onOpen={() => goSection("proprietario")}
-                      lines={[implementation.ownerName || "Não informado", `Cadastro ${intakeSubmitted ? "recebido" : "aguardando"}`]}
+                      lines={[
+                        implementation.ownerName || "Não informado",
+                        `Cadastro ${intakeSubmitted ? "recebido" : "aguardando"}`,
+                      ]}
                     />
                   </div>
                   <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
                     <MeetingSummary implementationId={implementation.id} />
                   </Collapsible>
-                  <Collapsible title="Etapa da implantação" summary={statusLabels[implementation.status]}>
-                    <StatusStepper status={implementation.status} onChange={(status) => changeStatus.mutate(status)} pending={changeStatus.isPending} />
+                  <Collapsible
+                    title="Etapa da implantação"
+                    summary={statusLabels[implementation.status]}
+                  >
+                    <StatusStepper
+                      status={implementation.status}
+                      onChange={(status) => changeStatus.mutate(status)}
+                      pending={changeStatus.isPending}
+                    />
                   </Collapsible>
                 </div>
               ) : section === "proposta" ? (
                 proposalEditing ? (
                   <div className="flex flex-col gap-4">
-                    <button type="button" onClick={() => setProposalEditing(false)} className="flex min-h-11 items-center gap-1 self-start text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
+                    <button
+                      type="button"
+                      onClick={() => setProposalEditing(false)}
+                      className="flex min-h-11 items-center gap-1 self-start text-sm font-medium"
+                      style={{ color: "var(--stayo-forest)" }}
+                    >
                       <ArrowLeft className="size-4" /> Voltar ao resumo
                     </button>
                     <ProposalTab implementationId={implementation.id} />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
-                    <section className="rounded-[var(--radius-card)] border bg-white p-5" style={{ borderColor: "var(--stayo-border)" }}>
+                    <section
+                      className="rounded-[var(--radius-card)] border bg-white p-5"
+                      style={{ borderColor: "var(--stayo-border)" }}
+                    >
                       <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                        {latestProposal ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}` : "Nenhuma versão criada"}
+                        {latestProposal
+                          ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}`
+                          : "Nenhuma versão criada"}
                       </p>
                       <dl className="mt-3 grid gap-3 sm:grid-cols-3">
                         <div>
-                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Valor definido</dt>
-                          <dd className="text-lg font-semibold">{latestProposal ? formatMoney(latestProposal.total) : "—"}</dd>
+                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                            Valor definido
+                          </dt>
+                          <dd className="text-lg font-semibold">
+                            {latestProposal ? formatMoney(latestProposal.total) : "—"}
+                          </dd>
                         </div>
                         <div>
-                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Taxa de administração</dt>
-                          <dd className="text-lg font-semibold">{conditions?.administration_fee != null ? `${conditions.administration_fee}%` : "A definir"}</dd>
+                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                            Taxa de administração
+                          </dt>
+                          <dd className="text-lg font-semibold">
+                            {conditions?.administration_fee != null
+                              ? `${conditions.administration_fee}%`
+                              : "A definir"}
+                          </dd>
                         </div>
                         <div>
-                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Limpeza comercial</dt>
-                          <dd className="text-lg font-semibold">{conditions?.turnover_cleaning_fee != null ? formatMoney(Number(conditions.turnover_cleaning_fee)) : "A definir"}</dd>
+                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                            Limpeza comercial
+                          </dt>
+                          <dd className="text-lg font-semibold">
+                            {conditions?.turnover_cleaning_fee != null
+                              ? formatMoney(Number(conditions.turnover_cleaning_fee))
+                              : "A definir"}
+                          </dd>
                         </div>
                       </dl>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Button className="min-h-11" onClick={() => setProposalEditing(true)}>
-                          <Pencil /> {latestProposal?.status === "draft" ? "Editar e publicar" : "Editar proposta"}
+                          <Pencil />{" "}
+                          {latestProposal?.status === "draft"
+                            ? "Editar e publicar"
+                            : "Editar proposta"}
                         </Button>
                         <Button asChild variant="outline" className="min-h-11">
-                          <Link to="/portal/previa/$id" params={{ id: implementation.id }} target="_blank">
+                          <Link
+                            to="/portal/previa/$id"
+                            params={{ id: implementation.id }}
+                            target="_blank"
+                          >
                             <Eye /> Ver como proprietário
                           </Link>
                         </Button>
                       </div>
                     </section>
-                    <Collapsible title="Condições comerciais e contratuais" summary="Taxas, limpeza, vigência, uso próprio">
+                    <Collapsible
+                      title="Condições comerciais e contratuais"
+                      summary="Taxas, limpeza, vigência, uso próprio"
+                    >
                       <ContractConditionsPanel implementationId={implementation.id} />
                     </Collapsible>
                     <Collapsible title="Termos comerciais" summary="Cobranças e percentuais">
@@ -534,13 +692,22 @@ function ImplementationDetailPage() {
               ) : section === "implantacao" ? (
                 <DomainHub
                   intro={
-                    <section className="rounded-[var(--radius-card)] border bg-white p-5" style={{ borderColor: "var(--stayo-border)" }}>
-                      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Prontidão</p>
-                      <p className="text-3xl font-semibold" style={{ color: readinessColors[readiness.state] }}>
+                    <section
+                      className="rounded-[var(--radius-card)] border bg-white p-5"
+                      style={{ borderColor: "var(--stayo-border)" }}
+                    >
+                      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                        Prontidão
+                      </p>
+                      <p
+                        className="text-3xl font-semibold"
+                        style={{ color: readinessColors[readiness.state] }}
+                      >
                         {itemsQuery.isPending ? "—" : `${progress.percent}%`}
                       </p>
                       <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                        {readinessLabels[readiness.state]} · {pendingItems.length} pendência(s) · {readiness.pendingBlockers} bloqueador(es)
+                        {readinessLabels[readiness.state]} · {pendingItems.length} pendência(s) ·{" "}
+                        {readiness.pendingBlockers} bloqueador(es)
                       </p>
                     </section>
                   }
@@ -560,12 +727,44 @@ function ImplementationDetailPage() {
                         />
                       ),
                     },
-                    { id: "guia", label: "Guia de utensílios", summary: <GuideSummary implementationId={implementation.id} guideType="utensilios" />, content: <GuidePanel implementationId={implementation.id} guideType="utensilios" /> },
-                    { id: "guia-enxoval", label: "Guia de enxoval", summary: <GuideSummary implementationId={implementation.id} guideType="enxoval" />, content: <GuidePanel implementationId={implementation.id} guideType="enxoval" /> },
-                    { id: "enxoval", label: "Enxoval (compras)", summary: "Peças por ambiente, compra e entrega", content: <SupplySheet implementationId={implementation.id} /> },
-                    { id: "itens", label: "Itens do imóvel", summary: "Inventário do que já existe", content: <EnxovalTab implementationId={implementation.id} mode="inventory" /> },
-                    { id: "faltantes", label: "Itens faltantes", summary: "O que precisa ser comprado ou instalado", content: <MissingItemsTab implementationId={implementation.id} /> },
-                    { id: "fornecedores", label: "Fornecedores e instalações", summary: "Quem forneceu, instalou ou atende o imóvel", content: <PropertySuppliersPanel implementationId={implementation.id} /> },
+                    {
+                      id: "guia",
+                      label: "Guia de utensílios",
+                      summary: (
+                        <GuideSummary implementationId={implementation.id} guideType="utensilios" />
+                      ),
+                      content: (
+                        <GuidePanel implementationId={implementation.id} guideType="utensilios" />
+                      ),
+                    },
+                    {
+                      id: "guia-enxoval",
+                      label: "Guia de enxoval",
+                      summary: (
+                        <GuideSummary implementationId={implementation.id} guideType="enxoval" />
+                      ),
+                      content: (
+                        <GuidePanel implementationId={implementation.id} guideType="enxoval" />
+                      ),
+                    },
+                    {
+                      id: "enxoval",
+                      label: "Enxoval (compras)",
+                      summary: "Peças por ambiente, compra e entrega",
+                      content: <SupplySheet implementationId={implementation.id} />,
+                    },
+                    {
+                      id: "inventario",
+                      label: "Inventário",
+                      summary: "Necessário, existente, faltas e bloqueadores",
+                      content: <InventoryTab implementationId={implementation.id} />,
+                    },
+                    {
+                      id: "fornecedores",
+                      label: "Fornecedores e instalações",
+                      summary: "Quem forneceu, instalou ou atende o imóvel",
+                      content: <PropertySuppliersPanel implementationId={implementation.id} />,
+                    },
                   ]}
                 />
               ) : section === "proprietario" ? (
@@ -574,17 +773,29 @@ function ImplementationDetailPage() {
                 <OwnerTab implementation={implementation} part="portal" />
               ) : (
                 <div className="flex flex-col gap-4">
-                  <section className="rounded-[var(--radius-card)] border bg-white p-5" style={{ borderColor: "var(--stayo-border)" }}>
+                  <section
+                    className="rounded-[var(--radius-card)] border bg-white p-5"
+                    style={{ borderColor: "var(--stayo-border)" }}
+                  >
                     <h2 className="mb-3 text-lg font-semibold">Histórico</h2>
                     <Timeline entries={history} />
                   </section>
-                  <Collapsible title="Detalhes técnicos e integração" summary="IDs, origem e conversão para o Core">
+                  <Collapsible
+                    title="Detalhes técnicos e integração"
+                    summary="IDs, origem e conversão para o Core"
+                  >
                     <div className="grid gap-3 text-xs sm:grid-cols-2">
                       <Field label="ID da Implantação" value={implementation.id} />
                       <Field label="Código" value={implementation.code} />
-                      {implementation.origin && <Field label="Origem" value={implementation.origin} />}
-                      {implementation.corePropertyId && <Field label="Imóvel no Core" value={implementation.corePropertyId} />}
-                      {implementation.coreOwnerId && <Field label="Proprietário no Core" value={implementation.coreOwnerId} />}
+                      {implementation.origin && (
+                        <Field label="Origem" value={implementation.origin} />
+                      )}
+                      {implementation.corePropertyId && (
+                        <Field label="Imóvel no Core" value={implementation.corePropertyId} />
+                      )}
+                      {implementation.coreOwnerId && (
+                        <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
+                      )}
                       <Field label="Criada em" value={implementation.createdAt} />
                       <Field label="Atualizada em" value={implementation.updatedAt} />
                     </div>
@@ -664,12 +875,15 @@ function ProposalGate({
   hasDraftChanges: boolean;
 }) {
   const navigate = Route.useNavigate();
-  const goToConditions = () =>
-    void navigate({ search: { etapa: "proposta" } });
+  const goToConditions = () => void navigate({ search: { etapa: "proposta" } });
   void implementationId;
   const box = "rounded-[var(--radius-control)] border p-3 text-sm";
   if (pending)
-    return <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Conferindo a proposta publicada…</p>;
+    return (
+      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        Conferindo a proposta publicada…
+      </p>
+    );
   if (error)
     return (
       <p role="alert" className={box} style={{ borderColor: "var(--stayo-danger)" }}>
@@ -678,7 +892,11 @@ function ProposalGate({
     );
   if (!published)
     return (
-      <div role="status" className={box} style={{ borderColor: "var(--stayo-warning)", backgroundColor: "var(--stayo-gold-soft)" }}>
+      <div
+        role="status"
+        className={box}
+        style={{ borderColor: "var(--stayo-warning)", backgroundColor: "var(--stayo-gold-soft)" }}
+      >
         <p className="font-medium" style={{ color: "var(--stayo-ink)" }}>
           Falta publicar as condições comerciais
         </p>
@@ -692,7 +910,10 @@ function ProposalGate({
       </div>
     );
   const fixedTotal = published.snapshot?.items
-    ? published.snapshot.items.reduce((sum, i) => sum + (countsInDefinedTotal(i) ? Number(i.total) || 0 : 0), 0)
+    ? published.snapshot.items.reduce(
+        (sum, i) => sum + (countsInDefinedTotal(i) ? Number(i.total) || 0 : 0),
+        0,
+      )
     : published.total;
   return (
     <div className={box} style={{ borderColor: "var(--stayo-border)" }}>
@@ -703,7 +924,10 @@ function ProposalGate({
       <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
         Publicada em{" "}
         {published.publishedAt
-          ? new Date(published.publishedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
+          ? new Date(published.publishedAt).toLocaleString("pt-BR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            })
           : "—"}{" "}
         · {(published.snapshot?.items ?? published.items).length} serviço(s) · valor definido{" "}
         {fixedTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}

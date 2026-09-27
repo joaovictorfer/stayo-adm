@@ -26,6 +26,7 @@ describe("jornada da nova oportunidade", () => {
   it("mapeia etapas antigas", () => {
     expect(toJourneyStep("proprietario")).toBe("contato");
     expect(toJourneyStep("faltantes")).toBe("implantacao");
+    expect(toJourneyStep("inventario")).toBe("implantacao");
     expect(toJourneyStep("condicoes")).toBe("proposta");
     expect(toJourneyStep("revisao")).toBe("revisao");
     expect(toJourneyStep("xyz")).toBeUndefined();

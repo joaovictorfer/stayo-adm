@@ -20,10 +20,10 @@ const eventLabels: Record<AuditEvent, string> = {
   "implementation.status_changed": "Status da implantação alterado",
   "timeline.item_updated": "Item da timeline atualizado",
   "readiness.override": "Override de prontidão registrado",
-  "supply.resolved": "Item faltante resolvido",
-  "supply.dismissed": "Item faltante dispensado",
-  "supply.reopened": "Item faltante reaberto",
-  "supply.blocker_removed": "Bloqueio de item faltante retirado",
+  "supply.resolved": "Item do inventário resolvido",
+  "supply.dismissed": "Item do inventário dispensado",
+  "supply.reopened": "Item do inventário reaberto",
+  "supply.blocker_removed": "Bloqueio do inventário retirado",
   "proposal.version_created": "Nova versão de proposta",
   "proposal.sent": "Proposta enviada",
   "proposal.accepted": "Proposta aceita",
@@ -103,7 +103,8 @@ function AuditoriaPage() {
                     <div>
                       <dt className="text-[var(--stayo-ink-muted)]">Entidade</dt>
                       <dd className="break-all text-[var(--stayo-ink)]">
-                        {entry.entityType}{entry.entityId ? ` · ${entry.entityId}` : ""}
+                        {entry.entityType}
+                        {entry.entityId ? ` · ${entry.entityId}` : ""}
                       </dd>
                     </div>
                     <div>
@@ -119,35 +120,35 @@ function AuditoriaPage() {
               ))}
             </ul>
             <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[42rem] text-sm">
-              <thead>
-                <tr style={{ color: "var(--stayo-ink-muted)" }}>
-                  <th className="py-2 text-left text-xs font-normal">Data/hora</th>
-                  <th className="py-2 text-left text-xs font-normal">Evento</th>
-                  <th className="py-2 text-left text-xs font-normal">Entidade</th>
-                  <th className="py-2 text-left text-xs font-normal">Detalhes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-                {rows.map((entry) => (
-                  <tr key={entry.id} style={{ color: "var(--stayo-ink)" }}>
-                    <td className="py-2 pr-3 whitespace-nowrap">
-                      {new Date(entry.createdAt).toLocaleString("pt-BR")}
-                    </td>
-                    <td className="py-2 pr-3">{eventLabels[entry.event] ?? entry.event}</td>
-                    <td className="py-2 pr-3">
-                      {entry.entityType}
-                      {entry.entityId ? ` · ${entry.entityId}` : ""}
-                    </td>
-                    <td className="py-2" style={{ color: "var(--stayo-ink-muted)" }}>
-                      {Object.keys(entry.metadata).length > 0
-                        ? JSON.stringify(entry.metadata)
-                        : "—"}
-                    </td>
+              <table className="w-full min-w-[42rem] text-sm">
+                <thead>
+                  <tr style={{ color: "var(--stayo-ink-muted)" }}>
+                    <th className="py-2 text-left text-xs font-normal">Data/hora</th>
+                    <th className="py-2 text-left text-xs font-normal">Evento</th>
+                    <th className="py-2 text-left text-xs font-normal">Entidade</th>
+                    <th className="py-2 text-left text-xs font-normal">Detalhes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+                  {rows.map((entry) => (
+                    <tr key={entry.id} style={{ color: "var(--stayo-ink)" }}>
+                      <td className="py-2 pr-3 whitespace-nowrap">
+                        {new Date(entry.createdAt).toLocaleString("pt-BR")}
+                      </td>
+                      <td className="py-2 pr-3">{eventLabels[entry.event] ?? entry.event}</td>
+                      <td className="py-2 pr-3">
+                        {entry.entityType}
+                        {entry.entityId ? ` · ${entry.entityId}` : ""}
+                      </td>
+                      <td className="py-2" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {Object.keys(entry.metadata).length > 0
+                          ? JSON.stringify(entry.metadata)
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         )}

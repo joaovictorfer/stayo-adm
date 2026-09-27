@@ -23,6 +23,7 @@ const LEGACY: Record<string, JourneyStep> = {
   proprietario: "contato",
   imovel: "imovel",
   enxoval: "implantacao",
+  inventario: "implantacao",
   itens: "implantacao",
   faltantes: "implantacao",
   observacoes: "implantacao",
