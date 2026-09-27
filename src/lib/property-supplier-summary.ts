@@ -54,19 +54,15 @@ export function summarizeSupplierCategory(
     const needsConfirmation = companies.some(
       (entry) => isPendingOther(entry) || entry.source === "owner",
     );
-    const primary = entryDisplayName(first, catalog);
-    const secondary =
-      companies.length > 1
-        ? `+ ${companies.length - 1} ${companies.length === 2 ? "empresa" : "empresas"}`
-        : first.role
-          ? null
-          : null;
 
     return {
       state: needsConfirmation ? "to_confirm" : "defined",
       stateLabel: needsConfirmation ? "A confirmar" : "Definido",
-      primary,
-      secondary,
+      primary: entryDisplayName(first, catalog),
+      secondary:
+        companies.length > 1
+          ? `+ ${companies.length - 1} ${companies.length === 2 ? "empresa" : "empresas"}`
+          : null,
     };
   }
 
