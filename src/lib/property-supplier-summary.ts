@@ -27,7 +27,9 @@ export function summarizeSupplierCategory(
     };
   }
 
-  const companies = entries.filter((entry) => entry.answer === "catalog" || entry.answer === "other");
+  const companies = entries.filter(
+    (entry) => entry.answer === "catalog" || entry.answer === "other",
+  );
   const notApplicable = entries.find((entry) => entry.answer === "not_applicable");
   const unknown = entries.find((entry) => entry.answer === "unknown");
 
