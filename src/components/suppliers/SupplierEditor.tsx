@@ -24,6 +24,10 @@ interface Props {
   onRemoveCategory?: (key: string) => void;
 }
 
+interface DetailProps extends Omit<Props, "categories"> {
+  category: SupplierCategory;
+}
+
 const field =
   "w-full min-h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline focus-visible:outline-2";
 const chip =
@@ -73,6 +77,45 @@ export function SupplierEditor({ categories, entries, catalog, onChange, mode, c
   );
 }
 
+/** Edição focada de uma categoria no Admin; o editor completo do Portal permanece inalterado. */
+export function SupplierCategoryDetail({ category, entries, catalog, onChange, mode, canEdit, onRemoveCategory }: DetailProps) {
+  const editable = (entry: SupplierEntry) => (canEdit ? canEdit(entry) : true);
+  const update = (id: string, patch: Partial<SupplierEntry>) =>
+    onChange(entries.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
+  const remove = (id: string) => onChange(entries.filter((entry) => entry.id !== id));
+  const choose = (answer: SupplierAnswer, catalogId?: string) => {
+    const entry = { ...newEntry(category.key, answer, mode), catalogId: catalogId ?? null };
+    if (answer === "unknown" || answer === "not_applicable") {
+      onChange([...entries.filter((current) => current.categoryKey !== category.key || !editable(current)), entry]);
+      return;
+    }
+    onChange([
+      ...entries.filter(
+        (current) =>
+          current.categoryKey !== category.key ||
+          !editable(current) ||
+          (current.answer !== "unknown" && current.answer !== "not_applicable"),
+      ),
+      entry,
+    ]);
+  };
+
+  return (
+    <CategoryBlock
+      category={category}
+      entries={entries.filter((entry) => entry.categoryKey === category.key)}
+      catalog={catalog}
+      mode={mode}
+      editable={editable}
+      onChoose={choose}
+      onUpdate={update}
+      onRemove={remove}
+      onRemoveCategory={category.custom && onRemoveCategory ? () => onRemoveCategory(category.key) : undefined}
+      detail
+    />
+  );
+}
+
 function CategoryBlock({
   category,
   entries,
@@ -83,6 +126,7 @@ function CategoryBlock({
   onUpdate,
   onRemove,
   onRemoveCategory,
+  detail = false,
 }: {
   category: SupplierCategory;
   entries: SupplierEntry[];
@@ -93,6 +137,7 @@ function CategoryBlock({
   onUpdate: (id: string, patch: Partial<SupplierEntry>) => void;
   onRemove: (id: string) => void;
   onRemoveCategory?: (() => void) | undefined;
+  detail?: boolean;
 }) {
   const [searching, setSearching] = useState(false);
   const companies = entries.filter((e) => e.answer === "catalog" || e.answer === "other");
@@ -100,11 +145,11 @@ function CategoryBlock({
   const hasAny = entries.length > 0;
 
   return (
-    <div className="rounded-xl border border-border p-3 sm:p-4" data-category={category.key}>
+    <div className={detail ? "space-y-3" : "rounded-xl border border-border p-3 sm:p-4"} data-category={category.key}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h4 className="text-sm font-semibold text-foreground">{category.label}</h4>
-          <p className="text-xs text-muted-foreground">Quem forneceu ou instalou?</p>
+          {!detail && <h4 className="text-sm font-semibold text-foreground">{category.label}</h4>}
+          <p className={detail ? "text-sm font-medium text-foreground" : "text-xs text-muted-foreground"}>Quem forneceu ou instalou?</p>
         </div>
         {onRemoveCategory && !hasAny && (
           <button type="button" onClick={onRemoveCategory} className="text-xs text-muted-foreground underline">

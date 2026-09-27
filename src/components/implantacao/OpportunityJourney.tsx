@@ -388,7 +388,7 @@ function JourneyBody({
           className="flex min-h-11 items-center gap-1 text-sm font-medium"
           style={{ color: "var(--stayo-forest)" }}
         >
-          <ArrowLeft className="size-4" /> Voltar para a lista
+          <ArrowLeft className="size-4" /> Voltar para Implantação
         </button>
         <h3 className="text-lg font-semibold">{open.label}</h3>
         {open.node}
