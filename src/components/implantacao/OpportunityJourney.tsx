@@ -979,6 +979,30 @@ function Question({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+function ReviewCard({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-[var(--radius-card)] border p-4" style={inputStyle}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <div className="min-w-0">
+          <h3 className="font-semibold">{title}</h3>
+          <div className="mt-1">{children}</div>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+          Editar
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: string) => void }) {
   const [condo, setCondo] = useState<"sim" | "nao" | "nsei" | null>(
     v.condominium_name ? "sim" : null,
@@ -1147,11 +1171,7 @@ function ProposalBlocks({
         className="rounded-[var(--radius-card)] border p-4 sm:p-5"
         style={inputStyle}
       >
-        <p className="text-xs font-medium" style={muted}>
-          Proposta · 1 de 3
-        </p>
-        <h3 className="mt-1 text-lg font-semibold">Condições comerciais</h3>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Taxa de administração</span>
             <div className="flex items-center gap-2">
@@ -1213,11 +1233,7 @@ function ProposalBlocks({
         className="rounded-[var(--radius-card)] border p-4 sm:p-5"
         style={inputStyle}
       >
-        <p className="text-xs font-medium" style={muted}>
-          Proposta · 2 de 3
-        </p>
-        <h3 className="mt-1 text-lg font-semibold">Preparação do imóvel</h3>
-        <div className="mt-4 flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <Question title="Limpeza antes da operação">
             <Chips
               label="Limpeza antes da operação"
@@ -1270,11 +1286,7 @@ function ProposalBlocks({
         className="rounded-[var(--radius-card)] border p-4 sm:p-5"
         style={inputStyle}
       >
-        <p className="text-xs font-medium" style={muted}>
-          Proposta · 3 de 3
-        </p>
-        <h3 className="mt-1 text-lg font-semibold">Condições do contrato</h3>
-        <div className="mt-4 flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <Question title="Exclusividade">
             <Chips
               label="Exclusividade"
