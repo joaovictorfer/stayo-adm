@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Check, ChevronRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { SupplierEditor } from "./SupplierEditor";
@@ -13,6 +14,7 @@ import {
   type SupplierCategory,
   type SupplierEntry,
 } from "@/lib/property-suppliers";
+import { supplierCategorySummary } from "@/lib/property-supplier-summary";
 
 type Row = {
   id: string;
@@ -48,12 +50,32 @@ const fromRow = (r: Row): SupplierEntry => ({
 });
 
 const comparable = (e: SupplierEntry) =>
-  JSON.stringify([e.categoryKey, e.answer, e.catalogId, e.otherName, e.role, e.phone, e.service, e.approxDate, e.notes, e.adminNotes ?? null]);
+  JSON.stringify([
+    e.categoryKey,
+    e.answer,
+    e.catalogId,
+    e.otherName,
+    e.role,
+    e.phone,
+    e.service,
+    e.approxDate,
+    e.notes,
+    e.adminNotes ?? null,
+  ]);
 
 async function load(implementationId: string) {
   const [entries, cats, catalog] = await Promise.all([
-    supabase.from("property_supplier_entries").select("*").eq("implementation_id", implementationId).is("deleted_at", null).order("created_at"),
-    supabase.from("property_supplier_categories").select("key,label").eq("implementation_id", implementationId).order("created_at"),
+    supabase
+      .from("property_supplier_entries")
+      .select("*")
+      .eq("implementation_id", implementationId)
+      .is("deleted_at", null)
+      .order("created_at"),
+    supabase
+      .from("property_supplier_categories")
+      .select("key,label")
+      .eq("implementation_id", implementationId)
+      .order("created_at"),
     supabase.from("supplier_catalog").select("id,name,specialties,status").order("name"),
   ]);
   if (entries.error) throw entries.error;
@@ -76,8 +98,11 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef<SupplierEntry[]>([]);
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
   const [newCat, setNewCat] = useState("");
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
 
   useEffect(() => {
     if (q.data && entries === null) {
@@ -121,11 +146,19 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
       }
       for (const id of [...base.current.keys()]) {
         if (ids.has(id)) continue;
-        const { error } = await supabase.from("property_supplier_entries").update({ deleted_at: now }).eq("id", id);
+        const { error } = await supabase
+          .from("property_supplier_entries")
+          .update({ deleted_at: now })
+          .eq("id", id);
         if (error) throw error;
         base.current.delete(id);
       }
-      setEntries((cur) => cur?.map((e) => (base.current.get(e.id)?.source === "admin" ? { ...e, source: "admin" } : e)) ?? cur);
+      setEntries(
+        (cur) =>
+          cur?.map((e) =>
+            base.current.get(e.id)?.source === "admin" ? { ...e, source: "admin" } : e,
+          ) ?? cur,
+      );
       if (latest.current === current) setState("saved");
     } catch {
       setState("error");
@@ -143,82 +176,224 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
     }, 700);
   };
 
-  useEffect(() => () => {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      void save();
-    }
+  useEffect(
+    () => () => {
+      if (timer.current) {
+        clearTimeout(timer.current);
+        void save();
+      }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    [],
+  );
 
   const addCategory = async () => {
     const label = newCat.trim();
     if (!label) return;
-    const { error } = await supabase.from("property_supplier_categories").insert({ implementation_id: implementationId, key: slugCategory(label), label });
-    if (!error) {
-      setNewCat("");
-      await qc.invalidateQueries({ queryKey: key });
+    setCategoryError("");
+    const { error } = await supabase.from("property_supplier_categories").insert({
+      implementation_id: implementationId,
+      key: slugCategory(label),
+      label,
+    });
+    if (error) {
+      setCategoryError("Não foi possível adicionar a categoria.");
+      return;
     }
-  };
-  const removeCategory = async (k: string) => {
-    await supabase.from("property_supplier_categories").delete().eq("implementation_id", implementationId).eq("key", k);
+    setNewCat("");
+    setShowAddCategory(false);
     await qc.invalidateQueries({ queryKey: key });
   };
 
-  if (q.isLoading || (q.data && entries === null)) return <p className="text-sm text-muted-foreground">Carregando fornecedores…</p>;
-  if (q.error || !q.data) return <p className="text-sm text-destructive">Não foi possível carregar os fornecedores.</p>;
+  const removeCategory = async (categoryKey: string) => {
+    const { error } = await supabase
+      .from("property_supplier_categories")
+      .delete()
+      .eq("implementation_id", implementationId)
+      .eq("key", categoryKey);
+    if (!error) {
+      setSelectedCategoryKey(null);
+      await qc.invalidateQueries({ queryKey: key });
+    }
+  };
 
-  const pending = (entries ?? []).filter(isPendingOther).length;
-  const fromOwner = (entries ?? []).filter((e) => e.source === "owner").length;
+  if (q.isLoading || (q.data && entries === null))
+    return <p className="text-sm text-muted-foreground">Carregando fornecedores…</p>;
+  if (q.error || !q.data)
+    return <p className="text-sm text-destructive">Não foi possível carregar os fornecedores.</p>;
+
+  const currentEntries = entries ?? [];
+  const categories = mergeCategories(q.data.categories);
+  const selectedCategory = categories.find((category) => category.key === selectedCategoryKey);
+  const pending = currentEntries.filter(isPendingOther).length;
+  const fromOwner = currentEntries.filter((e) => e.source === "owner").length;
+
+  if (selectedCategory) {
+    return (
+      <div className="space-y-3" data-supplier-view="detail">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryKey(null)}
+            className="inline-flex min-h-11 items-center gap-1 text-sm font-medium"
+            style={{ color: "var(--stayo-forest)" }}
+          >
+            <ArrowLeft className="size-4" /> Voltar para fornecedores
+          </button>
+          <SaveState state={state} onRetry={() => void save()} />
+        </div>
+        <SupplierEditor
+          mode="admin"
+          categories={[selectedCategory]}
+          catalog={q.data.catalog}
+          entries={currentEntries}
+          onChange={change}
+          onRemoveCategory={removeCategory}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-supplier-view="list">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2 text-xs">
           {pending > 0 && (
             <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-900">
-              {pending} {pending === 1 ? "empresa com nome pendente" : "empresas com nome pendente"}
+              {pending} {pending === 1 ? "empresa a confirmar" : "empresas a confirmar"}
             </span>
           )}
           {fromOwner > 0 && (
-            <span className="rounded bg-muted px-2 py-1">{fromOwner} informadas pelo proprietário — revisar</span>
+            <span className="rounded bg-muted px-2 py-1">
+              {fromOwner} informadas pelo proprietário — revisar
+            </span>
           )}
         </div>
-        <span className="text-xs text-muted-foreground" aria-live="polite">
-          {state === "saving" ? "Salvando…" : state === "saved" ? "Salvo" : state === "error" ? (
-            <button type="button" className="underline" onClick={() => void save()}>Não salvo — tentar novamente</button>
-          ) : null}
-        </span>
+        <SaveState state={state} onRetry={() => void save()} />
       </div>
-      <SupplierEditor
-        mode="admin"
-        categories={mergeCategories(q.data.categories)}
-        catalog={q.data.catalog}
-        entries={entries ?? []}
-        onChange={change}
-        onRemoveCategory={removeCategory}
-      />
-      <div className="flex flex-wrap gap-2">
-        <input
-          aria-label="Nova categoria"
-          placeholder="Nova categoria (ex.: Portão eletrônico)"
-          className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm"
-          value={newCat}
-          onChange={(e) => setNewCat(e.target.value)}
+
+      <div className="overflow-hidden rounded-xl border border-border bg-background">
+        {categories.map((category, index) => {
+          const summary = supplierCategorySummary(category.key, currentEntries, q.data.catalog);
+          return (
+            <button
+              key={category.key}
+              type="button"
+              className={`grid min-h-16 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/50 focus-visible:outline focus-visible:outline-2 ${
+                index > 0 ? "border-t border-border" : ""
+              }`}
+              onClick={() => setSelectedCategoryKey(category.key)}
+              aria-label={`${category.label}: ${summary.stateLabel}`}
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-foreground">
+                  {category.label}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                  {summary.display}
+                </span>
+                <span
+                  className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${
+                    summary.state === "defined"
+                      ? "text-emerald-700"
+                      : summary.state === "confirm"
+                        ? "text-amber-700"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {summary.state === "defined" && <Check className="size-3.5" aria-hidden="true" />}
+                  {summary.stateLabel}
+                </span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </button>
+          );
+        })}
+      </div>
+
+      {showAddCategory ? (
+        <div className="space-y-2 rounded-xl border border-border p-3">
+          <label
+            className="block text-xs font-medium text-muted-foreground"
+            htmlFor="new-supplier-category"
+          >
+            Nome da categoria
+          </label>
+          <input
+            id="new-supplier-category"
+            placeholder="Ex.: Portão eletrônico"
+            className="min-h-11 w-full rounded-lg border border-border bg-background px-3 text-sm"
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => void addCategory()} disabled={!newCat.trim()}>
+              Adicionar
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setNewCat("");
+                setCategoryError("");
+                setShowAddCategory(false);
+              }}
+            >
+              Cancelar
+            </Button>
+          </div>
+          {categoryError && <p className="text-xs text-destructive">{categoryError}</p>}
+        </div>
+      ) : (
+        <Button type="button" variant="outline" onClick={() => setShowAddCategory(true)}>
+          <Plus className="mr-1 size-4" /> Adicionar categoria
+        </Button>
+      )}
+
+      <div>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setShowCatalog((s) => !s)}>
+          {showCatalog ? "Fechar catálogo de empresas" : "Gerenciar catálogo de empresas"}
+        </Button>
+      </div>
+      {showCatalog && (
+        <CatalogManager
+          catalog={q.data.catalog}
+          onChanged={() => qc.invalidateQueries({ queryKey: key })}
         />
-        <Button type="button" variant="outline" onClick={() => void addCategory()} disabled={!newCat.trim()}>
-          Adicionar categoria
-        </Button>
-        <Button type="button" variant="ghost" onClick={() => setShowCatalog((s) => !s)}>
-          {showCatalog ? "Fechar catálogo" : "Catálogo de empresas"}
-        </Button>
-      </div>
-      {showCatalog && <CatalogManager catalog={q.data.catalog} onChanged={() => qc.invalidateQueries({ queryKey: key })} />}
+      )}
     </div>
   );
 }
 
-function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]; onChanged: () => void }) {
+function SaveState({
+  state,
+  onRetry,
+}: {
+  state: "idle" | "saving" | "saved" | "error";
+  onRetry: () => void;
+}) {
+  return (
+    <span className="shrink-0 text-xs text-muted-foreground" aria-live="polite">
+      {state === "saving" ? (
+        "Salvando…"
+      ) : state === "saved" ? (
+        "Salvo"
+      ) : state === "error" ? (
+        <button type="button" className="underline" onClick={onRetry}>
+          Não salvo — tentar novamente
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
+function CatalogManager({
+  catalog,
+  onChanged,
+}: {
+  catalog: SupplierCatalogItem[];
+  onChanged: () => void;
+}) {
   const [name, setName] = useState("");
   const [specs, setSpecs] = useState<string[]>([]);
   const [msg, setMsg] = useState("");
@@ -233,7 +408,9 @@ function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]
       setMsg("Essa empresa já está no catálogo.");
       return;
     }
-    const { error } = await supabase.from("supplier_catalog").insert({ name: n, specialties: specs, status: "approved" });
+    const { error } = await supabase
+      .from("supplier_catalog")
+      .insert({ name: n, specialties: specs, status: "approved" });
     setMsg(error ? "Não foi possível adicionar." : "");
     if (!error) {
       setName("");
@@ -241,11 +418,16 @@ function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]
       onChanged();
     }
   };
-  const label = { suggested: "Sugestão — revisar", approved: "Disponível", archived: "Arquivada" } as const;
+  const label = {
+    suggested: "Sugestão — revisar",
+    approved: "Disponível",
+    archived: "Arquivada",
+  } as const;
   return (
     <div className="space-y-3 rounded-xl border border-border p-3">
       <p className="text-xs text-muted-foreground">
-        Só empresas "Disponível" aparecem para o proprietário. O catálogo é apenas uma lista de sugestões, sem recomendação ou parceria.
+        Só empresas &quot;Disponível&quot; aparecem para o proprietário. O catálogo é apenas uma
+        lista de sugestões, sem recomendação ou parceria.
       </p>
       <ul className="divide-y divide-border">
         {catalog.map((c) => (
@@ -253,27 +435,55 @@ function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]
             <div>
               <p className="font-medium">{c.name}</p>
               <p className="text-xs text-muted-foreground">
-                {c.specialties.map((s) => SPECIALTY_LABELS[s] ?? s).join(" · ") || "Sem especialidade"} · {label[c.status ?? "approved"]}
+                {c.specialties.map((s) => SPECIALTY_LABELS[s] ?? s).join(" · ") ||
+                  "Sem especialidade"}{" "}
+                · {label[c.status ?? "approved"]}
               </p>
             </div>
             <div className="flex gap-1">
-              {c.status !== "approved" && <Button size="sm" variant="outline" onClick={() => void setStatus(c.id, "approved")}>Disponibilizar</Button>}
-              {c.status !== "archived" && <Button size="sm" variant="ghost" onClick={() => void setStatus(c.id, "archived")}>Arquivar</Button>}
+              {c.status !== "approved" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void setStatus(c.id, "approved")}
+                >
+                  Disponibilizar
+                </Button>
+              )}
+              {c.status !== "archived" && (
+                <Button size="sm" variant="ghost" onClick={() => void setStatus(c.id, "archived")}>
+                  Arquivar
+                </Button>
+              )}
             </div>
           </li>
         ))}
       </ul>
       <div className="space-y-2">
-        <input aria-label="Nome da nova empresa" placeholder="Nome da empresa" className="min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+        <input
+          aria-label="Nome da nova empresa"
+          placeholder="Nome da empresa"
+          className="min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
         <div className="flex flex-wrap gap-2">
           {DEFAULT_SUPPLIER_CATEGORIES.map((c) => (
             <label key={c.key} className="flex items-center gap-1 text-xs">
-              <input type="checkbox" checked={specs.includes(c.key)} onChange={(e) => setSpecs((s) => (e.target.checked ? [...s, c.key] : s.filter((x) => x !== c.key)))} />
+              <input
+                type="checkbox"
+                checked={specs.includes(c.key)}
+                onChange={(e) =>
+                  setSpecs((s) => (e.target.checked ? [...s, c.key] : s.filter((x) => x !== c.key)))
+                }
+              />
               {c.label}
             </label>
           ))}
         </div>
-        <Button type="button" size="sm" onClick={() => void add()} disabled={!name.trim()}>Adicionar empresa</Button>
+        <Button type="button" size="sm" onClick={() => void add()} disabled={!name.trim()}>
+          Adicionar empresa
+        </Button>
         {msg && <p className="text-xs text-destructive">{msg}</p>}
       </div>
     </div>
