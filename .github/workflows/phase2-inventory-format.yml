@@ -1,0 +1,46 @@
+name: Phase 2 inventory format
+
+on:
+  push:
+    branches:
+      - phase2-unify-inventory
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase2-unify-inventory
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Stabilize inventory query collection
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/implantacao/EnxovalTab.tsx')
+          text = path.read_text()
+          old = '  const items = query.data ?? [];\n'
+          new = '  const items = useMemo(() => query.data ?? [], [query.data]);\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one items assignment, got {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Format only rewritten inventory files
+        run: bunx prettier --write src/components/implantacao/EnxovalTab.tsx src/lib/inventory-state.ts src/lib/inventory-state.test.ts
+      - name: Verify targeted lint
+        run: bunx eslint src/components/implantacao/EnxovalTab.tsx src/lib/inventory-state.ts src/lib/inventory-state.test.ts
+      - name: Commit formatting corrections
+        run: |
+          git config user.name "stayo-phase-executor"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/components/implantacao/EnxovalTab.tsx src/lib/inventory-state.ts src/lib/inventory-state.test.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(inventory): satisfy targeted lint"
+          git push origin HEAD:phase2-unify-inventory
