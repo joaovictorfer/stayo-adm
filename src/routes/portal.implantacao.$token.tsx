@@ -7,22 +7,32 @@ import { ownerOnboardingLinkByTokenQuery } from "../lib/api/queries";
 import { ownerOnboardingLinkStatus } from "../types/owner-onboarding";
 
 export const Route = createFileRoute("/portal/implantacao/$token")({
-  head: () => ({
-    meta: [
-      { title: "Sua jornada com a STAYO" },
-      {
-        name: "description",
-        content: "Confira sua proposta, complete seus dados e prepare seu acesso à STAYO.",
-      },
-      { property: "og:title", content: "Sua jornada com a STAYO" },
-      {
-        property: "og:description",
-        content: "Proposta, cadastro do proprietário, imóvel e acesso em um único lugar.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: ({ params }) => {
+    const pageUrl = `https://adm.stayogramado.com.br/portal/implantacao/${encodeURIComponent(params.token)}`;
+    const imageUrl = `https://adm.stayogramado.com.br/api/public/owner-cover/${encodeURIComponent(params.token)}`;
+    const title = "Sua jornada com a STAYO";
+    const description = "Acompanhe a implantação e as informações do seu imóvel com a STAYO.";
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: pageUrl },
+        { property: "og:image", content: imageUrl },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "Imóvel acompanhado pela STAYO" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: imageUrl },
+      ],
+      links: [{ rel: "canonical", href: pageUrl }],
+    };
+  },
   component: OwnerJourneyPortalPage,
 });
 
