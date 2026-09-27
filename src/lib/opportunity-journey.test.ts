@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { isContactValid, summarize, toJourneyStep, validateContact } from "./opportunity-journey";
+import {
+  isContactValid,
+  PROPOSAL_BLOCKS,
+  proposalNumberChoice,
+  summarize,
+  toJourneyStep,
+  validateContact,
+} from "./opportunity-journey";
 
 describe("jornada da nova oportunidade", () => {
   it("exige título, nome e telefone", () => {
@@ -30,5 +37,16 @@ describe("jornada da nova oportunidade", () => {
     ]);
     expect(r.filled).toHaveLength(1);
     expect(r.missing).toBe(2);
+  });
+
+  it("mantém exatamente três blocos na proposta", () => {
+    expect(PROPOSAL_BLOCKS).toEqual(["commercial", "preparation", "contract"]);
+  });
+
+  it("retoma presets, outro e a definir sem criar campos paralelos", () => {
+    expect(proposalNumberChoice(12, [12, 24])).toBe("12");
+    expect(proposalNumberChoice("60", [30, 60])).toBe("60");
+    expect(proposalNumberChoice(18, [12, 24])).toBe("outro");
+    expect(proposalNumberChoice(null, [12, 24])).toBe("tbd");
   });
 });

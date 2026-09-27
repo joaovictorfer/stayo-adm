@@ -13,7 +13,7 @@ import {
   Trash2,
   Wrench,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "../ui/button";
@@ -34,7 +34,14 @@ import { useOpportunityAutosave, type SaveState } from "../../hooks/use-opportun
 import { autosaveOpportunity, loadOpportunityForm, type FormField, type FormValues } from "../../lib/api/opportunity-form";
 import { completeOpportunityDraft, saveOpportunityContact } from "../../lib/api/opportunities";
 import { formatBrazilianPhone } from "../../lib/owner-form-validation";
-import { JOURNEY_STEPS, summarize, validateContact, type JourneyStep } from "../../lib/opportunity-journey";
+import {
+  JOURNEY_STEPS,
+  PROPOSAL_BLOCKS,
+  proposalNumberChoice,
+  summarize,
+  validateContact,
+  type JourneyStep,
+} from "../../lib/opportunity-journey";
 import type { ImplementationProject } from "../../types/core";
 
 const inputClass =
@@ -166,24 +173,41 @@ function JourneyBody({
     if (condQ.data) setCond(condQ.data);
   }, [condQ.data]);
   const [condState, setCondState] = useState<SaveState>("idle");
-  const condSave = useMutation({
-    mutationFn: async (patch: Cond) => {
+  const condPending = useRef<Cond>({});
+  const condRunning = useRef<Promise<boolean> | null>(null);
+  const runCondSave = useCallback(async (): Promise<boolean> => {
+    if (condRunning.current) await condRunning.current;
+    const patch = condPending.current;
+    if (!Object.keys(patch).length) return true;
+    condPending.current = {};
+    setCondState("saving");
+    const request = (async () => {
+      try {
       const { error } = await supabase
         .from("implementation_contract_conditions")
         .upsert({ implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never, {
           onConflict: "implementation_id",
         });
       if (error) throw error;
-    },
-    onMutate: () => setCondState("saving"),
-    onSuccess: () => setCondState("saved"),
-    onError: () => setCondState("error"),
-  });
-  const lastCond = useRef<Cond>({});
+        setCondState(Object.keys(condPending.current).length ? "saving" : "saved");
+        return true;
+      } catch {
+        condPending.current = { ...patch, ...condPending.current };
+        setCondState("error");
+        return false;
+      }
+    })();
+    condRunning.current = request;
+    const ok = await request;
+    condRunning.current = null;
+    if (ok && Object.keys(condPending.current).length) return runCondSave();
+    return ok;
+  }, [id]);
   const setC = (patch: Cond) => {
     setCond((c) => ({ ...c, ...patch }));
-    lastCond.current = patch;
-    condSave.mutate(patch);
+    condPending.current = { ...condPending.current, ...patch };
+    setCondState("saving");
+    void runCondSave();
   };
 
   useEffect(() => {
@@ -201,19 +225,19 @@ function JourneyBody({
   const retry = () => {
     void auto.retry();
     void saveContact();
-    if (condState === "error") condSave.mutate(lastCond.current);
+    if (condState === "error") void runCondSave();
   };
 
   const flushAll = async () => {
     if (contactTimer.current) window.clearTimeout(contactTimer.current);
-    const [a, b] = await Promise.all([auto.flush(), saveContact()]);
-    if (!a || !b)
+    const [a, b, c] = await Promise.all([auto.flush(), saveContact(), runCondSave()]);
+    if (!a || !b || !c)
       toast.error("Não foi possível salvar agora", { description: "O que você digitou continua aqui." });
-    return a && b;
+    return a && b && c;
   };
   const go = async (next: JourneyStep) => {
-    await flushAll();
-    onStepChange(next);
+    const ok = await flushAll();
+    if (ok) onStepChange(next);
   };
   const exit = async () => {
     const ok = await flushAll();
@@ -231,14 +255,22 @@ function JourneyBody({
 
   const proposalBlocks = proposalBlockSummaries(cond);
   const isLast = index === JOURNEY_STEPS.length - 1;
-  const next = () => {
-    if (step === "proposta" && sub < proposalBlocks.length - 1) return setSub(sub + 1);
+  const next = async () => {
+    if (step === "proposta" && sub < proposalBlocks.length - 1) {
+      const ok = await flushAll();
+      if (ok) setSub((current) => current + 1);
+      return;
+    }
     if (!isLast) void go(JOURNEY_STEPS[index + 1]!.id);
   };
-  const back = () => {
+  const back = async () => {
     if (hub) return setHub(null);
     if (publishing) return setPublishing(false);
-    if (step === "proposta" && sub > 0) return setSub(sub - 1);
+    if (step === "proposta" && sub > 0) {
+      const ok = await flushAll();
+      if (ok) setSub((current) => current - 1);
+      return;
+    }
     if (index > 0) void go(JOURNEY_STEPS[index - 1]!.id);
     else void exit();
   };
@@ -475,7 +507,7 @@ function JourneyBody({
           </Button>
           <Button
             type="button"
-            onClick={next}
+            onClick={() => void next()}
             className="min-h-12 flex-1 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:ml-auto sm:flex-none sm:px-8"
           >
             Continuar
@@ -784,20 +816,10 @@ function ProposalBlocks({
   const num = (value: unknown) =>
     value === null || value === undefined || value === "" ? "" : String(value);
   const boolChoice = cond.exclusivity === true ? "sim" : cond.exclusivity === false ? "nao" : null;
-  const duration =
-    cond.duration_months == null
-      ? null
-      : [12, 24].includes(Number(cond.duration_months))
-        ? String(cond.duration_months)
-        : "outro";
-  const notice =
-    cond.notice_period_days == null
-      ? null
-      : [30, 60].includes(Number(cond.notice_period_days))
-        ? String(cond.notice_period_days)
-        : "outro";
+  const duration = proposalNumberChoice(cond.duration_months, [12, 24]);
+  const notice = proposalNumberChoice(cond.notice_period_days, [30, 60]);
 
-  const blocks = [
+  const blocks: Record<(typeof PROPOSAL_BLOCKS)[number], ReactNode> = {
     <section
       key="commercial"
       className="rounded-[var(--radius-card)] border p-4 sm:p-5"
@@ -1016,9 +1038,10 @@ function ProposalBlocks({
         </Question>
       </div>
     </section>,
-  ];
+  };
 
-  return blocks[sub] ?? null;
+  const block = PROPOSAL_BLOCKS[sub];
+  return block ? blocks[block] : null;
 }
 
 function NumberChoice({
