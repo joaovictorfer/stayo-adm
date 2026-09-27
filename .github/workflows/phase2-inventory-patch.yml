@@ -1,6 +1,9 @@
 name: Phase 2 inventory navigation patch
 
 on:
+  push:
+    branches:
+      - phase2-unify-inventory
   workflow_dispatch:
 
 permissions:
@@ -8,6 +11,7 @@ permissions:
 
 jobs:
   patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
