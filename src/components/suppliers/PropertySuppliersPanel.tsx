@@ -98,6 +98,7 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef<SupplierEntry[]>([]);
+  const saveRef = useRef<() => Promise<void>>(async () => {});
   const [newCat, setNewCat] = useState("");
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -163,6 +164,7 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
       setState("error");
     }
   };
+  saveRef.current = save;
 
   const change = (next: SupplierEntry[]) => {
     setEntries(next);
@@ -179,9 +181,8 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
     () => () => {
       if (timer.current) {
         clearTimeout(timer.current);
-        void save();
+        void saveRef.current();
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [],
   );
