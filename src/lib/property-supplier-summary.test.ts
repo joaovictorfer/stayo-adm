@@ -42,10 +42,7 @@ describe("summarizeSupplierCategory", () => {
 
   it("keeps not applicable explicit", () => {
     expect(
-      summarizeSupplierCategory(
-        [entry({ answer: "not_applicable", catalogId: null })],
-        catalog,
-      ),
+      summarizeSupplierCategory([entry({ answer: "not_applicable", catalogId: null })], catalog),
     ).toMatchObject({ state: "not_applicable", stateLabel: "Não se aplica" });
   });
 
