@@ -99,7 +99,12 @@ describe("supplierCategorySummary", () => {
       "ar_condicionado",
       [
         entry(),
-        entry({ id: crypto.randomUUID(), answer: "other", catalogId: null, otherName: "Clima Serra" }),
+        entry({
+          id: crypto.randomUUID(),
+          answer: "other",
+          catalogId: null,
+          otherName: "Clima Serra",
+        }),
       ],
       catalog,
     );
