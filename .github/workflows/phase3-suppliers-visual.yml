@@ -1,0 +1,33 @@
+name: Phase 3 suppliers visual
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  suppliers-mobile:
+    if: github.head_ref == 'phase3-suppliers-list-detail'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Validate suppliers at 390px
+        run: bunx playwright test --config=playwright.phase3.config.ts
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3-suppliers-screenshots
+          path: artifacts/phase3-suppliers
+          if-no-files-found: warn
