@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Trash2 } from "lucide-react";
@@ -23,12 +23,14 @@ export function DeleteImplementationButton({
   locked,
   navigateAfterDelete = true,
   compact = false,
+  trigger,
 }: {
   id: string;
   code: string;
   locked: boolean;
   navigateAfterDelete?: boolean;
   compact?: boolean;
+  trigger?: ReactElement;
 }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -54,6 +56,7 @@ export function DeleteImplementationButton({
   return (
     <AlertDialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setTyped(""); }}>
       <AlertDialogTrigger asChild>
+        {trigger ?? (
         <Button
           variant="outline"
           size={compact ? "icon" : "sm"
@@ -69,6 +72,7 @@ export function DeleteImplementationButton({
           <Trash2 className="size-4" aria-hidden="true" />
           {!compact && <span>Excluir</span>}
         </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

@@ -315,6 +315,7 @@ function ImplementationDetailPage() {
 
   return (
     <div className="implementation-workspace">
+      {!wizardStep && (
       <header className="implementation-mobile-heading">
         <Link
           to="/implantacao"
@@ -343,6 +344,7 @@ function ImplementationDetailPage() {
           </Link>
         </div>
       </header>
+      )}
 
       {query.isPending ? (
         <DetailSkeleton />

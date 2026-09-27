@@ -5,16 +5,25 @@ import {
   ChevronRight,
   CloudOff,
   Loader2,
+  MoreHorizontal,
   NotebookPen,
   Package,
   ShoppingBasket,
   Sofa,
+  Trash2,
   Wrench,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { DeleteImplementationButton } from "./DeleteImplementationButton";
 import { EnxovalTab } from "./EnxovalTab";
 import { MissingItemsTab } from "./MissingItemsTab";
 import { ProposalTab } from "./ProposalTab";
@@ -48,6 +57,8 @@ type Cond = Partial<
     | "duration_months"
     | "notice_period_days"
     | "owner_use_limit_mode"
+    | "owner_use_limit_days"
+    | "owner_use_limit_period"
     | "assignment_mode",
     unknown
   >
@@ -209,25 +220,21 @@ function JourneyBody({
     if (ok) onExit();
   };
 
-  const [sub, setSub] = useState(0);
   const [hub, setHub] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   useEffect(() => {
-    setSub(0);
     setHub(null);
     setPublishing(false);
   }, [step]);
 
-  const proposalQuestions = buildProposalQuestions(cond, setC);
+  const proposalBlocks = proposalBlockSummaries(cond);
   const isLast = index === JOURNEY_STEPS.length - 1;
   const next = () => {
-    if (step === "proposta" && sub < proposalQuestions.length - 1) return setSub(sub + 1);
     if (!isLast) void go(JOURNEY_STEPS[index + 1]!.id);
   };
   const back = () => {
     if (hub) return setHub(null);
     if (publishing) return setPublishing(false);
-    if (step === "proposta" && sub > 0) return setSub(sub - 1);
     if (index > 0) void go(JOURNEY_STEPS[index - 1]!.id);
     else void exit();
   };
@@ -262,15 +269,12 @@ function JourneyBody({
   } else if (step === "imovel") {
     content = <PropertyQuestions v={v} set={auto.set} />;
   } else if (step === "proposta") {
-    const q = proposalQuestions[sub]!;
-    content = (
-      <div className="flex flex-col gap-4">
-        <p className="text-xs font-medium" style={muted}>
-          Pergunta {sub + 1} de {proposalQuestions.length}
-        </p>
-        <h3 className="text-lg font-semibold">{q.title}</h3>
-        {condQ.isPending ? <Loader2 className="size-4 animate-spin" /> : q.body}
+    content = condQ.isPending ? (
+      <div className="flex items-center gap-2 py-10 text-sm" style={muted}>
+        <Loader2 className="size-4 animate-spin" /> Carregando condições da proposta…
       </div>
+    ) : (
+      <ProposalBlocks cond={cond} setC={setC} />
     );
   } else if (step === "implantacao") {
     const hubs = [
@@ -355,7 +359,7 @@ function JourneyBody({
       {
         title: "Proposta",
         step: "proposta" as const,
-        lines: proposalQuestions.map((q) => ({ label: q.title, value: q.answered ? "ok" : "" })),
+        lines: proposalBlocks,
       },
     ];
     content = (
@@ -424,27 +428,35 @@ function JourneyBody({
 
   return (
     <div ref={topRef} className="mx-auto flex w-full max-w-2xl flex-col gap-5 pb-28 sm:pb-6">
-      <header className="flex flex-col gap-3">
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
-          <button type="button" aria-label="Voltar" onClick={back} className="grid size-11 place-items-center rounded-full border" style={inputStyle}>
-            <ArrowLeft className="size-5" />
+      <header className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            aria-label="Voltar para implantações"
+            onClick={() => void exit()}
+            className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
+            style={{ color: "var(--stayo-forest)" }}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Implantação
           </button>
-          <div className="min-w-0">
-            <p className="truncate text-xs" style={muted}>
-              {implementation.code} · Etapa {index + 1} de {JOURNEY_STEPS.length}
-            </p>
-            <h2 className="truncate text-lg font-semibold">{JOURNEY_STEPS[index]!.label}</h2>
-          </div>
-          <Button type="button" variant="ghost" size="sm" className="min-h-11" onClick={() => void exit()}>
-            Salvar e sair
-          </Button>
+          <JourneyActions implementation={implementation} />
         </div>
-        <div className="flex gap-1" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={5}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="min-w-0 truncate text-sm font-semibold">{implementation.code}</p>
+          <div className="flex shrink-0 items-center gap-2">
+            <SaveStatus state={saveState} onRetry={retry} compact />
+            <Button type="button" variant="ghost" size="sm" className="min-h-11 px-2 sm:px-3" onClick={() => void exit()}>
+              Salvar e sair
+            </Button>
+          </div>
+        </div>
+        <h2 className="text-lg font-semibold">{JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de {JOURNEY_STEPS.length}</h2>
+        <div className="flex gap-1" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={JOURNEY_STEPS.length}>
           {JOURNEY_STEPS.map((s, i) => (
             <span key={s.id} className="h-1 flex-1 rounded-full" style={{ backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)" }} />
           ))}
         </div>
-        <SaveStatus state={saveState} onRetry={retry} />
       </header>
 
       <div>{content}</div>
@@ -470,11 +482,54 @@ function JourneyBody({
   );
 }
 
-function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
+function JourneyActions({ implementation }: { implementation: ImplementationProject }) {
+  const locked =
+    implementation.status === "ativo" ||
+    Boolean((implementation as { corePropertyId?: string | null }).corePropertyId);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label="Mais ações">
+          <MoreHorizontal className="size-5" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DeleteImplementationButton
+          id={implementation.id}
+          code={implementation.code}
+          locked={locked}
+          trigger={
+            <DropdownMenuItem
+              onSelect={(event) => event.preventDefault()}
+              className="cursor-pointer text-[var(--stayo-danger)] focus:text-[var(--stayo-danger)]"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Excluir oportunidade
+            </DropdownMenuItem>
+          }
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function SaveStatus({
+  state,
+  onRetry,
+  compact = false,
+}: {
+  state: SaveState;
+  onRetry: () => void;
+  compact?: boolean;
+}) {
   if (state === "idle") return null;
   if (state === "error")
     return (
-      <p role="status" className="flex items-center gap-1.5 text-xs" style={{ color: "var(--stayo-danger)" }}>
+      <p
+        role="status"
+        className={compact ? "flex items-center gap-1 text-xs whitespace-nowrap" : "flex items-center gap-1.5 text-xs"}
+        style={{ color: "var(--stayo-danger)" }}
+      >
         <CloudOff className="size-3.5" /> Não foi possível salvar ·{" "}
         <button type="button" className="underline" onClick={onRetry}>
           tentar novamente
@@ -482,7 +537,11 @@ function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void 
       </p>
     );
   return (
-    <p role="status" className="flex items-center gap-1.5 text-xs" style={muted}>
+    <p
+      role="status"
+      className={compact ? "flex items-center gap-1 text-xs whitespace-nowrap" : "flex items-center gap-1.5 text-xs"}
+      style={muted}
+    >
       {state === "saving" ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
       {state === "saving" ? "Salvando…" : "Salvo"}
     </p>
@@ -666,181 +725,252 @@ function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: s
 }
 
 const TBD = "tbd";
-function buildProposalQuestions(c: Cond, setC: (p: Cond) => void) {
-  const num = (x: unknown) => (x === null || x === undefined || x === "" ? "" : String(x));
-  const boolChoice = c.exclusivity === true ? "sim" : c.exclusivity === false ? "nao" : null;
-  const duration = c.duration_months == null ? null : [12, 24].includes(Number(c.duration_months)) ? String(c.duration_months) : "outro";
-  const notice = c.notice_period_days == null ? null : [30, 60].includes(Number(c.notice_period_days)) ? String(c.notice_period_days) : "outro";
+
+function proposalBlockSummaries(c: Cond) {
   return [
     {
-      title: "Taxa de administração",
-      answered: c.administration_fee != null,
-      body: (
-        <label className="block max-w-40">
-          <span className="sr-only">Taxa em %</span>
-          <div className="flex items-center gap-2">
-            <input
-              inputMode="decimal"
-              defaultValue={num(c.administration_fee)}
-              onBlur={(e) => {
-                const n = Number(e.target.value.replace(",", "."));
-                setC({ administration_fee: e.target.value.trim() === "" || Number.isNaN(n) ? null : Math.min(100, Math.max(0, n)) });
-              }}
-              className={inputClass}
-              style={inputStyle}
-            />
-            <span className="text-lg">%</span>
-          </div>
-        </label>
-      ),
+      label: "Condições comerciais",
+      value: c.administration_fee != null || c.turnover_cleaning_fee != null ? "ok" : "",
     },
     {
-      title: "Limpeza comercial",
-      answered: c.turnover_cleaning_fee != null,
-      body: (
-        <div className="flex flex-col gap-3">
-          <div className="flex max-w-52 items-center gap-2">
-            <span>R$</span>
-            <input
-              inputMode="decimal"
-              defaultValue={num(c.turnover_cleaning_fee)}
-              onBlur={(e) => {
-                const n = Number(e.target.value.replace(/\./g, "").replace(",", "."));
-                setC({ turnover_cleaning_fee: e.target.value.trim() === "" || Number.isNaN(n) ? null : Math.max(0, n) });
-              }}
-              className={inputClass}
-              style={inputStyle}
-            />
-          </div>
-          <Chips label="Limpeza comercial" value={c.turnover_cleaning_fee == null ? "tbd" : null} onChange={() => setC({ turnover_cleaning_fee: null })} options={[{ value: "tbd", label: "A definir" }]} />
-        </div>
-      ),
+      label: "Preparação do imóvel",
+      value: c.initial_cleaning_option || c.linen_mode || c.advisory_mode ? "ok" : "",
     },
     {
-      title: "Limpeza antes da operação",
-      answered: c.initial_cleaning_option != null,
-      body: (
-        <Chips
-          label="Limpeza antes da operação"
-          value={c.initial_cleaning_option as string}
-          onChange={(x) => setC({ initial_cleaning_option: x })}
-          options={[
-            { value: "owner_delivers", label: "Proprietário entrega limpo" },
-            { value: "stayo_initial", label: "Limpeza de implantação STAYO" },
-            { value: "stayo_post_construction", label: "Pós-obra" },
-            { value: TBD, label: "A decidir" },
-          ]}
-        />
-      ),
-    },
-    {
-      title: "Enxoval",
-      answered: c.linen_mode != null,
-      body: (
-        <Chips
-          label="Enxoval"
-          value={c.linen_mode as string}
-          onChange={(x) => setC({ linen_mode: x })}
-          options={[
-            { value: "complete", label: "Já possui completo" },
-            { value: "partial", label: "Possui parcialmente" },
-            { value: "stayo_supplier", label: "Fornecedor indicado pela STAYO" },
-            { value: TBD, label: "A decidir" },
-          ]}
-        />
-      ),
-    },
-    {
-      title: "Assessoria",
-      answered: c.advisory_mode != null,
-      body: (
-        <Chips
-          label="Assessoria"
-          value={c.advisory_mode as string}
-          onChange={(x) => setC({ advisory_mode: x })}
-          options={[
-            { value: "implementation_only", label: "Somente implantação" },
-            { value: "full", label: "Completa" },
-            { value: TBD, label: "A decidir" },
-          ]}
-        />
-      ),
-    },
-    {
-      title: "Exclusividade",
-      answered: c.exclusivity != null,
-      body: (
-        <Chips
-          label="Exclusividade"
-          value={boolChoice ?? (c.exclusivity === null && "exclusivity" in c ? TBD : null)}
-          onChange={(x) => setC({ exclusivity: x === "sim" ? true : x === "nao" ? false : null })}
-          options={[
-            { value: "sim", label: "Sim" },
-            { value: "nao", label: "Não" },
-            { value: TBD, label: "A definir" },
-          ]}
-        />
-      ),
-    },
-    {
-      title: "Vigência",
-      answered: c.duration_months != null,
-      body: (
-        <NumberChoice
-          value={duration}
-          current={num(c.duration_months)}
-          unit="meses"
-          presets={["12", "24"]}
-          onChange={(n) => setC({ duration_months: n })}
-        />
-      ),
-    },
-    {
-      title: "Aviso prévio",
-      answered: c.notice_period_days != null,
-      body: (
-        <NumberChoice
-          value={notice}
-          current={num(c.notice_period_days)}
-          unit="dias"
-          presets={["30", "60"]}
-          onChange={(n) => setC({ notice_period_days: n })}
-        />
-      ),
-    },
-    {
-      title: "Uso próprio pelo proprietário",
-      answered: c.owner_use_limit_mode != null,
-      body: (
-        <Chips
-          label="Uso próprio"
-          value={c.owner_use_limit_mode as string}
-          onChange={(x) => setC({ owner_use_limit_mode: x })}
-          options={[
-            { value: "unlimited", label: "Sem limite" },
-            { value: "limited", label: "Com limite" },
-            { value: TBD, label: "A definir" },
-          ]}
-        />
-      ),
-    },
-    {
-      title: "Cessão do imóvel a terceiros",
-      answered: c.assignment_mode != null,
-      body: (
-        <Chips
-          label="Cessão"
-          value={c.assignment_mode as string}
-          onChange={(x) => setC({ assignment_mode: x })}
-          options={[
-            { value: "allowed", label: "Permitida" },
-            { value: "not_allowed", label: "Não permitida" },
-            { value: TBD, label: "A definir" },
-          ]}
-        />
-      ),
+      label: "Condições do contrato",
+      value:
+        c.exclusivity != null ||
+        c.duration_months != null ||
+        c.notice_period_days != null ||
+        c.owner_use_limit_mode ||
+        c.assignment_mode
+          ? "ok"
+          : "",
     },
   ];
+}
+
+function ProposalBlocks({ cond, setC }: { cond: Cond; setC: (patch: Cond) => void }) {
+  const num = (value: unknown) =>
+    value === null || value === undefined || value === "" ? "" : String(value);
+  const boolChoice = cond.exclusivity === true ? "sim" : cond.exclusivity === false ? "nao" : null;
+  const duration =
+    cond.duration_months == null
+      ? null
+      : [12, 24].includes(Number(cond.duration_months))
+        ? String(cond.duration_months)
+        : "outro";
+  const notice =
+    cond.notice_period_days == null
+      ? null
+      : [30, 60].includes(Number(cond.notice_period_days))
+        ? String(cond.notice_period_days)
+        : "outro";
+
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="rounded-[var(--radius-card)] border p-4 sm:p-5" style={inputStyle}>
+        <p className="text-xs font-medium" style={muted}>
+          Proposta · 1 de 3
+        </p>
+        <h3 className="mt-1 text-lg font-semibold">Condições comerciais</h3>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">Taxa de administração</span>
+            <div className="flex items-center gap-2">
+              <input
+                key={num(cond.administration_fee)}
+                inputMode="decimal"
+                defaultValue={num(cond.administration_fee)}
+                onBlur={(event) => {
+                  const value = Number(event.target.value.replace(",", "."));
+                  setC({
+                    administration_fee:
+                      event.target.value.trim() === "" || Number.isNaN(value)
+                        ? null
+                        : Math.min(100, Math.max(0, value)),
+                  });
+                }}
+                className={inputClass}
+                style={inputStyle}
+              />
+              <span className="text-base">%</span>
+            </div>
+          </label>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium">Limpeza comercial</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">R$</span>
+              <input
+                key={num(cond.turnover_cleaning_fee)}
+                inputMode="decimal"
+                defaultValue={num(cond.turnover_cleaning_fee)}
+                onBlur={(event) => {
+                  const value = Number(event.target.value.replace(/\./g, "").replace(",", "."));
+                  setC({
+                    turnover_cleaning_fee:
+                      event.target.value.trim() === "" || Number.isNaN(value) ? null : Math.max(0, value),
+                  });
+                }}
+                className={inputClass}
+                style={inputStyle}
+              />
+            </div>
+            <div className="mt-2">
+              <Chips
+                label="Definição da limpeza comercial"
+                value={cond.turnover_cleaning_fee == null ? TBD : null}
+                onChange={() => setC({ turnover_cleaning_fee: null })}
+                options={[{ value: TBD, label: "A definir" }]}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[var(--radius-card)] border p-4 sm:p-5" style={inputStyle}>
+        <p className="text-xs font-medium" style={muted}>
+          Proposta · 2 de 3
+        </p>
+        <h3 className="mt-1 text-lg font-semibold">Preparação do imóvel</h3>
+        <div className="mt-4 flex flex-col gap-5">
+          <Question title="Limpeza antes da operação">
+            <Chips
+              label="Limpeza antes da operação"
+              value={cond.initial_cleaning_option as string}
+              onChange={(value) => setC({ initial_cleaning_option: value })}
+              options={[
+                { value: "owner_delivers", label: "Proprietário entrega limpo" },
+                { value: "stayo_initial", label: "Limpeza de implantação STAYO" },
+                { value: "stayo_post_construction", label: "Pós-obra" },
+                { value: TBD, label: "A decidir" },
+              ]}
+            />
+          </Question>
+          <Question title="Enxoval">
+            <Chips
+              label="Enxoval"
+              value={cond.linen_mode as string}
+              onChange={(value) => setC({ linen_mode: value })}
+              options={[
+                { value: "complete", label: "Já possui completo" },
+                { value: "partial", label: "Possui parcialmente" },
+                { value: "stayo_supplier", label: "Fornecedor indicado pela STAYO" },
+                { value: TBD, label: "A decidir" },
+              ]}
+            />
+          </Question>
+          <Question title="Assessoria">
+            <Chips
+              label="Assessoria"
+              value={cond.advisory_mode as string}
+              onChange={(value) => setC({ advisory_mode: value })}
+              options={[
+                { value: "implementation_only", label: "Somente implantação" },
+                { value: "full", label: "Completa" },
+                { value: TBD, label: "A decidir" },
+              ]}
+            />
+          </Question>
+        </div>
+      </section>
+
+      <section className="rounded-[var(--radius-card)] border p-4 sm:p-5" style={inputStyle}>
+        <p className="text-xs font-medium" style={muted}>
+          Proposta · 3 de 3
+        </p>
+        <h3 className="mt-1 text-lg font-semibold">Condições do contrato</h3>
+        <div className="mt-4 flex flex-col gap-5">
+          <Question title="Exclusividade">
+            <Chips
+              label="Exclusividade"
+              value={boolChoice ?? (cond.exclusivity === null && "exclusivity" in cond ? TBD : null)}
+              onChange={(value) => setC({ exclusivity: value === "sim" ? true : value === "nao" ? false : null })}
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+                { value: TBD, label: "A definir" },
+              ]}
+            />
+          </Question>
+          <Question title="Vigência">
+            <NumberChoice
+              value={duration}
+              current={num(cond.duration_months)}
+              unit="meses"
+              presets={["12", "24"]}
+              onChange={(value) => setC({ duration_months: value })}
+            />
+          </Question>
+          <Question title="Aviso prévio">
+            <NumberChoice
+              value={notice}
+              current={num(cond.notice_period_days)}
+              unit="dias"
+              presets={["30", "60"]}
+              onChange={(value) => setC({ notice_period_days: value })}
+            />
+          </Question>
+          <Question title="Uso próprio pelo proprietário">
+            <Chips
+              label="Uso próprio pelo proprietário"
+              value={cond.owner_use_limit_mode as string}
+              onChange={(value) => setC({ owner_use_limit_mode: value })}
+              options={[
+                { value: "unlimited", label: "Sem limite" },
+                { value: "limited", label: "Com limite" },
+                { value: TBD, label: "A definir" },
+              ]}
+            />
+            {cond.owner_use_limit_mode === "limited" && (
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-medium">Quantidade de dias</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      key={num(cond.owner_use_limit_days)}
+                      inputMode="numeric"
+                      defaultValue={num(cond.owner_use_limit_days)}
+                      onBlur={(event) => {
+                        const value = Number.parseInt(event.target.value, 10);
+                        setC({ owner_use_limit_days: Number.isNaN(value) ? null : Math.max(0, value) });
+                      }}
+                      className={inputClass}
+                      style={inputStyle}
+                    />
+                    <span className="text-sm">dias</span>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-medium">Período</span>
+                  <input
+                    key={num(cond.owner_use_limit_period)}
+                    defaultValue={num(cond.owner_use_limit_period)}
+                    onBlur={(event) => setC({ owner_use_limit_period: event.target.value.trim() || null })}
+                    placeholder="Ex.: por ano"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                </label>
+              </div>
+            )}
+          </Question>
+          <Question title="Cessão do imóvel a terceiros">
+            <Chips
+              label="Cessão do imóvel a terceiros"
+              value={cond.assignment_mode as string}
+              onChange={(value) => setC({ assignment_mode: value })}
+              options={[
+                { value: "allowed", label: "Permitida" },
+                { value: "not_allowed", label: "Não permitida" },
+                { value: TBD, label: "A definir" },
+              ]}
+            />
+          </Question>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function NumberChoice({
@@ -854,35 +984,45 @@ function NumberChoice({
   current: string;
   unit: string;
   presets: string[];
-  onChange: (n: number | null) => void;
+  onChange: (value: number | null) => void;
 }) {
   const [other, setOther] = useState(value === "outro");
+  useEffect(() => setOther(value === "outro"), [value]);
   return (
     <div className="flex flex-col gap-3">
       <Chips
         label={unit}
         value={other ? "outro" : value ?? null}
-        onChange={(x) => {
-          if (x === "outro") return setOther(true);
+        onChange={(choice) => {
+          if (choice === "outro") {
+            setOther(true);
+            return;
+          }
           setOther(false);
-          onChange(x === TBD ? null : Number(x));
+          onChange(choice === TBD ? null : Number(choice));
         }}
-        options={[...presets.map((p) => ({ value: p, label: `${p} ${unit}` })), { value: "outro", label: "Outro" }, { value: TBD, label: "A definir" }]}
+        options={[
+          ...presets.map((preset) => ({ value: preset, label: preset + " " + unit })),
+          { value: "outro", label: "Outro" },
+          { value: TBD, label: "A definir" },
+        ]}
       />
       {other && (
-        <div className="flex max-w-44 items-center gap-2">
+        <label className="flex max-w-52 items-center gap-2">
+          <span className="sr-only">Outro período em {unit}</span>
           <input
+            key={current}
             inputMode="numeric"
             defaultValue={current}
-            onBlur={(e) => {
-              const n = parseInt(e.target.value, 10);
-              onChange(Number.isNaN(n) ? null : Math.max(0, n));
+            onBlur={(event) => {
+              const parsed = Number.parseInt(event.target.value, 10);
+              onChange(Number.isNaN(parsed) ? null : Math.max(0, parsed));
             }}
             className={inputClass}
             style={inputStyle}
           />
-          <span>{unit}</span>
-        </div>
+          <span className="text-sm">{unit}</span>
+        </label>
       )}
     </div>
   );
