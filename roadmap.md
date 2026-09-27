@@ -2,10 +2,11 @@
 
 - [x] Otimizar todas as telas reais do Admin e do Portal para 360, 375, 390 e 430 px
 - [x] Validar fluxos mobile reais, estados, áreas de toque e ausência de rolagem horizontal
+- [x] Corrigir a prévia compartilhada da jornada com capa autorizada do imóvel e fallback institucional
 
 - [x] Refinar a proposta pública em 360–390 px e impedir que palavras quebrem no meio
-- [ ] Excluir todas as implantações, preservando somente a IMP-00003 Canela Residence
-- [ ] Disponibilizar exclusão segura em cada item da listagem completa
+- [x] Excluir todas as implantações, preservando somente a IMP-00003 Canela Residence
+- [x] Disponibilizar exclusão segura em cada item da listagem completa
 - [x] Corrigir carregamento da capa, cabeçalho, FAQ recolhida e linha do tempo da proposta pública
 - [x] Unificar a limpeza pós-obra na proposta pública por versão publicada
 - [x] Validar a revisão visual no celular sem alterar a versão publicada nem o aceite anterior
