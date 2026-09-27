@@ -11,7 +11,9 @@ const cleanScope = (scope: string[] | undefined) =>
 
 const templateForItem = (item: { description: string }) =>
   PROPOSAL_ITEM_TEMPLATES.find(
-    (template) => template.description.toLocaleLowerCase("pt-BR") === item.description.trim().toLocaleLowerCase("pt-BR"),
+    (template) =>
+      template.description.toLocaleLowerCase("pt-BR") ===
+      item.description.trim().toLocaleLowerCase("pt-BR"),
   );
 
 export function optionFromTemplate(template: ProposalItemTemplate): ProposalItemOption {
@@ -46,7 +48,9 @@ function optionFromItem(item: ProposalItem): ProposalItemOption {
 }
 
 /** Mantém a cópia editável já salva; versões antigas caem para os itens congelados. */
-export function guidedOptionsFromVersion(version: CommercialProposalVersion | null): ProposalItemOption[] {
+export function guidedOptionsFromVersion(
+  version: CommercialProposalVersion | null,
+): ProposalItemOption[] {
   if (!version) return [];
   if (version.draftItemOptions?.length) {
     return version.draftItemOptions.map((option) => ({

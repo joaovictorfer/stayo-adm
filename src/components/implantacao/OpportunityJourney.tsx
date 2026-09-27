@@ -256,6 +256,7 @@ function JourneyBody({
   const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(null);
   const [proposalState, setProposalState] = useState<SaveState>("idle");
   const proposalDirty = useRef(false);
+  const proposalOptionsRef = useRef<ProposalItemOption[]>([]);
   const proposalRunning = useRef<Promise<boolean> | null>(null);
   const proposalTimer = useRef<number | null>(null);
   useEffect(() => {
@@ -263,13 +264,16 @@ function JourneyBody({
       ? `${proposalSource.id}:${proposalSource.status}:${proposalSource.draftRevision}:${proposalSource.updatedAt}`
       : "empty";
     if (proposalDirty.current || key === proposalLoadedKey) return;
-    setProposalOptions(guidedOptionsFromVersion(proposalSource ?? null));
+    const restored = guidedOptionsFromVersion(proposalSource ?? null);
+    proposalOptionsRef.current = restored;
+    setProposalOptions(restored);
     setProposalLoadedKey(key);
   }, [proposalLoadedKey, proposalSource]);
 
   const saveProposal = useCallback(async (): Promise<boolean> => {
     if (proposalRunning.current) await proposalRunning.current;
-    if (!proposalDirty.current || guidedProposalIssue(proposalOptions)) return true;
+    const currentOptions = proposalOptionsRef.current;
+    if (!proposalDirty.current || guidedProposalIssue(currentOptions)) return true;
     setProposalState("saving");
     const request = (async () => {
       try {
@@ -277,7 +281,7 @@ function JourneyBody({
           buildGuidedDraftInput({
             implementationId: id,
             version: draftProposal ?? latestPublished,
-            options: proposalOptions,
+            options: currentOptions,
             commandId: crypto.randomUUID(),
           }),
         );
@@ -295,9 +299,10 @@ function JourneyBody({
     const ok = await request;
     proposalRunning.current = null;
     return ok;
-  }, [draftProposal, id, latestPublished, proposalOptions, queryClient]);
+  }, [draftProposal, id, latestPublished, queryClient]);
 
   const changeProposalOptions = (next: ProposalItemOption[]) => {
+    proposalOptionsRef.current = next;
     setProposalOptions(next);
     proposalDirty.current = true;
     setProposalState("saving");
@@ -543,11 +548,14 @@ function JourneyBody({
       const ok = await flushAll();
       if (!ok) return;
       try {
-        const saved = await commercialProposalsApi.saveDraft(
+        const currentVersions = await commercialProposalsApi.list(id);
+        const currentDraft = currentVersions.find((version) => version.status === "draft") ?? null;
+        const currentPublished = currentVersions.find((version) => version.status !== "draft") ?? null;
+        const saved = currentDraft ?? await commercialProposalsApi.saveDraft(
           buildGuidedDraftInput({
             implementationId: id,
-            version: draftProposal ?? latestPublished,
-            options: proposalOptions,
+            version: currentPublished,
+            options: proposalOptionsRef.current,
             commandId: crypto.randomUUID(),
           }),
         );
@@ -670,12 +678,20 @@ function JourneyBody({
             <div>
               <p className="font-semibold">Resumo da proposta</p>
               <p className="mt-1 text-sm" style={muted}>
-                {cond.administration_fee == null ? "Administração a definir" : `${cond.administration_fee}% administração`}
-                {cond.turnover_cleaning_fee == null ? " · Limpeza a definir" : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
+                {cond.administration_fee == null
+                  ? "Administração a definir"
+                  : `${cond.administration_fee}% administração`}
+                {cond.turnover_cleaning_fee == null
+                  ? " · Limpeza a definir"
+                  : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
               </p>
               <p className="mt-1 text-sm" style={muted}>
-                {cond.duration_months == null ? "Vigência a definir" : `${cond.duration_months} meses`}
-                {cond.notice_period_days == null ? " · Aviso a definir" : ` · ${cond.notice_period_days} dias de aviso`}
+                {cond.duration_months == null
+                  ? "Vigência a definir"
+                  : `${cond.duration_months} meses`}
+                {cond.notice_period_days == null
+                  ? " · Aviso a definir"
+                  : ` · ${cond.notice_period_days} dias de aviso`}
                 {` · ${serviceSummary.count} serviço(s)`}
               </p>
             </div>

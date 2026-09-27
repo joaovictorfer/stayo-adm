@@ -53,7 +53,13 @@ describe("proposta guiada", () => {
       },
     ];
     const current = version({ draftItemOptions: options });
-    expect(guidedOptionsFromVersion(current)).toEqual(options.map((item) => ({ ...item, details: item.details ?? "", scope: item.scope ?? [] })));
+    expect(guidedOptionsFromVersion(current)).toEqual(
+      options.map((item) => ({
+        ...item,
+        details: item.details ?? "",
+        scope: item.scope ?? [],
+      })),
+    );
 
     const input = buildGuidedDraftInput({
       implementationId: "implementation-1",
@@ -71,13 +77,16 @@ describe("proposta guiada", () => {
 
   it("aponta precisamente a ausência do serviço obrigatório", () => {
     expect(guidedProposalIssue([])).toBe("Falta adicionar ao menos um serviço.");
-    expect(guidedProposalIssue([optionFromTemplate(PROPOSAL_ITEM_TEMPLATES[0]!)] )).toBeNull();
+    expect(guidedProposalIssue([optionFromTemplate(PROPOSAL_ITEM_TEMPLATES[0]!)])).toBeNull();
   });
 
   it("calcula apenas serviços selecionados", () => {
     const selected = optionFromTemplate(PROPOSAL_ITEM_TEMPLATES[0]!);
     const excluded = { ...optionFromTemplate(PROPOSAL_ITEM_TEMPLATES[1]!), included: false };
     expect(includedProposalItems([selected, excluded])).toHaveLength(1);
-    expect(proposalServiceSummary([selected, excluded])).toEqual({ count: 1, labels: ["Implantação"] });
+    expect(proposalServiceSummary([selected, excluded])).toEqual({
+      count: 1,
+      labels: ["Implantação"],
+    });
   });
 });
