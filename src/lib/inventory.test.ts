@@ -1,10 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { deriveInventoryState, filterInventory, hasOpenInventoryDuplicate, type InventoryItem } from "./inventory";
+import {
+  deriveInventoryState,
+  filterInventory,
+  hasOpenInventoryDuplicate,
+  type InventoryItem,
+} from "./inventory";
 
 const item = (patch: Partial<InventoryItem> = {}): InventoryItem => ({
-  id: "item-1", module: "enxoval", name: "Cafeteira", room: "Cozinha", size: null,
-  required_qty: 1, existing_qty: 0, status: "pendente", priority: "media",
-  responsible: "stayo", blocks_readiness: false, notes: null, ...patch,
+  id: "item-1",
+  module: "enxoval",
+  name: "Cafeteira",
+  room: "Cozinha",
+  size: null,
+  required_qty: 1,
+  existing_qty: 0,
+  status: "pendente",
+  priority: "media",
+  responsible: "stayo",
+  blocks_readiness: false,
+  notes: null,
+  ...patch,
 });
 
 describe("inventário unificado", () => {
@@ -15,18 +30,26 @@ describe("inventário unificado", () => {
   });
   it("mantém pendência manual no mesmo domínio", () => {
     expect(deriveInventoryState(item({ module: "faltante" })).origin).toBe("manual");
-    expect(deriveInventoryState(item({ module: "faltante", status: "instalado" })).resolved).toBe(true);
+    expect(deriveInventoryState(item({ module: "faltante", status: "instalado" })).resolved).toBe(
+      true,
+    );
   });
   it("só considera bloqueador enquanto estiver faltando", () => {
     expect(deriveInventoryState(item({ blocks_readiness: true })).blocker).toBe(true);
-    expect(deriveInventoryState(item({ blocks_readiness: true, existing_qty: 1 })).blocker).toBe(false);
+    expect(deriveInventoryState(item({ blocks_readiness: true, existing_qty: 1 })).blocker).toBe(
+      false,
+    );
   });
   it("reflete mudanças nas quantidades", () => {
     expect(deriveInventoryState(item({ required_qty: 2, existing_qty: 2 })).resolved).toBe(true);
     expect(deriveInventoryState(item({ required_qty: 3, existing_qty: 2 })).missingQty).toBe(1);
   });
   it("filtra todos, faltando, resolvidos e bloqueadores", () => {
-    const rows = [item(), item({ id: "2", name: "TV", existing_qty: 1 }), item({ id: "3", name: "Ar", blocks_readiness: true })];
+    const rows = [
+      item(),
+      item({ id: "2", name: "TV", existing_qty: 1 }),
+      item({ id: "3", name: "Ar", blocks_readiness: true }),
+    ];
     expect(filterInventory(rows, "todos")).toHaveLength(3);
     expect(filterInventory(rows, "faltando")).toHaveLength(2);
     expect(filterInventory(rows, "resolvidos")).toHaveLength(1);

@@ -19,14 +19,24 @@ export interface InventoryItem {
 
 export const inventoryKey = (name: string, room: string | null | undefined) =>
   [name, room || "Geral"]
-    .map((value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g, " "))
+    .map((value) =>
+      value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " "),
+    )
     .join("|");
 
 export function deriveInventoryState(item: InventoryItem) {
-  const origin = item.module === "faltante" ? "manual" as const : "inventory" as const;
+  const origin = item.module === "faltante" ? ("manual" as const) : ("inventory" as const);
   const dismissed = item.status === "nao_aplicavel";
   const quantityMissing = Math.max(0, item.required_qty - item.existing_qty);
-  const resolved = origin === "manual" ? item.status === "instalado" || dismissed : quantityMissing === 0 || dismissed;
+  const resolved =
+    origin === "manual"
+      ? item.status === "instalado" || dismissed
+      : quantityMissing === 0 || dismissed;
   return {
     item,
     origin,
@@ -44,7 +54,17 @@ export function filterInventory(items: InventoryItem[], filter: InventoryFilter)
   return states;
 }
 
-export function hasOpenInventoryDuplicate(items: InventoryItem[], name: string, room: string | null | undefined, exceptId?: string) {
+export function hasOpenInventoryDuplicate(
+  items: InventoryItem[],
+  name: string,
+  room: string | null | undefined,
+  exceptId?: string,
+) {
   const key = inventoryKey(name, room);
-  return items.some((item) => item.id !== exceptId && inventoryKey(item.name, item.room) === key && !deriveInventoryState(item).resolved);
+  return items.some(
+    (item) =>
+      item.id !== exceptId &&
+      inventoryKey(item.name, item.room) === key &&
+      !deriveInventoryState(item).resolved,
+  );
 }
