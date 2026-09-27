@@ -50,12 +50,32 @@ const fromRow = (r: Row): SupplierEntry => ({
 });
 
 const comparable = (e: SupplierEntry) =>
-  JSON.stringify([e.categoryKey, e.answer, e.catalogId, e.otherName, e.role, e.phone, e.service, e.approxDate, e.notes, e.adminNotes ?? null]);
+  JSON.stringify([
+    e.categoryKey,
+    e.answer,
+    e.catalogId,
+    e.otherName,
+    e.role,
+    e.phone,
+    e.service,
+    e.approxDate,
+    e.notes,
+    e.adminNotes ?? null,
+  ]);
 
 async function load(implementationId: string) {
   const [entries, cats, catalog] = await Promise.all([
-    supabase.from("property_supplier_entries").select("*").eq("implementation_id", implementationId).is("deleted_at", null).order("created_at"),
-    supabase.from("property_supplier_categories").select("key,label").eq("implementation_id", implementationId).order("created_at"),
+    supabase
+      .from("property_supplier_entries")
+      .select("*")
+      .eq("implementation_id", implementationId)
+      .is("deleted_at", null)
+      .order("created_at"),
+    supabase
+      .from("property_supplier_categories")
+      .select("key,label")
+      .eq("implementation_id", implementationId)
+      .order("created_at"),
     supabase.from("supplier_catalog").select("id,name,specialties,status").order("name"),
   ]);
   if (entries.error) throw entries.error;
@@ -125,11 +145,19 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
       }
       for (const id of [...base.current.keys()]) {
         if (ids.has(id)) continue;
-        const { error } = await supabase.from("property_supplier_entries").update({ deleted_at: now }).eq("id", id);
+        const { error } = await supabase
+          .from("property_supplier_entries")
+          .update({ deleted_at: now })
+          .eq("id", id);
         if (error) throw error;
         base.current.delete(id);
       }
-      setEntries((cur) => cur?.map((e) => (base.current.get(e.id)?.source === "admin" ? { ...e, source: "admin" } : e)) ?? cur);
+      setEntries(
+        (cur) =>
+          cur?.map((e) =>
+            base.current.get(e.id)?.source === "admin" ? { ...e, source: "admin" } : e,
+          ) ?? cur,
+      );
       if (latest.current === current) setState("saved");
     } catch {
       setState("error");
@@ -147,52 +175,77 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
     }, 700);
   };
 
-  useEffect(() => () => {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      void save();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) {
+        clearTimeout(timer.current);
+        void save();
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [],
+  );
 
   const addCategory = async () => {
     const label = newCat.trim();
     if (!label) return;
-    const { error } = await supabase.from("property_supplier_categories").insert({ implementation_id: implementationId, key: slugCategory(label), label });
+    const { error } = await supabase
+      .from("property_supplier_categories")
+      .insert({ implementation_id: implementationId, key: slugCategory(label), label });
     if (!error) {
       setNewCat("");
       await qc.invalidateQueries({ queryKey: key });
     }
   };
   const removeCategory = async (k: string) => {
-    await supabase.from("property_supplier_categories").delete().eq("implementation_id", implementationId).eq("key", k);
+    await supabase
+      .from("property_supplier_categories")
+      .delete()
+      .eq("implementation_id", implementationId)
+      .eq("key", k);
     await qc.invalidateQueries({ queryKey: key });
   };
 
-  if (q.isLoading || (q.data && entries === null)) return <p className="text-sm text-muted-foreground">Carregando fornecedores…</p>;
-  if (q.error || !q.data) return <p className="text-sm text-destructive">Não foi possível carregar os fornecedores.</p>;
+  if (q.isLoading || (q.data && entries === null))
+    return <p className="text-sm text-muted-foreground">Carregando fornecedores…</p>;
+  if (q.error || !q.data)
+    return <p className="text-sm text-destructive">Não foi possível carregar os fornecedores.</p>;
 
   const pending = (entries ?? []).filter(isPendingOther).length;
   const fromOwner = (entries ?? []).filter((e) => e.source === "owner").length;
   const categories = mergeCategories(q.data.categories);
-  const selectedCategory = categories.find((category) => category.key === selectedCategoryKey) ?? null;
+  const selectedCategory =
+    categories.find((category) => category.key === selectedCategoryKey) ?? null;
 
   if (selectedCategory) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between">
-          <Button type="button" variant="ghost" className="min-w-0 justify-start px-2" onClick={() => setSelectedCategoryKey(null)}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="min-w-0 justify-start px-2"
+            onClick={() => setSelectedCategoryKey(null)}
+          >
             <ArrowLeft className="shrink-0" />
             <span className="truncate">Voltar para fornecedores</span>
           </Button>
           <span className="shrink-0 text-xs text-muted-foreground" aria-live="polite">
-            {state === "saving" ? "Salvando…" : state === "saved" ? "Salvo" : state === "error" ? (
-              <button type="button" className="underline" onClick={() => void save()}>Tentar novamente</button>
+            {state === "saving" ? (
+              "Salvando…"
+            ) : state === "saved" ? (
+              "Salvo"
+            ) : state === "error" ? (
+              <button type="button" className="underline" onClick={() => void save()}>
+                Tentar novamente
+              </button>
             ) : null}
           </span>
         </div>
         <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">Fornecedor ou instalação</p>
+          <p className="text-xs font-medium uppercase text-muted-foreground">
+            Fornecedor ou instalação
+          </p>
           <h3 className="text-lg font-semibold text-foreground">{selectedCategory.label}</h3>
         </div>
         <SupplierCategoryDetail
@@ -220,12 +273,20 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
             </span>
           )}
           {fromOwner > 0 && (
-            <span className="rounded bg-muted px-2 py-1">{fromOwner} informadas pelo proprietário — revisar</span>
+            <span className="rounded bg-muted px-2 py-1">
+              {fromOwner} informadas pelo proprietário — revisar
+            </span>
           )}
         </div>
         <span className="text-xs text-muted-foreground" aria-live="polite">
-          {state === "saving" ? "Salvando…" : state === "saved" ? "Salvo" : state === "error" ? (
-            <button type="button" className="underline" onClick={() => void save()}>Não salvo — tentar novamente</button>
+          {state === "saving" ? (
+            "Salvando…"
+          ) : state === "saved" ? (
+            "Salvo"
+          ) : state === "error" ? (
+            <button type="button" className="underline" onClick={() => void save()}>
+              Não salvo — tentar novamente
+            </button>
           ) : null}
         </span>
       </div>
@@ -243,11 +304,17 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
                 onClick={() => setSelectedCategoryKey(category.key)}
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-foreground">{category.label}</span>
-                  <span className="block truncate text-sm text-muted-foreground">{summary.description}</span>
+                  <span className="block truncate text-sm font-semibold text-foreground">
+                    {category.label}
+                  </span>
+                  <span className="block truncate text-sm text-muted-foreground">
+                    {summary.description}
+                  </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">{summary.stateLabel}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {summary.stateLabel}
+                  </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </span>
               </button>
@@ -257,12 +324,22 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
       </ul>
       <div className="space-y-3">
         {!showNewCategory ? (
-          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setShowNewCategory(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => setShowNewCategory(true)}
+          >
             <Plus /> Adicionar categoria
           </Button>
         ) : (
           <div className="rounded-lg border border-border p-3">
-            <label className="mb-2 block text-sm font-medium text-foreground" htmlFor="new-supplier-category">Nome da categoria</label>
+            <label
+              className="mb-2 block text-sm font-medium text-foreground"
+              htmlFor="new-supplier-category"
+            >
+              Nome da categoria
+            </label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 id="new-supplier-category"
@@ -272,10 +349,23 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
                 onChange={(e) => setNewCat(e.target.value)}
                 autoFocus
               />
-              <Button type="button" onClick={() => void addCategory().then(() => setShowNewCategory(false))} disabled={!newCat.trim()}>
+              <Button
+                type="button"
+                onClick={() => void addCategory().then(() => setShowNewCategory(false))}
+                disabled={!newCat.trim()}
+              >
                 Adicionar
               </Button>
-              <Button type="button" variant="ghost" onClick={() => { setNewCat(""); setShowNewCategory(false); }}>Cancelar</Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setNewCat("");
+                  setShowNewCategory(false);
+                }}
+              >
+                Cancelar
+              </Button>
             </div>
           </div>
         )}
@@ -283,12 +373,23 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
           {showCatalog ? "Fechar catálogo" : "Catálogo de empresas"}
         </Button>
       </div>
-      {showCatalog && <CatalogManager catalog={q.data.catalog} onChanged={() => qc.invalidateQueries({ queryKey: key })} />}
+      {showCatalog && (
+        <CatalogManager
+          catalog={q.data.catalog}
+          onChanged={() => qc.invalidateQueries({ queryKey: key })}
+        />
+      )}
     </div>
   );
 }
 
-function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]; onChanged: () => void }) {
+function CatalogManager({
+  catalog,
+  onChanged,
+}: {
+  catalog: SupplierCatalogItem[];
+  onChanged: () => void;
+}) {
   const [name, setName] = useState("");
   const [specs, setSpecs] = useState<string[]>([]);
   const [msg, setMsg] = useState("");
@@ -303,7 +404,9 @@ function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]
       setMsg("Essa empresa já está no catálogo.");
       return;
     }
-    const { error } = await supabase.from("supplier_catalog").insert({ name: n, specialties: specs, status: "approved" });
+    const { error } = await supabase
+      .from("supplier_catalog")
+      .insert({ name: n, specialties: specs, status: "approved" });
     setMsg(error ? "Não foi possível adicionar." : "");
     if (!error) {
       setName("");
@@ -311,11 +414,16 @@ function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]
       onChanged();
     }
   };
-  const label = { suggested: "Sugestão — revisar", approved: "Disponível", archived: "Arquivada" } as const;
+  const label = {
+    suggested: "Sugestão — revisar",
+    approved: "Disponível",
+    archived: "Arquivada",
+  } as const;
   return (
     <div className="space-y-3 rounded-xl border border-border p-3">
       <p className="text-xs text-muted-foreground">
-        Só empresas "Disponível" aparecem para o proprietário. O catálogo é apenas uma lista de sugestões, sem recomendação ou parceria.
+        Só empresas "Disponível" aparecem para o proprietário. O catálogo é apenas uma lista de
+        sugestões, sem recomendação ou parceria.
       </p>
       <ul className="divide-y divide-border">
         {catalog.map((c) => (
@@ -323,27 +431,55 @@ function CatalogManager({ catalog, onChanged }: { catalog: SupplierCatalogItem[]
             <div>
               <p className="font-medium">{c.name}</p>
               <p className="text-xs text-muted-foreground">
-                {c.specialties.map((s) => SPECIALTY_LABELS[s] ?? s).join(" · ") || "Sem especialidade"} · {label[c.status ?? "approved"]}
+                {c.specialties.map((s) => SPECIALTY_LABELS[s] ?? s).join(" · ") ||
+                  "Sem especialidade"}{" "}
+                · {label[c.status ?? "approved"]}
               </p>
             </div>
             <div className="flex gap-1">
-              {c.status !== "approved" && <Button size="sm" variant="outline" onClick={() => void setStatus(c.id, "approved")}>Disponibilizar</Button>}
-              {c.status !== "archived" && <Button size="sm" variant="ghost" onClick={() => void setStatus(c.id, "archived")}>Arquivar</Button>}
+              {c.status !== "approved" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void setStatus(c.id, "approved")}
+                >
+                  Disponibilizar
+                </Button>
+              )}
+              {c.status !== "archived" && (
+                <Button size="sm" variant="ghost" onClick={() => void setStatus(c.id, "archived")}>
+                  Arquivar
+                </Button>
+              )}
             </div>
           </li>
         ))}
       </ul>
       <div className="space-y-2">
-        <input aria-label="Nome da nova empresa" placeholder="Nome da empresa" className="min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+        <input
+          aria-label="Nome da nova empresa"
+          placeholder="Nome da empresa"
+          className="min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
         <div className="flex flex-wrap gap-2">
           {DEFAULT_SUPPLIER_CATEGORIES.map((c) => (
             <label key={c.key} className="flex items-center gap-1 text-xs">
-              <input type="checkbox" checked={specs.includes(c.key)} onChange={(e) => setSpecs((s) => (e.target.checked ? [...s, c.key] : s.filter((x) => x !== c.key)))} />
+              <input
+                type="checkbox"
+                checked={specs.includes(c.key)}
+                onChange={(e) =>
+                  setSpecs((s) => (e.target.checked ? [...s, c.key] : s.filter((x) => x !== c.key)))
+                }
+              />
               {c.label}
             </label>
           ))}
         </div>
-        <Button type="button" size="sm" onClick={() => void add()} disabled={!name.trim()}>Adicionar empresa</Button>
+        <Button type="button" size="sm" onClick={() => void add()} disabled={!name.trim()}>
+          Adicionar empresa
+        </Button>
         {msg && <p className="text-xs text-destructive">{msg}</p>}
       </div>
     </div>

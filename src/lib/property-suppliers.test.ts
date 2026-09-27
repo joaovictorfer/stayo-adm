@@ -18,11 +18,16 @@ const entry = (patch: Partial<SupplierEntry>): SupplierEntry => ({
 
 describe("summarizeSupplierCategory", () => {
   it("identifica categoria ainda não informada", () => {
-    expect(summarizeSupplierCategory([], catalog)).toMatchObject({ state: "not_informed", stateLabel: "Não informado" });
+    expect(summarizeSupplierCategory([], catalog)).toMatchObject({
+      state: "not_informed",
+      stateLabel: "Não informado",
+    });
   });
 
   it("resume empresa definida do catálogo", () => {
-    expect(summarizeSupplierCategory([entry({ answer: "catalog", catalogId: "catalog-1" })], catalog)).toEqual({
+    expect(
+      summarizeSupplierCategory([entry({ answer: "catalog", catalogId: "catalog-1" })], catalog),
+    ).toEqual({
       state: "defined",
       stateLabel: "Definido",
       description: "ON Instaladora",
@@ -30,21 +35,31 @@ describe("summarizeSupplierCategory", () => {
   });
 
   it("mantém não se aplica como estado próprio", () => {
-    expect(summarizeSupplierCategory([entry({ answer: "not_applicable", otherName: null })], catalog)).toMatchObject({
+    expect(
+      summarizeSupplierCategory([entry({ answer: "not_applicable", otherName: null })], catalog),
+    ).toMatchObject({
       state: "not_applicable",
       stateLabel: "Não se aplica",
     });
   });
 
   it("marca resposta do proprietário para confirmação", () => {
-    expect(summarizeSupplierCategory([entry({ source: "owner" })], catalog)).toMatchObject({ state: "to_confirm", stateLabel: "A confirmar" });
+    expect(summarizeSupplierCategory([entry({ source: "owner" })], catalog)).toMatchObject({
+      state: "to_confirm",
+      stateLabel: "A confirmar",
+    });
   });
 
   it("marca empresa manual sem nome para confirmação", () => {
-    expect(summarizeSupplierCategory([entry({ otherName: null })], catalog)).toMatchObject({ state: "to_confirm", description: "Outra empresa — nome pendente" });
+    expect(summarizeSupplierCategory([entry({ otherName: null })], catalog)).toMatchObject({
+      state: "to_confirm",
+      description: "Outra empresa — nome pendente",
+    });
   });
 
   it("resume múltiplas empresas sem ocultar a quantidade adicional", () => {
-    expect(summarizeSupplierCategory([entry({}), entry({ otherName: "Casa Y" })], catalog).description).toBe("Casa X +1");
+    expect(
+      summarizeSupplierCategory([entry({}), entry({ otherName: "Casa Y" })], catalog).description,
+    ).toBe("Casa X +1");
   });
 });

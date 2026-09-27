@@ -33,7 +33,15 @@ const field =
 const chip =
   "min-h-10 rounded-full border border-border px-3 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2";
 
-export function SupplierEditor({ categories, entries, catalog, onChange, mode, canEdit, onRemoveCategory }: Props) {
+export function SupplierEditor({
+  categories,
+  entries,
+  catalog,
+  onChange,
+  mode,
+  canEdit,
+  onRemoveCategory,
+}: Props) {
   const editable = (e: SupplierEntry) => (canEdit ? canEdit(e) : true);
   const update = (id: string, patch: Partial<SupplierEntry>) =>
     onChange(entries.map((e) => (e.id === id ? { ...e, ...patch } : e)));
@@ -70,7 +78,9 @@ export function SupplierEditor({ categories, entries, catalog, onChange, mode, c
           onChoose={(a, id) => choose(cat.key, a, id)}
           onUpdate={update}
           onRemove={remove}
-          onRemoveCategory={cat.custom && onRemoveCategory ? () => onRemoveCategory(cat.key) : undefined}
+          onRemoveCategory={
+            cat.custom && onRemoveCategory ? () => onRemoveCategory(cat.key) : undefined
+          }
         />
       ))}
     </div>
@@ -78,7 +88,15 @@ export function SupplierEditor({ categories, entries, catalog, onChange, mode, c
 }
 
 /** Edição focada de uma categoria no Admin; o editor completo do Portal permanece inalterado. */
-export function SupplierCategoryDetail({ category, entries, catalog, onChange, mode, canEdit, onRemoveCategory }: DetailProps) {
+export function SupplierCategoryDetail({
+  category,
+  entries,
+  catalog,
+  onChange,
+  mode,
+  canEdit,
+  onRemoveCategory,
+}: DetailProps) {
   const editable = (entry: SupplierEntry) => (canEdit ? canEdit(entry) : true);
   const update = (id: string, patch: Partial<SupplierEntry>) =>
     onChange(entries.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
@@ -86,7 +104,10 @@ export function SupplierCategoryDetail({ category, entries, catalog, onChange, m
   const choose = (answer: SupplierAnswer, catalogId?: string) => {
     const entry = { ...newEntry(category.key, answer, mode), catalogId: catalogId ?? null };
     if (answer === "unknown" || answer === "not_applicable") {
-      onChange([...entries.filter((current) => current.categoryKey !== category.key || !editable(current)), entry]);
+      onChange([
+        ...entries.filter((current) => current.categoryKey !== category.key || !editable(current)),
+        entry,
+      ]);
       return;
     }
     onChange([
@@ -110,7 +131,9 @@ export function SupplierCategoryDetail({ category, entries, catalog, onChange, m
       onChoose={choose}
       onUpdate={update}
       onRemove={remove}
-      onRemoveCategory={category.custom && onRemoveCategory ? () => onRemoveCategory(category.key) : undefined}
+      onRemoveCategory={
+        category.custom && onRemoveCategory ? () => onRemoveCategory(category.key) : undefined
+      }
       detail
     />
   );
@@ -145,14 +168,27 @@ function CategoryBlock({
   const hasAny = entries.length > 0;
 
   return (
-    <div className={detail ? "space-y-3" : "rounded-xl border border-border p-3 sm:p-4"} data-category={category.key}>
+    <div
+      className={detail ? "space-y-3" : "rounded-xl border border-border p-3 sm:p-4"}
+      data-category={category.key}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           {!detail && <h4 className="text-sm font-semibold text-foreground">{category.label}</h4>}
-          <p className={detail ? "text-sm font-medium text-foreground" : "text-xs text-muted-foreground"}>Quem forneceu ou instalou?</p>
+          <p
+            className={
+              detail ? "text-sm font-medium text-foreground" : "text-xs text-muted-foreground"
+            }
+          >
+            Quem forneceu ou instalou?
+          </p>
         </div>
         {onRemoveCategory && !hasAny && (
-          <button type="button" onClick={onRemoveCategory} className="text-xs text-muted-foreground underline">
+          <button
+            type="button"
+            onClick={onRemoveCategory}
+            className="text-xs text-muted-foreground underline"
+          >
             Remover categoria
           </button>
         )}
@@ -176,7 +212,9 @@ function CategoryBlock({
 
       {status && (
         <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
-          <span className="font-medium">{status.answer === "unknown" ? "Não sei informar" : "Não se aplica"}</span>
+          <span className="font-medium">
+            {status.answer === "unknown" ? "Não sei informar" : "Não se aplica"}
+          </span>
           {editable(status) ? (
             <button type="button" className="text-xs underline" onClick={() => onRemove(status.id)}>
               Alterar
@@ -287,7 +325,8 @@ function CatalogSearch({
                 )}
               </span>
               <span className="text-xs text-muted-foreground">
-                {c.specialties.map((s) => SPECIALTY_LABELS[s] ?? s).join(" · ") || "Sem especialidade"}
+                {c.specialties.map((s) => SPECIALTY_LABELS[s] ?? s).join(" · ") ||
+                  "Sem especialidade"}
               </span>
             </button>
           </li>
@@ -306,7 +345,8 @@ function CatalogSearch({
         </button>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Lista apenas de sugestões: não significa que a STAYO recomenda, contratou ou verificou a empresa.
+        Lista apenas de sugestões: não significa que a STAYO recomenda, contratou ou verificou a
+        empresa.
       </p>
     </div>
   );
@@ -360,14 +400,23 @@ function EntryCard({
           <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-muted-foreground">
             {mode === "admin" && (
               <span className="rounded bg-muted px-1.5">
-                {entry.source === "owner" ? "Informado pelo proprietário" : "Registrado/revisado pela STAYO"}
+                {entry.source === "owner"
+                  ? "Informado pelo proprietário"
+                  : "Registrado/revisado pela STAYO"}
               </span>
             )}
-            {mode === "owner" && !editable && <span className="rounded bg-muted px-1.5">Revisado pela STAYO</span>}
+            {mode === "owner" && !editable && (
+              <span className="rounded bg-muted px-1.5">Revisado pela STAYO</span>
+            )}
           </div>
         </div>
         {editable && (
-          <button type="button" aria-label="Remover empresa" onClick={onRemove} className="p-2 text-muted-foreground">
+          <button
+            type="button"
+            aria-label="Remover empresa"
+            onClick={onRemove}
+            className="p-2 text-muted-foreground"
+          >
             <Trash2 className="size-4" />
           </button>
         )}
@@ -398,12 +447,47 @@ function EntryCard({
       </button>
       {open && (
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <input aria-label="Telefone" placeholder="Telefone" inputMode="tel" className={field} disabled={!editable} value={entry.phone ?? ""} onChange={(e) => txt("phone")(e.target.value)} />
-          <input aria-label="Data aproximada" placeholder="Data aproximada (ex.: 2023)" className={field} disabled={!editable} value={entry.approxDate ?? ""} onChange={(e) => txt("approxDate")(e.target.value)} />
-          <input aria-label="Serviço realizado" placeholder="Serviço realizado" className={`${field} sm:col-span-2`} disabled={!editable} value={entry.service ?? ""} onChange={(e) => txt("service")(e.target.value)} />
-          <textarea aria-label="Observações" placeholder="Observações" className={`${field} min-h-16 py-2 sm:col-span-2`} disabled={!editable} value={entry.notes ?? ""} onChange={(e) => txt("notes")(e.target.value)} />
+          <input
+            aria-label="Telefone"
+            placeholder="Telefone"
+            inputMode="tel"
+            className={field}
+            disabled={!editable}
+            value={entry.phone ?? ""}
+            onChange={(e) => txt("phone")(e.target.value)}
+          />
+          <input
+            aria-label="Data aproximada"
+            placeholder="Data aproximada (ex.: 2023)"
+            className={field}
+            disabled={!editable}
+            value={entry.approxDate ?? ""}
+            onChange={(e) => txt("approxDate")(e.target.value)}
+          />
+          <input
+            aria-label="Serviço realizado"
+            placeholder="Serviço realizado"
+            className={`${field} sm:col-span-2`}
+            disabled={!editable}
+            value={entry.service ?? ""}
+            onChange={(e) => txt("service")(e.target.value)}
+          />
+          <textarea
+            aria-label="Observações"
+            placeholder="Observações"
+            className={`${field} min-h-16 py-2 sm:col-span-2`}
+            disabled={!editable}
+            value={entry.notes ?? ""}
+            onChange={(e) => txt("notes")(e.target.value)}
+          />
           {mode === "admin" && (
-            <textarea aria-label="Observação interna" placeholder="Observação interna (não aparece para o proprietário)" className={`${field} min-h-16 py-2 sm:col-span-2`} value={entry.adminNotes ?? ""} onChange={(e) => txt("adminNotes")(e.target.value)} />
+            <textarea
+              aria-label="Observação interna"
+              placeholder="Observação interna (não aparece para o proprietário)"
+              className={`${field} min-h-16 py-2 sm:col-span-2`}
+              value={entry.adminNotes ?? ""}
+              onChange={(e) => txt("adminNotes")(e.target.value)}
+            />
           )}
         </div>
       )}
