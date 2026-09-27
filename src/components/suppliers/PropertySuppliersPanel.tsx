@@ -233,7 +233,8 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
 
   const currentEntries = entries ?? [];
   const categories = mergeCategories(q.data.categories);
-  const selectedCategory = categories.find((category) => category.key === selectedCategoryKey) ?? null;
+  const selectedCategory =
+    categories.find((category) => category.key === selectedCategoryKey) ?? null;
   const pending = currentEntries.filter(isPendingOther).length;
   const fromOwner = currentEntries.filter((entry) => entry.source === "owner").length;
 
@@ -302,7 +303,8 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
           )}
           {fromOwner > 0 && (
             <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-              {fromOwner} {fromOwner === 1 ? "resposta do proprietário" : "respostas do proprietário"}
+              {fromOwner}{" "}
+              {fromOwner === 1 ? "resposta do proprietário" : "respostas do proprietário"}
             </span>
           )}
         </div>
@@ -358,7 +360,10 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
 
       {addingCategory ? (
         <div className="space-y-2 rounded-xl border border-border bg-muted/20 p-3">
-          <label className="block text-xs font-medium text-muted-foreground" htmlFor="new-supplier-category">
+          <label
+            className="block text-xs font-medium text-muted-foreground"
+            htmlFor="new-supplier-category"
+          >
             Nome da categoria
           </label>
           <input
@@ -377,7 +382,12 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
             }}
           />
           <div className="flex flex-wrap gap-2">
-            <Button type="button" size="sm" onClick={() => void addCategory()} disabled={!newCat.trim()}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void addCategory()}
+              disabled={!newCat.trim()}
+            >
               Adicionar
             </Button>
             <Button
@@ -394,13 +404,23 @@ export function PropertySuppliersPanel({ implementationId }: { implementationId:
           </div>
         </div>
       ) : (
-        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setAddingCategory(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full sm:w-auto"
+          onClick={() => setAddingCategory(true)}
+        >
           <Plus className="mr-1 size-4" /> Adicionar categoria
         </Button>
       )}
 
       <div className="border-t border-border pt-2">
-        <Button type="button" variant="ghost" size="sm" onClick={() => setShowCatalog((shown) => !shown)}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowCatalog((shown) => !shown)}
+        >
           {showCatalog ? "Fechar catálogo de empresas" : "Catálogo de empresas"}
         </Button>
       </div>
@@ -434,7 +454,9 @@ function CatalogManager({
   const add = async () => {
     const normalizedName = name.trim();
     if (!normalizedName) return;
-    if (catalog.some((company) => company.name.trim().toLowerCase() === normalizedName.toLowerCase())) {
+    if (
+      catalog.some((company) => company.name.trim().toLowerCase() === normalizedName.toLowerCase())
+    ) {
       setMsg("Essa empresa já está no catálogo.");
       return;
     }
@@ -458,16 +480,21 @@ function CatalogManager({
   return (
     <div className="space-y-3 rounded-xl border border-border p-3">
       <p className="text-xs text-muted-foreground">
-        Só empresas "Disponível" aparecem para o proprietário. O catálogo é apenas uma lista de sugestões, sem recomendação ou parceria.
+        Só empresas "Disponível" aparecem para o proprietário. O catálogo é apenas uma lista de
+        sugestões, sem recomendação ou parceria.
       </p>
       <ul className="divide-y divide-border">
         {catalog.map((company) => (
-          <li key={company.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+          <li
+            key={company.id}
+            className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
+          >
             <div>
               <p className="font-medium">{company.name}</p>
               <p className="text-xs text-muted-foreground">
-                {company.specialties.map((specialty) => SPECIALTY_LABELS[specialty] ?? specialty).join(" · ") ||
-                  "Sem especialidade"}{" "}
+                {company.specialties
+                  .map((specialty) => SPECIALTY_LABELS[specialty] ?? specialty)
+                  .join(" · ") || "Sem especialidade"}{" "}
                 · {label[company.status ?? "approved"]}
               </p>
             </div>
