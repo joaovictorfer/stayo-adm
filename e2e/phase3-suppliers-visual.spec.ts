@@ -107,7 +107,11 @@ async function mockSupabase(page: Page) {
         });
         return;
       }
-      await route.fulfill({ status: method === "POST" ? 201 : 200, contentType: "application/json", body: "[]" });
+      await route.fulfill({
+        status: method === "POST" ? 201 : 200,
+        contentType: "application/json",
+        body: "[]",
+      });
       return;
     }
 
@@ -121,7 +125,9 @@ async function mockSupabase(page: Page) {
         return;
       }
       if (method === "POST") {
-        const payload = request.postDataJSON() as { key: string; label: string } | Array<{ key: string; label: string }>;
+        const payload = request.postDataJSON() as
+          | { key: string; label: string }
+          | Array<{ key: string; label: string }>;
         const next = Array.isArray(payload) ? payload[0] : payload;
         if (next && !customCategories.some((category) => category.key === next.key)) {
           customCategories.push({ key: next.key, label: next.label });
@@ -134,7 +140,11 @@ async function mockSupabase(page: Page) {
     }
 
     if (url.pathname === "/rest/v1/supplier_catalog") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(catalog) });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(catalog),
+      });
       return;
     }
 
@@ -167,11 +177,13 @@ async function backToSuppliers(page: Page) {
 test("fornecedores usa lista compacta e detalhe sob demanda em 390px", async ({ page }) => {
   mkdirSync("artifacts/phase3-suppliers", { recursive: true });
   await mockSupabase(page);
-  await page.goto("/vistoria/prototipo/phase3-suppliers");
+  await page.goto("/phase3-preview.html");
 
   const list = page.locator('[data-supplier-view="list"]');
   await expect(list).toBeVisible();
-  await expect(page.getByRole("button", { name: /Ar-condicionado e climatização: Definido/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Ar-condicionado e climatização: Definido/ }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: /Hidráulica: A confirmar/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Elétrica: Não se aplica/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Gás: Não informado/ })).toBeVisible();
@@ -180,15 +192,21 @@ test("fornecedores usa lista compacta e detalhe sob demanda em 390px", async ({ 
   const geometry = await page.evaluate(() => ({
     viewport: window.innerWidth,
     width: document.documentElement.scrollWidth,
-    height: document.querySelector('[data-supplier-view="list"]')?.getBoundingClientRect().height ?? 0,
+    height:
+      document.querySelector('[data-supplier-view="list"]')?.getBoundingClientRect().height ?? 0,
   }));
   expect(geometry.viewport).toBe(390);
   expect(geometry.width).toBeLessThanOrEqual(390);
   expect(geometry.height).toBeLessThan(760);
 
-  await page.screenshot({ path: "artifacts/phase3-suppliers/suppliers-list-390.png", fullPage: true });
+  await page.screenshot({
+    path: "artifacts/phase3-suppliers/suppliers-list-390.png",
+    fullPage: true,
+  });
 
-  await page.getByRole("button", { name: /Ar-condicionado e climatização: Definido/ }).click();
+  await page
+    .getByRole("button", { name: /Ar-condicionado e climatização: Definido/ })
+    .click();
   await expect(page.locator('[data-supplier-view="detail"]')).toBeVisible();
   await expect(page.getByText("ON Instaladora", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Mais detalhes (opcional)" }).click();
@@ -231,10 +249,15 @@ test("fornecedores usa lista compacta e detalhe sob demanda em 390px", async ({ 
   await page.getByRole("button", { name: /Adicionar categoria/ }).click();
   await page.getByLabel("Nome da categoria").fill("Portão eletrônico");
   await page.getByRole("button", { name: "Adicionar", exact: true }).click();
-  await expect(page.getByRole("button", { name: /Portão eletrônico: Não informado/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Portão eletrônico: Não informado/ }),
+  ).toBeVisible();
   await page.getByRole("button", { name: /Portão eletrônico: Não informado/ }).click();
   await expect(page.getByRole("button", { name: "Buscar empresa" })).toBeVisible();
 
-  await page.screenshot({ path: "artifacts/phase3-suppliers/suppliers-detail-390.png", fullPage: true });
+  await page.screenshot({
+    path: "artifacts/phase3-suppliers/suppliers-detail-390.png",
+    fullPage: true,
+  });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
