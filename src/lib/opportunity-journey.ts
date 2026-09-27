@@ -13,10 +13,7 @@ export type JourneyStep = (typeof JOURNEY_STEPS)[number]["id"];
 export const PROPOSAL_BLOCKS = ["commercial", "preparation", "contract"] as const;
 export type ProposalBlock = (typeof PROPOSAL_BLOCKS)[number];
 
-export function proposalNumberChoice(
-  value: unknown,
-  presets: readonly number[],
-): string {
+export function proposalNumberChoice(value: unknown, presets: readonly number[]): string {
   if (value === null || value === undefined || value === "") return "tbd";
   return presets.includes(Number(value)) ? String(value) : "outro";
 }

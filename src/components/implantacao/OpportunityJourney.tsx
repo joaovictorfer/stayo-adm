@@ -31,7 +31,12 @@ import { SupplySheet } from "./SupplySheet";
 import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useOpportunityAutosave, type SaveState } from "../../hooks/use-opportunity-autosave";
-import { autosaveOpportunity, loadOpportunityForm, type FormField, type FormValues } from "../../lib/api/opportunity-form";
+import {
+  autosaveOpportunity,
+  loadOpportunityForm,
+  type FormField,
+  type FormValues,
+} from "../../lib/api/opportunity-form";
 import { completeOpportunityDraft, saveOpportunityContact } from "../../lib/api/opportunities";
 import { formatBrazilianPhone } from "../../lib/owner-form-validation";
 import {
@@ -123,7 +128,9 @@ function JourneyBody({
   // Contato (nome/telefone) salvo à parte, com o mesmo padrão de debounce.
   const [contact, setContact] = useState({
     name: implementation.ownerName ?? "",
-    phone: implementation.ownerPhone ? formatBrazilianPhone(implementation.ownerPhone.replace(/^55/, "")) : "",
+    phone: implementation.ownerPhone
+      ? formatBrazilianPhone(implementation.ownerPhone.replace(/^55/, ""))
+      : "",
   });
   const [contactState, setContactState] = useState<SaveState>("idle");
   const contactTimer = useRef<number | null>(null);
@@ -137,7 +144,12 @@ function JourneyBody({
     }
     setContactState("saving");
     try {
-      await saveOpportunityContact(id, { contactName: contact.name, phone: contact.phone, title: "", existingOwnerId: null });
+      await saveOpportunityContact(id, {
+        contactName: contact.name,
+        phone: contact.phone,
+        title: "",
+        existingOwnerId: null,
+      });
       contactDirty.current = false;
       setContactState("saved");
       void queryClient.invalidateQueries({ queryKey: ["implementations"] });
@@ -185,9 +197,12 @@ function JourneyBody({
       try {
         const { error } = await supabase
           .from("implementation_contract_conditions")
-          .upsert({ implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never, {
-            onConflict: "implementation_id",
-          });
+          .upsert(
+            { implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never,
+            {
+              onConflict: "implementation_id",
+            },
+          );
         if (error) throw error;
         setCondState(Object.keys(condPending.current).length ? "saving" : "saved");
         return true;
@@ -232,7 +247,9 @@ function JourneyBody({
     if (contactTimer.current) window.clearTimeout(contactTimer.current);
     const [a, b, c] = await Promise.all([auto.flush(), saveContact(), runCondSave()]);
     if (!a || !b || !c)
-      toast.error("Não foi possível salvar agora", { description: "O que você digitou continua aqui." });
+      toast.error("Não foi possível salvar agora", {
+        description: "O que você digitou continua aqui.",
+      });
     return a && b && c;
   };
   const go = async (next: JourneyStep) => {
@@ -291,14 +308,26 @@ function JourneyBody({
   if (step === "contato") {
     content = (
       <div className="flex flex-col gap-4">
-        <TextField label="Título da implantação" value={v.nickname} onChange={(x) => auto.set("nickname", x)} />
-        <TextField label="Nome do proprietário" value={contact.name} onChange={(x) => changeContact("name", x)} />
+        <TextField
+          label="Título da implantação"
+          value={v.nickname}
+          onChange={(x) => auto.set("nickname", x)}
+        />
+        <TextField
+          label="Nome do proprietário"
+          value={contact.name}
+          onChange={(x) => changeContact("name", x)}
+        />
         <TextField
           label="Telefone / WhatsApp"
           value={contact.phone}
           inputMode="tel"
           onChange={(x) => changeContact("phone", x)}
-          error={contactState === "error" ? validateContact({ title: "xxx", ...contact }).phone : undefined}
+          error={
+            contactState === "error"
+              ? validateContact({ title: "xxx", ...contact }).phone
+              : undefined
+          }
         />
       </div>
     );
@@ -314,17 +343,41 @@ function JourneyBody({
     );
   } else if (step === "implantacao") {
     const hubs = [
-      { id: "enxoval", label: "Enxoval", icon: Package, node: <SupplySheet implementationId={id} /> },
-      { id: "itens", label: "Itens do imóvel", icon: Sofa, node: <EnxovalTab implementationId={id} mode="inventory" /> },
-      { id: "fornecedores", label: "Fornecedores", icon: Wrench, node: <PropertySuppliersPanel implementationId={id} /> },
-      { id: "faltantes", label: "Itens faltantes", icon: ShoppingBasket, node: <MissingItemsTab implementationId={id} /> },
+      {
+        id: "enxoval",
+        label: "Enxoval",
+        icon: Package,
+        node: <SupplySheet implementationId={id} />,
+      },
+      {
+        id: "itens",
+        label: "Itens do imóvel",
+        icon: Sofa,
+        node: <EnxovalTab implementationId={id} mode="inventory" />,
+      },
+      {
+        id: "fornecedores",
+        label: "Fornecedores",
+        icon: Wrench,
+        node: <PropertySuppliersPanel implementationId={id} />,
+      },
+      {
+        id: "faltantes",
+        label: "Itens faltantes",
+        icon: ShoppingBasket,
+        node: <MissingItemsTab implementationId={id} />,
+      },
       {
         id: "observacoes",
         label: "Observações",
         icon: NotebookPen,
         node: (
           <div className="flex flex-col gap-4">
-            <TextArea label="Observações internas" value={v.notes} onChange={(x) => auto.set("notes", x)} />
+            <TextArea
+              label="Observações internas"
+              value={v.notes}
+              onChange={(x) => auto.set("notes", x)}
+            />
             <TextArea
               label="Informações para o proprietário"
               value={v.owner_facing_notes}
@@ -337,7 +390,12 @@ function JourneyBody({
     const open = hubs.find((h) => h.id === hub);
     content = open ? (
       <div className="flex flex-col gap-4">
-        <button type="button" onClick={() => setHub(null)} className="flex min-h-11 items-center gap-1 text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
+        <button
+          type="button"
+          onClick={() => setHub(null)}
+          className="flex min-h-11 items-center gap-1 text-sm font-medium"
+          style={{ color: "var(--stayo-forest)" }}
+        >
           <ArrowLeft className="size-4" /> Voltar para a lista
         </button>
         <h3 className="text-lg font-semibold">{open.label}</h3>
@@ -367,7 +425,12 @@ function JourneyBody({
   } else if (publishing) {
     content = (
       <div className="flex flex-col gap-4">
-        <button type="button" onClick={() => setPublishing(false)} className="flex min-h-11 items-center gap-1 text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
+        <button
+          type="button"
+          onClick={() => setPublishing(false)}
+          className="flex min-h-11 items-center gap-1 text-sm font-medium"
+          style={{ color: "var(--stayo-forest)" }}
+        >
           <ArrowLeft className="size-4" /> Voltar para a revisão
         </button>
         <ProposalTab implementationId={id} />
@@ -387,9 +450,17 @@ function JourneyBody({
       {
         title: "Imóvel",
         step: "imovel" as const,
-        lines: (["condominium_name", "unit", "address", "city", "property_type", "bedrooms", "capacity"] as FormField[]).map(
-          (f) => ({ label: f, value: v[f] }),
-        ),
+        lines: (
+          [
+            "condominium_name",
+            "unit",
+            "address",
+            "city",
+            "property_type",
+            "bedrooms",
+            "capacity",
+          ] as FormField[]
+        ).map((f) => ({ label: f, value: v[f] })),
         headline: [v.condominium_name, v.tower, v.unit].filter(Boolean).join(" · "),
       },
       {
@@ -419,25 +490,35 @@ function JourneyBody({
               {g.title === "Contato" ? (
                 s.filled.map((l) => (
                   <p key={l.label} className="mt-1 flex items-center gap-1.5 text-sm">
-                    <Check className="size-3.5" style={{ color: "var(--stayo-forest)" }} /> {l.value}
+                    <Check className="size-3.5" style={{ color: "var(--stayo-forest)" }} />{" "}
+                    {l.value}
                   </p>
                 ))
               ) : g.title === "Imóvel" ? (
-                <p className="mt-1 text-sm">{"headline" in g && g.headline ? g.headline : "Sem identificação"}</p>
+                <p className="mt-1 text-sm">
+                  {"headline" in g && g.headline ? g.headline : "Sem identificação"}
+                </p>
               ) : (
                 <p className="mt-1 flex items-center gap-1.5 text-sm">
-                  <Check className="size-3.5" style={{ color: "var(--stayo-forest)" }} /> {s.filled.length} condições registradas
+                  <Check className="size-3.5" style={{ color: "var(--stayo-forest)" }} />{" "}
+                  {s.filled.length} condições registradas
                 </p>
               )}
               {s.missing > 0 && (
                 <p className="mt-1 text-xs" style={muted}>
-                  {s.missing} {s.missing === 1 ? "item para completar depois" : "itens para completar depois"}
+                  {s.missing}{" "}
+                  {s.missing === 1 ? "item para completar depois" : "itens para completar depois"}
                 </p>
               )}
             </button>
           );
         })}
-        <button type="button" onClick={() => void go("implantacao")} className="rounded-[var(--radius-card)] border p-4 text-left" style={inputStyle}>
+        <button
+          type="button"
+          onClick={() => void go("implantacao")}
+          className="rounded-[var(--radius-card)] border p-4 text-left"
+          style={inputStyle}
+        >
           <span className="font-semibold">Implantação</span>
           <p className="mt-1 text-sm" style={muted}>
             Enxoval, itens, fornecedores, faltantes e observações — registre quando quiser.
@@ -451,10 +532,22 @@ function JourneyBody({
           >
             Publicar proposta e gerar link
           </Button>
-          <Button type="button" variant="outline" className="min-h-12" disabled={complete.isPending} onClick={() => complete.mutate()}>
-            {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem enviar
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-12"
+            disabled={complete.isPending}
+            onClick={() => complete.mutate()}
+          >
+            {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
+            enviar
           </Button>
-          <Button type="button" variant="ghost" className="min-h-12" onClick={() => void go("contato")}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="min-h-12"
+            onClick={() => void go("contato")}
+          >
             Continuar editando
           </Button>
         </div>
@@ -482,15 +575,35 @@ function JourneyBody({
           <p className="min-w-0 truncate text-sm font-semibold">{implementation.code}</p>
           <div className="flex shrink-0 items-center gap-2">
             <SaveStatus state={saveState} onRetry={retry} compact />
-            <Button type="button" variant="ghost" size="sm" className="min-h-11 px-2 sm:px-3" onClick={() => void exit()}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="min-h-11 px-2 sm:px-3"
+              onClick={() => void exit()}
+            >
               Salvar e sair
             </Button>
           </div>
         </div>
-        <h2 className="text-lg font-semibold">{JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de {JOURNEY_STEPS.length}</h2>
-        <div className="flex gap-1" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={JOURNEY_STEPS.length}>
+        <h2 className="text-lg font-semibold">
+          {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de {JOURNEY_STEPS.length}
+        </h2>
+        <div
+          className="flex gap-1"
+          role="progressbar"
+          aria-valuenow={index + 1}
+          aria-valuemin={1}
+          aria-valuemax={JOURNEY_STEPS.length}
+        >
           {JOURNEY_STEPS.map((s, i) => (
-            <span key={s.id} className="h-1 flex-1 rounded-full" style={{ backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)" }} />
+            <span
+              key={s.id}
+              className="h-1 flex-1 rounded-full"
+              style={{
+                backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
+              }}
+            />
           ))}
         </div>
       </header>
@@ -618,7 +731,13 @@ function TextField({
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
-      <input value={value} inputMode={inputMode} onChange={(e) => onChange(e.target.value)} className={inputClass} style={inputStyle} />
+      <input
+        value={value}
+        inputMode={inputMode}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+        style={inputStyle}
+      />
       {error && (
         <span className="mt-1 block text-xs" style={{ color: "var(--stayo-danger)" }}>
           {error}
@@ -628,11 +747,25 @@ function TextField({
   );
 }
 
-function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
-      <textarea value={value} rows={4} onChange={(e) => onChange(e.target.value)} className={inputClass} style={inputStyle} />
+      <textarea
+        value={value}
+        rows={4}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+        style={inputStyle}
+      />
     </label>
   );
 }
@@ -683,9 +816,18 @@ function Question({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: string) => void }) {
-  const [condo, setCondo] = useState<"sim" | "nao" | "nsei" | null>(v.condominium_name ? "sim" : null);
+  const [condo, setCondo] = useState<"sim" | "nao" | "nsei" | null>(
+    v.condominium_name ? "sim" : null,
+  );
   const [addr, setAddr] = useState<"sim" | "depois" | null>(v.address || v.city ? "sim" : null);
-  const bedroomsValue = v.property_type === "studio" ? "studio" : v.bedrooms ? (Number(v.bedrooms) >= 4 ? "4" : v.bedrooms) : "";
+  const bedroomsValue =
+    v.property_type === "studio"
+      ? "studio"
+      : v.bedrooms
+        ? Number(v.bedrooms) >= 4
+          ? "4"
+          : v.bedrooms
+        : "";
   const capacityValue = v.capacity ? (Number(v.capacity) >= 8 ? "8" : v.capacity) : "";
   return (
     <div className="flex flex-col gap-7">
@@ -702,7 +844,11 @@ function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: s
         />
         {condo === "sim" && (
           <div className="grid gap-3 sm:grid-cols-3">
-            <TextField label="Condomínio / prédio" value={v.condominium_name} onChange={(x) => set("condominium_name", x)} />
+            <TextField
+              label="Condomínio / prédio"
+              value={v.condominium_name}
+              onChange={(x) => set("condominium_name", x)}
+            />
             <TextField label="Torre / bloco" value={v.tower} onChange={(x) => set("tower", x)} />
             <TextField label="Unidade" value={v.unit} onChange={(x) => set("unit", x)} />
           </div>
@@ -722,7 +868,12 @@ function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: s
           <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
             <TextField label="Endereço" value={v.address} onChange={(x) => set("address", x)} />
             <TextField label="Cidade" value={v.city} onChange={(x) => set("city", x)} />
-            <TextField label="CEP" inputMode="numeric" value={v.postal_code} onChange={(x) => set("postal_code", x)} />
+            <TextField
+              label="CEP"
+              inputMode="numeric"
+              value={v.postal_code}
+              onChange={(x) => set("postal_code", x)}
+            />
           </div>
         )}
       </Question>
@@ -821,228 +972,230 @@ function ProposalBlocks({
 
   const blocks: Record<(typeof PROPOSAL_BLOCKS)[number], ReactNode> = {
     commercial: (
-    <section
-      key="commercial"
-      className="rounded-[var(--radius-card)] border p-4 sm:p-5"
-      style={inputStyle}
-    >
-      <p className="text-xs font-medium" style={muted}>
-        Proposta · 1 de 3
-      </p>
-      <h3 className="mt-1 text-lg font-semibold">Condições comerciais</h3>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Taxa de administração</span>
-          <div className="flex items-center gap-2">
-            <input
-              key={num(cond.administration_fee)}
-              inputMode="decimal"
-              defaultValue={num(cond.administration_fee)}
-              onBlur={(event) => {
-                const value = Number(event.target.value.replace(",", "."));
-                setC({
-                  administration_fee:
-                    event.target.value.trim() === "" || Number.isNaN(value)
-                      ? null
-                      : Math.min(100, Math.max(0, value)),
-                });
-              }}
-              className={inputClass}
-              style={inputStyle}
-            />
-            <span className="text-base">%</span>
-          </div>
-        </label>
-        <div>
-          <span className="mb-1.5 block text-sm font-medium">Limpeza comercial</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">R$</span>
-            <input
-              key={num(cond.turnover_cleaning_fee)}
-              inputMode="decimal"
-              defaultValue={num(cond.turnover_cleaning_fee)}
-              onBlur={(event) => {
-                const value = Number(event.target.value.replace(/\./g, "").replace(",", "."));
-                setC({
-                  turnover_cleaning_fee:
-                    event.target.value.trim() === "" || Number.isNaN(value)
-                      ? null
-                      : Math.max(0, value),
-                });
-              }}
-              className={inputClass}
-              style={inputStyle}
-            />
-          </div>
-          <div className="mt-2">
-            <Chips
-              label="Definição da limpeza comercial"
-              value={cond.turnover_cleaning_fee == null ? TBD : null}
-              onChange={() => setC({ turnover_cleaning_fee: null })}
-              options={[{ value: TBD, label: "A definir" }]}
-            />
+      <section
+        key="commercial"
+        className="rounded-[var(--radius-card)] border p-4 sm:p-5"
+        style={inputStyle}
+      >
+        <p className="text-xs font-medium" style={muted}>
+          Proposta · 1 de 3
+        </p>
+        <h3 className="mt-1 text-lg font-semibold">Condições comerciais</h3>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">Taxa de administração</span>
+            <div className="flex items-center gap-2">
+              <input
+                key={num(cond.administration_fee)}
+                inputMode="decimal"
+                defaultValue={num(cond.administration_fee)}
+                onBlur={(event) => {
+                  const value = Number(event.target.value.replace(",", "."));
+                  setC({
+                    administration_fee:
+                      event.target.value.trim() === "" || Number.isNaN(value)
+                        ? null
+                        : Math.min(100, Math.max(0, value)),
+                  });
+                }}
+                className={inputClass}
+                style={inputStyle}
+              />
+              <span className="text-base">%</span>
+            </div>
+          </label>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium">Limpeza comercial</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">R$</span>
+              <input
+                key={num(cond.turnover_cleaning_fee)}
+                inputMode="decimal"
+                defaultValue={num(cond.turnover_cleaning_fee)}
+                onBlur={(event) => {
+                  const value = Number(event.target.value.replace(/\./g, "").replace(",", "."));
+                  setC({
+                    turnover_cleaning_fee:
+                      event.target.value.trim() === "" || Number.isNaN(value)
+                        ? null
+                        : Math.max(0, value),
+                  });
+                }}
+                className={inputClass}
+                style={inputStyle}
+              />
+            </div>
+            <div className="mt-2">
+              <Chips
+                label="Definição da limpeza comercial"
+                value={cond.turnover_cleaning_fee == null ? TBD : null}
+                onChange={() => setC({ turnover_cleaning_fee: null })}
+                options={[{ value: TBD, label: "A definir" }]}
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
     ),
     preparation: (
-    <section
-      key="preparation"
-      className="rounded-[var(--radius-card)] border p-4 sm:p-5"
-      style={inputStyle}
-    >
-      <p className="text-xs font-medium" style={muted}>
-        Proposta · 2 de 3
-      </p>
-      <h3 className="mt-1 text-lg font-semibold">Preparação do imóvel</h3>
-      <div className="mt-4 flex flex-col gap-5">
-        <Question title="Limpeza antes da operação">
-          <Chips
-            label="Limpeza antes da operação"
-            value={cond.initial_cleaning_option as string}
-            onChange={(value) => setC({ initial_cleaning_option: value })}
-            options={[
-              { value: "owner_delivers", label: "Proprietário entrega limpo" },
-              { value: "stayo_initial", label: "Limpeza de implantação STAYO" },
-              { value: "stayo_post_construction", label: "Pós-obra" },
-              { value: TBD, label: "A decidir" },
-            ]}
-          />
-        </Question>
-        <Question title="Enxoval">
-          <Chips
-            label="Enxoval"
-            value={cond.linen_mode as string}
-            onChange={(value) => setC({ linen_mode: value })}
-            options={[
-              { value: "complete", label: "Já possui completo" },
-              { value: "partial", label: "Possui parcialmente" },
-              { value: "stayo_supplier", label: "Fornecedor indicado pela STAYO" },
-              { value: TBD, label: "A decidir" },
-            ]}
-          />
-        </Question>
-        <Question title="Assessoria">
-          <Chips
-            label="Assessoria"
-            value={cond.advisory_mode as string}
-            onChange={(value) => setC({ advisory_mode: value })}
-            options={[
-              { value: "implementation_only", label: "Somente implantação" },
-              { value: "full", label: "Completa" },
-              { value: TBD, label: "A decidir" },
-            ]}
-          />
-        </Question>
-      </div>
-    </section>
+      <section
+        key="preparation"
+        className="rounded-[var(--radius-card)] border p-4 sm:p-5"
+        style={inputStyle}
+      >
+        <p className="text-xs font-medium" style={muted}>
+          Proposta · 2 de 3
+        </p>
+        <h3 className="mt-1 text-lg font-semibold">Preparação do imóvel</h3>
+        <div className="mt-4 flex flex-col gap-5">
+          <Question title="Limpeza antes da operação">
+            <Chips
+              label="Limpeza antes da operação"
+              value={cond.initial_cleaning_option as string}
+              onChange={(value) => setC({ initial_cleaning_option: value })}
+              options={[
+                { value: "owner_delivers", label: "Proprietário entrega limpo" },
+                { value: "stayo_initial", label: "Limpeza de implantação STAYO" },
+                { value: "stayo_post_construction", label: "Pós-obra" },
+                { value: TBD, label: "A decidir" },
+              ]}
+            />
+          </Question>
+          <Question title="Enxoval">
+            <Chips
+              label="Enxoval"
+              value={cond.linen_mode as string}
+              onChange={(value) => setC({ linen_mode: value })}
+              options={[
+                { value: "complete", label: "Já possui completo" },
+                { value: "partial", label: "Possui parcialmente" },
+                { value: "stayo_supplier", label: "Fornecedor indicado pela STAYO" },
+                { value: TBD, label: "A decidir" },
+              ]}
+            />
+          </Question>
+          <Question title="Assessoria">
+            <Chips
+              label="Assessoria"
+              value={cond.advisory_mode as string}
+              onChange={(value) => setC({ advisory_mode: value })}
+              options={[
+                { value: "implementation_only", label: "Somente implantação" },
+                { value: "full", label: "Completa" },
+                { value: TBD, label: "A decidir" },
+              ]}
+            />
+          </Question>
+        </div>
+      </section>
     ),
     contract: (
-    <section
-      key="contract"
-      className="rounded-[var(--radius-card)] border p-4 sm:p-5"
-      style={inputStyle}
-    >
-      <p className="text-xs font-medium" style={muted}>
-        Proposta · 3 de 3
-      </p>
-      <h3 className="mt-1 text-lg font-semibold">Condições do contrato</h3>
-      <div className="mt-4 flex flex-col gap-5">
-        <Question title="Exclusividade">
-          <Chips
-            label="Exclusividade"
-            value={boolChoice ?? (cond.exclusivity === null && "exclusivity" in cond ? TBD : null)}
-            onChange={(value) =>
-              setC({ exclusivity: value === "sim" ? true : value === "nao" ? false : null })
-            }
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-              { value: TBD, label: "A definir" },
-            ]}
-          />
-        </Question>
-        <Question title="Vigência">
-          <NumberChoice
-            value={duration}
-            current={num(cond.duration_months)}
-            unit="meses"
-            presets={["12", "24"]}
-            onChange={(value) => setC({ duration_months: value })}
-          />
-        </Question>
-        <Question title="Aviso prévio">
-          <NumberChoice
-            value={notice}
-            current={num(cond.notice_period_days)}
-            unit="dias"
-            presets={["30", "60"]}
-            onChange={(value) => setC({ notice_period_days: value })}
-          />
-        </Question>
-        <Question title="Uso próprio pelo proprietário">
-          <Chips
-            label="Uso próprio pelo proprietário"
-            value={cond.owner_use_limit_mode as string}
-            onChange={(value) => setC({ owner_use_limit_mode: value })}
-            options={[
-              { value: "unlimited", label: "Sem limite" },
-              { value: "limited", label: "Com limite" },
-              { value: TBD, label: "A definir" },
-            ]}
-          />
-          {cond.owner_use_limit_mode === "limited" && (
-            <div className="grid gap-3 pt-1 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Quantidade de dias</span>
-                <div className="flex items-center gap-2">
+      <section
+        key="contract"
+        className="rounded-[var(--radius-card)] border p-4 sm:p-5"
+        style={inputStyle}
+      >
+        <p className="text-xs font-medium" style={muted}>
+          Proposta · 3 de 3
+        </p>
+        <h3 className="mt-1 text-lg font-semibold">Condições do contrato</h3>
+        <div className="mt-4 flex flex-col gap-5">
+          <Question title="Exclusividade">
+            <Chips
+              label="Exclusividade"
+              value={
+                boolChoice ?? (cond.exclusivity === null && "exclusivity" in cond ? TBD : null)
+              }
+              onChange={(value) =>
+                setC({ exclusivity: value === "sim" ? true : value === "nao" ? false : null })
+              }
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+                { value: TBD, label: "A definir" },
+              ]}
+            />
+          </Question>
+          <Question title="Vigência">
+            <NumberChoice
+              value={duration}
+              current={num(cond.duration_months)}
+              unit="meses"
+              presets={["12", "24"]}
+              onChange={(value) => setC({ duration_months: value })}
+            />
+          </Question>
+          <Question title="Aviso prévio">
+            <NumberChoice
+              value={notice}
+              current={num(cond.notice_period_days)}
+              unit="dias"
+              presets={["30", "60"]}
+              onChange={(value) => setC({ notice_period_days: value })}
+            />
+          </Question>
+          <Question title="Uso próprio pelo proprietário">
+            <Chips
+              label="Uso próprio pelo proprietário"
+              value={cond.owner_use_limit_mode as string}
+              onChange={(value) => setC({ owner_use_limit_mode: value })}
+              options={[
+                { value: "unlimited", label: "Sem limite" },
+                { value: "limited", label: "Com limite" },
+                { value: TBD, label: "A definir" },
+              ]}
+            />
+            {cond.owner_use_limit_mode === "limited" && (
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-medium">Quantidade de dias</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      key={num(cond.owner_use_limit_days)}
+                      inputMode="numeric"
+                      defaultValue={num(cond.owner_use_limit_days)}
+                      onBlur={(event) => {
+                        const value = Number.parseInt(event.target.value, 10);
+                        setC({
+                          owner_use_limit_days: Number.isNaN(value) ? null : Math.max(0, value),
+                        });
+                      }}
+                      className={inputClass}
+                      style={inputStyle}
+                    />
+                    <span className="text-sm">dias</span>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-medium">Período</span>
                   <input
-                    key={num(cond.owner_use_limit_days)}
-                    inputMode="numeric"
-                    defaultValue={num(cond.owner_use_limit_days)}
-                    onBlur={(event) => {
-                      const value = Number.parseInt(event.target.value, 10);
-                      setC({
-                        owner_use_limit_days: Number.isNaN(value) ? null : Math.max(0, value),
-                      });
-                    }}
+                    key={num(cond.owner_use_limit_period)}
+                    defaultValue={num(cond.owner_use_limit_period)}
+                    onBlur={(event) =>
+                      setC({ owner_use_limit_period: event.target.value.trim() || null })
+                    }
+                    placeholder="Ex.: por ano"
                     className={inputClass}
                     style={inputStyle}
                   />
-                  <span className="text-sm">dias</span>
-                </div>
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium">Período</span>
-                <input
-                  key={num(cond.owner_use_limit_period)}
-                  defaultValue={num(cond.owner_use_limit_period)}
-                  onBlur={(event) =>
-                    setC({ owner_use_limit_period: event.target.value.trim() || null })
-                  }
-                  placeholder="Ex.: por ano"
-                  className={inputClass}
-                  style={inputStyle}
-                />
-              </label>
-            </div>
-          )}
-        </Question>
-        <Question title="Cessão do imóvel a terceiros">
-          <Chips
-            label="Cessão do imóvel a terceiros"
-            value={cond.assignment_mode as string}
-            onChange={(value) => setC({ assignment_mode: value })}
-            options={[
-              { value: "allowed", label: "Permitida" },
-              { value: "not_allowed", label: "Não permitida" },
-              { value: TBD, label: "A definir" },
-            ]}
-          />
-        </Question>
-      </div>
-    </section>
+                </label>
+              </div>
+            )}
+          </Question>
+          <Question title="Cessão do imóvel a terceiros">
+            <Chips
+              label="Cessão do imóvel a terceiros"
+              value={cond.assignment_mode as string}
+              onChange={(value) => setC({ assignment_mode: value })}
+              options={[
+                { value: "allowed", label: "Permitida" },
+                { value: "not_allowed", label: "Não permitida" },
+                { value: TBD, label: "A definir" },
+              ]}
+            />
+          </Question>
+        </div>
+      </section>
     ),
   };
 
@@ -1069,7 +1222,7 @@ function NumberChoice({
     <div className="flex flex-col gap-3">
       <Chips
         label={unit}
-        value={other ? "outro" : value ?? null}
+        value={other ? "outro" : (value ?? null)}
         onChange={(choice) => {
           if (choice === "outro") {
             setOther(true);
