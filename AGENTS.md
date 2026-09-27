@@ -21,5 +21,6 @@
 - Oportunidade salva por `admin_autosave_opportunity` com whitelist/conflito por campo; origem fica em `implementation_field_sources`, evitando sobrescrita silenciosa.
 - Condições e decisões vivem só em `implementation_contract_conditions`; snapshots preservam a versão aceita e reconciliam limpeza pós-obra sem duplicidade.
 - Fornecedores vivem em `property_supplier_entries`, histórico imutável e categorias próprias; catálogo só sugere aprovados e correção admin trava a resposta.
+- Fornecedores no Admin usam lista compacta por categoria e detalhe sob demanda; o Portal mantém o editor próprio para preservar contexto e permissões.
 - Guias utensílios/enxoval compartilham tabelas/RPCs por `guide_type` e têm liberação independente via `guide_block_for`.
 - Inventário e pendências manuais compartilham `implementation_supply_items`; falta deriva de quantidades e `module=faltante` só identifica origem manual na mesma experiência.

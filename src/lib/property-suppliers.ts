@@ -57,17 +57,74 @@ export const SUPPLIER_ROLE_LABELS: Record<SupplierRole, string> = {
 
 export const PENDING_OTHER_NAME = "Outra empresa — nome pendente";
 
+export type SupplierCategoryState = "defined" | "not_informed" | "not_applicable" | "to_confirm";
+
+export interface SupplierCategorySummary {
+  state: SupplierCategoryState;
+  stateLabel: "Definido" | "Não informado" | "Não se aplica" | "A confirmar";
+  description: string;
+}
+
 export function entryDisplayName(e: SupplierEntry, catalog: SupplierCatalogItem[]): string {
   if (e.answer === "unknown") return "Não sei informar";
   if (e.answer === "not_applicable") return "Não se aplica";
   if (e.answer === "catalog")
-    return e.catalogName ?? catalog.find((c) => c.id === e.catalogId)?.name ?? "Empresa do catálogo";
+    return (
+      e.catalogName ?? catalog.find((c) => c.id === e.catalogId)?.name ?? "Empresa do catálogo"
+    );
   const name = e.otherName?.trim();
   return name ? name : PENDING_OTHER_NAME;
 }
 
 export function isPendingOther(e: SupplierEntry) {
   return e.answer === "other" && !e.otherName?.trim();
+}
+
+export function summarizeSupplierCategory(
+  entries: SupplierEntry[],
+  catalog: SupplierCatalogItem[],
+): SupplierCategorySummary {
+  if (entries.length === 0) {
+    return {
+      state: "not_informed",
+      stateLabel: "Não informado",
+      description: "Nenhuma informação",
+    };
+  }
+
+  const companies = entries.filter(
+    (entry) => entry.answer === "catalog" || entry.answer === "other",
+  );
+  const status = entries.find(
+    (entry) => entry.answer === "unknown" || entry.answer === "not_applicable",
+  );
+
+  if (companies.length > 0) {
+    const first = companies[0];
+    if (!first) {
+      return {
+        state: "not_informed",
+        stateLabel: "Não informado",
+        description: "Nenhuma informação",
+      };
+    }
+    const extra = companies.length - 1;
+    const description = `${entryDisplayName(first, catalog)}${extra > 0 ? ` +${extra}` : ""}`;
+    const needsConfirmation = companies.some(
+      (entry) => entry.source === "owner" || isPendingOther(entry),
+    );
+    return {
+      state: needsConfirmation ? "to_confirm" : "defined",
+      stateLabel: needsConfirmation ? "A confirmar" : "Definido",
+      description,
+    };
+  }
+
+  if (status?.answer === "not_applicable") {
+    return { state: "not_applicable", stateLabel: "Não se aplica", description: "Não se aplica" };
+  }
+
+  return { state: "not_informed", stateLabel: "Não informado", description: "Não informado" };
 }
 
 export function mergeCategories(custom: SupplierCategory[]): SupplierCategory[] {
@@ -89,7 +146,11 @@ export function slugCategory(label: string) {
   return `custom_${base || "categoria"}`;
 }
 
-export function newEntry(categoryKey: string, answer: SupplierAnswer, source: "owner" | "admin"): SupplierEntry {
+export function newEntry(
+  categoryKey: string,
+  answer: SupplierAnswer,
+  source: "owner" | "admin",
+): SupplierEntry {
   return {
     id: crypto.randomUUID(),
     categoryKey,
