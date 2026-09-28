@@ -68,4 +68,5 @@
 - [x] Validar paridade visual e estados em 390 px e desktop, mantendo leitura segura pelos contratos Core
 - [x] Fase 2: Hóspedes, Mensagens e IA, Guia e Serviços (leitura/demonstração)
 - [x] Fase 3: Tarefas, Manutenção e Vistorias agrupadas em Operação (leitura)
-- [ ] Fase 4: Implantação, Inventário, Estoque e Fornecedores
+- [x] Fase 4: Inventário/estoque e Fornecedores consolidados em Implantação (leitura)
+- [ ] Fase 5: Financeiro

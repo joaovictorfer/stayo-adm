@@ -88,6 +88,8 @@ export const navigation: NavItem[] = [
         icon: "file-invoice",
         roles: ["super_admin", "admin", "commercial"],
       },
+      { id: "implementation-inventory", label: "Inventário e estoque", path: "/implantacao/inventario", icon: "box", roles: ["super_admin", "admin", "operations", "commercial"] },
+      { id: "implementation-suppliers", label: "Fornecedores", path: "/implantacao/fornecedores", icon: "truck", roles: ["super_admin", "admin", "operations", "commercial"] },
     ],
   },
   {
