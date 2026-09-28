@@ -213,7 +213,7 @@ function StatusScreen({ icon, title, subtitle, status, period, celebrate, action
           {celebrate && <span className="absolute inset-0 animate-ping rounded-full bg-[var(--portal-success-soft)] [animation-iteration-count:2]" />}
           <Icon className="relative h-9 w-9" />
         </div>
-        <h2 className="mt-5 font-serif text-2xl">{title}{icon !== "x" && icon !== "clock" ? " ✓" : icon === "clock" ? " ✓" : ""}</h2>
+        <h2 className="mt-5 font-serif text-2xl">{title}{icon !== "x" ? " ✓" : ""}</h2>
         {subtitle && <p className="mt-2 text-sm text-[var(--portal-muted)]">{subtitle}</p>}
       </div>
       {period && (
