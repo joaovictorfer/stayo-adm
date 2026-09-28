@@ -62,3 +62,8 @@
 - [x] 7/7 Ciclo de acesso: portal só entra em operação com vínculo oficial do Core; ativação no Core pendente (dependência)
 - [x] Criar e validar protótipo visual isolado dos Guias de Implantação em 375, 390, 430 e 1440 px
 - [x] Desenhar e validar o Guia de Enxoval no mesmo sistema visual de Utensílios, sem dados oficiais
+
+- [ ] Reproduzir a Fase 1 do STAYO APP no Admin: sistema visual e navegação equivalentes
+- [ ] Reproduzir Dashboard, Reservas, Agenda, Imóveis, Condomínios, Proprietários e Cadastros enviados
+- [ ] Validar paridade visual e estados em 390 px e desktop, mantendo leitura segura pelos contratos Core
+- [ ] Mapear as demais telas do relatório para fases posteriores, com ações sensíveis inicialmente demonstrativas
