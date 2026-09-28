@@ -67,4 +67,5 @@
 - [x] Reproduzir Dashboard, Reservas, Agenda, Imóveis, Condomínios, Proprietários e Cadastros enviados
 - [x] Validar paridade visual e estados em 390 px e desktop, mantendo leitura segura pelos contratos Core
 - [x] Fase 2: Hóspedes, Mensagens e IA, Guia e Serviços (leitura/demonstração)
-- [ ] Fase 3: Central Operacional, Tarefas, Vistorias e Manutenção
+- [x] Fase 3: Tarefas, Manutenção e Vistorias agrupadas em Operação (leitura)
+- [ ] Fase 4: Implantação, Inventário, Estoque e Fornecedores

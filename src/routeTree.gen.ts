@@ -51,7 +51,9 @@ import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
 import { Route as OperacaoAgendaRouteImport } from './routes/operacao.agenda'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
+import { Route as OperacaoManutencaoRouteImport } from './routes/operacao.manutencao'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
+import { Route as OperacaoTarefasRouteImport } from './routes/operacao.tarefas'
 import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.tarefas-prototipo'
 import { Route as OperacaoVistoriasLinksPrototipoRouteImport } from './routes/operacao.vistorias-links-prototipo'
 import { Route as OperacaoVistoriasPrototipoRouteImport } from './routes/operacao.vistorias-prototipo'
@@ -295,9 +297,19 @@ const OperacaoAgendaPrototipoRoute = OperacaoAgendaPrototipoRouteImport.update({
   path: '/operacao/agenda-prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoManutencaoRoute = OperacaoManutencaoRouteImport.update({
+  id: '/operacao/manutencao',
+  path: '/operacao/manutencao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperacaoPrototipoRoute = OperacaoPrototipoRouteImport.update({
   id: '/operacao/prototipo',
   path: '/operacao/prototipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacaoTarefasRoute = OperacaoTarefasRouteImport.update({
+  id: '/operacao/tarefas',
+  path: '/operacao/tarefas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperacaoTarefasPrototipoRoute =
@@ -453,7 +465,9 @@ export interface FileRoutesByFullPath {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/tarefas': typeof OperacaoTarefasRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
@@ -521,7 +535,9 @@ export interface FileRoutesByTo {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/tarefas': typeof OperacaoTarefasRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
@@ -590,7 +606,9 @@ export interface FileRoutesById {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/tarefas': typeof OperacaoTarefasRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
@@ -660,7 +678,9 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/manutencao'
     | '/operacao/prototipo'
+    | '/operacao/tarefas'
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
@@ -728,7 +748,9 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/manutencao'
     | '/operacao/prototipo'
+    | '/operacao/tarefas'
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
@@ -796,7 +818,9 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/manutencao'
     | '/operacao/prototipo'
+    | '/operacao/tarefas'
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
@@ -865,7 +889,9 @@ export interface RootRouteChildren {
   OperacaoIdRoute: typeof OperacaoIdRoute
   OperacaoAgendaRoute: typeof OperacaoAgendaRoute
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
+  OperacaoManutencaoRoute: typeof OperacaoManutencaoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
+  OperacaoTarefasRoute: typeof OperacaoTarefasRoute
   OperacaoTarefasPrototipoRoute: typeof OperacaoTarefasPrototipoRoute
   OperacaoVistoriasLinksPrototipoRoute: typeof OperacaoVistoriasLinksPrototipoRoute
   OperacaoVistoriasPrototipoRoute: typeof OperacaoVistoriasPrototipoRoute
@@ -1197,11 +1223,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoAgendaPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/manutencao': {
+      id: '/operacao/manutencao'
+      path: '/operacao/manutencao'
+      fullPath: '/operacao/manutencao'
+      preLoaderRoute: typeof OperacaoManutencaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operacao/prototipo': {
       id: '/operacao/prototipo'
       path: '/operacao/prototipo'
       fullPath: '/operacao/prototipo'
       preLoaderRoute: typeof OperacaoPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacao/tarefas': {
+      id: '/operacao/tarefas'
+      path: '/operacao/tarefas'
+      fullPath: '/operacao/tarefas'
+      preLoaderRoute: typeof OperacaoTarefasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operacao/tarefas-prototipo': {
@@ -1401,7 +1441,9 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoIdRoute: OperacaoIdRoute,
   OperacaoAgendaRoute: OperacaoAgendaRoute,
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
+  OperacaoManutencaoRoute: OperacaoManutencaoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
+  OperacaoTarefasRoute: OperacaoTarefasRoute,
   OperacaoTarefasPrototipoRoute: OperacaoTarefasPrototipoRoute,
   OperacaoVistoriasLinksPrototipoRoute: OperacaoVistoriasLinksPrototipoRoute,
   OperacaoVistoriasPrototipoRoute: OperacaoVistoriasPrototipoRoute,

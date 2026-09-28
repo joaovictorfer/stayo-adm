@@ -106,6 +106,9 @@ export const navigation: NavItem[] = [
     children: [
       { id: "operations-overview", label: "Central operacional", path: "/operacao", icon: "list", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-agenda", label: "Agenda", path: "/operacao/agenda", icon: "calendar", roles: ["super_admin", "admin", "operations"] },
+      { id: "operations-tasks", label: "Tarefas", path: "/operacao/tarefas", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
+      { id: "operations-maintenance", label: "Manutenção", path: "/operacao/manutencao", icon: "tool", roles: ["super_admin", "admin", "operations"] },
+      { id: "operations-inspections", label: "Vistorias", path: "/vistorias", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
     ],
   },
   {
@@ -195,7 +198,7 @@ export const navigationGroups: NavGroup[] = [
   {
     id: "operations",
     label: "Operação",
-    itemIds: ["operations", "reservations", "guests", "inspections", "providers"],
+    itemIds: ["operations", "reservations", "guests", "providers"],
   },
   { id: "intelligence", label: "Inteligência", itemIds: ["messages", "guide", "products", "bi"] },
   { id: "management", label: "Gestão", itemIds: ["financial"] },
