@@ -63,6 +63,7 @@ import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
 import { Route as ProdutosIdRouteImport } from './routes/produtos.$id'
 import { Route as ProprietariosIndexRouteImport } from './routes/proprietarios.index'
 import { Route as ProprietariosIdRouteImport } from './routes/proprietarios.$id'
+import { Route as ProprietariosCadastrosRouteImport } from './routes/proprietarios.cadastros'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
 import { Route as ReservasIdRouteImport } from './routes/reservas.$id'
 import { Route as VistoriasIndexRouteImport } from './routes/vistorias.index'
@@ -357,6 +358,11 @@ const ProprietariosIdRoute = ProprietariosIdRouteImport.update({
   path: '/proprietarios/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProprietariosCadastrosRoute = ProprietariosCadastrosRouteImport.update({
+  id: '/proprietarios/cadastros',
+  path: '/proprietarios/cadastros',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReservasIndexRoute = ReservasIndexRouteImport.update({
   id: '/reservas/',
   path: '/reservas/',
@@ -456,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
+  '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
@@ -523,6 +530,7 @@ export interface FileRoutesByTo {
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
+  '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios': typeof CondominiosIndexRoute
@@ -591,6 +599,7 @@ export interface FileRoutesById {
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
+  '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
@@ -660,6 +669,7 @@ export interface FileRouteTypes {
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
+    | '/proprietarios/cadastros'
     | '/reservas/$id'
     | '/vistorias/$id'
     | '/condominios/'
@@ -727,6 +737,7 @@ export interface FileRouteTypes {
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
+    | '/proprietarios/cadastros'
     | '/reservas/$id'
     | '/vistorias/$id'
     | '/condominios'
@@ -794,6 +805,7 @@ export interface FileRouteTypes {
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
+    | '/proprietarios/cadastros'
     | '/reservas/$id'
     | '/vistorias/$id'
     | '/condominios/'
@@ -862,6 +874,7 @@ export interface RootRouteChildren {
   PrestadoresIdRoute: typeof PrestadoresIdRoute
   ProdutosIdRoute: typeof ProdutosIdRoute
   ProprietariosIdRoute: typeof ProprietariosIdRoute
+  ProprietariosCadastrosRoute: typeof ProprietariosCadastrosRoute
   ReservasIdRoute: typeof ReservasIdRoute
   VistoriasIdRoute: typeof VistoriasIdRoute
   CondominiosIndexRoute: typeof CondominiosIndexRoute
@@ -1268,6 +1281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProprietariosIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/proprietarios/cadastros': {
+      id: '/proprietarios/cadastros'
+      path: '/proprietarios/cadastros'
+      fullPath: '/proprietarios/cadastros'
+      preLoaderRoute: typeof ProprietariosCadastrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reservas/': {
       id: '/reservas/'
       path: '/reservas'
@@ -1390,6 +1410,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrestadoresIdRoute: PrestadoresIdRoute,
   ProdutosIdRoute: ProdutosIdRoute,
   ProprietariosIdRoute: ProprietariosIdRoute,
+  ProprietariosCadastrosRoute: ProprietariosCadastrosRoute,
   ReservasIdRoute: ReservasIdRoute,
   VistoriasIdRoute: VistoriasIdRoute,
   CondominiosIndexRoute: CondominiosIndexRoute,
