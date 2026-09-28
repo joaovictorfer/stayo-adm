@@ -115,6 +115,7 @@ const initialItems: LinenItem[] = [
 ];
 
 const views: Array<{ id: View; label: string }> = [
+  { id: "hub", label: "Etapa 4 · Hub" },
   { id: "admin", label: "Admin" },
   { id: "property", label: "No imóvel" },
   { id: "owner", label: "Proprietário" },
