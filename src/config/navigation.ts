@@ -197,7 +197,7 @@ export const navigationGroups: NavGroup[] = [
     label: "Operação",
     itemIds: ["operations", "reservations", "guests", "inspections", "providers"],
   },
-  { id: "intelligence", label: "Inteligência", itemIds: ["messages", "bi"] },
-  { id: "management", label: "Gestão", itemIds: ["financial", "products", "guide"] },
+  { id: "intelligence", label: "Inteligência", itemIds: ["messages", "guide", "products", "bi"] },
+  { id: "management", label: "Gestão", itemIds: ["financial"] },
   { id: "system", label: "Sistema", itemIds: ["settings"] },
 ];
