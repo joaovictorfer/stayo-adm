@@ -32,7 +32,7 @@ export function maskPhone(v: string | null) {
 export function maskEmail(v: string | null) {
   if (!v || !v.includes("@")) return null;
   const [user, domain] = v.split("@");
-  return `${user.slice(0, 1)}•••@${domain}`;
+  return `${(user ?? "").slice(0, 1)}•••@${domain}`;
 }
 
 function GuestsPage() {

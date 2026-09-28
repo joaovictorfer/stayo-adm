@@ -89,7 +89,7 @@ function InboxPage() {
 
 function Thread({ conversation: c, onBack }: { conversation: Conversation; onBack: () => void }) {
   const msgs = useQuery(conversationMessagesQuery(c.id));
-  const list = msgs.data?.data ?? [];
+  const list = msgs.data ?? [];
   return <>
     <header className="flex items-center gap-2 border-b border-[var(--stayo-border)] p-4">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onBack} aria-label="Voltar"><ArrowLeft /></Button>
