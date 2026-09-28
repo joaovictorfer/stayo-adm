@@ -49,6 +49,7 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as OperacaoAgendaRouteImport } from './routes/operacao.agenda'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
 import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.tarefas-prototipo'
@@ -62,6 +63,7 @@ import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
 import { Route as ProdutosIdRouteImport } from './routes/produtos.$id'
 import { Route as ProprietariosIndexRouteImport } from './routes/proprietarios.index'
 import { Route as ProprietariosIdRouteImport } from './routes/proprietarios.$id'
+import { Route as ProprietariosCadastrosRouteImport } from './routes/proprietarios.cadastros'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
 import { Route as ReservasIdRouteImport } from './routes/reservas.$id'
 import { Route as VistoriasIndexRouteImport } from './routes/vistorias.index'
@@ -283,6 +285,11 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoAgendaRoute = OperacaoAgendaRouteImport.update({
+  id: '/operacao/agenda',
+  path: '/operacao/agenda',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperacaoAgendaPrototipoRoute = OperacaoAgendaPrototipoRouteImport.update({
   id: '/operacao/agenda-prototipo',
   path: '/operacao/agenda-prototipo',
@@ -349,6 +356,11 @@ const ProprietariosIndexRoute = ProprietariosIndexRouteImport.update({
 const ProprietariosIdRoute = ProprietariosIdRouteImport.update({
   id: '/proprietarios/$id',
   path: '/proprietarios/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProprietariosCadastrosRoute = ProprietariosCadastrosRouteImport.update({
+  id: '/proprietarios/cadastros',
+  path: '/proprietarios/cadastros',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReservasIndexRoute = ReservasIndexRouteImport.update({
@@ -439,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
@@ -449,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
+  '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
@@ -505,6 +519,7 @@ export interface FileRoutesByTo {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
@@ -515,6 +530,7 @@ export interface FileRoutesByTo {
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
+  '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios': typeof CondominiosIndexRoute
@@ -572,6 +588,7 @@ export interface FileRoutesById {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
@@ -582,6 +599,7 @@ export interface FileRoutesById {
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
+  '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
@@ -640,6 +658,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
     | '/operacao/tarefas-prototipo'
@@ -650,6 +669,7 @@ export interface FileRouteTypes {
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
+    | '/proprietarios/cadastros'
     | '/reservas/$id'
     | '/vistorias/$id'
     | '/condominios/'
@@ -706,6 +726,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
     | '/operacao/tarefas-prototipo'
@@ -716,6 +737,7 @@ export interface FileRouteTypes {
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
+    | '/proprietarios/cadastros'
     | '/reservas/$id'
     | '/vistorias/$id'
     | '/condominios'
@@ -772,6 +794,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
     | '/operacao/tarefas-prototipo'
@@ -782,6 +805,7 @@ export interface FileRouteTypes {
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
+    | '/proprietarios/cadastros'
     | '/reservas/$id'
     | '/vistorias/$id'
     | '/condominios/'
@@ -839,6 +863,7 @@ export interface RootRouteChildren {
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
+  OperacaoAgendaRoute: typeof OperacaoAgendaRoute
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
   OperacaoTarefasPrototipoRoute: typeof OperacaoTarefasPrototipoRoute
@@ -849,6 +874,7 @@ export interface RootRouteChildren {
   PrestadoresIdRoute: typeof PrestadoresIdRoute
   ProdutosIdRoute: typeof ProdutosIdRoute
   ProprietariosIdRoute: typeof ProprietariosIdRoute
+  ProprietariosCadastrosRoute: typeof ProprietariosCadastrosRoute
   ReservasIdRoute: typeof ReservasIdRoute
   VistoriasIdRoute: typeof VistoriasIdRoute
   CondominiosIndexRoute: typeof CondominiosIndexRoute
@@ -1157,6 +1183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/agenda': {
+      id: '/operacao/agenda'
+      path: '/operacao/agenda'
+      fullPath: '/operacao/agenda'
+      preLoaderRoute: typeof OperacaoAgendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operacao/agenda-prototipo': {
       id: '/operacao/agenda-prototipo'
       path: '/operacao/agenda-prototipo'
@@ -1246,6 +1279,13 @@ declare module '@tanstack/react-router' {
       path: '/proprietarios/$id'
       fullPath: '/proprietarios/$id'
       preLoaderRoute: typeof ProprietariosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proprietarios/cadastros': {
+      id: '/proprietarios/cadastros'
+      path: '/proprietarios/cadastros'
+      fullPath: '/proprietarios/cadastros'
+      preLoaderRoute: typeof ProprietariosCadastrosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reservas/': {
@@ -1359,6 +1399,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
   OperacaoIdRoute: OperacaoIdRoute,
+  OperacaoAgendaRoute: OperacaoAgendaRoute,
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
   OperacaoTarefasPrototipoRoute: OperacaoTarefasPrototipoRoute,
@@ -1369,6 +1410,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrestadoresIdRoute: PrestadoresIdRoute,
   ProdutosIdRoute: ProdutosIdRoute,
   ProprietariosIdRoute: ProprietariosIdRoute,
+  ProprietariosCadastrosRoute: ProprietariosCadastrosRoute,
   ReservasIdRoute: ReservasIdRoute,
   VistoriasIdRoute: VistoriasIdRoute,
   CondominiosIndexRoute: CondominiosIndexRoute,

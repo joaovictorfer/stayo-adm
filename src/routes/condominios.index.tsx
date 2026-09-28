@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, ChevronRight, Plus } from "lucide-react";
+import { Building2, CheckCircle2, CircleDashed, MapPin, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AdminEmptyState, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
+import { CompactSearch, ModuleTabs, PortfolioMetric, PropertyVisual } from "@/components/admin/PhaseOnePatterns";
 import {
   CondominiumForm,
   emptyCondominiumForm,
@@ -16,7 +17,6 @@ import {
   ListSkeleton,
   PageHeader,
   Panel,
-  SearchInput,
 } from "@/components/data/ListStates";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +46,7 @@ export const Route = createFileRoute("/condominios/")({
 
 function CondominiumsPage() {
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<"todos" | "completos" | "pendentes">("todos");
   const [open, setOpen] = useState(false);
   const query = useQuery(adminCondominiumsListQuery());
   const impls = useQuery(implementationsListQuery());
@@ -61,29 +62,35 @@ function CondominiumsPage() {
   const rows = useMemo(() => {
     const data = query.data ?? [];
     const term = q.trim().toLocaleLowerCase("pt-BR");
-    if (!term) return data;
+    const byStatus = data.filter((c) => filter === "todos" || (filter === "completos" ? c.status === "complete" : c.status !== "complete"));
+    if (!term) return byStatus;
     const digits = term.replace(/\D/g, "");
-    return data.filter(
+    return byStatus.filter(
       (c) =>
         [c.name, c.city, c.neighborhood].some((v) =>
           v?.toLocaleLowerCase("pt-BR").includes(term),
         ) ||
         (digits.length > 0 && (c.conciergePhone ?? "").replace(/\D/g, "").includes(digits)),
     );
-  }, [query.data, q]);
+  }, [query.data, q, filter]);
 
   return (
     <>
       <PageHeader title="Condomínios" count={query.isSuccess ? rows.length : undefined}>
-        <SearchInput
-          value={q}
-          onChange={setQ}
-          placeholder="Buscar nome, cidade, bairro, telefone"
-        />
         <Button onClick={() => setOpen(true)}>
           <Plus className="size-4" /> Novo condomínio
         </Button>
       </PageHeader>
+      <p className="mb-4 text-xs text-[var(--admin-muted)]">Central de condomínios e seus imóveis vinculados.</p>
+      <div className="portfolio-metrics mb-4">
+        <PortfolioMetric icon={Building2} value={(query.data ?? []).length} label="Condomínios" />
+        <PortfolioMetric icon={CheckCircle2} value={(query.data ?? []).filter((c) => c.status === "complete").length} label="Completos" tone="success" />
+        <PortfolioMetric icon={CircleDashed} value={(query.data ?? []).filter((c) => c.status !== "complete").length} label="Pendentes" tone="warning" />
+      </div>
+      <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)]">
+        <ModuleTabs value={filter} onChange={setFilter} options={[{value:"todos",label:"Todos"},{value:"completos",label:"Completos"},{value:"pendentes",label:"Pendentes"}]} />
+        <CompactSearch value={q} onChange={setQ} placeholder="Buscar nome, cidade ou bairro" />
+      </div>
       <Panel>
         {query.isPending ? (
           <ListSkeleton />
@@ -113,47 +120,20 @@ function CondoList({ rows, counts }: { rows: AdminCondominium[]; counts: Map<str
   const navigate = useNavigate();
   const go = (id: string) => void navigate({ to: "/condominios/$id", params: { id } });
   return (
-    <div>
-      <div className="hidden grid-cols-[2fr_1.5fr_1.4fr_0.8fr_0.8fr_auto] gap-4 border-b border-[var(--admin-border)] px-4 py-2 text-xs font-medium uppercase tracking-wide text-[var(--admin-muted)] md:grid">
-        <span>Nome</span>
-        <span>Cidade / Bairro</span>
-        <span>Portaria</span>
-        <span>Aptos</span>
-        <span>Status</span>
-        <span className="w-14" />
-      </div>
-      <ul className="divide-y divide-[var(--admin-border)]">
+    <div className="portfolio-grid p-3">
         {rows.map((c) => (
-          <li
+          <div
             key={c.id}
             role="link"
             tabIndex={0}
             onClick={() => go(c.id)}
             onKeyDown={(e) => e.key === "Enter" && go(c.id)}
-            className="grid cursor-pointer grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-4 py-3 text-sm transition-colors hover:bg-[var(--admin-surface-muted,rgba(0,0,0,0.02))] md:grid-cols-[2fr_1.5fr_1.4fr_0.8fr_0.8fr_auto] md:items-center"
+            className="portfolio-card cursor-pointer"
           >
-            <span className="font-medium text-[var(--admin-text)]">{c.name}</span>
-            <span className="text-[var(--admin-muted)] md:text-[var(--admin-text)]">
-              {[c.city, c.neighborhood].filter(Boolean).join(" · ") || "—"}
-            </span>
-            <span className="col-span-2 text-[var(--admin-muted)] md:col-span-1">
-              {c.hasConcierge ? `Sim${c.conciergePhone ? ` · ${c.conciergePhone}` : ""}` : "Não"}
-            </span>
-            <span className="text-[var(--admin-muted)] md:text-[var(--admin-text)]">
-              <span className="md:hidden">Apartamentos: </span>
-              {counts.get(c.id) ?? 0}
-            </span>
-            <span>
-              <AdminStatusBadge tone={c.status === "complete" ? "success" : "warning"}>
-                {c.status === "complete" ? "Completo" : "Pendente"}
-              </AdminStatusBadge>
-            </span>
-            <span className="hidden w-14 items-center justify-end gap-1 text-xs text-[var(--admin-muted)] md:flex">
-              Abrir <ChevronRight className="size-3.5" />
-            </span>
-          </li>
+            <PropertyVisual label={`${counts.get(c.id) ?? 0} imóveis`} />
+            <div className="portfolio-card-body"><h3>{c.name}</h3><p className="flex items-center gap-1"><MapPin className="size-3" />{[c.city,c.neighborhood].filter(Boolean).join(" · ")||"Local não informado"}</p><div className="portfolio-card-footer"><span className="text-xs text-[var(--admin-muted)]">{c.hasConcierge?"Com portaria":"Sem portaria"}</span><AdminStatusBadge tone={c.status==="complete"?"success":"warning"}>{c.status==="complete"?"Completo":"Pendente"}</AdminStatusBadge></div></div>
+          </div>
         ))}
-      </ul>
     </div>
   );
 }
