@@ -70,4 +70,4 @@
 - [x] Fase 3: Tarefas, Manutenção e Vistorias agrupadas em Operação (leitura)
 - [x] Fase 4: Inventário/estoque e Fornecedores consolidados em Implantação (leitura)
 - [x] Fase 5: Financeiro no padrão visual (leitura)
-- [ ] Fase 6: Configurações, Equipe, Alertas, Automações, integrações e Portal Staff
+- [x] Fase 6: Configurações com Equipe, Alertas, Automações e Portal Staff (demonstração)

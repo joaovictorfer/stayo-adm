@@ -1,8 +1,8 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ClipboardList, DatabaseZap, HandCoins, Plug, Server } from "lucide-react";
+import { Bell, ClipboardList, DatabaseZap, HandCoins, Plug, Server, Smartphone, Users, Zap } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
-import { PageHeader } from "../components/data/ListStates";
+import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
 
 /** `to` vem de dados de configuração, então usamos o Link com tipagem solta. */
 const DynamicLink = Link as unknown as ComponentType<{
@@ -34,6 +34,10 @@ interface SettingsLink {
 }
 
 const links: SettingsLink[] = [
+  { icon: Users, to: "/configuracoes/equipe", title: "Equipe", description: "Usuários, papéis e escopos (demonstração)." },
+  { icon: Bell, to: "/configuracoes/alertas", title: "Alertas", description: "Regras de atenção para a equipe (demonstração)." },
+  { icon: Zap, to: "/configuracoes/automacoes", title: "Automações", description: "Mensagens e rotinas do STAYO APP (demonstração)." },
+  { icon: Smartphone, to: "/configuracoes/portal-staff", title: "Portal Staff", description: "Acesso da equipe de campo (demonstração)." },
   {
     icon: Server,
     to: "/configuracoes/stayo-core",
@@ -83,13 +87,14 @@ const links: SettingsLink[] = [
 function SettingsPage() {
   return (
     <>
-      <PageHeader title="Configurações" />
+      <AdminPageHeader eyebrow="Sistema" title="Configurações" description="Integrações, equipe, regras e dados do Admin." />
+      <div className="mt-5" />
       <div className="grid gap-3 sm:grid-cols-2">
         {links.map((l) => (
           <DynamicLink
             key={l.to}
             to={l.to}
-            className="flex items-start gap-3 rounded-[var(--radius-card)] border p-4"
+            className="admin-panel flex items-start gap-3 p-4 transition hover:-translate-y-0.5"
             style={{ ...surface, color: "var(--stayo-ink)" }}
           >
             <span
