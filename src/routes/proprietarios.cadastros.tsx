@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { AdminEmptyState, AdminPageHeader, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 import { CompactSearch, ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
-import { implementationQuery, implementationsListQuery, ownerOnboardingSubmissionQuery } from "@/lib/api/queries";
+import { implementationsListQuery, ownerOnboardingSubmissionQuery } from "@/lib/api/queries";
 
 export const Route = createFileRoute("/proprietarios/cadastros")({
   head: () => ({ meta: [

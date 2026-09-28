@@ -17,7 +17,6 @@ import {
   ListSkeleton,
   PageHeader,
   Panel,
-  SearchInput,
 } from "@/components/data/ListStates";
 import { Button } from "@/components/ui/button";
 import {
@@ -131,7 +130,7 @@ function CondoList({ rows, counts }: { rows: AdminCondominium[]; counts: Map<str
             onKeyDown={(e) => e.key === "Enter" && go(c.id)}
             className="portfolio-card cursor-pointer"
           >
-            <PropertyVisual image={c.coverImage} label={`${counts.get(c.id) ?? 0} imóveis`} />
+            <PropertyVisual label={`${counts.get(c.id) ?? 0} imóveis`} />
             <div className="portfolio-card-body"><h3>{c.name}</h3><p className="flex items-center gap-1"><MapPin className="size-3" />{[c.city,c.neighborhood].filter(Boolean).join(" · ")||"Local não informado"}</p><div className="portfolio-card-footer"><span className="text-xs text-[var(--admin-muted)]">{c.hasConcierge?"Com portaria":"Sem portaria"}</span><AdminStatusBadge tone={c.status==="complete"?"success":"warning"}>{c.status==="complete"?"Completo":"Pendente"}</AdminStatusBadge></div></div>
           </div>
         ))}
