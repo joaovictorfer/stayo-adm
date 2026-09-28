@@ -66,4 +66,5 @@
 - [x] Reproduzir a Fase 1 do STAYO APP no Admin: sistema visual e navegação equivalentes
 - [x] Reproduzir Dashboard, Reservas, Agenda, Imóveis, Condomínios, Proprietários e Cadastros enviados
 - [x] Validar paridade visual e estados em 390 px e desktop, mantendo leitura segura pelos contratos Core
-- [ ] Mapear as demais telas do relatório para fases posteriores, com ações sensíveis inicialmente demonstrativas
+- [x] Fase 2: Hóspedes, Mensagens e IA, Guia e Serviços (leitura/demonstração)
+- [ ] Fase 3: Central Operacional, Tarefas, Vistorias e Manutenção

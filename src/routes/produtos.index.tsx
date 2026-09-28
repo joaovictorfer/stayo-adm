@@ -10,6 +10,7 @@ import {
   Panel,
   SearchInput,
 } from "../components/data/ListStates";
+import { PropertyVisual } from "../components/admin/PhaseOnePatterns";
 import { Drawer } from "../components/patterns/Drawer";
 import { coreApi, productsListQuery } from "../lib/api/queries";
 import { formatMoney } from "../lib/format";
@@ -71,27 +72,18 @@ function ProductsPage() {
             }
           />
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((p) => (
-              <li key={p.id}>
-                <Link
-                  to="/produtos/$id"
-                  params={{ id: p.id }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  <span className="font-medium">{p.name}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {p.category ?? "Sem categoria"}
-                  </span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {formatMoney(p.price, p.currency) ?? "—"}
-                    {p.active ? "" : " · inativo"}
-                  </span>
-                </Link>
-              </li>
+              <Link key={p.id} to="/produtos/$id" params={{ id: p.id }} className="overflow-hidden rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] transition hover:-translate-y-0.5">
+                <PropertyVisual label={p.category ?? "Serviço"} />
+                <div className="space-y-1 p-3">
+                  <b className="block truncate text-sm">{p.name}</b>
+                  <small className="block text-[var(--admin-muted)]">{formatMoney(p.price, p.currency) ?? "Preço a definir"}{p.unit ? ` / ${p.unit}` : ""}</small>
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] ${p.active ? "bg-[var(--stayo-forest-soft)] text-[var(--stayo-forest)]" : "bg-[var(--stayo-gold-soft)]"}`}>{p.active ? "Disponível" : "Indisponível"}</span>
+                </div>
+              </Link>
             ))}
-          </ul>
+          </div>
         )}
       </Panel>
 

@@ -10,6 +10,7 @@ import {
   Panel,
   SearchInput,
 } from "../components/data/ListStates";
+import { PropertyVisual } from "../components/admin/PhaseOnePatterns";
 import { Drawer } from "../components/patterns/Drawer";
 import { coreApi, guideEntriesListQuery } from "../lib/api/queries";
 import type { GuideEntry } from "../types/core";
@@ -79,27 +80,18 @@ function GuidePage() {
             }
           />
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
+          <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((g) => (
-              <li key={g.id}>
-                <Link
-                  to="/guia/$id"
-                  params={{ id: g.id }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  <span className="font-medium">{g.title}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {g.category ?? "Sem categoria"}
-                    {g.propertyName ? ` · ${g.propertyName}` : ` · ${g.scope}`}
-                  </span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink-muted)" }}>
-                    {g.status}
-                  </span>
-                </Link>
-              </li>
+              <Link key={g.id} to="/guia/$id" params={{ id: g.id }} className="overflow-hidden rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] transition hover:-translate-y-0.5">
+                <PropertyVisual label={g.propertyName ?? "Guia geral"} />
+                <div className="space-y-1 p-3">
+                  <b className="block truncate text-sm">{g.title}</b>
+                  <small className="block truncate text-[var(--admin-muted)]">{g.category ?? "Sem categoria"}</small>
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] ${/public/i.test(g.status) ? "bg-[var(--stayo-forest-soft)] text-[var(--stayo-forest)]" : "bg-[var(--stayo-gold-soft)]"}`}>{/public/i.test(g.status) ? "Publicado" : "Rascunho"}</span>
+                </div>
+              </Link>
             ))}
-          </ul>
+          </div>
         )}
       </Panel>
 
