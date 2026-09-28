@@ -3,17 +3,18 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { ClipboardList, DollarSign, FileText, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
+import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
+
 import {
   EmptyRows,
   ErrorRows,
   Field,
   ListSkeleton,
-  PageHeader,
   Panel,
   SearchInput,
 } from "../components/data/ListStates";
 import { Drawer } from "../components/patterns/Drawer";
-import { IndicatorCard } from "../components/patterns/IndicatorCard";
 import { LinkedField } from "../components/patterns/LinkedField";
 import {
   expensesListQuery,
@@ -71,36 +72,24 @@ function FinanceSummary() {
   const pending = "…";
 
   return (
-    <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <IndicatorCard
-        icon={Wallet}
-        label="Total repassado"
-        value={payoutsQuery.isPending ? pending : (formatMoney(totalPayouts) ?? "—")}
+    <div className="portfolio-metrics mb-4">
+      <PortfolioMetric icon={Wallet} label="Total repassado" value={payoutsQuery.isPending ? pending : (formatMoney(totalPayouts) ?? "—")}
       />
-      <IndicatorCard
-        icon={FileText}
-        label="Faturas pendentes"
-        value={
+      <PortfolioMetric icon={FileText} label="Faturas pendentes" value={
           invoicesQuery.isPending
             ? pending
             : `${pendingInvoices.length} · ${formatMoney(pendingInvoices.reduce((s, i) => s + i.total, 0))}`
         }
-        tone={pendingInvoices.length > 0 ? "warning" : "neutral"}
+        tone={pendingInvoices.length > 0 ? "warning" : "success"}
       />
-      <IndicatorCard
-        icon={ClipboardList}
-        label="Fechamentos em aberto"
-        value={
+      <PortfolioMetric icon={ClipboardList} label="Fechamentos em aberto" value={
           settlementsQuery.isPending
             ? pending
             : `${openSettlements.length} · ${formatMoney(openSettlements.reduce((s, x) => s + x.total, 0))}`
         }
         tone={openSettlements.length > 0 ? "warning" : "neutral"}
       />
-      <IndicatorCard
-        icon={DollarSign}
-        label="Despesas em aberto"
-        value={
+      <PortfolioMetric icon={DollarSign} label="Despesas em aberto" value={
           expensesQuery.isPending
             ? pending
             : `${openExpenses.length} · ${formatMoney(openExpenses.reduce((s, x) => s + x.amount, 0))}`
@@ -116,24 +105,9 @@ function FinancePage() {
 
   return (
     <>
-      <PageHeader title="Financeiro" />
-      <FinanceSummary />
-      <div className="mb-4 flex gap-2 border-b" style={{ borderColor: "var(--stayo-border)" }}>
-        {(Object.keys(tabLabels) as (keyof typeof tabLabels)[]).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className="px-3 py-2 text-sm"
-            style={{
-              color: tab === t ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-              borderBottom: tab === t ? "2px solid var(--stayo-forest)" : "2px solid transparent",
-            }}
-          >
-            {tabLabels[t]}
-          </button>
-        ))}
-      </div>
+      <AdminPageHeader eyebrow="Gestão" title="Financeiro" description="Repasses, faturas, fechamentos e despesas em leitura. Nenhum pagamento ou cobrança é gerado aqui." />
+      <div className="mt-5"><FinanceSummary /></div>
+      <div className="mb-4"><ModuleTabs value={tab} onChange={setTab} options={(Object.keys(tabLabels) as (keyof typeof tabLabels)[]).map((t) => ({ value: t, label: tabLabels[t] }))} /></div>
 
       {tab === "visao-geral" ? (
         <PayoutsTab />
