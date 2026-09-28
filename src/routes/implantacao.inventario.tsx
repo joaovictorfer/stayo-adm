@@ -38,7 +38,7 @@ function InventoryPortfolio() {
   });
   const [tab, setTab] = useState<Tab>("faltando");
   const [q, setQ] = useState("");
-  const names = useMemo(() => new Map((impls.data ?? []).map((p) => [p.id, opportunityTitle(p)])), [impls.data]);
+  const names = useMemo(() => new Map((impls.data?.data ?? []).map((p) => [p.id, opportunityTitle(p)] as [string, string])), [impls.data]);
   const all = (items.data ?? []).map((i) => ({ ...i, missing: Math.max(0, i.required_qty - i.existing_qty), place: names.get(i.implementation_id) ?? "Implantação" }));
   const rows = all.filter((i) => {
     const term = q.trim().toLowerCase();

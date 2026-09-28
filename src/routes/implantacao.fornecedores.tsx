@@ -39,7 +39,7 @@ function SuppliersPortfolio() {
   });
   const [tab, setTab] = useState<Tab>("revisar");
   const [q, setQ] = useState("");
-  const names = useMemo(() => new Map((impls.data ?? []).map((p) => [p.id, opportunityTitle(p)])), [impls.data]);
+  const names = useMemo(() => new Map((impls.data?.data ?? []).map((p) => [p.id, opportunityTitle(p)] as [string, string])), [impls.data]);
   const all = (entries.data?.rows ?? []).map((r) => ({ ...r, cat: entries.data?.cats.get(r.category_key) ?? r.category_key, place: names.get(r.implementation_id) ?? "Implantação" }));
   const rows = all.filter((r) => {
     const term = q.trim().toLowerCase();
