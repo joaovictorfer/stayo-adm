@@ -53,7 +53,7 @@ function OwnerPortalPrototype() {
   };
 
   return (
-    <main className="stayo-owner-theme min-h-dvh bg-[var(--portal-bg)] text-[var(--portal-navy)]" style={{ ["--portal-success-soft" as string]: "color-mix(in srgb, var(--portal-success) 14%, transparent)" }}>
+    <main className="stayo-owner-theme min-h-dvh overflow-x-hidden [&_button]:transition-[transform,background-color,border-color,color] [&_button]:duration-200 [&_button:active:not(:disabled)]:scale-[0.97] bg-[var(--portal-bg)] text-[var(--portal-navy)]" style={{ ["--portal-success-soft" as string]: "color-mix(in srgb, var(--portal-success) 14%, transparent)" }}>
       <nav className="sticky top-0 z-30 border-b border-[var(--portal-border)] bg-[var(--portal-surface)]/95 backdrop-blur" aria-label="Estados do protótipo">
         <div className="hide-scrollbar mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 py-2">
           <span className="shrink-0 self-center text-[11px] font-semibold uppercase text-[var(--portal-muted)]">Protótipo</span>
@@ -72,6 +72,7 @@ function OwnerPortalPrototype() {
           <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--portal-surface-soft)] text-sm font-semibold">J</span>
         </header>
 
+        <div key={screen} className="animate-in fade-in slide-in-from-bottom-3 duration-300 ease-out">
         {screen === "home" && <HomeScreen go={go} />}
         {screen === "property" && <SubPage title="Meu imóvel" onBack={() => go("home")}><img src={propertyPhoto} alt="Vêneto A201" className="aspect-[4/3] w-full rounded-3xl object-cover" /><p className="mt-4 text-sm text-[var(--portal-muted)]">Área do imóvel — fora do escopo desta fase.</p></SubPage>}
         {screen === "calendar" && <CalendarScreen range={range} setRange={setRange} onBack={() => go("home")} onSubmit={() => go("sent")} />}
@@ -92,6 +93,7 @@ function OwnerPortalPrototype() {
             <ListRow title="10–12 jul" meta="2 noites" status="Concluído" tone="muted" />
           </SubPage>
         )}
+        </div>
       </div>
     </main>
   );
@@ -109,7 +111,7 @@ function HomeScreen({ go }: { go: (s: Screen) => void }) {
       <div>
         <p className="text-sm text-[var(--portal-muted)]">Olá, João</p>
         <div className="relative mt-4 overflow-hidden rounded-3xl">
-          <img src={propertyPhoto} alt="Vêneto A201" className="aspect-[4/3] w-full object-cover md:aspect-[5/4]" />
+          <img src={propertyPhoto} alt="Vêneto A201" className="aspect-[4/3] w-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-105 md:aspect-[5/4]" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--portal-navy)]/85 to-transparent p-5 pt-16 text-[var(--portal-surface)]">
             <h1 className="font-serif text-3xl leading-tight">Vêneto A201</h1>
             <p className="mt-1 text-sm opacity-85">Canela · RS</p>
@@ -117,9 +119,9 @@ function HomeScreen({ go }: { go: (s: Screen) => void }) {
         </div>
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3 md:mt-12">
-        {entries.map((e) => (
-          <button key={e.id} type="button" onClick={() => go(e.id)}
-            className={cn("flex min-h-[120px] flex-col justify-between rounded-3xl border p-4 text-left transition-colors md:min-h-[150px]",
+        {entries.map((e, i) => (
+          <button key={e.id} style={{ animationDelay: `${80 + i * 60}ms`, animationFillMode: "both" }} type="button" onClick={() => go(e.id)}
+            className={cn("animate-in fade-in zoom-in-95 duration-500 flex min-h-[120px] hover:-translate-y-0.5 hover:shadow-lg flex-col justify-between rounded-3xl border p-4 text-left transition-colors md:min-h-[150px]",
               e.id === "calendar" ? "border-[var(--portal-navy)] bg-[var(--portal-navy)] text-[var(--portal-surface)]" : "border-[var(--portal-border)] bg-[var(--portal-surface)] hover:border-[var(--portal-navy)]/30")}>
             <e.icon className="h-6 w-6" />
             <span className="text-base font-semibold leading-tight">{e.label}</span>
@@ -131,11 +133,28 @@ function HomeScreen({ go }: { go: (s: Screen) => void }) {
 }
 
 function SubPage({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
+  const [dx, setDx] = useState(0);
+  const [start, setStart] = useState<{ x: number; y: number } | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  const end = () => {
+    if (dx > 110) { setLeaving(true); window.setTimeout(onBack, 220); }
+    else setDx(0);
+    setStart(null);
+  };
   return (
-    <div className="mx-auto max-w-xl">
+    <div
+      className="relative mx-auto max-w-xl touch-pan-y"
+      style={{ transform: `translateX(${leaving ? 420 : dx}px)`, opacity: leaving ? 0 : 1 - Math.min(dx, 300) / 600, transition: start ? "none" : "transform 260ms cubic-bezier(.2,.8,.2,1), opacity 260ms" }}
+      onPointerDown={(e) => { if (e.pointerType !== "mouse" && !(e.target as HTMLElement).closest("button,textarea,input")) setStart({ x: e.clientX, y: e.clientY }); }}
+      onPointerMove={(e) => { if (!start) return; const x = e.clientX - start.x; if (Math.abs(e.clientY - start.y) > Math.abs(x) && dx === 0) return setStart(null); setDx(Math.max(0, x)); }}
+      onPointerUp={end}
+      onPointerCancel={end}
+    >
+      {dx > 20 && <span className="pointer-events-none fixed left-3 top-1/2 z-40 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-[var(--portal-navy)] text-[var(--portal-surface)] shadow-lg" style={{ opacity: Math.min(1, dx / 110), transform: `translateY(-50%) scale(${0.6 + Math.min(1, dx / 110) * 0.4})` }}><ArrowLeft className="h-5 w-5" /></span>}
       <button type="button" onClick={onBack} className="-ml-2 inline-flex min-h-11 items-center gap-1 px-2 text-sm font-medium"><ArrowLeft className="h-4 w-4" /> Início</button>
       <h1 className="mt-2 mb-6 font-serif text-3xl">{title}</h1>
-      <div className="space-y-3">{children}</div>
+      <div className="space-y-3 [&>*]:animate-in [&>*]:fade-in [&>*]:slide-in-from-bottom-2 [&>*]:duration-500">{children}</div>
+      <p className="pt-8 text-center text-[11px] text-[var(--portal-muted)] md:hidden">Deslize para a direita para voltar</p>
     </div>
   );
 }
@@ -170,8 +189,8 @@ function CalendarScreen({ range, setRange, onBack, onSubmit }: { range: [number 
               <button key={d} type="button" disabled={busy} onClick={() => pick(d)} aria-label={busy ? `${d} — Indisponível` : `${d}`}
                 className={cn("mx-auto grid h-11 w-full place-items-center text-sm",
                   busy && "cursor-not-allowed text-[var(--portal-muted)]/50 line-through",
-                  inside && "bg-[var(--portal-success-soft)]",
-                  edge && "rounded-full bg-[var(--portal-navy)] font-semibold text-[var(--portal-surface)]")}>
+                  inside && "animate-in fade-in duration-300 bg-[var(--portal-success-soft)]", !busy && !edge && "rounded-full hover:bg-[var(--portal-surface-soft)]",
+                  edge && "animate-in zoom-in-50 duration-300 rounded-full bg-[var(--portal-navy)] shadow-md font-semibold text-[var(--portal-surface)]")}>
                 {d}
               </button>
             );
@@ -184,7 +203,7 @@ function CalendarScreen({ range, setRange, onBack, onSubmit }: { range: [number 
       </div>
 
       {nights > 0 ? (
-        <div className="space-y-4 pt-2">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 pt-2">
           <div className="rounded-3xl bg-[var(--portal-surface)] p-5 text-center">
             <p className="font-serif text-2xl">{start} set → {end} set</p>
             <p className="mt-1 text-sm text-[var(--portal-muted)]">{nights} {nights === 1 ? "noite" : "noites"}</p>
@@ -208,7 +227,7 @@ function StatusScreen({ icon, title, subtitle, status, period, celebrate, action
   return (
     <SubPage title="" onBack={onBack}>
       <div className="text-center">
-        <div className={cn("relative mx-auto grid h-20 w-20 place-items-center rounded-full",
+        <div className={cn("animate-in zoom-in-50 spin-in-12 duration-500 relative mx-auto grid h-20 w-20 place-items-center rounded-full",
           icon === "x" ? "bg-[var(--portal-surface-soft)] text-[var(--portal-muted)]" : "bg-[var(--portal-success-soft)] text-[var(--portal-success)]")}>
           {celebrate && <span className="absolute inset-0 animate-ping rounded-full bg-[var(--portal-success-soft)] [animation-iteration-count:2]" />}
           <Icon className="relative h-9 w-9" />
@@ -239,12 +258,12 @@ function PixScreen({ copied, onCopy, onBack }: { copied: boolean; onCopy: () => 
         <p className="text-sm text-[var(--portal-muted)]">Taxa de limpeza</p>
         <p className="mt-1 font-serif text-4xl">R$ 250,00</p>
         <p className="mt-1 text-[11px] text-[var(--portal-muted)]">Valor de exemplo</p>
-        <div className="relative mx-auto mt-5 w-48">
+        <div className="animate-in fade-in zoom-in-90 duration-700 relative mx-auto mt-5 w-48">
           <DemoQr />
           <span className="absolute inset-x-0 -bottom-2 mx-auto w-fit rounded-full bg-[var(--portal-surface-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--portal-muted)]">Demonstração</span>
         </div>
         <Button variant="outline" className="mt-6 h-12 w-full rounded-2xl" onClick={onCopy}>
-          {copied ? <><Check className="h-4 w-4" /> Código copiado</> : <><Copy className="h-4 w-4" /> Copiar código PIX</>}
+          {copied ? <><Check className="h-4 w-4 animate-in zoom-in-0 duration-300 text-[var(--portal-success)]" /> Código copiado</> : <><Copy className="h-4 w-4" /> Copiar código PIX</>}
         </Button>
       </div>
       <dl className="space-y-3 rounded-3xl border border-[var(--portal-border)] p-5 text-sm">
