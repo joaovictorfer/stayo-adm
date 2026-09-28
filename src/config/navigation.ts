@@ -103,6 +103,10 @@ export const navigation: NavItem[] = [
     path: "/operacao",
     icon: "settings-automation",
     roles: ["super_admin", "admin", "operations"],
+    children: [
+      { id: "operations-overview", label: "Central operacional", path: "/operacao", icon: "list", roles: ["super_admin", "admin", "operations"] },
+      { id: "operations-agenda", label: "Agenda", path: "/operacao/agenda", icon: "calendar", roles: ["super_admin", "admin", "operations"] },
+    ],
   },
   {
     id: "providers",
@@ -124,6 +128,10 @@ export const navigation: NavItem[] = [
     path: "/proprietarios",
     icon: "user-star",
     roles: ["super_admin", "admin", "commercial"],
+    children: [
+      { id: "owners-list", label: "Proprietários", path: "/proprietarios", icon: "users", roles: ["super_admin", "admin", "commercial"] },
+      { id: "owners-submissions", label: "Cadastros enviados", path: "/proprietarios/cadastros", icon: "file-text", roles: ["super_admin", "admin", "commercial"] },
+    ],
   },
   {
     id: "contracts",

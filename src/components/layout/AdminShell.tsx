@@ -17,6 +17,7 @@ import {
   Menu,
   MessageCircle,
   Plug,
+  Home,
   Search,
   Server,
   Settings,
@@ -61,6 +62,7 @@ const icons: Record<string, ComponentType<{ size?: number; className?: string }>
   settings: Settings,
   "server-2": Server,
   plug: Plug,
+  home: Home,
 };
 
 /** `to` vem de dados de configuração, então usamos o Link com tipagem solta. */
@@ -239,12 +241,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
           >
             <Menu size={18} />
           </Button>
-          <nav aria-label="Breadcrumb" className="min-w-0 text-sm">
-            <span className="hidden text-[var(--admin-muted)] sm:inline">Centro de Controle</span>
+          <nav aria-label="Breadcrumb" className="flex min-w-0 items-center text-sm">
+            <Home size={14} className="mr-2 hidden shrink-0 text-[var(--admin-accent)] sm:block" />
+            <span className="hidden text-[var(--admin-muted)] sm:inline">Visão geral</span>
             {section && (
               <>
                 <span className="mx-2 hidden text-[var(--admin-border)] sm:inline">/</span>
-                <span className="font-medium text-[var(--admin-text)]">{section.label}</span>
+                <span className="truncate font-medium text-[var(--admin-text)]">{section.label}</span>
               </>
             )}
           </nav>
