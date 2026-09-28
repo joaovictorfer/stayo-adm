@@ -53,7 +53,7 @@ function OwnerPortalPrototype() {
   };
 
   return (
-    <main className="min-h-dvh bg-[var(--portal-background)] text-[var(--portal-navy)]">
+    <main className="stayo-owner-theme min-h-dvh bg-[var(--portal-bg)] text-[var(--portal-navy)]" style={{ ["--portal-success-soft" as string]: "color-mix(in srgb, var(--portal-success) 14%, transparent)" }}>
       <nav className="sticky top-0 z-30 border-b border-[var(--portal-border)] bg-[var(--portal-surface)]/95 backdrop-blur" aria-label="Estados do protótipo">
         <div className="hide-scrollbar mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 py-2">
           <span className="shrink-0 self-center text-[11px] font-semibold uppercase text-[var(--portal-muted)]">Protótipo</span>
