@@ -17,11 +17,15 @@ import { Route as ProprietarioPrototipoRouteImport } from './routes/proprietario
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
+import { Route as ConfiguracoesAlertasRouteImport } from './routes/configuracoes.alertas'
 import { Route as ConfiguracoesAuditoriaRouteImport } from './routes/configuracoes.auditoria'
+import { Route as ConfiguracoesAutomacoesRouteImport } from './routes/configuracoes.automacoes'
 import { Route as ConfiguracoesComercialRouteImport } from './routes/configuracoes.comercial'
+import { Route as ConfiguracoesEquipeRouteImport } from './routes/configuracoes.equipe'
 import { Route as ConfiguracoesGuiasRouteImport } from './routes/configuracoes.guias'
 import { Route as ConfiguracoesIntegracoesRouteImport } from './routes/configuracoes.integracoes'
 import { Route as ConfiguracoesMigracaoRouteImport } from './routes/configuracoes.migracao'
+import { Route as ConfiguracoesPortalStaffRouteImport } from './routes/configuracoes.portal-staff'
 import { Route as ConfiguracoesStayoCoreRouteImport } from './routes/configuracoes.stayo-core'
 import { Route as ConfiguracoesVistoriasPrototipoRouteImport } from './routes/configuracoes.vistorias-prototipo'
 import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
@@ -121,14 +125,29 @@ const ConfiguracoesIndexRoute = ConfiguracoesIndexRouteImport.update({
   path: '/configuracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfiguracoesAlertasRoute = ConfiguracoesAlertasRouteImport.update({
+  id: '/configuracoes/alertas',
+  path: '/configuracoes/alertas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracoesAuditoriaRoute = ConfiguracoesAuditoriaRouteImport.update({
   id: '/configuracoes/auditoria',
   path: '/configuracoes/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfiguracoesAutomacoesRoute = ConfiguracoesAutomacoesRouteImport.update({
+  id: '/configuracoes/automacoes',
+  path: '/configuracoes/automacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfiguracoesComercialRoute = ConfiguracoesComercialRouteImport.update({
   id: '/configuracoes/comercial',
   path: '/configuracoes/comercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesEquipeRoute = ConfiguracoesEquipeRouteImport.update({
+  id: '/configuracoes/equipe',
+  path: '/configuracoes/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesGuiasRoute = ConfiguracoesGuiasRouteImport.update({
@@ -147,6 +166,12 @@ const ConfiguracoesMigracaoRoute = ConfiguracoesMigracaoRouteImport.update({
   path: '/configuracoes/migracao',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfiguracoesPortalStaffRoute =
+  ConfiguracoesPortalStaffRouteImport.update({
+    id: '/configuracoes/portal-staff',
+    path: '/configuracoes/portal-staff',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ConfiguracoesStayoCoreRoute = ConfiguracoesStayoCoreRouteImport.update({
   id: '/configuracoes/stayo-core',
   path: '/configuracoes/stayo-core',
@@ -451,11 +476,15 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/alertas': typeof ConfiguracoesAlertasRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/automacoes': typeof ConfiguracoesAutomacoesRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
+  '/configuracoes/equipe': typeof ConfiguracoesEquipeRoute
   '/configuracoes/guias': typeof ConfiguracoesGuiasRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
+  '/configuracoes/portal-staff': typeof ConfiguracoesPortalStaffRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -523,11 +552,15 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/alertas': typeof ConfiguracoesAlertasRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/automacoes': typeof ConfiguracoesAutomacoesRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
+  '/configuracoes/equipe': typeof ConfiguracoesEquipeRoute
   '/configuracoes/guias': typeof ConfiguracoesGuiasRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
+  '/configuracoes/portal-staff': typeof ConfiguracoesPortalStaffRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -596,11 +629,15 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/condominios/$id': typeof CondominiosIdRoute
+  '/configuracoes/alertas': typeof ConfiguracoesAlertasRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
+  '/configuracoes/automacoes': typeof ConfiguracoesAutomacoesRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
+  '/configuracoes/equipe': typeof ConfiguracoesEquipeRoute
   '/configuracoes/guias': typeof ConfiguracoesGuiasRoute
   '/configuracoes/integracoes': typeof ConfiguracoesIntegracoesRoute
   '/configuracoes/migracao': typeof ConfiguracoesMigracaoRoute
+  '/configuracoes/portal-staff': typeof ConfiguracoesPortalStaffRoute
   '/configuracoes/stayo-core': typeof ConfiguracoesStayoCoreRoute
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
@@ -670,11 +707,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/proprietario-prototipo'
     | '/condominios/$id'
+    | '/configuracoes/alertas'
     | '/configuracoes/auditoria'
+    | '/configuracoes/automacoes'
     | '/configuracoes/comercial'
+    | '/configuracoes/equipe'
     | '/configuracoes/guias'
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
+    | '/configuracoes/portal-staff'
     | '/configuracoes/stayo-core'
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
@@ -742,11 +783,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/proprietario-prototipo'
     | '/condominios/$id'
+    | '/configuracoes/alertas'
     | '/configuracoes/auditoria'
+    | '/configuracoes/automacoes'
     | '/configuracoes/comercial'
+    | '/configuracoes/equipe'
     | '/configuracoes/guias'
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
+    | '/configuracoes/portal-staff'
     | '/configuracoes/stayo-core'
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
@@ -814,11 +859,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/proprietario-prototipo'
     | '/condominios/$id'
+    | '/configuracoes/alertas'
     | '/configuracoes/auditoria'
+    | '/configuracoes/automacoes'
     | '/configuracoes/comercial'
+    | '/configuracoes/equipe'
     | '/configuracoes/guias'
     | '/configuracoes/integracoes'
     | '/configuracoes/migracao'
+    | '/configuracoes/portal-staff'
     | '/configuracoes/stayo-core'
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
@@ -887,11 +936,15 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ProprietarioPrototipoRoute: typeof ProprietarioPrototipoRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
+  ConfiguracoesAlertasRoute: typeof ConfiguracoesAlertasRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
+  ConfiguracoesAutomacoesRoute: typeof ConfiguracoesAutomacoesRoute
   ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
+  ConfiguracoesEquipeRoute: typeof ConfiguracoesEquipeRoute
   ConfiguracoesGuiasRoute: typeof ConfiguracoesGuiasRoute
   ConfiguracoesIntegracoesRoute: typeof ConfiguracoesIntegracoesRoute
   ConfiguracoesMigracaoRoute: typeof ConfiguracoesMigracaoRoute
+  ConfiguracoesPortalStaffRoute: typeof ConfiguracoesPortalStaffRoute
   ConfiguracoesStayoCoreRoute: typeof ConfiguracoesStayoCoreRoute
   ConfiguracoesVistoriasPrototipoRoute: typeof ConfiguracoesVistoriasPrototipoRoute
   ContratosIdRoute: typeof ContratosIdRoute
@@ -1011,6 +1064,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/configuracoes/alertas': {
+      id: '/configuracoes/alertas'
+      path: '/configuracoes/alertas'
+      fullPath: '/configuracoes/alertas'
+      preLoaderRoute: typeof ConfiguracoesAlertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/configuracoes/auditoria': {
       id: '/configuracoes/auditoria'
       path: '/configuracoes/auditoria'
@@ -1018,11 +1078,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracoesAuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/configuracoes/automacoes': {
+      id: '/configuracoes/automacoes'
+      path: '/configuracoes/automacoes'
+      fullPath: '/configuracoes/automacoes'
+      preLoaderRoute: typeof ConfiguracoesAutomacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/configuracoes/comercial': {
       id: '/configuracoes/comercial'
       path: '/configuracoes/comercial'
       fullPath: '/configuracoes/comercial'
       preLoaderRoute: typeof ConfiguracoesComercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/equipe': {
+      id: '/configuracoes/equipe'
+      path: '/configuracoes/equipe'
+      fullPath: '/configuracoes/equipe'
+      preLoaderRoute: typeof ConfiguracoesEquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/guias': {
@@ -1044,6 +1118,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes/migracao'
       fullPath: '/configuracoes/migracao'
       preLoaderRoute: typeof ConfiguracoesMigracaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes/portal-staff': {
+      id: '/configuracoes/portal-staff'
+      path: '/configuracoes/portal-staff'
+      fullPath: '/configuracoes/portal-staff'
+      preLoaderRoute: typeof ConfiguracoesPortalStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes/stayo-core': {
@@ -1455,11 +1536,15 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ProprietarioPrototipoRoute: ProprietarioPrototipoRoute,
   CondominiosIdRoute: CondominiosIdRoute,
+  ConfiguracoesAlertasRoute: ConfiguracoesAlertasRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
+  ConfiguracoesAutomacoesRoute: ConfiguracoesAutomacoesRoute,
   ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,
+  ConfiguracoesEquipeRoute: ConfiguracoesEquipeRoute,
   ConfiguracoesGuiasRoute: ConfiguracoesGuiasRoute,
   ConfiguracoesIntegracoesRoute: ConfiguracoesIntegracoesRoute,
   ConfiguracoesMigracaoRoute: ConfiguracoesMigracaoRoute,
+  ConfiguracoesPortalStaffRoute: ConfiguracoesPortalStaffRoute,
   ConfiguracoesStayoCoreRoute: ConfiguracoesStayoCoreRoute,
   ConfiguracoesVistoriasPrototipoRoute: ConfiguracoesVistoriasPrototipoRoute,
   ContratosIdRoute: ContratosIdRoute,
