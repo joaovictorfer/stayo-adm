@@ -61,3 +61,4 @@
 - [x] 6/7 Dados recebidos com revisão + área "Visível ao proprietário" + portal só com o liberado
 - [x] 7/7 Ciclo de acesso: portal só entra em operação com vínculo oficial do Core; ativação no Core pendente (dependência)
 - [x] Criar e validar protótipo visual isolado dos Guias de Implantação em 375, 390, 430 e 1440 px
+- [x] Desenhar e validar o Guia de Enxoval no mesmo sistema visual de Utensílios, sem dados oficiais
