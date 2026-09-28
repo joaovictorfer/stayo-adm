@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { StayoLogo } from "@/components/brand/StayoLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Stage4Hub } from "@/components/prototypes/Stage4Hub";
 
 export const Route = createFileRoute("/guias-implantacao-prototipo")({
   head: () => ({
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/guias-implantacao-prototipo")({
 });
 
 type Category = "Cama" | "Banho" | "Cozinha" | "Complementos";
-type View = "admin" | "property" | "owner" | "visibility";
+type View = "hub" | "admin" | "property" | "owner" | "visibility";
 type Answer = "unanswered" | "owned" | "buy";
 
 type LinenItem = {
@@ -121,7 +122,7 @@ const views: Array<{ id: View; label: string }> = [
 ];
 
 function LinenGuidePrototype() {
-  const [view, setView] = useState<View>("admin");
+  const [view, setView] = useState<View>("hub");
   const [items, setItems] = useState(initialItems);
   const [category, setCategory] = useState<"Todos" | Category>("Todos");
   const [query, setQuery] = useState("");
@@ -176,7 +177,8 @@ function LinenGuidePrototype() {
       </nav>
 
       <div className="mx-auto w-full max-w-6xl px-4 py-6 pb-[max(2rem,env(safe-area-inset-bottom))] md:px-8 md:py-10">
-        <DemoNotice />
+        {view !== "hub" && <DemoNotice />}
+        {view === "hub" && <Stage4Hub />}
         {view === "admin" && (
           <AdminCatalog items={shown} category={category} query={query} onCategory={setCategory} onQuery={setQuery} onDetail={setDetail} onEdit={setEditing} />
         )}
