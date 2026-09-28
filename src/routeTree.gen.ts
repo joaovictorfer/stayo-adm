@@ -43,6 +43,8 @@ import { Route as ImoveisIndexRouteImport } from './routes/imoveis.index'
 import { Route as ImoveisIdRouteImport } from './routes/imoveis.$id'
 import { Route as ImplantacaoIndexRouteImport } from './routes/implantacao.index'
 import { Route as ImplantacaoIdRouteImport } from './routes/implantacao.$id'
+import { Route as ImplantacaoFornecedoresRouteImport } from './routes/implantacao.fornecedores'
+import { Route as ImplantacaoInventarioRouteImport } from './routes/implantacao.inventario'
 import { Route as ImplantacaoPropostasRouteImport } from './routes/implantacao.propostas'
 import { Route as ImplantacaoTemplatesRouteImport } from './routes/implantacao.templates'
 import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
@@ -257,6 +259,16 @@ const ImplantacaoIdRoute = ImplantacaoIdRouteImport.update({
   path: '/implantacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImplantacaoFornecedoresRoute = ImplantacaoFornecedoresRouteImport.update({
+  id: '/implantacao/fornecedores',
+  path: '/implantacao/fornecedores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImplantacaoInventarioRoute = ImplantacaoInventarioRouteImport.update({
+  id: '/implantacao/inventario',
+  path: '/implantacao/inventario',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImplantacaoPropostasRoute = ImplantacaoPropostasRouteImport.update({
   id: '/implantacao/propostas',
   path: '/implantacao/propostas',
@@ -459,6 +471,8 @@ export interface FileRoutesByFullPath {
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
+  '/implantacao/fornecedores': typeof ImplantacaoFornecedoresRoute
+  '/implantacao/inventario': typeof ImplantacaoInventarioRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
@@ -529,6 +543,8 @@ export interface FileRoutesByTo {
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
+  '/implantacao/fornecedores': typeof ImplantacaoFornecedoresRoute
+  '/implantacao/inventario': typeof ImplantacaoInventarioRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
@@ -600,6 +616,8 @@ export interface FileRoutesById {
   '/hospedes/$id': typeof HospedesIdRoute
   '/imoveis/$id': typeof ImoveisIdRoute
   '/implantacao/$id': typeof ImplantacaoIdRoute
+  '/implantacao/fornecedores': typeof ImplantacaoFornecedoresRoute
+  '/implantacao/inventario': typeof ImplantacaoInventarioRoute
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
@@ -672,6 +690,8 @@ export interface FileRouteTypes {
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
+    | '/implantacao/fornecedores'
+    | '/implantacao/inventario'
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/mensagens/$id'
@@ -742,6 +762,8 @@ export interface FileRouteTypes {
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
+    | '/implantacao/fornecedores'
+    | '/implantacao/inventario'
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/mensagens/$id'
@@ -812,6 +834,8 @@ export interface FileRouteTypes {
     | '/hospedes/$id'
     | '/imoveis/$id'
     | '/implantacao/$id'
+    | '/implantacao/fornecedores'
+    | '/implantacao/inventario'
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/mensagens/$id'
@@ -883,6 +907,8 @@ export interface RootRouteChildren {
   HospedesIdRoute: typeof HospedesIdRoute
   ImoveisIdRoute: typeof ImoveisIdRoute
   ImplantacaoIdRoute: typeof ImplantacaoIdRoute
+  ImplantacaoFornecedoresRoute: typeof ImplantacaoFornecedoresRoute
+  ImplantacaoInventarioRoute: typeof ImplantacaoInventarioRoute
   ImplantacaoPropostasRoute: typeof ImplantacaoPropostasRoute
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
@@ -1167,6 +1193,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImplantacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/implantacao/fornecedores': {
+      id: '/implantacao/fornecedores'
+      path: '/implantacao/fornecedores'
+      fullPath: '/implantacao/fornecedores'
+      preLoaderRoute: typeof ImplantacaoFornecedoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/implantacao/inventario': {
+      id: '/implantacao/inventario'
+      path: '/implantacao/inventario'
+      fullPath: '/implantacao/inventario'
+      preLoaderRoute: typeof ImplantacaoInventarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/implantacao/propostas': {
       id: '/implantacao/propostas'
       path: '/implantacao/propostas'
@@ -1435,6 +1475,8 @@ const rootRouteChildren: RootRouteChildren = {
   HospedesIdRoute: HospedesIdRoute,
   ImoveisIdRoute: ImoveisIdRoute,
   ImplantacaoIdRoute: ImplantacaoIdRoute,
+  ImplantacaoFornecedoresRoute: ImplantacaoFornecedoresRoute,
+  ImplantacaoInventarioRoute: ImplantacaoInventarioRoute,
   ImplantacaoPropostasRoute: ImplantacaoPropostasRoute,
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
