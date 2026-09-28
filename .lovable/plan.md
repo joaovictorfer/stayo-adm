@@ -1,82 +1,85 @@
-# Guia de Utensílios — revisão Admin
+# Guia de Enxoval — proposta visual integrada
 
 ## Objetivo
 
-Desenhar, no protótipo visual isolado, a revisão das respostas do proprietário com leitura imediata de quantidade informada, compra prevista, ausência de resposta e diferença para o recomendado. Não alterar o fluxo Admin real, banco, APIs ou inventário.
+Desenhar o Guia de Enxoval usando exatamente o sistema visual já aprovado para o Guia de Utensílios. A proposta ficará no protótipo isolado, com estado local e conteúdo demonstrativo claramente identificado, sem alterar telas reais, banco, APIs ou inventário.
 
-## Arquitetura da proposta
+## Princípio de continuidade
 
-### 1. Topo compacto
+- Reutilizar a mesma linguagem de catálogo visual, cards, chips, busca, detalhe progressivo, aplicação ao imóvel e checklist do proprietário.
+- Mudar somente o tipo do guia, as categorias e o campo específico `Tamanho/padrão`.
+- Manter separados os quatro conceitos: catálogo STAYO, cópia aplicada ao imóvel, resposta do proprietário e confirmação operacional.
+- Não criar uma navegação, arquitetura ou conjunto de componentes visuais paralelo.
 
-- Título `Guia de utensílios`.
-- Resumo em uma linha ou grade curta conforme a largura:
-  - `32 itens`
-  - `18 confirmados`
-  - `4 para revisar`
-  - `10 não informados`
-- Filtros em chips: `Todos`, `Para revisar`, `Faltando`, `Vai comprar`, `Concluídos`.
-- Sem busca, categorias ou ações de catálogo nesta proposta, para manter o foco na revisão.
+## 1. Admin — catálogo de enxoval
 
-### 2. Lista visual
+- Cabeçalho curto: `Guia de enxoval`, subtexto de uma linha e `+ Adicionar item`.
+- Busca no mesmo padrão de Utensílios.
+- Chips configuráveis: `Todos`, `Cama`, `Banho`, `Cozinha`, `Complementos`.
+- Cards compactos com foto/placeholder STAYO, nome, quantidade recomendada, classificação e seta.
+- A demonstração terá poucos itens de composição visual e um aviso persistente e discreto: `Exemplo visual — conteúdo a definir`.
+- Nenhum exemplo será apresentado como catálogo oficial da STAYO.
 
-- Cards compactos, sem tabela, com foto pequena, nome e recomendação.
-- A resposta do proprietário aparece como informação separada da confirmação STAYO.
-- O card inteiro abre a revisão; `Confirmar` fica visível apenas quando há resposta a revisar.
-- Exemplos demonstrados:
-  - `Taças de vinho`: recomendadas 6, proprietário informou 4, `Faltam 2`, aguardando revisão.
-  - `Cafeteira`: recomendada 1, `Compra prevista pelo proprietário`.
-  - Item confirmado integralmente.
-  - Item confirmado abaixo do recomendado.
-  - Item não informado.
+## 2. Item e edição
 
-### 3. Revisão individual
+- Bottom sheet no mobile e drawer no desktop, como em Utensílios.
+- Exibir foto grande, nome, quantidade recomendada, `Tamanho/padrão`, descrição, Dica STAYO e indicação de compra.
+- `Abrir referência` continua sendo apenas indicação, sem compra, checkout ou fornecedor obrigatório.
+- Edição usa o mesmo formulário visual aprovado, acrescentando somente `Tamanho/padrão`.
+- Item sem foto usa o mesmo placeholder oficial do sistema, nunca imagem falsa ou quebrada.
 
-- Bottom sheet no mobile e drawer lateral no desktop.
-- Conteúdo curto: foto, nome, recomendado, informado e `Quantidade confirmada`.
-- Seletor grande `− 4 +` e ação principal `Confirmar informação`.
-- `Corrigir` como ação secundária dentro da mesma interação; não abrir formulário extenso.
-- Após confirmar, fechar a revisão e atualizar o card localmente para `✓ Confirmado pela STAYO`.
+## 3. Aplicação ao imóvel
 
-### 4. Falta derivada do próprio item
+- Entrada compacta dentro de Implantação: `Enxoval`, contagem de recomendações, situação das respostas e seta.
+- Estado sem guia: `Nenhum guia aplicado ainda`, `Aplicar guia padrão STAYO` e `Começar vazio`.
+- Como não existe catálogo oficial fornecido, a ação de aplicar o padrão aparece indisponível ou em estado demonstrativo com `Conteúdo a definir`; não será simulada como catálogo real.
+- Após uma cópia demonstrativa, manter os mesmos cards, edição local por imóvel, ocultação e item exclusivo aprovados para Utensílios.
+- Alterações na cópia do imóvel não sugerem alteração do catálogo mestre.
 
-- Quando a quantidade confirmada for menor que a recomendada, o mesmo card mostra `Faltam N`.
-- Não criar uma segunda ficha, lista duplicada ou pendência manual para representar essa falta.
-- O filtro `Faltando` seleciona esses mesmos cards confirmados abaixo do recomendado.
+## 4. Proprietário
 
-### 5. Compra prevista
+- Entrada `Prepare seu imóvel` com progresso simples do Guia de Enxoval.
+- Lista visual mobile-first com os mesmos filtros, busca e cards de Utensílios.
+- Decisões principais sempre visíveis: `Já tenho` e `Vou comprar`.
+- Para `Já tenho`, pedir quantidade apenas quando necessário.
+- Detalhe mostra foto, recomendado, tamanho/padrão, descrição, Dica STAYO e referência.
+- Resposta permanece apenas informação do proprietário, sem aparência de inventário confirmado.
 
-- Resposta `Vou comprar` aparece como `Compra prevista pelo proprietário` com ícone de compra.
-- O estado permanece distinto de `Confirmado pela STAYO` e não aparenta disponibilidade física.
-- O filtro `Vai comprar` reúne esses mesmos itens, sem marcá-los como concluídos.
+## 5. Visibilidade independente
 
-## Mobile 390 px
+- Demonstrar lado a lado, sem mistura de permissões:
+  - `Guia de utensílios · Visível`
+  - `Guia de enxoval · Privado`
+- Cada controle altera visualmente somente o respectivo guia no protótipo.
+- Não envolver proposta, documentos ou outros blocos do portal.
 
-- Uma coluna, imagem pequena e conteúdo hierarquizado em poucas linhas.
-- Métricas compactas sem aparência de dashboard.
+## 6. Mobile 390 px
+
+- Uma coluna, imagens reconhecíveis, pouco texto e ações grandes.
 - Chips com rolagem horizontal controlada.
-- Resultado (`Faltam 2`, `Confirmado`, `Compra prevista`) visível sem abrir detalhes.
-- Bottom sheet com ações grandes e rodapé respeitando a área segura.
+- Detalhes e edição em bottom sheet com área segura.
+- Aplicação ao imóvel, proprietário e visibilidade legíveis sem tabela ou rolagem horizontal.
 
-## Desktop
+## 7. Desktop 1440 px
 
-- Mesma arquitetura, com largura maior e lista em duas colunas quando houver espaço.
-- Revisão abre em drawer lateral, preservando o contexto da lista.
-- Nenhuma tabela, confirmação em lote ou painel adicional.
+- Mesma hierarquia, com catálogo em grade e detalhe em drawer lateral.
+- Aplicação ao imóvel preserva contexto com conteúdo principal e controle de visibilidade lateral.
+- Sem converter a experiência em planilha ou painel administrativo denso.
 
 ## Estados entregues
 
-1. Lista completa.
-2. Cinco filtros funcionais no protótipo.
-3. Revisão individual.
-4. Item confirmado.
-5. Item faltando.
-6. Item com compra prevista.
+1. Admin.
+2. Item e detalhe/edição.
+3. Aplicação ao imóvel, incluindo ausência de catálogo oficial.
+4. Experiência do proprietário.
+5. Visibilidade independente entre Utensílios e Enxoval.
+6. Mobile em 390 px.
 7. Desktop em 1440 px.
-8. Mobile em 390 px.
 
 ## Limites e validação
 
-- Usar somente dados fictícios e estado local na rota isolada do protótipo.
-- Não chamar APIs, persistir respostas, alterar o Admin real ou atualizar inventário.
-- Validar filtros, confirmação, correção de quantidade e estados em 390 e 1440 px.
-- Confirmar textos sem corte, ausência de rolagem horizontal, fotos/placeholder consistentes e nenhum erro de console.
+- Usar poucos placeholders de conteúdo, sempre marcados `Exemplo visual — conteúdo a definir`.
+- Não criar ou tratar itens de enxoval como dados oficiais.
+- Não chamar APIs, persistir respostas, alterar produção, banco, permissões ou inventário.
+- Validar navegação entre as sete vistas, estados locais e independência visual dos dois controles.
+- Confirmar textos sem corte, ausência de rolagem horizontal, placeholder consistente e nenhum erro de console em 390 e 1440 px.
