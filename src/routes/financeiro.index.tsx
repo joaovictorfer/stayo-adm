@@ -73,26 +73,38 @@ function FinanceSummary() {
 
   return (
     <div className="portfolio-metrics mb-4">
-      <PortfolioMetric icon={Wallet} label="Total repassado" value={payoutsQuery.isPending ? pending : (formatMoney(totalPayouts) ?? "—")}
+      <PortfolioMetric icon={Wallet} label="Total repassado" value={
+          payoutsQuery.isPending
+            ? pending
+            : (payoutsQuery.data?.data ?? []).length === 0
+              ? "—"
+              : (formatMoney(totalPayouts) ?? "—")
+        }
       />
       <PortfolioMetric icon={FileText} label="Faturas pendentes" value={
           invoicesQuery.isPending
             ? pending
-            : `${pendingInvoices.length} · ${formatMoney(pendingInvoices.reduce((s, i) => s + i.total, 0))}`
+            : pendingInvoices.length === 0
+              ? "—"
+              : `${pendingInvoices.length} · ${formatMoney(pendingInvoices.reduce((s, i) => s + i.total, 0))}`
         }
         tone={pendingInvoices.length > 0 ? "warning" : "success"}
       />
       <PortfolioMetric icon={ClipboardList} label="Fechamentos em aberto" value={
           settlementsQuery.isPending
             ? pending
-            : `${openSettlements.length} · ${formatMoney(openSettlements.reduce((s, x) => s + x.total, 0))}`
+            : openSettlements.length === 0
+              ? "—"
+              : `${openSettlements.length} · ${formatMoney(openSettlements.reduce((s, x) => s + x.total, 0))}`
         }
         tone={openSettlements.length > 0 ? "warning" : "neutral"}
       />
       <PortfolioMetric icon={DollarSign} label="Despesas em aberto" value={
           expensesQuery.isPending
             ? pending
-            : `${openExpenses.length} · ${formatMoney(openExpenses.reduce((s, x) => s + x.amount, 0))}`
+            : openExpenses.length === 0
+              ? "—"
+              : `${openExpenses.length} · ${formatMoney(openExpenses.reduce((s, x) => s + x.amount, 0))}`
         }
         tone={openExpenses.length > 0 ? "warning" : "neutral"}
       />
