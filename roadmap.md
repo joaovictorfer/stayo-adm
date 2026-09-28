@@ -69,4 +69,5 @@
 - [x] Fase 2: Hóspedes, Mensagens e IA, Guia e Serviços (leitura/demonstração)
 - [x] Fase 3: Tarefas, Manutenção e Vistorias agrupadas em Operação (leitura)
 - [x] Fase 4: Inventário/estoque e Fornecedores consolidados em Implantação (leitura)
-- [ ] Fase 5: Financeiro
+- [x] Fase 5: Financeiro no padrão visual (leitura)
+- [ ] Fase 6: Configurações, Equipe, Alertas, Automações, integrações e Portal Staff
