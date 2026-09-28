@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
 import { Route as GuiasImplantacaoPrototipoRouteImport } from './routes/guias-implantacao-prototipo'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProprietarioPrototipoRouteImport } from './routes/proprietario-prototipo'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
@@ -92,6 +93,11 @@ const GuiasImplantacaoPrototipoRoute =
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProprietarioPrototipoRoute = ProprietarioPrototipoRouteImport.update({
+  id: '/proprietario-prototipo',
+  path: '/proprietario-prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
@@ -407,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/bi': typeof BiRoute
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
+  '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -472,6 +479,7 @@ export interface FileRoutesByTo {
   '/bi': typeof BiRoute
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
+  '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -538,6 +546,7 @@ export interface FileRoutesById {
   '/bi': typeof BiRoute
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
+  '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
   '/configuracoes/comercial': typeof ConfiguracoesComercialRoute
@@ -605,6 +614,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/guias-implantacao-prototipo'
     | '/login'
+    | '/proprietario-prototipo'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/guias-implantacao-prototipo'
     | '/login'
+    | '/proprietario-prototipo'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -735,6 +746,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/guias-implantacao-prototipo'
     | '/login'
+    | '/proprietario-prototipo'
     | '/condominios/$id'
     | '/configuracoes/auditoria'
     | '/configuracoes/comercial'
@@ -801,6 +813,7 @@ export interface RootRouteChildren {
   BiRoute: typeof BiRoute
   GuiasImplantacaoPrototipoRoute: typeof GuiasImplantacaoPrototipoRoute
   LoginRoute: typeof LoginRoute
+  ProprietarioPrototipoRoute: typeof ProprietarioPrototipoRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
   ConfiguracoesComercialRoute: typeof ConfiguracoesComercialRoute
@@ -890,6 +903,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proprietario-prototipo': {
+      id: '/proprietario-prototipo'
+      path: '/proprietario-prototipo'
+      fullPath: '/proprietario-prototipo'
+      preLoaderRoute: typeof ProprietarioPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/condominios/': {
@@ -1313,6 +1333,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiRoute: BiRoute,
   GuiasImplantacaoPrototipoRoute: GuiasImplantacaoPrototipoRoute,
   LoginRoute: LoginRoute,
+  ProprietarioPrototipoRoute: ProprietarioPrototipoRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
   ConfiguracoesComercialRoute: ConfiguracoesComercialRoute,
