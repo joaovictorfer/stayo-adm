@@ -4,10 +4,10 @@
  * Direção: hospitalidade premium operacional — não é um site de marketing
  * (sem hero, sem gradiente), é uma ferramenta que a equipe usa o dia
  * inteiro no computador e, em campo (vistoria/implantação), no celular.
- * A paleta parte do "verde institucional Stayo" citado no handoff
- * (seção 44), lido como um verde-floresta abafado — não um verde-SaaS
- * saturado — combinado com um dourado latão discreto para as ações que
- * dependem de alguém fora da equipe (proprietário) responder.
+ * A paleta é azul-marinho institucional (a cor predominante do sistema,
+ * mantida da versão anterior), combinada com um dourado latão discreto
+ * para as ações que dependem de alguém fora da equipe (proprietário)
+ * responder.
  */
 
 /* Base legada: mantida para telas ainda não migradas. O Admin sobrescreve tudo no próprio escopo. */
@@ -37,15 +37,15 @@
   --admin-bg: #faf7f1;
   --admin-surface: #ffffff;
   --admin-surface-subtle: #fcfaf6;
-  --admin-sidebar: #0f3b36;
-  --admin-sidebar-strong: #0b302c;
-  --admin-sidebar-hover: #174942;
-  --admin-sidebar-active: #1e5a52;
+  --admin-sidebar: #0b3150;
+  --admin-sidebar-strong: #082641;
+  --admin-sidebar-hover: #123f66;
+  --admin-sidebar-active: #1a5285;
   --admin-sidebar-text: #f5f8fa;
   --admin-sidebar-muted: #b7c5d0;
   --admin-border: #e4e8ec;
-  --admin-primary: #0f3b36;
-  --admin-primary-hover: #1e5a52;
+  --admin-primary: #0b3150;
+  --admin-primary-hover: #144a75;
   --admin-text: #17232f;
   --admin-muted: #6b7785;
   --admin-accent: #b8924a;
