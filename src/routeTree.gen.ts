@@ -49,6 +49,7 @@ import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
+import { Route as OperacaoAgendaRouteImport } from './routes/operacao.agenda'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
 import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.tarefas-prototipo'
@@ -283,6 +284,11 @@ const OperacaoIdRoute = OperacaoIdRouteImport.update({
   path: '/operacao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoAgendaRoute = OperacaoAgendaRouteImport.update({
+  id: '/operacao/agenda',
+  path: '/operacao/agenda',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperacaoAgendaPrototipoRoute = OperacaoAgendaPrototipoRouteImport.update({
   id: '/operacao/agenda-prototipo',
   path: '/operacao/agenda-prototipo',
@@ -439,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
@@ -505,6 +512,7 @@ export interface FileRoutesByTo {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
@@ -572,6 +580,7 @@ export interface FileRoutesById {
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
   '/operacao/$id': typeof OperacaoIdRoute
+  '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
@@ -640,6 +649,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
     | '/operacao/tarefas-prototipo'
@@ -706,6 +716,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
     | '/operacao/tarefas-prototipo'
@@ -772,6 +783,7 @@ export interface FileRouteTypes {
     | '/implantacao/templates'
     | '/mensagens/$id'
     | '/operacao/$id'
+    | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
     | '/operacao/prototipo'
     | '/operacao/tarefas-prototipo'
@@ -839,6 +851,7 @@ export interface RootRouteChildren {
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
+  OperacaoAgendaRoute: typeof OperacaoAgendaRoute
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
   OperacaoTarefasPrototipoRoute: typeof OperacaoTarefasPrototipoRoute
@@ -1157,6 +1170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/agenda': {
+      id: '/operacao/agenda'
+      path: '/operacao/agenda'
+      fullPath: '/operacao/agenda'
+      preLoaderRoute: typeof OperacaoAgendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operacao/agenda-prototipo': {
       id: '/operacao/agenda-prototipo'
       path: '/operacao/agenda-prototipo'
@@ -1359,6 +1379,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
   OperacaoIdRoute: OperacaoIdRoute,
+  OperacaoAgendaRoute: OperacaoAgendaRoute,
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
   OperacaoTarefasPrototipoRoute: OperacaoTarefasPrototipoRoute,
