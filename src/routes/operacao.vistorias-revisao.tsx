@@ -63,8 +63,6 @@ const DEMO: Instance = {
   ],
 };
 
-const condLabel: Record<Cond, string> = { ok: "OK", atencao: "Atenção", problema: "Problema", nao_aplica: "Não se aplica", pendente: "Pendente" };
-const condTone = { ok: "success", atencao: "warning", problema: "danger", nao_aplica: "neutral", pendente: "warning" } as const;
 const fmt = (s: string) => new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
 interface Audit { at: string; who: string; action: string; detail?: string | undefined }
