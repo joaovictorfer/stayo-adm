@@ -47,7 +47,7 @@ export interface InventorySnapshotItem {
   inventory_internal_notes?: string | null;
   base_catalog_item_id?: string | null;
   inventory_source?: "equipe" | "proprietario";
-  inventory_review_status?: "aprovado" | "em_revisao";
+  inventory_review_status?: "preenchido_stayo" | "revisado_stayo";
   inventory_updated_at?: string | null;
 }
 
