@@ -11,7 +11,7 @@ export interface ItemConfig {
 }
 
 export interface ConditionAnswer { condition?: Cond; value?: string; note?: string }
-export type SaveResult = { kind: "salvo" } | { kind: "pendente"; message: string } | { kind: "erro"; message: string };
+export type SaveResult = { kind: "salvo" } | { kind: "conflito"; message: string } | { kind: "pendente"; message: string } | { kind: "erro"; message: string };
 
 const OPTIONS: { v: Cond; label: string; icon: typeof CheckCircle2; cls: string; iconCls: string }[] = [
   { v: "ok", label: "OK", icon: CheckCircle2, cls: "border-[oklch(0.82_0.08_155)] bg-[oklch(0.97_0.03_155)]", iconCls: "text-[oklch(0.55_0.16_150)]" },
@@ -26,7 +26,7 @@ export function ItemConditionScreen({
   room, name, position, total, config, photoCount, onBack, onSave,
 }: {
   room: string; name: string; position: number; total: number; config: ItemConfig; photoCount: number;
-  onBack: () => void; onSave: (a: ConditionAnswer) => Promise<SaveResult>;
+  onBack: () => void; onSave: (a: ConditionAnswer, force?: boolean) => Promise<SaveResult>;
 }) {
   const [cond, setCond] = useState<Cond | null>(null);
   const [value, setValue] = useState("");
@@ -51,11 +51,11 @@ export function ItemConditionScreen({
   } else if (config.required && !value.trim()) errors.push("Preencha a resposta.");
   if (config.photo === "obrigatoria" && photoCount < 1 && cond !== "nao_aplica") errors.push("Este item exige foto.");
 
-  const save = async (override?: ConditionAnswer) => {
+  const save = async (override?: ConditionAnswer, force = false) => {
     setTouched(true);
     if (!override && errors.length) return;
     setSaving(true);
-    const r = await onSave(override ?? { ...(cond ? { condition: cond } : {}), ...(value ? { value } : {}), ...(note.trim() ? { note: note.trim() } : {}) });
+    const r = await onSave(override ?? { ...(cond ? { condition: cond } : {}), ...(value ? { value } : {}), ...(note.trim() ? { note: note.trim() } : {}) }, force);
     setResult(r);
     setSaving(false);
   };
@@ -136,7 +136,18 @@ export function ItemConditionScreen({
           {touched && errors.map((e) => <p key={e} className="text-destructive">{e}</p>)}
           {result?.kind === "salvo" && <p className="text-[oklch(0.5_0.14_150)]">Salvo.</p>}
           {result?.kind === "pendente" && <p className="flex items-center gap-1.5 text-[oklch(0.55_0.14_60)]"><CloudOff className="size-4" /> {result.message}</p>}
-          {result?.kind === "erro" && <p className="text-destructive">{result.message}</p>}
+          {result?.kind === "erro" && (
+            <p className="text-destructive">{result.message} <button onClick={() => void save()} className="font-semibold underline">Tentar de novo</button></p>
+          )}
+          {result?.kind === "conflito" && (
+            <div className="rounded-xl border border-[oklch(0.85_0.09_70)] bg-[oklch(0.97_0.03_80)] p-3">
+              <p>{result.message}</p>
+              <div className="mt-2 flex gap-2">
+                <button onClick={() => void save(undefined, true)} className="h-10 flex-1 rounded-lg bg-primary text-sm font-semibold text-primary-foreground">Manter a minha</button>
+                <button onClick={onBack} className="h-10 flex-1 rounded-lg border border-border text-sm font-semibold">Ver a outra</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

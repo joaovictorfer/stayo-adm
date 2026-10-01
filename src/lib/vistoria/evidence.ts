@@ -159,3 +159,4 @@ export const getResponses = (inspectionId: string) =>
 export async function uploadResponse(_r: ItemResponse): Promise<never> {
   throw new Error("Envio de respostas ainda não disponível");
 }
+export const getResponse = (key: string) => tx<ItemResponse | undefined>("responses", "readonly", (s) => s.get(key) as IDBRequest<ItemResponse | undefined>);

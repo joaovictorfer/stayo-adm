@@ -1,8 +1,9 @@
-import { CameraOff, ChevronLeft, CloudOff, ImageIcon, Loader2, RotateCcw, SkipForward, WifiOff, X } from "lucide-react";
+import { CameraOff, ChevronLeft, LayoutGrid, CloudOff, ImageIcon, Loader2, RotateCcw, SkipForward, WifiOff, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ItemConditionScreen, type ConditionAnswer, type ItemConfig, type SaveResult } from "@/components/vistoria/ItemCondition";
-import { addAudit, burnEvidence, putResponse, uploadResponse, getQueued, putQueued, queueKey, uploadEvidence, type EvidenceContext, type EvidenceMeta } from "@/lib/vistoria/evidence";
+import { RoomsSheet, roomRank, type PendingItem, type RoomSummary } from "@/components/vistoria/RoomsSheet";
+import { addAudit, burnEvidence, getResponse, getResponses, putResponse, type ItemResponse, uploadResponse, getQueued, putQueued, queueKey, uploadEvidence, type EvidenceContext, type EvidenceMeta } from "@/lib/vistoria/evidence";
 
 export type RunContext = Omit<EvidenceContext, "room" | "itemId" | "itemName">;
 
@@ -43,14 +44,36 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [condOpen, setCondOpen] = useState(false);
+  const [roomsOpen, setRoomsOpen] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, ItemResponse>>({});
+  const [save, setSave] = useState<{ s: "carregando" | "ok" | "salvando" | "pendente" | "erro"; at?: string }>({ s: "carregando" });
 
-  // Retomada: fotos que ficaram na fila do aparelho voltam como "Pendente de envio".
+  // Retomada pelo mesmo link: fotos e respostas guardadas no aparelho voltam,
+  // e a câmera abre no primeiro item ainda sem resposta.
   useEffect(() => {
-    getQueued(context.inspectionId).then((q) => {
+    Promise.all([getQueued(context.inspectionId), getResponses(context.inspectionId)]).then(([q, rs]) => {
       setStatus((s) => ({ ...s, ...Object.fromEntries(q.map((e) => [e.itemId, "pendente_envio" as const])) }));
       setShots((s) => ({ ...s, ...Object.fromEntries(q.map((e) => [e.itemId, URL.createObjectURL(e.blob)])) }));
-    }).catch(() => setNotice("Não foi possível ler as fotos guardadas neste aparelho."));
+      const map = Object.fromEntries(rs.map((r) => [r.itemId, r]));
+      setAnswers(map);
+      const first = items.findIndex((i) => !map[i.id]);
+      if (first > 0) setIdx(first);
+      setSave({ s: q.length || rs.length ? "pendente" : "ok" });
+    }).catch(() => {
+      setSave({ s: "erro" });
+      setNotice("Não foi possível ler o que foi guardado neste aparelho.");
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context.inspectionId]);
+
+  const retrySend = async () => {
+    setSave({ s: "salvando" });
+    const [q, rs] = await Promise.all([getQueued(context.inspectionId), getResponses(context.inspectionId)]).catch(() => [[], []] as const);
+    let failed = 0;
+    for (const e of q) { try { await uploadEvidence(e.blob, e.meta); } catch { failed++; } }
+    for (const r of rs) { try { await uploadResponse(r); } catch { failed++; } }
+    setSave({ s: failed ? "pendente" : "ok", at: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) });
+  };
 
   const start = useCallback(async () => {
     setCam("pedindo");
@@ -138,7 +161,17 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
     setBusy(false);
   };
 
-  const saveAnswer = async (a: ConditionAnswer): Promise<SaveResult> => {
+  const saveAnswer = async (a: ConditionAnswer, force = false): Promise<SaveResult> => {
+    setSave({ s: "salvando" });
+    // Conflito: outra aba/sessão do mesmo link gravou este item depois da versão que esta tela conhece.
+    const key = queueKey(context.inspectionId, item.id);
+    const stored = await getResponse(key).catch(() => undefined);
+    const known = answers[item.id]?.answeredAt;
+    if (!force && stored && stored.answeredAt !== known) {
+      setAnswers((m) => ({ ...m, [item.id]: stored }));
+      setSave({ s: "pendente" });
+      return { kind: "conflito", message: `Este item já foi respondido em outra aba (${stored.condition ?? stored.value ?? "resposta"}). Qual vale?` };
+    }
     const answeredAt = new Date().toISOString();
     const evidence = await getQueued(context.inspectionId).then((q) => q.filter((e) => e.itemId === item.id).map((e) => e.meta.sha256)).catch(() => []);
     const resp = {
@@ -149,18 +182,34 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
     };
     try {
       await putResponse(resp);
+      setAnswers((m) => ({ ...m, [item.id]: resp }));
     } catch {
+      setSave({ s: "erro" });
       return { kind: "erro", message: "Não foi possível guardar a resposta neste aparelho. Tente de novo." };
     }
     try {
       await uploadResponse(resp);
       return { kind: "salvo" };
     } catch {
+      setSave({ s: "pendente" });
       setNotice("Resposta guardada neste aparelho · Pendente de envio.");
       window.setTimeout(() => { setCondOpen(false); next(); }, 900);
       return { kind: "pendente", message: "Guardado neste aparelho · Pendente de envio. O item ainda não foi concluído." };
     }
   };
+
+  const roomSummaries: RoomSummary[] = [...new Set(items.map((i) => i.room))]
+    .sort((a, b) => roomRank(a) - roomRank(b))
+    .map((room) => {
+      const its = items.map((it, i) => ({ it, i })).filter((x) => x.it.room === room);
+      const done = its.filter((x) => answers[x.it.id]).length;
+      const issue = its.some((x) => status[x.it.id] === "pulado" || answers[x.it.id]?.condition === "problema");
+      const st = issue ? "pendencia" : done === 0 ? "nao_iniciado" : done === its.length ? "concluido" : "em_andamento";
+      return { room, firstIndex: its.find((x) => !answers[x.it.id])?.i ?? its[0]!.i, done, total: its.length, status: st };
+    });
+  const pendingItems: PendingItem[] = items.flatMap((it, i) =>
+    answers[it.id] ? [] : [{ index: i, room: it.room, name: it.name, reason: status[it.id] === "pulado" ? "Pulado · continua pendente" : status[it.id] === "pendente_envio" ? "Foto tirada, falta a condição" : "Não respondido" }],
+  );
 
   const skip = () => {
     if (cur !== "pendente_envio") setStatus((s) => ({ ...s, [item.id]: "pulado" }));
@@ -182,11 +231,21 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
             <h1 className="truncate text-xl font-semibold">{item.room} · {item.name}</h1>
           </div>
           <span className="shrink-0 text-sm tabular-nums opacity-85">{idx + 1} de {total}</span>
+          <button onClick={() => setRoomsOpen(true)} aria-label="Ambientes" className="grid size-10 place-items-center rounded-full bg-[oklch(1_0_0/0.12)]">
+            <LayoutGrid className="size-5" />
+          </button>
         </div>
         <div className="mt-3 h-1 rounded-full bg-[oklch(1_0_0/0.18)]">
           <div className="h-1 rounded-full bg-[oklch(0.8_0.13_185)] transition-all" style={{ width: `${((idx + 1) / total) * 100}%` }} />
         </div>
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <span role="status" className="contents">
+            {save.s === "salvando" && <Chip>Salvando…</Chip>}
+            {save.s === "pendente" && (
+              <Chip warn><CloudOff className="size-3.5" /> Guardado neste aparelho · pendente de envio{save.at ? ` · tentativa ${save.at}` : ""} <button onClick={retrySend} className="ml-1 font-semibold underline">Tentar de novo</button></Chip>
+            )}
+            {save.s === "erro" && <Chip warn>Erro ao guardar <button onClick={retrySend} className="ml-1 font-semibold underline">Tentar de novo</button></Chip>}
+          </span>
           {cur === "pulado" && <Chip>Pulado · continua pendente</Chip>}
           {cur === "pendente_envio" && <Chip warn><CloudOff className="size-3.5" /> Pendente de envio · item não concluído</Chip>}
           {notice && <Chip>{notice}</Chip>}
@@ -258,6 +317,11 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
           photoCount={status[item.id] === "pendente_envio" ? 1 : 0}
           onBack={() => setCondOpen(false)} onSave={saveAnswer}
         />
+      )}
+
+      {roomsOpen && (
+        <RoomsSheet rooms={roomSummaries} pending={pendingItems} onClose={() => setRoomsOpen(false)}
+          onOpen={(i) => { setRoomsOpen(false); setCondOpen(false); setRefOpen(false); setIdx(i); }} />
       )}
 
       {refOpen && <ReferenceDrawer item={item} onClose={() => setRefOpen(false)} />}
