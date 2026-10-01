@@ -66,7 +66,7 @@ const condLabel: Record<Cond, string> = { ok: "OK", atencao: "Atenção", proble
 const condTone = { ok: "success", atencao: "warning", problema: "danger", nao_aplica: "neutral", pendente: "warning" } as const;
 const fmt = (s: string) => new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
-interface Audit { at: string; who: string; action: string; detail?: string }
+interface Audit { at: string; who: string; action: string; detail?: string | undefined }
 
 function useBurned(inst: Instance | null) {
   const [urls, setUrls] = useState<Record<string, string>>({});
