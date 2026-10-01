@@ -3,13 +3,19 @@ import { ArrowLeft, Check, ChevronLeft, ChevronRight, Loader2, Plus, RotateCcw }
 import { useState } from "react";
 
 import { Button } from "../../ui/button";
+import { InventoryItemDetails } from "./InventoryItemDetails";
 import {
   addInventoryItem,
+  duplicateInventoryItem,
   guidedInventoryQuery,
+  removeInventoryItem,
   setInventoryAnswer,
+  updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
 import {
   inventoryAnswerLabel,
+  inventoryConditionLabel,
+  inventoryOriginLabel,
   inventoryRooms,
   roomProgress,
   type InventoryAnswer,
@@ -38,6 +44,7 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
   const [failed, setFailed] = useState<{ id: string; answer: InventoryAnswer | null } | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [adding, setAdding] = useState("");
+  const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
 
   const answer = useMutation({
     mutationFn: (v: { id: string; answer: InventoryAnswer | null }) =>
@@ -168,10 +175,12 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
               <li key={i.id} className="flex flex-col gap-2 px-3 py-2 md:flex-row md:items-center" data-testid="inventory-row">
                 <div className="min-w-0 flex-1">
                   <span className="text-sm font-medium">{i.name}</span>
-                  {i.catalog_item_id && <span className="ml-2 text-[11px]" style={muted}>recomendado</span>}
+                  <span className="ml-2 text-[11px]" style={muted}>{inventoryOriginLabel(i)}</span>
                   {!i.inventory_answer && <span className="ml-2 text-[11px]" style={muted}>· Não informado</span>}
-                  {detail === i.id && (
-                    <p className="mt-1 text-xs" style={muted}>{i.category}{i.tip ? ` · ${i.tip}` : ""}</p>
+                  {(i.inventory_brand || i.inventory_condition || i.inventory_quantity != null) && (
+                    <p className="mt-0.5 text-[11px]" style={muted}>
+                      {[i.inventory_quantity != null ? `${i.inventory_quantity} un.` : null, i.inventory_brand, i.inventory_condition ? inventoryConditionLabel[i.inventory_condition] : null].filter(Boolean).join(" · ")}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center gap-1" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
@@ -190,7 +199,7 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
                       </button>
                     );
                   })}
-                  <button className="ml-1 px-1 text-xs underline" style={muted} onClick={() => setDetail(detail === i.id ? null : i.id)}>
+                  <button className="ml-1 px-1 text-xs underline" style={muted} onClick={() => setDetail(i.id)}>
                     Detalhes
                   </button>
                 </div>
@@ -217,6 +226,17 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
           </form>
         </div>
       )}
+      <InventoryItemDetails
+        item={items.find((i) => i.id === detail) ?? null}
+        onClose={() => setDetail(null)}
+        onSave={async (d) => { await updateInventoryDetails(detail!, implementationId, d); setSave("saved"); await refresh(); }}
+        onDuplicate={async (name) => {
+          const src = items.find((i) => i.id === detail)!;
+          await duplicateInventoryItem(src, name, src.display_order + 1);
+          setSave("saved"); await refresh();
+        }}
+        onRemove={async () => { await removeInventoryItem(detail!, implementationId); setSave("saved"); await refresh(); }}
+      />
     </div>
   );
 }
