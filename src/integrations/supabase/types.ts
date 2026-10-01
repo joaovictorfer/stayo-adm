@@ -732,6 +732,7 @@ export type Database = {
       }
       implementation_guide_items: {
         Row: {
+          base_catalog_item_id: string | null
           catalog_item_id: string | null
           category: string
           classification: string
@@ -746,6 +747,14 @@ export type Database = {
           inventory_answer: string | null
           inventory_answered_at: string | null
           inventory_answered_by: string | null
+          inventory_brand: string | null
+          inventory_condition: string | null
+          inventory_internal_notes: string | null
+          inventory_quantity: number | null
+          inventory_review_status: string
+          inventory_source: string
+          inventory_updated_at: string | null
+          inventory_updated_by: string | null
           name: string
           purchase_url: string | null
           quantity_text: string | null
@@ -756,6 +765,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          base_catalog_item_id?: string | null
           catalog_item_id?: string | null
           category: string
           classification?: string
@@ -770,6 +780,14 @@ export type Database = {
           inventory_answer?: string | null
           inventory_answered_at?: string | null
           inventory_answered_by?: string | null
+          inventory_brand?: string | null
+          inventory_condition?: string | null
+          inventory_internal_notes?: string | null
+          inventory_quantity?: number | null
+          inventory_review_status?: string
+          inventory_source?: string
+          inventory_updated_at?: string | null
+          inventory_updated_by?: string | null
           name: string
           purchase_url?: string | null
           quantity_text?: string | null
@@ -780,6 +798,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          base_catalog_item_id?: string | null
           catalog_item_id?: string | null
           category?: string
           classification?: string
@@ -794,6 +813,14 @@ export type Database = {
           inventory_answer?: string | null
           inventory_answered_at?: string | null
           inventory_answered_by?: string | null
+          inventory_brand?: string | null
+          inventory_condition?: string | null
+          inventory_internal_notes?: string | null
+          inventory_quantity?: number | null
+          inventory_review_status?: string
+          inventory_source?: string
+          inventory_updated_at?: string | null
+          inventory_updated_by?: string | null
           name?: string
           purchase_url?: string | null
           quantity_text?: string | null
@@ -804,6 +831,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "implementation_guide_items_base_catalog_item_id_fkey"
+            columns: ["base_catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "guide_catalog_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "implementation_guide_items_catalog_item_id_fkey"
             columns: ["catalog_item_id"]
