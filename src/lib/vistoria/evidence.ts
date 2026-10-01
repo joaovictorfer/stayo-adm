@@ -35,7 +35,7 @@ export function guestLabel(kind: string, g?: EvidenceContext["guest"]): string |
   return initial ? `${first} ${initial.toUpperCase()}.` : first;
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((res, rej) => {
     const i = new Image();
     i.onload = () => res(i);
@@ -53,14 +53,15 @@ const fmt = (d: Date) =>
   d.toLocaleString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).replace(".", "");
 
 /** Desenha o quadro do vídeo e grava a identificação no canto inferior esquerdo. */
-export async function burnEvidence(video: HTMLVideoElement, ctx: EvidenceContext): Promise<{ blob: Blob; meta: EvidenceMeta }> {
-  const w = video.videoWidth, h = video.videoHeight;
+export async function burnEvidence(video: HTMLVideoElement | HTMLImageElement, ctx: EvidenceContext, capturedAt?: Date): Promise<{ blob: Blob; meta: EvidenceMeta }> {
+  const w = "videoWidth" in video ? video.videoWidth : video.naturalWidth;
+  const h = "videoHeight" in video ? video.videoHeight : video.naturalHeight;
   const c = document.createElement("canvas");
   c.width = w; c.height = h;
   const g = c.getContext("2d")!;
   g.drawImage(video, 0, 0, w, h);
 
-  const captured = new Date();
+  const captured = capturedAt ?? new Date();
   const guest = guestLabel(ctx.inspectionKind, ctx.guest);
   const lines = [
     `${ctx.property} · ${ctx.room}`,
