@@ -1,4 +1,4 @@
-import { CameraOff, ChevronLeft, LayoutGrid, CloudOff, ImageIcon, Loader2, RotateCcw, SkipForward, WifiOff, X } from "lucide-react";
+import { ArrowLeft, CameraOff, CheckCircle2, ChevronLeft, LayoutGrid, CloudOff, ImageIcon, Loader2, Package, RotateCcw, SkipForward, StickyNote, Tag, WifiOff, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ItemConditionScreen, type ConditionAnswer, type ItemConfig, type SaveResult } from "@/components/vistoria/ItemCondition";
