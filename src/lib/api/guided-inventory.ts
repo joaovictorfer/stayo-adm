@@ -1,13 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
+  buildDuplicate,
   INVENTORY_GUIDE_TYPE,
   type InventoryAnswer,
+  type InventoryCondition,
   type InventoryRoom,
   type InventorySnapshotItem,
 } from "../guided-inventory";
 
 const COLS =
-  "id, implementation_id, catalog_item_id, room, category, name, display_order, enabled, tip, inventory_answer";
+  "id, implementation_id, catalog_item_id, room, category, name, display_order, enabled, tip, inventory_answer, inventory_quantity, inventory_brand, inventory_condition, inventory_internal_notes, base_catalog_item_id, inventory_source, inventory_review_status, inventory_updated_at";
 
 /** Fonte única: banco (RLS por papel administrativo). Nada em localStorage. */
 export async function listGuidedInventory(implementationId: string): Promise<InventorySnapshotItem[]> {
@@ -71,6 +73,56 @@ export async function addInventoryItem(implementationId: string, room: Inventory
     recommended_quantity: 1,
     classification: "recomendado",
     display_order: order,
+    inventory_source: "equipe",
   });
   if (error) throw error;
+}
+
+export interface InventoryDetails {
+  name: string;
+  inventory_quantity: number | null;
+  inventory_brand: string | null;
+  inventory_condition: InventoryCondition | null;
+  inventory_internal_notes: string | null;
+}
+
+/** Detalhes opcionais. Autor/data gravados pelo banco. Não cria compra nem pendência. */
+export async function updateInventoryDetails(itemId: string, implementationId: string, d: InventoryDetails) {
+  const name = d.name.trim();
+  if (!name) throw new Error("Informe o nome do item");
+  const clean = (s: string | null) => (s && s.trim() ? s.trim() : null);
+  const { data, error } = await supabase
+    .from("implementation_guide_items")
+    .update({
+      name,
+      inventory_quantity: d.inventory_quantity,
+      inventory_brand: clean(d.inventory_brand),
+      inventory_condition: d.inventory_condition,
+      inventory_internal_notes: clean(d.inventory_internal_notes),
+    })
+    .eq("id", itemId)
+    .eq("implementation_id", implementationId)
+    .eq("guide_type", INVENTORY_GUIDE_TYPE)
+    .select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("sem permissão para gravar");
+}
+
+export async function duplicateInventoryItem(src: InventorySnapshotItem, newName: string, order: number) {
+  const { error } = await supabase.from("implementation_guide_items").insert(buildDuplicate(src, newName, order));
+  if (error) throw error;
+}
+
+/** Só cópias e itens novos podem ser removidos; itens do catálogo voltariam no próximo snapshot. */
+export async function removeInventoryItem(itemId: string, implementationId: string) {
+  const { data, error } = await supabase
+    .from("implementation_guide_items")
+    .delete()
+    .eq("id", itemId)
+    .eq("implementation_id", implementationId)
+    .eq("guide_type", INVENTORY_GUIDE_TYPE)
+    .is("catalog_item_id", null)
+    .select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("sem permissão para remover");
 }
