@@ -743,6 +743,9 @@ export type Database = {
           id: string
           image_path: string | null
           implementation_id: string
+          inventory_answer: string | null
+          inventory_answered_at: string | null
+          inventory_answered_by: string | null
           name: string
           purchase_url: string | null
           quantity_text: string | null
@@ -764,6 +767,9 @@ export type Database = {
           id?: string
           image_path?: string | null
           implementation_id: string
+          inventory_answer?: string | null
+          inventory_answered_at?: string | null
+          inventory_answered_by?: string | null
           name: string
           purchase_url?: string | null
           quantity_text?: string | null
@@ -785,6 +791,9 @@ export type Database = {
           id?: string
           image_path?: string | null
           implementation_id?: string
+          inventory_answer?: string | null
+          inventory_answered_at?: string | null
+          inventory_answered_by?: string | null
           name?: string
           purchase_url?: string | null
           quantity_text?: string | null
