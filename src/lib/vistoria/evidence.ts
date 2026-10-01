@@ -104,10 +104,12 @@ export interface AuditEntry { at: string; action: "capturada" | "descartada_reti
 const DB = "stayo-vistoria-outbox";
 function db(): Promise<IDBDatabase> {
   return new Promise((res, rej) => {
-    const r = indexedDB.open(DB, 1);
+    const r = indexedDB.open(DB, 2);
     r.onupgradeneeded = () => {
-      r.result.createObjectStore("evidence", { keyPath: "key" });
-      r.result.createObjectStore("audit", { autoIncrement: true });
+      const names = r.result.objectStoreNames;
+      if (!names.contains("evidence")) r.result.createObjectStore("evidence", { keyPath: "key" });
+      if (!names.contains("audit")) r.result.createObjectStore("audit", { autoIncrement: true });
+      if (!names.contains("responses")) r.result.createObjectStore("responses", { keyPath: "key" });
     };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
@@ -130,3 +132,30 @@ export const getQueued = (inspectionId: string) =>
 export const addAudit = (a: AuditEntry) => tx("audit", "readwrite", (s) => s.add(a));
 export const getAudit = (inspectionId: string) =>
   tx<AuditEntry[]>("audit", "readonly", (s) => s.getAll() as IDBRequest<AuditEntry[]>).then((all) => all.filter((a) => a.inspectionId === inspectionId));
+
+/* ---------- Resposta do item (condição / Sim-Não / texto) ---------- */
+export type ItemCondition = "ok" | "atencao" | "problema" | "nao_aplica";
+export interface ItemResponse {
+  key: string;
+  inspectionId: string;
+  property: string;
+  room: string;
+  itemId: string;
+  itemName: string;
+  answerKind: "condicao" | "sim_nao" | "texto";
+  condition?: ItemCondition | undefined;
+  value?: string | undefined;
+  note?: string | undefined;
+  evidenceSha256: string[];
+  author: string;
+  answeredAt: string;
+  status: "pendente_envio";
+}
+export const putResponse = (r: ItemResponse) => tx("responses", "readwrite", (s) => s.put(r));
+export const getResponses = (inspectionId: string) =>
+  tx<ItemResponse[]>("responses", "readonly", (s) => s.getAll() as IDBRequest<ItemResponse[]>).then((all) => all.filter((r) => r.inspectionId === inspectionId));
+
+/** Envio da resposta ao servidor — ainda sem destino real. */
+export async function uploadResponse(_r: ItemResponse): Promise<never> {
+  throw new Error("Envio de respostas ainda não disponível");
+}
