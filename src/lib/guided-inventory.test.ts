@@ -48,9 +48,9 @@ describe("duplicação do inventário", () => {
   it("mantém ambiente e item-base, sem copiar resposta nem observação", () => {
     const d = buildDuplicate(src, "Forma de pizza grande", 4) as Record<string, unknown>;
     expect(d).toMatchObject({ implementation_id: "imp1", room: "cozinha", catalog_item_id: null, base_catalog_item_id: "cat1", name: "Forma de pizza grande" });
-    expect(d.inventory_answer).toBeUndefined();
-    expect(d.inventory_internal_notes).toBeUndefined();
-    expect(d.inventory_brand).toBeUndefined();
+    expect(d['inventory_answer']).toBeUndefined();
+    expect(d['inventory_internal_notes']).toBeUndefined();
+    expect(d['inventory_brand']).toBeUndefined();
   });
   it("rotula origem", () => {
     expect(inventoryOriginLabel({ catalog_item_id: null, base_catalog_item_id: null, inventory_source: "proprietario" })).toBe("Informado pelo proprietário");
