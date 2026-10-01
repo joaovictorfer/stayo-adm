@@ -980,6 +980,85 @@ export type Database = {
           },
         ]
       }
+      implementation_inventory_submissions: {
+        Row: {
+          applied: Json | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_internal_note: string | null
+          id: string
+          implementation_id: string
+          item_id: string | null
+          kind: string
+          owner_id: string | null
+          owner_message: string | null
+          previous: Json | null
+          proposed: Json
+          status: string
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          applied?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_internal_note?: string | null
+          id?: string
+          implementation_id: string
+          item_id?: string | null
+          kind: string
+          owner_id?: string | null
+          owner_message?: string | null
+          previous?: Json | null
+          proposed: Json
+          status?: string
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          applied?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_internal_note?: string | null
+          id?: string
+          implementation_id?: string
+          item_id?: string | null
+          kind?: string
+          owner_id?: string | null
+          owner_message?: string | null
+          previous?: Json | null
+          proposed?: Json
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_inventory_submissions_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_inventory_submissions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_guide_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_inventory_submissions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_items: {
         Row: {
           blocker: boolean
@@ -3140,6 +3219,10 @@ export type Database = {
         Returns: Json
       }
       admin_review_guide_response: { Args: { p_data: Json }; Returns: Json }
+      admin_review_inventory_submission: {
+        Args: { p_data: Json }
+        Returns: Json
+      }
       admin_review_owner_intake: { Args: { p_data: Json }; Returns: Json }
       admin_save_opportunity_contact: {
         Args: { p_data: Json; p_implementation_id: string }
@@ -3278,6 +3361,14 @@ export type Database = {
           p_submit: boolean
           p_token: string
         }
+        Returns: Json
+      }
+      owner_inventory_resolve: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
+      owner_inventory_submit: {
+        Args: { p_data: Json; p_implementation_id: string; p_item_id: string }
         Returns: Json
       }
       owner_journey_accept_proposal: {
