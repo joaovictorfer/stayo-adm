@@ -1,4 +1,5 @@
--- Executar: psql -v ON_ERROR_STOP=1 -f tests/sql/guided_inventory_owner_access.sql  (tudo é desfeito)
+-- Executar com papel privilegiado (ex.: SQL do backend); resultado volta como erro proposital 'RESULTADOS: ...' e tudo é desfeito.
+-- Original: psql -v ON_ERROR_STOP=1 -f tests/sql/guided_inventory_owner_access.sql  (tudo é desfeito)
 BEGIN;
 CREATE TEMP TABLE r(t text, ok boolean) ON COMMIT DROP;
 GRANT ALL ON r TO authenticated, anon;
@@ -26,7 +27,9 @@ SELECT owner_inventory_submit(current_setting('test.impA')::uuid, current_settin
 SELECT owner_inventory_submit(current_setting('test.impA')::uuid, NULL, '{"name":"Rede","room":"externa","answer":"tenho"}');
 INSERT INTO r SELECT 'item não muda antes da revisão', (SELECT count(*) = 0 FROM implementation_guide_items WHERE id = current_setting('test.item')::uuid AND inventory_brand = 'Ortobom');
 INSERT INTO r SELECT 'A não lê tabela de envios direto', (SELECT count(*) = 0 FROM implementation_inventory_submissions);
-INSERT INTO r SELECT 'A não grava item direto', NOT EXISTS (SELECT 1 FROM implementation_guide_items WHERE id = current_setting('test.item')::uuid);
+INSERT INTO r SELECT 'A não lê item direto', NOT EXISTS (SELECT 1 FROM implementation_guide_items WHERE id = current_setting('test.item')::uuid);
+DO $$ BEGIN UPDATE implementation_guide_items SET inventory_brand='hack' WHERE id = current_setting('test.item')::uuid; INSERT INTO r VALUES ('A não grava item direto', NOT FOUND);
+  EXCEPTION WHEN insufficient_privilege THEN INSERT INTO r VALUES ('A não grava item direto', true); END $$;
 DO $$ BEGIN PERFORM owner_inventory_resolve(current_setting('test.impB')::uuid); INSERT INTO r VALUES ('A bloqueado no imóvel B', false);
   EXCEPTION WHEN insufficient_privilege THEN INSERT INTO r VALUES ('A bloqueado no imóvel B', true); END $$;
 DO $$ BEGIN PERFORM owner_inventory_submit(current_setting('test.impB')::uuid, NULL, '{"name":"x","room":"sala"}'); INSERT INTO r VALUES ('A não envia para B', false);
