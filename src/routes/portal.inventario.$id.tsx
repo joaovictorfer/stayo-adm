@@ -176,12 +176,12 @@ function Inventory({ implementationId }: { implementationId: string }) {
   );
 }
 
-function Status({ item, sub }: { item: OwnerInventoryItem; sub?: OwnerSubmission }) {
+function Status({ item, sub }: { item: OwnerInventoryItem; sub?: OwnerSubmission | undefined }) {
   const label = sub ? (sub.status === "complemento_solicitado" ? "Complemento pedido" : "Em revisão") : item.reviewStatus === "revisado_stayo" ? "Revisado pela STAYO" : item.answer ? "Preenchido pela STAYO" : "Não informado";
   return <span className="shrink-0 text-[11px]" style={muted}>{label}</span>;
 }
 
-function DetailsForm({ initial, onSubmit, busy, withName }: { initial: OwnerProposal; onSubmit: (p: OwnerProposal) => void; busy: boolean; withName?: boolean }) {
+function DetailsForm({ initial, onSubmit, busy, withName }: { initial: OwnerProposal; onSubmit: (p: OwnerProposal) => void; busy: boolean; withName?: boolean | undefined }) {
   const [p, setP] = useState<OwnerProposal>(initial);
   const field = "h-10 w-full rounded-lg border px-3 text-sm";
   return (

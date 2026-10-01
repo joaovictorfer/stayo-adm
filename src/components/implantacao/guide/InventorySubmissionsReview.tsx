@@ -48,7 +48,7 @@ export function InventorySubmissionsReview({ implementationId, items }: { implem
   );
 }
 
-function Row({ s, item, onDone }: { s: InventorySubmissionRow; item?: InventorySnapshotItem; onDone: () => Promise<void> }) {
+function Row({ s, item, onDone }: { s: InventorySubmissionRow; item?: InventorySnapshotItem | undefined; onDone: () => Promise<void> }) {
   const [mode, setMode] = useState<null | "ajustar" | "complemento">(null);
   const [vals, setVals] = useState<OwnerProposal>(s.proposed);
   const [msg, setMsg] = useState("");

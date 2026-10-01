@@ -93,9 +93,9 @@ export const inventorySubmissionsQuery = (implementationId: string) => ({
 });
 
 export type ReviewDecision =
-  | { decision: "aprovar"; internalNote?: string }
-  | { decision: "ajustar"; values: OwnerProposal; internalNote?: string }
-  | { decision: "complemento"; ownerMessage: string; internalNote?: string };
+  | { decision: "aprovar"; internalNote?: string | undefined }
+  | { decision: "ajustar"; values: OwnerProposal; internalNote?: string | undefined }
+  | { decision: "complemento"; ownerMessage: string; internalNote?: string | undefined };
 
 export async function reviewInventorySubmission(submissionId: string, d: ReviewDecision) {
   const { error } = await supabase.rpc("admin_review_inventory_submission", {
