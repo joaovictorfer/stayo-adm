@@ -23,4 +23,4 @@
 - Fornecedores vivem em `property_supplier_entries` (histórico imutável); correção admin trava; Admin lista por categoria, Portal tem editor próprio.
 - Inventário e pendências usam `implementation_supply_items`; falta deriva das quantidades.
 - Protótipos de Guias usam rota isolada e estado local, sem APIs.
-- Guias utensílios/enxoval/inventário (`guide_type`, `room` p/ inventário) compartilham tabelas e snapshot `admin_apply_guide`; liberação via `guide_block_for`.
+- Guias utensílios/enxoval/inventário compartilham tabelas e snapshot `admin_apply_guide`; proprietário do inventário só propõe via `owner_inventory_*` (sessão+vínculo) e STAYO decide em `admin_review_inventory_submission`.
