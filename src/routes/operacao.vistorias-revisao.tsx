@@ -10,8 +10,7 @@ import { useAuthSession } from "@/lib/auth/session";
 import { burnEvidence, loadImage } from "@/lib/vistoria/evidence";
 import salaImg from "@/assets/vistoria-demo-sala.jpg";
 import cozinhaImg from "@/assets/guide-cookware.jpg";
-import geladeiraImg from "@/assets/guide-cookware.jpg";
-import boxImg from "@/assets/guide-cookware.jpg";
+import banheiroImg from "@/assets/guide-cutlery.jpg";
 
 /**
  * Revisão interna da vistoria (Admin). Protótipo isolado: não compartilha
