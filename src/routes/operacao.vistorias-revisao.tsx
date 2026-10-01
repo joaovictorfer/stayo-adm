@@ -186,7 +186,7 @@ function ReviewBody({ inst, who }: { inst: Instance; who: string }) {
 
         {/* Ocorrências + decisão */}
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-          <AdminSection title="Ocorrências para revisão" description={occurrences.length ? `${occurrences.length} ${occurrences.length === 1 ? "ocorrência" : "ocorrências"} · nenhuma gera manutenção ou cobrança automaticamente` : undefined}>
+          <AdminSection title="Ocorrências para revisão" description={`${occurrences.length} ${occurrences.length === 1 ? "ocorrência" : "ocorrências"} · nenhuma gera manutenção ou cobrança automaticamente`}>
             {occurrences.length === 0 ? <p className="text-sm text-muted-foreground">Sem ocorrências.</p> : (
               <ol className="space-y-4">{occurrences.map((i, n) => (
                 <li key={i.id} className="space-y-2 border-b pb-4 last:border-0 last:pb-0">
