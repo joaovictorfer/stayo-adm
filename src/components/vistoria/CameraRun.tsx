@@ -1,10 +1,14 @@
 import { CameraOff, ChevronLeft, CloudOff, ImageIcon, Loader2, RotateCcw, SkipForward, WifiOff, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { addAudit, burnEvidence, getQueued, putQueued, queueKey, uploadEvidence, type EvidenceContext, type EvidenceMeta } from "@/lib/vistoria/evidence";
+
+export type RunContext = Omit<EvidenceContext, "room" | "itemId" | "itemName">;
+
 /**
  * Execução por câmera do link externo de vistoria — PROTÓTIPO VISUAL.
  * Não existe backend de evidências ainda: a foto capturada fica só na
- * memória da tela e é exibida como "aguardando envio", nunca como salva.
+ * fila do aparelho como "Pendente de envio", nunca como salva.
  */
 export interface RunItem {
   id: string;
@@ -21,9 +25,9 @@ export interface RunItem {
 }
 
 type CamState = "pedindo" | "ativa" | "negada" | "indisponivel";
-type Status = "pendente" | "pulado" | "aguardando_envio";
+type Status = "pendente" | "pulado" | "pendente_envio";
 
-export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => void }) {
+export function CameraRun({ items, context, onExit }: { items: RunItem[]; context: RunContext; onExit: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cam, setCam] = useState<CamState>("pedindo");
@@ -33,6 +37,17 @@ export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => v
   const [online, setOnline] = useState(true);
   const [refOpen, setRefOpen] = useState(false);
   const [flash, setFlash] = useState(false);
+  const [draft, setDraft] = useState<{ blob: Blob; meta: EvidenceMeta; url: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // Retomada: fotos que ficaram na fila do aparelho voltam como "Pendente de envio".
+  useEffect(() => {
+    getQueued(context.inspectionId).then((q) => {
+      setStatus((s) => ({ ...s, ...Object.fromEntries(q.map((e) => [e.itemId, "pendente_envio" as const])) }));
+      setShots((s) => ({ ...s, ...Object.fromEntries(q.map((e) => [e.itemId, URL.createObjectURL(e.blob)])) }));
+    }).catch(() => setNotice("Não foi possível ler as fotos guardadas neste aparelho."));
+  }, [context.inspectionId]);
 
   const start = useCallback(async () => {
     setCam("pedindo");
@@ -65,27 +80,63 @@ export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => v
   const item = items[idx]!;
   const total = items.length;
   const cur = status[item.id] ?? "pendente";
-  const pendingUploads = Object.values(status).filter((s) => s === "aguardando_envio").length;
+  const pendingUploads = Object.values(status).filter((s) => s === "pendente_envio").length;
 
   const next = () => { setRefOpen(false); setIdx((i) => Math.min(total - 1, i + 1)); };
 
-  const capture = () => {
+  const capture = async () => {
     const v = videoRef.current;
-    if (!v || cam !== "ativa" || !v.videoWidth) return;
-    const c = document.createElement("canvas");
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
-    c.getContext("2d")?.drawImage(v, 0, 0);
-    const url = c.toDataURL("image/jpeg", 0.8);
-    setShots((s) => ({ ...s, [item.id]: url }));
-    setStatus((s) => ({ ...s, [item.id]: "aguardando_envio" }));
+    if (!v || cam !== "ativa" || !v.videoWidth || busy) return;
+    setBusy(true);
     setFlash(true);
     window.setTimeout(() => setFlash(false), 180);
-    window.setTimeout(next, 450);
+    try {
+      const { blob, meta } = await burnEvidence(v, { ...context, room: item.room, itemId: item.id, itemName: item.name });
+      setDraft({ blob, meta, url: URL.createObjectURL(blob) });
+    } catch {
+      setNotice("Não foi possível gerar a foto. Tente de novo.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const retake = async () => {
+    if (!draft) return;
+    await addAudit({ at: new Date().toISOString(), action: "descartada_retirar", itemId: item.id, inspectionId: context.inspectionId, author: context.author, sha256: draft.meta.sha256 }).catch(() => undefined);
+    URL.revokeObjectURL(draft.url);
+    setDraft(null);
+  };
+
+  const useDraft = async () => {
+    if (!draft) return;
+    setBusy(true);
+    const now = new Date().toISOString();
+    const base = { itemId: item.id, inspectionId: context.inspectionId, author: context.author, sha256: draft.meta.sha256 };
+    try {
+      if (status[item.id] === "pendente_envio") await addAudit({ ...base, at: now, action: "substituida" });
+      await addAudit({ ...base, at: now, action: "capturada", detail: draft.meta.capturedAt });
+      await uploadEvidence(draft.blob, draft.meta);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Falha no envio";
+      try {
+        await putQueued({ key: queueKey(context.inspectionId, item.id), itemId: item.id, blob: draft.blob, meta: draft.meta, status: "pendente_envio", queuedAt: now, lastError: msg });
+        await addAudit({ ...base, at: now, action: "envio_falhou", detail: msg });
+        setStatus((s) => ({ ...s, [item.id]: "pendente_envio" }));
+        setShots((s) => ({ ...s, [item.id]: draft.url }));
+        setDraft(null);
+        setBusy(false);
+        setNotice("Foto guardada neste aparelho · Pendente de envio. O item não foi concluído.");
+        window.setTimeout(next, 600);
+        return;
+      } catch {
+        setNotice("Não foi possível guardar a foto neste aparelho. Tente de novo.");
+      }
+    }
+    setBusy(false);
   };
 
   const skip = () => {
-    if (cur !== "aguardando_envio") setStatus((s) => ({ ...s, [item.id]: "pulado" }));
+    if (cur !== "pendente_envio") setStatus((s) => ({ ...s, [item.id]: "pulado" }));
     next();
   };
 
@@ -110,10 +161,11 @@ export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => v
         </div>
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
           {cur === "pulado" && <Chip>Pulado · continua pendente</Chip>}
-          {cur === "aguardando_envio" && <Chip>Foto capturada · aguardando envio</Chip>}
+          {cur === "pendente_envio" && <Chip warn><CloudOff className="size-3.5" /> Pendente de envio · item não concluído</Chip>}
+          {notice && <Chip>{notice}</Chip>}
           {!online && <Chip warn><WifiOff className="size-3.5" /> Conexão instável — nada foi enviado</Chip>}
           {pendingUploads > 0 && online && (
-            <Chip warn><CloudOff className="size-3.5" /> {pendingUploads} {pendingUploads === 1 ? "foto não enviada" : "fotos não enviadas"} — envio ainda não disponível</Chip>
+            <Chip warn><CloudOff className="size-3.5" /> {pendingUploads} {pendingUploads === 1 ? "foto pendente de envio" : "fotos pendentes de envio"}</Chip>
           )}
         </div>
       </header>
@@ -129,7 +181,7 @@ export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => v
         {cam === "indisponivel" && (
           <Problem title="Câmera indisponível" text="Não encontramos uma câmera neste aparelho ou ela está em uso por outro app. Nenhuma foto foi registrada." onRetry={start} />
         )}
-        {cam === "ativa" && shots[item.id] && cur === "aguardando_envio" && (
+        {cam === "ativa" && shots[item.id] && cur === "pendente_envio" && (
           <img src={shots[item.id]} alt="" className="absolute bottom-4 right-4 size-16 rounded-lg border-2 border-[oklch(1_0_0)] object-cover" />
         )}
       </div>
@@ -153,6 +205,24 @@ export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => v
           </button>
         </div>
       </footer>
+
+      {draft && (
+        <div className="absolute inset-0 z-30 flex flex-col bg-background text-foreground" role="dialog" aria-label="Foto capturada">
+          <header className="flex items-center justify-between bg-[oklch(0.16_0.03_250)] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] text-[oklch(0.98_0_0)]">
+            <h2 className="text-xl font-semibold">Foto capturada</h2>
+            <span className="text-sm tabular-nums opacity-80">{idx + 1}/{total}</span>
+          </header>
+          <div className="flex min-h-0 flex-1 items-center justify-center p-4">
+            <img src={draft.url} alt={`Foto de ${item.name} com identificação gravada`} className="max-h-full w-full rounded-2xl object-contain" />
+          </div>
+          <div className="space-y-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <button onClick={useDraft} disabled={busy} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-semibold text-primary-foreground disabled:opacity-60">
+              {busy && <Loader2 className="size-4 animate-spin" />} Usar esta foto
+            </button>
+            <button onClick={retake} disabled={busy} className="h-14 w-full rounded-2xl border border-primary text-base font-semibold text-primary">Tirar outra foto</button>
+          </div>
+        </div>
+      )}
 
       {refOpen && <ReferenceDrawer item={item} onClose={() => setRefOpen(false)} />}
     </div>

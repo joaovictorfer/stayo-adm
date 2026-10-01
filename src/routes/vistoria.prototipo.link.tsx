@@ -150,7 +150,7 @@ function FieldInspectionPrototype() {
         {linkState === "expirado" ? (
           <Expired />
         ) : screen === "execucao" ? (
-          <CameraRun items={RUN_ITEMS} onExit={() => setScreen("inicio")} />
+          <CameraRun items={RUN_ITEMS} context={{ inspectionId: CTX.code, inspectionKind: CTX.kind, inspectionStatus: "Em andamento", property: CTX.property, author: "Vistoriador do link", guest: { firstName: "Mariana", lastName: "Souza" } }} onExit={() => setScreen("inicio")} />
         ) : screen === "inicio" ? (
           <Start
             reopened={linkState === "reaberto"}
