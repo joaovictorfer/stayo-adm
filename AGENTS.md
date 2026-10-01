@@ -25,3 +25,4 @@
 - Guias utensílios/enxoval compartilham tabelas/RPCs por `guide_type` e têm liberação independente via `guide_block_for`.
 - Inventário e pendências usam `implementation_supply_items`; falta deriva das quantidades.
 - Protótipos de Guias usam rota isolada e estado local, sem APIs.
+- Inventário guiado usa `guide_type=inventario` + coluna `room` nas tabelas de guias e snapshot via `admin_apply_guide`; evita domínio paralelo e não toca Enxoval/`implementation_supply_items`.
