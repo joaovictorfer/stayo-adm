@@ -37,3 +37,23 @@ describe("inventário guiado — snapshot", () => {
     expect(groupByRoom(buildSnapshot("A", catalog(), [], id)).map((g) => g.key)).toEqual(["cozinha", "sala"]);
   });
 });
+
+import { buildDuplicate, inventoryOriginLabel } from "./guided-inventory";
+describe("duplicação do inventário", () => {
+  const src = { id: "a", implementation_id: "imp1", catalog_item_id: "cat1", room: "cozinha" as const, category: "Utensílios", name: "Forma de pizza pequena", display_order: 3, enabled: true, tip: null, inventory_answer: "tenho" as const, inventory_brand: "X", inventory_internal_notes: "segredo" };
+  it("exige nome novo e diferente", () => {
+    expect(() => buildDuplicate(src, "  ", 4)).toThrow();
+    expect(() => buildDuplicate(src, "forma de pizza pequena", 4)).toThrow();
+  });
+  it("mantém ambiente e item-base, sem copiar resposta nem observação", () => {
+    const d = buildDuplicate(src, "Forma de pizza grande", 4) as Record<string, unknown>;
+    expect(d).toMatchObject({ implementation_id: "imp1", room: "cozinha", catalog_item_id: null, base_catalog_item_id: "cat1", name: "Forma de pizza grande" });
+    expect(d.inventory_answer).toBeUndefined();
+    expect(d.inventory_internal_notes).toBeUndefined();
+    expect(d.inventory_brand).toBeUndefined();
+  });
+  it("rotula origem", () => {
+    expect(inventoryOriginLabel({ catalog_item_id: null, base_catalog_item_id: null, inventory_source: "proprietario" })).toBe("Informado pelo proprietário");
+    expect(inventoryOriginLabel({ catalog_item_id: null, base_catalog_item_id: null, inventory_source: "equipe" })).toBe("Adicionado pela equipe");
+  });
+});
