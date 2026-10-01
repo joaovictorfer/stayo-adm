@@ -20,8 +20,7 @@
 - Nova oportunidade cria rascunho idempotente e usa `/implantacao/$id?etapa=...`; a jornada compõe o draft versionado, deixando o editor completo para casos avançados.
 - Oportunidade salva por `admin_autosave_opportunity` com whitelist/conflito por campo; origem fica em `implementation_field_sources`, evitando sobrescrita silenciosa.
 - Condições e decisões vivem só em `implementation_contract_conditions`; snapshots preservam a versão aceita e reconciliam limpeza pós-obra sem duplicidade.
-- Fornecedores vivem em `property_supplier_entries`, histórico imutável e categorias próprias; catálogo só sugere aprovados e correção admin trava a resposta.
-- Fornecedores: Admin usa lista por categoria; Portal mantém editor próprio.
-- Guias utensílios/enxoval compartilham tabelas/RPCs por `guide_type` e têm liberação independente via `guide_block_for`.
+- Fornecedores vivem em `property_supplier_entries` (histórico imutável); correção admin trava; Admin lista por categoria, Portal tem editor próprio.
 - Inventário e pendências usam `implementation_supply_items`; falta deriva das quantidades.
 - Protótipos de Guias usam rota isolada e estado local, sem APIs.
+- Guias utensílios/enxoval/inventário (`guide_type`, `room` p/ inventário) compartilham tabelas e snapshot `admin_apply_guide`; liberação via `guide_block_for`.
