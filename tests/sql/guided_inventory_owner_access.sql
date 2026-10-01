@@ -69,5 +69,6 @@ INSERT INTO r SELECT 'A vê pedido de complemento', owner_inventory_resolve(curr
 INSERT INTO r SELECT 'A não vê nota interna da decisão', owner_inventory_resolve(current_setting('test.impA')::uuid)::text NOT LIKE '%colchão manchado%';
 
 RESET ROLE;
-SELECT t, ok FROM r;
+-- Aborta de propósito: devolve o resultado e desfaz tudo.
+DO $$ BEGIN RAISE EXCEPTION 'RESULTADOS: %', (SELECT string_agg(t || '=' || ok, ' | ') FROM r); END $$;
 ROLLBACK;
