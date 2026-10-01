@@ -1,4 +1,4 @@
-import { CameraOff, ChevronLeft, LayoutGrid, CloudOff, ImageIcon, Loader2, RotateCcw, SkipForward, WifiOff, X } from "lucide-react";
+import { ArrowLeft, CameraOff, CheckCircle2, ChevronLeft, LayoutGrid, CloudOff, ImageIcon, Loader2, Package, RotateCcw, SkipForward, StickyNote, Tag, WifiOff, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ItemConditionScreen, type ConditionAnswer, type ItemConfig, type SaveResult } from "@/components/vistoria/ItemCondition";
@@ -350,26 +350,23 @@ function Problem({ title, text, onRetry }: { title: string; text: string; onRetr
 
 function ReferenceDrawer({ item, onClose }: { item: RunItem; onClose: () => void }) {
   const r = item.ref;
-  const rows: [string, string | undefined][] = [
-    ["Quantidade", r.quantity != null ? String(r.quantity) : undefined],
-    ["Marca", r.brand],
-    ["Estado", r.condition],
-    ["Observação", r.note],
+  const rows: [React.ReactNode, string, string | undefined][] = [
+    [<Tag key="m" className="size-4" />, "Marca", r.brand],
+    [<Package key="q" className="size-4" />, "Quantidade", r.quantity != null ? String(r.quantity) : undefined],
+    [<CheckCircle2 key="e" className="size-4" />, "Estado esperado", r.condition],
+    [<StickyNote key="o" className="size-4" />, "Observação", r.note],
   ];
   return (
     <div className="absolute inset-0 z-20 flex flex-col justify-end bg-[oklch(0_0_0/0.45)]" onClick={onClose}>
       <section
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[78dvh] overflow-y-auto rounded-t-3xl bg-background p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-foreground"
+        className="max-h-[82dvh] overflow-y-auto rounded-t-3xl bg-background p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-foreground"
         aria-label="Referência do item"
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border" />
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Referência da implantação</p>
-            <h2 className="text-lg font-semibold">{item.name}</h2>
-          </div>
-          <button onClick={onClose} aria-label="Fechar referência" className="grid size-10 place-items-center rounded-full bg-muted"><X className="size-5" /></button>
+          <h2 className="text-2xl font-bold tracking-tight">Referência da implantação</h2>
+          <button onClick={onClose} aria-label="Fechar referência" className="grid size-10 shrink-0 place-items-center rounded-full"><X className="size-6" /></button>
         </div>
         {r.photo ? (
           <img src={r.photo} alt={`Referência: ${item.name}`} className="mt-4 aspect-[4/3] w-full rounded-2xl object-cover" />
@@ -378,15 +375,19 @@ function ReferenceDrawer({ item, onClose }: { item: RunItem; onClose: () => void
             <span className="flex items-center gap-2"><ImageIcon className="size-4" /> Sem foto de referência</span>
           </div>
         )}
-        <p className="mt-4 text-sm">{r.description ?? <span className="text-muted-foreground">Sem descrição.</span>}</p>
-        <dl className="mt-4 divide-y divide-border rounded-2xl border border-border">
-          {rows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4 px-4 py-3 text-sm">
-              <dt className="text-muted-foreground">{k}</dt>
-              <dd className={`text-right ${v ? "" : "text-muted-foreground"}`}>{v ?? "Não informado"}</dd>
+        <h3 className="mt-4 text-xl font-bold">{item.name}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{r.description ?? "Sem descrição."}</p>
+        <dl className="mt-4 space-y-2">
+          {rows.map(([icon, k, v]) => (
+            <div key={k as string} className="flex items-center justify-between gap-4 rounded-xl bg-muted px-4 py-3 text-sm">
+              <dt className="flex items-center gap-2.5 text-muted-foreground">{icon}{k}</dt>
+              <dd className={`text-right font-medium ${v ? "" : "text-muted-foreground"}`}>{v ?? "Não informado"}</dd>
             </div>
           ))}
         </dl>
+        <button onClick={onClose} className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary text-base font-semibold text-primary">
+          <ArrowLeft className="size-5" /> Voltar à câmera
+        </button>
       </section>
     </div>
   );
