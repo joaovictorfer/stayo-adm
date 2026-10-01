@@ -41,6 +41,49 @@ export interface InventorySnapshotItem {
   enabled: boolean;
   tip: string | null;
   inventory_answer?: InventoryAnswer | null;
+  inventory_quantity?: number | null;
+  inventory_brand?: string | null;
+  inventory_condition?: InventoryCondition | null;
+  inventory_internal_notes?: string | null;
+  base_catalog_item_id?: string | null;
+  inventory_source?: "equipe" | "proprietario";
+  inventory_review_status?: "aprovado" | "em_revisao";
+  inventory_updated_at?: string | null;
+}
+
+export type InventoryCondition = "bom" | "atencao" | "danificado";
+export const inventoryConditionLabel: Record<InventoryCondition, string> = {
+  bom: "Bom",
+  atencao: "Atenção",
+  danificado: "Danificado",
+};
+
+/** Origem exibida: catálogo, cópia de um item-base ou item novo (equipe/proprietário). */
+export function inventoryOriginLabel(i: Pick<InventorySnapshotItem, "catalog_item_id" | "base_catalog_item_id" | "inventory_source">): string {
+  if (i.catalog_item_id) return "recomendado";
+  if (i.base_catalog_item_id) return "variação";
+  return i.inventory_source === "proprietario" ? "Informado pelo proprietário" : "Adicionado pela equipe";
+}
+
+/** Payload da cópia: mesmo ambiente e item-base, nome novo obrigatório; sem resposta, foto ou observação. */
+export function buildDuplicate(src: InventorySnapshotItem, newName: string, order: number) {
+  const name = newName.trim();
+  if (!name) throw new Error("Informe o nome da cópia");
+  if (name.toLowerCase() === src.name.trim().toLowerCase()) throw new Error("Use um nome diferente do original");
+  return {
+    implementation_id: src.implementation_id,
+    guide_type: INVENTORY_GUIDE_TYPE,
+    room: src.room,
+    category: src.category,
+    name,
+    tip: src.tip,
+    recommended_quantity: 1,
+    classification: "recomendado",
+    display_order: order,
+    catalog_item_id: null,
+    base_catalog_item_id: src.catalog_item_id ?? src.base_catalog_item_id ?? null,
+    inventory_source: "equipe" as const,
+  };
 }
 
 /**
