@@ -1787,6 +1787,19 @@ export function OwnerHomeContent({
           ) : implementation ? (
             <>
               <ImplementationJourney implementation={implementation} />
+              {!preview && (
+                <a
+                  href={`/portal/inventario/${implementation.id}`}
+                  className="flex items-center justify-between rounded-xl border px-4 py-3 text-sm"
+                  style={{ borderColor: "var(--stayo-border)" }}
+                >
+                  <span>
+                    <b className="block">Inventário do imóvel</b>
+                    <small style={{ color: "var(--stayo-ink-muted)" }}>Marque o que já existe em cada ambiente</small>
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              )}
               <PortalTimeline events={timelineQ.data ?? []} loading={timelineQ.isPending} />
             </>
           ) : (
