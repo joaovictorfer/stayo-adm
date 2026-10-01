@@ -302,6 +302,13 @@
       "when": 1790822310025,
       "tag": "0042_guided_inventory_details",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790822663657,
+      "tag": "0043_guided_inventory_owner_submissions",
+      "breakpoints": true
     }
   ]
 }
