@@ -207,7 +207,7 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
       const st = issue ? "pendencia" : done === 0 ? "nao_iniciado" : done === its.length ? "concluido" : "em_andamento";
       return { room, firstIndex: its.find((x) => !answers[x.it.id])?.i ?? its[0]!.i, done, total: its.length, status: st };
     });
-  const pendingItems: PendingItem[] = items.flatMap((it, i) =>
+  const pendingItems: PendingItem[] = items.map((it, i) => ({ it, i })).sort((a, b) => roomRank(a.it.room) - roomRank(b.it.room)).flatMap(({ it, i }) =>
     answers[it.id] ? [] : [{ index: i, room: it.room, name: it.name, reason: status[it.id] === "pulado" ? "Pulado · continua pendente" : status[it.id] === "pendente_envio" ? "Foto tirada, falta a condição" : "Não respondido" }],
   );
 
