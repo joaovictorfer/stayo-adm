@@ -63,6 +63,7 @@ import { Route as OperacaoTarefasRouteImport } from './routes/operacao.tarefas'
 import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.tarefas-prototipo'
 import { Route as OperacaoVistoriasLinksPrototipoRouteImport } from './routes/operacao.vistorias-links-prototipo'
 import { Route as OperacaoVistoriasPrototipoRouteImport } from './routes/operacao.vistorias-prototipo'
+import { Route as OperacaoVistoriasRevisaoRouteImport } from './routes/operacao.vistorias-revisao'
 import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
 import { Route as PortalLoginRouteImport } from './routes/portal.login'
 import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
@@ -368,6 +369,12 @@ const OperacaoVistoriasPrototipoRoute =
     path: '/operacao/vistorias-prototipo',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OperacaoVistoriasRevisaoRoute =
+  OperacaoVistoriasRevisaoRouteImport.update({
+    id: '/operacao/vistorias-revisao',
+    path: '/operacao/vistorias-revisao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PortalInicioRoute = PortalInicioRouteImport.update({
   id: '/portal/inicio',
   path: '/portal/inicio',
@@ -520,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
+  '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -597,6 +605,7 @@ export interface FileRoutesByTo {
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
+  '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -675,6 +684,7 @@ export interface FileRoutesById {
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
+  '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
@@ -754,6 +764,7 @@ export interface FileRouteTypes {
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
+    | '/operacao/vistorias-revisao'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -831,6 +842,7 @@ export interface FileRouteTypes {
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
+    | '/operacao/vistorias-revisao'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -908,6 +920,7 @@ export interface FileRouteTypes {
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
+    | '/operacao/vistorias-revisao'
     | '/portal/inicio'
     | '/portal/login'
     | '/prestadores/$id'
@@ -986,6 +999,7 @@ export interface RootRouteChildren {
   OperacaoTarefasPrototipoRoute: typeof OperacaoTarefasPrototipoRoute
   OperacaoVistoriasLinksPrototipoRoute: typeof OperacaoVistoriasLinksPrototipoRoute
   OperacaoVistoriasPrototipoRoute: typeof OperacaoVistoriasPrototipoRoute
+  OperacaoVistoriasRevisaoRoute: typeof OperacaoVistoriasRevisaoRoute
   PortalInicioRoute: typeof PortalInicioRoute
   PortalLoginRoute: typeof PortalLoginRoute
   PrestadoresIdRoute: typeof PrestadoresIdRoute
@@ -1399,6 +1413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoVistoriasPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/vistorias-revisao': {
+      id: '/operacao/vistorias-revisao'
+      path: '/operacao/vistorias-revisao'
+      fullPath: '/operacao/vistorias-revisao'
+      preLoaderRoute: typeof OperacaoVistoriasRevisaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/inicio': {
       id: '/portal/inicio'
       path: '/portal/inicio'
@@ -1594,6 +1615,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoTarefasPrototipoRoute: OperacaoTarefasPrototipoRoute,
   OperacaoVistoriasLinksPrototipoRoute: OperacaoVistoriasLinksPrototipoRoute,
   OperacaoVistoriasPrototipoRoute: OperacaoVistoriasPrototipoRoute,
+  OperacaoVistoriasRevisaoRoute: OperacaoVistoriasRevisaoRoute,
   PortalInicioRoute: PortalInicioRoute,
   PortalLoginRoute: PortalLoginRoute,
   PrestadoresIdRoute: PrestadoresIdRoute,
