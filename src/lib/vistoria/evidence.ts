@@ -23,7 +23,7 @@ export interface EvidenceContext {
 }
 
 export interface EvidenceMeta extends Omit<EvidenceContext, "guest"> {
-  guestLabel?: string;
+  guestLabel?: string | undefined;
   capturedAt: string;
   sha256: string;
 }

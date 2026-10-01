@@ -8,7 +8,7 @@ export type RunContext = Omit<EvidenceContext, "room" | "itemId" | "itemName">;
 /**
  * Execução por câmera do link externo de vistoria — PROTÓTIPO VISUAL.
  * Não existe backend de evidências ainda: a foto capturada fica só na
- * memória da tela e é exibida como "aguardando envio", nunca como salva.
+ * fila do aparelho como "Pendente de envio", nunca como salva.
  */
 export interface RunItem {
   id: string;
