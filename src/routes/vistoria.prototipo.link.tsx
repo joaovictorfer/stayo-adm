@@ -65,7 +65,7 @@ const RUN_ITEMS: RunItem[] = [
   { id: "c3", room: "Cozinha", name: "Bancada e pia", config: { photo: "opcional", answer: "sim_nao", required: true }, ref: { description: "Bancada limpa e seca." } },
   ...Array.from({ length: 25 }, (_, i) => ({
     id: `c${i + 4}`,
-    room: ["Sala", "Quarto", "Banheiro", "Área externa"][i % 4]!,
+    room: ["Entrada", "Sala", "Dormitório", "Banheiro", "Varanda/Serviço"][i % 5]!,
     name: `Item ${i + 4}`,
     config: { photo: "opcional" as const, answer: "condicao" as const, required: false },
     ref: {},
