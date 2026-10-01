@@ -1,7 +1,8 @@
 import { CameraOff, ChevronLeft, CloudOff, ImageIcon, Loader2, RotateCcw, SkipForward, WifiOff, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { addAudit, burnEvidence, getQueued, putQueued, queueKey, uploadEvidence, type EvidenceContext, type EvidenceMeta } from "@/lib/vistoria/evidence";
+import { ItemConditionScreen, type ConditionAnswer, type ItemConfig, type SaveResult } from "@/components/vistoria/ItemCondition";
+import { addAudit, burnEvidence, putResponse, uploadResponse, getQueued, putQueued, queueKey, uploadEvidence, type EvidenceContext, type EvidenceMeta } from "@/lib/vistoria/evidence";
 
 export type RunContext = Omit<EvidenceContext, "room" | "itemId" | "itemName">;
 
@@ -14,6 +15,7 @@ export interface RunItem {
   id: string;
   room: string;
   name: string;
+  config: ItemConfig;
   ref: {
     photo?: string;
     description?: string;
@@ -40,6 +42,7 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
   const [draft, setDraft] = useState<{ blob: Blob; meta: EvidenceMeta; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [condOpen, setCondOpen] = useState(false);
 
   // Retomada: fotos que ficaram na fila do aparelho voltam como "Pendente de envio".
   useEffect(() => {
@@ -125,14 +128,38 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
         setShots((s) => ({ ...s, [item.id]: draft.url }));
         setDraft(null);
         setBusy(false);
-        setNotice("Foto guardada neste aparelho · Pendente de envio. O item não foi concluído.");
-        window.setTimeout(next, 600);
+        setNotice("Foto guardada neste aparelho · Pendente de envio.");
+        setCondOpen(true);
         return;
       } catch {
         setNotice("Não foi possível guardar a foto neste aparelho. Tente de novo.");
       }
     }
     setBusy(false);
+  };
+
+  const saveAnswer = async (a: ConditionAnswer): Promise<SaveResult> => {
+    const answeredAt = new Date().toISOString();
+    const evidence = await getQueued(context.inspectionId).then((q) => q.filter((e) => e.itemId === item.id).map((e) => e.meta.sha256)).catch(() => []);
+    const resp = {
+      key: queueKey(context.inspectionId, item.id), inspectionId: context.inspectionId, property: context.property,
+      room: item.room, itemId: item.id, itemName: item.name, answerKind: item.config.answer,
+      condition: a.condition, value: a.value, note: a.note, evidenceSha256: evidence,
+      author: context.author, answeredAt, status: "pendente_envio" as const,
+    };
+    try {
+      await putResponse(resp);
+    } catch {
+      return { kind: "erro", message: "Não foi possível guardar a resposta neste aparelho. Tente de novo." };
+    }
+    try {
+      await uploadResponse(resp);
+      return { kind: "salvo" };
+    } catch {
+      setNotice("Resposta guardada neste aparelho · Pendente de envio.");
+      window.setTimeout(() => { setCondOpen(false); next(); }, 900);
+      return { kind: "pendente", message: "Guardado neste aparelho · Pendente de envio. O item ainda não foi concluído." };
+    }
   };
 
   const skip = () => {
@@ -222,6 +249,15 @@ export function CameraRun({ items, context, onExit }: { items: RunItem[]; contex
             <button onClick={retake} disabled={busy} className="h-14 w-full rounded-2xl border border-primary text-base font-semibold text-primary">Tirar outra foto</button>
           </div>
         </div>
+      )}
+
+      {condOpen && (
+        <ItemConditionScreen
+          key={item.id}
+          room={item.room} name={item.name} position={idx + 1} total={total} config={item.config}
+          photoCount={status[item.id] === "pendente_envio" ? 1 : 0}
+          onBack={() => setCondOpen(false)} onSave={saveAnswer}
+        />
       )}
 
       {refOpen && <ReferenceDrawer item={item} onClose={() => setRefOpen(false)} />}

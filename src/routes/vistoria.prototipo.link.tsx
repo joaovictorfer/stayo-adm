@@ -60,13 +60,14 @@ const ITEMS: Item[] = [
 ];
 /* Snapshot demonstrativo do roteiro de câmera (28 itens). */
 const RUN_ITEMS: RunItem[] = [
-  { id: "c1", room: "Cozinha", name: "Geladeira fechada", ref: { photo: demoPhoto, description: "Geladeira inox duas portas, fotografada de frente com as portas fechadas.", quantity: 1, brand: "Brastemp", condition: "Bom", note: "Conferir borracha da porta." } },
-  { id: "c2", room: "Cozinha", name: "Fogão", ref: { description: "Cooktop 4 bocas.", quantity: 1, condition: "Bom" } },
-  { id: "c3", room: "Cozinha", name: "Bancada e pia", ref: { description: "Bancada limpa e seca." } },
+  { id: "c1", room: "Cozinha", name: "Geladeira fechada", config: { photo: "obrigatoria", answer: "condicao", required: true }, ref: { photo: demoPhoto, description: "Geladeira inox duas portas, fotografada de frente com as portas fechadas.", quantity: 1, brand: "Brastemp", condition: "Bom", note: "Conferir borracha da porta." } },
+  { id: "c2", room: "Cozinha", name: "Fogão", config: { photo: "opcional", answer: "condicao", required: false }, ref: { description: "Cooktop 4 bocas.", quantity: 1, condition: "Bom" } },
+  { id: "c3", room: "Cozinha", name: "Bancada e pia", config: { photo: "opcional", answer: "sim_nao", required: true }, ref: { description: "Bancada limpa e seca." } },
   ...Array.from({ length: 25 }, (_, i) => ({
     id: `c${i + 4}`,
     room: ["Sala", "Quarto", "Banheiro", "Área externa"][i % 4]!,
     name: `Item ${i + 4}`,
+    config: { photo: "opcional" as const, answer: "condicao" as const, required: false },
     ref: {},
   })),
 ];
