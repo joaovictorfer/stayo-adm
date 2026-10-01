@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 
 import demoPhoto from "@/assets/vistoria-demo-sala.jpg";
 import { StayoLogo } from "@/components/brand/StayoLogo";
+import { CameraRun, type RunItem } from "@/components/vistoria/CameraRun";
 
 export const Route = createFileRoute("/vistoria/prototipo/link")({
   head: () => ({
@@ -57,6 +58,18 @@ const ITEMS: Item[] = [
   { id: "i11", room: "Banheiro", name: "Água quente funciona?", hint: "Abra o chuveiro por alguns segundos.", type: "question" },
   { id: "i12", room: "Área externa", name: "Sacada", hint: "Fotografe a sacada inteira.", type: "photo" },
 ];
+/* Snapshot demonstrativo do roteiro de câmera (28 itens). */
+const RUN_ITEMS: RunItem[] = [
+  { id: "c1", room: "Cozinha", name: "Geladeira fechada", ref: { photo: demoPhoto, description: "Geladeira inox duas portas, fotografada de frente com as portas fechadas.", quantity: 1, brand: "Brastemp", condition: "Bom", note: "Conferir borracha da porta." } },
+  { id: "c2", room: "Cozinha", name: "Fogão", ref: { description: "Cooktop 4 bocas.", quantity: 1, condition: "Bom" } },
+  { id: "c3", room: "Cozinha", name: "Bancada e pia", ref: { description: "Bancada limpa e seca." } },
+  ...Array.from({ length: 25 }, (_, i) => ({
+    id: `c${i + 4}`,
+    room: ["Sala", "Quarto", "Banheiro", "Área externa"][i % 4]!,
+    name: `Item ${i + 4}`,
+    ref: {},
+  })),
+];
 const ROOMS = [...new Set(ITEMS.map((i) => i.room))];
 
 interface Answer { done: boolean; skipped?: boolean; photos: number; value?: string; cond?: Cond }
@@ -78,7 +91,7 @@ const STATES: { v: LinkState; l: string }[] = [
   { v: "enviado", l: "Enviado" },
   { v: "reaberto", l: "Reaberto" },
 ];
-type Screen = "inicio" | "item" | "camera" | "previa" | "ambientes" | "revisao" | "final";
+type Screen = "execucao" | "inicio" | "item" | "camera" | "previa" | "ambientes" | "revisao" | "final";
 type Save = "salvo" | "salvando" | "offline";
 
 const COND: Record<Cond, { label: string; icon: typeof Check; cls: string }> = {
@@ -136,12 +149,14 @@ function FieldInspectionPrototype() {
       <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background shadow-sm md:my-6 md:min-h-[780px] md:overflow-hidden md:rounded-3xl md:border md:border-border">
         {linkState === "expirado" ? (
           <Expired />
+        ) : screen === "execucao" ? (
+          <CameraRun items={RUN_ITEMS} onExit={() => setScreen("inicio")} />
         ) : screen === "inicio" ? (
           <Start
             reopened={linkState === "reaberto"}
             progress={doneCount}
             hasProgress={Object.keys(answers).length > 0}
-            onStart={() => go(0)}
+            onStart={() => setScreen("execucao")}
             onResume={() => go(idx)}
           />
         ) : screen === "item" ? (
