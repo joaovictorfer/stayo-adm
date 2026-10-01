@@ -51,13 +51,13 @@ const DEMO_SCOPE = ["prop-204"];
 const DEMO: Instance = {
   id: "VST-2026-0142", propertyId: "prop-204", property: "Apto 204 · Centro", kind: "Pré-check-in",
   reservation: "Reserva #48213 · Mariana S. · 02–05 out", reservationAuthorized: true,
-  responsible: "Vistoriador do link", startedAt: "2026-10-01T10:12:00", submittedAt: "2026-10-01T10:58:00", status: "enviada",
+  responsible: "Equipe STAYO", startedAt: "2025-05-12T13:44:00", submittedAt: "2025-05-12T14:26:00", status: "enviada",
   items: [
-    { id: "i1", room: "Sala", name: "Tomada com folga", cond: "problema", note: "Espelho solto ao lado do sofá", photo: salaImg, critical: true },
+    { id: "i1", room: "Sala", name: "Tomada com folga", cond: "problema", note: "Tomada com folga na fixação. Necessário ajuste.", photo: salaImg, critical: true },
     { id: "i2", room: "Sala", name: "Sofá", cond: "ok", photo: salaImg },
     { id: "i3", room: "Cozinha", name: "Panelas", cond: "atencao", note: "Uma tampa faltando", photo: cozinhaImg },
     { id: "i4", room: "Cozinha", name: "Geladeira fechada", cond: "ok", photo: cozinhaImg },
-    { id: "i5", room: "Suíte", name: "Box com trinca", cond: "problema", note: "Trinca no vidro, risco de quebra" , critical: true },
+    { id: "i5", room: "Suíte", name: "Box com trinca", cond: "problema", note: "Trinca no vidro do box. Avaliar substituição.", photo: banheiroImg, critical: true },
     { id: "i6", room: "Suíte", name: "Toalhas", cond: "pendente" },
     ...Array.from({ length: 22 }, (_, k) => ({ id: `x${k}`, room: ["Entrada", "Sala", "Cozinha", "Dormitório", "Banheiro"][k % 5]!, name: `Item ${k + 7}`, cond: "ok" as Cond })),
   ],
