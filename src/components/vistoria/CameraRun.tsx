@@ -101,7 +101,6 @@ export function CameraRun({ items, onExit }: { items: RunItem[]; onExit: () => v
             <ChevronLeft className="size-6" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs opacity-75">{item.room}</p>
             <h1 className="truncate text-xl font-semibold">{item.room} · {item.name}</h1>
           </div>
           <span className="shrink-0 text-sm tabular-nums opacity-85">{idx + 1} de {total}</span>
