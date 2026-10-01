@@ -281,6 +281,13 @@
       "when": 1790454095715,
       "tag": "0039_linen_guide",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790821930888,
+      "tag": "0040_guided_inventory_catalog",
+      "breakpoints": true
     }
   ]
 }

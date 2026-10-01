@@ -316,6 +316,7 @@ export type Database = {
           purchase_url: string | null
           quantity_text: string | null
           recommended_quantity: number
+          room: string | null
           size_text: string | null
           tip: string | null
           updated_at: string
@@ -334,6 +335,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          room?: string | null
           size_text?: string | null
           tip?: string | null
           updated_at?: string
@@ -352,6 +354,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          room?: string | null
           size_text?: string | null
           tip?: string | null
           updated_at?: string
@@ -744,6 +747,7 @@ export type Database = {
           purchase_url: string | null
           quantity_text: string | null
           recommended_quantity: number
+          room: string | null
           size_text: string | null
           tip: string | null
           updated_at: string
@@ -764,6 +768,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          room?: string | null
           size_text?: string | null
           tip?: string | null
           updated_at?: string
@@ -784,6 +789,7 @@ export type Database = {
           purchase_url?: string | null
           quantity_text?: string | null
           recommended_quantity?: number
+          room?: string | null
           size_text?: string | null
           tip?: string | null
           updated_at?: string
