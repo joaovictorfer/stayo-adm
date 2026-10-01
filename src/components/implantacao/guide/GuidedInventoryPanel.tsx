@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "../../ui/button";
 import { InventoryItemDetails } from "./InventoryItemDetails";
+import { InventorySubmissionsReview } from "./InventorySubmissionsReview";
 import {
   addInventoryItem,
   duplicateInventoryItem,
@@ -135,6 +136,8 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
         {status}
       </header>
 
+      <InventorySubmissionsReview implementationId={implementationId} items={items} />
+
       {!room ? (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {inventoryRooms.map((r) => {
@@ -176,7 +179,7 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
                 <div className="min-w-0 flex-1">
                   <span className="text-sm font-medium">{i.name}</span>
                   <span className="ml-2 text-[11px]" style={muted}>{inventoryOriginLabel(i)}</span>
-                  {!i.inventory_answer && <span className="ml-2 text-[11px]" style={muted}>· Não informado</span>}
+                  {!i.inventory_answer ? <span className="ml-2 text-[11px]" style={muted}>· Não informado</span> : <span className="ml-2 text-[11px]" style={muted}>· {i.inventory_review_status === "revisado_stayo" ? "Revisado pela STAYO" : "Preenchido pela STAYO"}</span>}
                   {(i.inventory_brand || i.inventory_condition || i.inventory_quantity != null) && (
                     <p className="mt-0.5 text-[11px]" style={muted}>
                       {[i.inventory_quantity != null ? `${i.inventory_quantity} un.` : null, i.inventory_brand, i.inventory_condition ? inventoryConditionLabel[i.inventory_condition] : null].filter(Boolean).join(" · ")}
