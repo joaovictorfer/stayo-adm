@@ -22,13 +22,13 @@ export interface OwnerInventoryItem {
   condition: InventoryCondition | null;
 }
 export interface OwnerProposal {
-  answer?: InventoryAnswer;
-  quantity?: number;
-  brand?: string;
-  condition?: InventoryCondition;
-  note?: string;
-  name?: string;
-  room?: InventoryRoom;
+  answer?: InventoryAnswer | undefined;
+  quantity?: number | undefined;
+  brand?: string | undefined;
+  condition?: InventoryCondition | undefined;
+  note?: string | undefined;
+  name?: string | undefined;
+  room?: InventoryRoom | undefined;
 }
 export interface OwnerSubmission {
   id: string;

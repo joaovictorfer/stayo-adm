@@ -165,7 +165,7 @@ function Inventory({ implementationId }: { implementationId: string }) {
           </ul>
           {open === "novo" ? (
             <div className="rounded-xl border p-3" style={border}>
-              <DetailsForm withName initial={{ answer: "tenho" }} busy={send.isPending} onSubmit={(p) => send.mutate({ itemId: null, p: { ...p, room } })} />
+              <DetailsForm withName initial={{ answer: "tenho" }} busy={send.isPending} onSubmit={(p) => send.mutate({ itemId: null, p: { ...p, room: room ?? undefined } })} />
             </div>
           ) : (
             <Button variant="outline" size="sm" onClick={() => setOpen("novo")}><Plus className="mr-1 h-4 w-4" /> Adicionar item</Button>
