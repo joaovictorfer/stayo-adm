@@ -288,6 +288,13 @@
       "when": 1790821930888,
       "tag": "0040_guided_inventory_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790822099947,
+      "tag": "0041_guided_inventory_answer",
+      "breakpoints": true
     }
   ]
 }

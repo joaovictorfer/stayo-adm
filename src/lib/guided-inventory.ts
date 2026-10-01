@@ -23,6 +23,13 @@ export interface InventoryCatalogItem {
   tip: string | null;
 }
 
+export type InventoryAnswer = "tenho" | "nao_tenho" | "nao_aplica";
+export const inventoryAnswerLabel: Record<InventoryAnswer, string> = {
+  tenho: "Tenho",
+  nao_tenho: "Não tenho",
+  nao_aplica: "Não se aplica",
+};
+
 export interface InventorySnapshotItem {
   id: string;
   implementation_id: string;
@@ -33,6 +40,7 @@ export interface InventorySnapshotItem {
   display_order: number;
   enabled: boolean;
   tip: string | null;
+  inventory_answer?: InventoryAnswer | null;
 }
 
 /**
@@ -70,4 +78,10 @@ export function groupByRoom(items: InventorySnapshotItem[]) {
         .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name)),
     }))
     .filter((g) => g.items.length > 0);
+}
+
+/** Progresso por ambiente: "confirmado" = qualquer resposta (Não informado não conta). */
+export function roomProgress(items: InventorySnapshotItem[]) {
+  const enabled = items.filter((i) => i.enabled);
+  return { total: enabled.length, answered: enabled.filter((i) => i.inventory_answer).length };
 }

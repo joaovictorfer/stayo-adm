@@ -78,6 +78,7 @@ import {
   type FichaSection,
 } from "../lib/ficha-next-action";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
+import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -722,6 +723,14 @@ function ImplementationDetailPage() {
                           error={itemsQuery.isError}
                           onRetry={() => void itemsQuery.refetch()}
                         />
+                      ),
+                    },
+                    {
+                      id: "inventario-guiado",
+                      label: "Inventário guiado",
+                      summary: <GuidedInventorySummary implementationId={implementation.id} />,
+                      content: (
+                        <GuidedInventoryPanel implementationId={implementation.id} title={`${implementation.code}${implementation.nickname ? ` · ${implementation.nickname}` : ""}`} />
                       ),
                     },
                     {
