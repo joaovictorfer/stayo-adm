@@ -130,17 +130,18 @@ function ReviewBody({ inst, who }: { inst: Instance; who: string }) {
   const [dialog, setDialog] = useState<null | "devolver" | "aprovar">(null);
   const [text, setText] = useState("");
   const [zoom, setZoom] = useState<Item | null>(null);
+  const [assignee, setAssignee] = useState<Record<string, string>>({});
 
   const counts = useMemo(() => {
     const c: Record<Cond, number> = { ok: 0, atencao: 0, problema: 0, nao_aplica: 0, pendente: 0 };
     inst.items.forEach((i) => c[i.cond]++); return c;
   }, [inst]);
   const occurrences = inst.items.filter((i) => i.cond === "problema" || i.cond === "atencao" || i.cond === "pendente");
-  const byRoom = occurrences.reduce<Record<string, Item[]>>((a, i) => ((a[i.room] ??= []).push(i), a), {});
   const blockers = inst.items.filter((i) => i.critical || i.cond === "pendente");
   const photos = inst.items.filter((i) => urls[i.id]);
   const done = inst.items.length - counts.pendente;
   const locked = status !== "enviada";
+  const durationMin = Math.max(1, Math.round((new Date(inst.submittedAt).getTime() - new Date(inst.startedAt).getTime()) / 60000));
 
   const log = (action: string, detail?: string) => setAudit((a) => [{ at: new Date().toISOString(), who, action, detail }, ...a]);
   const confirm = () => {
@@ -151,76 +152,96 @@ function ReviewBody({ inst, who }: { inst: Instance; who: string }) {
   const needText = dialog === "devolver" || (dialog === "aprovar" && blockers.length > 0);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="min-w-0 space-y-4">
-        <AdminSection>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 text-sm">
-            <Info label="Imóvel" value={inst.property} />
-            <Info label="Tipo" value={inst.kind} />
-            <Info label="Reserva" value={inst.reservationAuthorized ? inst.reservation ?? "—" : "Sem autorização para ver"} />
-            <Info label="Responsável" value={inst.responsible} icon={<User className="h-3.5 w-3.5" />} />
-            <Info label="Horário" value={`${fmt(inst.startedAt)} → ${fmt(inst.submittedAt)}`} icon={<Clock className="h-3.5 w-3.5" />} />
-            <div><p className="text-xs text-muted-foreground">Status</p>
-              <AdminStatusBadge tone={status === "aprovada" ? "success" : status === "devolvida" ? "warning" : "info"}>
-                {status === "aprovada" ? "Aprovada" : status === "devolvida" ? "Devolvida para correção" : "Aguardando revisão"}
-              </AdminStatusBadge></div>
-          </div>
-        </AdminSection>
+    <div className="space-y-4">
+      {/* Cabeçalho da instância: imóvel, tipo, reserva, status */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Vistoria {inst.kind.toLowerCase()}</h2>
+          <p className="text-muted-foreground">{inst.property}{inst.reservationAuthorized && inst.reservation ? ` · ${inst.reservation}` : ""}</p>
+          {!inst.reservationAuthorized && <p className="text-xs text-muted-foreground">Reserva não exibida: sem autorização.</p>}
+        </div>
+        <AdminStatusBadge tone={status === "aprovada" ? "success" : status === "devolvida" ? "warning" : "info"}>
+          <Clock className="h-3.5 w-3.5" /> {status === "aprovada" ? "Aprovada" : status === "devolvida" ? "Devolvida para correção" : "Aguardando revisão"}
+        </AdminStatusBadge>
+      </div>
 
-        <AdminSection title="Resumo" description={`${done} de ${inst.items.length} itens registrados · ${inst.id}`}>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {(Object.keys(counts) as Cond[]).map((k) => (
-              <div key={k} className="rounded-md border p-3"><p className="text-xs text-muted-foreground">{condLabel[k]}</p><p className="text-xl font-semibold">{counts[k]}</p></div>
-            ))}
-          </div>
-        </AdminSection>
+      {/* Resumo em cartões */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icon={<ClipboardCheck className="h-5 w-5" />} tone="primary" label="Itens verificados" value={`${done}/${inst.items.length}`} hint="itens" />
+        <StatCard icon={<AlertTriangle className="h-5 w-5" />} tone="danger" label="Ocorrências" value={String(occurrences.length)} hint={occurrences.length === 1 ? "ocorrência" : "ocorrências"} />
+        <StatCard icon={<User className="h-5 w-5" />} tone="muted" label="Responsável pela vistoria" value={inst.responsible} hint="Vistoria por link externo" />
+        <StatCard icon={<CalendarCheck className="h-5 w-5" />} tone="muted" label="Concluída em" value={fmt(inst.submittedAt)} hint={`Duração: ${durationMin} min`} />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Resumo por condição: {counts.ok} OK · {counts.atencao} Atenção · {counts.problema} Problema · {counts.nao_aplica} Não se aplica · {counts.pendente} Pendente · {inst.id}
+      </p>
 
-        <AdminSection title={`Ocorrências (${occurrences.length})`} description="Agrupadas por ambiente. Nenhuma gera manutenção ou cobrança automaticamente.">
-          {occurrences.length === 0 ? <p className="text-sm text-muted-foreground">Sem ocorrências.</p> : (
-            <div className="space-y-4">{Object.entries(byRoom).map(([room, items]) => (
-              <div key={room}><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{room}</p>
-                <ul className="divide-y rounded-md border">{items.map((i) => (
-                  <li key={i.id} className="flex items-center gap-3 p-3">
-                    {urls[i.id] ? <button onClick={() => setZoom(i)} aria-label={`Ampliar foto de ${i.name}`}><img src={urls[i.id]} alt="" className="h-14 w-20 rounded object-cover" /></button>
-                      : <div className="grid h-14 w-20 place-items-center rounded bg-muted"><Camera className="h-4 w-4 text-muted-foreground" /></div>}
-                    <div className="min-w-0 flex-1"><p className="font-medium">{i.name}</p>{i.note && <p className="truncate text-sm text-muted-foreground">{i.note}</p>}
-                      {!urls[i.id] && i.cond === "problema" && <p className="text-xs text-destructive">Sem foto enviada</p>}</div>
-                    <div className="flex flex-col items-end gap-1"><AdminStatusBadge tone={condTone[i.cond]}>{condLabel[i.cond]}</AdminStatusBadge>
-                      {i.critical && <span className="text-xs font-medium text-destructive">Bloqueio crítico</span>}</div>
-                  </li>))}</ul></div>))}</div>)}
-        </AdminSection>
-
-        <AdminSection title={`Evidências (${photos.length})`} description="Fotos com a identificação gravada na imagem.">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Galeria de evidências */}
+        <AdminSection title="Evidências da vistoria" description={`${photos.length} fotos · identificação gravada na imagem`}>
           {photos.length === 0 ? <p className="text-sm text-muted-foreground">Preparando fotos…</p> : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">{photos.map((i) => (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{photos.map((i) => (
               <button key={i.id} onClick={() => setZoom(i)} className="overflow-hidden rounded-md border text-left">
                 <img src={urls[i.id]} alt={`${i.room} · ${i.name}`} className="aspect-[4/3] w-full object-cover" />
                 <p className="truncate px-2 py-1 text-xs">{i.room} · {i.name}</p></button>))}</div>)}
         </AdminSection>
-      </div>
 
-      <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-        <AdminSection title="Prontidão do imóvel">
-          {blockers.length ? (<div className="space-y-2 text-sm">
-            <p className="flex items-center gap-2 font-medium text-destructive"><ShieldAlert className="h-4 w-4" />Imóvel não liberado · {blockers.length} bloqueio(s)</p>
-            <ul className="list-disc pl-5 text-muted-foreground">{blockers.map((b) => <li key={b.id}>{b.room} · {b.name}{b.cond === "pendente" ? " (pendente)" : ""}</li>)}</ul>
-            <p className="text-xs text-muted-foreground">Aprovar a vistoria não libera o imóvel. Os bloqueios seguem até serem resolvidos.</p></div>)
-            : <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-primary" />Sem bloqueios críticos.</p>}
-        </AdminSection>
+        {/* Ocorrências + decisão */}
+        <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+          <AdminSection title="Ocorrências para revisão" description={occurrences.length ? `${occurrences.length} ${occurrences.length === 1 ? "ocorrência" : "ocorrências"} · nenhuma gera manutenção ou cobrança automaticamente` : undefined}>
+            {occurrences.length === 0 ? <p className="text-sm text-muted-foreground">Sem ocorrências.</p> : (
+              <ol className="space-y-4">{occurrences.map((i, n) => (
+                <li key={i.id} className="space-y-2 border-b pb-4 last:border-0 last:pb-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-destructive/15 text-xs font-semibold text-destructive">{n + 1}</span>
+                    <p className="min-w-0 flex-1 font-medium">{i.name} · {i.room}</p>
+                    <AdminStatusBadge tone={i.cond === "problema" ? "danger" : "warning"}>{i.cond === "problema" ? "Correção necessária" : i.cond === "pendente" ? "Pendente" : "Acompanhar"}</AdminStatusBadge>
+                  </div>
+                  {urls[i.id]
+                    ? <button onClick={() => setZoom(i)} aria-label={`Ampliar foto de ${i.name}`}><img src={urls[i.id]} alt="" className="aspect-[4/3] w-full rounded-md object-cover" /></button>
+                    : <div className="grid aspect-[4/3] w-full place-items-center rounded-md bg-muted text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Camera className="h-4 w-4" /> {i.cond === "problema" ? "Sem foto enviada" : "Sem foto"}</span></div>}
+                  {i.note && <div><p className="text-xs text-muted-foreground">Descrição</p><p className="text-sm">{i.note}</p></div>}
+                  {i.critical && <p className="flex items-center gap-1.5 text-xs font-medium text-destructive"><ShieldAlert className="h-3.5 w-3.5" /> Bloqueio crítico — imóvel não liberado</p>}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Responsável</p>
+                    <div className="relative">
+                      <select
+                        value={assignee[i.id] ?? "Equipe Manutenção"}
+                        onChange={(e) => { setAssignee((a) => ({ ...a, [i.id]: e.target.value })); log("Responsável atribuído", `${i.room} · ${i.name} → ${e.target.value}`); }}
+                        aria-label={`Responsável por ${i.name}`}
+                        className="h-10 w-full appearance-none rounded-md border bg-background px-3 pr-8 text-sm"
+                      >
+                        <option>Equipe Manutenção</option>
+                        <option>Equipe Limpeza</option>
+                        <option>Equipe STAYO</option>
+                        <option>Fornecedor externo</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-3 h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </li>))}</ol>)}
+          </AdminSection>
 
-        <AdminSection title="Decisão">
-          <div className="flex flex-col gap-2">
+          <AdminSection title="Prontidão do imóvel">
+            {blockers.length ? (<div className="space-y-2 text-sm">
+              <p className="flex items-center gap-2 font-medium text-destructive"><ShieldAlert className="h-4 w-4" />Imóvel não liberado · {blockers.length} bloqueio(s)</p>
+              <ul className="list-disc pl-5 text-muted-foreground">{blockers.map((b) => <li key={b.id}>{b.room} · {b.name}{b.cond === "pendente" ? " (pendente)" : ""}</li>)}</ul>
+              <p className="text-xs text-muted-foreground">Aprovar a vistoria não libera o imóvel. Os bloqueios seguem até serem resolvidos.</p></div>)
+              : <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-primary" />Sem bloqueios críticos.</p>}
+          </AdminSection>
+
+          <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" disabled={locked} onClick={() => setDialog("devolver")}><RotateCcw className="mr-2 h-4 w-4" />Devolver para correção</Button>
             <Button disabled={locked} onClick={() => setDialog("aprovar")}><CheckCircle2 className="mr-2 h-4 w-4" />Aprovar vistoria</Button>
-            {locked && <p className="text-xs text-muted-foreground">Decisão registrada. Só esta vistoria foi afetada.</p>}
           </div>
-        </AdminSection>
+          {locked && <p className="text-xs text-muted-foreground">Decisão registrada. Só esta vistoria foi afetada.</p>}
 
-        <AdminSection title="Histórico">
-          <ol className="space-y-2 text-sm">{audit.map((a, k) => (
-            <li key={k}><p className="font-medium">{a.action}</p><p className="text-xs text-muted-foreground">{a.who} · {fmt(a.at)}</p>{a.detail && <p className="text-xs">“{a.detail}”</p>}</li>))}</ol>
-        </AdminSection>
-      </aside>
+          <AdminSection title="Histórico">
+            <ol className="space-y-2 text-sm">{audit.map((a, k) => (
+              <li key={k}><p className="font-medium">{a.action}</p><p className="text-xs text-muted-foreground">{a.who} · {fmt(a.at)}</p>{a.detail && <p className="text-xs">“{a.detail}”</p>}</li>))}</ol>
+          </AdminSection>
+        </aside>
+      </div>
 
       {dialog && (
         <div role="dialog" aria-modal="true" aria-labelledby="dlg-t" className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4">
@@ -244,6 +265,15 @@ function ReviewBody({ inst, who }: { inst: Instance; who: string }) {
   );
 }
 
-function Info({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
-  return <div><p className="text-xs text-muted-foreground">{label}</p><p className="flex items-center gap-1 font-medium">{icon}{value}</p></div>;
+function StatCard({ icon, tone, label, value, hint }: { icon: React.ReactNode; tone: "primary" | "danger" | "muted"; label: string; value: string; hint: string }) {
+  const toneCls = tone === "primary" ? "bg-primary/10 text-primary" : tone === "danger" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground";
+  return (
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
+      <span className={`grid size-11 shrink-0 place-items-center rounded-full ${toneCls}`}>{icon}</span>
+      <div className="min-w-0">
+        <p className="truncate text-xs text-muted-foreground">{label}</p>
+        <p className="truncate text-lg font-semibold leading-tight">{value} <span className="text-xs font-normal text-muted-foreground">{hint}</span></p>
+      </div>
+    </div>
+  );
 }
