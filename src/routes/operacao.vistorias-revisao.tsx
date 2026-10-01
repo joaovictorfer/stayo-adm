@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, Camera, CheckCircle2, Clock, Lock, RotateCcw, ShieldAlert, User, X } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Camera, CheckCircle2, ChevronDown, ClipboardCheck, Clock, Lock, RotateCcw, ShieldAlert, User, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
@@ -10,6 +10,8 @@ import { useAuthSession } from "@/lib/auth/session";
 import { burnEvidence, loadImage } from "@/lib/vistoria/evidence";
 import salaImg from "@/assets/vistoria-demo-sala.jpg";
 import cozinhaImg from "@/assets/guide-cookware.jpg";
+import geladeiraImg from "@/assets/guide-cookware.jpg";
+import boxImg from "@/assets/guide-cookware.jpg";
 
 /**
  * Revisão interna da vistoria (Admin). Protótipo isolado: não compartilha
