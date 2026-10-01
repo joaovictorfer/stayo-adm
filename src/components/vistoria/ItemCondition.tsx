@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, CloudOff, Loader2, MinusCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { ItemCondition as Cond } from "@/lib/vistoria/evidence";
 
@@ -34,6 +34,10 @@ export function ItemConditionScreen({
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<SaveResult | null>(null);
   const [touched, setTouched] = useState(false);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (cond && cond !== "ok") noteRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [cond]);
 
   const max = cond === "atencao" ? ATTENTION_MAX : NOTE_MAX;
   const errors: string[] = [];
@@ -120,7 +124,7 @@ export function ItemConditionScreen({
           <label className="mt-6 block">
             <span className="text-sm text-muted-foreground">{noteLabel}</span>
             <div className="relative mt-1">
-              <textarea value={note} maxLength={max} onChange={(e) => setNote(e.target.value)} rows={cond === "atencao" ? 2 : 4}
+              <textarea ref={noteRef} value={note} maxLength={max} onChange={(e) => setNote(e.target.value)} rows={cond === "atencao" ? 2 : 4}
                 placeholder="Adicione uma observação, se necessário…" aria-invalid={touched && errors.some((e) => /observação|motivo/i.test(e))}
                 className="w-full resize-none rounded-xl border border-border bg-background p-3 pb-7 text-base" />
               <span className="absolute bottom-2 right-3 text-xs text-muted-foreground">{note.length}/{max}</span>
