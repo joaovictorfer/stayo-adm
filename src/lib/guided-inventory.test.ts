@@ -22,15 +22,15 @@ describe("inventário guiado — snapshot", () => {
   it("mudança no modelo não altera snapshot existente", () => {
     const cat = catalog();
     const snap = buildSnapshot("A", cat, [], id);
-    cat[0].name = "Forma de pizza (novo)";
-    expect(snap[0].name).toBe("Forma de pizza");
+    cat[0]!.name = "Forma de pizza (novo)";
+    expect(snap[0]!.name).toBe("Forma de pizza");
   });
   it("isola duas implantações", () => {
     const cat = catalog();
     const a = buildSnapshot("A", cat, [], id);
     const b = buildSnapshot("B", cat, [], id);
-    a[0].name = "Forma de pizza pequena";
-    expect(b[0].name).toBe("Forma de pizza");
+    a[0]!.name = "Forma de pizza pequena";
+    expect(b[0]!.name).toBe("Forma de pizza");
     expect(new Set([...a, ...b].map((i) => i.id)).size).toBe(4);
   });
   it("agrupa por ambiente na ordem padrão", () => {
