@@ -192,7 +192,10 @@ export function reconcileRooms(rooms: RoomState[], c: Composition): RoomState[] 
       out = gi < 0 ? [...out, r] : [...out.slice(0, gi), r, ...out.slice(gi)];
     }
     list = out.filter((r) => r.kind === kind);
-    for (let i = list.length - 1; i >= target; i--) if (isEmpty(list[i])) out = out.filter((x) => x.id !== list[i].id);
+    for (let i = list.length - 1; i >= target; i--) {
+      const r = list[i];
+      if (r && isEmpty(r)) out = out.filter((x) => x.id !== r.id);
+    }
   };
   fit("quarto", c.bedrooms, (i) => `Quarto ${pad(i + 1)}`);
   const suites = out.filter((r) => r.kind === "quarto" && r.suite).length;
@@ -209,7 +212,7 @@ export function toggleSuite(room: RoomState, on: boolean): RoomState {
     ...room,
     suite: on,
     name: auto ? `${on ? "Suíte" : "Quarto"} ${num}` : room.name,
-    bath: on ? (room.bath ?? { items: {}, custom: [] }) : room.bath,
+    bath: room.bath ?? { items: {}, custom: [] },
   };
 }
 
