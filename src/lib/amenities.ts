@@ -127,6 +127,9 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
   banheiro: [
     { title: "Itens", items: ["Lixeira", "Decoração", "Secador de cabelo"].map((l) => ({ key: slug(l), label: l })) },
   ],
+  lavabo: [
+    { title: "Itens", items: ["Lixeira", "Decoração", "Porta-toalha"].map((l) => ({ key: slug(l), label: l })) },
+  ],
   servico: [
     { title: "Itens", items: ["Máquina de lavar", "Secadora", "Ferro de passar", "Tábua de passar", "Varal"].map((l) => ({ key: slug(l), label: l })) },
   ],
@@ -141,7 +144,7 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
 };
 
 export const ROOM_KIND_LABEL: Record<RoomKind, string> = {
-  cozinha: "Cozinha", sala: "Sala", quarto: "Quarto", banheiro: "Banheiro", servico: "Área de serviço",
+  cozinha: "Cozinha", sala: "Sala", quarto: "Quarto", banheiro: "Banheiro", lavabo: "Lavabo", servico: "Área de serviço",
   externa: "Área externa", geral: "Geral do imóvel", outro: "Outro ambiente",
 };
 
