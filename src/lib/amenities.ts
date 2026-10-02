@@ -1,7 +1,7 @@
 // Comodidades e itens do imóvel — catálogo de atalhos por tipo de ambiente.
 // Os itens padrão só simplificam; cada ambiente aceita itens livres.
 
-export type RoomKind = "cozinha" | "sala" | "quarto" | "banheiro" | "servico" | "externa" | "geral" | "outro";
+export type RoomKind = "cozinha" | "sala" | "quarto" | "banheiro" | "lavabo" | "servico" | "externa" | "geral" | "outro";
 
 export interface ItemDef {
   key: string;
@@ -34,6 +34,12 @@ export interface CustomItem extends ItemState {
   supplier?: string;
 }
 
+export interface BathState {
+  furnitureSupplier?: string | null;
+  items: Record<string, ItemState>;
+  custom: CustomItem[];
+}
+
 export interface RoomState {
   id: string;
   name: string;
@@ -41,6 +47,9 @@ export interface RoomState {
   furnitureSupplier?: string | null;
   items: Record<string, ItemState>;
   custom: CustomItem[];
+  /** Quarto com banheiro privativo. */
+  suite?: boolean;
+  bath?: BathState;
 }
 
 export interface AmenitiesData {
@@ -144,18 +153,61 @@ export function uid() {
   return crypto.randomUUID();
 }
 
-/** Ambientes iniciais: quartos conforme o cadastro do imóvel. */
-export function defaultRooms(bedrooms: number | null | undefined, bathrooms?: number | null): RoomState[] {
-  const r = (kind: RoomKind, name: string): RoomState => ({ id: uid(), kind, name, items: {}, custom: [] });
-  const nb = Math.max(1, bedrooms ?? 1);
-  const nba = Math.max(1, bathrooms ?? 1);
-  return [
-    r("cozinha", "Cozinha"),
-    r("sala", "Sala"),
-    ...Array.from({ length: nb }, (_, i) => r("quarto", `Quarto ${String(i + 1).padStart(2, "0")}`)),
-    ...Array.from({ length: nba }, (_, i) => r("banheiro", nba > 1 ? `Banheiro ${String(i + 1).padStart(2, "0")}` : "Banheiro")),
-    r("geral", "Geral do imóvel"),
-  ];
+export interface Composition {
+  bedrooms: number;
+  bathrooms: number;
+  lavatories: number;
+}
+
+const pad = (n: number) => String(n).padStart(2, "0");
+const mk = (kind: RoomKind, name: string): RoomState => ({ id: uid(), kind, name, items: {}, custom: [] });
+
+/** Ambientes iniciais conforme a composição cadastrada. */
+export function defaultRooms(bedrooms: number | null | undefined, bathrooms?: number | null, lavatories?: number | null): RoomState[] {
+  return reconcileRooms([mk("cozinha", "Cozinha"), mk("sala", "Sala"), mk("geral", "Geral do imóvel")], {
+    bedrooms: Math.max(1, bedrooms ?? 1),
+    bathrooms: Math.max(1, bathrooms ?? 1),
+    lavatories: Math.max(0, lavatories ?? 0),
+  });
+}
+
+function isEmpty(r: RoomState) {
+  return roomProgress(r).marked === 0 && !r.furnitureSupplier && !r.suite;
+}
+
+/**
+ * Ajusta quartos, banheiros sociais e lavabos à composição. Banheiros de suíte
+ * contam no total de banheiros. Nunca remove ambiente com algo marcado.
+ */
+export function reconcileRooms(rooms: RoomState[], c: Composition): RoomState[] {
+  let out = [...rooms];
+  const fit = (kind: RoomKind, target: number, name: (i: number, total: number) => string) => {
+    let list = out.filter((r) => r.kind === kind);
+    for (let i = list.length; i < target; i++) {
+      const r = mk(kind, name(i, target));
+      const gi = out.findIndex((x) => x.kind === "geral");
+      out = gi < 0 ? [...out, r] : [...out.slice(0, gi), r, ...out.slice(gi)];
+    }
+    list = out.filter((r) => r.kind === kind);
+    for (let i = list.length - 1; i >= target; i--) if (isEmpty(list[i])) out = out.filter((x) => x.id !== list[i].id);
+  };
+  fit("quarto", c.bedrooms, (i) => `Quarto ${pad(i + 1)}`);
+  const suites = out.filter((r) => r.kind === "quarto" && r.suite).length;
+  fit("banheiro", Math.max(0, c.bathrooms - suites), (i, t) => (t > 1 ? `Banheiro social ${pad(i + 1)}` : "Banheiro social"));
+  fit("lavabo", c.lavatories, (i, t) => (t > 1 ? `Lavabo ${pad(i + 1)}` : "Lavabo"));
+  return out;
+}
+
+/** Liga/desliga suíte: renomeia e cria o banheiro privativo. */
+export function toggleSuite(room: RoomState, on: boolean): RoomState {
+  const auto = /^(Quarto|Suíte) \d+$/.test(room.name);
+  const num = room.name.match(/\d+$/)?.[0] ?? "";
+  return {
+    ...room,
+    suite: on,
+    name: auto ? `${on ? "Suíte" : "Quarto"} ${num}` : room.name,
+    bath: on ? (room.bath ?? { items: {}, custom: [] }) : room.bath,
+  };
 }
 
 function allDefs(kind: RoomKind): ItemDef[] {
@@ -163,6 +215,8 @@ function allDefs(kind: RoomKind): ItemDef[] {
 }
 
 export function roomProgress(room: RoomState) {
-  const marked = Object.values(room.items).filter((i) => i.on).length + room.custom.length;
-  return { marked, total: allDefs(room.kind).length + room.custom.length };
+  const count = (items: Record<string, ItemState>, custom: CustomItem[]) =>
+    Object.values(items).filter((i) => i.on).length + custom.length;
+  const bath = room.suite && room.bath ? count(room.bath.items, room.bath.custom) : 0;
+  return { marked: count(room.items, room.custom) + bath, total: allDefs(room.kind).length + room.custom.length };
 }
