@@ -9,7 +9,10 @@ import {
   ROOM_KIND_LABEL,
   ROOM_SECTIONS,
   defaultRooms,
+  reconcileRooms,
   roomProgress,
+  toggleSuite,
+  type Composition,
   uid,
   type AmenitiesData,
   type CustomItem,
@@ -22,13 +25,18 @@ import {
 type Save = "idle" | "saving" | "saved" | "error";
 
 async function load(implementationId: string) {
-  const [a, cat] = await Promise.all([
+  const [a, cat, det] = await Promise.all([
     supabase.from("implementation_amenities").select("data").eq("implementation_id", implementationId).maybeSingle(),
     supabase.from("supplier_catalog").select("id,name,status").neq("status", "archived").order("name"),
+    supabase.from("implementation_property_details").select("bathrooms,lavatories").eq("implementation_id", implementationId).maybeSingle(),
   ]);
   if (a.error) throw a.error;
   if (cat.error) throw cat.error;
-  return { data: (a.data?.data ?? null) as AmenitiesData | null, catalog: (cat.data ?? []).map((c) => c.name as string) };
+  return {
+    data: (a.data?.data ?? null) as AmenitiesData | null,
+    bathrooms: det.data?.bathrooms ?? null,
+    lavatories: det.data?.lavatories ?? null,
+    catalog: (cat.data ?? []).map((c) => c.name as string) };
 }
 
 export function AmenitiesPanel({
@@ -50,7 +58,9 @@ export function AmenitiesPanel({
 
   useEffect(() => {
     if (q.data && data === null) {
-      const d = q.data.data?.rooms?.length ? q.data.data : { rooms: defaultRooms(bedrooms, bathrooms) };
+      const d = q.data.data?.rooms?.length
+        ? q.data.data
+        : { rooms: defaultRooms(bedrooms, q.data.bathrooms ?? bathrooms, q.data.lavatories) };
       setData(d);
       latest.current = d;
     }
@@ -87,6 +97,31 @@ export function AmenitiesPanel({
     void qc.invalidateQueries({ queryKey: ["amenities", implementationId] });
   };
 
+  const [comp, setComp] = useState<Composition | null>(null);
+  useEffect(() => {
+    if (q.data && data && !comp) {
+      const r = data.rooms;
+      setComp({
+        bedrooms: bedrooms ?? r.filter((x) => x.kind === "quarto").length,
+        bathrooms: q.data.bathrooms ?? r.filter((x) => x.kind === "banheiro" || x.suite).length,
+        lavatories: q.data.lavatories ?? r.filter((x) => x.kind === "lavabo").length,
+      });
+    }
+  }, [q.data, data, comp, bedrooms]);
+
+  const changeComp = async (next: Composition) => {
+    setComp(next);
+    update((d) => ({ rooms: reconcileRooms(d.rooms, next) }));
+    const [p1, p2] = await Promise.all([
+      supabase.from("implementation_projects").update({ bedrooms: next.bedrooms }).eq("id", implementationId),
+      supabase
+        .from("implementation_property_details")
+        .upsert({ implementation_id: implementationId, bedrooms: next.bedrooms, bathrooms: next.bathrooms, lavatories: next.lavatories }),
+    ]);
+    if (p1.error || p2.error) setSave("error");
+    else void qc.invalidateQueries({ queryKey: ["implementation", implementationId] });
+  };
+
   if (q.isPending || !data)
     return q.isError ? (
       <div className="rounded-lg border p-4 text-sm" style={{ borderColor: "var(--stayo-border)" }}>
@@ -112,6 +147,8 @@ export function AmenitiesPanel({
         <SaveBadge state={save} onRetry={() => void persist()} />
       </div>
 
+      {comp && <CompositionBar value={comp} onChange={(c) => void changeComp(c)} />}
+
       {data.rooms.map((room) => (
         <RoomCard
           key={room.id}
@@ -119,6 +156,12 @@ export function AmenitiesPanel({
           open={open === room.id}
           onToggle={() => setOpen(open === room.id ? null : room.id)}
           onChange={(fn) => updateRoom(room.id, fn)}
+          onSuite={(on) =>
+            update((d) => {
+              const rooms = d.rooms.map((r) => (r.id === room.id ? toggleSuite(r, on) : r));
+              return { rooms: comp ? reconcileRooms(rooms, comp) : rooms };
+            })
+          }
           onRemove={() => update((d) => ({ rooms: d.rooms.filter((r) => r.id !== room.id) }))}
           catalog={catalog}
           onNewCompany={addCompany}
@@ -172,9 +215,11 @@ function RoomCard({
   onToggle,
   onChange,
   onRemove,
+  onSuite,
   catalog,
   onNewCompany,
 }: {
+  onSuite: (on: boolean) => void;
   room: RoomState;
   open: boolean;
   onToggle: () => void;
@@ -211,6 +256,19 @@ function RoomCard({
             <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
               {p.marked} marcado{p.marked === 1 ? "" : "s"}
             </span>
+          </button>
+        )}
+        {!renaming && room.kind === "quarto" && (
+          <button
+            onClick={() => onSuite(!room.suite)}
+            aria-pressed={!!room.suite}
+            className="rounded-full border px-3 py-1 text-xs font-medium"
+            style={{
+              borderColor: room.suite ? "var(--stayo-forest)" : "var(--stayo-border)",
+              backgroundColor: room.suite ? "var(--stayo-forest-soft)" : "white",
+            }}
+          >
+            {room.suite ? "✓ Suíte" : "Suíte"}
           </button>
         )}
         {!renaming && (
@@ -260,6 +318,38 @@ function RoomCard({
             items={room.custom}
             onChange={(custom) => onChange((r) => ({ ...r, custom }))}
           />
+
+          {room.suite && room.bath && (
+            <div className="flex flex-col gap-3 rounded-lg border-l-4 pl-3" style={{ borderColor: "var(--stayo-forest)" }}>
+              <h4 className="text-sm font-semibold">Banheiro da suíte</h4>
+              <CompanyPicker
+                label="Móveis do banheiro"
+                value={room.bath.furnitureSupplier ?? ""}
+                catalog={catalog}
+                onChange={(v) => onChange((r) => ({ ...r, bath: { ...r.bath!, furnitureSupplier: v || null } }))}
+                onNew={onNewCompany}
+              />
+              <div className="flex flex-col gap-1.5">
+                {ROOM_SECTIONS.banheiro.flatMap((s) => s.items).map((def) => (
+                  <ItemRow
+                    key={def.key}
+                    def={def}
+                    items={room.bath!.items}
+                    setItem={(key, patch) =>
+                      onChange((r) => ({
+                        ...r,
+                        bath: { ...r.bath!, items: { ...r.bath!.items, [key]: { ...r.bath!.items[key], ...patch } } },
+                      }))
+                    }
+                  />
+                ))}
+              </div>
+              <CustomItems
+                items={room.bath.custom}
+                onChange={(custom) => onChange((r) => ({ ...r, bath: { ...r.bath!, custom } }))}
+              />
+            </div>
+          )}
         </div>
       )}
     </section>
@@ -458,7 +548,7 @@ function CompanyPicker({
 
 function AddRoom({ onAdd, bedroomsCount }: { onAdd: (k: RoomKind, name: string) => void; bedroomsCount: number }) {
   const [open, setOpen] = useState(false);
-  const kinds: RoomKind[] = ["quarto", "banheiro", "sala", "cozinha", "servico", "externa", "outro"];
+  const kinds: RoomKind[] = ["quarto", "banheiro", "lavabo", "sala", "cozinha", "servico", "externa", "outro"];
   if (!open)
     return (
       <Button variant="outline" onClick={() => setOpen(true)}>
@@ -481,6 +571,45 @@ function AddRoom({ onAdd, bedroomsCount }: { onAdd: (k: RoomKind, name: string) 
         </Button>
       ))}
       <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+    </div>
+  );
+}
+
+function CompositionBar({ value, onChange }: { value: Composition; onChange: (c: Composition) => void }) {
+  const fields: [keyof Composition, string, number][] = [
+    ["bedrooms", "Quartos", 1],
+    ["bathrooms", "Banheiros", 1],
+    ["lavatories", "Lavabos", 0],
+  ];
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-[var(--radius-card)] border bg-white p-3" style={{ borderColor: "var(--stayo-border)" }}>
+      {fields.map(([k, label, min]) => (
+        <div key={k} className="flex flex-col items-center gap-1">
+          <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              aria-label={`Menos ${label}`}
+              disabled={value[k] <= min}
+              onClick={() => onChange({ ...value, [k]: value[k] - 1 })}
+            >
+              −
+            </Button>
+            <span className="w-6 text-center text-lg font-semibold tabular-nums">{value[k]}</span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              aria-label={`Mais ${label}`}
+              onClick={() => onChange({ ...value, [k]: value[k] + 1 })}
+            >
+              +
+            </Button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
