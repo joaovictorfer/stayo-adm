@@ -361,6 +361,38 @@ export type Database = {
         }
         Relationships: []
       }
+      implementation_amenities: {
+        Row: {
+          created_at: string
+          data: Json
+          implementation_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          implementation_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          implementation_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_amenities_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_commercial_meeting_events: {
         Row: {
           actor_id: string

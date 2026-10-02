@@ -1,0 +1,486 @@
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronDown, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import {
+  ROOM_KIND_LABEL,
+  ROOM_SECTIONS,
+  defaultRooms,
+  roomProgress,
+  uid,
+  type AmenitiesData,
+  type CustomItem,
+  type ItemDef,
+  type ItemState,
+  type RoomKind,
+  type RoomState,
+} from "@/lib/amenities";
+
+type Save = "idle" | "saving" | "saved" | "error";
+
+async function load(implementationId: string) {
+  const [a, cat] = await Promise.all([
+    supabase.from("implementation_amenities").select("data").eq("implementation_id", implementationId).maybeSingle(),
+    supabase.from("supplier_catalog").select("id,name,status").neq("status", "archived").order("name"),
+  ]);
+  if (a.error) throw a.error;
+  if (cat.error) throw cat.error;
+  return { data: (a.data?.data ?? null) as AmenitiesData | null, catalog: (cat.data ?? []).map((c) => c.name as string) };
+}
+
+export function AmenitiesPanel({
+  implementationId,
+  bedrooms,
+  bathrooms,
+}: {
+  implementationId: string;
+  bedrooms: number | null | undefined;
+  bathrooms?: number | null;
+}) {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["amenities", implementationId], queryFn: () => load(implementationId) });
+  const [data, setData] = useState<AmenitiesData | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [save, setSave] = useState<Save>("idle");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latest = useRef<AmenitiesData | null>(null);
+
+  useEffect(() => {
+    if (q.data && data === null) {
+      const d = q.data.data?.rooms?.length ? q.data.data : { rooms: defaultRooms(bedrooms, bathrooms) };
+      setData(d);
+      latest.current = d;
+    }
+  }, [q.data, data, bedrooms, bathrooms]);
+
+  const persist = async () => {
+    if (!latest.current) return;
+    setSave("saving");
+    const { error } = await supabase
+      .from("implementation_amenities")
+      .upsert({ implementation_id: implementationId, data: latest.current as never });
+    setSave(error ? "error" : "saved");
+  };
+
+  const update = (fn: (d: AmenitiesData) => AmenitiesData) => {
+    setData((prev) => {
+      if (!prev) return prev;
+      const next = fn(prev);
+      latest.current = next;
+      return next;
+    });
+    setSave("saving");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => void persist(), 700);
+  };
+
+  const updateRoom = (id: string, fn: (r: RoomState) => RoomState) =>
+    update((d) => ({ rooms: d.rooms.map((r) => (r.id === id ? fn(r) : r)) }));
+
+  const addCompany = async (name: string) => {
+    const clean = name.trim();
+    if (!clean) return;
+    await supabase.from("supplier_catalog").insert({ name: clean, specialties: ["moveis"], status: "suggested" });
+    void qc.invalidateQueries({ queryKey: ["amenities", implementationId] });
+  };
+
+  if (q.isPending || !data)
+    return q.isError ? (
+      <div className="rounded-lg border p-4 text-sm" style={{ borderColor: "var(--stayo-border)" }}>
+        Não foi possível abrir as comodidades.{" "}
+        <Button variant="link" className="h-auto p-0" onClick={() => void q.refetch()}>
+          Tentar de novo
+        </Button>
+      </div>
+    ) : (
+      <div className="flex items-center gap-2 p-4 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+        <Loader2 className="size-4 animate-spin" /> Carregando…
+      </div>
+    );
+
+  const catalog = q.data?.catalog ?? [];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+          Abra cada ambiente e marque o que o imóvel tem.
+        </p>
+        <SaveBadge state={save} onRetry={() => void persist()} />
+      </div>
+
+      {data.rooms.map((room) => (
+        <RoomCard
+          key={room.id}
+          room={room}
+          open={open === room.id}
+          onToggle={() => setOpen(open === room.id ? null : room.id)}
+          onChange={(fn) => updateRoom(room.id, fn)}
+          onRemove={() => update((d) => ({ rooms: d.rooms.filter((r) => r.id !== room.id) }))}
+          catalog={catalog}
+          onNewCompany={addCompany}
+        />
+      ))}
+
+      <AddRoom
+        onAdd={(kind, name) => {
+          const id = uid();
+          update((d) => ({ rooms: [...d.rooms, { id, kind, name, items: {}, custom: [] }] }));
+          setOpen(id);
+        }}
+        bedroomsCount={data.rooms.filter((r) => r.kind === "quarto").length}
+      />
+    </div>
+  );
+}
+
+export function AmenitiesSummary({ implementationId }: { implementationId: string }) {
+  const q = useQuery({ queryKey: ["amenities", implementationId], queryFn: () => load(implementationId) });
+  const rooms = q.data?.data?.rooms ?? [];
+  if (!rooms.length) return <>Nada marcado ainda</>;
+  const marked = rooms.reduce((n, r) => n + roomProgress(r).marked, 0);
+  return <>{`${marked} itens marcados em ${rooms.length} ambientes`}</>;
+}
+
+function SaveBadge({ state, onRetry }: { state: Save; onRetry: () => void }) {
+  if (state === "idle") return null;
+  if (state === "saving")
+    return (
+      <span className="flex items-center gap-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+        <Loader2 className="size-3 animate-spin" /> Salvando…
+      </span>
+    );
+  if (state === "error")
+    return (
+      <button className="text-xs underline" style={{ color: "var(--stayo-danger)" }} onClick={onRetry}>
+        Não salvou · tentar de novo
+      </button>
+    );
+  return (
+    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--stayo-success)" }}>
+      <Check className="size-3" /> Salvo
+    </span>
+  );
+}
+
+function RoomCard({
+  room,
+  open,
+  onToggle,
+  onChange,
+  onRemove,
+  catalog,
+  onNewCompany,
+}: {
+  room: RoomState;
+  open: boolean;
+  onToggle: () => void;
+  onChange: (fn: (r: RoomState) => RoomState) => void;
+  onRemove: () => void;
+  catalog: string[];
+  onNewCompany: (name: string) => Promise<void>;
+}) {
+  const [renaming, setRenaming] = useState(false);
+  const [name, setName] = useState(room.name);
+  const p = roomProgress(room);
+  const setItem = (key: string, patch: Partial<ItemState>) =>
+    onChange((r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
+
+  return (
+    <section className="rounded-[var(--radius-card)] border bg-white" style={{ borderColor: "var(--stayo-border)" }}>
+      <div className="flex items-center gap-2 p-3">
+        {renaming ? (
+          <form
+            className="flex flex-1 items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (name.trim()) onChange((r) => ({ ...r, name: name.trim() }));
+              setRenaming(false);
+            }}
+          >
+            <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus className="h-8" />
+            <Button size="sm" type="submit">OK</Button>
+          </form>
+        ) : (
+          <button className="flex flex-1 items-center gap-2 text-left" onClick={onToggle} aria-expanded={open}>
+            <ChevronDown className={`size-4 transition-transform ${open ? "" : "-rotate-90"}`} />
+            <span className="font-semibold">{room.name}</span>
+            <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+              {p.marked} marcado{p.marked === 1 ? "" : "s"}
+            </span>
+          </button>
+        )}
+        {!renaming && (
+          <>
+            <Button variant="ghost" size="icon" className="size-8" aria-label="Renomear ambiente" onClick={() => setRenaming(true)}>
+              <Pencil className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              aria-label="Remover ambiente"
+              onClick={() => window.confirm(`Remover "${room.name}" e tudo que foi marcado nele?`) && onRemove()}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </>
+        )}
+      </div>
+
+      {open && (
+        <div className="flex flex-col gap-4 border-t p-3" style={{ borderColor: "var(--stayo-border)" }}>
+          {room.kind !== "geral" && (
+            <CompanyPicker
+              label="Quem forneceu os móveis deste ambiente?"
+              value={room.furnitureSupplier ?? ""}
+              catalog={catalog}
+              onChange={(v) => onChange((r) => ({ ...r, furnitureSupplier: v || null }))}
+              onNew={onNewCompany}
+            />
+          )}
+
+          {ROOM_SECTIONS[room.kind].map((s) => (
+            <div key={s.title}>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+                {s.title}
+              </h4>
+              <div className="flex flex-col gap-1.5">
+                {s.items.map((def) => (
+                  <ItemRow key={def.key} def={def} items={room.items} setItem={setItem} />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <CustomItems
+            items={room.custom}
+            onChange={(custom) => onChange((r) => ({ ...r, custom }))}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ItemRow({
+  def,
+  items,
+  setItem,
+  nested,
+}: {
+  def: ItemDef;
+  items: Record<string, ItemState>;
+  setItem: (key: string, patch: Partial<ItemState>) => void;
+  nested?: boolean;
+}) {
+  const st = items[def.key] ?? {};
+  const [details, setDetails] = useState(false);
+  const on = !!st.on;
+  return (
+    <div
+      className={`rounded-lg border ${nested ? "bg-white" : ""}`}
+      style={{ borderColor: on ? "var(--stayo-forest)" : "var(--stayo-border)", backgroundColor: on && !nested ? "var(--stayo-bg)" : undefined }}
+    >
+      <div className="flex min-h-11 items-center gap-3 px-3 py-2">
+        <Switch checked={on} onCheckedChange={(v) => setItem(def.key, { on: v })} aria-label={def.label} />
+        <span className="flex-1 text-sm font-medium">{def.label}</span>
+        {on && !def.sub && (
+          <button className="text-xs underline" style={{ color: "var(--stayo-ink-muted)" }} onClick={() => setDetails((d) => !d)}>
+            {details ? "Fechar" : summary(st, def) || "Detalhes"}
+          </button>
+        )}
+      </div>
+
+      {on && def.options && (
+        <div className="flex flex-wrap gap-2 px-3 pb-2">
+          {def.options.map((o) => {
+            const n = st.opts?.[o] ?? 0;
+            return (
+              <div
+                key={o}
+                className="flex items-center gap-1 rounded-full border px-1 py-0.5 text-sm"
+                style={{ borderColor: n ? "var(--stayo-forest)" : "var(--stayo-border)", backgroundColor: n ? "var(--stayo-forest-soft)" : "white" }}
+              >
+                <button
+                  className="px-2"
+                  onClick={() => setItem(def.key, { opts: { ...st.opts, [o]: n ? 0 : 1 } })}
+                  aria-pressed={!!n}
+                >
+                  {o}
+                </button>
+                {n > 0 && (
+                  <>
+                    <button className="size-6 rounded-full" aria-label={`Menos ${o}`} onClick={() => setItem(def.key, { opts: { ...st.opts, [o]: n - 1 } })}>−</button>
+                    <span className="w-4 text-center tabular-nums">{n}</span>
+                    <button className="size-6 rounded-full" aria-label={`Mais ${o}`} onClick={() => setItem(def.key, { opts: { ...st.opts, [o]: n + 1 } })}>+</button>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {on && def.company && (
+        <div className="px-3 pb-2">
+          <Input
+            placeholder="Empresa responsável"
+            value={st.company ?? ""}
+            onChange={(e) => setItem(def.key, { company: e.target.value })}
+            className="h-9"
+          />
+        </div>
+      )}
+
+      {on && details && !def.sub && (
+        <div className="grid gap-2 px-3 pb-3 sm:grid-cols-3">
+          {!def.options && (
+            <Input
+              type="number"
+              min={0}
+              placeholder="Qtd"
+              value={st.qty ?? ""}
+              onChange={(e) => setItem(def.key, { qty: e.target.value === "" ? null : Number(e.target.value) })}
+              className="h-9"
+            />
+          )}
+          <Input placeholder="Marca" value={st.brand ?? ""} onChange={(e) => setItem(def.key, { brand: e.target.value })} className="h-9" />
+          <Input
+            placeholder="Observação"
+            value={st.notes ?? ""}
+            onChange={(e) => setItem(def.key, { notes: e.target.value })}
+            className="h-9 sm:col-span-1"
+          />
+        </div>
+      )}
+
+      {on && def.sub && (
+        <div className="flex flex-col gap-1.5 px-3 pb-3">
+          {def.sub.map((s) => (
+            <ItemRow key={s.key} def={s} items={items} setItem={setItem} nested />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function summary(st: ItemState, def: ItemDef) {
+  return [!def.options && st.qty ? `${st.qty} un.` : "", st.brand, st.notes ? "obs." : ""].filter(Boolean).join(" · ");
+}
+
+function CustomItems({ items, onChange }: { items: CustomItem[]; onChange: (c: CustomItem[]) => void }) {
+  const set = (id: string, patch: Partial<CustomItem>) => onChange(items.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+  return (
+    <div>
+      {items.length > 0 && (
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+          Outros itens
+        </h4>
+      )}
+      <div className="flex flex-col gap-2">
+        {items.map((i) => (
+          <div key={i.id} className="grid gap-2 rounded-lg border p-2 sm:grid-cols-[2fr_80px_1fr_1fr_1.5fr_auto]" style={{ borderColor: "var(--stayo-border)" }}>
+            <Input placeholder="Nome do item" value={i.name} onChange={(e) => set(i.id, { name: e.target.value })} className="h-9" />
+            <Input type="number" min={0} placeholder="Qtd" value={i.qty ?? ""} onChange={(e) => set(i.id, { qty: e.target.value === "" ? null : Number(e.target.value) })} className="h-9" />
+            <Input placeholder="Marca" value={i.brand ?? ""} onChange={(e) => set(i.id, { brand: e.target.value })} className="h-9" />
+            <Input placeholder="Fornecedor" value={i.supplier ?? ""} onChange={(e) => set(i.id, { supplier: e.target.value })} className="h-9" />
+            <Input placeholder="Observação" value={i.notes ?? ""} onChange={(e) => set(i.id, { notes: e.target.value })} className="h-9" />
+            <Button variant="ghost" size="icon" className="size-9" aria-label="Remover item" onClick={() => onChange(items.filter((x) => x.id !== i.id))}>
+              <X className="size-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button variant="outline" size="sm" className="mt-2" onClick={() => onChange([...items, { id: uid(), name: "", on: true, qty: 1 }])}>
+        <Plus /> Adicionar outro item
+      </Button>
+    </div>
+  );
+}
+
+function CompanyPicker({
+  label,
+  value,
+  catalog,
+  onChange,
+  onNew,
+}: {
+  label: string;
+  value: string;
+  catalog: string[];
+  onChange: (v: string) => void;
+  onNew: (name: string) => Promise<void>;
+}) {
+  const [other, setOther] = useState(false);
+  const [text, setText] = useState("");
+  const options = value && !catalog.includes(value) ? [value, ...catalog] : catalog;
+  return (
+    <div className="rounded-lg p-3" style={{ backgroundColor: "var(--stayo-bg)" }}>
+      <label className="mb-1.5 block text-sm font-medium">{label}</label>
+      {other ? (
+        <form
+          className="flex gap-2"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!text.trim()) return;
+            await onNew(text);
+            onChange(text.trim());
+            setOther(false);
+            setText("");
+          }}
+        >
+          <Input autoFocus placeholder="Nome da empresa" value={text} onChange={(e) => setText(e.target.value)} className="h-9 bg-white" />
+          <Button size="sm" type="submit">Salvar</Button>
+          <Button size="sm" variant="ghost" type="button" onClick={() => setOther(false)}>Cancelar</Button>
+        </form>
+      ) : (
+        <select
+          className="h-9 w-full rounded-md border bg-white px-2 text-sm"
+          style={{ borderColor: "var(--stayo-border)" }}
+          value={value}
+          onChange={(e) => (e.target.value === "__other" ? setOther(true) : onChange(e.target.value))}
+        >
+          <option value="">Não informado</option>
+          {options.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+          <option value="__other">+ Outra empresa…</option>
+        </select>
+      )}
+    </div>
+  );
+}
+
+function AddRoom({ onAdd, bedroomsCount }: { onAdd: (k: RoomKind, name: string) => void; bedroomsCount: number }) {
+  const [open, setOpen] = useState(false);
+  const kinds: RoomKind[] = ["quarto", "banheiro", "sala", "cozinha", "servico", "externa", "outro"];
+  if (!open)
+    return (
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <Plus /> Adicionar ambiente
+      </Button>
+    );
+  return (
+    <div className="flex flex-wrap gap-2 rounded-lg border p-3" style={{ borderColor: "var(--stayo-border)" }}>
+      {kinds.map((k) => (
+        <Button
+          key={k}
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            onAdd(k, k === "quarto" ? `Quarto ${String(bedroomsCount + 1).padStart(2, "0")}` : ROOM_KIND_LABEL[k]);
+            setOpen(false);
+          }}
+        >
+          {ROOM_KIND_LABEL[k]}
+        </Button>
+      ))}
+      <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+    </div>
+  );
+}

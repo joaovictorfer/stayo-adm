@@ -79,6 +79,7 @@ import {
 } from "../lib/ficha-next-action";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
+import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -723,6 +724,14 @@ function ImplementationDetailPage() {
                           error={itemsQuery.isError}
                           onRetry={() => void itemsQuery.refetch()}
                         />
+                      ),
+                    },
+                    {
+                      id: "comodidades",
+                      label: "Comodidades e itens do imóvel",
+                      summary: <AmenitiesSummary implementationId={implementation.id} />,
+                      content: (
+                        <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} />
                       ),
                     },
                     {
