@@ -726,6 +726,14 @@ function ImplementationDetailPage() {
                       ),
                     },
                     {
+                      id: "comodidades",
+                      label: "Comodidades e itens do imóvel",
+                      summary: <AmenitiesSummary implementationId={implementation.id} />,
+                      content: (
+                        <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} />
+                      ),
+                    },
+                    {
                       id: "inventario-guiado",
                       label: "Inventário guiado",
                       summary: <GuidedInventorySummary implementationId={implementation.id} />,
