@@ -1,0 +1,1 @@
+ALTER TABLE public.implementation_property_details ADD COLUMN IF NOT EXISTS lavatories integer;

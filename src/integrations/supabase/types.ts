@@ -1424,6 +1424,7 @@ export type Database = {
           complement: string | null
           district: string | null
           implementation_id: string
+          lavatories: number | null
           notes: string | null
           number: string | null
           parking_box: string | null
@@ -1447,6 +1448,7 @@ export type Database = {
           complement?: string | null
           district?: string | null
           implementation_id: string
+          lavatories?: number | null
           notes?: string | null
           number?: string | null
           parking_box?: string | null
@@ -1470,6 +1472,7 @@ export type Database = {
           complement?: string | null
           district?: string | null
           implementation_id?: string
+          lavatories?: number | null
           notes?: string | null
           number?: string | null
           parking_box?: string | null
