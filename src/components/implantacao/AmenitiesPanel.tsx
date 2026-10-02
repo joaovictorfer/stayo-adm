@@ -273,13 +273,13 @@ function RoomCard({
         )}
         {!renaming && (
           <>
-            <Button variant="ghost" size="icon" className="size-8" aria-label="Renomear ambiente" onClick={() => setRenaming(true)}>
+            <Button variant="ghost" size="icon" className="size-7" aria-label="Renomear ambiente" onClick={() => setRenaming(true)}>
               <Pencil className="size-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="size-8"
+              className="size-7"
               aria-label="Remover ambiente"
               onClick={() => window.confirm(`Remover "${room.name}" e tudo que foi marcado nele?`) && onRemove()}
             >
@@ -586,22 +586,22 @@ function CompositionBar({ value, onChange }: { value: Composition; onChange: (c:
       {fields.map(([k, label, min]) => (
         <div key={k} className="flex flex-col items-center gap-1">
           <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="outline"
               size="icon"
-              className="size-8"
+              className="size-7"
               aria-label={`Menos ${label}`}
               disabled={value[k] <= min}
               onClick={() => onChange({ ...value, [k]: value[k] - 1 })}
             >
               −
             </Button>
-            <span className="w-6 text-center text-lg font-semibold tabular-nums">{value[k]}</span>
+            <span className="w-5 text-center text-base font-semibold tabular-nums">{value[k]}</span>
             <Button
               variant="outline"
               size="icon"
-              className="size-8"
+              className="size-7"
               aria-label={`Mais ${label}`}
               onClick={() => onChange({ ...value, [k]: value[k] + 1 })}
             >
