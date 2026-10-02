@@ -79,6 +79,7 @@ import {
 } from "../lib/ficha-next-action";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
+import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
