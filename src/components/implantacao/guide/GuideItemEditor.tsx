@@ -50,7 +50,8 @@ export function GuideItemEditor({
 
   const valid = v.category.trim() && v.name.trim() && v.recommended_quantity >= 0 && isValidPurchaseUrl(v.purchase_url ?? "");
 
-  const upload = async (file: File) => {
+  const upload = async (raw: File) => {
+    const file = await shrinkImage(raw);
     const err = validateImage(file);
     if (err) return setError(err);
     setBusy(true);
