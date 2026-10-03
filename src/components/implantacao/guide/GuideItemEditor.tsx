@@ -203,3 +203,19 @@ export const emptyItem = (category = "Cozinha"): EditorValue => ({
   display_order: 0,
   enabled: true,
 });
+
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || (file.size < 1_500_000 && /jpeg|png|webp/.test(file.type))) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise<Blob | null>((r) => c.toBlob(r, "image/jpeg", 0.85));
+    return blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
