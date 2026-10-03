@@ -50,7 +50,8 @@ export function GuideItemEditor({
 
   const valid = v.category.trim() && v.name.trim() && v.recommended_quantity >= 0 && isValidPurchaseUrl(v.purchase_url ?? "");
 
-  const upload = async (file: File) => {
+  const upload = async (raw: File) => {
+    const file = await shrinkImage(raw);
     const err = validateImage(file);
     if (err) return setError(err);
     setBusy(true);
@@ -109,11 +110,17 @@ export function GuideItemEditor({
             {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="size-6" style={{ color: "var(--stayo-ink-muted)" }} />}
           </div>
           <div className="flex flex-col gap-1">
-            <label className="inline-flex min-h-11 cursor-pointer items-center rounded-[var(--radius-control)] border px-3 text-sm font-medium" style={style}>
-              {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              {v.image_path ? "Trocar foto" : "Enviar foto"}
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
-            </label>
+            <div className="flex flex-wrap gap-2">
+              <label className="inline-flex min-h-11 cursor-pointer items-center rounded-[var(--radius-control)] border px-3 text-sm font-medium" style={style}>
+                {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                Tirar foto
+                <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
+              </label>
+              <label className="inline-flex min-h-11 cursor-pointer items-center rounded-[var(--radius-control)] border px-3 text-sm font-medium" style={style}>
+                {v.image_path ? "Trocar da galeria" : "Galeria"}
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
+              </label>
+            </div>
             {v.image_path && (
               <button type="button" className="text-left text-xs underline" onClick={() => { set("image_path", null); setPreview(null); }}>
                 Remover foto
@@ -196,3 +203,19 @@ export const emptyItem = (category = "Cozinha"): EditorValue => ({
   display_order: 0,
   enabled: true,
 });
+
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || (file.size < 1_500_000 && /jpeg|png|webp/.test(file.type))) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise<Blob | null>((r) => c.toBlob(r, "image/jpeg", 0.85));
+    return blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}

@@ -3251,6 +3251,10 @@ export type Database = {
       }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
+      admin_quick_mark_guide_item: {
+        Args: { p_have: boolean; p_item_id: string }
+        Returns: Json
+      }
       admin_release_portal_block: { Args: { p_data: Json }; Returns: Json }
       admin_reschedule_commercial_meeting: {
         Args: { p_data: Json }

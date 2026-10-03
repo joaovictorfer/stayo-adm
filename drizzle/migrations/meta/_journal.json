@@ -330,6 +330,13 @@
       "when": 1790985728627,
       "tag": "0046_guide_items_amenity_key",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1791035804958,
+      "tag": "0047_admin_quick_mark_guide_item",
+      "breakpoints": true
     }
   ]
 }

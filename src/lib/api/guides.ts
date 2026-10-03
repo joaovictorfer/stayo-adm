@@ -122,6 +122,11 @@ export async function deleteGuideItem(id: string) {
   if (error) throw error;
 }
 
+export async function quickMarkGuideItem(itemId: string, have: boolean) {
+  const { error } = await supabase.rpc("admin_quick_mark_guide_item", { p_item_id: itemId, p_have: have });
+  if (error) throw error;
+}
+
 export async function reviewResponse(input: {
   responseId: string;
   action: "confirm" | "correct" | "reject";

@@ -12,6 +12,7 @@ import {
   isGuideReleased,
   listCatalog,
   listGuide,
+  quickMarkGuideItem,
   reviewResponse,
   saveGuideItem,
   setGuideReleased,
@@ -93,6 +94,11 @@ export function GuidePanel({ implementationId, guideType = "utensilios" }: { imp
       void qc.invalidateQueries({ queryKey: ["supply"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível revisar."),
+  });
+  const mark = useMutation({
+    mutationFn: (v: { id: string; have: boolean }) => quickMarkGuideItem(v.id, v.have),
+    onSuccess: () => { void invalidate(); void qc.invalidateQueries({ queryKey: ["supply"] }); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível marcar."),
   });
 
   const items = q.data ?? [];
@@ -181,20 +187,42 @@ export function GuidePanel({ implementationId, guideType = "utensilios" }: { imp
             const st = rowStatus(toRow(i));
             const img = imageOf(i);
             return (
-              <li key={i.id}>
-                <button type="button" onClick={() => setDetail(i)} className="flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-[var(--stayo-bg)]" style={{ opacity: i.enabled ? 1 : 0.5 }}>
+              <li key={i.id} className="flex items-center gap-2 pr-2">
+                <button type="button" onClick={() => setDetail(i)} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left transition hover:bg-[var(--stayo-bg)]" style={{ opacity: i.enabled ? 1 : 0.5 }}>
                   <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[var(--radius-control)]" style={{ backgroundColor: "var(--stayo-bg)" }}>
                     {img ? <img src={img} alt="" className="h-full w-full object-cover" /> : <Package className="size-5" style={muted} />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{i.name}</span>
                     <span className="block truncate text-xs" style={muted}>
-                      {i.quantity_text || `${i.recommended_quantity} un.`}{i.size_text ? ` · ${i.size_text}` : ""} · {classificationLabel[i.classification]}
+                      {i.quantity_text || `${i.recommended_quantity} un.`} · {classificationLabel[i.classification]}
                     </span>
                     <StatusLine item={i} status={st} />
                   </span>
-                  <ChevronRight className="size-4 shrink-0" style={muted} />
                 </button>
+                {(() => {
+                  const have = st === "concluido";
+                  const missing = st === "faltando";
+                  const pending = mark.isPending && mark.variables?.id === i.id;
+                  const btn = (on: boolean, active: boolean, label: string) => (
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      disabled={pending}
+                      onClick={() => mark.mutate({ id: i.id, have: on })}
+                      className="min-h-11 rounded-full border px-3 text-sm font-medium"
+                      style={active ? { backgroundColor: on ? "var(--stayo-forest)" : "var(--stayo-danger)", color: "var(--primary-foreground)", borderColor: "transparent" } : surface}
+                    >
+                      {pending && mark.variables?.have === on ? <Loader2 className="size-4 animate-spin" /> : label}
+                    </button>
+                  );
+                  return (
+                    <span className="flex shrink-0 gap-1.5">
+                      {btn(true, have, "Tem")}
+                      {btn(false, missing, "Não tem")}
+                    </span>
+                  );
+                })()}
               </li>
             );
           })}
