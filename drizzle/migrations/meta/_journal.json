@@ -323,6 +323,13 @@
       "when": 1790982733924,
       "tag": "0045_property_details_lavatories",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1790985728627,
+      "tag": "0046_guide_items_amenity_key",
+      "breakpoints": true
     }
   ]
 }
