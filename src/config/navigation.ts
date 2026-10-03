@@ -146,13 +146,6 @@ export const navigation: NavItem[] = [
     roles: ["super_admin", "admin", "commercial"],
   },
   {
-    id: "guide",
-    label: "Guia / Conteúdo",
-    path: "/guia",
-    icon: "book",
-    roles: ["super_admin", "admin", "operations"],
-  },
-  {
     id: "products",
     label: "Produtos / Serviços",
     path: "/produtos",
@@ -202,7 +195,7 @@ export const navigationGroups: NavGroup[] = [
     label: "Operação",
     itemIds: ["operations", "reservations", "guests", "providers"],
   },
-  { id: "intelligence", label: "Inteligência", itemIds: ["messages", "guide", "products", "bi"] },
+  { id: "intelligence", label: "Inteligência", itemIds: ["messages", "products", "bi"] },
   { id: "management", label: "Gestão", itemIds: ["financial"] },
   { id: "system", label: "Sistema", itemIds: ["settings"] },
 ];

@@ -764,6 +764,7 @@ export type Database = {
       }
       implementation_guide_items: {
         Row: {
+          amenity_key: string | null
           base_catalog_item_id: string | null
           catalog_item_id: string | null
           category: string
@@ -797,6 +798,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amenity_key?: string | null
           base_catalog_item_id?: string | null
           catalog_item_id?: string | null
           category: string
@@ -830,6 +832,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amenity_key?: string | null
           base_catalog_item_id?: string | null
           catalog_item_id?: string | null
           category?: string
