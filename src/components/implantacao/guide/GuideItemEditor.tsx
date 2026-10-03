@@ -109,11 +109,17 @@ export function GuideItemEditor({
             {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="size-6" style={{ color: "var(--stayo-ink-muted)" }} />}
           </div>
           <div className="flex flex-col gap-1">
-            <label className="inline-flex min-h-11 cursor-pointer items-center rounded-[var(--radius-control)] border px-3 text-sm font-medium" style={style}>
-              {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              {v.image_path ? "Trocar foto" : "Enviar foto"}
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
-            </label>
+            <div className="flex flex-wrap gap-2">
+              <label className="inline-flex min-h-11 cursor-pointer items-center rounded-[var(--radius-control)] border px-3 text-sm font-medium" style={style}>
+                {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                Tirar foto
+                <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
+              </label>
+              <label className="inline-flex min-h-11 cursor-pointer items-center rounded-[var(--radius-control)] border px-3 text-sm font-medium" style={style}>
+                {v.image_path ? "Trocar da galeria" : "Galeria"}
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
+              </label>
+            </div>
             {v.image_path && (
               <button type="button" className="text-left text-xs underline" onClick={() => { set("image_path", null); setPreview(null); }}>
                 Remover foto
