@@ -22,6 +22,9 @@ import {
   type RoomState,
 } from "@/lib/amenities";
 
+import { buildSyncRows } from "@/lib/amenities-sync";
+import { syncAmenitiesToInventory } from "@/lib/api/guided-inventory";
+
 type Save = "idle" | "saving" | "saved" | "error";
 
 async function load(implementationId: string) {
@@ -72,7 +75,14 @@ export function AmenitiesPanel({
     const { error } = await supabase
       .from("implementation_amenities")
       .upsert({ implementation_id: implementationId, data: latest.current as never });
-    setSave(error ? "error" : "saved");
+    if (error) return setSave("error");
+    try {
+      await syncAmenitiesToInventory(implementationId, buildSyncRows(latest.current));
+      void qc.invalidateQueries({ queryKey: ["guided-inventory", implementationId] });
+      setSave("saved");
+    } catch {
+      setSave("error");
+    }
   };
 
   const update = (fn: (d: AmenitiesData) => AmenitiesData) => {

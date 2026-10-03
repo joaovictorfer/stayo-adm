@@ -126,3 +126,47 @@ export async function removeInventoryItem(itemId: string, implementationId: stri
   if (error) throw error;
   if (!data?.length) throw new Error("sem permissão para remover");
 }
+
+/**
+ * Comodidades → inventário guiado. Marcado vira "Tenho" com quantidade/marca;
+ * desmarcado só desativa o item (nunca vira "Não tenho" nem cria pendência).
+ */
+export async function syncAmenitiesToInventory(implementationId: string, rows: import("../amenities-sync").SyncRow[]) {
+  const { data: existing, error: e1 } = await supabase
+    .from("implementation_guide_items")
+    .select("id, amenity_key")
+    .eq("implementation_id", implementationId)
+    .not("amenity_key", "is", null);
+  if (e1) throw e1;
+  const known = new Set((existing ?? []).map((r) => r.amenity_key));
+  const payload = rows
+    .filter((r) => r.on || known.has(r.amenity_key))
+    .map((r) => ({
+      implementation_id: implementationId,
+      guide_type: INVENTORY_GUIDE_TYPE,
+      amenity_key: r.amenity_key,
+      room: r.room,
+      category: "Comodidades",
+      name: r.name,
+      recommended_quantity: 1,
+      classification: "recomendado",
+      display_order: r.order,
+      inventory_source: "equipe",
+      enabled: r.on,
+      inventory_answer: r.on ? ("tenho" as const) : null,
+      inventory_quantity: r.on ? r.qty : null,
+      inventory_brand: r.on ? r.brand : null,
+      inventory_internal_notes: r.on ? r.notes : null,
+    }));
+  // Itens removidos do painel (ambiente ou item livre apagado) também saem de uso.
+  const live = new Set(rows.map((r) => r.amenity_key));
+  const gone = (existing ?? []).filter((r) => r.amenity_key && !live.has(r.amenity_key)).map((r) => r.id);
+  if (payload.length) {
+    const { error } = await supabase.from("implementation_guide_items").upsert(payload as never, { onConflict: "implementation_id,amenity_key" });
+    if (error) throw error;
+  }
+  if (gone.length) {
+    const { error } = await supabase.from("implementation_guide_items").update({ enabled: false, inventory_answer: null }).in("id", gone);
+    if (error) throw error;
+  }
+}

@@ -146,13 +146,6 @@ export const navigation: NavItem[] = [
     roles: ["super_admin", "admin", "commercial"],
   },
   {
-    id: "guide",
-    label: "Guia / Conteúdo",
-    path: "/guia",
-    icon: "book",
-    roles: ["super_admin", "admin", "operations"],
-  },
-  {
     id: "products",
     label: "Produtos / Serviços",
     path: "/produtos",
