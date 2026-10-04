@@ -421,7 +421,9 @@ function ImplementationRowActions({ item }: { item: ImplementationProject }) {
         params: { id: created.implementationId },
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível duplicar a implantação.");
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível duplicar a implantação.",
+      );
     } finally {
       setDuplicating(false);
     }
