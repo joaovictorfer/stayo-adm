@@ -1,5 +1,6 @@
 import { normalizePhone } from "../owner-form-validation";
 import { getSupabaseBrowserClient } from "./supabase-client";
+import { autosaveOpportunity, loadOpportunityForm } from "./opportunity-form";
 
 export interface OpportunityContactCandidate {
   id: string;
@@ -173,6 +174,59 @@ export async function saveOpportunityContact(
     },
   });
   if (error) throw new Error(error.message || "Não foi possível salvar os dados.");
+}
+
+export interface DuplicateOpportunitySource {
+  id: string;
+  code: string;
+  nickname?: string | null;
+  ownerId?: string | null;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+  responsibleUserId?: string | null;
+}
+
+function duplicateOpportunityTitle(source: DuplicateOpportunitySource, formNickname: string): string {
+  const suffix = " · cópia";
+  const base = (formNickname || source.nickname || source.code || "Oportunidade").trim();
+  return `${base.slice(0, 140 - suffix.length).trimEnd()}${suffix}`;
+}
+
+/**
+ * Duplica somente a base editável da oportunidade/implantação em um novo rascunho.
+ * Não carrega propostas, aceites, convites, reuniões, documentos, histórico ou vínculos Core.
+ */
+export async function duplicateOpportunity(
+  source: DuplicateOpportunitySource,
+): Promise<CreateOpportunityResult> {
+  // Leia a origem antes de criar o novo rascunho para evitar um registro vazio
+  // quando a ficha de origem não estiver acessível.
+  const sourceForm = await loadOpportunityForm(source.id);
+  const title = duplicateOpportunityTitle(source, sourceForm.values.nickname);
+
+  const created = await createDraftOpportunity({
+    title,
+    responsibleUserId: source.responsibleUserId ?? null,
+    requestId: crypto.randomUUID(),
+  });
+
+  const targetForm = await loadOpportunityForm(created.implementationId);
+  await autosaveOpportunity(
+    created.implementationId,
+    { ...sourceForm.values, nickname: title },
+    targetForm.values,
+  );
+
+  if (source.ownerId) {
+    await saveOpportunityContact(created.implementationId, {
+      contactName: source.ownerName ?? "",
+      phone: source.ownerPhone ?? "",
+      title,
+      existingOwnerId: source.ownerId,
+    });
+  }
+
+  return created;
 }
 
 export async function completeOpportunityDraft(implementationId: string): Promise<void> {
