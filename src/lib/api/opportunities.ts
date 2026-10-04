@@ -186,7 +186,10 @@ export interface DuplicateOpportunitySource {
   responsibleUserId?: string | null;
 }
 
-function duplicateOpportunityTitle(source: DuplicateOpportunitySource, formNickname: string): string {
+function duplicateOpportunityTitle(
+  source: DuplicateOpportunitySource,
+  formNickname: string,
+): string {
   const suffix = " · cópia";
   const base = (formNickname || source.nickname || source.code || "Oportunidade").trim();
   return `${base.slice(0, 140 - suffix.length).trimEnd()}${suffix}`;
