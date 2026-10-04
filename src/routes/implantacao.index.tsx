@@ -367,7 +367,10 @@ function OpportunityList({
                 <div className="hidden sm:block">
                   <AdminStatusBadge tone={tone}>{statusLabels[item.status]}</AdminStatusBadge>
                 </div>
-                <span className="hidden text-sm sm:block" style={{ color: "var(--stayo-ink-muted)" }}>
+                <span
+                  className="hidden text-sm sm:block"
+                  style={{ color: "var(--stayo-ink-muted)" }}
+                >
                   {responsibleLabel(item, currentUserId, assigneeById)}
                 </span>
                 <div className="hidden sm:block">
@@ -520,7 +523,10 @@ function Pipeline({
                   >
                     {opportunityTitle(item)}
                   </p>
-                  <p className="mt-1 truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                  <p
+                    className="mt-1 truncate text-xs"
+                    style={{ color: "var(--stayo-ink-muted)" }}
+                  >
                     {item.ownerName || (item.ownerId ? "Contato a completar" : "Aguardando cadastro")}
                     {item.ownerPhone ? ` · ${formatBrazilianPhone(item.ownerPhone)}` : ""}
                   </p>
