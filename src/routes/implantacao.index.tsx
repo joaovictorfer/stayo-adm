@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   AdminActionButton,
@@ -447,7 +448,11 @@ function ImplementationRowActions({ item }: { item: ImplementationProject }) {
             Abrir ficha
           </DropdownMenuItem>
           <DropdownMenuItem disabled={duplicating} onSelect={() => void duplicate()}>
-            {duplicating ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Copy aria-hidden="true" />}
+            {duplicating ? (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Copy aria-hidden="true" />
+            )}
             Duplicar implantação
           </DropdownMenuItem>
           <DropdownMenuSeparator />
