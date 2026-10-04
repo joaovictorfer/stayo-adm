@@ -523,11 +523,9 @@ function Pipeline({
                   >
                     {opportunityTitle(item)}
                   </p>
-                  <p
-                    className="mt-1 truncate text-xs"
-                    style={{ color: "var(--stayo-ink-muted)" }}
-                  >
-                    {item.ownerName || (item.ownerId ? "Contato a completar" : "Aguardando cadastro")}
+                  <p className="mt-1 truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                    {item.ownerName ||
+                      (item.ownerId ? "Contato a completar" : "Aguardando cadastro")}
                     {item.ownerPhone ? ` · ${formatBrazilianPhone(item.ownerPhone)}` : ""}
                   </p>
                   <div className="mt-3">
