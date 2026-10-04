@@ -1,12 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
   CalendarClock,
   ChevronRight,
+  Copy,
+  ExternalLink,
   LayoutGrid,
   List,
+  Loader2,
+  MoreHorizontal,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -27,9 +32,17 @@ import {
   SelectFilter,
 } from "../components/data/ListStates";
 import { Button } from "../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { useAuthSession } from "../lib/auth/session";
 import { commercialMeetingsApi } from "../lib/api/commercial-meetings";
 import { implementationsListQuery } from "../lib/api/queries";
+import { duplicateOpportunity } from "../lib/api/opportunities";
 import { commercialUrgency, formatCommercialDateTime } from "../lib/commercial-meeting-state";
 import { opportunityNextAction, opportunityTitle } from "../lib/opportunity-state";
 import { formatBrazilianPhone } from "../lib/owner-form-validation";
@@ -272,7 +285,7 @@ function OpportunityList({
           return (
             <li
               key={item.id}
-              className="animate-fade-in"
+              className="relative animate-fade-in"
               style={{ animationDelay: `${Math.min(index, 8) * 35}ms`, animationFillMode: "both" }}
             >
               <Link
@@ -365,23 +378,99 @@ function OpportunityList({
                 </div>
               </Link>
               <div className="absolute right-3 top-3 sm:top-1/2 sm:-translate-y-1/2">
-                <DeleteImplementationButton
-                  id={item.id}
-                  code={item.code}
-                  locked={
-                    item.status === "ativo" ||
-                    Boolean(item.corePropertyId) ||
-                    Boolean(item.coreOwnerId)
-                  }
-                  navigateAfterDelete={false}
-                  compact
-                />
+                <ImplementationRowActions item={item} />
               </div>
             </li>
           );
         })}
       </ul>
     </Panel>
+  );
+}
+
+function ImplementationRowActions({ item }: { item: ImplementationProject }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [duplicating, setDuplicating] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const locked =
+    item.status === "ativo" || Boolean(item.corePropertyId) || Boolean(item.coreOwnerId);
+
+  function openDetails() {
+    void navigate({ to: "/implantacao/$id", params: { id: item.id } });
+  }
+
+  async function duplicate() {
+    if (duplicating) return;
+    setDuplicating(true);
+    try {
+      const created = await duplicateOpportunity({
+        id: item.id,
+        code: item.code,
+        nickname: item.nickname,
+        ownerId: item.ownerId,
+        ownerName: item.ownerName,
+        ownerPhone: item.ownerPhone,
+        responsibleUserId: item.responsibleUserId,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["implementations"] });
+      toast.success(`${item.code} duplicada em um novo rascunho.`);
+      await navigate({
+        to: "/implantacao/$id",
+        params: { id: created.implementationId },
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível duplicar a implantação.");
+    } finally {
+      setDuplicating(false);
+    }
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-9 rounded-[var(--radius-control)] border border-transparent bg-[var(--stayo-surface)]/90 text-[var(--stayo-ink-muted)] shadow-sm hover:border-[var(--stayo-border)] hover:bg-[var(--stayo-surface)] hover:text-[var(--stayo-ink)]"
+            aria-label={`Ações de ${item.code}`}
+            title={`Ações de ${item.code}`}
+          >
+            <MoreHorizontal className="size-4" aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem onSelect={openDetails}>
+            <ExternalLink aria-hidden="true" />
+            Abrir ficha
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={duplicating} onSelect={() => void duplicate()}>
+            {duplicating ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Copy aria-hidden="true" />}
+            Duplicar implantação
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-[var(--stayo-danger)] focus:text-[var(--stayo-danger)]"
+            onSelect={() => setDeleteOpen(true)}
+          >
+            <Trash2 aria-hidden="true" />
+            Excluir implantação
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DeleteImplementationButton
+        id={item.id}
+        code={item.code}
+        locked={locked}
+        navigateAfterDelete={false}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        showTrigger={false}
+      />
+    </>
   );
 }
 
