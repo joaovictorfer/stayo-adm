@@ -37,9 +37,9 @@ export interface OwnerOnboardingPerson {
   email: string;
   phone: string;
   /** Estado civil (pessoa física). Nullable para dados antigos. */
-  maritalStatus?: string | null;
+  maritalStatus?: string | null | undefined;
   /** Profissão (pessoa física). Nullable para dados antigos. */
-  profession?: string | null;
+  profession?: string | null | undefined;
 }
 
 export interface OwnerOnboardingSubmission {
