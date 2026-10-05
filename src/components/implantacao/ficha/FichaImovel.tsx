@@ -351,22 +351,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
             <>
               <Card icon={<FileText className="size-4" />} title="Identificação">
                 <ul>
-                  <Line
-                    row={{
-                      label: "Condomínio",
-                      value: condoName ? (
-                        <span className="flex items-center gap-3">
-                          <span style={muted}>{condoName}</span>
-                          {linked && <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ficha-ok)" }}><span className="size-2 rounded-full" style={{ backgroundColor: "var(--ficha-ok)" }} />Cadastrado</span>}
-                        </span>
-                      ) : null,
-                      extra: linked ? (
-                        <Link to="/condominios/$id" params={{ id: implementation.condominiumId as string }} className="hidden items-center gap-1.5 text-sm underline underline-offset-2 sm:flex" style={navy}>
-                          Ver condomínio <ExternalLink className="size-4" />
-                        </Link>
-                      ) : undefined,
-                    }}
-                    onEdit={startEdit}
                   />
                   <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
                   <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
