@@ -72,11 +72,10 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
 
   const open_ = async (id: string, continueJourney: boolean) => {
     onClose();
-    if (!continueJourney) window.sessionStorage.setItem(`opp-wizard-exit:${id}`, "1");
     await navigate({
       to: "/implantacao/$id",
       params: { id },
-      search: continueJourney ? { etapa: "imovel" } : {},
+      search: continueJourney ? { etapa: "imovel" } : { secao: "visao" },
     });
   };
 
@@ -201,10 +200,10 @@ export function NewOpportunityDrawer({ open, onClose }: { open: boolean; onClose
               onClick={() => void open_(createdId, true)}
               className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90"
             >
-              Continuar preenchendo
+              Continuar cadastro
             </Button>
             <Button type="button" variant="outline" className="min-h-12" onClick={() => void open_(createdId, false)}>
-              Criar ficha agora
+              Ver ficha
             </Button>
           </div>
         )}
