@@ -732,22 +732,12 @@ export function OwnerJourney({
     const ownerDone =
       ownerFields.filter((field) => !validateOwnerField(field, form[field])).length + (peopleOk ? 1 : 0);
     const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
-    const propertyDone = propertyKeys.filter((key) => !propertyErrors[key]).length;
-    const platformsDone = isValidEmail(platEmail.trim()) ? 1 : 0;
-    const prepKnown = Boolean(prepQ.data);
-    const prepItems = prepQ.data ?? [];
-    // Enquanto os itens não carregam, a Preparação conta como 1 requisito pendente (nunca 100% por falta de dado).
-    const prepTotal = prepKnown ? prepItems.length : 1;
-    const prepDone = prepKnown ? prepItems.filter((i) => i.answer).length : 0;
-    const total = ownerTotal + propertyKeys.length + 1 + prepTotal;
-    const done = ownerDone + propertyDone + platformsDone + prepDone;
-    const pending: Array<{ key: "owner" | "property" | "platforms" | "prep"; label: string }> = [];
-    if (ownerDone < ownerTotal) pending.push({ key: "owner", label: "Seus dados" });
-    if (propertyDone < propertyKeys.length) pending.push({ key: "property", label: "Seu imóvel" });
-    if (!platformsDone) pending.push({ key: "platforms", label: "Plataformas" });
-    if (prepDone < prepTotal) pending.push({ key: "prep", label: "Preparação" });
-    const percent = pending.length ? Math.min(99, Math.floor((done / total) * 100)) : 100;
-    return { percent, pending };
+    return computeRegistrationProgress({
+      owner: { done: ownerDone, total: ownerTotal },
+      property: { done: propertyKeys.filter((key) => !propertyErrors[key]).length, total: propertyKeys.length },
+      platformsDone: isValidEmail(platEmail.trim()),
+      prepAnswers: prepQ.data ? prepQ.data.map((i) => i.answer ?? null) : null,
+    });
   })();
   const registrationPercent = registration.percent;
   const openPending = (key: "owner" | "property" | "platforms" | "prep") => {
