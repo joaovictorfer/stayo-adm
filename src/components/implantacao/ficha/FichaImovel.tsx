@@ -289,7 +289,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
           )}
         </div>
 
-        <div className="lg:hidden">{pendencies.length > 0 && sidebar && null}</div>
 
         {editing ? (
           <section className="space-y-4 rounded-[var(--radius-card)] border bg-white p-4 sm:p-5" style={border}>
