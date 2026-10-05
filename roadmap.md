@@ -1,7 +1,7 @@
 # Roadmap
 
-- [ ] Inventário do proprietário — Modo Visual aprovado; bloqueado pela reconciliação da instância de dados e acesso GitHub para PR
-- [ ] Inventário do proprietário — Modo Lista; aguarda Modo Visual implementado/homologado e resolução dos bloqueios de dados/GitHub; sem nova fonte de inventário
+- [ ] Inventário do proprietário — Modo Visual implementado; aguarda homologação com proprietário real vinculado a uma implantação com inventário
+- [ ] Inventário do proprietário — Modo Lista; aguarda homologação do Modo Visual; sem nova fonte de inventário
 
 - [x] Otimizar todas as telas reais do Admin e do Portal para 360, 375, 390 e 430 px
 - [x] Validar fluxos mobile reais, estados, áreas de toque e ausência de rolagem horizontal
