@@ -51,6 +51,9 @@ import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implemen
 import type { CommercialAssignee, CommercialOverviewRow } from "../types/commercial-journey";
 import type { ImplementationProject } from "../types/core";
 import { supabase } from "@/integrations/supabase/client";
+import { Eye, Pencil } from "lucide-react";
+import { loadOpportunityForm } from "../lib/api/opportunity-form";
+import { toJourneyStep } from "../lib/opportunity-journey";
 import { isDraftOrigin, journeyLabel, proposalStage } from "../lib/journey-states";
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
 
@@ -332,7 +335,7 @@ function OpportunityList({
               <Link
                 to="/implantacao/$id"
                 params={{ id: item.id }}
-                className="group block py-4 pl-4 pr-14 transition-colors duration-200 hover:bg-[var(--admin-surface-subtle)] focus-visible:bg-[var(--admin-surface-subtle)] focus-visible:outline-none active:bg-[var(--admin-surface-subtle)] sm:grid sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center sm:gap-4 sm:pl-4 sm:pr-16"
+                className="group block pb-2 pt-4 pl-4 pr-14 transition-colors duration-200 hover:bg-[var(--admin-surface-subtle)] focus-visible:bg-[var(--admin-surface-subtle)] focus-visible:outline-none active:bg-[var(--admin-surface-subtle)] sm:grid sm:grid-cols-[minmax(220px,1.3fr)_minmax(180px,1fr)_10rem_11rem_minmax(200px,1.1fr)] sm:items-center sm:gap-4 sm:pl-4 sm:pr-16"
               >
                 {/* Mobile card */}
                 <div className="flex flex-col gap-3 sm:hidden">
@@ -421,7 +424,8 @@ function OpportunityList({
                   />
                 </div>
               </Link>
-              <div className="absolute right-3 top-3 sm:top-1/2 sm:-translate-y-1/2">
+              <RowPrimaryActions item={item} isDraft={labelFor(item) === "Rascunho"} />
+              <div className="absolute right-3 top-3 sm:top-6">
                 <ImplementationRowActions item={item} />
               </div>
             </li>
@@ -429,6 +433,38 @@ function OpportunityList({
         })}
       </ul>
     </Panel>
+  );
+}
+
+/** Ações explícitas: "Ver ficha" abre o Resumo; "Continuar cadastro" retoma a etapa salva. */
+function RowPrimaryActions({ item, isDraft }: { item: ImplementationProject; isDraft: boolean }) {
+  const navigate = useNavigate();
+  const [resuming, setResuming] = useState(false);
+  async function resume() {
+    if (resuming) return;
+    setResuming(true);
+    try {
+      const form = await loadOpportunityForm(item.id);
+      await navigate({ to: "/implantacao/$id", params: { id: item.id }, search: { etapa: toJourneyStep(form.draftStep) ?? "contato" } });
+    } catch {
+      toast.error("Não foi possível retomar o cadastro. Tente novamente.");
+    } finally {
+      setResuming(false);
+    }
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
+      <Button asChild variant="outline" size="sm" className="min-h-9">
+        <Link to="/implantacao/$id" params={{ id: item.id }} search={{ secao: "visao" }}>
+          <Eye aria-hidden="true" /> Ver ficha
+        </Link>
+      </Button>
+      {isDraft && (
+        <Button type="button" variant="ghost" size="sm" className="min-h-9" disabled={resuming} onClick={() => void resume()}>
+          <Pencil aria-hidden="true" /> {resuming ? "Abrindo…" : "Continuar cadastro"}
+        </Button>
+      )}
+    </div>
   );
 }
 
