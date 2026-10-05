@@ -165,7 +165,7 @@ export function FichaContrato({
 
   // Somente estados reais. Assinatura nunca é marcada: não existe registro de assinatura no sistema.
   const stages: Stage[] = [
-    { key: "minuta", label: "Minuta", detail: "Cláusulas e condições do contrato.", done: false, next: { title: "Definir cláusulas", detail: "Registre as condições antes de montar a proposta.", cta: "Definir cláusulas" } },
+    { key: "minuta", label: "Minuta", detail: "Cláusulas e condições do contrato.", done: false, next: { title: "Definir cláusulas", detail: "Ainda não há contrato gerado. As condições ficam registradas na proposta.", cta: "Definir cláusulas" } },
     { key: "revisao", label: "Revisão", detail: "Revisão do contrato — sem registro no sistema.", done: false, next: { title: "Revisar minuta", detail: "Monte a proposta com as condições acordadas.", cta: "Revisar minuta" } },
     { key: "envio", label: "Envio", detail: "Envio do contrato — sem registro no sistema.", done: false, next: { title: "Enviar ao proprietário", detail: "Publique a proposta para envio.", cta: "Abrir proposta" } },
     { key: "assinatura", label: "Assinatura", detail: "Assinatura do contrato — sem integração no sistema.", done: false, next: { title: "Assinatura fora do sistema", detail: "Ainda não há assinatura eletrônica integrada. O aceite da proposta não substitui a assinatura.", cta: "" } },
@@ -320,7 +320,7 @@ export function FichaContrato({
             {docVersion ? (
               <button type="button" onClick={() => pdf.mutate(docVersion)} className="mt-3 grid min-h-11 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-3 text-left text-sm" style={border}>
                 <span className="truncate" style={navy}>Proposta · v{docVersion.version} (PDF)</span>
-                <span style={{ color: statusColor }} className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: statusColor }} />{status}</span>
+                <span style={{ color: "var(--ficha-ok)" }} className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: "var(--ficha-ok)" }} />Proposta publicada</span>
               </button>
             ) : (
               <p className="mt-3 text-sm" style={muted}>Nenhum documento publicado ainda.</p>
