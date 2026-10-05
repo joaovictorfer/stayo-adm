@@ -1,3 +1,4 @@
+import { computeRegistrationProgress } from "../../lib/owner-registration-progress";
 import { OwnerGuide } from "@/components/portal/OwnerGuide";
 import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
