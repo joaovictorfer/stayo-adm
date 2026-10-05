@@ -93,6 +93,7 @@ import {
   type SheetRow,
 } from "../components/implantacao/ficha/FichaSummary";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
+import { guidedInventoryQuery } from "../lib/api/guided-inventory";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
 import { getOpportunityDraftState } from "../lib/api/opportunities";
@@ -202,6 +203,7 @@ function ImplementationDetailPage() {
   >("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
+  const inventoryQ = useQuery(guidedInventoryQuery(id));
   const implementation = query.data;
   const draftQuery = useQuery({
     queryKey: ["opportunity-draft-state", id],
@@ -519,11 +521,14 @@ function ImplementationDetailPage() {
               {section === "visao" ? (
                 (() => {
                   const done = items.length - pendingItems.length;
+                  const inv = (inventoryQ.data ?? []).filter((i) => i.enabled);
+                  const inventoryTotal = inv.length;
+                  const inventoryAnswered = inv.filter((i) => i.inventory_answer).length;
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
                     { section: "contrato", label: "Contrato", status: contractStageLabel[currentContractStage()], tone: "muted" },
                     { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
-                    { section: "implantacao", label: "Implantação", status: itemsQuery.isPending ? "—" : items.length ? `${done} de ${items.length} itens concluídos` : "Sem itens", tone: !items.length ? "muted" : readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress" },
+                    { section: "implantacao", label: "Implantação", status: itemsQuery.isPending || inventoryQ.isPending ? "—" : items.length ? `${done} de ${items.length} itens concluídos` : inventoryTotal ? `Inventário: ${inventoryAnswered} de ${inventoryTotal} respondidos` : "Sem itens", tone: items.length ? (readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress") : inventoryTotal ? (inventoryAnswered === inventoryTotal ? "ok" : "progress") : "muted" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
                     { section: "portal", label: "Portal", status: releasesQuery.isPending ? "Verificando liberação…" : releasesQuery.isError ? "Liberação não verificada" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado", tone: releasesQuery.data?.length ? "ok" : "muted" },
                   ];
