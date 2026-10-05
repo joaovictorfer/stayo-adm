@@ -3441,13 +3441,29 @@ export type Database = {
         Args: { p_implementation_id: string }
         Returns: Json
       }
+      owner_inventory_image_paths_by_token: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       owner_inventory_resolve: {
         Args: { p_implementation_id: string }
+        Returns: Json
+      }
+      owner_inventory_resolve_by_token: {
+        Args: { p_token: string }
         Returns: Json
       }
       owner_inventory_submit: {
         Args: { p_data: Json; p_implementation_id: string; p_item_id: string }
         Returns: Json
+      }
+      owner_inventory_submit_by_token: {
+        Args: { p_data: Json; p_item_id: string; p_token: string }
+        Returns: Json
+      }
+      owner_inventory_token_ctx: {
+        Args: { p_token: string }
+        Returns: Record<string, unknown>
       }
       owner_journey_accept_proposal: {
         Args: {
