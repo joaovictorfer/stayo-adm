@@ -1,3 +1,4 @@
+import { FichaProprietario } from "../components/implantacao/ficha/FichaProprietario";
 import { FichaImovel } from "@/components/implantacao/ficha/FichaImovel";
 import { FichaImplantacao } from "../components/implantacao/ficha/FichaImplantacao";
 import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
@@ -158,6 +159,8 @@ export const Route = createFileRoute("/implantacao/$id")({
     meta: [
       { title: "Detalhe da implantação — Stayo Admin" },
       { name: "description", content: "Etapas e checklist de uma implantação Stayo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { property: "og:title", content: "Detalhe da implantação — Stayo Admin" },
       {
         property: "og:description",
@@ -664,7 +667,15 @@ function ImplementationDetailPage() {
                   }
                 />
               ) : section === "proprietario" ? (
-                <OwnerTab implementation={implementation} part="owner" />
+                <FichaProprietario
+                  implementation={implementation}
+                  portal={<OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} ownerName={implementation.ownerName} compact />}
+                  review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
+                  pending={buildPending()}
+                  proposal={latestProposal ?? null}
+                  hasConditions={Boolean(conditions)}
+                  onGo={goSection}
+                />
               ) : section === "portal" ? (
                 <OwnerTab implementation={implementation} part="portal" />
               ) : (
@@ -1207,7 +1218,9 @@ function OwnerPortalPanel({
   implementationId,
   ownerId,
   ownerName,
+  compact = false,
 }: {
+  compact?: boolean;
   implementationId: EntityId;
   ownerId: EntityId | null;
   ownerName: string | null;
@@ -1219,7 +1232,7 @@ function OwnerPortalPanel({
   const status = link ? ownerOnboardingLinkStatus(link) : null;
   const tokenQuery = useQuery({
     queryKey: ["owner-onboarding", "link-token", link?.id],
-    queryFn: () => adminApi.ownerOnboarding.getLinkToken(link!.id),
+    queryFn: () => link ? adminApi.ownerOnboarding.getLinkToken(link.id) : Promise.resolve(null),
     enabled: Boolean(link && status === "ativo"),
     staleTime: 60_000,
   });
@@ -1345,17 +1358,17 @@ function OwnerPortalPanel({
   return (
     <section
       aria-labelledby="owner-link-title"
-      className="rounded-[var(--radius-card)] border-2 bg-white p-4 shadow-sm sm:p-5"
-      style={{ borderColor: "var(--stayo-forest)" }}
+      className={compact ? "min-w-0 rounded-lg border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4 text-[var(--stayo-navy)]" : "rounded-[var(--radius-card)] border-2 bg-white p-4 shadow-sm sm:p-5"}
+      style={compact ? undefined : { borderColor: "var(--stayo-forest)" }}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <h2
             id="owner-link-title"
             className="text-base font-semibold"
-            style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+            style={{ fontFamily: compact ? "Outfit, sans-serif" : "var(--stayo-font-display)", color: "var(--stayo-navy)" }}
           >
-            Link de implantação do proprietário
+            {compact ? "Portal do proprietário" : "Link de implantação do proprietário"}
           </h2>
           <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
             {linkQuery.isPending ? "Verificando link…" : statusDetail}
@@ -1400,7 +1413,7 @@ function OwnerPortalPanel({
               published={published ?? null}
               hasDraftChanges={hasDraftChanges}
             />
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className={compact ? "mt-3 flex flex-wrap gap-2" : "mt-3 grid gap-2 sm:grid-cols-3"}>
               <Button
                 className="min-h-11"
                 disabled={!canSend}
@@ -1414,7 +1427,7 @@ function OwnerPortalPanel({
                 disabled={!canSend}
                 onClick={() => void copy(message, "Mensagem copiada")}
               >
-                <Copy /> Copiar mensagem
+                <Copy /> {compact ? "Copiar convite" : "Copiar mensagem"}
               </Button>
               <Button asChild variant="outline" className="min-h-11">
                 <a
@@ -1423,10 +1436,12 @@ function OwnerPortalPanel({
                   rel="noopener noreferrer"
                   title="Abre a jornada real deste proprietário em nova aba"
                 >
-                  <ExternalLink /> Acessar como administrador
+                  <ExternalLink /> {compact ? "Abrir Portal" : "Acessar como administrador"}
                 </a>
               </Button>
             </div>
+            <details open={compact ? undefined : true} className="mt-3">
+            {compact && <summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do convite</summary>}
             <div
               className="mt-3 rounded-[var(--radius-control)] border p-3"
               style={{ borderColor: "var(--stayo-border)" }}
@@ -1460,11 +1475,12 @@ function OwnerPortalPanel({
                 Copiar não envia nada. Cole a mensagem no WhatsApp do proprietário.
               </p>
             </div>
+            </details>
           </>
         ) : null}
       </div>
 
-      <ol
+      {!compact && <ol
         className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:grid-cols-4"
         style={{ borderColor: "var(--stayo-border)" }}
       >
@@ -1491,7 +1507,7 @@ function OwnerPortalPanel({
             </span>
           </li>
         ))}
-      </ol>
+      </ol>}
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
         {status === "ativo" && link && (

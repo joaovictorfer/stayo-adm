@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Refinar aba Proprietário com dados mascarados, vínculos existentes, notas internas e ações do Portal; validado em 1440/390/360, edição e retomada com conta real
+
 - [ ] Inventário do proprietário — Modo Visual implementado; aguarda homologação com proprietário real vinculado a uma implantação com inventário
 - [ ] Inventário do proprietário — Modo Lista; aguarda homologação do Modo Visual; sem nova fonte de inventário
 
