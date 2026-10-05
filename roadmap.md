@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Inventário do proprietário — Modo Visual aprovado; bloqueado pela reconciliação da instância de dados e acesso GitHub para PR
+
 - [x] Otimizar todas as telas reais do Admin e do Portal para 360, 375, 390 e 430 px
 - [x] Validar fluxos mobile reais, estados, áreas de toque e ausência de rolagem horizontal
 - [x] Corrigir a prévia compartilhada da jornada com capa autorizada do imóvel e fallback institucional
