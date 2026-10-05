@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Trash2,
   type LucideIcon,
+  X,
 } from "lucide-react";
 import {
   useCallback,
@@ -499,11 +500,11 @@ function JourneyBody({
   const complete = useMutation({
     mutationFn: async () => {
       const ok = await flushAll();
-      if (!ok) throw new Error("Salve os dados antes de criar a ficha.");
+      if (!ok) throw new Error("Salve os dados antes de concluir o cadastro.");
       await completeOpportunityDraft(id);
     },
     onSuccess: () => {
-      toast.success("Ficha criada", {
+      toast.success("Cadastro inicial concluído", {
         description: "Nada foi enviado ao proprietário.",
       });
       onExit();
@@ -655,13 +656,7 @@ function JourneyBody({
     );
   } else if (step === "implantacao") {
     content = (
-      <PreparationWorkspace
-        implementationId={id}
-        notes={v.notes}
-        ownerNotes={v.owner_facing_notes}
-        onNotesChange={(value) => auto.set("notes", value)}
-        onOwnerNotesChange={(value) => auto.set("owner_facing_notes", value)}
-      />
+      <PreparationWorkspace implementationId={id} />
     );
   } else {
     const propertyIdentification =
@@ -731,7 +726,7 @@ function JourneyBody({
         >
           <div className="px-4 py-5 sm:px-6">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Tudo certo para criar
+              Revise o cadastro inicial
             </h2>
             <p className="mt-1 text-sm" style={muted}>
               Você pode completar os demais detalhes depois.
@@ -782,38 +777,18 @@ function JourneyBody({
             >
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               <p>
-                Fornecedores e observações não bloqueiam a criação da ficha.
+                A ficha já existe. A proposta é publicada depois, pela área Comercial.
               </p>
             </div>
           </div>
         </section>
 
-        {proposalIssue && (
-          <div
-            role="alert"
-            className="rounded-[var(--radius-card)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-4"
-          >
-            <p className="text-sm font-semibold">{proposalIssue}</p>
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-3 min-h-11"
-              onClick={() => void go("proposta")}
-            >
-              Resolver
-            </Button>
-          </div>
-        )}
-
-        <p className="text-right text-xs" style={muted}>
-          A proposta será publicada somente ao confirmar.
-        </p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
           <Button
             type="button"
             variant="outline"
             className="min-h-12 sm:min-w-28"
-            disabled={complete.isPending || publish.isPending}
+            disabled={complete.isPending}
             onClick={() => void back()}
           >
             Voltar
@@ -821,28 +796,16 @@ function JourneyBody({
           <div className="hidden sm:block sm:flex-1" />
           <Button
             type="button"
-            variant="outline"
-            className="min-h-12 sm:min-w-36"
-            disabled={complete.isPending || publish.isPending}
+            className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:min-w-56"
+            disabled={complete.isPending}
             onClick={submitComplete}
           >
-            {complete.isPending && <Loader2 className="size-4 animate-spin" />}
-            Criar ficha
-          </Button>
-          <Button
-            type="button"
-            className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:min-w-56"
-            disabled={
-              Boolean(proposalIssue) || complete.isPending || publish.isPending
-            }
-            onClick={submitPublish}
-          >
-            {publish.isPending ? (
+            {complete.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              <ArrowRight className="size-4" />
+              <Check className="size-4" />
             )}
-            Criar e publicar proposta
+            Concluir cadastro inicial
           </Button>
         </div>
       </div>
@@ -863,84 +826,63 @@ function JourneyBody({
           : "max-w-2xl gap-5"
       }`}
     >
-      {propertyStep ? (
-        <PropertyJourneyHeader
-          implementation={implementation}
-          saveState={saveState}
-          onRetry={retry}
-          onExit={exit}
-        />
-      ) : commercialStep ? (
-        <CommercialJourneyHeader
-          implementation={implementation}
-          saveState={saveState}
-          onRetry={retry}
-          onExit={exit}
-        />
-      ) : preparationStep ? (
-        <PreparationJourneyHeader
-          implementation={implementation}
-          saveState={saveState}
-          onRetry={retry}
-          onExit={exit}
-        />
-      ) : reviewStep ? (
-        <ReviewJourneyHeader
-          implementation={implementation}
-          saveState={saveState}
-          onRetry={retry}
-          onExit={exit}
-        />
-      ) : (
-        <header className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
+      <header className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-sm font-semibold">
+              {implementation.code}
+            </span>
+            <span
+              className="hidden rounded-full px-2 py-0.5 text-[11px] font-semibold sm:inline"
+              style={{
+                backgroundColor: "var(--stayo-gold-soft)",
+                color: "var(--stayo-ink)",
+              }}
+            >
+              <JourneyStateText implementation={implementation} />
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <SaveStatus state={saveState} onRetry={retry} compact />
+            <JourneyActions implementation={implementation} />
             <Button
               type="button"
-              variant="ghost"
-              aria-label="Voltar para ficha"
+              variant="outline"
+              size="sm"
+              className="min-h-10 gap-1.5 px-3"
               onClick={() => void exit()}
-              className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
-              style={{ color: "var(--stayo-forest)" }}
             >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              Voltar para ficha
+              <X className="size-4" aria-hidden="true" />
+              Fechar
             </Button>
-            <JourneyActions implementation={implementation} />
           </div>
-          <div className="flex items-center justify-between gap-3">
-            <p className="min-w-0 truncate text-sm font-semibold">
-              {implementation.code}
-            </p>
-            <div className="flex shrink-0 items-center gap-2">
-              <SaveStatus state={saveState} onRetry={retry} compact />
-            </div>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">
-              {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de{" "}
-              {JOURNEY_STEPS.length}
-            </h2>
-          </div>
-          <div
-            className="flex gap-1"
-            role="progressbar"
-            aria-valuenow={index + 1}
-            aria-valuemin={1}
-            aria-valuemax={JOURNEY_STEPS.length}
-          >
-            {JOURNEY_STEPS.map((s, i) => (
-              <span
-                key={s.id}
-                className="h-1 flex-1 rounded-full"
-                style={{
-                  backgroundColor:
-                    i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
-                }}
-              />
-            ))}
-          </div>
-        </header>
-      )}
+        </div>
+        <div>
+          <p className="text-xs font-medium" style={muted}>
+            Cadastro inicial · Etapa {index + 1} de {JOURNEY_STEPS.length}
+          </p>
+          <h1 className="mt-0.5 text-xl font-semibold tracking-tight sm:text-2xl">
+            {STEP_TITLES[index]}
+          </h1>
+        </div>
+        <div
+          className="h-1 w-full overflow-hidden rounded-full"
+          style={{ backgroundColor: "var(--stayo-border)" }}
+          role="progressbar"
+          aria-label="Progresso do cadastro inicial"
+          aria-valuenow={index + 1}
+          aria-valuemin={1}
+          aria-valuemax={JOURNEY_STEPS.length}
+        >
+          <span
+            className="block h-full rounded-full transition-[width]"
+            style={{
+              width: `${((index + 1) / JOURNEY_STEPS.length) * 100}%`,
+              backgroundColor: "var(--stayo-forest)",
+            }}
+          />
+        </div>
+      </header>
 
       <div>{content}</div>
 
@@ -973,7 +915,7 @@ function JourneyBody({
   );
 }
 
-const PROPERTY_PROGRESS = [
+const STEP_TITLES = [
   "Contato",
   "Imóvel",
   "Comercial",
@@ -981,29 +923,8 @@ const PROPERTY_PROGRESS = [
   "Revisão",
 ] as const;
 
-type PreparationTab = "inventario" | "enxoval" | "fornecedores" | "observacoes";
-
-const PREPARATION_TABS: Array<{ id: PreparationTab; label: string }> = [
-  { id: "inventario", label: "Inventário" },
-  { id: "enxoval", label: "Enxoval" },
-  { id: "fornecedores", label: "Fornecedores" },
-  { id: "observacoes", label: "Observações" },
-];
-
-function PreparationWorkspace({
-  implementationId,
-  notes,
-  ownerNotes,
-  onNotesChange,
-  onOwnerNotesChange,
-}: {
-  implementationId: string;
-  notes: string;
-  ownerNotes: string;
-  onNotesChange: (value: string) => void;
-  onOwnerNotesChange: (value: string) => void;
-}) {
-  const [tab, setTab] = useState<PreparationTab>("inventario");
+function PreparationWorkspace({ implementationId }: { implementationId: string }) {
+  const [mode, setMode] = useState<"now" | "later" | null>(null);
   return (
     <section
       className="overflow-hidden rounded-[var(--radius-card)] border"
@@ -1012,539 +933,57 @@ function PreparationWorkspace({
         borderColor: "var(--stayo-border)",
       }}
     >
-      <nav
-        className="flex overflow-x-auto border-b px-2 pt-2 sm:px-4"
-        style={{ borderColor: "var(--stayo-border)" }}
-        role="tablist"
-        aria-label="Preparação do imóvel"
-      >
-        {PREPARATION_TABS.map((entry) => {
-          const active = tab === entry.id;
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(entry.id)}
-              className="relative min-h-11 shrink-0 px-3 text-sm font-medium sm:px-4"
-              style={{
-                color: active
-                  ? "var(--stayo-forest)"
-                  : "var(--stayo-ink-muted)",
-              }}
-            >
-              {entry.label}
-              {active && (
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-2 bottom-0 h-0.5 rounded-full"
-                  style={{ backgroundColor: "var(--stayo-forest)" }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </nav>
-      <div className="p-3 sm:p-5">
-        {tab === "inventario" ? (
-          <GuidedInventoryPanel implementationId={implementationId} />
-        ) : tab === "enxoval" ? (
-          <GuidePanel implementationId={implementationId} guideType="enxoval" />
-        ) : tab === "fornecedores" ? (
-          <PropertySuppliersPanel implementationId={implementationId} />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextArea
-              label="Observações internas"
-              value={notes}
-              onChange={onNotesChange}
-            />
-            <TextArea
-              label="Informações para o proprietário"
-              value={ownerNotes}
-              onChange={onOwnerNotesChange}
-            />
-          </div>
-        )}
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Quer conferir o inventário agora?</p>
+          <p className="mt-0.5 text-xs" style={muted}>
+            Enxoval, fornecedores e observações ficam na ficha.
+          </p>
+        </div>
+        <div
+          role="radiogroup"
+          aria-label="Conferência do inventário"
+          className="grid grid-cols-2 gap-1 rounded-[var(--radius-control)] border p-1"
+          style={{ borderColor: "var(--stayo-border)" }}
+        >
+          {([
+            ["now", "Conferir agora"],
+            ["later", "Completar depois"],
+          ] as const).map(([value, label]) => {
+            const active = mode === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setMode(value)}
+                className="min-h-10 rounded-[calc(var(--radius-control)-2px)] px-3 text-sm font-medium whitespace-nowrap"
+                style={{
+                  backgroundColor: active ? "var(--stayo-forest)" : "transparent",
+                  color: active ? "var(--primary-foreground)" : "var(--stayo-ink)",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
+      {mode === "now" && (
+        <div className="border-t p-3 sm:p-5" style={{ borderColor: "var(--stayo-border)" }}>
+          <GuidedInventoryPanel implementationId={implementationId} />
+        </div>
+      )}
+      {mode === "later" && (
+        <p className="border-t px-4 py-3 text-sm sm:px-5" style={{ borderColor: "var(--stayo-border)", ...muted }}>
+          Tudo bem. O inventário fica disponível na aba Implantação da ficha.
+        </p>
+      )}
     </section>
   );
 }
 
-function PreparationJourneyHeader({
-  implementation,
-  saveState,
-  onRetry,
-  onExit,
-}: {
-  implementation: ImplementationProject;
-  saveState: SaveState;
-  onRetry: () => void;
-  onExit: () => Promise<void>;
-}) {
-  const activeIndex = 3;
-  return (
-    <header className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold">
-            {implementation.code}
-          </span>
-          <span
-            className="rounded-full px-2 py-1 text-[11px] font-semibold"
-            style={{
-              backgroundColor: "var(--stayo-gold-soft)",
-              color: "var(--stayo-ink)",
-            }}
-          >
-            <JourneyStateText implementation={implementation} />
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <SaveStatus
-              state={saveState}
-              onRetry={onRetry}
-              compact
-            />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-10 px-3"
-            onClick={() => void onExit()}
-          >
-            Voltar para ficha
-          </Button>
-          <JourneyActions implementation={implementation} />
-        </div>
-      </div>
-      <div>
-        <p
-          className="text-xs font-semibold uppercase tracking-[0.12em]"
-          style={muted}
-        >
-          Implantação · Etapa 4 de 5
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Preparação do imóvel
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
-          Confira inventário e enxoval com poucos cliques. Fornecedores e
-          observações continuam opcionais.
-        </p>
-      </div>
-      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
-        {PROPERTY_PROGRESS.map((label, i) => {
-          const complete = i < activeIndex;
-          const active = i === activeIndex;
-          return (
-            <li
-              key={label}
-              className="relative flex min-w-0 flex-col items-center gap-1.5"
-            >
-              {i < PROPERTY_PROGRESS.length - 1 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute left-1/2 right-[-50%] top-4 h-px"
-                  style={{
-                    backgroundColor: complete
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  }}
-                />
-              )}
-              <span
-                aria-hidden="true"
-                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
-                style={{
-                  borderColor:
-                    complete || active
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  backgroundColor: complete
-                    ? "var(--stayo-forest)"
-                    : "var(--stayo-surface)",
-                  color: complete
-                    ? "var(--primary-foreground)"
-                    : "var(--stayo-ink)",
-                }}
-              >
-                {complete ? <Check className="size-4" /> : i + 1}
-              </span>
-              <span
-                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
-                style={{
-                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                }}
-                aria-current={active ? "step" : undefined}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </header>
-  );
-}
-
-function ReviewJourneyHeader({
-  implementation,
-  saveState,
-  onRetry,
-  onExit,
-}: {
-  implementation: ImplementationProject;
-  saveState: SaveState;
-  onRetry: () => void;
-  onExit: () => Promise<void>;
-}) {
-  const activeIndex = 4;
-  return (
-    <header className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold">
-            {implementation.code}
-          </span>
-          <span
-            className="rounded-full px-2 py-1 text-[11px] font-semibold"
-            style={{
-              backgroundColor: "var(--stayo-gold-soft)",
-              color: "var(--stayo-ink)",
-            }}
-          >
-            <JourneyStateText implementation={implementation} />
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <SaveStatus
-              state={saveState}
-              onRetry={onRetry}
-              compact
-            />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="min-h-10 px-3"
-            onClick={() => void onExit()}
-          >
-            Voltar para ficha
-          </Button>
-          <JourneyActions implementation={implementation} />
-        </div>
-      </div>
-
-      <div>
-        <p
-          className="text-sm font-semibold"
-          style={{ color: "var(--stayo-ink)" }}
-        >
-          Implantação · Etapa 5 de 5
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Revisão
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
-          Confira o essencial antes de criar a ficha.
-        </p>
-      </div>
-
-      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
-        {PROPERTY_PROGRESS.map((label, i) => {
-          const complete = i < activeIndex;
-          const active = i === activeIndex;
-          return (
-            <li
-              key={label}
-              className="relative flex min-w-0 flex-col items-center gap-1.5"
-            >
-              {i < PROPERTY_PROGRESS.length - 1 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute left-1/2 right-[-50%] top-4 h-px"
-                  style={{
-                    backgroundColor: complete
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  }}
-                />
-              )}
-              <span
-                aria-hidden="true"
-                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
-                style={{
-                  borderColor: "var(--stayo-forest)",
-                  backgroundColor:
-                    complete || active
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-surface)",
-                  color:
-                    complete || active
-                      ? "var(--primary-foreground)"
-                      : "var(--stayo-ink)",
-                }}
-              >
-                {complete ? <Check className="size-4" /> : i + 1}
-              </span>
-              <span
-                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
-                style={{
-                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                }}
-                aria-current={active ? "step" : undefined}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </header>
-  );
-}
-
-function PropertyJourneyHeader({
-  implementation,
-  saveState,
-  onRetry,
-  onExit,
-}: {
-  implementation: ImplementationProject;
-  saveState: SaveState;
-  onRetry: () => void;
-  onExit: () => Promise<void>;
-}) {
-  const activeIndex = 1;
-  return (
-    <header className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold">
-            {implementation.code}
-          </span>
-          <span
-            className="rounded-full px-2 py-1 text-[11px] font-semibold"
-            style={{
-              backgroundColor: "var(--stayo-gold-soft)",
-              color: "var(--stayo-ink)",
-            }}
-          >
-            <JourneyStateText implementation={implementation} />
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <SaveStatus
-              state={saveState}
-              onRetry={onRetry}
-              compact
-            />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-10 px-3"
-            onClick={() => void onExit()}
-          >
-            Voltar para ficha
-          </Button>
-          <JourneyActions implementation={implementation} />
-        </div>
-      </div>
-
-      <div>
-        <p
-          className="text-xs font-semibold uppercase tracking-[0.12em]"
-          style={muted}
-        >
-          Implantação · Etapa 2 de 5
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Dados do imóvel
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
-          Identifique o imóvel e registre apenas as informações que já são
-          conhecidas.
-        </p>
-      </div>
-
-      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
-        {PROPERTY_PROGRESS.map((label, i) => {
-          const complete = i < activeIndex;
-          const active = i === activeIndex;
-          return (
-            <li
-              key={label}
-              className="relative flex min-w-0 flex-col items-center gap-1.5"
-            >
-              {i < PROPERTY_PROGRESS.length - 1 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute left-1/2 right-[-50%] top-4 h-px"
-                  style={{
-                    backgroundColor: complete
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  }}
-                />
-              )}
-              <span
-                aria-hidden="true"
-                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
-                style={{
-                  borderColor:
-                    complete || active
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  backgroundColor: complete
-                    ? "var(--stayo-forest)"
-                    : active
-                      ? "var(--stayo-surface)"
-                      : "var(--stayo-surface)",
-                  color: complete
-                    ? "var(--primary-foreground)"
-                    : "var(--stayo-ink)",
-                }}
-              >
-                {complete ? <Check className="size-4" /> : i + 1}
-              </span>
-              <span
-                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
-                style={{
-                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                }}
-                aria-current={active ? "step" : undefined}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </header>
-  );
-}
-
-function CommercialJourneyHeader({
-  implementation,
-  saveState,
-  onRetry,
-  onExit,
-}: {
-  implementation: ImplementationProject;
-  saveState: SaveState;
-  onRetry: () => void;
-  onExit: () => Promise<void>;
-}) {
-  const activeIndex = 2;
-  return (
-    <header className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold">
-            {implementation.code}
-          </span>
-          <span
-            className="rounded-full px-2 py-1 text-[11px] font-semibold"
-            style={{
-              backgroundColor: "var(--stayo-gold-soft)",
-              color: "var(--stayo-ink)",
-            }}
-          >
-            <JourneyStateText implementation={implementation} />
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <SaveStatus
-              state={saveState}
-              onRetry={onRetry}
-              compact
-            />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-10 px-3"
-            onClick={() => void onExit()}
-          >
-            Voltar para ficha
-          </Button>
-          <JourneyActions implementation={implementation} />
-        </div>
-      </div>
-
-      <div>
-        <p
-          className="text-xs font-semibold uppercase tracking-[0.12em]"
-          style={muted}
-        >
-          Implantação · Etapa 3 de 5
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Condições comerciais
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
-          O padrão STAYO já está preenchido. Confirme ou ajuste somente o que
-          for necessário.
-        </p>
-      </div>
-
-      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
-        {PROPERTY_PROGRESS.map((label, i) => {
-          const complete = i < activeIndex;
-          const active = i === activeIndex;
-          return (
-            <li
-              key={label}
-              className="relative flex min-w-0 flex-col items-center gap-1.5"
-            >
-              {i < PROPERTY_PROGRESS.length - 1 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute left-1/2 right-[-50%] top-4 h-px"
-                  style={{
-                    backgroundColor: complete
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  }}
-                />
-              )}
-              <span
-                aria-hidden="true"
-                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
-                style={{
-                  borderColor:
-                    complete || active
-                      ? "var(--stayo-forest)"
-                      : "var(--stayo-border)",
-                  backgroundColor: complete
-                    ? "var(--stayo-forest)"
-                    : "var(--stayo-surface)",
-                  color: complete
-                    ? "var(--primary-foreground)"
-                    : "var(--stayo-ink)",
-                }}
-              >
-                {complete ? <Check className="size-4" /> : i + 1}
-              </span>
-              <span
-                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
-                style={{
-                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
-                }}
-                aria-current={active ? "step" : undefined}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </header>
-  );
-}
 
 function JourneyActions({
   implementation,
