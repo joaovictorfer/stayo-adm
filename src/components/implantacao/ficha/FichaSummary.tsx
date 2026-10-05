@@ -165,7 +165,7 @@ export function JourneyCard({ status, pendingCount }: { status: ImplementationSt
                 {done && <Check className="size-3.5" strokeWidth={3} style={{ color: "white" }} />}
                 {active && <span className="size-3 rounded-full" style={{ backgroundColor: "var(--stayo-navy, #0b3150)" }} />}
               </span>
-              <span className="mt-2 text-[11px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-ink)" }}>
+              <span className="mt-2 w-full truncate px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-ink)" }}>
                 {step.label}
               </span>
               <span className="hidden text-xs sm:block" style={active ? { color: "var(--stayo-ink)" } : muted}>
@@ -196,13 +196,13 @@ export function SheetOverviewCard({ rows, onGo }: { rows: SheetRow[]; onGo: (s: 
             <button
               type="button"
               onClick={() => onGo(r.section)}
-              className="grid min-h-11 w-full grid-cols-[minmax(0,7rem)_auto_minmax(0,1fr)_auto] items-center gap-3 py-2 text-left text-sm transition hover:bg-[var(--stayo-bg)] sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.4fr)_auto]"
+              className="grid min-h-11 w-full grid-cols-[5.5rem_auto_minmax(0,1fr)_auto] items-center gap-3 py-2 text-left text-sm transition hover:bg-[var(--stayo-bg)] sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.4fr)_auto]"
             >
               <span className="truncate font-medium" style={{ color: "var(--stayo-ink)" }}>
                 {r.label}
               </span>
               <ToneDot tone={r.tone} />
-              <span className="truncate" style={muted}>
+              <span className="min-w-0 leading-snug sm:truncate" style={muted}>
                 {r.status}
               </span>
               <ChevronRight className="size-4 shrink-0" style={muted} />

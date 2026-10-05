@@ -437,9 +437,7 @@ function ImplementationDetailPage() {
         <div className="flex flex-col gap-4">
           <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3" aria-label="Resumo da implantação">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--stayo-ink-muted)" }}>
-                Implantação · {implementation.code}
-              </p>
+
               <h1
                 className="truncate text-2xl font-semibold sm:text-3xl"
                 style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
