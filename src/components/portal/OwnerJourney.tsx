@@ -602,21 +602,8 @@ export function OwnerJourney({
       lead: "Nada foi alterado. Tente novamente em instantes.",
     },
     A: {
-      title: "Sua proposta de gestão STAYO",
+      title: "Sua proposta STAYO",
       lead: "Confira as condições e confirme para iniciar.",
-      cta: {
-        label: "Ir para a confirmação",
-        onClick: () => {
-          if (stage !== 1) setStage(1);
-          window.setTimeout(
-            () =>
-              document
-                .getElementById("confirmar-proposta")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-            120,
-          );
-        },
-      },
     },
     B: {
       title: "Estamos preparando sua proposta",
