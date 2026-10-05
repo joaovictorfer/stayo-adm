@@ -475,6 +475,7 @@ function JourneyBody({
         initialCondominiumId={implementation.condominiumId ?? null}
         v={v}
         set={auto.set}
+        flush={auto.flush}
       />
     );
   } else if (step === "proposta") {
@@ -1202,11 +1203,13 @@ function PropertyQuestions({
   initialCondominiumId,
   v,
   set,
+  flush,
 }: {
   implementationId: string;
   initialCondominiumId: string | null;
   v: FormValues;
   set: (f: FormField, x: string) => void;
+  flush: () => Promise<boolean>;
 }) {
   const queryClient = useQueryClient();
   const condominiumsQ = useQuery(adminCondominiumsListQuery());
@@ -1261,6 +1264,9 @@ function PropertyQuestions({
       set("address", condominium.address ?? "");
       set("city", condominium.city ?? "");
       set("postal_code", condominium.postalCode ?? "");
+      if (!(await flush())) {
+        toast.error("Condomínio vinculado, mas o endereço ainda não sincronizou.");
+      }
       void queryClient.invalidateQueries({ queryKey: ["implementations"] });
     } catch (error) {
       toast.error("Não foi possível vincular o condomínio", {
@@ -1281,6 +1287,7 @@ function PropertyQuestions({
       setSelectedId(null);
       setMode("standalone");
       set("condominium_name", "");
+      await flush();
       void queryClient.invalidateQueries({ queryKey: ["implementations"] });
     } catch (error) {
       toast.error("Não foi possível atualizar o imóvel", {
@@ -2204,5 +2211,4 @@ function NumberChoice({
     </div>
   );
 }
-
 
