@@ -1060,6 +1060,8 @@ function ProposalStep({
   // Após confirmar, mostra exatamente o texto confirmado.
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
+  const [showConditions, setShowConditions] = useState(false);
+  const confirmed = !needs && confirmation;
 
   return (
     <section className="pj-proposal">
@@ -1073,9 +1075,64 @@ function ProposalStep({
         </div>
       )}
 
-      <ProposalSnapshotSummary snapshot={shown} />
+      <div className="pj-open">
+        <div className="pj-open-title-row">
+          <h2 className="pj-open-title">Sua proposta STAYO</h2>
+          <span className="pj-version-chip">Versão {current.version}</span>
+        </div>
+        <dl className="pj-open-facts">
+          <div className="pj-open-fact">
+            <dt>Administração</dt>
+            <dd>{facts.admin ?? "A definir"}</dd>
+          </div>
+          <div className="pj-open-fact">
+            <dt>Prazo</dt>
+            <dd>{facts.duration ?? "A definir"}</dd>
+          </div>
+          <div className="pj-open-fact">
+            <dt>Limpeza</dt>
+            <dd>{facts.cleaning ? `${facts.cleaning} por uso` : "A definir"}</dd>
+          </div>
+        </dl>
+        <p className="pj-open-note">
+          <strong>
+            Implantação: {facts.implementation ?? "valor definido após avaliação"}.
+          </strong>
+          <span>Combinaremos tudo antes de qualquer cobrança.</span>
+        </p>
+        <button
+          type="button"
+          className="pj-open-conditions"
+          aria-expanded={showConditions}
+          onClick={() => setShowConditions((value) => !value)}
+        >
+          {showConditions ? "Ocultar as condições" : "Ver todas as condições"}
+          <ChevronDown className="size-4" aria-hidden="true" />
+        </button>
+        {!confirmed && (
+          <>
+            <Button
+              type="button"
+              className="portal-cta h-12 w-full text-sm"
+              onClick={() =>
+                document
+                  .getElementById("confirmar-proposta")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            >
+              Revisar e confirmar <ChevronRight className="size-4" />
+            </Button>
+            <p className="pj-open-legal">A confirmação desta proposta não substitui o contrato.</p>
+            <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
+              Falar com a STAYO
+            </a>
+          </>
+        )}
+      </div>
 
-      {!needs && confirmation ? (
+      {showConditions && <ProposalSnapshotSummary snapshot={shown} />}
+
+      {confirmed ? (
         <div className="pj-confirmed">
           <CheckCircle2 aria-hidden="true" />
           <div>
