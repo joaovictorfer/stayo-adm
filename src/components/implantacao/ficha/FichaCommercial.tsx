@@ -1,3 +1,5 @@
+import { UserRound, House, ListChecks } from "lucide-react";
+import type { PendingEntry, FichaSection } from "./FichaSummary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Plus, Settings2 } from "lucide-react";
@@ -80,12 +82,16 @@ export function FichaCommercial({
   onNewVersion,
   onHistory,
   extras,
+  nextSteps = [],
+  onGoSection,
 }: {
   implementationId: string;
   proposal: { version: number; statusLabel: string } | null;
   onNewVersion: () => void;
   onHistory: () => void;
   extras?: ReactNode;
+  nextSteps?: PendingEntry[];
+  onGoSection: (s: FichaSection) => void;
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -157,24 +163,25 @@ export function FichaCommercial({
     { label: "Enxoval", value: linen, detail: c?.linen_notes },
   ];
 
+  const stepIcon = { owner: UserRound, doc: FileText, home: House, list: ListChecks } as Record<string, typeof FileText>;
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-        <div className="min-w-0">
-          <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Condições comerciais</h2>
-          <p className="text-sm sm:text-base" style={muted}>O que foi acordado com o proprietário.</p>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-semibold sm:text-[1.75rem]" style={display}>Condições comerciais</h2>
+            <p className="text-sm sm:text-base" style={muted}>O que foi acordado com o proprietário.</p>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={onHistory} className="flex h-10 flex-1 items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm sm:flex-none" style={{ ...border, ...navy }}>
+              {proposal ? `Proposta v${proposal.version} · ${proposal.statusLabel}` : "Sem proposta"} <ChevronDown className="ml-3 size-4" />
+            </button>
+            <button type="button" onClick={onNewVersion} className="flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}>
+              <Plus className="size-4" /> Nova versão
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={onHistory} className="flex h-11 flex-1 items-center gap-2 rounded-lg border bg-white px-4 text-sm sm:flex-none" style={{ ...border, ...navy }}>
-            <FileText className="size-4" /> {proposal ? `Proposta v${proposal.version} · ${proposal.statusLabel}` : "Sem proposta"} <ChevronDown className="ml-2 size-4" />
-          </button>
-          <button type="button" onClick={onNewVersion} className="flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-medium" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}>
-            <Plus className="size-4" /> Nova versão
-          </button>
-        </div>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(18rem,1fr)]">
-        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-1">
+        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-none">
           {q.isLoading ? (
             <p className="text-sm" style={muted}>Carregando condições…</p>
           ) : (
@@ -192,29 +199,47 @@ export function FichaCommercial({
           )}
           {extras}
         </div>
-        <aside className="order-1 lg:order-2">
-          <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
-            <div className="flex items-center gap-3 border-b pb-2.5" style={border}>
-              <FileText className="size-5" style={navy} />
-              <h3 className="text-lg font-semibold" style={display}>Proposta</h3>
-            </div>
-            <dl className="grid grid-cols-[7rem_1fr] text-sm">
-              <dt className="border-b py-2.5 font-medium" style={{ ...border, ...navy }}>Versão</dt>
-              <dd className="border-b py-2.5" style={{ ...border, ...navy }}>{proposal ? `v${proposal.version}` : "—"}</dd>
-              <dt className="py-2.5 font-medium" style={navy}>Status</dt>
-              <dd className="py-2.5" style={navy}>{proposal?.statusLabel ?? "Não criada"}</dd>
-            </dl>
-            <div className="border-t text-sm" style={border}>
-              <Link to="/portal/previa/$id" params={{ id: implementationId }} target="_blank" className="flex min-h-12 items-center gap-3 border-b" style={{ ...border, ...navy }}>
-                <ExternalLink className="size-4" /> <span className="flex-1 underline underline-offset-2">Ver como proprietário</span> <ChevronRight className="size-4" />
-              </Link>
-              <button type="button" onClick={onHistory} className="flex min-h-12 w-full items-center gap-3 text-left" style={navy}>
-                <History className="size-4" /> <span className="flex-1 underline underline-offset-2">Ver histórico de versões</span> <ChevronRight className="size-4" />
-              </button>
-            </div>
-          </section>
-        </aside>
       </div>
+      <aside className="lg:pt-0">
+        <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
+          <div className="flex items-center gap-3 border-b pb-3 pt-1" style={border}>
+            <span className="grid size-9 place-items-center rounded-full" style={{ backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" }}>
+              <ListChecks className="size-4" />
+            </span>
+            <h3 className="text-lg font-semibold" style={display}>Próximos passos</h3>
+          </div>
+          {nextSteps.length === 0 ? (
+            <p className="border-b py-4 text-sm" style={{ ...border, ...muted }}>Nenhuma pendência no momento.</p>
+          ) : (
+            nextSteps.map((p) => {
+              const Icon = stepIcon[p.icon] ?? FileText;
+              return (
+                <button key={p.id} type="button" onClick={() => onGoSection(p.section)} className="flex min-h-[4.5rem] w-full items-center gap-3 border-b py-3 text-left" style={border}>
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-semibold" style={navy}>{p.title}</span>
+                      {p.chip ? (
+                        <span className="rounded-full px-2.5 py-0.5 text-xs" style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--ficha-pending-fg)" }}>{p.chip}</span>
+                      ) : null}
+                    </span>
+                    <span className="mt-0.5 block text-xs" style={muted}>{p.detail}</span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0" style={navy} />
+                </button>
+              );
+            })
+          )}
+          <button type="button" onClick={onHistory} className="flex min-h-12 w-full items-center gap-3 text-left text-sm" style={navy}>
+            <History className="size-4" /> <span className="underline underline-offset-2">Ver histórico de alterações</span>
+          </button>
+          <Link to="/portal/previa/$id" params={{ id: implementationId }} target="_blank" className="flex min-h-10 items-center gap-3 text-sm" style={muted}>
+            <ExternalLink className="size-4" /> <span className="underline underline-offset-2">Ver como proprietário</span>
+          </Link>
+        </section>
+      </aside>
     </div>
   );
 }
