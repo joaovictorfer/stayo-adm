@@ -23,7 +23,7 @@ const navy = { color: "var(--stayo-navy)" };
 const muted = { color: "var(--stayo-ink-muted)" };
 const border = { borderColor: "var(--stayo-border)" };
 const link = navy;
-const display = { fontFamily: "var(--stayo-font-display)", color: "var(--stayo-navy)" };
+const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const input = "mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]";
 const linkCls = "text-sm font-medium underline underline-offset-2";
 
