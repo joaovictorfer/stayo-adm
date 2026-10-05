@@ -77,6 +77,15 @@ import {
   toFichaSection,
   type FichaSection,
 } from "../lib/ficha-next-action";
+import {
+  JourneyCard,
+  NextStepCard,
+  PendingCard,
+  ResponsibleCard,
+  SheetOverviewCard,
+  type PendingEntry,
+  type SheetRow,
+} from "../components/implantacao/ficha/FichaSummary";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
@@ -426,183 +435,119 @@ function ImplementationDetailPage() {
         />
       ) : (
         <div className="flex flex-col gap-4">
-          <header
-            className="rounded-[var(--radius-card)] border bg-white p-4 shadow-sm sm:p-5"
-            style={{ borderColor: "var(--stayo-border)" }}
-            aria-label="Resumo da implantação"
-          >
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-              <div className="min-w-0">
-                <h1
-                  className="truncate text-xl font-semibold"
-                  style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
-                >
-                  {propertyName}
-                </h1>
-                <p className="truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                  {implementation.code} · {statusLabels[implementation.status]} · Responsável:{" "}
-                  {responsibleName}
-                </p>
-                <p className="mt-1 truncate text-sm" style={{ color: "var(--stayo-ink)" }}>
-                  {implementation.ownerName || "Proprietário não informado"}
-                  {implementation.ownerPhone
-                    ? ` · ${formatBrazilianPhone(implementation.ownerPhone.replace(/^55/, ""))}`
-                    : ""}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
-                    void navigate({ search: { etapa: "contato" } });
-                  }}
-                >
-                  <Pencil /> <span className="hidden sm:inline">Editar</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-9"
-                  onClick={() => void shareWorkspace()}
-                  aria-label="Compartilhar ficha com a equipe"
-                >
-                  <Share2 />
-                </Button>
-              </div>
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3" aria-label="Resumo da implantação">
+            <div className="min-w-0">
+
+              <h1
+                className="truncate text-2xl font-semibold sm:text-3xl"
+                style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
+              >
+                {propertyName}
+              </h1>
+              <p className="truncate text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
+                {implementation.ownerName || "Proprietário não informado"} · {statusLabels[implementation.status]} · Responsável:{" "}
+                {responsibleName}
+              </p>
             </div>
-            <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+            <div className="flex shrink-0 items-center gap-2">
               <span
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: "var(--stayo-bg)" }}
+                className="hidden items-center gap-2 rounded-[var(--radius-control)] border px-3 py-2 text-sm font-medium sm:inline-flex"
+                style={{ borderColor: "var(--stayo-forest-soft)", backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-ink)" }}
               >
-                Proposta:{" "}
-                {latestProposal ? proposalStatusLabel[latestProposal.status] : "não criada"}
+                <span className="size-2 rounded-full" style={{ backgroundColor: "var(--stayo-success, #1f8a5b)" }} />
+                Proposta {latestProposal ? proposalStatusLabel[latestProposal.status].toLowerCase() : "não criada"}
               </span>
-              <span
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: "var(--stayo-bg)" }}
-              >
-                Cadastro: {intakeSubmitted ? "recebido" : "aguardando"}
-              </span>
-              <span
-                className="rounded-full px-2.5 py-1"
-                style={{
-                  backgroundColor: "var(--stayo-bg)",
-                  color: readiness.pendingBlockers ? "var(--stayo-danger)" : undefined,
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
+                  void navigate({ search: { etapa: "contato" } });
                 }}
               >
-                Prontidão {itemsQuery.isPending ? "—" : `${progress.percent}%`}
-                {readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}
-              </span>
+                <Pencil /> <span className="hidden sm:inline">Editar</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-9"
+                onClick={() => void shareWorkspace()}
+                aria-label="Compartilhar ficha com a equipe"
+              >
+                <Share2 />
+              </Button>
             </div>
           </header>
 
-          <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-6">
-            <FichaNav
-              current={section}
-              onChange={goSection}
-              badges={{ implantacao: pendingItems.length ? String(pendingItems.length) : "" }}
-            />
+          <FichaNav
+            current={section}
+            onChange={goSection}
+            badges={{ implantacao: pendingItems.length ? String(pendingItems.length) : "" }}
+          />
+          <div>
             <main
               className="min-w-0"
               aria-label={FICHA_SECTIONS.find((s) => s.id === section)?.label}
             >
               {section === "visao" ? (
-                <div className="flex flex-col gap-4">
-                  <section
-                    className="rounded-[var(--radius-card)] border p-5"
-                    style={{
-                      borderColor: "var(--stayo-forest)",
-                      backgroundColor: "var(--stayo-forest-soft)",
-                    }}
-                  >
-                    <p
-                      className="text-xs font-semibold uppercase tracking-[0.14em]"
-                      style={{ color: "var(--stayo-forest)" }}
-                    >
-                      Próxima ação
-                    </p>
-                    <h2
-                      className="mt-1 text-xl font-semibold"
-                      style={{ color: "var(--stayo-ink)" }}
-                    >
-                      {action.title}
-                    </h2>
-                    <p className="mt-1 text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                      {action.detail}
-                    </p>
-                    {action.cta && action.section !== "visao" && (
-                      <Button className="mt-3 min-h-11" onClick={() => goSection(action.section)}>
-                        {action.cta} <ChevronRight />
-                      </Button>
-                    )}
-                  </section>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <OverviewCard
-                      title="Comercial"
-                      onOpen={() => goSection("proposta")}
-                      lines={[
-                        latestProposal
-                          ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}`
-                          : "Proposta não criada",
-                        latestProposal
-                          ? `Valor definido ${formatMoney(latestProposal.total)}`
-                          : null,
-                      ]}
-                    />
-                    <OverviewCard
-                      title="Imóvel"
-                      onOpen={() => goSection("imovel")}
-                      lines={[
-                        [implementation.condominiumName, implementation.unit]
-                          .filter(Boolean)
-                          .join(" · ") || "Sem identificação",
-                        [
-                          implementation.propertyType,
-                          implementation.bedrooms != null
-                            ? `${implementation.bedrooms} quarto(s)`
-                            : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ") || null,
-                        missingPropertyFields
-                          ? `${missingPropertyFields} informação(ões) em aberto`
-                          : "Dados principais completos",
-                      ]}
-                    />
-                    <OverviewCard
-                      title="Implantação"
-                      onOpen={() => goSection("implantacao")}
-                      lines={[
-                        `Prontidão: ${itemsQuery.isPending ? "—" : readinessLabels[readiness.state]}`,
-                        `${pendingItems.length} pendência(s) · ${readiness.pendingBlockers} bloqueador(es)`,
-                      ]}
-                    />
-                    <OverviewCard
-                      title="Proprietário"
-                      onOpen={() => goSection("proprietario")}
-                      lines={[
-                        implementation.ownerName || "Não informado",
-                        `Cadastro ${intakeSubmitted ? "recebido" : "aguardando"}`,
-                      ]}
-                    />
-                  </div>
-                  <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
-                    <MeetingSummary implementationId={implementation.id} />
-                  </Collapsible>
-                  <Collapsible
-                    title="Etapa da implantação"
-                    summary={statusLabels[implementation.status]}
-                  >
-                    <StatusStepper
-                      status={implementation.status}
-                      onChange={(status) => changeStatus.mutate(status)}
-                      pending={changeStatus.isPending}
-                    />
-                  </Collapsible>
-                </div>
+                (() => {
+                  const pend: PendingEntry[] = [];
+                  if (!implementation.ownerName || !implementation.ownerPhone)
+                    pend.push({ id: "owner", section: "proprietario", icon: "owner", title: "Proprietário", detail: "Completar dados de contato", chip: "Pendente" });
+                  else if (latestProposal?.status === "accepted" && !intakeSubmitted)
+                    pend.push({ id: "owner", section: "portal", icon: "owner", title: "Proprietário", detail: "Cadastro ainda não enviado", chip: "Aguardando" });
+                  if (!latestProposal || latestProposal.status === "draft")
+                    pend.push({ id: "prop", section: "proposta", icon: "doc", title: "Comercial", detail: latestProposal ? "Publicar proposta" : "Montar a proposta", chip: "Pendente" });
+                  else if (latestProposal.status === "published")
+                    pend.push({ id: "prop", section: "portal", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
+                  if (missingPropertyFields)
+                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${missingPropertyFields} informação(ões) em aberto`, chip: "Pendente" });
+                  if (pendingItems.length)
+                    pend.push({ id: "impl", section: "implantacao", icon: "list", title: "Implantação", detail: `${pendingItems.length} item(ns) em aberto${readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}`, chip: "Pendente" });
+                  const done = items.length - pendingItems.length;
+                  const rows: SheetRow[] = [
+                    { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
+                    { section: "contrato", label: "Contrato", status: conditionsQuery.isPending ? "—" : conditions ? "Condições registradas" : "Condições não definidas", tone: conditions ? "ok" : "warn" },
+                    { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
+                    { section: "implantacao", label: "Implantação", status: itemsQuery.isPending ? "—" : items.length ? `${done} de ${items.length} itens concluídos` : "Sem itens", tone: !items.length ? "muted" : readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress" },
+                    { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
+                    { section: "portal", label: "Portal", status: "Acesso e liberações", tone: "muted" },
+                  ];
+                  return (
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
+                      <div className="flex flex-col gap-4">
+                        <div className="hidden lg:block">
+                          <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}>Resumo</h2>
+                          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
+                        </div>
+                        <NextStepCard action={action} onGo={goSection} onPortal={() => goSection("portal")} />
+                        <div className="lg:hidden"><PendingCard entries={pend} onGo={goSection} /></div>
+                        <JourneyCard status={implementation.status} pendingCount={pend.length} />
+                        <SheetOverviewCard rows={rows} onGo={goSection} />
+                        <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
+                          <MeetingSummary implementationId={implementation.id} />
+                        </Collapsible>
+                        <Collapsible title="Alterar etapa da implantação" summary={statusLabels[implementation.status]}>
+                          <StatusStepper
+                            status={implementation.status}
+                            onChange={(status) => changeStatus.mutate(status)}
+                            pending={changeStatus.isPending}
+                          />
+                        </Collapsible>
+                        <div className="lg:hidden"><ResponsibleCard name={responsibleName} /></div>
+                      </div>
+                      <aside className="hidden flex-col gap-4 lg:flex">
+                        <PendingCard entries={pend} onGo={goSection} />
+                        <ResponsibleCard name={responsibleName} />
+                      </aside>
+                    </div>
+                  );
+                })()
+              ) : section === "contrato" ? (
+                <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5" style={{ borderColor: "var(--stayo-border)" }}>
+                  <h2 className="mb-3 text-lg font-semibold">Condições comerciais e contratuais</h2>
+                  <ContractConditionsPanel implementationId={implementation.id} />
+                </section>
               ) : section === "proposta" ? (
                 proposalEditing ? (
                   <div className="flex flex-col gap-4">
