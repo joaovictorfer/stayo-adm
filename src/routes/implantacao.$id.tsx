@@ -385,6 +385,7 @@ function ImplementationDetailPage() {
   });
 
   const buildPending = (): PendingEntry[] => {
+    if (!implementation) return [];
                   const pend: PendingEntry[] = [];
                   if (!implementation.ownerName || !implementation.ownerPhone)
                     pend.push({ id: "owner", section: "proprietario", icon: "owner", title: "Proprietário", detail: "Completar dados de contato", chip: "Pendente" });
