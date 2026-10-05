@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { StayoLogo } from "@/components/brand/StayoLogo";
 import { Button } from "../components/ui/button";
+import { OwnerInventoryVisual } from "@/components/portal/OwnerInventoryVisual";
 import { useOwnerSession } from "../lib/auth/owner-session";
 import {
   inventoryAnswerLabel,
@@ -52,11 +53,7 @@ function OwnerInventoryPage() {
   }, [auth.status, navigate]);
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-xl px-4 py-4">
-      <header className="mb-4 flex items-center justify-between">
-        <Link to="/portal/inicio" className="flex items-center gap-1 text-sm"><ArrowLeft className="h-4 w-4" /> Início</Link>
-        <StayoLogo className="h-7" />
-      </header>
+    <div className="min-h-screen w-full" style={{ background: "#faf8f4" }}>
       {auth.status === "authenticated" ? (
         <Inventory implementationId={id} />
       ) : auth.status === "unlinked" || auth.status === "error" ? (
@@ -75,12 +72,23 @@ function Inventory({ implementationId }: { implementationId: string }) {
   const [room, setRoom] = useState<InventoryRoom | null>(null);
   const [open, setOpen] = useState<string | "novo" | null>(null);
   const [notice, setNotice] = useState<"ok" | "erro" | null>(null);
+  const [mode, setMode] = useState<"visual" | "lista">("visual");
+  const navigate = useNavigate();
 
   const send = useMutation({
     mutationFn: (v: { itemId: string | null; p: OwnerProposal }) => ownerSubmitInventory(implementationId, v.itemId, v.p),
     onSuccess: async () => { setNotice("ok"); setOpen(null); await qc.invalidateQueries({ queryKey: query.queryKey }); },
     onError: () => setNotice("erro"),
   });
+
+  const modeSwitch = (
+    <div className="flex shrink-0 rounded-full border p-0.5 text-xs" style={border} role="tablist" aria-label="Modo de exibição">
+      {(["visual", "lista"] as const).map((m) => (
+        <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className="rounded-full px-3 py-1.5 font-medium"
+          style={mode === m ? on : undefined}>{m === "visual" ? "Visual" : "Lista"}</button>
+      ))}
+    </div>
+  );
 
   if (q.isPending) return <p className="flex items-center gap-2 text-sm" style={muted} role="status"><Loader2 className="h-4 w-4 animate-spin" /> Carregando inventário…</p>;
   if (q.isError) {
@@ -93,6 +101,16 @@ function Inventory({ implementationId }: { implementationId: string }) {
     );
   }
 
+  if (mode === "visual") {
+    return (
+      <div>
+        <div className="flex justify-center pt-3"><StayoLogo className="h-6" /></div>
+        <OwnerInventoryVisual implementationId={implementationId} data={q.data} modeSwitch={modeSwitch}
+          onBack={() => void navigate({ to: "/portal/inicio" })} />
+      </div>
+    );
+  }
+
   const { implementation, items, submissions } = q.data;
   const subFor = (itemId: string) => submissions.find((s) => s.itemId === itemId);
   const idx = room ? inventoryRooms.findIndex((r) => r.key === room) : -1;
@@ -101,7 +119,12 @@ function Inventory({ implementationId }: { implementationId: string }) {
   const informed = (i: OwnerInventoryItem) => Boolean(i.answer || subFor(i.id)?.proposed.answer);
 
   return (
-    <div className="space-y-3">
+    <div className="mx-auto w-full max-w-xl space-y-3 px-4 py-4">
+      <header className="flex items-center justify-between gap-2">
+        <Link to="/portal/inicio" className="flex items-center gap-1 text-sm"><ArrowLeft className="h-4 w-4" /> Início</Link>
+        <StayoLogo className="h-7" />
+        {modeSwitch}
+      </header>
       <div>
         <h1 className="text-lg font-semibold">Inventário do imóvel</h1>
         <p className="text-xs" style={muted}>{[implementation.nickname ?? implementation.code, implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ")}</p>
