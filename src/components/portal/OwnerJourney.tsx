@@ -2439,6 +2439,9 @@ function AccessStep({
             >
               {creating ? "Preparando acesso..." : "Criar acesso e entrar"}
             </Button>
+            <button type="button" className="pd-back ac-support w-full justify-center" onClick={onEnter}>
+              Já tenho acesso · Entrar
+            </button>
           </div>
         )}
         <p className="ac-lock"><KeyRound className="size-4" aria-hidden="true" /> Seu acesso é pessoal e protegido.</p>
