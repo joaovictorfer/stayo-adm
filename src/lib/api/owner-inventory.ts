@@ -12,6 +12,9 @@ export interface OwnerInventoryItem {
   name: string;
   category: string;
   tip: string | null;
+  description?: string | null;
+  purchaseUrl?: string | null;
+  hasImage?: boolean;
   displayOrder: number;
   recommended: boolean;
   source: "equipe" | "proprietario";

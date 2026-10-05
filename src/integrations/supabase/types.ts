@@ -3405,6 +3405,10 @@ export type Database = {
         }
         Returns: Json
       }
+      owner_inventory_image_paths: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
       owner_inventory_resolve: {
         Args: { p_implementation_id: string }
         Returns: Json
