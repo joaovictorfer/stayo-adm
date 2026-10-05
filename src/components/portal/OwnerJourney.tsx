@@ -1060,6 +1060,7 @@ function ProposalStep({
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
   const [showConditions, setShowConditions] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const confirmed = !needs && confirmation;
 
   return (
@@ -1116,11 +1117,16 @@ function ProposalStep({
             <Button
               type="button"
               className="portal-cta h-12 w-full text-sm"
-              onClick={() =>
-                document
-                  .getElementById("confirmar-proposta")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
+              onClick={() => {
+                setReviewing(true);
+                window.setTimeout(
+                  () =>
+                    document
+                      .getElementById("confirmar-proposta")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                  0,
+                );
+              }}
             >
               Revisar e confirmar <ChevronRight className="size-4" />
             </Button>
@@ -1154,7 +1160,7 @@ function ProposalStep({
           </div>
         </div>
       ) : (
-        <div id="confirmar-proposta" className="pj-confirm">
+        <div id="confirmar-proposta" className="pj-confirm" hidden={!reviewing}>
           <p className="pj-confirm-eyebrow">Confirmação</p>
           <h2 className="pj-confirm-title">Você está confirmando a proposta versão {current.version}</h2>
           <p className="pj-confirm-summary">
