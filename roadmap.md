@@ -1,7 +1,8 @@
 # Roadmap
 
-- [ ] Consolidar o acesso ao cadastro completo para contrato (CPF/CNPJ, contato e participantes), refinar visual conforme referência e corrigir dados prévios; preservar links e permissões existentes
-- [ ] Entregar relatório do percurso do cadastro com evidências e limites da validação
+- [x] Distinguir convites do cadastro completo e da coleta comercial, refinar visual e reconciliar contato autorizado; link público e pré-preenchimento conferidos, visual isolado validado em 1440/390/360, sem alterar banco
+- [x] Entregar relatório do percurso do cadastro com evidências e limites da validação
+- [ ] Homologar salvamento/retomada, envio final e criação de acesso do cadastro completo; depende de convite autorizado para testar confirmação e envio reais
 
 - [x] Separar Ver ficha e Continuar cadastro e simplificar Resumo; navegação, retomada, retorno e reload validados com cadastro real em 1440/390/360; ficha já publicada mantém o workspace
 - [ ] Homologar publicação de proposta nesta jornada; aguarda uma proposta autorizada para publicação real, sem publicar dados comerciais apenas para teste
