@@ -5498,7 +5498,7 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .owner-contract-registration .pj-top-segment.is-current { background: var(--portal-gold); }
 .pd-step { display: flex; flex-direction: column; gap: 20px; }
 .pd-head { display: flex; flex-direction: column; gap: 8px; }
-.pd-title { margin: 0; font-size: 28px; line-height: 1.12; font-weight: 600; letter-spacing: -0.02em; color: var(--portal-navy); }
+.pd-title { margin: 0; font-size: clamp(32px, 8.5vw, 40px); line-height: 1.08; font-weight: 600; letter-spacing: -0.02em; color: var(--portal-navy); }
 .pd-lead { margin: 0; font-size: 14px; line-height: 1.5; color: var(--portal-muted); }
 .pd-sub { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 13px; font-weight: 500; color: var(--portal-gold); }
 .pd-sub::after { content: ""; flex: 1; height: 1px; background: var(--portal-border); }
