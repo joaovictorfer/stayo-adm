@@ -24,6 +24,7 @@ import {
   Camera,
   Shirt,
   Wrench,
+  Minus,
   FileText,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -796,15 +797,6 @@ export function OwnerJourney({
                 }}
               />
             )}
-            {stage === 3 && proposalAccepted && (
-              <Button variant="ghost"
-                type="button"
-                onClick={() => go(1)}
-                className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--portal-border)] px-3 text-sm font-medium text-[var(--portal-navy)] focus-visible:outline focus-visible:outline-2"
-              >
-                <FileCheck2 className="size-4" /> Ver condições da proposta
-              </Button>
-            )}
             {stage === 2 && (
               <OwnerStep
                 form={form}
@@ -836,9 +828,8 @@ export function OwnerJourney({
               <PropertyStep
                 token={token}
                 form={form}
-                implementationName={
-                  implementationQ.data?.condominiumName || implementationQ.data?.nickname || null
-                }
+                condominiumName={implementationQ.data?.condominiumName || null}
+                unit={implementationQ.data?.unit || null}
                 errors={showPropertyErrors ? propertyErrors : {}}
                 finishing={finish.isPending}
                 onSet={set}
@@ -2032,10 +2023,13 @@ function PersonEditor({
   );
 }
 
+type PropertySubStep = 1 | 2;
+
 function PropertyStep({
   token,
   form,
-  implementationName,
+  condominiumName,
+  unit,
   errors,
   finishing,
   onSet,
@@ -2044,7 +2038,8 @@ function PropertyStep({
 }: {
   token: string;
   form: OwnerOnboardingSubmissionInput;
-  implementationName: string | null;
+  condominiumName: string | null;
+  unit: string | null;
   errors: PropertyErrors;
   finishing: boolean;
   onSet: <K extends keyof OwnerOnboardingSubmissionInput>(
@@ -2054,152 +2049,224 @@ function PropertyStep({
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const number = (
-    key: "propertyBedrooms" | "propertySuites" | "propertyBathrooms" | "propertyParkingSpots",
-    value: string,
-  ) => onSet(key, value === "" ? null : Math.max(0, Number.parseInt(value, 10) || 0));
+  const storageKey = `stayo:property-substep:${token.slice(0, 12)}`;
+  const [sub, setSub] = useState<PropertySubStep>(1);
+  const [touched, setTouched] = useState(false);
+  const topRef = useRef<HTMLElement | null>(null);
+
+  // Retoma o passo interno salvo neste aparelho (somente o número do passo).
+  useEffect(() => {
+    if (window.localStorage.getItem(storageKey) === "2") setSub(2);
+  }, [storageKey]);
+  useEffect(() => {
+    window.localStorage.setItem(storageKey, String(sub));
+  }, [sub, storageKey]);
+
+  const live = getPropertyErrors(form);
+  const shown: PropertyErrors = touched ? { ...live, ...errors } : errors;
+  const addressKeys: Array<keyof PropertyErrors> = [
+    "propertyPostalCode",
+    "propertyStreet",
+    "propertyNumber",
+    "propertyDistrict",
+    "propertyCity",
+    "propertyState",
+  ];
+  // Endereço vem do condomínio já vinculado; só pede o que realmente falta.
+  const [needsAddress] = useState(() => addressKeys.some((key) => live[key]));
+  const [needsType] = useState(() => Boolean(live.propertyType));
+  const unitOk = !needsAddress && !needsType
+    ? true
+    : ![...addressKeys, "propertyType" as const].some((key) => live[key]);
+
+  const goTo = (step: PropertySubStep) => {
+    setSub(step);
+    requestAnimationFrame(() => topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const next = () => {
+    setTouched(true);
+    if (sub === 1) {
+      if (!unitOk) {
+        toast.error("Complete os dados do imóvel");
+        return;
+      }
+      goTo(2);
+      return;
+    }
+    onContinue();
+  };
+  const back = () => (sub === 2 ? goTo(1) : onBack());
+
   return (
-    <section className="space-y-6">
-      <Heading
-        eyebrow="Etapa 3 de 4"
-        title="Agora, seu imóvel"
-        text="Estas informações iniciam a ficha de implantação. A equipe STAYO valida os dados antes de uso operacional ou publicação."
-      />
-      {implementationName && (
-        <div className="flex items-center gap-3 rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-surface-soft)] p-4">
-          <Building2 className="size-5 text-[var(--portal-navy)]" />
-          <div>
-            <span className="text-xs text-[var(--portal-muted)]">Pré-cadastro STAYO</span>
-            <strong className="block text-sm">{implementationName}</strong>
-          </div>
+    <section className="pd-step" ref={topRef}>
+      {sub === 1 && (
+        <div className="pd-head">
+          <h2 className="pd-title">Agora, vamos confirmar seu imóvel</h2>
+          <p className="pd-lead">A STAYO já preencheu o que sabemos. Confira e complete apenas o que faltar.</p>
         </div>
       )}
-      <Section
-        title="Localização"
-        icon={<Home />}
-        text="Se o endereço já veio preenchido pela STAYO, confira e complete o que estiver faltando."
-      >
-        <div className="grid gap-3 sm:grid-cols-6">
-          <Field
-            className="sm:col-span-2"
-            label="CEP do imóvel"
-            inputMode="numeric"
-            value={formatBrazilianPostalCode(form.propertyPostalCode)}
-            onChange={(value) => onSet("propertyPostalCode", formatBrazilianPostalCode(value))}
-            onBlur={() => void findCep(form.propertyPostalCode, onSet, true)}
-            error={errors.propertyPostalCode}
-          />
-          <Field
-            className="sm:col-span-4"
-            label="Endereço"
-            value={form.propertyStreet}
-            onChange={(value) => onSet("propertyStreet", value)}
-            error={errors.propertyStreet}
-          />
-          <Field
-            className="sm:col-span-2"
-            label="Número / unidade"
-            value={form.propertyNumber}
-            onChange={(value) => onSet("propertyNumber", value)}
-            error={errors.propertyNumber}
-          />
-          <Field
-            className="sm:col-span-4"
-            label="Complemento (opcional)"
-            value={form.propertyComplement ?? ""}
-            onChange={(value) => onSet("propertyComplement", value || null)}
-          />
-          <Field
-            className="sm:col-span-3"
-            label="Bairro"
-            value={form.propertyDistrict}
-            onChange={(value) => onSet("propertyDistrict", value)}
-            error={errors.propertyDistrict}
-          />
-          <Field
-            className="sm:col-span-2"
-            label="Cidade"
-            value={form.propertyCity}
-            onChange={(value) => onSet("propertyCity", value)}
-            error={errors.propertyCity}
-          />
-          <Field
-            className="sm:col-span-1"
-            label="UF"
-            value={form.propertyState}
-            onChange={(value) =>
-              onSet(
-                "propertyState",
-                value
-                  .toUpperCase()
-                  .replace(/[^A-Z]/g, "")
-                  .slice(0, 2),
-              )
-            }
-            error={errors.propertyState}
-          />
+      <p className="pd-sub">
+        <span>
+          {sub === 1 ? "Unidade" : "Ambientes"} · {sub} de 2
+        </span>
+      </p>
+
+      {sub === 1 && (
+        <div className="pd-fields">
+          <div>
+            <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">Condomínio</span>
+            <div className="pd-readonly">
+              <span>{condominiumName || "A confirmar com a STAYO"}</span>
+              {condominiumName && (
+                <span className="pd-check" aria-hidden="true">
+                  <Check className="size-4" />
+                </span>
+              )}
+            </div>
+            {condominiumName && <p className="pd-hint">Cadastrado pela STAYO</p>}
+          </div>
+          {unit && (
+            <div>
+              <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">Apartamento</span>
+              <div className="pd-readonly">
+                <span>{unit}</span>
+              </div>
+              <p className="pd-hint">Precisa corrigir? Fale com a STAYO pelo botão Ajuda.</p>
+            </div>
+          )}
+          {needsType && (
+            <Field
+              label="Tipo do imóvel"
+              value={form.propertyType}
+              onChange={(value) => onSet("propertyType", value)}
+              placeholder="Ex.: Apartamento"
+              error={shown.propertyType}
+            />
+          )}
+          {needsAddress ? (
+            <>
+              <p className="pd-group">Endereço do imóvel</p>
+              <div className="grid gap-4 sm:grid-cols-6">
+                <Field
+                  className="sm:col-span-2"
+                  label="CEP"
+                  inputMode="numeric"
+                  value={formatBrazilianPostalCode(form.propertyPostalCode)}
+                  onChange={(value) => onSet("propertyPostalCode", formatBrazilianPostalCode(value))}
+                  onBlur={() => void findCep(form.propertyPostalCode, onSet, true)}
+                  error={shown.propertyPostalCode}
+                />
+                <Field
+                  className="sm:col-span-4"
+                  label="Endereço"
+                  value={form.propertyStreet}
+                  onChange={(value) => onSet("propertyStreet", value)}
+                  error={shown.propertyStreet}
+                />
+                <Field
+                  className="sm:col-span-2"
+                  label="Número"
+                  value={form.propertyNumber}
+                  onChange={(value) => onSet("propertyNumber", value)}
+                  error={shown.propertyNumber}
+                />
+                <Field
+                  className="sm:col-span-4"
+                  label="Bairro"
+                  value={form.propertyDistrict}
+                  onChange={(value) => onSet("propertyDistrict", value)}
+                  error={shown.propertyDistrict}
+                />
+                <Field
+                  className="sm:col-span-4"
+                  label="Cidade"
+                  value={form.propertyCity}
+                  onChange={(value) => onSet("propertyCity", value)}
+                  error={shown.propertyCity}
+                />
+                <Field
+                  className="sm:col-span-2"
+                  label="UF"
+                  value={form.propertyState}
+                  onChange={(value) =>
+                    onSet("propertyState", value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2))
+                  }
+                  error={shown.propertyState}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="pd-note">{condominiumName ? "O endereço do condomínio já está conosco." : "O endereço do imóvel já está conosco."}</p>
+          )}
         </div>
-      </Section>
-      <Section
-        title="Características"
-        text="Uma visão inicial é suficiente; a vistoria e a implantação completam a ficha depois."
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field
-            label="Tipo do imóvel"
-            value={form.propertyType}
-            onChange={(value) => onSet("propertyType", value)}
-            placeholder="Ex.: Apartamento"
-            error={errors.propertyType}
-          />
-          <NumberInput
-            label="Dormitórios"
-            value={form.propertyBedrooms}
-            onChange={(value) => number("propertyBedrooms", value)}
-          />
-          <NumberInput
-            label="Suítes"
-            value={form.propertySuites}
-            onChange={(value) => number("propertySuites", value)}
-          />
-          <NumberInput
-            label="Banheiros"
-            value={form.propertyBathrooms}
-            onChange={(value) => number("propertyBathrooms", value)}
-          />
-          <NumberInput
-            label="Vagas"
-            value={form.propertyParkingSpots}
-            onChange={(value) => number("propertyParkingSpots", value)}
-          />
+      )}
+
+      {sub === 2 && (
+        <div className="pd-fields">
+          <p className="pd-lead">Uma visão inicial basta. A vistoria completa o restante.</p>
+          <div className="pd-steppers">
+            <Stepper label="Quartos" value={form.propertyBedrooms} onChange={(v) => onSet("propertyBedrooms", v)} />
+            <Stepper label="Banheiros" value={form.propertyBathrooms} onChange={(v) => onSet("propertyBathrooms", v)} />
+            <Stepper label="Suítes" value={form.propertySuites} onChange={(v) => onSet("propertySuites", v)} />
+          </div>
+          <details className="pd-more">
+            <summary>Fornecedores, utensílios e enxoval (opcional)</summary>
+            <div className="mt-4 space-y-6">
+              <OwnerSuppliersSection token={token} />
+              <OwnerGuide token={token} guideType="utensilios" />
+              <OwnerGuide token={token} guideType="enxoval" />
+            </div>
+          </details>
         </div>
-      </Section>
-      <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 text-xs text-[var(--portal-muted)]">
-        <strong className="flex items-center gap-2 text-sm text-[var(--portal-navy)]">
-          <KeyRound className="size-4" /> Acesso e Wi-Fi ficam para depois
-        </strong>
-        <p className="mt-1">
-          Senhas, códigos e Wi-Fi não são pedidos por este link. Você informa depois, já com seu
-          login no Portal do Proprietário.
-        </p>
+      )}
+
+      <div className="pd-actions">
+        <Button type="button" className="portal-cta pd-cta" onClick={next} disabled={finishing}>
+          Continuar <ArrowRight className="size-4" aria-hidden="true" />
+        </Button>
+        <button type="button" className="pd-back" onClick={back}>
+          Voltar
+        </button>
       </div>
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
-        <strong className="block">Importante</strong>
-        <p className="mt-1">
-          Dados enviados aqui alimentam a implantação administrativa. Nada é publicado
-          automaticamente no Guia do Hóspede sem revisão da equipe STAYO.
-        </p>
-      </div>
-      <OwnerSuppliersSection token={token} />
-      <OwnerGuide token={token} guideType="utensilios" />
-      <OwnerGuide token={token} guideType="enxoval" />
-      <Actions
-        onBack={onBack}
-        onContinue={onContinue}
-        label="Revisar antes de enviar"
-        disabled={finishing}
-      />
     </section>
+  );
+}
+
+function Stepper({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (value: number) => void;
+}) {
+  const current = value ?? 0;
+  return (
+    <div className="pd-stepper">
+      <span className="pd-stepper-label">{label}</span>
+      <div className="pd-stepper-ctrl">
+        <button
+          type="button"
+          aria-label={`Diminuir ${label.toLowerCase()}`}
+          disabled={current <= 0}
+          onClick={() => onChange(Math.max(0, current - 1))}
+        >
+          <Minus className="size-4" aria-hidden="true" />
+        </button>
+        <output aria-live="polite" aria-label={label}>
+          {value ?? "–"}
+        </output>
+        <button
+          type="button"
+          aria-label={`Aumentar ${label.toLowerCase()}`}
+          disabled={current >= 20}
+          onClick={() => onChange(Math.min(20, current + 1))}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
   );
 }
 
