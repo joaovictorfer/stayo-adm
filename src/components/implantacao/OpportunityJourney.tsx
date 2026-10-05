@@ -308,10 +308,9 @@ function JourneyBody({
       duration_months: defaults.durationMonths,
       notice_period_days: defaults.noticePeriodDays,
     };
+    // Só exibe o padrão; grava junto com a primeira edição ou ao avançar.
     setCond(initial);
     condPending.current = { ...condPending.current, ...initial };
-    setCondState("saving");
-    void runCondSave();
   }, [
     commercialDefaultsQ.data,
     commercialDefaultsQ.isPending,
@@ -402,12 +401,22 @@ function JourneyBody({
     proposalTimer.current = window.setTimeout(() => void saveProposal(), 900);
   };
 
+  // Navegar entre etapas não grava. A etapa só é registrada depois de uma
+  // edição real do usuário (estado salvo diferente do idle).
+  const lastSavedStep = useRef<string | null>(null);
+  const userEdited = [auto.state, contactState, condState, proposalState].some(
+    (s) => s !== "idle",
+  );
   useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [id, step]);
+  useEffect(() => {
+    if (!userEdited || lastSavedStep.current === step) return;
+    lastSavedStep.current = step;
     void autosaveOpportunity(id, { draft_step: step }, {}).catch(
       () => undefined,
     );
-    window.scrollTo({ top: 0 });
-  }, [id, step]);
+  }, [id, step, userEdited]);
 
   const saveState: SaveState = [
     auto.state,
