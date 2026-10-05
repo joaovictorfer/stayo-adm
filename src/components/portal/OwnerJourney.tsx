@@ -32,6 +32,13 @@ import { toast } from "sonner";
 
 import { StayoLogo } from "../brand/StayoLogo";
 import { OwnerCoverBanner } from "./OwnerCoverBanner";
+import { PlatformsStep } from "./PlatformsStep";
+import {
+  isValidEmail,
+  resolveOwnerPlatforms,
+  saveOwnerPlatforms,
+  type DistributionChannel,
+} from "../../lib/api/owner-platforms";
 import { reconcileRegistrationContact } from "../../lib/owner-registration-contact";
 import institutionalCover from "../../assets/owner-portal-property-fallback.jpg";
 import { useOwnerCoverByToken } from "../../hooks/use-owner-cover";
@@ -223,6 +230,52 @@ export function OwnerJourney({
   );
   const commandId = useRef<string>(crypto.randomUUID());
   const submitted = Boolean(submissionQ.data?.submittedAt || draftQ.data?.submittedAt);
+
+  // Fase 04 · Plataformas — fonte oficial: implantação (RPC por token do cadastro).
+  const platformsViewKey = `stayo:platforms-view:${token.slice(0, 12)}`;
+  const [platformsView, setPlatformsView] = useState(false);
+  const platformsQ = useQuery({
+    queryKey: ["owner-platforms", token],
+    queryFn: () => resolveOwnerPlatforms(token),
+    enabled: proposalAccepted,
+    retry: false,
+  });
+  const [platChannels, setPlatChannels] = useState<DistributionChannel[]>(["airbnb"]);
+  const [platEmail, setPlatEmail] = useState("");
+  const platHydrated = useRef(false);
+  const platTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (platHydrated.current || !platformsQ.data) return;
+    platHydrated.current = true;
+    setPlatChannels(Array.from(new Set<DistributionChannel>(["airbnb", ...(platformsQ.data.channels ?? [])])));
+    setPlatEmail(platformsQ.data.airbnbEmail ?? "");
+  }, [platformsQ.data]);
+  useEffect(() => {
+    if (window.localStorage.getItem(platformsViewKey) === "1") setPlatformsView(true);
+  }, [platformsViewKey]);
+  const showPlatforms = (value: boolean) => {
+    setPlatformsView(value);
+    window.localStorage.setItem(platformsViewKey, value ? "1" : "0");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const changePlatforms = (channels: DistributionChannel[], email: string) => {
+    const nextChannels = Array.from(new Set<DistributionChannel>(["airbnb", ...channels]));
+    setPlatChannels(nextChannels);
+    setPlatEmail(email);
+    if (!platHydrated.current || submitted) return;
+    if (platTimer.current) clearTimeout(platTimer.current);
+    platTimer.current = setTimeout(() => {
+      const trimmed = email.trim();
+      if (trimmed && !isValidEmail(trimmed)) return;
+      setSaveState("saving");
+      saveOwnerPlatforms(token, nextChannels, trimmed)
+        .then((saved) => {
+          queryClient.setQueryData(["owner-platforms", token], saved);
+          setSaveState("saved");
+        })
+        .catch(() => setSaveState("error"));
+    }, 700);
+  };
 
   useEffect(() => {
     formRef.current = form;
@@ -654,8 +707,12 @@ export function OwnerJourney({
     const ownerDone = ownerFields.filter((field) => !validateOwnerField(field, form[field])).length;
     const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
     const propertyDone = propertyKeys.filter((key) => !propertyErrors[key]).length;
-    return Math.round(((ownerDone + propertyDone) / (ownerFields.length + propertyKeys.length)) * 100);
+    const platformsDone = isValidEmail(platEmail) ? 1 : 0;
+    return Math.round(
+      ((ownerDone + propertyDone + platformsDone) / (ownerFields.length + propertyKeys.length + 1)) * 100,
+    );
   })();
+  const displayStage = stage === 3 && platformsView && !reviewing ? 4 : stage;
 
   return (
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
@@ -699,7 +756,8 @@ export function OwnerJourney({
             </div>
             <div className="pj-top-progress-row">
               <p className="pj-top-progress">
-                Etapa {stage} de 6 · <strong>{stage === 2 ? "Seus dados" : "Seu imóvel"}</strong>
+                Etapa {displayStage} de 6 ·{" "}
+                <strong>{displayStage === 2 ? "Seus dados" : displayStage === 4 ? "Plataformas" : "Seu imóvel"}</strong>
               </p>
               <span className="pj-top-percent">Cadastro {registrationPercent}%</span>
             </div>
@@ -707,7 +765,7 @@ export function OwnerJourney({
               {[0, 1, 2, 3, 4, 5].map((i) => (
                 <span
                   key={i}
-                  className={`pj-top-segment${i < stage - 1 ? " is-done" : i === stage - 1 ? " is-current" : ""}`}
+                  className={`pj-top-segment${i < displayStage - 1 ? " is-done" : i === displayStage - 1 ? " is-current" : ""}`}
                 />
               ))}
             </div>
@@ -824,7 +882,16 @@ export function OwnerJourney({
                 onSend={sendForReview}
               />
             )}
-            {stage === 3 && !reviewing && (
+            {stage === 3 && !reviewing && platformsView && (
+              <PlatformsStep
+                channels={platChannels}
+                airbnbEmail={platEmail}
+                onChange={changePlatforms}
+                onBack={() => showPlatforms(false)}
+                onContinue={continueProperty}
+              />
+            )}
+            {stage === 3 && !reviewing && !platformsView && (
               <PropertyStep
                 token={token}
                 form={form}
@@ -834,7 +901,15 @@ export function OwnerJourney({
                 finishing={finish.isPending}
                 onSet={set}
                 onBack={() => go(2)}
-                onContinue={continueProperty}
+                onContinue={() => {
+                  setShowPropertyErrors(true);
+                  if (!propertyValid) {
+                    toast.error("Complete os dados essenciais do imóvel");
+                    return;
+                  }
+                  void persist(formRef.current, 3);
+                  showPlatforms(true);
+                }}
               />
             )}
             {stage === 4 && (
