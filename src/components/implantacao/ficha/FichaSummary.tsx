@@ -272,7 +272,7 @@ export function ResponsibleCard({ name }: { name: string }) {
   );
 }
 
-export function LastActivityCard({ entry, onHistory }: { entry?: TimelineEntry; onHistory: () => void }) {
+export function LastActivityCard({ entry, onHistory }: { entry: TimelineEntry | undefined; onHistory: () => void }) {
   return (
     <Card icon={Clock3} title="Última atividade">
       {entry ? (

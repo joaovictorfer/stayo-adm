@@ -511,7 +511,6 @@ function ImplementationDetailPage() {
             >
               {section === "visao" ? (
                 (() => {
-                  const pend = buildPending();
                   const done = items.length - pendingItems.length;
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
