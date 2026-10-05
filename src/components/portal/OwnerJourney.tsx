@@ -715,17 +715,51 @@ export function OwnerJourney({
       ? coverData.label
       : null;
   const collecting = stage === 2 || stage === 3 || stage === 4;
-  const registrationPercent = (() => {
-    const ownerDone = ownerFields.filter((field) => !validateOwnerField(field, form[field])).length;
+  // Progresso real: cada requisito obrigatório aplicável vale 1 unidade.
+  // Seus dados = campos obrigatórios + demais participantes válidos; Imóvel = campos essenciais;
+  // Plataformas = e-mail Airbnb válido; Preparação = cada item respondido (N/A conta como resposta,
+  // regra atual). Sem itens de preparação aplicáveis, a etapa não soma requisitos.
+  const registration = (() => {
+    const ownerTotal = ownerFields.length + 1;
+    const peopleOk = people.every(
+      (person) =>
+        Boolean(person.fullName) &&
+        !validateOwnerField("fullName", person.fullName) &&
+        !validateOwnerField("document", person.document) &&
+        (!person.email || !validateOwnerField("email", person.email)) &&
+        (!person.phone || !validateOwnerField("phone", person.phone)),
+    );
+    const ownerDone =
+      ownerFields.filter((field) => !validateOwnerField(field, form[field])).length + (peopleOk ? 1 : 0);
     const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
     const propertyDone = propertyKeys.filter((key) => !propertyErrors[key]).length;
-    const platformsDone = isValidEmail(platEmail) ? 1 : 0;
+    const platformsDone = isValidEmail(platEmail.trim()) ? 1 : 0;
+    const prepKnown = Boolean(prepQ.data);
     const prepItems = prepQ.data ?? [];
-    const prepDone = prepItems.length === 0 || prepItems.every((i) => i.answer) ? 1 : 0;
-    return Math.round(
-      ((ownerDone + propertyDone + platformsDone + prepDone) / (ownerFields.length + propertyKeys.length + 2)) * 100,
-    );
+    // Enquanto os itens não carregam, a Preparação conta como 1 requisito pendente (nunca 100% por falta de dado).
+    const prepTotal = prepKnown ? prepItems.length : 1;
+    const prepDone = prepKnown ? prepItems.filter((i) => i.answer).length : 0;
+    const total = ownerTotal + propertyKeys.length + 1 + prepTotal;
+    const done = ownerDone + propertyDone + platformsDone + prepDone;
+    const pending: Array<{ key: "owner" | "property" | "platforms" | "prep"; label: string }> = [];
+    if (ownerDone < ownerTotal) pending.push({ key: "owner", label: "Seus dados" });
+    if (propertyDone < propertyKeys.length) pending.push({ key: "property", label: "Seu imóvel" });
+    if (!platformsDone) pending.push({ key: "platforms", label: "Plataformas" });
+    if (prepDone < prepTotal) pending.push({ key: "prep", label: "Preparação" });
+    const percent = pending.length ? Math.min(99, Math.floor((done / total) * 100)) : 100;
+    return { percent, pending };
   })();
+  const registrationPercent = registration.percent;
+  const openPending = (key: "owner" | "property" | "platforms" | "prep") => {
+    if (key === "owner") return go(2);
+    setReviewing(false);
+    setPlatformsView(key !== "property");
+    window.localStorage.setItem(platformsViewKey, key !== "property" ? "1" : "0");
+    setPrepView(key === "prep");
+    window.localStorage.setItem(prepViewKey, key === "prep" ? "1" : "0");
+    setStage(3);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const displayStage = stage === 4 ? 6 : stage === 3 && platformsView && !reviewing ? (prepView ? 5 : 4) : stage;
 
   return (
@@ -938,7 +972,13 @@ export function OwnerJourney({
                 }}
               />
             )}
-            {stage === 4 && (
+            {stage === 4 && registration.pending.length > 0 && (
+              <PendingStep
+                pending={registration.pending}
+                onContinue={() => openPending(registration.pending[0].key)}
+              />
+            )}
+            {stage === 4 && registration.pending.length === 0 && (
               <AccessStep
                 email={form.email}
                 password={password}
