@@ -30,3 +30,4 @@
 
 - The implementation route renders the administrative workspace by default; only an explicit etapa search parameter opens the guided registration, and resuming loads draft_step freshly to preserve the same workspace across proposal publication.
 - Contract registration reuses OwnerJourney and invitation-authorized contact reconciliation; commercial intake and read-only presentation keep distinct capabilities to preserve existing links and avoid duplicate contract records.
+- Owner distribution channels live on implementation_projects (distribution_channels, airbnb_account_email) and are written only via owner_platforms_save (token + confirmed proposal); copy lives in src/lib/api/owner-platforms.ts so rules never diverge between screens.
