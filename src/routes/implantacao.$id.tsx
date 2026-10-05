@@ -1283,7 +1283,7 @@ function OwnerPortalPanel({
     ? rawFirstName.charAt(0).toLocaleUpperCase("pt-BR") + rawFirstName.slice(1)
     : "";
   const defaultMessage = ownerUrl
-    ? `${firstName ? `Oi, ${firstName}!` : "Oi!"} Preparei seu espaço na STAYO para acompanharmos a implantação e reunirmos as informações do imóvel. Você pode acessar por aqui: ${ownerUrl}`
+    ? `${firstName ? `Oi, ${firstName}!` : "Oi!"} Confira sua proposta STAYO e, após confirmar as condições, preencha seus dados e os demais participantes para prepararmos o contrato. Você pode parar e continuar pelo mesmo link: ${ownerUrl}`
     : "";
   const [message, setMessage] = useState(defaultMessage);
   const [editingMessage, setEditingMessage] = useState(false);
@@ -1367,7 +1367,7 @@ function OwnerPortalPanel({
             className="text-base font-semibold"
             style={{ fontFamily: compact ? "Outfit, sans-serif" : "var(--stayo-font-display)", color: "var(--stayo-navy)" }}
           >
-            {compact ? "Portal do proprietário" : "Link de implantação do proprietário"}
+             {status === "usado" ? "Portal do proprietário" : "Proposta e cadastro para contrato"}
           </h2>
           <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
             {linkQuery.isPending ? "Verificando link…" : statusDetail}
@@ -1400,7 +1400,7 @@ function OwnerPortalPanel({
               disabled={createLink.isPending}
               className="min-h-11"
             >
-              <Send /> {createLink.isPending ? "Gerando…" : "Gerar link"}
+               <Send /> {createLink.isPending ? "Gerando…" : "Gerar convite"}
             </Button>
           </div>
         ) : ownerUrl ? (
@@ -1435,7 +1435,7 @@ function OwnerPortalPanel({
                   rel="noopener noreferrer"
                   title="Abre a jornada real deste proprietário em nova aba"
                 >
-                  <ExternalLink /> {compact ? "Abrir Portal" : "Acessar como administrador"}
+                   <ExternalLink /> {status === "usado" ? "Abrir Portal" : "Abrir jornada"}
                 </a>
               </Button>
             </div>

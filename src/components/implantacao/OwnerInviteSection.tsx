@@ -123,7 +123,7 @@ export function OwnerInviteSection({
     >
       <p className="implementation-section-label">Comercial</p>
       <h2 id="owner-invite-heading" className="text-lg font-semibold text-[var(--stayo-ink)]">
-        Convite do proprietário
+        Apresentação da proposta · somente leitura
       </h2>
       <p className="mt-1 text-xs text-[var(--stayo-ink-muted)]">
         Link exclusivo desta oportunidade, somente para ver a proposta. Não permite aceitar nem
@@ -279,8 +279,8 @@ export function OwnerInviteSection({
           )}
 
           <p className="mt-4 text-xs text-[var(--stayo-ink-muted)]">
-            Este link não permite preencher cadastro. Para isso, gere o link de cadastro no card
-            “Dados recebidos” abaixo — é outro acesso, e os dois nunca se misturam.
+            Este link não permite preencher cadastro nem confirmar a proposta. Para seguir com
+            os dados do contrato, use o convite “Proposta e cadastro para contrato”.
           </p>
         </>
       )}
