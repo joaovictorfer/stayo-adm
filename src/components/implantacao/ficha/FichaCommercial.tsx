@@ -20,21 +20,23 @@ import { formatBRL } from "../../../lib/money";
 import { ContractConditionsPanel } from "../ContractConditionsPanel";
 
 const muted = { color: "var(--stayo-ink-muted)" };
+const navy = { color: "var(--stayo-navy)" };
 const border = { borderColor: "var(--stayo-border)" };
+const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
 type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined };
 
 function Block({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
-    <section className="rounded-[var(--radius-card)] border bg-white px-4 py-3 sm:px-5" style={border}>
-      <h3 className="flex items-center gap-3 pb-2 text-base font-semibold">
-        <span className="grid size-8 place-items-center rounded-full" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-forest)" }}>
+    <section className="rounded-xl border bg-white px-4 pb-2 pt-3 sm:px-5" style={border}>
+      <h3 className="flex items-center gap-3 border-b pb-2.5 text-lg font-semibold" style={{ ...border, ...display }}>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" }}>
           {icon}
         </span>
         {title}
       </h3>
-      <ul className="divide-y" style={border}>{children}</ul>
+      <ul>{children}</ul>
     </section>
   );
 }
@@ -44,32 +46,31 @@ function ValueLine({ row, onEdit }: { row: Row; onEdit: () => void }) {
   const expandable = Boolean(row.detail);
   const value = row.value ?? TBD;
   return (
-    <li style={border}>
+    <li className="border-b last:border-b-0" style={border}>
       <button
         type="button"
         aria-expanded={expandable ? open : undefined}
         onClick={() => (expandable ? setOpen((o) => !o) : onEdit())}
-        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 py-2.5 text-left text-sm sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto]"
+        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 px-1 py-2 text-left text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
       >
-        <span className="font-medium">{row.label}</span>
-        <span className="col-start-1 row-start-2 truncate sm:col-start-2 sm:row-start-1" style={{ color: row.value ? "var(--stayo-ink-muted)" : "var(--stayo-warning, var(--stayo-ink-muted))" }}>
-          {value}
-        </span>
-        <span className="row-span-2 sm:row-span-1" style={muted} aria-label={expandable ? "Expandir" : `Editar ${row.label}`}>
+        <span className="font-medium" style={navy}>{row.label}</span>
+        <span className="col-start-1 row-start-2 truncate sm:col-start-2 sm:row-start-1" style={muted}>{value}</span>
+        <span className="row-span-2 sm:row-span-1" style={navy} aria-label={expandable ? "Expandir" : `Editar ${row.label}`}>
           {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : <Pencil className="size-4" />}
         </span>
       </button>
       {expandable && open && (
-        <div className="mb-2.5 flex flex-col gap-2 rounded-md px-3 py-2 text-sm sm:flex-row sm:items-start sm:justify-between" style={{ backgroundColor: "var(--stayo-bg)" }}>
+        <div className="mb-2 flex flex-col gap-2 rounded-md px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between" style={{ backgroundColor: "var(--ficha-subtle)" }}>
           <p style={muted}>{row.detail}</p>
-          <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1 font-medium underline underline-offset-2">
-            <Pencil className="size-3.5" /> Editar cláusula
+          <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1.5 underline underline-offset-2" style={navy}>
+            <Pencil className="size-4" /> Editar cláusula
           </button>
         </div>
       )}
     </li>
   );
 }
+
 
 const days = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
 
@@ -158,17 +159,22 @@ export function FichaCommercial({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)" }}>Condições comerciais</h2>
-          <p className="text-sm" style={muted}>O que foi acordado com o proprietário.</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Condições comerciais</h2>
+          <p className="text-sm sm:text-base" style={muted}>O que foi acordado com o proprietário.</p>
         </div>
-        <Button className="min-h-11" onClick={onNewVersion}>
-          <Plus /> Nova versão
-        </Button>
+        <div className="flex gap-2">
+          <button type="button" onClick={onHistory} className="flex h-11 flex-1 items-center gap-2 rounded-lg border bg-white px-4 text-sm sm:flex-none" style={{ ...border, ...navy }}>
+            <FileText className="size-4" /> {proposal ? `Proposta v${proposal.version} · ${proposal.statusLabel}` : "Sem proposta"} <ChevronDown className="ml-2 size-4" />
+          </button>
+          <button type="button" onClick={onNewVersion} className="flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-medium" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}>
+            <Plus className="size-4" /> Nova versão
+          </button>
+        </div>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="order-2 flex flex-col gap-4 lg:order-1">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(18rem,1fr)]">
+        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-1">
           {q.isLoading ? (
             <p className="text-sm" style={muted}>Carregando condições…</p>
           ) : (
@@ -187,18 +193,23 @@ export function FichaCommercial({
           {extras}
         </div>
         <aside className="order-1 lg:order-2">
-          <section className="rounded-[var(--radius-card)] border bg-white px-4 py-3 sm:px-5" style={border}>
-            <h3 className="flex items-center gap-2 pb-2 text-base font-semibold"><FileText className="size-4" /> Proposta</h3>
-            <dl className="divide-y text-sm" style={border}>
-              <div className="flex justify-between py-2" style={border}><dt style={muted}>Versão</dt><dd className="font-medium">{proposal ? `v${proposal.version}` : "—"}</dd></div>
-              <div className="flex justify-between py-2" style={border}><dt style={muted}>Status</dt><dd className="font-medium">{proposal?.statusLabel ?? "Não criada"}</dd></div>
+          <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
+            <div className="flex items-center gap-3 border-b pb-2.5" style={border}>
+              <FileText className="size-5" style={navy} />
+              <h3 className="text-lg font-semibold" style={display}>Proposta</h3>
+            </div>
+            <dl className="grid grid-cols-[7rem_1fr] text-sm">
+              <dt className="border-b py-2.5 font-medium" style={{ ...border, ...navy }}>Versão</dt>
+              <dd className="border-b py-2.5" style={{ ...border, ...navy }}>{proposal ? `v${proposal.version}` : "—"}</dd>
+              <dt className="py-2.5 font-medium" style={navy}>Status</dt>
+              <dd className="py-2.5" style={navy}>{proposal?.statusLabel ?? "Não criada"}</dd>
             </dl>
-            <div className="mt-1 divide-y border-t text-sm" style={border}>
-              <Link to="/portal/previa/$id" params={{ id: implementationId }} target="_blank" className="flex min-h-11 items-center gap-2 underline-offset-2 hover:underline" style={border}>
-                <ExternalLink className="size-4" /> <span className="flex-1">Ver como proprietário</span> <ChevronRight className="size-4" style={muted} />
+            <div className="border-t text-sm" style={border}>
+              <Link to="/portal/previa/$id" params={{ id: implementationId }} target="_blank" className="flex min-h-12 items-center gap-3 border-b" style={{ ...border, ...navy }}>
+                <ExternalLink className="size-4" /> <span className="flex-1 underline underline-offset-2">Ver como proprietário</span> <ChevronRight className="size-4" />
               </Link>
-              <button type="button" onClick={onHistory} className="flex min-h-11 w-full items-center gap-2 text-left underline-offset-2 hover:underline" style={border}>
-                <History className="size-4" /> <span className="flex-1">Ver histórico de versões</span> <ChevronRight className="size-4" style={muted} />
+              <button type="button" onClick={onHistory} className="flex min-h-12 w-full items-center gap-3 text-left" style={navy}>
+                <History className="size-4" /> <span className="flex-1 underline underline-offset-2">Ver histórico de versões</span> <ChevronRight className="size-4" />
               </button>
             </div>
           </section>
