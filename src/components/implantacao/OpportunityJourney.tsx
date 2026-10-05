@@ -702,7 +702,7 @@ function JourneyBody({
       ? "Carregando resumo…"
       : preparationReviewQ.isError
         ? "Resumo indisponível"
-        : `${preparationReviewQ.data?.checked ?? 0} itens conferidos · ${preparationReviewQ.data?.missing ?? 0} ${preparationReviewQ.data?.missing === 1 ? "faltante" : "faltantes"}`;
+        : `${preparationReviewQ.data?.checked ?? 0} ${(preparationReviewQ.data?.checked ?? 0) === 1 ? "item conferido" : "itens conferidos"} · ${preparationReviewQ.data?.missing ?? 0} ${preparationReviewQ.data?.missing === 1 ? "faltante" : "faltantes"}`;
 
     content = publishedResult ? (
       <PublishedProposalSuccess

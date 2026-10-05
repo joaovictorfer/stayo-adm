@@ -138,7 +138,7 @@ export function FichaImplantacao({
         </button>
       </div>
 
-      <nav className="flex gap-1 overflow-x-auto border-b" style={border} role="tablist" aria-label="Áreas da implantação">
+      <nav className="grid grid-cols-2 gap-x-1 border-b sm:flex" style={border} role="tablist" aria-label="Áreas da implantação">
         {tabs.map((t) => {
           const on = tab === t.id;
           return (
@@ -147,7 +147,7 @@ export function FichaImplantacao({
               role="tab"
               aria-selected={on}
               onClick={() => setTab(t.id)}
-              className="-mb-px shrink-0 border-b-[3px] px-4 py-2.5 text-sm"
+              className="-mb-px min-h-11 shrink-0 whitespace-nowrap border-b-[3px] px-2 py-2.5 text-sm sm:px-4"
               style={{ ...navy, borderColor: on ? "var(--ficha-icon-fg)" : "transparent", fontWeight: on ? 600 : 400 }}
             >
               {t.label}

@@ -1,3 +1,5 @@
+import { formatDateTime } from "@/lib/format-datetime";
+
 export interface TimelineEntry {
   id: string;
   label: string;
@@ -40,7 +42,7 @@ export function Timeline({ entries }: { entries: TimelineEntry[] }) {
               {entry.label}
             </p>
             <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-              {entry.timestamp}
+              {formatDateTime(entry.timestamp)}
               {entry.actor ? ` · ${entry.actor}` : ""}
             </p>
           </div>

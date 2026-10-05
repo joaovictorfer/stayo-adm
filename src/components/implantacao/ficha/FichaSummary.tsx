@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format-datetime";
 import {
   AlertCircle,
   Check,
@@ -138,12 +139,26 @@ export function JourneyCard({ status }: { status: ImplementationStatus }) {
           Implantação fora do fluxo principal.
         </p>
       )}
-      <ol className="flex overflow-x-auto pb-1">
+      {current >= 0 && (
+        <div className="sm:hidden">
+          <p className="text-sm font-semibold" style={{ color: "var(--stayo-navy)" }}>
+            {JOURNEY[current]!.label}
+            <span className="ml-1 font-normal" style={muted}>· Etapa {current + 1} de {JOURNEY.length}</span>
+          </p>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
+            <span className="block h-full rounded-full" style={{ width: `${((current + 1) / JOURNEY.length) * 100}%`, backgroundColor: "var(--stayo-forest)" }} />
+          </div>
+          {JOURNEY[current + 1] && (
+            <p className="mt-2 text-xs" style={muted}>Próxima: {JOURNEY[current + 1]!.label}</p>
+          )}
+        </div>
+      )}
+      <ol className={`${current >= 0 ? "hidden sm:flex" : "flex"} pb-1`}>
         {JOURNEY.map((step, i) => {
           const done = current >= 0 && i < current;
           const active = i === current;
           return (
-            <li key={step.label} className="relative flex min-w-[76px] flex-1 flex-col items-center text-center">
+            <li key={step.label} className="relative flex min-w-0 flex-1 flex-col items-center text-center">
               {i > 0 && (
                 <span
                   aria-hidden
@@ -278,7 +293,7 @@ export function LastActivityCard({ entry, onHistory }: { entry: TimelineEntry | 
       {entry ? (
         <div className="space-y-1">
           <p className="text-sm font-medium text-[var(--stayo-navy)]">{entry.label}</p>
-          <p className="text-xs" style={muted}>{new Date(entry.timestamp).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+          <p className="text-xs" style={muted}>{formatDateTime(entry.timestamp)}</p>
           {entry.actor && <p className="text-xs" style={muted}>{entry.actor}</p>}
         </div>
       ) : <p className="text-sm" style={muted}>Nenhuma atividade registrada.</p>}

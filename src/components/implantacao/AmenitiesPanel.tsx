@@ -195,7 +195,7 @@ export function AmenitiesSummary({ implementationId }: { implementationId: strin
   const rooms = q.data?.data?.rooms ?? [];
   if (!rooms.length) return <>Nada marcado ainda</>;
   const marked = rooms.reduce((n, r) => n + roomProgress(r).marked, 0);
-  return <>{`${marked} itens marcados em ${rooms.length} ambientes`}</>;
+  return <>{`${marked} ${marked === 1 ? "item marcado" : "itens marcados"} em ${rooms.length} ${rooms.length === 1 ? "ambiente" : "ambientes"}`}</>;
 }
 
 function SaveBadge({ state, onRetry }: { state: Save; onRetry: () => void }) {

@@ -16,33 +16,49 @@ export function FichaNav({
   onChange: (s: FichaSection) => void;
   badges?: Partial<Record<FichaSection, string>>;
 }) {
+  const idx = FICHA_SECTIONS.findIndex((s) => s.id === current);
   return (
-    <nav aria-label="Seções da ficha" className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0" style={{ borderColor: "var(--stayo-border)" }}>
-      <ul className="flex min-w-max gap-1 sm:gap-4">
-        {FICHA_SECTIONS.map((s) => {
-          const active = s.id === current;
-          return (
-            <li key={s.id}>
-              <button
-                type="button"
-                aria-current={active ? "page" : undefined}
-                onClick={() => onChange(s.id)}
-                className="relative flex min-h-11 items-center gap-1.5 px-2 text-sm transition"
-                style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
-              >
-                {s.label}
-                {badges[s.id] && (
-                  <span className="rounded-full px-1.5 text-[11px]" style={{ backgroundColor: "var(--stayo-bg)" }}>
-                    {badges[s.id]}
-                  </span>
-                )}
-                {active && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[3px] rounded-full" style={{ backgroundColor: "var(--stayo-forest)" }} />}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <div className="relative">
+      <nav
+        aria-label="Seções da ficha"
+        className="-mx-4 overflow-x-auto scroll-smooth border-b px-4 [scrollbar-width:none] sm:mx-0 sm:px-0"
+        style={{ borderColor: "var(--stayo-border)" }}
+      >
+        <ul className="flex min-w-max gap-1 pr-10 sm:gap-4 sm:pr-0">
+          {FICHA_SECTIONS.map((s) => {
+            const active = s.id === current;
+            return (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  aria-current={active ? "page" : undefined}
+                  ref={active ? (el) => el?.scrollIntoView({ block: "nearest", inline: "center" }) : undefined}
+                  onClick={() => onChange(s.id)}
+                  className="relative flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2 text-sm transition"
+                  style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
+                >
+                  {s.label}
+                  {badges[s.id] && (
+                    <span className="rounded-full px-1.5 text-[11px]" style={{ backgroundColor: "var(--stayo-bg)" }}>
+                      {badges[s.id]}
+                    </span>
+                  )}
+                  {active && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[3px] rounded-full" style={{ backgroundColor: "var(--stayo-forest)" }} />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 -right-4 flex w-14 items-center justify-end pr-3 sm:hidden"
+        style={{ background: "linear-gradient(to right, transparent, var(--stayo-bg) 60%)" }}
+      >
+        <ChevronRight className="size-4" style={{ color: "var(--stayo-ink-muted)" }} />
+      </div>
+      <p className="sr-only">Seção {idx + 1} de {FICHA_SECTIONS.length}</p>
+    </div>
   );
 }
 

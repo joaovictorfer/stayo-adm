@@ -6,6 +6,8 @@ import { FichaImplantacao } from "../components/implantacao/ficha/FichaImplantac
 import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
 import { FichaContrato } from "@/components/implantacao/ficha/FichaContrato";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { formatDateTime } from "@/lib/format-datetime";
 import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";
 import { commercialProposalsApi } from "../lib/api/commercial-proposals";
@@ -29,6 +31,8 @@ import {
   Share2,
   CalendarPlus,
   Megaphone,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
@@ -415,9 +419,9 @@ function ImplementationDetailPage() {
                   else if (latestProposal.status === "published")
                     pend.push({ id: "prop", section: "portal", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
                   if (missingPropertyFields)
-                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${missingPropertyFields} informação(ões) em aberto`, chip: "Pendente" });
+                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${missingPropertyFields} ${missingPropertyFields === 1 ? "informação" : "informações"} em aberto`, chip: "Pendente" });
                   if (pendingItems.length)
-                    pend.push({ id: "impl", section: "implantacao", icon: "list", title: "Implantação", detail: `${pendingItems.length} item(ns) em aberto${readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}`, chip: "Pendente" });
+                    pend.push({ id: "impl", section: "implantacao", icon: "list", title: "Implantação", detail: `${pendingItems.length} ${pendingItems.length === 1 ? "item" : "itens"} em aberto${readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} ${readiness.pendingBlockers === 1 ? "bloqueador" : "bloqueadores"}` : ""}`, chip: "Pendente" });
     return pend;
   };
 
@@ -436,21 +440,9 @@ function ImplementationDetailPage() {
             <span>Implantação</span>
             <strong>{implementation?.code ?? "Carregando"}</strong>
           </div>
-          <div className="flex items-center gap-1">
-            {implementation && (
-              <DeleteImplementationButton
-                id={implementation.id}
-                code={implementation.code}
-                locked={
-                  implementation.status === "ativo" ||
-                  Boolean((implementation as { corePropertyId?: string | null }).corePropertyId)
-                }
-              />
-            )}
-            <Link to="/implantacao" className="implementation-back-link">
+          <Link to="/implantacao" className="implementation-back-link">
               Ver todas
             </Link>
-          </div>
         </header>
       )}
 
@@ -499,15 +491,35 @@ function ImplementationDetailPage() {
               >
                 <Pencil /> {resuming ? "Abrindo…" : draftQuery.data?.isDraft ? "Continuar cadastro" : "Editar cadastro"}
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="size-9"
-                onClick={() => void shareWorkspace()}
-                aria-label="Compartilhar ficha com a equipe"
-              >
-                <Share2 />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="size-10" aria-label="Mais ações">
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="cursor-pointer" onSelect={() => void shareWorkspace()}>
+                    <Share2 className="size-4" /> Compartilhar ficha
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DeleteImplementationButton
+                    id={implementation.id}
+                    code={implementation.code}
+                    locked={
+                      implementation.status === "ativo" ||
+                      Boolean((implementation as { corePropertyId?: string | null }).corePropertyId)
+                    }
+                    trigger={
+                      <DropdownMenuItem
+                        onSelect={(event) => event.preventDefault()}
+                        className="cursor-pointer text-[var(--stayo-danger)] focus:text-[var(--stayo-danger)]"
+                      >
+                        <Trash2 className="size-4" /> Excluir oportunidade
+                      </DropdownMenuItem>
+                    }
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 
@@ -530,14 +542,14 @@ function ImplementationDetailPage() {
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
                     { section: "contrato", label: "Contrato", status: contractStageLabel[currentContractStage()], tone: "muted" },
-                    { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
-                    { section: "implantacao", label: "Implantação", status: itemsQuery.isPending || inventoryQ.isPending ? "—" : items.length ? `${done} de ${items.length} itens concluídos` : inventoryTotal ? `Inventário: ${inventoryAnswered} de ${inventoryTotal} respondidos` : "Sem itens", tone: items.length ? (readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress") : inventoryTotal ? (inventoryAnswered === inventoryTotal ? "ok" : "progress") : "muted" },
+                    { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} ${missingPropertyFields === 1 ? "informação" : "informações"} em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
+                    { section: "implantacao", label: "Implantação", status: itemsQuery.isPending || inventoryQ.isPending ? "—" : items.length ? `${done} de ${items.length} ${items.length === 1 ? "item concluído" : "itens concluídos"}` : inventoryTotal ? `Inventário: ${inventoryAnswered} de ${inventoryTotal} respondidos` : "Sem itens", tone: items.length ? (readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress") : inventoryTotal ? (inventoryAnswered === inventoryTotal ? "ok" : "progress") : "muted" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
                     { section: "portal", label: "Portal", status: releasesQuery.isPending ? "Verificando liberação…" : releasesQuery.isError ? "Liberação não verificada" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado", tone: releasesQuery.data?.length ? "ok" : "muted" },
                   ];
                   return (
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-                      <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
+                      <div className="flex min-w-0 flex-col gap-4">
                         <div className="hidden lg:block">
                           <h2 className="text-3xl font-semibold" style={{ fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "0", color: "var(--stayo-navy)" }}>Resumo</h2>
                           <p className="text-base" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
@@ -557,7 +569,7 @@ function ImplementationDetailPage() {
                         </Collapsible>
 
                       </div>
-                      <aside className="flex flex-col gap-4">
+                      <aside className="flex min-w-0 flex-col gap-4">
                         <ResponsibleCard name={responsibleName} />
                         <LastActivityCard entry={history[0]} onHistory={() => goSection("historico")} />
                       </aside>
@@ -669,8 +681,8 @@ function ImplementationDetailPage() {
                     <Timeline entries={history} />
                   </section>
                   <Collapsible
-                    title="Detalhes técnicos e integração"
-                    summary="IDs, origem e conversão para o Core"
+                    title="Avançado"
+                    summary="Identificadores técnicos e integração com o Core"
                   >
                     <div className="grid gap-3 text-xs sm:grid-cols-2">
                       <Field label="ID da Implantação" value={implementation.id} />
@@ -684,8 +696,8 @@ function ImplementationDetailPage() {
                       {implementation.coreOwnerId && (
                         <Field label="Proprietário no Core" value={implementation.coreOwnerId} />
                       )}
-                      <Field label="Criada em" value={implementation.createdAt} />
-                      <Field label="Atualizada em" value={implementation.updatedAt} />
+                      <Field label="Criada em" value={formatDateTime(implementation.createdAt)} />
+                      <Field label="Atualizada em" value={formatDateTime(implementation.updatedAt)} />
                     </div>
                     <div className="mt-4">
                       <CoreConversionPanel implementation={implementation} />
@@ -817,7 +829,7 @@ function ProposalGate({
               timeStyle: "short",
             })
           : "—"}{" "}
-        · {(published.snapshot?.items ?? published.items).length} serviço(s) · valor definido{" "}
+        · {(published.snapshot?.items ?? published.items).length} {(published.snapshot?.items ?? published.items).length === 1 ? "serviço" : "serviços"} · valor definido{" "}
         {fixedTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
       </p>
       {hasDraftChanges && (
@@ -1438,8 +1450,8 @@ function OwnerPortalPanel({
                 </a>
               </Button>
             </div>
-            <details open={compact ? undefined : true} className="mt-3">
-            {<summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do link de acesso</summary>}
+            <details className="mt-3">
+            {<summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Ver mensagem para WhatsApp</summary>}
             <div
               className="mt-3 rounded-[var(--radius-control)] border p-3"
               style={{ borderColor: "var(--stayo-border)" }}

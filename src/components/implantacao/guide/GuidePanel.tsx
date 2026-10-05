@@ -75,7 +75,7 @@ export function GuidePanel({ implementationId, guideType = "utensilios" }: { imp
   const apply = useMutation({
     mutationFn: () => applyGuide(implementationId, guideType),
     onSuccess: (n) => {
-      toast.success(n ? `${n} itens aplicados` : "Nenhum item novo no catálogo");
+      toast.success(n ? `${n} ${n === 1 ? "item aplicado" : "itens aplicados"}` : "Nenhum item novo no catálogo");
       void invalidate();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível aplicar."),
@@ -309,7 +309,7 @@ function DetailSheet({
             <p className="text-sm" style={muted}>Ainda não informado.</p>
           ) : (
             <>
-              <p className="text-sm">{answerLabel[r.answer]} · {r.quantity ?? 0} unidade(s)</p>
+              <p className="text-sm">{answerLabel[r.answer]} · {r.quantity ?? 0} {(r.quantity ?? 0) === 1 ? "unidade" : "unidades"}</p>
               <p className="text-xs" style={muted}>
                 {r.review_status === "pendente" ? "Aguardando confirmação" : r.review_status === "rejeitado" ? "Rejeitada" : `Confirmado: ${r.confirmed_quantity ?? 0}`}
               </p>

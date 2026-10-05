@@ -547,7 +547,7 @@ function MobileSupplyRow({
       </Select>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <Button variant="outline" className="min-w-0" onClick={onOpenPayment}><Wallet /><span className="truncate">Pagamento</span></Button>
-        <Button variant="outline" className="min-w-0" onClick={onOpenDocs}><Paperclip /><span className="truncate">{docCount > 0 ? `${docCount} arquivo(s)` : "Arquivos"}</span></Button>
+        <Button variant="outline" className="min-w-0" onClick={onOpenDocs}><Paperclip /><span className="truncate">{docCount > 0 ? `${docCount} ${docCount === 1 ? "arquivo" : "arquivos"}` : "Arquivos"}</span></Button>
       </div>
     </article>
   );
