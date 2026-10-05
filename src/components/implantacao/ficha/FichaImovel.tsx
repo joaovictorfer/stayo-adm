@@ -103,10 +103,9 @@ const toNum = (v: string) => (v.trim() === "" ? null : Number(v));
 
 export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { implementation: ImplementationProject; onGoOwner: () => void; onGoPortal: () => void }) {
   const qc = useQueryClient();
-  const adminCover = useAdminCoverUrl(implementation.id);
+  const { keys: pendencyKeys, detailsQ } = usePropertyPendencies(implementation.id);
   const [editing, setEditing] = useState(false);
 
-  const detailsQ = useQuery({ queryKey: ["implementation-property-details", implementation.id], queryFn: () => getPropertyDetails(implementation.id) });
   const condoQ = useQuery({ ...adminCondominiumQuery(implementation.condominiumId ?? ""), enabled: Boolean(implementation.condominiumId) });
   const condoListQ = useQuery({ ...adminCondominiumsListQuery(), enabled: editing });
   const d = detailsQ.data;
@@ -215,9 +214,9 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const legacyAddress = [implementation.address, implementation.city].filter(Boolean).join(", ");
 
   const pendencies: Array<{ label: string; cta: string; onClick: () => void }> = [];
-  if (!adminCover) pendencies.push({ label: "Fotos do imóvel ainda não adicionadas.", cta: "Adicionar fotos", onClick: onGoPortal });
-  if (d !== undefined && (!d?.wifiNetwork || !d?.wifiPassword)) pendencies.push({ label: "Dados de Wi-Fi não informados.", cta: "Completar", onClick: startEdit });
-  if (d !== undefined && !d?.accessType) pendencies.push({ label: "Forma de acesso não informada.", cta: "Definir", onClick: startEdit });
+  if (pendencyKeys.includes("cover")) pendencies.push({ label: "Fotos do imóvel ainda não adicionadas.", cta: "Adicionar fotos", onClick: onGoPortal });
+  if (pendencyKeys.includes("wifi")) pendencies.push({ label: "Dados de Wi-Fi não informados.", cta: "Completar", onClick: startEdit });
+  if (pendencyKeys.includes("access")) pendencies.push({ label: "Forma de acesso não informada.", cta: "Definir", onClick: startEdit });
 
   const sidebar = (
     <>
@@ -353,7 +352,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                 <ul>
                   <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
                   <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
-                  <Line row={{ label: "Tipo", value: implementation.propertyType }} onEdit={startEdit} />
+                  <Line row={{ label: "Tipo", value: implementation.propertyType ? implementation.propertyType.charAt(0).toLocaleUpperCase("pt-BR") + implementation.propertyType.slice(1) : implementation.propertyType }} onEdit={startEdit} />
                 </ul>
               </Card>
 
