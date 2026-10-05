@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Refinar visual do cadastro comercial público conforme referência, corrigir reaproveitamento de dados e salvamento/retomada; validar envio e destino final sem alterar ficha oficial sem revisão
+- [ ] Entregar relatório do percurso do cadastro com evidências e limites da validação
+
 - [x] Separar Ver ficha e Continuar cadastro e simplificar Resumo; navegação, retomada, retorno e reload validados com cadastro real em 1440/390/360; ficha já publicada mantém o workspace
 - [ ] Homologar publicação de proposta nesta jornada; aguarda uma proposta autorizada para publicação real, sem publicar dados comerciais apenas para teste
 
