@@ -5,11 +5,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "../../ui/button";
-import { useAdminCoverUrl } from "../CoverPicker";
+import { usePropertyPendencies } from "./property-pendencies";
 import { Collapsible } from "./FichaParts";
 import { adminCondominiumQuery, adminCondominiumsListQuery, coreApi } from "../../../lib/api/queries";
 import {
-  getPropertyDetails,
   savePropertyDetails,
   type PropertyDetailsInput,
 } from "../../../lib/api/owner-portal-data";
