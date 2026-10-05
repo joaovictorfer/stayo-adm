@@ -24,6 +24,7 @@ import {
   Camera,
   Shirt,
   Wrench,
+  FileText,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -660,9 +661,9 @@ export function OwnerJourney({
               className={`pj-top-photo${coverReady ? " is-ready" : ""}`}
             />
           )}
-          <p className="pj-top-progress">Etapa 1 de 5 · Proposta</p>
+          <p className="pj-top-progress">Etapa 1 de 6 · <strong>Proposta</strong></p>
           <div className="pj-top-segments" aria-hidden="true">
-            {[0, 1, 2, 3, 4].map((i) => (
+            {[0, 1, 2, 3, 4, 5].map((i) => (
               <span key={i} className={`pj-top-segment${i === 0 ? " is-current" : ""}`} />
             ))}
           </div>
@@ -1059,6 +1060,7 @@ function ProposalStep({
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
   const [showConditions, setShowConditions] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const confirmed = !needs && confirmation;
 
   return (
@@ -1078,6 +1080,7 @@ function ProposalStep({
           <h2 className="pj-open-title">Sua proposta STAYO</h2>
           <span className="pj-version-chip">Versão {current.version}</span>
         </div>
+        <p className="pj-open-lead">Confira o essencial. Os detalhes ficam disponíveis quando você quiser.</p>
         <dl className="pj-open-facts">
           <div className="pj-open-fact">
             <dt>Administração</dt>
@@ -1092,12 +1095,14 @@ function ProposalStep({
             <dd>{facts.cleaning ? `${facts.cleaning} por uso` : "A definir"}</dd>
           </div>
         </dl>
-        <p className="pj-open-note">
-          <strong>
-            Implantação: {facts.implementation ?? "valor definido após avaliação"}.
-          </strong>
-          <span>Combinaremos tudo antes de qualquer cobrança.</span>
-        </p>
+        <div className="pj-open-note">
+          <span className="pj-open-note-icon" aria-hidden="true"><FileText className="size-4" /></span>
+          <p>
+            <strong>Implantação</strong>
+            <span>{facts.implementation ?? "Valor definido após avaliação."}</span>
+            <span>Combinaremos tudo antes de qualquer cobrança.</span>
+          </p>
+        </div>
         <button
           type="button"
           className="pj-open-conditions"
@@ -1112,11 +1117,16 @@ function ProposalStep({
             <Button
               type="button"
               className="portal-cta h-12 w-full text-sm"
-              onClick={() =>
-                document
-                  .getElementById("confirmar-proposta")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
+              onClick={() => {
+                setReviewing(true);
+                window.setTimeout(
+                  () =>
+                    document
+                      .getElementById("confirmar-proposta")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                  0,
+                );
+              }}
             >
               Revisar e confirmar <ChevronRight className="size-4" />
             </Button>
@@ -1150,7 +1160,7 @@ function ProposalStep({
           </div>
         </div>
       ) : (
-        <div id="confirmar-proposta" className="pj-confirm">
+        <div id="confirmar-proposta" className="pj-confirm" hidden={!reviewing}>
           <p className="pj-confirm-eyebrow">Confirmação</p>
           <h2 className="pj-confirm-title">Você está confirmando a proposta versão {current.version}</h2>
           <p className="pj-confirm-summary">
