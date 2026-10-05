@@ -1,4 +1,5 @@
 import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
+import { FichaContrato } from "@/components/implantacao/ficha/FichaContrato";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";
@@ -545,10 +546,15 @@ function ImplementationDetailPage() {
                   );
                 })()
               ) : section === "contrato" ? (
-                <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5" style={{ borderColor: "var(--stayo-border)" }}>
-                  <h2 className="mb-3 text-lg font-semibold">Condições comerciais e contratuais</h2>
-                  <ContractConditionsPanel implementationId={implementation.id} />
-                </section>
+                <FichaContrato
+                  implementationId={implementation.id}
+                  implementationCode={implementation.code}
+                  ownerName={implementation.ownerName}
+                  proposal={latestProposal ?? null}
+                  onGoOwner={() => goSection("proprietario")}
+                  onEditProposal={() => { goSection("proposta"); setProposalEditing(true); }}
+                  onHistory={() => goSection("historico")}
+                />
               ) : section === "proposta" ? (
                 proposalEditing ? (
                   <div className="flex flex-col gap-4">
