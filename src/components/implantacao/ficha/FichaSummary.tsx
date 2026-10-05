@@ -138,12 +138,12 @@ export function JourneyCard({ status }: { status: ImplementationStatus }) {
           Implantação fora do fluxo principal.
         </p>
       )}
-      <ol className="grid grid-cols-5">
+      <ol className="flex overflow-x-auto pb-1">
         {JOURNEY.map((step, i) => {
           const done = current >= 0 && i < current;
           const active = i === current;
           return (
-            <li key={step.label} className="relative flex flex-col items-center text-center">
+            <li key={step.label} className="relative flex min-w-[76px] flex-1 flex-col items-center text-center">
               {i > 0 && (
                 <span
                   aria-hidden
@@ -161,7 +161,7 @@ export function JourneyCard({ status }: { status: ImplementationStatus }) {
                 {done && <Check className="size-3.5" strokeWidth={3} style={{ color: "white" }} />}
                 {active && <span className="size-3 rounded-full" style={{ backgroundColor: "var(--stayo-navy, #0b3150)" }} />}
               </span>
-              <span lang="pt-BR" className="mt-2 w-full hyphens-auto px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
+              <span className="mt-2 w-full px-1 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
                 {step.label}
               </span>
               <span className="hidden text-xs sm:block" style={active ? { color: "var(--stayo-navy)" } : muted}>
