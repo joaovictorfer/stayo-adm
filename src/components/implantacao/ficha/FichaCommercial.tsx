@@ -23,7 +23,7 @@ const muted = { color: "var(--stayo-ink-muted)" };
 const border = { borderColor: "var(--stayo-border)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null; detail?: string | null };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined };
 
 function Block({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -146,9 +146,9 @@ export function FichaCommercial({
     { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule },
     { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null },
     { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não" },
-    ...(assignment ? [{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null }] : []),
-    ...(c?.notice_period_days ? [{ label: "Aviso prévio", value: days(c.notice_period_days) }] : []),
-    ...(c?.maintenance_limit != null ? [{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}` }] : []),
+    ...(assignment ? <Row[]>[{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null }] : []),
+    ...(c?.notice_period_days ? <Row[]>[{ label: "Aviso prévio", value: days(c.notice_period_days) }] : []),
+    ...(c?.maintenance_limit != null ? <Row[]>[{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}` }] : []),
   ];
   const services: Row[] = [
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes },
