@@ -257,7 +257,7 @@ function EnxovalSlot({ implementationId }: { implementationId: string }) {
   return <GuidePanel implementationId={implementationId} guideType="enxoval" />;
 }
 
-function InventoryWorkspace({
+export function InventoryWorkspace({
   implementationId,
   adding,
   setAdding,
