@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Trash2,
   type LucideIcon,
+  X,
 } from "lucide-react";
 import {
   useCallback,
@@ -499,11 +500,11 @@ function JourneyBody({
   const complete = useMutation({
     mutationFn: async () => {
       const ok = await flushAll();
-      if (!ok) throw new Error("Salve os dados antes de criar a ficha.");
+      if (!ok) throw new Error("Salve os dados antes de concluir o cadastro.");
       await completeOpportunityDraft(id);
     },
     onSuccess: () => {
-      toast.success("Ficha criada", {
+      toast.success("Cadastro inicial concluído", {
         description: "Nada foi enviado ao proprietário.",
       });
       onExit();
@@ -655,13 +656,7 @@ function JourneyBody({
     );
   } else if (step === "implantacao") {
     content = (
-      <PreparationWorkspace
-        implementationId={id}
-        notes={v.notes}
-        ownerNotes={v.owner_facing_notes}
-        onNotesChange={(value) => auto.set("notes", value)}
-        onOwnerNotesChange={(value) => auto.set("owner_facing_notes", value)}
-      />
+      <PreparationWorkspace implementationId={id} />
     );
   } else {
     const propertyIdentification =
@@ -731,7 +726,7 @@ function JourneyBody({
         >
           <div className="px-4 py-5 sm:px-6">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Tudo certo para criar
+              Revise o cadastro inicial
             </h2>
             <p className="mt-1 text-sm" style={muted}>
               Você pode completar os demais detalhes depois.
@@ -782,38 +777,18 @@ function JourneyBody({
             >
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               <p>
-                Fornecedores e observações não bloqueiam a criação da ficha.
+                A ficha já existe. A proposta é publicada depois, pela área Comercial.
               </p>
             </div>
           </div>
         </section>
 
-        {proposalIssue && (
-          <div
-            role="alert"
-            className="rounded-[var(--radius-card)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-4"
-          >
-            <p className="text-sm font-semibold">{proposalIssue}</p>
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-3 min-h-11"
-              onClick={() => void go("proposta")}
-            >
-              Resolver
-            </Button>
-          </div>
-        )}
-
-        <p className="text-right text-xs" style={muted}>
-          A proposta será publicada somente ao confirmar.
-        </p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
           <Button
             type="button"
             variant="outline"
             className="min-h-12 sm:min-w-28"
-            disabled={complete.isPending || publish.isPending}
+            disabled={complete.isPending}
             onClick={() => void back()}
           >
             Voltar
@@ -821,28 +796,16 @@ function JourneyBody({
           <div className="hidden sm:block sm:flex-1" />
           <Button
             type="button"
-            variant="outline"
-            className="min-h-12 sm:min-w-36"
-            disabled={complete.isPending || publish.isPending}
+            className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:min-w-56"
+            disabled={complete.isPending}
             onClick={submitComplete}
           >
-            {complete.isPending && <Loader2 className="size-4 animate-spin" />}
-            Criar ficha
-          </Button>
-          <Button
-            type="button"
-            className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:min-w-56"
-            disabled={
-              Boolean(proposalIssue) || complete.isPending || publish.isPending
-            }
-            onClick={submitPublish}
-          >
-            {publish.isPending ? (
+            {complete.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              <ArrowRight className="size-4" />
+              <Check className="size-4" />
             )}
-            Criar e publicar proposta
+            Concluir cadastro inicial
           </Button>
         </div>
       </div>
