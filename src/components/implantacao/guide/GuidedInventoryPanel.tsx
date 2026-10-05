@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, Loader2, Plus, RotateCcw } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "../../ui/button";
@@ -14,10 +21,8 @@ import {
   updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
 import {
-  inventoryAnswerLabel,
   inventoryConditionLabel,
   inventoryOriginLabel,
-  inventoryRooms,
   roomProgress,
   type InventoryAnswer,
   type InventoryRoom,
@@ -25,37 +30,104 @@ import {
 } from "../../../lib/guided-inventory";
 
 const muted = { color: "var(--stayo-ink-muted)" };
-const surface = { backgroundColor: "var(--stayo-surface, #fff)", borderColor: "var(--stayo-border)" };
+const surface = {
+  backgroundColor: "var(--stayo-surface, #fff)",
+  borderColor: "var(--stayo-border)",
+};
 const ANSWERS: InventoryAnswer[] = ["tenho", "nao_tenho", "nao_aplica"];
+const ANSWER_LABEL: Record<InventoryAnswer, string> = {
+  tenho: "Tem",
+  nao_tenho: "Falta",
+  nao_aplica: "N/A",
+};
+const PREPARATION_ROOMS: Array<{
+  id:
+    | "cozinha"
+    | "sala"
+    | "quarto1"
+    | "quarto2"
+    | "banheiro"
+    | "lavanderia"
+    | "outros";
+  label: string;
+}> = [
+  { id: "cozinha", label: "Cozinha" },
+  { id: "sala", label: "Sala" },
+  { id: "quarto1", label: "Quarto 1" },
+  { id: "quarto2", label: "Quarto 2" },
+  { id: "banheiro", label: "Banheiro" },
+  { id: "lavanderia", label: "Lavanderia" },
+  { id: "outros", label: "Outros" },
+];
+type PreparationRoom = (typeof PREPARATION_ROOMS)[number]["id"];
+const inPreparationRoom = (
+  item: InventorySnapshotItem,
+  room: PreparationRoom,
+) => {
+  if (room === "quarto1")
+    return item.room === "quartos" && item.category !== "Quarto 2";
+  if (room === "quarto2")
+    return item.room === "quartos" && item.category === "Quarto 2";
+  if (room === "banheiro") return item.room === "banheiros";
+  if (room === "outros")
+    return item.room === "outros" || item.room === "externa";
+  return item.room === room;
+};
+const persistedRoom = (room: PreparationRoom): InventoryRoom => {
+  if (room === "quarto1" || room === "quarto2") return "quartos";
+  if (room === "banheiro") return "banheiros";
+  return room as InventoryRoom;
+};
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export function GuidedInventorySummary({ implementationId }: { implementationId: string }) {
+export function GuidedInventorySummary({
+  implementationId,
+}: {
+  implementationId: string;
+}) {
   const q = useQuery(guidedInventoryQuery(implementationId));
   if (!q.data) return <span>{q.isError ? "Indisponível" : "Carregando…"}</span>;
   const p = roomProgress(q.data);
-  return <span>{p.answered} de {p.total} informados</span>;
+  return (
+    <span>
+      {p.answered} de {p.total} informados
+    </span>
+  );
 }
 
-export function GuidedInventoryPanel({ implementationId, title }: { implementationId: string; title?: string }) {
+export function GuidedInventoryPanel({
+  implementationId,
+  title,
+}: {
+  implementationId: string;
+  title?: string;
+}) {
   const qc = useQueryClient();
   const query = guidedInventoryQuery(implementationId);
   const q = useQuery(query);
-  const [room, setRoom] = useState<InventoryRoom | null>(null);
+  const [room, setRoom] = useState<PreparationRoom>("cozinha");
   const [save, setSave] = useState<SaveState>("idle");
-  const [failed, setFailed] = useState<{ id: string; answer: InventoryAnswer | null } | null>(null);
+  const [failed, setFailed] = useState<{
+    item: InventorySnapshotItem;
+    answer: InventoryAnswer | null;
+  } | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [adding, setAdding] = useState("");
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
 
   const answer = useMutation({
-    mutationFn: (v: { id: string; answer: InventoryAnswer | null }) =>
-      setInventoryAnswer(v.id, implementationId, v.answer),
+    mutationFn: (v: {
+      item: InventorySnapshotItem;
+      answer: InventoryAnswer | null;
+    }) => setInventoryAnswer(v.item, implementationId, v.answer),
     onMutate: async (v) => {
       setSave("saving");
       await qc.cancelQueries({ queryKey: query.queryKey });
       const prev = qc.getQueryData<InventorySnapshotItem[]>(query.queryKey);
       qc.setQueryData<InventorySnapshotItem[]>(query.queryKey, (old) =>
-        (old ?? []).map((i) => (i.id === v.id ? { ...i, inventory_answer: v.answer } : i)),
+        (old ?? []).map((i) =>
+          i.id === v.item.id ? { ...i, inventory_answer: v.answer } : i,
+        ),
       );
       return { prev };
     },
@@ -72,7 +144,13 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
 
   const add = useMutation({
     mutationFn: (name: string) =>
-      addInventoryItem(implementationId, room!, name, 1000 + (q.data?.length ?? 0)),
+      addInventoryItem(
+        implementationId,
+        persistedRoom(room),
+        name,
+        1000 + (q.data?.length ?? 0),
+        room === "quarto2" ? "Quarto 2" : undefined,
+      ),
     onMutate: () => setSave("saving"),
     onSuccess: async () => {
       setAdding("");
@@ -84,16 +162,34 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
 
   if (q.isPending)
     return (
-      <div className="flex items-center gap-2 p-4 text-sm" style={muted} role="status">
+      <div
+        className="flex items-center gap-2 p-4 text-sm"
+        style={muted}
+        role="status"
+      >
         <Loader2 className="h-4 w-4 animate-spin" /> Carregando inventário…
       </div>
     );
   if (q.isError) {
-    const denied = /permiss|42501/i.test(String((q.error as Error)?.message ?? ""));
+    const denied = /permiss|42501/i.test(
+      String((q.error as Error)?.message ?? ""),
+    );
     return (
-      <div className="space-y-2 rounded-lg border p-4 text-sm" style={surface} role="alert">
-        <p className="font-medium">{denied ? "Sem permissão para o inventário" : "Não foi possível abrir o inventário"}</p>
-        <p style={muted}>{denied ? "Seu perfil não pode ver ou editar esta implantação." : "Verifique a conexão e tente de novo."}</p>
+      <div
+        className="space-y-2 rounded-lg border p-4 text-sm"
+        style={surface}
+        role="alert"
+      >
+        <p className="font-medium">
+          {denied
+            ? "Sem permissão para o inventário"
+            : "Não foi possível abrir o inventário"}
+        </p>
+        <p style={muted}>
+          {denied
+            ? "Seu perfil não pode ver ou editar esta implantação."
+            : "Verifique a conexão e tente de novo."}
+        </p>
         {!denied && (
           <Button size="sm" variant="outline" onClick={() => void q.refetch()}>
             <RotateCcw className="mr-1 h-4 w-4" /> Tentar de novo
@@ -105,18 +201,36 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
 
   const items = (q.data ?? []).filter((i) => i.enabled);
   const all = roomProgress(items);
-  const roomIdx = room ? inventoryRooms.findIndex((r) => r.key === room) : -1;
-  const roomItems = room ? items.filter((i) => i.room === room).sort((a, b) => a.display_order - b.display_order) : [];
+  const roomItems = items
+    .filter((i) => inPreparationRoom(i, room))
+    .sort((a, b) => a.display_order - b.display_order);
 
   const status = (
-    <span className="flex items-center gap-1 text-xs" style={muted} aria-live="polite">
-      {save === "saving" && <><Loader2 className="h-3 w-3 animate-spin" /> Salvando…</>}
-      {save === "saved" && <><Check className="h-3 w-3" /> Salvo</>}
+    <span
+      className="flex items-center gap-1 text-xs"
+      style={muted}
+      aria-live="polite"
+    >
+      {save === "saving" && (
+        <>
+          <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+        </>
+      )}
+      {save === "saved" && (
+        <>
+          <Check className="h-3 w-3" /> Salvo
+        </>
+      )}
       {save === "error" && (
-        <span className="flex items-center gap-2" style={{ color: "var(--stayo-danger, #b42318)" }}>
+        <span
+          className="flex items-center gap-2"
+          style={{ color: "var(--stayo-danger, #b42318)" }}
+        >
           Não salvou
           {failed && (
-            <button className="underline" onClick={() => answer.mutate(failed)}>Tentar de novo</button>
+            <button className="underline" onClick={() => answer.mutate(failed)}>
+              Tentar de novo
+            </button>
           )}
         </span>
       )}
@@ -127,66 +241,129 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          {title && <p className="truncate text-xs" style={muted}>{title}</p>}
-          <p className="text-sm font-medium">{all.answered} de {all.total} itens informados</p>
-          <div className="mt-1 h-1.5 w-40 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
-            <div className="h-full" style={{ width: `${all.total ? (all.answered / all.total) * 100 : 0}%`, backgroundColor: "var(--stayo-primary, #0b3150)" }} />
+          {title && (
+            <p className="truncate text-xs" style={muted}>
+              {title}
+            </p>
+          )}
+          <p className="text-sm font-medium">
+            {all.answered} de {all.total} itens informados
+          </p>
+          <div
+            className="mt-1 h-1.5 w-40 overflow-hidden rounded-full"
+            style={{ backgroundColor: "var(--stayo-border)" }}
+          >
+            <div
+              className="h-full"
+              style={{
+                width: `${all.total ? (all.answered / all.total) * 100 : 0}%`,
+                backgroundColor: "var(--stayo-primary, #0b3150)",
+              }}
+            />
           </div>
         </div>
         {status}
       </header>
 
-      <InventorySubmissionsReview implementationId={implementationId} items={items} />
+      <InventorySubmissionsReview
+        implementationId={implementationId}
+        items={items}
+      />
 
-      {!room ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {inventoryRooms.map((r) => {
-            const p = roomProgress(items.filter((i) => i.room === r.key));
-            return (
-              <button
-                key={r.key}
-                onClick={() => setRoom(r.key)}
-                className="flex min-h-14 items-center justify-between rounded-lg border px-3 py-2 text-left"
-                style={surface}
-              >
-                <span>
-                  <b className="block text-sm">{r.label}</b>
-                  <small style={muted}>{p.total ? `${p.answered} de ${p.total} informados` : "Sem itens"}</small>
-                </span>
-                <ChevronRight className="h-4 w-4" style={muted} />
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <button className="flex items-center gap-1 text-sm" onClick={() => setRoom(null)}>
-              <ArrowLeft className="h-4 w-4" /> Ambientes
+      <div
+        className="flex gap-1.5 overflow-x-auto pb-1"
+        role="tablist"
+        aria-label="Ambientes do inventário"
+      >
+        {PREPARATION_ROOMS.map((r) => {
+          const p = roomProgress(
+            items.filter((i) => inPreparationRoom(i, r.id)),
+          );
+          const active = room === r.id;
+          return (
+            <button
+              key={r.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => {
+                setRoom(r.id);
+                setDetail(null);
+              }}
+              className="min-h-10 shrink-0 rounded-full border px-3 text-xs font-medium"
+              style={
+                active
+                  ? {
+                      backgroundColor: "var(--stayo-forest)",
+                      color: "var(--primary-foreground)",
+                      borderColor: "var(--stayo-forest)",
+                    }
+                  : surface
+              }
+            >
+              {r.label}{" "}
+              <span className="opacity-70">
+                {p.answered}/{p.total}
+              </span>
             </button>
-            <b className="text-sm">{inventoryRooms[roomIdx]?.label}</b>
-            <span className="flex gap-1">
-              <Button size="icon" variant="ghost" aria-label="Ambiente anterior" disabled={roomIdx <= 0} onClick={() => setRoom(inventoryRooms[roomIdx - 1]!.key)}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button size="icon" variant="ghost" aria-label="Próximo ambiente" disabled={roomIdx >= inventoryRooms.length - 1} onClick={() => setRoom(inventoryRooms[roomIdx + 1]!.key)}><ChevronRight className="h-4 w-4" /></Button>
-            </span>
-          </div>
+          );
+        })}
+      </div>
 
-          {roomItems.length === 0 && <p className="rounded-lg border p-3 text-sm" style={{ ...surface, ...muted }}>Nenhum item neste ambiente ainda.</p>}
+      <div className="space-y-2">
+        {roomItems.length === 0 && (
+          <p
+            className="rounded-lg border p-3 text-sm"
+            style={{ ...surface, ...muted }}
+          >
+            Nenhum item neste ambiente ainda.
+          </p>
+        )}
 
-          <ul className="divide-y rounded-lg border" style={surface}>
-            {roomItems.map((i) => (
-              <li key={i.id} className="flex flex-col gap-2 px-3 py-2 md:flex-row md:items-center" data-testid="inventory-row">
+        <ul className="divide-y rounded-lg border" style={surface}>
+          {roomItems.map((i) => (
+            <li key={i.id} className="px-3 py-2" data-testid="inventory-row">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
                 <div className="min-w-0 flex-1">
                   <span className="text-sm font-medium">{i.name}</span>
-                  <span className="ml-2 text-[11px]" style={muted}>{inventoryOriginLabel(i)}</span>
-                  {!i.inventory_answer ? <span className="ml-2 text-[11px]" style={muted}>· Não informado</span> : <span className="ml-2 text-[11px]" style={muted}>· {i.inventory_review_status === "revisado_stayo" ? "Revisado pela STAYO" : "Preenchido pela STAYO"}</span>}
-                  {(i.inventory_brand || i.inventory_condition || i.inventory_quantity != null) && (
+                  <span className="ml-2 text-[11px]" style={muted}>
+                    {inventoryOriginLabel(i)}
+                  </span>
+                  {!i.inventory_answer ? (
+                    <span className="ml-2 text-[11px]" style={muted}>
+                      · Não informado
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-[11px]" style={muted}>
+                      ·{" "}
+                      {i.inventory_review_status === "revisado_stayo"
+                        ? "Revisado pela STAYO"
+                        : "Preenchido pela STAYO"}
+                    </span>
+                  )}
+                  {(i.inventory_brand ||
+                    i.inventory_condition ||
+                    i.inventory_quantity != null) && (
                     <p className="mt-0.5 text-[11px]" style={muted}>
-                      {[i.inventory_quantity != null ? `${i.inventory_quantity} un.` : null, i.inventory_brand, i.inventory_condition ? inventoryConditionLabel[i.inventory_condition] : null].filter(Boolean).join(" · ")}
+                      {[
+                        i.inventory_quantity != null
+                          ? `${i.inventory_quantity} un.`
+                          : null,
+                        i.inventory_brand,
+                        i.inventory_condition
+                          ? inventoryConditionLabel[i.inventory_condition]
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
+                <div
+                  className="flex items-center gap-1"
+                  role="radiogroup"
+                  aria-label={`Resposta para ${i.name}`}
+                >
                   {ANSWERS.map((a) => {
                     const on = i.inventory_answer === a;
                     return (
@@ -194,52 +371,97 @@ export function GuidedInventoryPanel({ implementationId, title }: { implementati
                         key={a}
                         role="radio"
                         aria-checked={on}
-                        onClick={() => answer.mutate({ id: i.id, answer: on ? null : a })}
+                        onClick={() =>
+                          answer.mutate({ item: i, answer: on ? null : a })
+                        }
                         className="min-h-9 flex-1 rounded-md border px-2.5 text-xs md:flex-none"
-                        style={on ? { backgroundColor: "var(--stayo-primary, #0b3150)", color: "var(--stayo-on-primary, #fff)", borderColor: "transparent" } : { borderColor: "var(--stayo-border)" }}
+                        style={
+                          on
+                            ? {
+                                backgroundColor:
+                                  "var(--stayo-primary, #0b3150)",
+                                color: "var(--stayo-on-primary, #fff)",
+                                borderColor: "transparent",
+                              }
+                            : { borderColor: "var(--stayo-border)" }
+                        }
                       >
-                        {inventoryAnswerLabel[a]}
+                        {ANSWER_LABEL[a]}
                       </button>
                     );
                   })}
-                  <button className="ml-1 px-1 text-xs underline" style={muted} onClick={() => setDetail(i.id)}>
+                  <button
+                    className="ml-1 inline-flex min-h-9 items-center gap-1 px-1 text-xs"
+                    style={muted}
+                    onClick={() => setDetail(detail === i.id ? null : i.id)}
+                    aria-expanded={detail === i.id}
+                  >
+                    {detail === i.id ? (
+                      <ChevronUp className="size-3.5" />
+                    ) : (
+                      <ChevronDown className="size-3.5" />
+                    )}{" "}
                     Detalhes
                   </button>
                 </div>
-              </li>
-            ))}
-          </ul>
+              </div>
+              {detail === i.id && (
+                <InventoryItemDetails
+                  item={i}
+                  onClose={() => setDetail(null)}
+                  onSave={async (d) => {
+                    setSave("saving");
+                    await updateInventoryDetails(i.id, implementationId, d);
+                    setSave("saved");
+                    await refresh();
+                  }}
+                  onDuplicate={async () => {
+                    setSave("saving");
+                    const copy = await duplicateInventoryItem(
+                      i,
+                      i.display_order + 1,
+                    );
+                    setSave("saved");
+                    await refresh();
+                    setDetail(copy.id);
+                  }}
+                  onRemove={async () => {
+                    setSave("saving");
+                    await removeInventoryItem(i.id, implementationId);
+                    setSave("saved");
+                    await refresh();
+                  }}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
 
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => { e.preventDefault(); if (adding.trim()) add.mutate(adding); }}
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (adding.trim()) add.mutate(adding);
+          }}
+        >
+          <input
+            value={adding}
+            onChange={(e) => setAdding(e.target.value)}
+            placeholder="Ex.: Forma de pizza grande"
+            maxLength={120}
+            className="h-9 min-w-0 flex-1 rounded-md border px-3 text-sm"
+            style={{ borderColor: "var(--stayo-border)" }}
+            aria-label="Nome do novo item"
+          />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!adding.trim() || add.isPending}
           >
-            <input
-              value={adding}
-              onChange={(e) => setAdding(e.target.value)}
-              placeholder="Ex.: Forma de pizza grande"
-              maxLength={120}
-              className="h-9 min-w-0 flex-1 rounded-md border px-3 text-sm"
-              style={{ borderColor: "var(--stayo-border)" }}
-              aria-label="Nome do novo item"
-            />
-            <Button type="submit" size="sm" disabled={!adding.trim() || add.isPending}>
-              <Plus className="mr-1 h-4 w-4" /> Adicionar item
-            </Button>
-          </form>
-        </div>
-      )}
-      <InventoryItemDetails
-        item={items.find((i) => i.id === detail) ?? null}
-        onClose={() => setDetail(null)}
-        onSave={async (d) => { await updateInventoryDetails(detail!, implementationId, d); setSave("saved"); await refresh(); }}
-        onDuplicate={async (name) => {
-          const src = items.find((i) => i.id === detail)!;
-          await duplicateInventoryItem(src, name, src.display_order + 1);
-          setSave("saved"); await refresh();
-        }}
-        onRemove={async () => { await removeInventoryItem(detail!, implementationId); setSave("saved"); await refresh(); }}
-      />
+            <Plus className="mr-1 h-4 w-4" /> Adicionar item
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
