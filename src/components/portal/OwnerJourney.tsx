@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Building2,
-  CircleHelp,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -21,7 +20,6 @@ import {
   ArrowRight,
   ChevronDown,
   Loader2,
-  Clock3,
   Sparkles,
   Camera,
   Shirt,
@@ -75,6 +73,8 @@ import type {
 } from "../../types/owner-onboarding";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+// Canal de contato exibido na proposta pública ("Ajuda" / "Falar com a STAYO").
+const STAYO_SUPPORT_URL = "mailto:contato@stayogramado.com.br";
 const STEP = { owner: 20, property: 30, access: 40 } as const;
 type Stage = 1 | 2 | 3 | 4;
 
@@ -602,21 +602,8 @@ export function OwnerJourney({
       lead: "Nada foi alterado. Tente novamente em instantes.",
     },
     A: {
-      title: "Sua proposta de gestão STAYO",
+      title: "Sua proposta STAYO",
       lead: "Confira as condições e confirme para iniciar.",
-      cta: {
-        label: "Ir para a confirmação",
-        onClick: () => {
-          if (stage !== 1) setStage(1);
-          window.setTimeout(
-            () =>
-              document
-                .getElementById("confirmar-proposta")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-            120,
-          );
-        },
-      },
     },
     B: {
       title: "Estamos preparando sua proposta",
@@ -650,7 +637,36 @@ export function OwnerJourney({
 
   return (
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
-      {collecting ? (
+      {journeyState === "A" ? (
+        <header className="pj-top">
+          <div className="pj-top-row">
+            <StayoLogo className="h-8 w-auto" />
+            <a className="pj-top-help" href={STAYO_SUPPORT_URL}>
+              Ajuda
+            </a>
+          </div>
+          {coverSrc && (
+            <img
+              key={coverSrc}
+              src={coverSrc}
+              onLoad={() => setCoverReady(true)}
+              onError={() => {
+                setCoverReady(false);
+                setCoverBroken(true);
+              }}
+              alt=""
+              aria-hidden="true"
+              className={`pj-top-photo${coverReady ? " is-ready" : ""}`}
+            />
+          )}
+          <p className="pj-top-progress">Etapa 1 de 5 · Proposta</p>
+          <div className="pj-top-segments" aria-hidden="true">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} className={`pj-top-segment${i === 0 ? " is-current" : ""}`} />
+            ))}
+          </div>
+        </header>
+      ) : collecting ? (
         <>
           <div className="owner-registration-brand"><StayoLogo className="h-12 w-auto" /></div>
           <OwnerCoverBanner token={token} />
@@ -690,9 +706,8 @@ export function OwnerJourney({
               <span className="portal-onboarding-cover-tag">{coverNote}</span>
             ) : null}
           </div>
-          {journeyState === "A" && <span className="pj-hero-badge">Proposta personalizada</span>}
           <p className="portal-onboarding-eyebrow">
-            {journeyState === "A" && ownerFullName ? ownerFullName : firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
+            {firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
           </p>
           <h1 key={journeyState} className="portal-onboarding-headline">
             {copy.title}
@@ -708,7 +723,7 @@ export function OwnerJourney({
       </header>
       )}
 
-      {journeyState !== "B" && journeyState !== "loading" && journeyState !== "error" && (
+      {journeyState !== "A" && journeyState !== "B" && journeyState !== "loading" && journeyState !== "error" && (
         <div className="portal-journey-ruler-wrap">
           <Timeline stage={stage} maxStage={maxStage} onSelect={go} showFollowUp={submitted} />
         </div>
@@ -1042,6 +1057,8 @@ function ProposalStep({
   // Após confirmar, mostra exatamente o texto confirmado.
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
+  const [showConditions, setShowConditions] = useState(false);
+  const confirmed = !needs && confirmation;
 
   return (
     <section className="pj-proposal">
@@ -1055,9 +1072,64 @@ function ProposalStep({
         </div>
       )}
 
-      <ProposalSnapshotSummary snapshot={shown} />
+      <div className="pj-open">
+        <div className="pj-open-title-row">
+          <h2 className="pj-open-title">Sua proposta STAYO</h2>
+          <span className="pj-version-chip">Versão {current.version}</span>
+        </div>
+        <dl className="pj-open-facts">
+          <div className="pj-open-fact">
+            <dt>Administração</dt>
+            <dd>{facts.admin ?? "A definir"}</dd>
+          </div>
+          <div className="pj-open-fact">
+            <dt>Prazo</dt>
+            <dd>{facts.duration ?? "A definir"}</dd>
+          </div>
+          <div className="pj-open-fact">
+            <dt>Limpeza</dt>
+            <dd>{facts.cleaning ? `${facts.cleaning} por uso` : "A definir"}</dd>
+          </div>
+        </dl>
+        <p className="pj-open-note">
+          <strong>
+            Implantação: {facts.implementation ?? "valor definido após avaliação"}.
+          </strong>
+          <span>Combinaremos tudo antes de qualquer cobrança.</span>
+        </p>
+        <button
+          type="button"
+          className="pj-open-conditions"
+          aria-expanded={showConditions}
+          onClick={() => setShowConditions((value) => !value)}
+        >
+          {showConditions ? "Ocultar as condições" : "Ver todas as condições"}
+          <ChevronDown className="size-4" aria-hidden="true" />
+        </button>
+        {!confirmed && (
+          <>
+            <Button
+              type="button"
+              className="portal-cta h-12 w-full text-sm"
+              onClick={() =>
+                document
+                  .getElementById("confirmar-proposta")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            >
+              Revisar e confirmar <ChevronRight className="size-4" />
+            </Button>
+            <p className="pj-open-legal">A confirmação desta proposta não substitui o contrato.</p>
+            <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
+              Falar com a STAYO
+            </a>
+          </>
+        )}
+      </div>
 
-      {!needs && confirmation ? (
+      {showConditions && <ProposalSnapshotSummary snapshot={shown} />}
+
+      {confirmed ? (
         <div className="pj-confirmed">
           <CheckCircle2 aria-hidden="true" />
           <div>
@@ -1078,7 +1150,19 @@ function ProposalStep({
           <p className="pj-confirm-summary">
             Você confirma a proposta versão {current.version}, com implantação definida em {facts.implementation ?? "valor a definir"}.
           </p>
-          <a className="pj-review-link" href="#pj-cond-title">Revisar condições da proposta</a>
+          <button
+            type="button"
+            className="pj-review-link"
+            onClick={() => {
+              setShowConditions(true);
+              window.setTimeout(
+                () => document.getElementById("pj-cond-title")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                80,
+              );
+            }}
+          >
+            Revisar condições da proposta
+          </button>
           <p className="pj-fineprint">
             Este aceite confirma as condições comerciais. O contrato será formalizado em etapa própria.
           </p>
@@ -1114,103 +1198,10 @@ function ProposalStep({
         </div>
       )}
 
-      <ProposalFaq />
     </section>
   );
 }
 
-const FAQ_ITEMS: Array<{ q: string; a: string }> = [
-  {
-    q: "Como funciona a gestão da STAYO?",
-    a: "A STAYO cuida da divulgação, atendimento aos hóspedes, gestão das reservas, limpeza, operação diária e acompanhamento do imóvel para locação por temporada.",
-  },
-  {
-    q: "O que está incluído na limpeza comercial?",
-    a: "A limpeza comercial inclui limpeza completa após cada hospedagem, troca e lavagem do enxoval, reposição básica e conferência visual do imóvel.",
-  },
-  {
-    q: "Como funciona a lavanderia?",
-    a: "A equipe STAYO coleta, lava, confere e repõe o enxoval necessário para a próxima hospedagem.",
-  },
-  {
-    q: "A STAYO faz manutenção do imóvel?",
-    a: "A STAYO identifica a necessidade, orienta e aciona fornecedores quando necessário. Despesas dependem da aprovação do proprietário, salvo o limite previsto na proposta.",
-  },
-  {
-    q: "Quem paga as despesas do imóvel?",
-    a: "O proprietário é responsável por água, gás, energia, internet, IPTU, condomínio, seguro e qualquer outra despesa relacionada ao imóvel que não esteja incluída no contrato.",
-  },
-  {
-    q: "Como funciona o repasse dos valores?",
-    a: "Nas reservas pela Airbnb, o repasse ocorre pela própria plataforma. Nas demais reservas, como Booking e reservas diretas, o repasse segue a regra apresentada na sua proposta.",
-  },
-  {
-    q: "Posso usar meu imóvel?",
-    a: "Sim. Você pode solicitar o uso conforme disponibilidade e com a antecedência indicada na proposta. Datas com reservas confirmadas não podem ser bloqueadas posteriormente.",
-  },
-  {
-    q: "Posso liberar o imóvel para familiares ou convidados?",
-    a: "Sim, conforme as condições da proposta. A utilização depende de disponibilidade e segue as mesmas regras de antecedência e limpeza comercial.",
-  },
-  {
-    q: "O que acontece se forem necessários enxoval, ajustes ou serviços extras?",
-    a: "A STAYO apresenta os orçamentos, orienta e intermedia o processo. O pagamento é feito diretamente pelo proprietário ao fornecedor, após alinhamento prévio.",
-  },
-  {
-    q: "Quem define o valor das diárias?",
-    a: "A STAYO acompanha mercado, eventos, ocupação e demanda para definir a melhor estratégia de precificação do imóvel.",
-  },
-  {
-    q: "Como acompanho a operação do imóvel?",
-    a: "Após a ativação, você terá acesso ao portal do proprietário com as informações liberadas para acompanhar o seu imóvel.",
-  },
-  {
-    q: "O que acontece se houver dano durante uma hospedagem?",
-    a: "A STAYO registra a ocorrência, avalia a situação e busca a solução adequada. Quando a reserva for pela Airbnb, a equipe aciona a proteção AirCover e, conforme o valor obtido na solicitação aprovada, realiza a reposição do item. Em outros canais, a equipe orienta o proprietário sobre as providências necessárias.",
-  },
-  {
-    q: "A confirmação da proposta já é a assinatura do contrato?",
-    a: "Não. A confirmação registra seu aceite comercial das condições apresentadas. O contrato será formalizado em etapa própria.",
-  },
-];
-
-function ProposalFaq() {
-  const [open, setOpen] = useState<number | null>(null);
-  return (
-    <details className="pj-faq-shell">
-      <summary>
-        <CircleHelp className="pj-faq-shell-icon" aria-hidden="true" />
-        <span className="pj-faq-shell-copy">
-          <strong id="pj-faq-title">Dúvidas frequentes</strong>
-          <small>Entenda como funciona a gestão e a implantação do seu imóvel.</small>
-        </span>
-        <ChevronDown className="pj-chevron" aria-hidden="true" />
-      </summary>
-      <section aria-labelledby="pj-faq-title" className="pj-faq">
-        <div className="pj-accordion">
-          {FAQ_ITEMS.map((item, i) => (
-            <details key={item.q} className="pj-acc pj-faq-acc" open={open === i}>
-              <summary
-                onClick={(event) => {
-                  event.preventDefault();
-                  setOpen(open === i ? null : i);
-                }}
-              >
-                <CircleHelp className="pj-faq-icon" aria-hidden="true" />
-                <span className="pj-faq-question">{item.q}</span>
-                <ChevronDown className="pj-chevron" aria-hidden="true" />
-              </summary>
-              <div className="pj-faq-body">
-                <p>{item.a}</p>
-              </div>
-            </details>
-          ))}
-        </div>
-        <p className="pj-faq-note">Ficou com alguma dúvida? Nossa equipe estará ao seu lado durante toda a implantação.</p>
-      </section>
-    </details>
-  );
-}
 
 type SnapItem = CommercialProposalSnapshot["items"][number];
 
@@ -1375,41 +1366,12 @@ function proposalFacts(snapshot: CommercialProposalSnapshot) {
   };
 }
 
-function ExecutiveSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
-  const f = proposalFacts(snapshot);
-  const stats = [
-    { label: "Administração", value: f.admin },
-    { label: "Prazo", value: f.duration },
-    { label: "Implantação", value: f.implementation },
-  ];
-  const pendingCount = f.groups.pending.length + f.groups.optional.length;
-  return (
-    <section className="pj-summary" aria-labelledby="pj-summary-title">
-      <h2 id="pj-summary-title" className="pj-summary-title">Resumo da proposta</h2>
-      <dl className="pj-stats">
-        {stats.map((s) => (
-          <div key={s.label} className="pj-stat">
-            <dt>{s.label}</dt>
-            <dd className={s.value ? "pj-stat-value" : "pj-stat-value is-soft"}>{s.value ?? "A definir"}</dd>
-          </div>
-        ))}
-      </dl>
-      {pendingCount > 0 && (
-        <p className="pj-summary-note">
-          <Clock3 aria-hidden="true" /> {pendingCount} {pendingCount === 1 ? "item será definido" : "itens serão definidos"} após avaliação.
-        </p>
-      )}
-    </section>
-  );
-}
-
 function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
   const blocks = publicBlocks(snapshot);
   const facts = proposalFacts(snapshot);
   const { groups } = facts;
   const { fixed, optional, pending, fixedTotal } = groups;
   const [openBlock, setOpenBlock] = useState<string | null>(null);
-  const [reviewedBlocks, setReviewedBlocks] = useState<Set<string>>(() => new Set());
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   const responsibilities = (snapshot.responsibilities ?? []).filter((r) => r?.trim());
   const signatories = snapshot.requiredSignatories ?? [];
@@ -1421,18 +1383,12 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
   };
   const toggleBlock = (key: string, open: boolean) => {
     setOpenBlock(open ? key : null);
-    if (open) setReviewedBlocks((current) => new Set(current).add(key));
   };
   return (
     <div className="pj-blocks">
-      <ExecutiveSummary snapshot={snapshot} />
-
       {blocks.length > 0 && (
         <section aria-labelledby="pj-cond-title">
           <h2 id="pj-cond-title" className="pj-section-title">Condições comerciais e contratuais</h2>
-          <p className="pj-review-progress" aria-live="polite">
-            {reviewedBlocks.size} de {blocks.length} {blocks.length === 1 ? "condição revisada" : "condições revisadas"}
-          </p>
           <div className="pj-accordion">
             {blocks.map((b) => (
               <details
