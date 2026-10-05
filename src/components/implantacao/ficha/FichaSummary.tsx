@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format-datetime";
 import {
   AlertCircle,
   Check,
@@ -292,7 +293,7 @@ export function LastActivityCard({ entry, onHistory }: { entry: TimelineEntry | 
       {entry ? (
         <div className="space-y-1">
           <p className="text-sm font-medium text-[var(--stayo-navy)]">{entry.label}</p>
-          <p className="text-xs" style={muted}>{new Date(entry.timestamp).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+          <p className="text-xs" style={muted}>{formatDateTime(entry.timestamp)}</p>
           {entry.actor && <p className="text-xs" style={muted}>{entry.actor}</p>}
         </div>
       ) : <p className="text-sm" style={muted}>Nenhuma atividade registrada.</p>}
