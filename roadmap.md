@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Separar Ver ficha e Continuar cadastro, simplificar Resumo e validar permanência do workspace em 1440/390/360
+
 - [x] Refinar aba Proprietário com dados mascarados, vínculos existentes, notas internas e ações do Portal; validado em 1440/390/360, edição e retomada com conta real
 
 - [ ] Inventário do proprietário — Modo Visual implementado; aguarda homologação com proprietário real vinculado a uma implantação com inventário
