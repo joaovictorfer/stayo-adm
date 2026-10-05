@@ -797,15 +797,6 @@ export function OwnerJourney({
                 }}
               />
             )}
-            {stage === 3 && proposalAccepted && (
-              <Button variant="ghost"
-                type="button"
-                onClick={() => go(1)}
-                className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--portal-border)] px-3 text-sm font-medium text-[var(--portal-navy)] focus-visible:outline focus-visible:outline-2"
-              >
-                <FileCheck2 className="size-4" /> Ver condições da proposta
-              </Button>
-            )}
             {stage === 2 && (
               <OwnerStep
                 form={form}
