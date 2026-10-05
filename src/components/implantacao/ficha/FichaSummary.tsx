@@ -52,18 +52,18 @@ const icons: Record<PendingEntry["icon"], LucideIcon> = {
 
 function Card({ icon: Icon, title, children, tone }: { icon: LucideIcon; title: string; children: ReactNode; tone?: "warn" }) {
   return (
-    <section className="rounded-[var(--radius-card)] border bg-white" style={surface}>
+    <section className="rounded-xl border bg-white" style={surface}>
       <header className="mx-4 flex items-center gap-3 border-b py-3.5 sm:mx-5" style={{ borderColor: "var(--stayo-border)" }}>
         <span
-          className="grid size-8 shrink-0 place-items-center rounded-full"
+          className="grid size-9 shrink-0 place-items-center rounded-full"
           style={{
-            backgroundColor: tone === "warn" ? "var(--stayo-warning-soft, #fdf3e3)" : "var(--stayo-forest-soft)",
-            color: tone === "warn" ? "var(--stayo-warning, #c27a12)" : "var(--stayo-forest)",
+            backgroundColor: tone === "warn" ? "var(--ficha-pending-bg)" : "var(--ficha-icon-bg)",
+            color: tone === "warn" ? "var(--stayo-warning, #c27a12)" : "var(--ficha-icon-fg)",
           }}
         >
           <Icon className="size-4" />
         </span>
-        <h2 className="text-base font-semibold" style={{ color: "var(--stayo-ink)" }}>
+        <h2 className="text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em" }}>
           {title}
         </h2>
       </header>
@@ -75,7 +75,7 @@ function Card({ icon: Icon, title, children, tone }: { icon: LucideIcon; title: 
 function ToneDot({ tone }: { tone: Tone }) {
   if (tone === "ok")
     return (
-      <span className="grid size-5 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--stayo-success, #1f8a5b)", color: "white" }}>
+      <span className="grid size-5 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--ficha-ok)", color: "white" }}>
         <Check className="size-3" strokeWidth={3} />
       </span>
     );
@@ -83,7 +83,7 @@ function ToneDot({ tone }: { tone: Tone }) {
     return (
       <span
         className="grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold"
-        style={{ backgroundColor: tone === "danger" ? "var(--stayo-danger)" : "var(--stayo-warning, #e3a03a)", color: "white" }}
+        style={{ backgroundColor: tone === "danger" ? "var(--stayo-danger)" : "var(--ficha-pending-fg)", color: "white" }}
       >
         !
       </span>
@@ -106,7 +106,7 @@ export function NextStepCard({
     <Card icon={AlertCircle} title="Próximo passo" tone="warn">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:pl-11">
         <div className="min-w-0">
-          <p className="font-semibold" style={{ color: "var(--stayo-ink)" }}>
+          <p className="font-semibold" style={{ color: "var(--stayo-navy)" }}>
             {action.title}
           </p>
           <p className="text-sm" style={muted}>
@@ -124,7 +124,7 @@ export function NextStepCard({
               {action.cta}
             </button>
           )}
-          <button type="button" onClick={onPortal} className="min-h-11 text-sm font-medium underline underline-offset-4" style={{ color: "var(--stayo-ink)" }}>
+          <button type="button" onClick={onPortal} className="min-h-11 text-sm font-medium underline underline-offset-4" style={{ color: "var(--stayo-navy)" }}>
             Abrir Portal
           </button>
         </div>
@@ -158,17 +158,17 @@ export function JourneyCard({ status, pendingCount }: { status: ImplementationSt
               <span
                 className="relative z-10 grid size-6 place-items-center rounded-full border-2 bg-white"
                 style={{
-                  borderColor: done ? "var(--stayo-success, #1f8a5b)" : active ? "var(--stayo-navy, #0b3150)" : "var(--stayo-border)",
-                  backgroundColor: done ? "var(--stayo-success, #1f8a5b)" : "white",
+                  borderColor: done ? "var(--ficha-ok)" : active ? "var(--stayo-navy, #0b3150)" : "var(--stayo-border)",
+                  backgroundColor: done ? "var(--ficha-ok)" : "white",
                 }}
               >
                 {done && <Check className="size-3.5" strokeWidth={3} style={{ color: "white" }} />}
                 {active && <span className="size-3 rounded-full" style={{ backgroundColor: "var(--stayo-navy, #0b3150)" }} />}
               </span>
-              <span className="mt-2 w-full truncate px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-ink)" }}>
+              <span className="mt-2 w-full truncate px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
                 {step.label}
               </span>
-              <span className="hidden text-xs sm:block" style={active ? { color: "var(--stayo-ink)" } : muted}>
+              <span className="hidden text-xs sm:block" style={active ? { color: "var(--stayo-navy)" } : muted}>
                 {done ? "Concluído" : active ? "Em andamento" : "Pendente"}
               </span>
             </li>
@@ -178,7 +178,7 @@ export function JourneyCard({ status, pendingCount }: { status: ImplementationSt
       {pendingCount > 0 && (
         <p
           className="mt-4 flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--stayo-warning-soft, #fdf3e3)", color: "var(--stayo-ink)" }}
+          style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--stayo-navy)" }}
         >
           <ToneDot tone="warn" /> {pendingCount} pendência{pendingCount > 1 ? "s" : ""} antes de avançar
         </p>
@@ -198,7 +198,7 @@ export function SheetOverviewCard({ rows, onGo }: { rows: SheetRow[]; onGo: (s: 
               onClick={() => onGo(r.section)}
               className="grid min-h-11 w-full grid-cols-[5.5rem_auto_minmax(0,1fr)_auto] items-center gap-3 py-2 text-left text-sm transition hover:bg-[var(--stayo-bg)] sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.4fr)_auto]"
             >
-              <span className="truncate font-medium" style={{ color: "var(--stayo-ink)" }}>
+              <span className="truncate font-medium" style={{ color: "var(--stayo-navy)" }}>
                 {r.label}
               </span>
               <ToneDot tone={r.tone} />
@@ -229,9 +229,9 @@ export function PendingCard({ entries, onGo }: { entries: PendingEntry[]; onGo: 
             return (
               <li key={e.id} style={{ borderColor: "var(--stayo-border)" }}>
                 <button type="button" onClick={() => onGo(e.section)} className="flex min-h-14 w-full items-center gap-3 py-3 text-left">
-                  <Icon className="size-5 shrink-0" style={{ color: "var(--stayo-ink)" }} />
+                  <Icon className="size-5 shrink-0" style={{ color: "var(--stayo-navy)" }} />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
+                    <span className="block text-sm font-medium" style={{ color: "var(--stayo-navy)" }}>
                       {e.title}
                     </span>
                     <span className="block truncate text-xs" style={muted}>
@@ -241,7 +241,7 @@ export function PendingCard({ entries, onGo }: { entries: PendingEntry[]; onGo: 
                   <span
                     className="shrink-0 rounded-full px-2.5 py-0.5 text-xs"
                     style={{
-                      backgroundColor: waiting ? "var(--stayo-warning-soft, #fdf3e3)" : "var(--stayo-danger-soft, #fde8e8)",
+                      backgroundColor: waiting ? "var(--ficha-pending-bg)" : "var(--stayo-danger-soft, #fde8e8)",
                       color: waiting ? "var(--stayo-warning, #b26b0e)" : "var(--stayo-danger)",
                     }}
                   >
@@ -268,11 +268,11 @@ export function ResponsibleCard({ name }: { name: string }) {
   return (
     <Card icon={UsersRound} title="Responsável">
       <div className="flex items-center gap-3">
-        <span className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-ink)" }}>
+        <span className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-navy)" }}>
           {initials || "—"}
         </span>
         <span className="min-w-0">
-          <span className="block truncate font-medium" style={{ color: "var(--stayo-ink)" }}>
+          <span className="block truncate font-medium" style={{ color: "var(--stayo-navy)" }}>
             {name}
           </span>
           <span className="block text-sm" style={muted}>

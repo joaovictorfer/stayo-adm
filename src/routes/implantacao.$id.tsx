@@ -520,8 +520,8 @@ function ImplementationDetailPage() {
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
                       <div className="flex flex-col gap-4">
                         <div className="hidden lg:block">
-                          <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}>Resumo</h2>
-                          <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
+                          <h2 className="text-3xl font-semibold" style={{ fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" }}>Resumo</h2>
+                          <p className="text-base" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
                         </div>
                         <NextStepCard action={action} onGo={goSection} onPortal={() => goSection("portal")} />
                         <div className="lg:hidden"><PendingCard entries={pend} onGo={goSection} /></div>
