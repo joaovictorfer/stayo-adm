@@ -146,6 +146,16 @@ const ownerFields: OwnerFormField[] = [
   "pixKey",
 ];
 
+const emptyPropertyErrorKeys: Record<keyof PropertyErrors, true> = {
+  propertyPostalCode: true,
+  propertyStreet: true,
+  propertyNumber: true,
+  propertyDistrict: true,
+  propertyCity: true,
+  propertyState: true,
+  propertyType: true,
+};
+
 interface PropertyErrors {
   propertyPostalCode?: string | undefined;
   propertyStreet?: string | undefined;
@@ -425,7 +435,10 @@ export function OwnerJourney({
           changed = true;
         }
       }
-      return changed ? next : current;
+      if (!changed) return current;
+      // Valores derivados (titular/Pix sugeridos) não são edição do usuário: abrir a tela não grava.
+      if (JSON.stringify(current) === lastSaved.current) lastSaved.current = JSON.stringify(next);
+      return next;
     });
   }, [people]);
 
@@ -636,6 +649,12 @@ export function OwnerJourney({
       ? coverData.label
       : null;
   const collecting = stage === 2 || stage === 3;
+  const registrationPercent = (() => {
+    const ownerDone = ownerFields.filter((field) => !validateOwnerField(field, form[field])).length;
+    const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
+    const propertyDone = propertyKeys.filter((key) => !propertyErrors[key]).length;
+    return Math.round(((ownerDone + propertyDone) / (ownerFields.length + propertyKeys.length)) * 100);
+  })();
 
   return (
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
@@ -670,16 +689,28 @@ export function OwnerJourney({
         </header>
       ) : collecting ? (
         <>
-          <div className="owner-registration-brand"><StayoLogo className="h-12 w-auto" /></div>
-          <OwnerCoverBanner token={token} />
-          <header className="owner-registration-intro">
-            <span className="text-xs font-medium text-[var(--portal-muted)]">CADASTRO PARA CONTRATO</span>
-            <h1>Seu cadastro, passo a passo</h1>
-            <p>Confira seus dados. Você pode continuar depois pelo mesmo link.</p>
-            <div className="owner-registration-progress-meta">
-              <span>Etapa {stage} de 4 · {stage === 2 ? "Seus dados" : "Seu imóvel"}</span>
-              <SaveStatus state={saveState} onRetry={() => void persist(formRef.current, stageRef.current)} />
+          <header className="pj-top">
+            <div className="pj-top-row">
+              <StayoLogo className="h-8 w-auto" />
+              <a className="pj-top-help" href={STAYO_SUPPORT_URL}>
+                Ajuda
+              </a>
             </div>
+            <div className="pj-top-progress-row">
+              <p className="pj-top-progress">
+                Etapa {stage} de 6 · <strong>{stage === 2 ? "Seus dados" : "Seu imóvel"}</strong>
+              </p>
+              <span className="pj-top-percent">Cadastro {registrationPercent}%</span>
+            </div>
+            <div className="pj-top-segments" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <span
+                  key={i}
+                  className={`pj-top-segment${i < stage - 1 ? " is-done" : i === stage - 1 ? " is-current" : ""}`}
+                />
+              ))}
+            </div>
+            <SaveStatus state={saveState} onRetry={() => void persist(formRef.current, stageRef.current)} />
           </header>
         </>
       ) : (
@@ -765,7 +796,7 @@ export function OwnerJourney({
                 }}
               />
             )}
-            {(stage === 2 || stage === 3) && proposalAccepted && (
+            {stage === 3 && proposalAccepted && (
               <Button variant="ghost"
                 type="button"
                 onClick={() => go(1)}
@@ -783,6 +814,10 @@ export function OwnerJourney({
                 onUpdatePerson={updatePerson}
                 onAddPerson={addPerson}
                 onRemovePerson={removePerson}
+                onKeepOnlyPrimary={() =>
+                  setForm((current) => ({ ...current, people: current.people.slice(0, 1) }))
+                }
+                subStepKey={`stayo:owner-substep:${token.slice(0, 12)}`}
                 onBack={() => go(1)}
                 onContinue={continueOwner}
               />
@@ -1508,6 +1543,8 @@ function formatSnapshotTerm(term: ProposalSnapshotCommercialTerm) {
   return term.notes || "Condição informativa";
 }
 
+type OwnerSubStep = 1 | 2 | 3;
+
 function OwnerStep({
   form,
   people,
@@ -1516,6 +1553,8 @@ function OwnerStep({
   onUpdatePerson,
   onAddPerson,
   onRemovePerson,
+  onKeepOnlyPrimary,
+  subStepKey,
   onBack,
   onContinue,
 }: {
@@ -1529,199 +1568,365 @@ function OwnerStep({
   onUpdatePerson: (index: number, patch: Partial<OwnerOnboardingPerson>) => void;
   onAddPerson: () => void;
   onRemovePerson: (index: number) => void;
+  onKeepOnlyPrimary: () => void;
+  subStepKey: string;
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const error = (field: OwnerFormField) =>
-    showErrors ? validateOwnerField(field, form[field]) : undefined;
   const primary = people[0];
+  const [sub, setSub] = useState<OwnerSubStep>(1);
+  const [hasCoOwners, setHasCoOwners] = useState<boolean | null>(people.length > 1 ? true : null);
+  const [touched, setTouched] = useState<Record<OwnerSubStep, boolean>>({ 1: false, 2: false, 3: false });
+  const topRef = useRef<HTMLDivElement | null>(null);
+
+  // Retoma o passo interno salvo neste aparelho (somente o número do passo, nenhum dado pessoal).
+  useEffect(() => {
+    const saved = Number(window.localStorage.getItem(subStepKey));
+    if (saved === 2 && people.length > 1) setSub(2);
+    else if (saved === 3) setSub(3);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subStepKey]);
+  useEffect(() => {
+    window.localStorage.setItem(subStepKey, String(sub));
+  }, [sub, subStepKey]);
+
+  const show = (step: OwnerSubStep) => showErrors || touched[step];
+  const error = (step: OwnerSubStep, field: OwnerFormField) =>
+    show(step) ? validateOwnerField(field, form[field]) : undefined;
+
+  const personalFields: OwnerFormField[] = [
+    "fullName",
+    "document",
+    "email",
+    "phone",
+    "postalCode",
+    "street",
+    "number",
+    "district",
+    "city",
+    "state",
+  ];
+  const paymentFields: OwnerFormField[] = [
+    "bankName",
+    "bankBranch",
+    "accountNumber",
+    "accountType",
+    "accountHolder",
+    "holderTaxId",
+    "pixType",
+    "pixKey",
+  ];
+  const personalOk =
+    personalFields.every((field) => !validateOwnerField(field, form[field])) && hasCoOwners !== null;
+  const othersOk = people
+    .slice(1)
+    .every(
+      (person) =>
+        Boolean(person.fullName) &&
+        !validateOwnerField("fullName", person.fullName) &&
+        !validateOwnerField("document", person.document) &&
+        (!person.email || !validateOwnerField("email", person.email)) &&
+        (!person.phone || !validateOwnerField("phone", person.phone)),
+    );
+
+  const goTo = (step: OwnerSubStep) => {
+    setSub(step);
+    requestAnimationFrame(() => topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const next = () => {
+    setTouched((current) => ({ ...current, [sub]: true }));
+    if (sub === 1) {
+      if (!personalOk) {
+        toast.error(hasCoOwners === null ? "Responda se haverá outro proprietário" : "Confira os dados antes de continuar");
+        return;
+      }
+      goTo(hasCoOwners ? 2 : 3);
+      return;
+    }
+    if (sub === 2) {
+      if (!othersOk) {
+        toast.error("Confira os dados dos outros proprietários");
+        return;
+      }
+      goTo(3);
+      return;
+    }
+    onContinue();
+  };
+  const back = () => {
+    if (sub === 3) goTo(hasCoOwners ? 2 : 1);
+    else if (sub === 2) goTo(1);
+    else onBack();
+  };
+  const chooseCoOwners = (value: boolean) => {
+    setHasCoOwners(value);
+    if (value && people.length < 2) onAddPerson();
+    if (!value && people.length > 1) onKeepOnlyPrimary();
+  };
+
+  const subLabel = { 1: "Dados pessoais", 2: "Outros proprietários", 3: "Recebimentos" }[sub];
+  const docLabel = form.personType === "pj" ? "CNPJ" : "CPF";
+
   return (
-    <section className="space-y-6">
-      <Heading
-        eyebrow="Etapa 2 de 4"
-        title="Seus dados para o contrato"
-        text="Confirme a identificação e o contato dos participantes."
-      />
-      <Section
-        title="Identificação"
-        icon={<UserRound />}
-        text="Comece pelo proprietário principal. Se houver coproprietário ou proponente, adicione abaixo."
-      >
-        <div className="space-y-3">
-          {people.map((person, index) => (
-            <PersonEditor
-              key={index}
-              person={person}
-              index={index}
-              showErrors={showErrors}
-              onChange={(patch) => onUpdatePerson(index, patch)}
-              onRemove={index > 0 ? () => onRemovePerson(index) : undefined}
-            />
-          ))}
+    <section className="pd-step" ref={topRef}>
+      {sub === 1 && (
+        <div className="pd-head">
+          <h2 className="pd-title">Vamos confirmar seus dados</h2>
+          <p className="pd-lead">Você pode fazer no seu tempo. Suas alterações são salvas automaticamente.</p>
         </div>
-        <Button type="button" variant="outline" className="w-full" onClick={onAddPerson}>
-          <Plus className="size-4" /> Adicionar coproprietário ou proponente
-        </Button>
-      </Section>
-      <Section title="Contato" text="Este será também o e-mail sugerido para seu acesso ao portal.">
-        <div className="grid gap-3 sm:grid-cols-2">
+      )}
+      <p className="pd-sub">
+        <span>
+          {subLabel} · {sub} de 3
+        </span>
+      </p>
+
+      {sub === 1 && (
+        <div className="pd-fields">
+          <Select
+            label="Tipo de cadastro"
+            value={form.personType}
+            onChange={(value) => onUpdatePerson(0, { personType: value as OwnerOnboardingPerson["personType"] })}
+            options={[
+              { value: "pf", label: "Pessoa física" },
+              { value: "pj", label: "Pessoa jurídica" },
+            ]}
+          />
+          <Field
+            label={form.personType === "pj" ? "Razão social" : "Nome completo"}
+            placeholder={form.personType === "pj" ? "Digite a razão social" : "Digite seu nome completo"}
+            value={primary?.fullName ?? form.fullName}
+            onChange={(value) => onUpdatePerson(0, { fullName: value })}
+            error={error(1, "fullName")}
+          />
+          <Field
+            label={docLabel}
+            placeholder={`Digite seu ${docLabel}`}
+            inputMode="numeric"
+            value={formatBrazilianDocument(primary?.document ?? form.document)}
+            onChange={(value) => onUpdatePerson(0, { document: formatBrazilianDocument(value) })}
+            error={error(1, "document")}
+          />
           <Field
             label="E-mail"
             type="email"
+            placeholder="Digite seu e-mail"
             value={form.email}
             onChange={(value) => {
               onSet("email", value);
-              if (primary) onUpdatePerson(0, { email: value });
+              onUpdatePerson(0, { email: value });
             }}
-            error={error("email")}
+            error={error(1, "email")}
           />
           <Field
-            label="WhatsApp ou telefone"
+            label="Telefone"
             inputMode="tel"
+            placeholder="Digite seu telefone"
             value={formatBrazilianPhone(form.phone)}
             onChange={(value) => {
               const phone = formatBrazilianPhone(value);
               onSet("phone", phone);
-              if (primary) onUpdatePerson(0, { phone });
+              onUpdatePerson(0, { phone });
             }}
-            error={error("phone")}
+            error={error(1, "phone")}
           />
+
+          <p className="pd-group">Seu endereço</p>
+          <div className="grid gap-4 sm:grid-cols-6">
+            <Field
+              className="sm:col-span-2"
+              label="CEP"
+              inputMode="numeric"
+              placeholder="00000-000"
+              value={formatBrazilianPostalCode(form.postalCode)}
+              onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))}
+              onBlur={() => void findCep(form.postalCode, onSet, false)}
+              error={error(1, "postalCode")}
+            />
+            <Field
+              className="sm:col-span-4"
+              label="Endereço"
+              value={form.street}
+              onChange={(value) => onSet("street", value)}
+              error={error(1, "street")}
+            />
+            <Field
+              className="sm:col-span-2"
+              label="Número"
+              value={form.number}
+              onChange={(value) => onSet("number", value)}
+              error={error(1, "number")}
+            />
+            <Field
+              className="sm:col-span-4"
+              label="Complemento (opcional)"
+              value={form.complement ?? ""}
+              onChange={(value) => onSet("complement", value || null)}
+            />
+            <Field
+              className="sm:col-span-3"
+              label="Bairro"
+              value={form.district}
+              onChange={(value) => onSet("district", value)}
+              error={error(1, "district")}
+            />
+            <Field
+              className="sm:col-span-2"
+              label="Cidade"
+              value={form.city}
+              onChange={(value) => onSet("city", value)}
+              error={error(1, "city")}
+            />
+            <Field
+              className="sm:col-span-1"
+              label="UF"
+              value={form.state}
+              onChange={(value) =>
+                onSet(
+                  "state",
+                  value
+                    .toUpperCase()
+                    .replace(/[^A-Z]/g, "")
+                    .slice(0, 2),
+                )
+              }
+              error={error(1, "state")}
+            />
+          </div>
+
+          <div className="pd-question">
+            <p id="pd-co-owner">O imóvel terá mais de um proprietário ou proponente?</p>
+            <div className="pd-choice" role="radiogroup" aria-labelledby="pd-co-owner">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={hasCoOwners === false}
+                className={`pd-choice-btn${hasCoOwners === false ? " is-on" : ""}`}
+                onClick={() => chooseCoOwners(false)}
+              >
+                Não
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={hasCoOwners === true}
+                className={`pd-choice-btn${hasCoOwners === true ? " is-on" : ""}`}
+                onClick={() => chooseCoOwners(true)}
+              >
+                Sim
+              </button>
+            </div>
+            {show(1) && hasCoOwners === null && <p className="pd-error">Escolha uma opção.</p>}
+          </div>
         </div>
-      </Section>
-      <Section
-        title="Seu endereço"
-        text="Este é o endereço do proprietário, não o endereço do imóvel administrado."
-      >
-        <div className="grid gap-3 sm:grid-cols-6">
-          <Field
-            className="sm:col-span-2"
-            label="CEP"
-            inputMode="numeric"
-            value={formatBrazilianPostalCode(form.postalCode)}
-            onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))}
-            onBlur={() => void findCep(form.postalCode, onSet, false)}
-            error={error("postalCode")}
-          />
-          <Field
-            className="sm:col-span-4"
-            label="Endereço"
-            value={form.street}
-            onChange={(value) => onSet("street", value)}
-            error={error("street")}
-          />
-          <Field
-            className="sm:col-span-2"
-            label="Número"
-            value={form.number}
-            onChange={(value) => onSet("number", value)}
-            error={error("number")}
-          />
-          <Field
-            className="sm:col-span-4"
-            label="Complemento (opcional)"
-            value={form.complement ?? ""}
-            onChange={(value) => onSet("complement", value || null)}
-          />
-          <Field
-            className="sm:col-span-3"
-            label="Bairro"
-            value={form.district}
-            onChange={(value) => onSet("district", value)}
-            error={error("district")}
-          />
-          <Field
-            className="sm:col-span-2"
-            label="Cidade"
-            value={form.city}
-            onChange={(value) => onSet("city", value)}
-            error={error("city")}
-          />
-          <Field
-            className="sm:col-span-1"
-            label="UF"
-            value={form.state}
-            onChange={(value) =>
-              onSet(
-                "state",
-                value
-                  .toUpperCase()
-                  .replace(/[^A-Z]/g, "")
-                  .slice(0, 2),
-              )
-            }
-            error={error("state")}
-          />
+      )}
+
+      {sub === 2 && (
+        <div className="pd-fields">
+          <p className="pd-lead">Informe quem mais participa do contrato.</p>
+          {people.slice(1).map((person, offset) => (
+            <PersonEditor
+              key={offset + 1}
+              person={person}
+              index={offset + 1}
+              showErrors={show(2)}
+              onChange={(patch) => onUpdatePerson(offset + 1, patch)}
+              onRemove={() => {
+                onRemovePerson(offset + 1);
+                if (people.length <= 2) {
+                  setHasCoOwners(false);
+                  goTo(1);
+                }
+              }}
+            />
+          ))}
+          <button type="button" className="pd-add" onClick={onAddPerson}>
+            <Plus className="size-4" aria-hidden="true" /> Adicionar proprietário ou proponente
+          </button>
         </div>
-      </Section>
-      <Section
-        title="Dados para repasse"
-        icon={<LockKeyhole />}
-        text="Informações financeiras ficam restritas à equipe autorizada e são confirmadas antes do primeiro repasse."
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Select
-            label="Banco"
-            value={form.bankName}
-            onChange={(value) => onSet("bankName", value)}
-            options={BRAZILIAN_BANKS.map((bank) => ({ value: bank, label: bank }))}
-            placeholder="Selecione o banco"
-            error={error("bankName")}
-          />
-          <Select
-            label="Tipo de conta"
-            value={form.accountType}
-            onChange={(value) =>
-              onSet("accountType", value as OwnerOnboardingSubmissionInput["accountType"])
-            }
-            options={[...ACCOUNT_TYPES]}
-            error={error("accountType")}
-          />
-          <Field
-            label="Agência"
-            value={form.bankBranch}
-            onChange={(value) => onSet("bankBranch", value)}
-            error={error("bankBranch")}
-          />
-          <Field
-            label="Conta com dígito"
-            value={form.accountNumber}
-            onChange={(value) => onSet("accountNumber", value)}
-            error={error("accountNumber")}
-          />
-          <Field
-            label="Titular da conta"
-            value={form.accountHolder}
-            onChange={(value) => onSet("accountHolder", value)}
-            error={error("accountHolder")}
-          />
-          <Field
-            label="CPF/CNPJ do titular"
-            inputMode="numeric"
-            value={formatBrazilianDocument(form.holderTaxId)}
-            onChange={(value) => onSet("holderTaxId", formatBrazilianDocument(value))}
-            error={error("holderTaxId")}
-          />
-          <Select
-            label="Tipo da chave Pix"
-            value={form.pixType}
-            onChange={(value) => {
-              const type = value as OwnerOnboardingSubmissionInput["pixType"];
-              onSet("pixType", type);
-              if (primary && type !== "random") onSet("pixKey", suggestPixKey(primary, type));
-              if (type === "random") onSet("pixKey", "");
-            }}
-            options={[...PIX_KEY_TYPES]}
-            error={error("pixType")}
-          />
-          <Field
-            label="Chave Pix"
-            value={form.pixKey}
-            onChange={(value) => onSet("pixKey", value)}
-            error={error("pixKey")}
-          />
+      )}
+
+      {sub === 3 && (
+        <div className="pd-fields">
+          <p className="pd-lead">
+            Usados para os repasses. Ficam restritos à equipe autorizada e são confirmados antes do primeiro repasse.
+          </p>
+          <p className="pd-group">Pix</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              label="Tipo da chave Pix"
+              value={form.pixType}
+              onChange={(value) => {
+                const type = value as OwnerOnboardingSubmissionInput["pixType"];
+                onSet("pixType", type);
+                if (primary && type !== "random") onSet("pixKey", suggestPixKey(primary, type));
+                if (type === "random") onSet("pixKey", "");
+              }}
+              options={[...PIX_KEY_TYPES]}
+              error={error(3, "pixType")}
+            />
+            <Field
+              label="Chave Pix"
+              value={form.pixKey}
+              onChange={(value) => onSet("pixKey", value)}
+              error={error(3, "pixKey")}
+            />
+          </div>
+          <p className="pd-group">Conta bancária</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              label="Banco"
+              value={form.bankName}
+              onChange={(value) => onSet("bankName", value)}
+              options={BRAZILIAN_BANKS.map((bank) => ({ value: bank, label: bank }))}
+              placeholder="Selecione o banco"
+              error={error(3, "bankName")}
+            />
+            <Select
+              label="Tipo de conta"
+              value={form.accountType}
+              onChange={(value) => onSet("accountType", value as OwnerOnboardingSubmissionInput["accountType"])}
+              options={[...ACCOUNT_TYPES]}
+              error={error(3, "accountType")}
+            />
+            <Field
+              label="Agência"
+              inputMode="numeric"
+              value={form.bankBranch}
+              onChange={(value) => onSet("bankBranch", value)}
+              error={error(3, "bankBranch")}
+            />
+            <Field
+              label="Conta com dígito"
+              value={form.accountNumber}
+              onChange={(value) => onSet("accountNumber", value)}
+              error={error(3, "accountNumber")}
+            />
+            <Field
+              label="Titular da conta"
+              value={form.accountHolder}
+              onChange={(value) => onSet("accountHolder", value)}
+              error={error(3, "accountHolder")}
+            />
+            <Field
+              label="CPF/CNPJ do titular"
+              inputMode="numeric"
+              value={formatBrazilianDocument(form.holderTaxId)}
+              onChange={(value) => onSet("holderTaxId", formatBrazilianDocument(value))}
+              error={error(3, "holderTaxId")}
+            />
+          </div>
         </div>
-      </Section>
-      <Actions onBack={onBack} onContinue={onContinue} label="Continuar para o imóvel" />
+      )}
+
+      <div className="pd-actions">
+        <Button type="button" className="portal-cta pd-cta" onClick={next}>
+          Continuar <ArrowRight className="size-4" aria-hidden="true" />
+        </Button>
+        <button type="button" className="pd-back" onClick={back}>
+          Voltar
+        </button>
+      </div>
     </section>
   );
 }

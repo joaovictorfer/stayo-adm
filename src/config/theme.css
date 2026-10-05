@@ -5490,3 +5490,29 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
   .pj-open-fact dd { font-size: 15px; }
 }
 .pj-confirm[hidden] { display: none !important; }
+
+/* Fase 02 · Seus dados */
+.pj-top-progress-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pj-top-percent { font-size: 12px; color: var(--portal-muted); white-space: nowrap; }
+.pj-top-segment.is-done { background: var(--portal-navy); }
+.owner-contract-registration .pj-top-segment.is-current { background: var(--portal-gold); }
+.pd-step { display: flex; flex-direction: column; gap: 20px; }
+.pd-head { display: flex; flex-direction: column; gap: 8px; }
+.pd-title { margin: 0; font-size: 28px; line-height: 1.12; font-weight: 600; letter-spacing: -0.02em; color: var(--portal-navy); }
+.pd-lead { margin: 0; font-size: 14px; line-height: 1.5; color: var(--portal-muted); }
+.pd-sub { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 13px; font-weight: 500; color: var(--portal-gold); }
+.pd-sub::after { content: ""; flex: 1; height: 1px; background: var(--portal-border); }
+.pd-fields { display: flex; flex-direction: column; gap: 16px; }
+.pd-fields .portal-input { min-height: 48px; }
+.pd-group { margin: 8px 0 0; font-size: 13px; font-weight: 600; color: var(--portal-navy); }
+.pd-question { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid var(--portal-border); }
+.pd-question > p { margin: 0; font-size: 15px; color: var(--portal-navy); }
+.pd-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pd-choice-btn { min-height: 48px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-surface); font-size: 15px; color: var(--portal-navy); }
+.pd-choice-btn.is-on { border-color: var(--portal-navy); background: var(--portal-navy); color: var(--portal-surface); }
+.pd-error { margin: 0; font-size: 12px; color: var(--destructive); }
+.pd-add { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border: 1px dashed var(--portal-border); border-radius: 12px; background: none; font-size: 14px; color: var(--portal-navy); }
+.pd-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 4px; }
+.pd-cta { width: 100%; min-height: 52px; font-size: 15px; }
+.pd-back { min-height: 44px; padding: 0 12px; border: 0; background: none; font-size: 14px; color: var(--portal-navy); text-decoration: underline; text-underline-offset: 3px; }
+.owner-contract-registration .portal-onboarding-main { max-width: 560px; margin-inline: auto; }
