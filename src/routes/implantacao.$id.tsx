@@ -789,7 +789,7 @@ function ProposalGate({
           Falta publicar as condições comerciais
         </p>
         <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          A oportunidade continua em rascunho. Para enviar o convite com proposta, revise e publique
+          A oportunidade continua em rascunho. Para enviar o link de acesso ao proprietário, revise e publique
           as condições; é a versão publicada que o proprietário verá no link.
         </p>
         <Button size="sm" variant="outline" className="mt-2 min-h-10" onClick={goToConditions}>
@@ -1439,14 +1439,14 @@ function OwnerPortalPanel({
               </Button>
             </div>
             <details open={compact ? undefined : true} className="mt-3">
-            {compact && <summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do convite</summary>}
+            {compact && <summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do link de acesso</summary>}
             <div
               className="mt-3 rounded-[var(--radius-control)] border p-3"
               style={{ borderColor: "var(--stayo-border)" }}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
-                  Mensagem do convite (WhatsApp)
+                  Mensagem do link de acesso (WhatsApp)
                 </span>
                 <button
                   type="button"
@@ -1461,7 +1461,7 @@ function OwnerPortalPanel({
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
                   rows={4}
-                  aria-label="Mensagem do convite"
+                  aria-label="Mensagem do link de acesso"
                   className="mt-2 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm"
                 />
               ) : (
