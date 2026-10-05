@@ -162,7 +162,7 @@ export function FichaImplantacao({
               adding={adding}
               setAdding={setAdding}
               reviewing={reviewing}
-              pendingReviewIds={new Set(pendingReview.map((s) => s.item_id))}
+              pendingReviewIds={new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x))}
             />
           ) : tab === "faltantes" ? (
             <Surface>
