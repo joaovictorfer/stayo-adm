@@ -88,6 +88,7 @@ export function PreparationStep({
     }
   };
 
+  const openMenu = (it: PrepItem) => { setMenuFor(it); setNoteDraft(answers[it.id]?.note ?? ""); };
   const answerButtons = (it: PrepItem, compact = false) => {
     const cur = answers[it.id]?.answer;
     return (
@@ -104,9 +105,11 @@ export function PreparationStep({
             {a === "tenho" ? "Sim" : "Não"}
           </button>
         ))}
-        <button type="button" className="pp-more" aria-label={`Mais opções para ${it.name}`} onClick={() => { setMenuFor(it); setNoteDraft(answers[it.id]?.note ?? ""); }}>
-          <MoreHorizontal className="size-5" />
-        </button>
+        {compact && (
+          <button type="button" className="pp-more" aria-label={`Mais opções para ${it.name}`} onClick={() => openMenu(it)}>
+            <MoreHorizontal className="size-5" />
+          </button>
+        )}
       </div>
     );
   };
@@ -168,16 +171,17 @@ export function PreparationStep({
           <div className="pp-photo">
             {images.data?.[item.id] ? <img src={images.data[item.id]} alt={item.name} /> : <ImageIcon className="size-10" aria-hidden="true" />}
           </div>
-          <h3 className="pp-name">{item.name}</h3>
+          <div className="pp-name-row">
+            <h3 className="pp-name">{item.name}</h3>
+            <button type="button" className="pp-more" aria-label={`Mais opções para ${item.name}`} onClick={() => openMenu(item)}>
+              <MoreHorizontal className="size-5" />
+            </button>
+          </div>
           {(item.tip || item.description) && <p className="pd-lead">{item.tip || item.description}</p>}
           <p className="pp-q">Seu imóvel possui este item?</p>
           {answerButtons(item)}
           {answers[item.id]?.answer === "nao_aplica" && <p className="pd-hint">Marcado como "Não se aplica".</p>}
           <p className="pd-hint">Mais opções em ••• · N/A, observação{item.purchaseUrl ? " e onde comprar" : ""}</p>
-          <div className="pp-nav">
-            <button type="button" className="pd-back" disabled={idx <= 0} onClick={() => setIdx((i) => Math.max(0, i - 1))}>Anterior</button>
-            <button type="button" className="pd-back" disabled={idx >= total - 1} onClick={() => setIdx((i) => Math.min(total - 1, i + 1))}>Pular</button>
-          </div>
         </div>
       )}
 
@@ -196,7 +200,16 @@ export function PreparationStep({
         </ul>
       )}
 
-      <Actions onBack={onBack} onContinue={onContinue} />
+      {mode === "visual" && !allDone ? (
+        <div className="pd-actions">
+          <Button type="button" className="portal-cta pd-cta" disabled={saving} onClick={() => setIdx((i) => (i >= total - 1 ? 0 : i + 1))}>
+            Próximo item <ArrowRight className="size-4" aria-hidden="true" />
+          </Button>
+          <button type="button" className="pd-back" onClick={() => (idx > 0 ? setIdx((i) => i - 1) : onBack())}>Voltar</button>
+        </div>
+      ) : (
+        <Actions onBack={onBack} onContinue={onContinue} />
+      )}
 
       <Sheet open={Boolean(menuFor)} onOpenChange={(o) => !o && setMenuFor(null)}>
         <SheetContent side="bottom" className="pp-sheet">
