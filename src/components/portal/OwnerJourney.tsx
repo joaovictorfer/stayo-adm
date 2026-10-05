@@ -1121,9 +1121,14 @@ function ProposalStep({
               Revisar e confirmar <ChevronRight className="size-4" />
             </Button>
             <p className="pj-open-legal">A confirmação desta proposta não substitui o contrato.</p>
-            <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
-              Falar com a STAYO
-            </a>
+            <div className="pj-open-support-row">
+              <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
+                Falar com a STAYO
+              </a>
+              <a className="pj-open-support pj-open-support--alt" href={STAYO_SUPPORT_EMAIL_URL}>
+                stayogramado@gmail.com
+              </a>
+            </div>
           </>
         )}
       </div>
