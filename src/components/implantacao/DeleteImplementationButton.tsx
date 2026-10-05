@@ -24,6 +24,9 @@ export function DeleteImplementationButton({
   navigateAfterDelete = true,
   compact = false,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
+  showTrigger = true,
 }: {
   id: string;
   code: string;
@@ -31,12 +34,21 @@ export function DeleteImplementationButton({
   navigateAfterDelete?: boolean;
   compact?: boolean;
   trigger?: ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  function setOpen(nextOpen: boolean) {
+    if (controlledOpen === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  }
 
   async function confirm() {
     setBusy(true);
@@ -61,24 +73,26 @@ export function DeleteImplementationButton({
         if (!o) setTyped("");
       }}
     >
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button
-            variant="outline"
-            size={compact ? "icon" : "sm"}
-            className={
-              compact
-                ? "size-9 rounded-[var(--radius-control)] border-[var(--stayo-border)] bg-[var(--stayo-surface)] text-[var(--stayo-danger)] shadow-sm hover:border-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
-                : "gap-2 rounded-[var(--radius-control)] border-[var(--stayo-danger)]/40 text-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
-            }
-            aria-label={`Excluir ${code}`}
-            title={`Excluir ${code}`}
-          >
-            <Trash2 className="size-4" aria-hidden="true" />
-            {!compact && <span>Excluir</span>}
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      {showTrigger && (
+        <AlertDialogTrigger asChild>
+          {trigger ?? (
+            <Button
+              variant="outline"
+              size={compact ? "icon" : "sm"}
+              className={
+                compact
+                  ? "size-9 rounded-[var(--radius-control)] border-[var(--stayo-border)] bg-[var(--stayo-surface)] text-[var(--stayo-danger)] shadow-sm hover:border-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
+                  : "gap-2 rounded-[var(--radius-control)] border-[var(--stayo-danger)]/40 text-[var(--stayo-danger)] hover:bg-[var(--stayo-danger)]/10 hover:text-[var(--stayo-danger)]"
+              }
+              aria-label={`Excluir ${code}`}
+              title={`Excluir ${code}`}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              {!compact && <span>Excluir</span>}
+            </Button>
+          )}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-[var(--stayo-danger)]/10">
