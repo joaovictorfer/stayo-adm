@@ -203,6 +203,7 @@ function ImplementationDetailPage() {
   >("resumo");
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
+  const inventoryQ = useQuery(guidedInventoryQuery(id));
   const implementation = query.data;
   const draftQuery = useQuery({
     queryKey: ["opportunity-draft-state", id],
