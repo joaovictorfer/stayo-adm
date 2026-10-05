@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Loader2, Trash2 } from "lucide-react";
+import { Copy, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "../../ui/button";
 import {
@@ -109,11 +109,6 @@ export function InventoryItemDetails({
           {save === "saving" && (
             <>
               <Loader2 className="size-3 animate-spin" /> Salvando…
-            </>
-          )}
-          {save === "saved" && (
-            <>
-              <Check className="size-3" /> Salvo
             </>
           )}
           {save === "error" && "Erro ao salvar"}

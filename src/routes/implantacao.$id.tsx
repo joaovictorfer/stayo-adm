@@ -1,4 +1,5 @@
 import { FichaImovel } from "@/components/implantacao/ficha/FichaImovel";
+import { FichaImplantacao } from "../components/implantacao/ficha/FichaImplantacao";
 import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
 import { FichaContrato } from "@/components/implantacao/ficha/FichaContrato";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
@@ -598,43 +599,22 @@ function ImplementationDetailPage() {
               ) : section === "imovel" ? (
                 <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("portal")} />
               ) : section === "implantacao" ? (
-                <DomainHub
-                  intro={
-                    <section
-                      className="rounded-[var(--radius-card)] border bg-white p-5"
-                      style={{ borderColor: "var(--stayo-border)" }}
-                    >
-                      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                        Prontidão
-                      </p>
-                      <p
-                        className="text-3xl font-semibold"
-                        style={{ color: readinessColors[readiness.state] }}
-                      >
-                        {itemsQuery.isPending ? "—" : `${progress.percent}%`}
-                      </p>
-                      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                        {readinessLabels[readiness.state]} · {pendingItems.length} pendência(s) ·{" "}
-                        {readiness.pendingBlockers} bloqueador(es)
-                      </p>
-                    </section>
+                <FichaImplantacao
+                  implementationId={implementation.id}
+                  checklistPending={pendingItems.length}
+                  onOpenPortal={() => goSection("portal")}
+                  checklist={
+                    <Checklist
+                      implementationId={implementation.id}
+                      items={itemsQuery.data ?? []}
+                      loading={itemsQuery.isPending}
+                      error={itemsQuery.isError}
+                      onRetry={() => void itemsQuery.refetch()}
+                    />
                   }
-                  rows={[
-                    {
-                      id: "checklist",
-                      label: "Checklist e prontidão",
-                      summary: `${progress.done} de ${progress.total} concluídos`,
-                      tone: readiness.pendingBlockers ? "danger" : "muted",
-                      content: (
-                        <Checklist
-                          implementationId={implementation.id}
-                          items={itemsQuery.data ?? []}
-                          loading={itemsQuery.isPending}
-                          error={itemsQuery.isError}
-                          onRetry={() => void itemsQuery.refetch()}
-                        />
-                      ),
-                    },
+                  more={
+                    <DomainHub
+                      rows={[
                     {
                       id: "comodidades",
                       label: "Comodidades e itens do imóvel",
@@ -662,16 +642,6 @@ function ImplementationDetailPage() {
                       ),
                     },
                     {
-                      id: "guia-enxoval",
-                      label: "Guia de enxoval",
-                      summary: (
-                        <GuideSummary implementationId={implementation.id} guideType="enxoval" />
-                      ),
-                      content: (
-                        <GuidePanel implementationId={implementation.id} guideType="enxoval" />
-                      ),
-                    },
-                    {
                       id: "enxoval",
                       label: "Enxoval (compras)",
                       summary: "Peças por ambiente, compra e entrega",
@@ -689,7 +659,9 @@ function ImplementationDetailPage() {
                       summary: "Quem forneceu, instalou ou atende o imóvel",
                       content: <PropertySuppliersPanel implementationId={implementation.id} />,
                     },
-                  ]}
+                      ]}
+                    />
+                  }
                 />
               ) : section === "proprietario" ? (
                 <OwnerTab implementation={implementation} part="owner" />
