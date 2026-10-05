@@ -637,7 +637,36 @@ export function OwnerJourney({
 
   return (
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
-      {collecting ? (
+      {journeyState === "A" ? (
+        <header className="pj-top">
+          <div className="pj-top-row">
+            <StayoLogo className="h-8 w-auto" />
+            <a className="pj-top-help" href={STAYO_SUPPORT_URL}>
+              Ajuda
+            </a>
+          </div>
+          {coverSrc && (
+            <img
+              key={coverSrc}
+              src={coverSrc}
+              onLoad={() => setCoverReady(true)}
+              onError={() => {
+                setCoverReady(false);
+                setCoverBroken(true);
+              }}
+              alt=""
+              aria-hidden="true"
+              className={`pj-top-photo${coverReady ? " is-ready" : ""}`}
+            />
+          )}
+          <p className="pj-top-progress">Etapa 1 de 5 · Proposta</p>
+          <div className="pj-top-segments" aria-hidden="true">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} className={`pj-top-segment${i === 0 ? " is-current" : ""}`} />
+            ))}
+          </div>
+        </header>
+      ) : collecting ? (
         <>
           <div className="owner-registration-brand"><StayoLogo className="h-12 w-auto" /></div>
           <OwnerCoverBanner token={token} />
