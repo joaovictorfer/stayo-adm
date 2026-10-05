@@ -297,24 +297,12 @@ function JourneyBody({
     setCond(initial);
     condPending.current = { ...condPending.current, ...initial };
     setCondState("saving");
-    void runCondSave().then((ok) => {
-      if (!ok) return;
-      void adminApi.commercialTerms
-        .cloneDefaults(id)
-        .then(() => {
-          void queryClient.invalidateQueries({
-            queryKey: ["commercial-terms", id],
-          });
-        })
-        .catch(() => undefined);
-    });
+    void runCondSave();
   }, [
     commercialDefaultsQ.data,
     commercialDefaultsQ.isPending,
     condQ.data,
     condQ.isPending,
-    id,
-    queryClient,
     runCondSave,
     step,
   ]);
