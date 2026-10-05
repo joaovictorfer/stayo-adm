@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Building2,
-  CircleHelp,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -1367,34 +1366,6 @@ function proposalFacts(snapshot: CommercialProposalSnapshot) {
     groups,
     decisions,
   };
-}
-
-function ExecutiveSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
-  const f = proposalFacts(snapshot);
-  const stats = [
-    { label: "Administração", value: f.admin },
-    { label: "Prazo", value: f.duration },
-    { label: "Implantação", value: f.implementation },
-  ];
-  const pendingCount = f.groups.pending.length + f.groups.optional.length;
-  return (
-    <section className="pj-summary" aria-labelledby="pj-summary-title">
-      <h2 id="pj-summary-title" className="pj-summary-title">Resumo da proposta</h2>
-      <dl className="pj-stats">
-        {stats.map((s) => (
-          <div key={s.label} className="pj-stat">
-            <dt>{s.label}</dt>
-            <dd className={s.value ? "pj-stat-value" : "pj-stat-value is-soft"}>{s.value ?? "A definir"}</dd>
-          </div>
-        ))}
-      </dl>
-      {pendingCount > 0 && (
-        <p className="pj-summary-note">
-          <Clock3 aria-hidden="true" /> {pendingCount} {pendingCount === 1 ? "item será definido" : "itens serão definidos"} após avaliação.
-        </p>
-      )}
-    </section>
-  );
 }
 
 function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
