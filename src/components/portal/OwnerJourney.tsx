@@ -74,7 +74,8 @@ import type {
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 // Canal de contato exibido na proposta pública ("Ajuda" / "Falar com a STAYO").
-const STAYO_SUPPORT_URL = "mailto:contato@stayogramado.com.br";
+const STAYO_SUPPORT_URL = "https://wa.me/5554991403953";
+const STAYO_SUPPORT_EMAIL_URL = "mailto:stayogramado@gmail.com";
 const STEP = { owner: 20, property: 30, access: 40 } as const;
 type Stage = 1 | 2 | 3 | 4;
 
@@ -1120,9 +1121,14 @@ function ProposalStep({
               Revisar e confirmar <ChevronRight className="size-4" />
             </Button>
             <p className="pj-open-legal">A confirmação desta proposta não substitui o contrato.</p>
-            <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
-              Falar com a STAYO
-            </a>
+            <div className="pj-open-support-row">
+              <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
+                Falar com a STAYO
+              </a>
+              <a className="pj-open-support pj-open-support--alt" href={STAYO_SUPPORT_EMAIL_URL}>
+                stayogramado@gmail.com
+              </a>
+            </div>
           </>
         )}
       </div>
