@@ -384,6 +384,23 @@ function ImplementationDetailPage() {
     },
   });
 
+  const buildPending = (): PendingEntry[] => {
+                  const pend: PendingEntry[] = [];
+                  if (!implementation.ownerName || !implementation.ownerPhone)
+                    pend.push({ id: "owner", section: "proprietario", icon: "owner", title: "Proprietário", detail: "Completar dados de contato", chip: "Pendente" });
+                  else if (latestProposal?.status === "accepted" && !intakeSubmitted)
+                    pend.push({ id: "owner", section: "portal", icon: "owner", title: "Proprietário", detail: "Cadastro ainda não enviado", chip: "Aguardando" });
+                  if (!latestProposal || latestProposal.status === "draft")
+                    pend.push({ id: "prop", section: "proposta", icon: "doc", title: "Comercial", detail: latestProposal ? "Publicar proposta" : "Montar a proposta", chip: "Pendente" });
+                  else if (latestProposal.status === "published")
+                    pend.push({ id: "prop", section: "portal", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
+                  if (missingPropertyFields)
+                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${missingPropertyFields} informação(ões) em aberto`, chip: "Pendente" });
+                  if (pendingItems.length)
+                    pend.push({ id: "impl", section: "implantacao", icon: "list", title: "Implantação", detail: `${pendingItems.length} item(ns) em aberto${readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}`, chip: "Pendente" });
+    return pend;
+  };
+
   return (
     <div className="implementation-workspace">
       {!wizardStep && (
@@ -494,19 +511,7 @@ function ImplementationDetailPage() {
             >
               {section === "visao" ? (
                 (() => {
-                  const pend: PendingEntry[] = [];
-                  if (!implementation.ownerName || !implementation.ownerPhone)
-                    pend.push({ id: "owner", section: "proprietario", icon: "owner", title: "Proprietário", detail: "Completar dados de contato", chip: "Pendente" });
-                  else if (latestProposal?.status === "accepted" && !intakeSubmitted)
-                    pend.push({ id: "owner", section: "portal", icon: "owner", title: "Proprietário", detail: "Cadastro ainda não enviado", chip: "Aguardando" });
-                  if (!latestProposal || latestProposal.status === "draft")
-                    pend.push({ id: "prop", section: "proposta", icon: "doc", title: "Comercial", detail: latestProposal ? "Publicar proposta" : "Montar a proposta", chip: "Pendente" });
-                  else if (latestProposal.status === "published")
-                    pend.push({ id: "prop", section: "portal", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
-                  if (missingPropertyFields)
-                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${missingPropertyFields} informação(ões) em aberto`, chip: "Pendente" });
-                  if (pendingItems.length)
-                    pend.push({ id: "impl", section: "implantacao", icon: "list", title: "Implantação", detail: `${pendingItems.length} item(ns) em aberto${readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} bloqueador(es)` : ""}`, chip: "Pendente" });
+                  const pend = buildPending();
                   const done = items.length - pendingItems.length;
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
@@ -571,6 +576,8 @@ function ImplementationDetailPage() {
                   </div>
                 ) : (
                   <FichaCommercial
+                    nextSteps={buildPending()}
+                    onGoSection={goSection}
                     implementationId={implementation.id}
                     proposal={latestProposal ? { version: latestProposal.version, statusLabel: proposalStatusLabel[latestProposal.status] } : null}
                     onNewVersion={() => setProposalEditing(true)}
