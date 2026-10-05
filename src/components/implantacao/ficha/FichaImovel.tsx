@@ -14,7 +14,7 @@ import {
 } from "../../../lib/api/owner-portal-data";
 import type { ImplementationProject } from "../../../types/core";
 import { CHANNEL_LABELS, getImplementationPlatforms } from "../../../lib/api/owner-platforms";
-import { formatDateTimeBR } from "../../../lib/format-datetime";
+import { formatDateTime } from "../../../lib/format-datetime";
 
 const navy = { color: "var(--stayo-navy)" };
 const muted = { color: "var(--stayo-ink-muted)" };
@@ -475,7 +475,7 @@ function PlatformsCard({ implementationId }: { implementationId: string }) {
           <p className="break-all" style={muted}>Conta Airbnb: {q.data?.airbnb_account_email || "Não informada"}</p>
           {q.data?.distribution_updated_at && (
             <p className="text-xs" style={muted}>
-              {q.data.distribution_updated_by === "owner" ? "Informado pelo proprietário" : "Atualizado"} · {formatDateTimeBR(q.data.distribution_updated_at)}
+              {q.data.distribution_updated_by === "owner" ? "Informado pelo proprietário" : "Atualizado"} · {formatDateTime(q.data.distribution_updated_at)}
             </p>
           )}
         </div>
