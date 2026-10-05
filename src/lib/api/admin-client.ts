@@ -1038,6 +1038,8 @@ function ownerOnboardingFromDraft(
           document: personText("document"),
           email: personText("email"),
           phone: personText("phone"),
+          maritalStatus: personText("maritalStatus") || null,
+          profession: personText("profession") || null,
         },
       ];
     },

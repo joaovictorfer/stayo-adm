@@ -62,6 +62,9 @@ import {
   ownerOnboardingFormSchema,
   suggestPixKey,
   validateOwnerField,
+  validateMaritalStatus,
+  validateProfession,
+  MARITAL_STATUS_OPTIONS,
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
 import {
@@ -134,18 +137,13 @@ const emptyForm: OwnerOnboardingSubmissionInput = {
   propertyWifiPassword: "",
 };
 
+// Requisitos obrigatórios de "Seus dados" na jornada pública (Correção 02B):
+// sem tipo de cadastro e sem endereço; estado civil e profissão são verificados na pessoa principal.
 const ownerFields: OwnerFormField[] = [
-  "personType",
   "fullName",
   "document",
   "email",
   "phone",
-  "postalCode",
-  "street",
-  "number",
-  "district",
-  "city",
-  "state",
   "bankName",
   "bankBranch",
   "accountNumber",
@@ -524,6 +522,7 @@ export function OwnerJourney({
 
   const ownerValid = useMemo(() => {
     if (!ownerFields.every((field) => !validateOwnerField(field, form[field]))) return false;
+    if (validateMaritalStatus(people[0]?.maritalStatus) || validateProfession(people[0]?.profession)) return false;
     return people.every(
       (person) =>
         Boolean(person.fullName) &&
@@ -734,7 +733,7 @@ export function OwnerJourney({
   // Plataformas = e-mail Airbnb válido; Preparação = cada item respondido (N/A conta como resposta,
   // regra atual). Sem itens de preparação aplicáveis, a etapa não soma requisitos.
   const registration = (() => {
-    const ownerTotal = ownerFields.length + 1;
+    const ownerTotal = ownerFields.length + 2 + 1;
     const peopleOk = people.every(
       (person) =>
         Boolean(person.fullName) &&
@@ -744,7 +743,10 @@ export function OwnerJourney({
         (!person.phone || !validateOwnerField("phone", person.phone)),
     );
     const ownerDone =
-      ownerFields.filter((field) => !validateOwnerField(field, form[field])).length + (peopleOk ? 1 : 0);
+      ownerFields.filter((field) => !validateOwnerField(field, form[field])).length +
+      (validateMaritalStatus(people[0]?.maritalStatus) ? 0 : 1) +
+      (validateProfession(people[0]?.profession) ? 0 : 1) +
+      (peopleOk ? 1 : 0);
     const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
     return computeRegistrationProgress({
       owner: { done: ownerDone, total: ownerTotal },
@@ -1735,12 +1737,6 @@ function OwnerStep({
     "document",
     "email",
     "phone",
-    "postalCode",
-    "street",
-    "number",
-    "district",
-    "city",
-    "state",
   ];
   const paymentFields: OwnerFormField[] = [
     "bankName",
@@ -1753,7 +1749,10 @@ function OwnerStep({
     "pixKey",
   ];
   const personalOk =
-    personalFields.every((field) => !validateOwnerField(field, form[field])) && hasCoOwners !== null;
+    personalFields.every((field) => !validateOwnerField(field, form[field])) &&
+    !validateMaritalStatus(primary?.maritalStatus) &&
+    !validateProfession(primary?.profession) &&
+    hasCoOwners !== null;
   const othersOk = people
     .slice(1)
     .every(
@@ -1819,15 +1818,6 @@ function OwnerStep({
 
       {sub === 1 && (
         <div className="pd-fields">
-          <Select
-            label="Tipo de cadastro"
-            value={form.personType}
-            onChange={(value) => onUpdatePerson(0, { personType: value as OwnerOnboardingPerson["personType"] })}
-            options={[
-              { value: "pf", label: "Pessoa física" },
-              { value: "pj", label: "Pessoa jurídica" },
-            ]}
-          />
           <Field
             label={form.personType === "pj" ? "Razão social" : "Nome completo"}
             placeholder={form.personType === "pj" ? "Digite a razão social" : "Digite seu nome completo"}
@@ -1867,68 +1857,20 @@ function OwnerStep({
             error={error(1, "phone")}
           />
 
-          <p className="pd-group">Seu endereço</p>
-          <div className="grid gap-4 sm:grid-cols-6">
-            <Field
-              className="sm:col-span-2"
-              label="CEP"
-              inputMode="numeric"
-              placeholder="00000-000"
-              value={formatBrazilianPostalCode(form.postalCode)}
-              onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))}
-              onBlur={() => void findCep(form.postalCode, onSet, false)}
-              error={error(1, "postalCode")}
-            />
-            <Field
-              className="sm:col-span-4"
-              label="Endereço"
-              value={form.street}
-              onChange={(value) => onSet("street", value)}
-              error={error(1, "street")}
-            />
-            <Field
-              className="sm:col-span-2"
-              label="Número"
-              value={form.number}
-              onChange={(value) => onSet("number", value)}
-              error={error(1, "number")}
-            />
-            <Field
-              className="sm:col-span-4"
-              label="Complemento (opcional)"
-              value={form.complement ?? ""}
-              onChange={(value) => onSet("complement", value || null)}
-            />
-            <Field
-              className="sm:col-span-3"
-              label="Bairro"
-              value={form.district}
-              onChange={(value) => onSet("district", value)}
-              error={error(1, "district")}
-            />
-            <Field
-              className="sm:col-span-2"
-              label="Cidade"
-              value={form.city}
-              onChange={(value) => onSet("city", value)}
-              error={error(1, "city")}
-            />
-            <Field
-              className="sm:col-span-1"
-              label="UF"
-              value={form.state}
-              onChange={(value) =>
-                onSet(
-                  "state",
-                  value
-                    .toUpperCase()
-                    .replace(/[^A-Z]/g, "")
-                    .slice(0, 2),
-                )
-              }
-              error={error(1, "state")}
-            />
-          </div>
+          <Select
+            label="Estado civil"
+            value={primary?.maritalStatus ?? ""}
+            onChange={(value) => onUpdatePerson(0, { maritalStatus: value || null })}
+            options={[{ value: "", label: "Selecione" }, ...MARITAL_STATUS_OPTIONS]}
+            error={show(1) ? validateMaritalStatus(primary?.maritalStatus) : undefined}
+          />
+          <Field
+            label="Profissão"
+            placeholder="Digite sua profissão"
+            value={primary?.profession ?? ""}
+            onChange={(value) => onUpdatePerson(0, { profession: value || null })}
+            error={show(1) ? validateProfession(primary?.profession) : undefined}
+          />
 
           <div className="pd-question">
             <p id="pd-co-owner">O imóvel terá mais de um proprietário ou proponente?</p>
@@ -2141,6 +2083,21 @@ function PersonEditor({
           onChange={(value) => onChange({ document: formatBrazilianDocument(value) })}
           error={documentError}
         />
+        {index > 0 && person.personType === "pf" && (
+          <>
+            <Select
+              label="Estado civil (opcional)"
+              value={person.maritalStatus ?? ""}
+              onChange={(value) => onChange({ maritalStatus: value || null })}
+              options={[{ value: "", label: "Selecione" }, ...MARITAL_STATUS_OPTIONS]}
+            />
+            <Field
+              label="Profissão (opcional)"
+              value={person.profession ?? ""}
+              onChange={(value) => onChange({ profession: value || null })}
+            />
+          </>
+        )}
         {index > 0 && (
           <>
             <Field

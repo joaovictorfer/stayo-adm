@@ -127,18 +127,19 @@ export const ownerOnboardingFormSchema = z.object({
   document: documentSchema,
   email: emailSchema,
   phone: phoneSchema,
+  // Endereço do proprietário: preservado quando existir, mas não exigido no onboarding público.
   postalCode: z
     .string()
-    .refine((value) => normalizeDocument(value).length === 8, "Digite um CEP válido."),
-  street: z.string().trim().min(2, "Informe o endereço.").max(160),
-  number: z.string().trim().min(1, "Informe o número.").max(20),
+    .refine((value) => [0, 8].includes(normalizeDocument(value).length), "Digite um CEP válido."),
+  street: z.string().trim().max(160),
+  number: z.string().trim().max(20),
   complement: z.string().trim().max(100).nullable(),
-  district: z.string().trim().min(2, "Informe o bairro.").max(100),
-  city: z.string().trim().min(2, "Informe a cidade.").max(100),
+  district: z.string().trim().max(100),
+  city: z.string().trim().max(100),
   state: z
     .string()
     .trim()
-    .length(2, "Informe a UF.")
+    .refine((value) => value.length === 0 || value.length === 2, "Informe a UF.")
     .transform((value) => value.toUpperCase()),
   bankName: z.string().trim().min(2, "Informe o banco.").max(120),
   bankBranch: z.string().trim().min(1, "Informe a agência.").max(20),
@@ -172,6 +173,8 @@ export const ownerOnboardingFormSchema = z.object({
             (value) => !value || phoneSchema.safeParse(value).success,
             "Digite um telefone com DDD.",
           ),
+        maritalStatus: z.string().trim().max(40).nullable().optional(),
+        profession: z.string().trim().max(120).nullable().optional(),
       }),
     )
     .min(1)
@@ -201,6 +204,25 @@ export const ownerAdminEditSchema = z.object({
   email: emailSchema.nullable().or(z.literal("")),
   document: documentSchema.nullable().or(z.literal("")),
 });
+
+export const MARITAL_STATUS_OPTIONS = [
+  { value: "solteiro", label: "Solteiro(a)" },
+  { value: "casado", label: "Casado(a)" },
+  { value: "uniao_estavel", label: "União estável" },
+  { value: "divorciado", label: "Divorciado(a)" },
+  { value: "separado", label: "Separado(a)" },
+  { value: "viuvo", label: "Viúvo(a)" },
+] as const;
+
+export function validateMaritalStatus(value: string | null | undefined): string | undefined {
+  return MARITAL_STATUS_OPTIONS.some((option) => option.value === value) ? undefined : "Informe o estado civil.";
+}
+
+export function validateProfession(value: string | null | undefined): string | undefined {
+  const text = value?.trim() ?? "";
+  if (text.length < 2) return "Informe a profissão.";
+  return text.length > 120 ? "Use até 120 caracteres." : undefined;
+}
 
 export type OwnerFormField = keyof z.input<typeof ownerOnboardingFormSchema>;
 
