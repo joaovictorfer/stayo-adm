@@ -1439,7 +1439,7 @@ function OwnerPortalPanel({
               </Button>
             </div>
             <details open={compact ? undefined : true} className="mt-3">
-            {compact && <summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do link de acesso</summary>}
+            {<summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do link de acesso</summary>}
             <div
               className="mt-3 rounded-[var(--radius-control)] border p-3"
               style={{ borderColor: "var(--stayo-border)" }}
