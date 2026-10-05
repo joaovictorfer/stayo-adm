@@ -25,7 +25,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { InventoryItemDetails } from "../guide/InventoryItemDetails";
 import { InventorySubmissionsReview } from "../guide/InventorySubmissionsReview";
-import { GuideSummary } from "../guide/GuidePanel";
+import { GuidePanel, GuideSummary } from "../guide/GuidePanel";
+import { MissingItemsTab } from "../MissingItemsTab";
 import {
   addInventoryItem,
   duplicateInventoryItem,
@@ -249,8 +250,6 @@ function Surface({ children }: { children: ReactNode }) {
   );
 }
 
-import { MissingItemsTab } from "../MissingItemsTab";
-import { GuidePanel } from "../guide/GuidePanel";
 function MissingSlot({ implementationId }: { implementationId: string }) {
   return <MissingItemsTab implementationId={implementationId} />;
 }

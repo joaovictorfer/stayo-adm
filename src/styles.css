@@ -155,4 +155,7 @@
   --ficha-pending-bg: #fdf3ea;
   --ficha-pending-fg: #e08a1e;
   --ficha-subtle: #f6f8fa;
+  --ficha-no-bg: #fdecec;
+  --ficha-no-fg: #d92d20;
+  --ficha-no-border: #f5b5b0;
 }
