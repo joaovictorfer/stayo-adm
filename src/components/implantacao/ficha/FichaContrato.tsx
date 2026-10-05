@@ -20,7 +20,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const days = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined };
 
 function Block({ icon, title, subtitle, action, children }: { icon: ReactNode; title: string; subtitle?: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -182,7 +182,7 @@ export function FichaContrato({
   const object = proposal?.snapshot?.partnershipObject?.trim() || proposal?.draftPartnershipObject?.trim() || null;
   const fee = formatPercent(c?.administration_fee);
 
-  const clauses: Row[] = [
+  const clauses = [
     { label: "Objeto do contrato", value: object ? object.split(/[.;\n]/)[0] : null, detail: object },
     { label: "Remuneração", value: fee ? `${fee} de administração` : null },
     { label: "Vigência e renovação", value: c?.duration_months ? `${c.duration_months} meses` : null, detail: c?.notice_period_days ? `Aviso prévio de ${days(c.notice_period_days)} para encerrar.` : null },
@@ -207,9 +207,9 @@ export function FichaContrato({
           <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)" }}>Contrato</h2>
           <p className="text-sm" style={muted}>Documento, partes e andamento do contrato.</p>
         </div>
-        {current.cta && (
+        {current.next.cta && (
           <Button className="min-h-11" onClick={runNext}>
-            <FileText /> {current.cta}
+            <FileText /> {current.next.cta}
           </Button>
         )}
       </div>
@@ -254,7 +254,7 @@ export function FichaContrato({
               <p className="py-2 text-sm" style={muted}>Carregando…</p>
             ) : (
               <ul className="divide-y" style={border}>
-                {clauses.map((r) => <Line key={r.label} row={r} onEdit={r.label === "Objeto do contrato" ? onEditProposal : edit} />)}
+                {(clauses as Row[]).map((r) => <Line key={r.label} row={r} onEdit={r.label === "Objeto do contrato" ? onEditProposal : edit} />)}
               </ul>
             )}
           </Block>
@@ -288,8 +288,8 @@ export function FichaContrato({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">Próximo passo</p>
                 <p className="text-xs" style={muted}>{current.next.detail}</p>
-                {current.cta && (
-                  <Button size="sm" className="mt-2" onClick={runNext}>{current.cta}</Button>
+                {current.next.cta && (
+                  <Button size="sm" className="mt-2" onClick={runNext}>{current.next.cta}</Button>
                 )}
               </div>
             </div>
