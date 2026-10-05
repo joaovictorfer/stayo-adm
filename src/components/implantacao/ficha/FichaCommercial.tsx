@@ -1,5 +1,6 @@
 import { UserRound, House, ListChecks } from "lucide-react";
-import type { PendingEntry, FichaSection } from "./FichaSummary";
+import type { PendingEntry } from "./FichaSummary";
+import type { FichaSection } from "../../../lib/ficha-next-action";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Plus, Settings2 } from "lucide-react";
