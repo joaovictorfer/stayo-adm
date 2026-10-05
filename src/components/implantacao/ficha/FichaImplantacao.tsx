@@ -1,3 +1,4 @@
+import { Collapsible } from "./FichaParts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -158,6 +159,7 @@ export function FichaImplantacao({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="order-2 min-w-0 lg:order-1">
           {tab === "inventario" ? (
+            <div className="flex flex-col gap-4">
             <InventoryWorkspace
               implementationId={implementationId}
               adding={adding}
@@ -165,6 +167,10 @@ export function FichaImplantacao({
               reviewing={reviewing}
               pendingReviewIds={new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x))}
             />
+            <Collapsible title="Recomendações do guia de utensílios" summary="Itens sugeridos pelo guia para este imóvel">
+              <GuidePanel implementationId={implementationId} guideType="utensilios" />
+            </Collapsible>
+            </div>
           ) : tab === "faltantes" ? (
             <Surface>
               <MissingSlot implementationId={implementationId} />

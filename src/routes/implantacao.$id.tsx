@@ -93,6 +93,7 @@ import {
   type SheetRow,
 } from "../components/implantacao/ficha/FichaSummary";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
+import { PortalStatusCard } from "../components/implantacao/ficha/PortalStatusCard";
 import { InspectionsPanel, PortalTimelinePanel } from "../components/implantacao/ficha/PortalUpdatesPanels";
 import { guidedInventoryQuery } from "../lib/api/guided-inventory";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
@@ -587,7 +588,7 @@ function ImplementationDetailPage() {
                   </div>
                 ) : (
                   <FichaCommercial
-                    nextSteps={buildPending()}
+                    nextSteps={buildPending().filter((p) => p.id === "prop")}
                     onGoSection={goSection}
                     implementationId={implementation.id}
                     proposal={latestProposal ? { version: latestProposal.version, statusLabel: proposalStatusLabel[latestProposal.status], snapshot: latestProposal.status === "draft" ? null : latestProposal.snapshot ?? null, total: latestProposal.total ?? null } : null}
@@ -648,9 +649,9 @@ function ImplementationDetailPage() {
               ) : section === "proprietario" ? (
                 <FichaProprietario
                   implementation={implementation}
-                  portal={<OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} ownerName={implementation.ownerName} compact />}
+                  portal={<PortalStatusCard status={releasesQuery.isPending ? "Verificando…" : releasesQuery.isError ? "Não verificado" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado"} onOpen={() => goSection("portal")} />}
                   review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
-                  pending={buildPending()}
+                  pending={buildPending().filter((p) => p.id === "owner")}
                   proposal={latestProposal ?? null}
                   hasConditions={Boolean(conditions)}
                   onGo={goSection}
@@ -991,6 +992,7 @@ function OwnerTab({
             ownerName={ownerData?.name ?? implementation.ownerName ?? null}
           />
         </div>
+        <PortalTimelinePanel implementationId={implementation.id} />
         <Collapsible title="Convite da proposta" summary="Link de apresentação e aceite">
           <OwnerInviteSection
             implementationId={implementation.id}
