@@ -57,6 +57,7 @@ import {
 } from "../../lib/owner-form-validation";
 import {
   commercialCleaningFee,
+  ownerUseSummary,
   conditionSections,
   formatPercent,
   implementationDecisionItems,
@@ -1415,7 +1416,7 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
   const blockSummary = (key: string) => {
     if (key === "management") return `${facts.admin ?? "A definir"} · ${facts.duration ?? "A definir"}`;
     if (key === "cleaning") return facts.cleaning ? `${facts.cleaning} por utilização` : "Valor a definir";
-    if (key === "owner_use") return "Conforme disponibilidade";
+    if (key === "owner_use") return ownerUseSummary(snapshot.contractConditions ?? {}) ?? "A definir";
     return "Conforme condições da proposta";
   };
   const toggleBlock = (key: string, open: boolean) => {

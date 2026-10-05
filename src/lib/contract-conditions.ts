@@ -381,3 +381,64 @@ export function contractRowToSnapshot(v: Record<string, unknown> | null | undefi
       : [],
   };
 }
+
+/** Linha no formato da tabela (snake_case) a partir do snapshot publicado. */
+export type ConditionRow = Record<string, unknown>;
+export function snapshotConditionsToRow(c: ProposalSnapshotContractConditions): ConditionRow {
+  return {
+    administration_fee: c.administrationFee ?? null,
+    cleaning_responsibility: c.cleaningResponsibility ?? null,
+    payout_rule: c.payoutRule ?? null,
+    maintenance_limit: c.maintenanceLimit ?? null,
+    exclusivity: c.exclusivity ?? null,
+    duration_months: c.durationMonths ?? null,
+    notice_period_days: c.noticePeriodDays ?? null,
+    initial_cleaning_option: c.initialCleaningOption ?? null,
+    initial_cleaning_other: c.initialCleaningOther ?? null,
+    initial_cleaning_notes: c.initialCleaningNotes ?? null,
+    turnover_cleaning_team: c.turnoverCleaningTeam ?? null,
+    turnover_cleaning_fee: commercialCleaningFee(c),
+    turnover_cleaning_payer: c.turnoverCleaningPayer ?? null,
+    owner_use_limit_mode: c.ownerUseLimitMode ?? null,
+    owner_use_limit_days: c.ownerUseLimitDays ?? null,
+    owner_use_limit_period: c.ownerUseLimitPeriod ?? null,
+    owner_use_notice_days: c.ownerUseNoticeDays ?? null,
+    owner_use_notes: c.ownerUseNotes ?? null,
+    assignment_mode: c.assignmentMode ?? null,
+    assignment_who: c.assignmentWho ?? null,
+    assignment_procedure: c.assignmentProcedure ?? null,
+    linen_mode: c.linenMode ?? null,
+    linen_notes: c.linenNotes ?? null,
+  };
+}
+
+const COMPARED: Array<[string, string]> = [
+  ["administration_fee", "Taxa de administração"],
+  ["turnover_cleaning_fee", "Taxa de limpeza"],
+  ["duration_months", "Vigência"],
+  ["exclusivity", "Exclusividade"],
+  ["owner_use_limit_mode", "Uso do imóvel"],
+  ["owner_use_limit_days", "Uso do imóvel"],
+  ["payout_rule", "Repasse"],
+  ["initial_cleaning_option", "Preparação inicial"],
+  ["linen_mode", "Enxoval"],
+  ["assignment_mode", "Cessão a terceiros"],
+  ["notice_period_days", "Aviso prévio"],
+  ["maintenance_limit", "Manutenção"],
+];
+const norm = (v: unknown) => (v == null || v === "" ? null : typeof v === "number" || /^-?\d+(\.\d+)?$/.test(String(v)) ? Number(v) : v);
+
+/** Campos em que as condições atuais divergem do snapshot publicado. */
+export function conditionsDivergence(snapshotRow: ConditionRow, live: ConditionRow | null | undefined): string[] {
+  if (!live) return [];
+  const out = new Set<string>();
+  for (const [k, label] of COMPARED) if (norm(snapshotRow[k]) !== norm(live[k])) out.add(label);
+  return [...out];
+}
+
+export function ownerUseSummary(c: ProposalSnapshotContractConditions): string | null {
+  const mode = c.ownerUseLimitMode as OwnerUseLimitMode | null | undefined;
+  if (mode === "limited" && c.ownerUseLimitDays != null)
+    return `Até ${c.ownerUseLimitDays} ${c.ownerUseLimitDays === 1 ? "dia" : "dias"}${c.ownerUseLimitPeriod ? ` ${c.ownerUseLimitPeriod}` : ""}`;
+  return mode ? OWNER_USE_LIMIT_LABELS[mode] ?? null : null;
+}

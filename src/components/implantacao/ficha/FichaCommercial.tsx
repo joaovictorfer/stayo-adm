@@ -13,7 +13,9 @@ import {
   LINEN_CHOICES,
   OWNER_USE_LIMIT_LABELS,
   TURNOVER_PAYER_LABELS,
+  conditionsDivergence,
   formatPercent,
+  snapshotConditionsToRow,
   type AssignmentMode,
   type InitialCleaningOption,
   type OwnerUseLimitMode,
@@ -21,6 +23,7 @@ import {
 } from "../../../lib/contract-conditions";
 import { formatBRL } from "../../../lib/money";
 import { ContractConditionsPanel } from "../ContractConditionsPanel";
+import type { CommercialProposalSnapshot } from "../../../types/commercial-proposal";
 
 const muted = { color: "var(--stayo-ink-muted)" };
 const navy = { color: "var(--stayo-navy)" };
@@ -87,7 +90,7 @@ export function FichaCommercial({
   onGoSection,
 }: {
   implementationId: string;
-  proposal: { version: number; statusLabel: string } | null;
+  proposal: { version: number; statusLabel: string; snapshot?: CommercialProposalSnapshot | null; total?: number | null } | null;
   onNewVersion: () => void;
   onHistory: () => void;
   extras?: ReactNode;
@@ -125,7 +128,13 @@ export function FichaCommercial({
       </div>
     );
 
-  const c = q.data;
+  // Proposta publicada/aceita: mostra exatamente o snapshot (o mesmo do link e do PDF).
+  const snap = proposal?.snapshot ?? null;
+  const snapRow = snap ? snapshotConditionsToRow(snap.contractConditions ?? {}) : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const c = (snapRow ?? q.data) as any;
+  const diverged = snapRow ? conditionsDivergence(snapRow, q.data as Record<string, unknown> | null) : [];
+  const implTotal = snap ? snap.total : proposal?.total ?? null;
   const edit = () => setEditing(true);
   const cleaningFee = c?.turnover_cleaning_fee != null ? formatBRL(Number(c.turnover_cleaning_fee)) : null;
   const initialOpt = c?.initial_cleaning_option as InitialCleaningOption | null | undefined;
@@ -148,6 +157,7 @@ export function FichaCommercial({
     { label: "Taxa de limpeza", value: cleaningFee },
     { label: "Preparação inicial", value: initial },
     { label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null },
+    { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null },
   ];
   const clauses: Row[] = [
     { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null },
@@ -187,6 +197,16 @@ export function FichaCommercial({
             <p className="text-sm" style={muted}>Carregando condições…</p>
           ) : (
             <>
+              {snap && (
+                <p className="text-xs" style={muted}>
+                  Valores da proposta v{snap.version} publicada — os mesmos do link e do PDF.
+                  {diverged.length > 0 && (
+                    <span style={{ color: "var(--ficha-pending-fg)" }}>
+                      {" "}Condições alteradas depois da publicação ({diverged.join(", ")}). Valem para o proprietário só após publicar nova versão.
+                    </span>
+                  )}
+                </p>
+              )}
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
                 {values.map((r) => <ValueLine key={r.label} row={r} onEdit={edit} />)}
               </Block>
