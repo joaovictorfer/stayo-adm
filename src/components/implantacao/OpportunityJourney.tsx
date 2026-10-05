@@ -1,15 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowRight,
   ArrowLeft,
   Check,
   ChevronRight,
+  CircleUserRound,
+  ClipboardCheck,
   CloudOff,
   Copy,
   ExternalLink,
+  FileText,
+  House,
+  Info,
   Link2,
   Loader2,
   MoreHorizontal,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import {
   useCallback,
@@ -35,7 +42,6 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { DeleteImplementationButton } from "./DeleteImplementationButton";
-import { ProposalTab } from "./ProposalTab";
 import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
 import { GuidePanel } from "./guide/GuidePanel";
 import { GuidedInventoryPanel } from "./guide/GuidedInventoryPanel";
@@ -61,6 +67,7 @@ import {
   coreApi,
 } from "../../lib/api/queries";
 import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
+import { opportunityPreparationSummaryQuery } from "../../lib/api/opportunity-review";
 import {
   presentationInvitesApi,
   presentationUrl,
@@ -70,13 +77,11 @@ import {
   guidedOptionsFromVersion,
   guidedProposalIssue,
   optionFromTemplate,
-  proposalServiceSummary,
 } from "../../lib/guided-proposal";
 import { formatBrazilianPhone } from "../../lib/owner-form-validation";
 import {
   JOURNEY_STEPS,
   proposalNumberChoice,
-  reviewPropertySummary,
   validateContact,
   type JourneyStep,
 } from "../../lib/opportunity-journey";
@@ -138,7 +143,11 @@ export function OpportunityJourney(props: {
     return (
       <div role="alert" className="py-10 text-sm">
         Não conseguimos abrir o cadastro.{" "}
-        <button type="button" className="underline" onClick={() => void formQ.refetch()}>
+        <button
+          type="button"
+          className="underline"
+          onClick={() => void formQ.refetch()}
+        >
           Tentar novamente
         </button>
       </div>
@@ -201,7 +210,10 @@ function JourneyBody({
     }
   };
   const changeContact = (k: "name" | "phone", value: string) => {
-    setContact((c) => ({ ...c, [k]: k === "phone" ? formatBrazilianPhone(value) : value }));
+    setContact((c) => ({
+      ...c,
+      [k]: k === "phone" ? formatBrazilianPhone(value) : value,
+    }));
     contactDirty.current = true;
     setContactState("saving");
     if (contactTimer.current) window.clearTimeout(contactTimer.current);
@@ -240,13 +252,19 @@ function JourneyBody({
         const { error } = await supabase
           .from("implementation_contract_conditions")
           .upsert(
-            { implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never,
+            {
+              implementation_id: id,
+              ...patch,
+              updated_at: new Date().toISOString(),
+            } as never,
             {
               onConflict: "implementation_id",
             },
           );
         if (error) throw error;
-        setCondState(Object.keys(condPending.current).length ? "saving" : "saved");
+        setCondState(
+          Object.keys(condPending.current).length ? "saving" : "saved",
+        );
         return true;
       } catch {
         condPending.current = { ...patch, ...condPending.current };
@@ -307,12 +325,22 @@ function JourneyBody({
     queryKey: ["commercial-proposals", id],
     queryFn: () => commercialProposalsApi.list(id),
   });
+  const preparationReviewQ = useQuery({
+    ...opportunityPreparationSummaryQuery(id),
+    enabled: step === "revisao",
+  });
   const versions = proposalsQ.data ?? [];
-  const draftProposal = versions.find((version) => version.status === "draft") ?? null;
-  const latestPublished = versions.find((version) => version.status !== "draft") ?? null;
+  const draftProposal =
+    versions.find((version) => version.status === "draft") ?? null;
+  const latestPublished =
+    versions.find((version) => version.status !== "draft") ?? null;
   const proposalSource = draftProposal ?? latestPublished;
-  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>([]);
-  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(null);
+  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>(
+    [],
+  );
+  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(
+    null,
+  );
   const [proposalState, setProposalState] = useState<SaveState>("idle");
   const proposalDirty = useRef(false);
   const proposalOptionsRef = useRef<ProposalItemOption[]>([]);
@@ -332,7 +360,8 @@ function JourneyBody({
   const saveProposal = useCallback(async (): Promise<boolean> => {
     if (proposalRunning.current) await proposalRunning.current;
     const currentOptions = proposalOptionsRef.current;
-    if (!proposalDirty.current || guidedProposalIssue(currentOptions)) return true;
+    if (!proposalDirty.current || guidedProposalIssue(currentOptions))
+      return true;
     setProposalState("saving");
     const request = (async () => {
       try {
@@ -349,7 +378,9 @@ function JourneyBody({
           `${saved.id}:${saved.status}:${saved.draftRevision}:${saved.updatedAt}`,
         );
         setProposalState("saved");
-        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
+        await queryClient.invalidateQueries({
+          queryKey: ["commercial-proposals", id],
+        });
         return true;
       } catch {
         setProposalState("error");
@@ -372,13 +403,18 @@ function JourneyBody({
   };
 
   useEffect(() => {
-    void autosaveOpportunity(id, { draft_step: step }, {}).catch(() => undefined);
+    void autosaveOpportunity(id, { draft_step: step }, {}).catch(
+      () => undefined,
+    );
     window.scrollTo({ top: 0 });
   }, [id, step]);
 
-  const saveState: SaveState = [auto.state, contactState, condState, proposalState].includes(
-    "error",
-  )
+  const saveState: SaveState = [
+    auto.state,
+    contactState,
+    condState,
+    proposalState,
+  ].includes("error")
     ? "error"
     : [auto.state, contactState, condState, proposalState].includes("saving")
       ? "saving"
@@ -407,48 +443,150 @@ function JourneyBody({
       });
     return a && b && c && d;
   };
+  const [editingFromReview, setEditingFromReview] = useState(false);
   const go = async (next: JourneyStep) => {
     const ok = await flushAll();
     if (ok) {
       onStepChange(next);
     }
+    return ok;
+  };
+  const editFromReview = async (next: JourneyStep) => {
+    const ok = await go(next);
+    if (ok) setEditingFromReview(true);
+  };
+  const returnToReview = async () => {
+    const ok = await flushAll();
+    if (!ok) return;
+    setEditingFromReview(false);
+    onStepChange("revisao");
   };
   const exit = async () => {
     const ok = await flushAll();
     if (ok) onExit();
   };
 
-  const [publishing, setPublishing] = useState(false);
   const [publishedResult, setPublishedResult] = useState<{
     version: CommercialProposalVersion;
     link: string | null;
   } | null>(null);
-  useEffect(() => {
-    setPublishing(false);
-  }, [step]);
+  const finalSubmission = useRef<"complete" | "publish" | null>(null);
 
-  const proposalBlocks = proposalBlockSummaries(cond);
   const isLast = index === JOURNEY_STEPS.length - 1;
   const next = async () => {
+    if (editingFromReview) return void returnToReview();
     if (!isLast) void go(JOURNEY_STEPS[index + 1]!.id);
   };
   const back = async () => {
-    if (publishing) return setPublishing(false);
+    if (editingFromReview) return void returnToReview();
     if (index > 0) void go(JOURNEY_STEPS[index - 1]!.id);
     else void exit();
   };
 
   const complete = useMutation({
     mutationFn: async () => {
-      await flushAll();
+      const ok = await flushAll();
+      if (!ok) throw new Error("Salve os dados antes de criar a ficha.");
       await completeOpportunityDraft(id);
     },
     onSuccess: () => {
-      toast.success("Ficha criada", { description: "Nada foi enviado ao proprietário." });
+      toast.success("Ficha criada", {
+        description: "Nada foi enviado ao proprietário.",
+      });
       onExit();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível concluir."),
+    onError: (e) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível concluir.",
+      ),
   });
+
+  const proposalIssue = guidedProposalIssue(proposalOptions);
+  const publish = useMutation({
+    mutationFn: async () => {
+      if (proposalIssue) throw new Error(proposalIssue);
+      const ok = await flushAll();
+      if (!ok) throw new Error("Salve os dados antes de publicar a proposta.");
+
+      // Criar a ficha continua sendo uma ação separada da publicação no banco.
+      // Nesta ação composta, concluímos o rascunho primeiro; o comando é idempotente.
+      await completeOpportunityDraft(id);
+
+      const currentVersions = await commercialProposalsApi.list(id);
+      const currentDraft =
+        currentVersions.find((version) => version.status === "draft") ?? null;
+      const currentPublished =
+        currentVersions.find((version) => version.status === "published") ??
+        currentVersions.find((version) => version.status === "accepted") ??
+        currentVersions.find((version) => version.status !== "draft") ??
+        null;
+
+      // Sem draft novo, uma versão já publicada é reutilizada. Isso evita criar
+      // proposta idêntica apenas porque o usuário voltou à revisão e clicou de novo.
+      let published = currentPublished;
+      if (currentDraft) {
+        published = await commercialProposalsApi.publish({
+          proposalId: currentDraft.id,
+          expectedRevision: currentDraft.draftRevision,
+          commandId: crypto.randomUUID(),
+        });
+      } else if (!published) {
+        const saved = await commercialProposalsApi.saveDraft(
+          buildGuidedDraftInput({
+            implementationId: id,
+            version: null,
+            options: proposalOptionsRef.current,
+            commandId: crypto.randomUUID(),
+          }),
+        );
+        published = await commercialProposalsApi.publish({
+          proposalId: saved.id,
+          expectedRevision: saved.draftRevision,
+          commandId: crypto.randomUUID(),
+        });
+      }
+
+      if (!published)
+        throw new Error("Não foi possível localizar a proposta publicada.");
+      return published;
+    },
+    onSuccess: async (published) => {
+      // Publicar não gera/revoga token automaticamente. O link seguro existente
+      // continua disponível como ação explícita na confirmação de publicação.
+      setPublishedResult({ version: published, link: null });
+      await queryClient.invalidateQueries({
+        queryKey: ["commercial-proposals", id],
+      });
+      toast.success("Ficha criada e proposta publicada", {
+        description: "Nenhuma mensagem foi enviada ao proprietário.",
+      });
+    },
+    onError: (error) =>
+      toast.error("Não foi possível criar e publicar", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Revise os dados e tente novamente.",
+      }),
+  });
+  const submitComplete = () => {
+    if (finalSubmission.current) return;
+    finalSubmission.current = "complete";
+    complete.mutate(undefined, {
+      onSettled: () => {
+        finalSubmission.current = null;
+      },
+    });
+  };
+  const submitPublish = () => {
+    if (finalSubmission.current) return;
+    finalSubmission.current = "publish";
+    publish.mutate(undefined, {
+      onSettled: () => {
+        finalSubmission.current = null;
+      },
+    });
+  };
 
   let content: ReactNode = null;
   if (step === "contato") {
@@ -490,7 +628,8 @@ function JourneyBody({
   } else if (step === "proposta") {
     content = condQ.isPending ? (
       <div className="flex items-center gap-2 py-10 text-sm" style={muted}>
-        <Loader2 className="size-4 animate-spin" /> Carregando condições da proposta…
+        <Loader2 className="size-4 animate-spin" /> Carregando condições da
+        proposta…
       </div>
     ) : (
       <ProposalBlocks
@@ -511,124 +650,131 @@ function JourneyBody({
         onOwnerNotesChange={(value) => auto.set("owner_facing_notes", value)}
       />
     );
-  } else if (publishing) {
-    content = (
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={() => setPublishing(false)}
-          className="flex min-h-11 items-center gap-1 text-sm font-medium"
-          style={{ color: "var(--stayo-forest)" }}
-        >
-          <ArrowLeft className="size-4" /> Voltar para a revisão
-        </button>
-        <div>
-          <p className="text-xs font-medium" style={muted}>
-            Opção para casos complexos
-          </p>
-          <h3 className="text-lg font-semibold">Editar proposta avançada</h3>
-        </div>
-        <ProposalTab implementationId={id} />
-      </div>
-    );
   } else {
-    const serviceSummary = proposalServiceSummary(proposalOptions);
-    const proposalIssue = guidedProposalIssue(proposalOptions);
-    const publishGuided = async () => {
-      if (proposalIssue) return;
-      const ok = await flushAll();
-      if (!ok) return;
-      try {
-        const currentVersions = await commercialProposalsApi.list(id);
-        const currentDraft = currentVersions.find((version) => version.status === "draft") ?? null;
-        const currentPublished =
-          currentVersions.find((version) => version.status !== "draft") ?? null;
-        const saved =
-          currentDraft ??
-          (await commercialProposalsApi.saveDraft(
-            buildGuidedDraftInput({
-              implementationId: id,
-              version: currentPublished,
-              options: proposalOptionsRef.current,
-              commandId: crypto.randomUUID(),
-            }),
-          ));
-        const published = await commercialProposalsApi.publish({
-          proposalId: saved.id,
-          expectedRevision: saved.draftRevision,
-          commandId: crypto.randomUUID(),
-        });
-        let link: string | null = null;
-        try {
-          const issued = await presentationInvitesApi.issue({
-            implementationId: id,
-            proposalId: published.id,
-            validDays: 15,
-          });
-          link = presentationUrl(issued.token);
-        } catch {
-          // A versão permanece publicada; o link pode ser gerado novamente na tela de sucesso.
+    const propertyIdentification =
+      [v.condominium_name, v.tower, v.unit]
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .join(" · ") ||
+      [v.address, v.city]
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .join(" · ") ||
+      "Identificação a completar";
+    const propertyFacts = [
+      reviewPropertyType(v.property_type),
+      reviewBedrooms(v.bedrooms),
+      v.capacity ? `até ${v.capacity} hóspedes` : "Capacidade a definir",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const commercialPrimary = [
+      cond.administration_fee == null
+        ? "Administração a definir"
+        : `${cond.administration_fee}% administração`,
+      cond.turnover_cleaning_fee == null
+        ? "Limpeza a definir"
+        : `${formatReviewMoney(cond.turnover_cleaning_fee)} limpeza`,
+    ].join(" · ");
+    const commercialSecondary = [
+      reviewPreparationLabel(cond),
+      cond.exclusivity === true
+        ? "Exclusividade"
+        : cond.exclusivity === false
+          ? "Sem exclusividade"
+          : "Exclusividade a definir",
+      cond.duration_months == null
+        ? "Vigência a definir"
+        : `${cond.duration_months} meses`,
+      cond.notice_period_days == null
+        ? "Aviso a definir"
+        : `${cond.notice_period_days} dias`,
+    ].join(" · ");
+    const preparationPrimary = preparationReviewQ.isPending
+      ? "Carregando resumo…"
+      : preparationReviewQ.isError
+        ? "Resumo indisponível"
+        : `${preparationReviewQ.data?.checked ?? 0} itens conferidos · ${preparationReviewQ.data?.missing ?? 0} ${preparationReviewQ.data?.missing === 1 ? "faltante" : "faltantes"}`;
+
+    content = publishedResult ? (
+      <PublishedProposalSuccess
+        result={publishedResult}
+        implementationId={id}
+        onBack={onExit}
+        onLinkGenerated={(link) =>
+          setPublishedResult((current) =>
+            current ? { ...current, link } : current,
+          )
         }
-        setPublishedResult({ version: published, link });
-        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
-        toast.success("Proposta publicada", {
-          description: link
-            ? "O link está pronto para copiar."
-            : "A versão foi publicada; gere o link novamente.",
-        });
-      } catch (error) {
-        toast.error("Não foi possível publicar a proposta", {
-          description:
-            error instanceof Error ? error.message : "Revise os dados e tente novamente.",
-        });
-      }
-    };
-    const propertySummary = reviewPropertySummary(v);
-    const conditionCount = proposalBlocks.filter((block) => block.value).length;
-    content = (
-      <div className="flex flex-col gap-3">
-        <ReviewCard title="Contato" onEdit={() => void go("contato")}>
-          <p className="text-sm">{contact.name || "Nome a completar"}</p>
-          <p className="mt-1 text-sm" style={muted}>
-            {contact.phone || "Telefone a completar"}
-          </p>
-        </ReviewCard>
-        <ReviewCard title="Imóvel" onEdit={() => void go("imovel")}>
-          <p className="text-sm">{propertySummary.identification}</p>
-          {propertySummary.missing > 0 && (
-            <p className="mt-1 text-xs" style={muted}>
-              {propertySummary.missing}{" "}
-              {propertySummary.missing === 1
-                ? "dado pode ser completado depois"
-                : "dados podem ser completados depois"}
+      />
+    ) : (
+      <div className="flex flex-col gap-4">
+        <section
+          className="overflow-hidden rounded-[var(--radius-card)] border"
+          style={{
+            backgroundColor: "var(--stayo-surface)",
+            borderColor: "var(--stayo-border)",
+          }}
+        >
+          <div className="px-4 py-5 sm:px-6">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              Tudo certo para criar
+            </h2>
+            <p className="mt-1 text-sm" style={muted}>
+              Você pode completar os demais detalhes depois.
             </p>
-          )}
-        </ReviewCard>
-        <ReviewCard title="Proposta" onEdit={() => void go("proposta")}>
-          <p className="text-sm" style={muted}>
-            {cond.administration_fee == null
-              ? "Administração a definir"
-              : `${cond.administration_fee}% administração`}
-            {cond.turnover_cleaning_fee == null
-              ? " · Limpeza a definir"
-              : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
-          </p>
-          <p className="mt-1 text-sm" style={muted}>
-            {cond.duration_months == null ? "Vigência a definir" : `${cond.duration_months} meses`}
-            {cond.notice_period_days == null
-              ? " · Aviso a definir"
-              : ` · ${cond.notice_period_days} dias de aviso`}
-          </p>
-          <p className="mt-1 text-xs" style={muted}>
-            {conditionCount} de 3 grupos de condições · {serviceSummary.count}{" "}
-            {serviceSummary.count === 1 ? "serviço" : "serviços"}
-          </p>
-        </ReviewCard>
-        <ReviewCard title="Implantação" onEdit={() => void go("implantacao")}>
-          <p className="text-sm" style={muted}>
-            Enxoval, inventário, fornecedores e observações.
-          </p>
-        </ReviewCard>
+          </div>
+          <div
+            className="border-t px-4 sm:px-6"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            <ReviewSummaryRow
+              icon={CircleUserRound}
+              title="Contato"
+              primary={contact.name || "Proprietário a completar"}
+              secondary={contact.phone || "Telefone a completar"}
+              onEdit={() => void editFromReview("contato")}
+            />
+            <ReviewSummaryRow
+              icon={House}
+              title="Imóvel"
+              primary={propertyIdentification}
+              secondary={propertyFacts}
+              onEdit={() => void editFromReview("imovel")}
+            />
+            <ReviewSummaryRow
+              icon={FileText}
+              title="Comercial"
+              primary={commercialPrimary}
+              secondary={commercialSecondary}
+              onEdit={() => void editFromReview("proposta")}
+            />
+            <ReviewSummaryRow
+              icon={ClipboardCheck}
+              title="Preparação"
+              primary={preparationPrimary}
+              secondary={
+                preparationReviewQ.isError
+                  ? "Edite a preparação para conferir os itens."
+                  : "Os demais itens podem ser conferidos depois."
+              }
+              onEdit={() => void editFromReview("implantacao")}
+            />
+            <div
+              className="my-4 flex items-start gap-2 rounded-[var(--radius-control)] px-3 py-3 text-xs sm:text-sm"
+              style={{
+                backgroundColor: "var(--stayo-surface-muted)",
+                color: "var(--stayo-ink-muted)",
+              }}
+            >
+              <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <p>
+                Fornecedores e observações não bloqueiam a criação da ficha.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {proposalIssue && (
           <div
             role="alert"
@@ -645,45 +791,47 @@ function JourneyBody({
             </Button>
           </div>
         )}
-        {publishedResult ? (
-          <PublishedProposalSuccess
-            result={publishedResult}
-            implementationId={id}
-            onBack={onExit}
-            onLinkGenerated={(link) =>
-              setPublishedResult((current) => (current ? { ...current, link } : current))
+
+        <p className="text-right text-xs" style={muted}>
+          A proposta será publicada somente ao confirmar.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-12 sm:min-w-28"
+            disabled={complete.isPending || publish.isPending}
+            onClick={() => void back()}
+          >
+            Voltar
+          </Button>
+          <div className="hidden sm:block sm:flex-1" />
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-12 sm:min-w-36"
+            disabled={complete.isPending || publish.isPending}
+            onClick={submitComplete}
+          >
+            {complete.isPending && <Loader2 className="size-4 animate-spin" />}
+            Criar ficha
+          </Button>
+          <Button
+            type="button"
+            className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:min-w-56"
+            disabled={
+              Boolean(proposalIssue) || complete.isPending || publish.isPending
             }
-          />
-        ) : (
-          <div className="mt-2 flex flex-col gap-2">
-            <Button
-              type="button"
-              disabled={Boolean(proposalIssue)}
-              onClick={() => void publishGuided()}
-              className="min-h-12 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90"
-            >
-              Publicar proposta e gerar link
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-12"
-              onClick={() => setPublishing(true)}
-            >
-              Editar proposta avançada
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-12"
-              disabled={complete.isPending}
-              onClick={() => complete.mutate()}
-            >
-              {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
-              enviar
-            </Button>
-          </div>
-        )}
+            onClick={submitPublish}
+          >
+            {publish.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <ArrowRight className="size-4" />
+            )}
+            Criar e publicar proposta
+          </Button>
+        </div>
       </div>
     );
   }
@@ -691,12 +839,15 @@ function JourneyBody({
   const propertyStep = step === "imovel";
   const commercialStep = step === "proposta";
   const preparationStep = step === "implantacao";
+  const reviewStep = step === "revisao";
 
   return (
     <div
       ref={topRef}
       className={`mx-auto flex w-full flex-col pb-28 sm:pb-6 ${
-          propertyStep || commercialStep || preparationStep ? "max-w-5xl gap-6" : "max-w-2xl gap-5"
+        propertyStep || commercialStep || preparationStep || reviewStep
+          ? "max-w-5xl gap-6"
+          : "max-w-2xl gap-5"
       }`}
     >
       {propertyStep ? (
@@ -715,6 +866,13 @@ function JourneyBody({
         />
       ) : preparationStep ? (
         <PreparationJourneyHeader
+          implementation={implementation}
+          saveState={saveState}
+          onRetry={retry}
+          onExit={exit}
+        />
+      ) : reviewStep ? (
+        <ReviewJourneyHeader
           implementation={implementation}
           saveState={saveState}
           onRetry={retry}
@@ -795,14 +953,14 @@ function JourneyBody({
             className="min-h-12"
             onClick={back}
           >
-            Voltar etapa
+            {editingFromReview ? "Voltar para revisão" : "Voltar etapa"}
           </Button>
           <Button
             type="button"
             onClick={() => void next()}
             className="min-h-12 flex-1 bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90 sm:ml-auto sm:flex-none sm:px-8"
           >
-            Continuar
+            {editingFromReview ? "Salvar e voltar" : "Continuar"}
           </Button>
         </footer>
       )}
@@ -842,14 +1000,43 @@ function PreparationWorkspace({
 }) {
   const [tab, setTab] = useState<PreparationTab>("inventario");
   return (
-    <section className="overflow-hidden rounded-[var(--radius-card)] border" style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}>
-      <nav className="flex overflow-x-auto border-b px-2 pt-2 sm:px-4" style={{ borderColor: "var(--stayo-border)" }} role="tablist" aria-label="Preparação do imóvel">
+    <section
+      className="overflow-hidden rounded-[var(--radius-card)] border"
+      style={{
+        backgroundColor: "var(--stayo-surface)",
+        borderColor: "var(--stayo-border)",
+      }}
+    >
+      <nav
+        className="flex overflow-x-auto border-b px-2 pt-2 sm:px-4"
+        style={{ borderColor: "var(--stayo-border)" }}
+        role="tablist"
+        aria-label="Preparação do imóvel"
+      >
         {PREPARATION_TABS.map((entry) => {
           const active = tab === entry.id;
           return (
-            <button key={entry.id} type="button" role="tab" aria-selected={active} onClick={() => setTab(entry.id)} className="relative min-h-11 shrink-0 px-3 text-sm font-medium sm:px-4" style={{ color: active ? "var(--stayo-forest)" : "var(--stayo-ink-muted)" }}>
+            <button
+              key={entry.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setTab(entry.id)}
+              className="relative min-h-11 shrink-0 px-3 text-sm font-medium sm:px-4"
+              style={{
+                color: active
+                  ? "var(--stayo-forest)"
+                  : "var(--stayo-ink-muted)",
+              }}
+            >
               {entry.label}
-              {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--stayo-forest)" }} />}
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-2 bottom-0 h-0.5 rounded-full"
+                  style={{ backgroundColor: "var(--stayo-forest)" }}
+                />
+              )}
             </button>
           );
         })}
@@ -863,8 +1050,16 @@ function PreparationWorkspace({
           <PropertySuppliersPanel implementationId={implementationId} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextArea label="Observações internas" value={notes} onChange={onNotesChange} />
-            <TextArea label="Informações para o proprietário" value={ownerNotes} onChange={onOwnerNotesChange} />
+            <TextArea
+              label="Observações internas"
+              value={notes}
+              onChange={onNotesChange}
+            />
+            <TextArea
+              label="Informações para o proprietário"
+              value={ownerNotes}
+              onChange={onOwnerNotesChange}
+            />
           </div>
         )}
       </div>
@@ -888,33 +1083,236 @@ function PreparationJourneyHeader({
     <header className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold">{implementation.code}</span>
-          <span className="rounded-full px-2 py-1 text-[11px] font-semibold" style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-ink)" }}>Rascunho</span>
+          <span className="truncate text-sm font-semibold">
+            {implementation.code}
+          </span>
+          <span
+            className="rounded-full px-2 py-1 text-[11px] font-semibold"
+            style={{
+              backgroundColor: "var(--stayo-gold-soft)",
+              color: "var(--stayo-ink)",
+            }}
+          >
+            Rascunho
+          </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           {saveState === "idle" ? (
-            <p className="flex items-center gap-1 text-xs whitespace-nowrap" style={muted}><Check className="size-3.5" /> Salvo agora</p>
+            <p
+              className="flex items-center gap-1 text-xs whitespace-nowrap"
+              style={muted}
+            >
+              <Check className="size-3.5" /> Salvo agora
+            </p>
           ) : (
-            <SaveStatus state={saveState} onRetry={onRetry} compact savedLabel="Salvo agora" />
+            <SaveStatus
+              state={saveState}
+              onRetry={onRetry}
+              compact
+              savedLabel="Salvo agora"
+            />
           )}
-          <Button type="button" variant="outline" size="sm" className="min-h-10 px-3" onClick={() => void onExit()}>Salvar e sair</Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-10 px-3"
+            onClick={() => void onExit()}
+          >
+            Salvar e sair
+          </Button>
           <JourneyActions implementation={implementation} />
         </div>
       </div>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={muted}>Implantação · Etapa 4 de 5</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Preparação do imóvel</h1>
-        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>Confira inventário e enxoval com poucos cliques. Fornecedores e observações continuam opcionais.</p>
+        <p
+          className="text-xs font-semibold uppercase tracking-[0.12em]"
+          style={muted}
+        >
+          Implantação · Etapa 4 de 5
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Preparação do imóvel
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
+          Confira inventário e enxoval com poucos cliques. Fornecedores e
+          observações continuam opcionais.
+        </p>
       </div>
       <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
         {PROPERTY_PROGRESS.map((label, i) => {
           const complete = i < activeIndex;
           const active = i === activeIndex;
           return (
-            <li key={label} className="relative flex min-w-0 flex-col items-center gap-1.5">
-              {i < PROPERTY_PROGRESS.length - 1 && <span aria-hidden="true" className="absolute left-1/2 right-[-50%] top-4 h-px" style={{ backgroundColor: complete ? "var(--stayo-forest)" : "var(--stayo-border)" }} />}
-              <span aria-hidden="true" className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold" style={{ borderColor: complete || active ? "var(--stayo-forest)" : "var(--stayo-border)", backgroundColor: complete ? "var(--stayo-forest)" : "var(--stayo-surface)", color: complete ? "var(--primary-foreground)" : "var(--stayo-ink)" }}>{complete ? <Check className="size-4" /> : i + 1}</span>
-              <span className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs" style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }} aria-current={active ? "step" : undefined}>{label}</span>
+            <li
+              key={label}
+              className="relative flex min-w-0 flex-col items-center gap-1.5"
+            >
+              {i < PROPERTY_PROGRESS.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 right-[-50%] top-4 h-px"
+                  style={{
+                    backgroundColor: complete
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-border)",
+                  }}
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
+                style={{
+                  borderColor:
+                    complete || active
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-border)",
+                  backgroundColor: complete
+                    ? "var(--stayo-forest)"
+                    : "var(--stayo-surface)",
+                  color: complete
+                    ? "var(--primary-foreground)"
+                    : "var(--stayo-ink)",
+                }}
+              >
+                {complete ? <Check className="size-4" /> : i + 1}
+              </span>
+              <span
+                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
+                style={{
+                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                }}
+                aria-current={active ? "step" : undefined}
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </header>
+  );
+}
+
+function ReviewJourneyHeader({
+  implementation,
+  saveState,
+  onRetry,
+  onExit,
+}: {
+  implementation: ImplementationProject;
+  saveState: SaveState;
+  onRetry: () => void;
+  onExit: () => Promise<void>;
+}) {
+  const activeIndex = 4;
+  return (
+    <header className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-semibold">
+            {implementation.code}
+          </span>
+          <span
+            className="rounded-full px-2 py-1 text-[11px] font-semibold"
+            style={{
+              backgroundColor: "var(--stayo-gold-soft)",
+              color: "var(--stayo-ink)",
+            }}
+          >
+            Rascunho
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {saveState === "idle" ? (
+            <p
+              className="flex items-center gap-1 text-xs whitespace-nowrap"
+              style={muted}
+            >
+              <Check className="size-3.5" /> Salvo agora
+            </p>
+          ) : (
+            <SaveStatus
+              state={saveState}
+              onRetry={onRetry}
+              compact
+              savedLabel="Salvo agora"
+            />
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="min-h-10 px-3"
+            onClick={() => void onExit()}
+          >
+            Salvar e sair
+          </Button>
+          <JourneyActions implementation={implementation} />
+        </div>
+      </div>
+
+      <div>
+        <p
+          className="text-sm font-semibold"
+          style={{ color: "var(--stayo-ink)" }}
+        >
+          Implantação · Etapa 5 de 5
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Revisão
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
+          Confira o essencial antes de criar a ficha.
+        </p>
+      </div>
+
+      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
+        {PROPERTY_PROGRESS.map((label, i) => {
+          const complete = i < activeIndex;
+          const active = i === activeIndex;
+          return (
+            <li
+              key={label}
+              className="relative flex min-w-0 flex-col items-center gap-1.5"
+            >
+              {i < PROPERTY_PROGRESS.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 right-[-50%] top-4 h-px"
+                  style={{
+                    backgroundColor: complete
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-border)",
+                  }}
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
+                style={{
+                  borderColor: "var(--stayo-forest)",
+                  backgroundColor:
+                    complete || active
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-surface)",
+                  color:
+                    complete || active
+                      ? "var(--primary-foreground)"
+                      : "var(--stayo-ink)",
+                }}
+              >
+                {complete ? <Check className="size-4" /> : i + 1}
+              </span>
+              <span
+                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
+                style={{
+                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                }}
+                aria-current={active ? "step" : undefined}
+              >
+                {label}
+              </span>
             </li>
           );
         })}
@@ -954,7 +1352,10 @@ function PropertyJourneyHeader({
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           {saveState === "idle" ? (
-            <p className="flex items-center gap-1 text-xs whitespace-nowrap" style={muted}>
+            <p
+              className="flex items-center gap-1 text-xs whitespace-nowrap"
+              style={muted}
+            >
               <Check className="size-3.5" /> Salvo agora
             </p>
           ) : (
@@ -1180,10 +1581,16 @@ function CommercialJourneyHeader({
   );
 }
 
-function JourneyActions({ implementation }: { implementation: ImplementationProject }) {
+function JourneyActions({
+  implementation,
+}: {
+  implementation: ImplementationProject;
+}) {
   const locked =
     implementation.status === "ativo" ||
-    Boolean((implementation as { corePropertyId?: string | null }).corePropertyId);
+    Boolean(
+      (implementation as { corePropertyId?: string | null }).corePropertyId,
+    );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -1290,7 +1697,10 @@ function TextField({
         style={inputStyle}
       />
       {error && (
-        <span className="mt-1 block text-xs" style={{ color: "var(--stayo-danger)" }}>
+        <span
+          className="mt-1 block text-xs"
+          style={{ color: "var(--stayo-danger)" }}
+        >
           {error}
         </span>
       )}
@@ -1344,8 +1754,12 @@ function Chips<T extends string>({
             onClick={() => onChange(o.value)}
             className="min-h-11 rounded-full border px-4 text-sm font-medium transition"
             style={{
-              borderColor: active ? "var(--stayo-forest)" : "var(--stayo-border)",
-              backgroundColor: active ? "var(--stayo-forest)" : "var(--stayo-surface)",
+              borderColor: active
+                ? "var(--stayo-forest)"
+                : "var(--stayo-border)",
+              backgroundColor: active
+                ? "var(--stayo-forest)"
+                : "var(--stayo-surface)",
               color: active ? "var(--primary-foreground)" : "var(--stayo-ink)",
             }}
           >
@@ -1366,28 +1780,98 @@ function Question({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function ReviewCard({
+function ReviewSummaryRow({
+  icon: Icon,
   title,
+  primary,
+  secondary,
   onEdit,
-  children,
 }: {
+  icon: LucideIcon;
   title: string;
+  primary: string;
+  secondary: string;
   onEdit: () => void;
-  children: ReactNode;
 }) {
   return (
-    <section className="rounded-[var(--radius-card)] border p-4" style={inputStyle}>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-        <div className="min-w-0">
-          <h3 className="font-semibold">{title}</h3>
-          <div className="mt-1">{children}</div>
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+    <div
+      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 border-b py-4 last:border-b-0 sm:grid-cols-[13rem_minmax(0,1fr)_auto] sm:items-center sm:py-5"
+      style={{ borderColor: "var(--stayo-border)" }}
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span
+          className="grid size-9 shrink-0 place-items-center rounded-full"
+          style={{
+            backgroundColor: "var(--stayo-surface-muted)",
+            color: "var(--stayo-ink)",
+          }}
+        >
+          <Icon className="size-4.5" aria-hidden="true" />
+        </span>
+        <h3 className="truncate text-sm font-semibold sm:text-base">{title}</h3>
+      </div>
+      <div className="col-start-2 min-w-0 sm:col-start-auto">
+        <p className="text-sm font-medium sm:text-base">{primary}</p>
+        <p className="mt-0.5 text-xs sm:text-sm" style={muted}>
+          {secondary}
+        </p>
+      </div>
+      <div className="row-start-1 col-start-3 sm:row-start-auto sm:col-start-auto">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="min-h-10 px-2 text-[var(--stayo-forest)]"
+          onClick={onEdit}
+        >
           Editar
         </Button>
       </div>
-    </section>
+    </div>
   );
+}
+
+function formatReviewMoney(value: unknown): string {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "Limpeza a definir";
+  return amount.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+}
+
+function reviewPropertyType(value: string): string {
+  if (!value.trim()) return "Tipo a definir";
+  return value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
+}
+
+function reviewBedrooms(value: string): string {
+  if (!value.trim()) return "Quartos a definir";
+  const count = Number(value);
+  if (count === 0) return "Studio";
+  if (count === 1) return "1 quarto";
+  return `${value} quartos`;
+}
+
+function reviewPreparationLabel(cond: Cond): string {
+  const option = String(cond.initial_cleaning_option ?? "");
+  if (option === "owner_delivers") return "Proprietário entrega limpo";
+  if (option === "stayo_initial") return "Limpeza de implantação STAYO";
+  if (option === "stayo_post_construction") return "Limpeza pós-obra";
+  if (
+    option === "other" &&
+    String(cond.initial_cleaning_other ?? "")
+      .trim()
+      .toLocaleLowerCase("pt-BR") === "limpeza comercial"
+  ) {
+    return "Limpeza comercial";
+  }
+  if (option === TBD) return "Preparação a definir";
+  if (option === "other" && String(cond.initial_cleaning_other ?? "").trim()) {
+    return String(cond.initial_cleaning_other).trim();
+  }
+  return "Preparação a definir";
 }
 
 function PropertyQuestions({
@@ -1457,7 +1941,9 @@ function PropertyQuestions({
       set("city", condominium.city ?? "");
       set("postal_code", condominium.postalCode ?? "");
       if (!(await flush())) {
-        toast.error("Condomínio vinculado, mas o endereço ainda não sincronizou.");
+        toast.error(
+          "Condomínio vinculado, mas o endereço ainda não sincronizou.",
+        );
       }
       void queryClient.invalidateQueries({ queryKey: ["implementations"] });
     } catch (error) {
@@ -1850,30 +2336,6 @@ function PropertyQuestions({
 
 const TBD = "tbd";
 
-function proposalBlockSummaries(c: Cond) {
-  return [
-    {
-      label: "Condições comerciais",
-      value: c.administration_fee != null || c.turnover_cleaning_fee != null ? "ok" : "",
-    },
-    {
-      label: "Preparação do imóvel",
-      value: c.initial_cleaning_option || c.linen_mode || c.advisory_mode ? "ok" : "",
-    },
-    {
-      label: "Condições do contrato",
-      value:
-        c.exclusivity != null ||
-        c.duration_months != null ||
-        c.notice_period_days != null ||
-        c.owner_use_limit_mode ||
-        c.assignment_mode
-          ? "ok"
-          : "",
-    },
-  ];
-}
-
 function ProposalBlocks({
   cond,
   setC,
@@ -2230,18 +2692,23 @@ function GuidedServices({
   const [addingOther, setAddingOther] = useState(false);
   const [otherName, setOtherName] = useState("");
   const [otherValue, setOtherValue] = useState("");
-  const byTemplate = new Map(options.map((option) => [option.templateKey, option]));
+  const byTemplate = new Map(
+    options.map((option) => [option.templateKey, option]),
+  );
   const custom = options.filter((option) => !option.templateKey);
   const toggleTemplate = (key: string, checked: boolean) => {
     const existing = byTemplate.get(key);
     if (existing) {
       onChange(
-        options.map((option) => (option === existing ? { ...option, included: checked } : option)),
+        options.map((option) =>
+          option === existing ? { ...option, included: checked } : option,
+        ),
       );
       return;
     }
     const template = PROPOSAL_ITEM_TEMPLATES.find((item) => item.key === key);
-    if (template && checked) onChange([...options, optionFromTemplate(template)]);
+    if (template && checked)
+      onChange([...options, optionFromTemplate(template)]);
   };
   const addOther = () => {
     const value = Number(otherValue.replace(".", "").replace(",", "."));
@@ -2287,9 +2754,13 @@ function GuidedServices({
                 <Checkbox
                   className="size-5"
                   checked={Boolean(option?.included)}
-                  onCheckedChange={(checked) => toggleTemplate(template.key, checked === true)}
+                  onCheckedChange={(checked) =>
+                    toggleTemplate(template.key, checked === true)
+                  }
                 />
-                <span className="min-w-0 flex-1 text-sm font-medium">{template.description}</span>
+                <span className="min-w-0 flex-1 text-sm font-medium">
+                  {template.description}
+                </span>
                 <span className="shrink-0 text-sm tabular-nums">
                   {template.unitValue.toLocaleString("pt-BR", {
                     style: "currency",
@@ -2311,14 +2782,21 @@ function GuidedServices({
                 onCheckedChange={(checked) =>
                   onChange(
                     options.map((item) =>
-                      item === option ? { ...item, included: checked === true } : item,
+                      item === option
+                        ? { ...item, included: checked === true }
+                        : item,
                     ),
                   )
                 }
               />
-              <span className="min-w-0 flex-1 text-sm font-medium">{option.description}</span>
+              <span className="min-w-0 flex-1 text-sm font-medium">
+                {option.description}
+              </span>
               <span className="shrink-0 text-sm tabular-nums">
-                {option.unitValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                {option.unitValue.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
               </span>
             </label>
           ))}
@@ -2329,7 +2807,11 @@ function GuidedServices({
           className="grid gap-3 rounded-[var(--radius-control)] border p-3 sm:grid-cols-[1fr_10rem_auto] sm:items-end"
           style={inputStyle}
         >
-          <TextField label="Nome do serviço" value={otherName} onChange={setOtherName} />
+          <TextField
+            label="Nome do serviço"
+            value={otherName}
+            onChange={setOtherName}
+          />
           <TextField
             label="Valor (R$)"
             value={otherValue}
@@ -2431,14 +2913,17 @@ function PublishedProposalSuccess({
         </>
       ) : (
         <div className="mt-4 rounded-[var(--radius-control)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-3">
-          <p className="text-sm">A proposta foi publicada, mas o link ainda não foi gerado.</p>
+          <p className="text-sm">
+            A proposta foi publicada, mas o link ainda não foi gerado.
+          </p>
           <Button
             type="button"
             className="mt-3"
             disabled={generating}
             onClick={() => void generateLink()}
           >
-            <Link2 className="size-4" /> {generating ? "Gerando…" : "Gerar link"}
+            <Link2 className="size-4" />{" "}
+            {generating ? "Gerando…" : "Gerar link"}
           </Button>
         </div>
       )}
@@ -2475,7 +2960,10 @@ function NumberChoice({
           onChange(choice === TBD ? null : Number(choice));
         }}
         options={[
-          ...presets.map((preset) => ({ value: preset, label: preset + " " + unit })),
+          ...presets.map((preset) => ({
+            value: preset,
+            label: preset + " " + unit,
+          })),
           { value: "outro", label: "Outro" },
           { value: TBD, label: "A definir" },
         ]}
