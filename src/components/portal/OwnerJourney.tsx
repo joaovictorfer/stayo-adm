@@ -1403,7 +1403,6 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
   const { groups } = facts;
   const { fixed, optional, pending, fixedTotal } = groups;
   const [openBlock, setOpenBlock] = useState<string | null>(null);
-  const [reviewedBlocks, setReviewedBlocks] = useState<Set<string>>(() => new Set());
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   const responsibilities = (snapshot.responsibilities ?? []).filter((r) => r?.trim());
   const signatories = snapshot.requiredSignatories ?? [];
@@ -1415,18 +1414,12 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
   };
   const toggleBlock = (key: string, open: boolean) => {
     setOpenBlock(open ? key : null);
-    if (open) setReviewedBlocks((current) => new Set(current).add(key));
   };
   return (
     <div className="pj-blocks">
-      <ExecutiveSummary snapshot={snapshot} />
-
       {blocks.length > 0 && (
         <section aria-labelledby="pj-cond-title">
           <h2 id="pj-cond-title" className="pj-section-title">Condições comerciais e contratuais</h2>
-          <p className="pj-review-progress" aria-live="polite">
-            {reviewedBlocks.size} de {blocks.length} {blocks.length === 1 ? "condição revisada" : "condições revisadas"}
-          </p>
           <div className="pj-accordion">
             {blocks.map((b) => (
               <details
