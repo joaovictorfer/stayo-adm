@@ -93,6 +93,8 @@ import {
   type SheetRow,
 } from "../components/implantacao/ficha/FichaSummary";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
+import { PortalStatusCard } from "../components/implantacao/ficha/PortalStatusCard";
+import { InspectionsPanel, PortalTimelinePanel } from "../components/implantacao/ficha/PortalUpdatesPanels";
 import { guidedInventoryQuery } from "../lib/api/guided-inventory";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
@@ -586,7 +588,7 @@ function ImplementationDetailPage() {
                   </div>
                 ) : (
                   <FichaCommercial
-                    nextSteps={buildPending()}
+                    nextSteps={buildPending().filter((p) => p.id === "prop")}
                     onGoSection={goSection}
                     implementationId={implementation.id}
                     proposal={latestProposal ? { version: latestProposal.version, statusLabel: proposalStatusLabel[latestProposal.status], snapshot: latestProposal.status === "draft" ? null : latestProposal.snapshot ?? null, total: latestProposal.total ?? null } : null}
@@ -621,6 +623,8 @@ function ImplementationDetailPage() {
                     />
                   }
                   more={
+                    <div className="flex flex-col gap-4">
+                    <InspectionsPanel implementationId={implementation.id} />
                     <DomainHub
                       rows={[
                     {
@@ -632,36 +636,6 @@ function ImplementationDetailPage() {
                       ),
                     },
                     {
-                      id: "inventario-guiado",
-                      label: "Inventário guiado",
-                      summary: <GuidedInventorySummary implementationId={implementation.id} />,
-                      content: (
-                        <GuidedInventoryPanel implementationId={implementation.id} title={`${implementation.code}${implementation.nickname ? ` · ${implementation.nickname}` : ""}`} />
-                      ),
-                    },
-                    {
-                      id: "guia",
-                      label: "Guia de utensílios",
-                      summary: (
-                        <GuideSummary implementationId={implementation.id} guideType="utensilios" />
-                      ),
-                      content: (
-                        <GuidePanel implementationId={implementation.id} guideType="utensilios" />
-                      ),
-                    },
-                    {
-                      id: "enxoval",
-                      label: "Enxoval (compras)",
-                      summary: "Peças por ambiente, compra e entrega",
-                      content: <SupplySheet implementationId={implementation.id} />,
-                    },
-                    {
-                      id: "inventario",
-                      label: "Inventário",
-                      summary: "Necessário, existente, faltas e bloqueadores",
-                      content: <InventoryTab implementationId={implementation.id} />,
-                    },
-                    {
                       id: "fornecedores",
                       label: "Fornecedores e instalações",
                       summary: "Quem forneceu, instalou ou atende o imóvel",
@@ -669,14 +643,15 @@ function ImplementationDetailPage() {
                     },
                       ]}
                     />
+                    </div>
                   }
                 />
               ) : section === "proprietario" ? (
                 <FichaProprietario
                   implementation={implementation}
-                  portal={<OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} ownerName={implementation.ownerName} compact />}
+                  portal={<PortalStatusCard status={releasesQuery.isPending ? "Verificando…" : releasesQuery.isError ? "Não verificado" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado"} onOpen={() => goSection("portal")} />}
                   review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
-                  pending={buildPending()}
+                  pending={buildPending().filter((p) => p.id === "owner")}
                   proposal={latestProposal ?? null}
                   hasConditions={Boolean(conditions)}
                   onGo={goSection}
@@ -1017,6 +992,7 @@ function OwnerTab({
             ownerName={ownerData?.name ?? implementation.ownerName ?? null}
           />
         </div>
+        <PortalTimelinePanel implementationId={implementation.id} />
         <Collapsible title="Convite da proposta" summary="Link de apresentação e aceite">
           <OwnerInviteSection
             implementationId={implementation.id}

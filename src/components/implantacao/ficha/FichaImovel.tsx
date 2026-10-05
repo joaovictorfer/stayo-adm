@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, Building, CalendarPlus, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Megaphone, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
+import { AlertCircle, Building, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -9,11 +9,7 @@ import { useAdminCoverUrl } from "../CoverPicker";
 import { Collapsible } from "./FichaParts";
 import { adminCondominiumQuery, adminCondominiumsListQuery, coreApi } from "../../../lib/api/queries";
 import {
-  createInspection,
-  createTimelineUpdate,
   getPropertyDetails,
-  listPortalInspections,
-  listPortalTimeline,
   savePropertyDetails,
   type PropertyDetailsInput,
 } from "../../../lib/api/owner-portal-data";
@@ -113,8 +109,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const detailsQ = useQuery({ queryKey: ["implementation-property-details", implementation.id], queryFn: () => getPropertyDetails(implementation.id) });
   const condoQ = useQuery({ ...adminCondominiumQuery(implementation.condominiumId ?? ""), enabled: Boolean(implementation.condominiumId) });
   const condoListQ = useQuery({ ...adminCondominiumsListQuery(), enabled: editing });
-  const timelineQ = useQuery({ queryKey: ["implementation-timeline", implementation.id], queryFn: () => listPortalTimeline(implementation.id) });
-  const inspectionsQ = useQuery({ queryKey: ["implementation-inspections", implementation.id], queryFn: () => listPortalInspections(implementation.id) });
   const d = detailsQ.data;
 
   const [condoId, setCondoId] = useState("");
@@ -132,10 +126,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const [wifiPassword, setWifiPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
-  const [timelineTitle, setTimelineTitle] = useState("");
-  const [timelineDescription, setTimelineDescription] = useState("");
-  const [inspectionDate, setInspectionDate] = useState("");
-  const [inspectionNotes, setInspectionNotes] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
 
@@ -195,27 +185,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
     onError,
   });
 
-  const publishUpdate = useMutation({
-    mutationFn: () => createTimelineUpdate({ implementationId: implementation.id, title: timelineTitle, description: timelineDescription, kind: "update", ownerVisible: true }),
-    onSuccess: async () => {
-      setTimelineTitle("");
-      setTimelineDescription("");
-      await qc.invalidateQueries({ queryKey: ["implementation-timeline", implementation.id] });
-      toast.success("Atualização publicada no portal");
-    },
-  });
-
-  const scheduleInspection = useMutation({
-    mutationFn: () =>
-      createInspection({ implementationId: implementation.id, type: "implantacao", scheduledFor: inspectionDate ? new Date(inspectionDate).toISOString() : null, publicNotes: inspectionNotes, ownerVisible: true }),
-    onSuccess: async () => {
-      setInspectionDate("");
-      setInspectionNotes("");
-      await qc.invalidateQueries({ queryKey: ["implementation-inspections", implementation.id] });
-      toast.success("Vistoria adicionada ao portal");
-    },
-  });
-
   async function handleSave() {
     const selected = condoListQ.data?.find((c) => c.id === condoId);
     try {
@@ -247,7 +216,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
   const pendencies: Array<{ label: string; cta: string; onClick: () => void }> = [];
   if (!adminCover) pendencies.push({ label: "Fotos do imóvel ainda não adicionadas.", cta: "Adicionar fotos", onClick: onGoPortal });
-  if (!linked) pendencies.push({ label: "Imóvel sem condomínio vinculado.", cta: "Vincular", onClick: startEdit });
   if (d !== undefined && (!d?.wifiNetwork || !d?.wifiPassword)) pendencies.push({ label: "Dados de Wi-Fi não informados.", cta: "Completar", onClick: startEdit });
   if (d !== undefined && !d?.accessType) pendencies.push({ label: "Forma de acesso não informada.", cta: "Definir", onClick: startEdit });
 
@@ -383,23 +351,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
             <>
               <Card icon={<FileText className="size-4" />} title="Identificação">
                 <ul>
-                  <Line
-                    row={{
-                      label: "Condomínio",
-                      value: condoName ? (
-                        <span className="flex items-center gap-3">
-                          <span style={muted}>{condoName}</span>
-                          {linked && <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ficha-ok)" }}><span className="size-2 rounded-full" style={{ backgroundColor: "var(--ficha-ok)" }} />Cadastrado</span>}
-                        </span>
-                      ) : null,
-                      extra: linked ? (
-                        <Link to="/condominios/$id" params={{ id: implementation.condominiumId as string }} className="hidden items-center gap-1.5 text-sm underline underline-offset-2 sm:flex" style={navy}>
-                          Ver condomínio <ExternalLink className="size-4" />
-                        </Link>
-                      ) : undefined,
-                    }}
-                    onEdit={startEdit}
-                  />
                   <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
                   <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
                   <Line row={{ label: "Tipo", value: implementation.propertyType }} onEdit={startEdit} />
@@ -414,9 +365,9 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                 <div className="my-3 grid gap-3 rounded-lg border p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center" style={{ ...border, backgroundColor: "var(--ficha-subtle)" }}>
                   <span className="grid size-11 place-items-center rounded-full bg-white" style={navy}><Building className="size-5" /></span>
                   <div className="min-w-0">
-                    <p className="font-semibold" style={navy}>{linked ? `Endereço do condomínio ${condoName ?? ""}` : "Sem condomínio vinculado"}</p>
+                    <p className="font-semibold" style={navy}>{linked ? `Endereço do condomínio ${condoName ?? ""}` : "Endereço da unidade"}</p>
                     <p className="text-sm" style={muted}>
-                      {linked ? condoAddress || "Este endereço é reutilizado pelas unidades vinculadas." : legacyAddress || "Vincule um condomínio cadastrado para reaproveitar o endereço."}
+                      {linked ? condoAddress || "Este endereço é reutilizado pelas unidades vinculadas." : legacyAddress || "Não informado"}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 sm:items-end">
@@ -427,9 +378,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                           Ver endereço <ExternalLink className="size-4" />
                         </Link>
                       </>
-                    ) : (
-                      <button type="button" onClick={startEdit} className={linkCls} style={navy}>Vincular condomínio</button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </Card>
@@ -481,41 +430,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
           )}
 
           <div className="flex flex-col gap-4 lg:hidden">{sidebar}</div>
-
-          <Collapsible title="Linha do tempo pública" summary="Atualizações visíveis no Portal do Proprietário">
-            <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
-              <input value={timelineTitle} onChange={(e) => setTimelineTitle(e.target.value)} placeholder="Título da atualização" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-              <input value={timelineDescription} onChange={(e) => setTimelineDescription(e.target.value)} placeholder="Mensagem para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-              <Button size="sm" onClick={() => publishUpdate.mutate()} disabled={!timelineTitle.trim() || publishUpdate.isPending}><Megaphone /> Publicar</Button>
-            </div>
-            <div className="mt-4 space-y-2">
-              {(timelineQ.data ?? []).slice(0, 5).map((event) => (
-                <div key={event.id} className="flex items-start justify-between gap-3 border-t pt-3 text-sm" style={border}>
-                  <div>
-                    <strong>{event.title}</strong>
-                    {event.description && <p className="text-xs" style={muted}>{event.description}</p>}
-                  </div>
-                  <span className="shrink-0 text-xs" style={muted}>{new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}</span>
-                </div>
-              ))}
-            </div>
-          </Collapsible>
-
-          <Collapsible title="Vistorias" summary="Agendamento e resumo liberados no portal">
-            <div className="grid gap-3 sm:grid-cols-[13rem_1fr_auto]">
-              <input type="datetime-local" value={inspectionDate} onChange={(e) => setInspectionDate(e.target.value)} className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-              <input value={inspectionNotes} onChange={(e) => setInspectionNotes(e.target.value)} placeholder="Resumo para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-              <Button size="sm" onClick={() => scheduleInspection.mutate()} disabled={!inspectionDate || scheduleInspection.isPending}><CalendarPlus /> Agendar</Button>
-            </div>
-            <div className="mt-4 space-y-2">
-              {(inspectionsQ.data ?? []).map((i) => (
-                <div key={i.id} className="flex items-center justify-between border-t pt-3 text-sm" style={border}>
-                  <span>{i.publicNotes || "Vistoria do imóvel"}</span>
-                  <strong>{i.status === "completed" ? "Concluída" : "Agendada"}</strong>
-                </div>
-              ))}
-            </div>
-          </Collapsible>
 
           <Collapsible title="Observações internas" summary="Notas de uso exclusivo da operação">
             {editingNotes ? (
