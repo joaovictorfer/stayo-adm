@@ -151,6 +151,8 @@ export interface AdminApiClient {
       input: OwnerOnboardingSubmissionInput,
       currentStep: number,
       submit?: boolean,
+      /** false = não regravar os dados do imóvel (só mudaram dados pessoais). */
+      saveProperty?: boolean,
     ): Promise<OwnerOnboardingSubmission>;
     /** Idem — chamado pelo portal público, valida tudo de novo server-side. */
     submit(
@@ -1705,13 +1707,17 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
           })
         : null;
     },
-    saveDraft: async (token, input, currentStep, submit = false) => {
+    saveDraft: async (token, input, currentStep, submit = false, saveProperty = true) => {
       const supabase = publicClient();
-      const { error: propertyError } = await supabase.rpc("owner_property_details_save_by_token", {
-        p_token: token,
-        p_data: input,
-      });
-      if (propertyError) throw propertyError;
+      // Dados do imóvel só são regravados quando mudaram (ou no envio final);
+      // editar dados pessoais grava apenas o cadastro do proprietário.
+      if (saveProperty || submit) {
+        const { error: propertyError } = await supabase.rpc("owner_property_details_save_by_token", {
+          p_token: token,
+          p_data: input,
+        });
+        if (propertyError) throw propertyError;
+      }
       const { data, error } = await supabase.rpc("owner_onboarding_draft_save_v2", {
         p_token: token,
         p_submit: submit,

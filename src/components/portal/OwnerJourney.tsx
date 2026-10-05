@@ -156,6 +156,13 @@ const ownerFields: OwnerFormField[] = [
   "pixKey",
 ];
 
+/** Somente campos do imóvel: decide se a gravação do imóvel é necessária. */
+function propertySignature(form: OwnerOnboardingSubmissionInput) {
+  return JSON.stringify(
+    Object.fromEntries(Object.entries(form).filter(([key]) => key.startsWith("property"))),
+  );
+}
+
 const emptyPropertyErrorKeys: Record<keyof PropertyErrors, true> = {
   propertyPostalCode: true,
   propertyStreet: true,
@@ -186,7 +193,7 @@ export function OwnerJourney({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const implementationQ = useQuery(implementationQuery(implementationId));
-  const submissionQ = useQuery(ownerOnboardingSubmissionQuery(implementationId));
+  // Página pública: não consultar owner_onboarding_profiles (tabela administrativa → 401).
   const journeyQ = useQuery({
     queryKey: ["owner-journey", "proposal", token],
     queryFn: () => ownerJourneyApi.resolveProposal(token),
@@ -224,6 +231,7 @@ export function OwnerJourney({
   const stageRef = useRef<Stage>(stage);
   const maxStageRef = useRef<Stage>(maxStage);
   const lastSaved = useRef("");
+  const lastPropertySaved = useRef("");
   const queue = useRef<Promise<void>>(Promise.resolve());
   const finalizing = useRef(false);
 
@@ -231,7 +239,7 @@ export function OwnerJourney({
     journeyQ.data?.confirmation && !journeyQ.data.needsConfirmation,
   );
   const commandId = useRef<string>(crypto.randomUUID());
-  const submitted = Boolean(submissionQ.data?.submittedAt || draftQ.data?.submittedAt);
+  const submitted = Boolean(draftQ.data?.submittedAt);
 
   // Fase 04 · Plataformas — fonte oficial: implantação (RPC por token do cadastro).
   const platformsViewKey = `stayo:platforms-view:${token.slice(0, 12)}`;
@@ -359,6 +367,7 @@ export function OwnerJourney({
     setForm(reconciled);
     formRef.current = reconciled;
     lastSaved.current = JSON.stringify(reconciled);
+    lastPropertySaved.current = propertySignature(reconciled);
     setStage(current);
     stageRef.current = current;
     setMaxStage(reached);
@@ -399,8 +408,12 @@ export function OwnerJourney({
       queue.current = queue.current
         .catch(() => undefined)
         .then(async () => {
-          const saved = await adminApi.ownerOnboarding.saveDraft(token, snapshot, code, false);
+          const propSig = propertySignature(snapshot);
+          const saved = await adminApi.ownerOnboarding.saveDraft(
+            token, snapshot, code, false, propSig !== lastPropertySaved.current,
+          );
           lastSaved.current = signature;
+          lastPropertySaved.current = propSig;
           queryClient.setQueryData(["owner-onboarding-draft", token], saved);
           queryClient.setQueryData(
             ownerOnboardingSubmissionQuery(implementationId).queryKey,
