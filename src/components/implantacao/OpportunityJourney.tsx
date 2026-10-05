@@ -67,6 +67,8 @@ import {
   coreApi,
 } from "../../lib/api/queries";
 import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
+import { getOpportunityDraftState } from "../../lib/api/opportunities";
+import { journeyLabel, proposalStage } from "../../lib/journey-states";
 import { opportunityPreparationSummaryQuery } from "../../lib/api/opportunity-review";
 import {
   presentationInvitesApi,
@@ -1096,7 +1098,7 @@ function PreparationJourneyHeader({
               color: "var(--stayo-ink)",
             }}
           >
-            Rascunho
+            <JourneyStateText implementation={implementation} />
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1213,7 +1215,7 @@ function ReviewJourneyHeader({
               color: "var(--stayo-ink)",
             }}
           >
-            Rascunho
+            <JourneyStateText implementation={implementation} />
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1330,7 +1332,7 @@ function PropertyJourneyHeader({
               color: "var(--stayo-ink)",
             }}
           >
-            Rascunho
+            <JourneyStateText implementation={implementation} />
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1451,7 +1453,7 @@ function CommercialJourneyHeader({
               color: "var(--stayo-ink)",
             }}
           >
-            Rascunho
+            <JourneyStateText implementation={implementation} />
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -2947,5 +2949,27 @@ function NumberChoice({
         </label>
       )}
     </div>
+  );
+}
+
+/** Estado real da ficha (o mesmo da lista e do cabeçalho), não um "Rascunho" fixo. */
+function JourneyStateText({ implementation }: { implementation: ImplementationProject }) {
+  const draft = useQuery({
+    queryKey: ["opportunity-draft-state", implementation.id],
+    queryFn: () => getOpportunityDraftState(implementation.id),
+  });
+  const proposals = useQuery({
+    queryKey: ["commercial-proposals", implementation.id],
+    queryFn: () => commercialProposalsApi.list(implementation.id),
+  });
+  if (!draft.data || !proposals.data) return <>…</>;
+  return (
+    <>
+      {journeyLabel({
+        status: implementation.status,
+        isDraft: draft.data.isDraft,
+        proposal: proposalStage(proposals.data),
+      })}
+    </>
   );
 }
