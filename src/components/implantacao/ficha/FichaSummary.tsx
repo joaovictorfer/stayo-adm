@@ -138,12 +138,26 @@ export function JourneyCard({ status }: { status: ImplementationStatus }) {
           Implantação fora do fluxo principal.
         </p>
       )}
-      <ol className="flex overflow-x-auto pb-1">
+      {current >= 0 && (
+        <div className="sm:hidden">
+          <p className="text-sm font-semibold" style={{ color: "var(--stayo-navy)" }}>
+            {JOURNEY[current]!.label}
+            <span className="ml-1 font-normal" style={muted}>· Etapa {current + 1} de {JOURNEY.length}</span>
+          </p>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
+            <span className="block h-full rounded-full" style={{ width: `${((current + 1) / JOURNEY.length) * 100}%`, backgroundColor: "var(--stayo-forest)" }} />
+          </div>
+          {JOURNEY[current + 1] && (
+            <p className="mt-2 text-xs" style={muted}>Próxima: {JOURNEY[current + 1]!.label}</p>
+          )}
+        </div>
+      )}
+      <ol className={`${current >= 0 ? "hidden sm:flex" : "flex"} pb-1`}>
         {JOURNEY.map((step, i) => {
           const done = current >= 0 && i < current;
           const active = i === current;
           return (
-            <li key={step.label} className="relative flex min-w-[76px] flex-1 flex-col items-center text-center">
+            <li key={step.label} className="relative flex min-w-0 flex-1 flex-col items-center text-center">
               {i > 0 && (
                 <span
                   aria-hidden

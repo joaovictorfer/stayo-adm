@@ -31,6 +31,8 @@ import {
   Share2,
   CalendarPlus,
   Megaphone,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 

@@ -927,7 +927,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
 
         {excludedCount > 0 && !optionsSupported && (
           <p className="mt-3 rounded-lg bg-[var(--stayo-gold-soft)] p-3 text-xs text-[var(--stayo-warning)]">
-            {excludedCount} item(ns) desligado(s). Até a atualização do banco ser aprovada, itens
+            {excludedCount} {excludedCount === 1 ? "item desligado" : "itens desligados"}. Até a atualização do banco ser aprovada, itens
             desligados não ficam guardados no rascunho ao salvar.
           </p>
         )}
@@ -1040,7 +1040,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           <AlertDialogHeader>
             <AlertDialogTitle>Publicar versão {draftSnapshot.version}?</AlertDialogTitle>
             <AlertDialogDescription>
-              {proposalItems.length} serviço(s) incluído(s), total {formatBRL(total)}. Depois de
+              {proposalItems.length} {proposalItems.length === 1 ? "serviço incluído" : "serviços incluídos"}, total {formatBRL(total)}. Depois de
               publicada, esta versão não pode ser alterada
               {latestPublished?.status === "published"
                 ? ` e a versão ${latestPublished.version} passa a ser substituída`

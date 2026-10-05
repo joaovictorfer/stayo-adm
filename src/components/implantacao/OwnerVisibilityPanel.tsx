@@ -149,10 +149,10 @@ export function OwnerVisibilityPanel({
   const readyHint: Record<PortalBlock, string> = {
     overview: "Mensagem escrita pela equipe",
     proposal: published.length
-      ? `${published.length} versão(ões) publicada(s)`
+      ? `${published.length} ${published.length === 1 ? "versão publicada" : "versões publicadas"}`
       : "Nenhuma versão publicada",
     documents: attachmentsQ.data?.length
-      ? `${attachmentsQ.data.length} arquivo(s) na implantação`
+      ? `${attachmentsQ.data.length} ${attachmentsQ.data.length === 1 ? "arquivo" : "arquivos"} na implantação`
       : "Nenhum arquivo anexado",
   };
 
