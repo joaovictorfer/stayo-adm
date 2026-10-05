@@ -140,11 +140,7 @@ export function OpportunityJourney(props: {
     return (
       <div role="alert" className="py-10 text-sm">
         Não conseguimos abrir o cadastro.{" "}
-        <button
-          type="button"
-          className="underline"
-          onClick={() => void formQ.refetch()}
-        >
+        <button type="button" className="underline" onClick={() => void formQ.refetch()}>
           Tentar novamente
         </button>
       </div>
@@ -207,10 +203,7 @@ function JourneyBody({
     }
   };
   const changeContact = (k: "name" | "phone", value: string) => {
-    setContact((c) => ({
-      ...c,
-      [k]: k === "phone" ? formatBrazilianPhone(value) : value,
-    }));
+    setContact((c) => ({ ...c, [k]: k === "phone" ? formatBrazilianPhone(value) : value }));
     contactDirty.current = true;
     setContactState("saving");
     if (contactTimer.current) window.clearTimeout(contactTimer.current);
@@ -248,19 +241,13 @@ function JourneyBody({
         const { error } = await supabase
           .from("implementation_contract_conditions")
           .upsert(
-            {
-              implementation_id: id,
-              ...patch,
-              updated_at: new Date().toISOString(),
-            } as never,
+            { implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never,
             {
               onConflict: "implementation_id",
             },
           );
         if (error) throw error;
-        setCondState(
-          Object.keys(condPending.current).length ? "saving" : "saved",
-        );
+        setCondState(Object.keys(condPending.current).length ? "saving" : "saved");
         return true;
       } catch {
         condPending.current = { ...patch, ...condPending.current };
@@ -286,17 +273,11 @@ function JourneyBody({
     queryFn: () => commercialProposalsApi.list(id),
   });
   const versions = proposalsQ.data ?? [];
-  const draftProposal =
-    versions.find((version) => version.status === "draft") ?? null;
-  const latestPublished =
-    versions.find((version) => version.status !== "draft") ?? null;
+  const draftProposal = versions.find((version) => version.status === "draft") ?? null;
+  const latestPublished = versions.find((version) => version.status !== "draft") ?? null;
   const proposalSource = draftProposal ?? latestPublished;
-  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>(
-    [],
-  );
-  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(
-    null,
-  );
+  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>([]);
+  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(null);
   const [proposalState, setProposalState] = useState<SaveState>("idle");
   const proposalDirty = useRef(false);
   const proposalOptionsRef = useRef<ProposalItemOption[]>([]);
@@ -316,8 +297,7 @@ function JourneyBody({
   const saveProposal = useCallback(async (): Promise<boolean> => {
     if (proposalRunning.current) await proposalRunning.current;
     const currentOptions = proposalOptionsRef.current;
-    if (!proposalDirty.current || guidedProposalIssue(currentOptions))
-      return true;
+    if (!proposalDirty.current || guidedProposalIssue(currentOptions)) return true;
     setProposalState("saving");
     const request = (async () => {
       try {
@@ -334,9 +314,7 @@ function JourneyBody({
           `${saved.id}:${saved.status}:${saved.draftRevision}:${saved.updatedAt}`,
         );
         setProposalState("saved");
-        await queryClient.invalidateQueries({
-          queryKey: ["commercial-proposals", id],
-        });
+        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
         return true;
       } catch {
         setProposalState("error");
@@ -359,18 +337,13 @@ function JourneyBody({
   };
 
   useEffect(() => {
-    void autosaveOpportunity(id, { draft_step: step }, {}).catch(
-      () => undefined,
-    );
+    void autosaveOpportunity(id, { draft_step: step }, {}).catch(() => undefined);
     window.scrollTo({ top: 0 });
   }, [id, step]);
 
-  const saveState: SaveState = [
-    auto.state,
-    contactState,
-    condState,
-    proposalState,
-  ].includes("error")
+  const saveState: SaveState = [auto.state, contactState, condState, proposalState].includes(
+    "error",
+  )
     ? "error"
     : [auto.state, contactState, condState, proposalState].includes("saving")
       ? "saving"
@@ -462,15 +435,10 @@ function JourneyBody({
       await completeOpportunityDraft(id);
     },
     onSuccess: () => {
-      toast.success("Ficha criada", {
-        description: "Nada foi enviado ao proprietário.",
-      });
+      toast.success("Ficha criada", { description: "Nada foi enviado ao proprietário." });
       onExit();
     },
-    onError: (e) =>
-      toast.error(
-        e instanceof Error ? e.message : "Não foi possível concluir.",
-      ),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível concluir."),
   });
 
   let content: ReactNode = null;
@@ -512,8 +480,7 @@ function JourneyBody({
   } else if (step === "proposta") {
     content = condQ.isPending ? (
       <div className="flex items-center gap-2 py-10 text-sm" style={muted}>
-        <Loader2 className="size-4 animate-spin" /> Carregando condições da
-        proposta…
+        <Loader2 className="size-4 animate-spin" /> Carregando condições da proposta…
       </div>
     ) : (
       <ProposalBlocks
@@ -581,9 +548,7 @@ function JourneyBody({
       </div>
     ) : (
       <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">
-          O que você quer registrar agora?
-        </h3>
+        <h3 className="text-lg font-semibold">O que você quer registrar agora?</h3>
         <p className="text-sm" style={muted}>
           Preencha um, vários ou nenhum.
         </p>
@@ -595,10 +560,7 @@ function JourneyBody({
             className="flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] border px-4 text-left transition hover:border-[var(--stayo-forest)]"
             style={inputStyle}
           >
-            <h.icon
-              className="size-5 shrink-0"
-              style={{ color: "var(--stayo-forest)" }}
-            />
+            <h.icon className="size-5 shrink-0" style={{ color: "var(--stayo-forest)" }} />
             <span className="flex-1 font-medium">{h.label}</span>
             <ChevronRight className="size-4" style={muted} />
           </button>
@@ -634,8 +596,7 @@ function JourneyBody({
       if (!ok) return;
       try {
         const currentVersions = await commercialProposalsApi.list(id);
-        const currentDraft =
-          currentVersions.find((version) => version.status === "draft") ?? null;
+        const currentDraft = currentVersions.find((version) => version.status === "draft") ?? null;
         const currentPublished =
           currentVersions.find((version) => version.status !== "draft") ?? null;
         const saved =
@@ -665,9 +626,7 @@ function JourneyBody({
           // A versão permanece publicada; o link pode ser gerado novamente na tela de sucesso.
         }
         setPublishedResult({ version: published, link });
-        await queryClient.invalidateQueries({
-          queryKey: ["commercial-proposals", id],
-        });
+        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
         toast.success("Proposta publicada", {
           description: link
             ? "O link está pronto para copiar."
@@ -676,9 +635,7 @@ function JourneyBody({
       } catch (error) {
         toast.error("Não foi possível publicar a proposta", {
           description:
-            error instanceof Error
-              ? error.message
-              : "Revise os dados e tente novamente.",
+            error instanceof Error ? error.message : "Revise os dados e tente novamente.",
         });
       }
     };
@@ -713,9 +670,7 @@ function JourneyBody({
               : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
           </p>
           <p className="mt-1 text-sm" style={muted}>
-            {cond.duration_months == null
-              ? "Vigência a definir"
-              : `${cond.duration_months} meses`}
+            {cond.duration_months == null ? "Vigência a definir" : `${cond.duration_months} meses`}
             {cond.notice_period_days == null
               ? " · Aviso a definir"
               : ` · ${cond.notice_period_days} dias de aviso`}
@@ -752,9 +707,7 @@ function JourneyBody({
             implementationId={id}
             onBack={onExit}
             onLinkGenerated={(link) =>
-              setPublishedResult((current) =>
-                current ? { ...current, link } : current,
-              )
+              setPublishedResult((current) => (current ? { ...current, link } : current))
             }
           />
         ) : (
@@ -782,10 +735,8 @@ function JourneyBody({
               disabled={complete.isPending}
               onClick={() => complete.mutate()}
             >
-              {complete.isPending && (
-                <Loader2 className="size-4 animate-spin" />
-              )}{" "}
-              Criar ficha sem enviar
+              {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
+              enviar
             </Button>
           </div>
         )}
@@ -810,67 +761,67 @@ function JourneyBody({
           onExit={exit}
         />
       ) : (
-      <header className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            aria-label="Voltar para implantações"
-            onClick={() => void exit()}
-            className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
-            style={{ color: "var(--stayo-forest)" }}
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Implantação
-          </button>
-          <JourneyActions implementation={implementation} />
-        </div>
-        <div className="flex items-center justify-between gap-3">
+        <header className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              aria-label="Voltar para implantações"
+              onClick={() => void exit()}
+              className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
+              style={{ color: "var(--stayo-forest)" }}
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Implantação
+            </button>
+            <JourneyActions implementation={implementation} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
             <p className="min-w-0 truncate text-sm font-semibold">
               {implementation.code}
             </p>
-          <div className="flex shrink-0 items-center gap-2">
-            <SaveStatus state={saveState} onRetry={retry} compact />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="min-h-11 px-2 sm:px-3"
-              onClick={() => void exit()}
-            >
-              Salvar e sair
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              <SaveStatus state={saveState} onRetry={retry} compact />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="min-h-11 px-2 sm:px-3"
+                onClick={() => void exit()}
+              >
+                Salvar e sair
+              </Button>
+            </div>
           </div>
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold">
+          <div>
+            <h2 className="text-lg font-semibold">
               {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de{" "}
               {JOURNEY_STEPS.length}
-          </h2>
-          {proposalBlockLabel && (
-            <p className="mt-0.5 text-xs" style={muted}>
-              {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
-            </p>
-          )}
-        </div>
-        <div
-          className="flex gap-1"
-          role="progressbar"
-          aria-valuenow={index + 1}
-          aria-valuemin={1}
-          aria-valuemax={JOURNEY_STEPS.length}
-        >
-          {JOURNEY_STEPS.map((s, i) => (
-            <span
-              key={s.id}
-              className="h-1 flex-1 rounded-full"
-              style={{
+            </h2>
+            {proposalBlockLabel && (
+              <p className="mt-0.5 text-xs" style={muted}>
+                {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
+              </p>
+            )}
+          </div>
+          <div
+            className="flex gap-1"
+            role="progressbar"
+            aria-valuenow={index + 1}
+            aria-valuemin={1}
+            aria-valuemax={JOURNEY_STEPS.length}
+          >
+            {JOURNEY_STEPS.map((s, i) => (
+              <span
+                key={s.id}
+                className="h-1 flex-1 rounded-full"
+                style={{
                   backgroundColor:
                     i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
-              }}
-            />
-          ))}
-        </div>
-      </header>
+                }}
+              />
+            ))}
+          </div>
+        </header>
       )}
 
       <div>{content}</div>
@@ -1036,16 +987,10 @@ function PropertyJourneyHeader({
   );
 }
 
-function JourneyActions({
-  implementation,
-}: {
-  implementation: ImplementationProject;
-}) {
+function JourneyActions({ implementation }: { implementation: ImplementationProject }) {
   const locked =
     implementation.status === "ativo" ||
-    Boolean(
-      (implementation as { corePropertyId?: string | null }).corePropertyId,
-    );
+    Boolean((implementation as { corePropertyId?: string | null }).corePropertyId);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -1152,10 +1097,7 @@ function TextField({
         style={inputStyle}
       />
       {error && (
-        <span
-          className="mt-1 block text-xs"
-          style={{ color: "var(--stayo-danger)" }}
-        >
+        <span className="mt-1 block text-xs" style={{ color: "var(--stayo-danger)" }}>
           {error}
         </span>
       )}
@@ -1209,12 +1151,8 @@ function Chips<T extends string>({
             onClick={() => onChange(o.value)}
             className="min-h-11 rounded-full border px-4 text-sm font-medium transition"
             style={{
-              borderColor: active
-                ? "var(--stayo-forest)"
-                : "var(--stayo-border)",
-              backgroundColor: active
-                ? "var(--stayo-forest)"
-                : "var(--stayo-surface)",
+              borderColor: active ? "var(--stayo-forest)" : "var(--stayo-border)",
+              backgroundColor: active ? "var(--stayo-forest)" : "var(--stayo-surface)",
               color: active ? "var(--primary-foreground)" : "var(--stayo-ink)",
             }}
           >
@@ -1245,10 +1183,7 @@ function ReviewCard({
   children: ReactNode;
 }) {
   return (
-    <section
-      className="rounded-[var(--radius-card)] border p-4"
-      style={inputStyle}
-    >
+    <section className="rounded-[var(--radius-card)] border p-4" style={inputStyle}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold">{title}</h3>
@@ -1367,7 +1302,7 @@ function PropertyQuestions({
       (item) =>
         normalize(item.name) === normalize(name) &&
         normalize(item.city) === normalize(newCondo.city),
-  );
+    );
     if (duplicate) {
       setCreating(false);
       setNewCondoError(null);
@@ -1429,7 +1364,7 @@ function PropertyQuestions({
             Use o cadastro mestre para reaproveitar o endereço e evitar
             informações duplicadas.
           </p>
-          </div>
+        </div>
 
         {mode === "condo" && selected ? (
           <div
@@ -1458,7 +1393,7 @@ function PropertyQuestions({
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-        )}
+                )}
               </div>
               <Button
                 type="button"
@@ -1486,7 +1421,7 @@ function PropertyQuestions({
             </div>
             <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
               <TextField
-          label="Endereço"
+                label="Endereço"
                 value={v.address}
                 onChange={(x) => set("address", x)}
               />
@@ -1494,14 +1429,14 @@ function PropertyQuestions({
                 label="Cidade"
                 value={v.city}
                 onChange={(x) => set("city", x)}
-        />
-            <TextField
-              label="CEP"
-              inputMode="numeric"
-              value={v.postal_code}
-              onChange={(x) => set("postal_code", x)}
-            />
-          </div>
+              />
+              <TextField
+                label="CEP"
+                inputMode="numeric"
+                value={v.postal_code}
+                onChange={(x) => set("postal_code", x)}
+              />
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -1556,7 +1491,7 @@ function PropertyQuestions({
               <p className="py-1 text-sm" style={muted}>
                 Nenhum condomínio encontrado.
               </p>
-        )}
+            )}
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <button
@@ -1660,55 +1595,55 @@ function PropertyQuestions({
       >
         <h2 className="mb-4 text-base font-semibold">Características</h2>
         <div className="grid gap-5 lg:grid-cols-3">
-      <Question title="Tipo">
-        <Chips
-          label="Tipo"
+          <Question title="Tipo">
+            <Chips
+              label="Tipo"
               value={v.property_type || null}
-          onChange={(x) => set("property_type", x === "nsei" ? "" : x)}
-          options={[
-            { value: "apartamento", label: "Apartamento" },
-            { value: "casa", label: "Casa" },
-            { value: "studio", label: "Studio" },
-            { value: "outro", label: "Outro" },
-            { value: "nsei", label: "Não sei" },
-          ]}
-        />
-      </Question>
-      <Question title="Quartos">
-        <Chips
-          label="Quartos"
+              onChange={(x) => set("property_type", x === "nsei" ? "" : x)}
+              options={[
+                { value: "apartamento", label: "Apartamento" },
+                { value: "casa", label: "Casa" },
+                { value: "studio", label: "Studio" },
+                { value: "outro", label: "Outro" },
+                { value: "nsei", label: "Não sei" },
+              ]}
+            />
+          </Question>
+          <Question title="Quartos">
+            <Chips
+              label="Quartos"
               value={bedroomsValue || null}
-          onChange={(x) => {
-            if (x === "studio") {
-              set("property_type", "studio");
-              set("bedrooms", "0");
-            } else set("bedrooms", x === "nsei" ? "" : x);
-          }}
-          options={[
-            { value: "studio", label: "Studio" },
-            { value: "1", label: "1" },
-            { value: "2", label: "2" },
-            { value: "3", label: "3" },
-            { value: "4", label: "4+" },
-            { value: "nsei", label: "Não sei" },
-          ]}
-        />
-      </Question>
-      <Question title="Capacidade de hóspedes">
-        <Chips
-          label="Capacidade"
+              onChange={(x) => {
+                if (x === "studio") {
+                  set("property_type", "studio");
+                  set("bedrooms", "0");
+                } else set("bedrooms", x === "nsei" ? "" : x);
+              }}
+              options={[
+                { value: "studio", label: "Studio" },
+                { value: "1", label: "1" },
+                { value: "2", label: "2" },
+                { value: "3", label: "3" },
+                { value: "4", label: "4+" },
+                { value: "nsei", label: "Não sei" },
+              ]}
+            />
+          </Question>
+          <Question title="Capacidade de hóspedes">
+            <Chips
+              label="Capacidade"
               value={capacityValue || null}
-          onChange={(x) => set("capacity", x === "nsei" ? "" : x)}
-          options={[
-            { value: "2", label: "2" },
-            { value: "4", label: "4" },
-            { value: "6", label: "6" },
-            { value: "8", label: "8+" },
-            { value: "nsei", label: "Não sei" },
-          ]}
-        />
-      </Question>
-    </div>
+              onChange={(x) => set("capacity", x === "nsei" ? "" : x)}
+              options={[
+                { value: "2", label: "2" },
+                { value: "4", label: "4" },
+                { value: "6", label: "6" },
+                { value: "8", label: "8+" },
+                { value: "nsei", label: "Não sei" },
+              ]}
+            />
+          </Question>
+        </div>
       </section>
     </div>
   );
@@ -1720,17 +1655,11 @@ function proposalBlockSummaries(c: Cond) {
   return [
     {
       label: "Condições comerciais",
-      value:
-        c.administration_fee != null || c.turnover_cleaning_fee != null
-          ? "ok"
-          : "",
+      value: c.administration_fee != null || c.turnover_cleaning_fee != null ? "ok" : "",
     },
     {
       label: "Preparação do imóvel",
-      value:
-        c.initial_cleaning_option || c.linen_mode || c.advisory_mode
-          ? "ok"
-          : "",
+      value: c.initial_cleaning_option || c.linen_mode || c.advisory_mode ? "ok" : "",
     },
     {
       label: "Condições do contrato",
@@ -1763,12 +1692,7 @@ function ProposalBlocks({
 }) {
   const num = (value: unknown) =>
     value === null || value === undefined || value === "" ? "" : String(value);
-  const boolChoice =
-    cond.exclusivity === true
-      ? "sim"
-      : cond.exclusivity === false
-        ? "nao"
-        : null;
+  const boolChoice = cond.exclusivity === true ? "sim" : cond.exclusivity === false ? "nao" : null;
   const duration = proposalNumberChoice(cond.duration_months, [12, 24]);
   const notice = proposalNumberChoice(cond.notice_period_days, [30, 60]);
 
@@ -1781,9 +1705,7 @@ function ProposalBlocks({
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">
-              Taxa de administração
-            </span>
+            <span className="mb-1.5 block text-sm font-medium">Taxa de administração</span>
             <div className="flex items-center gap-2">
               <input
                 key={num(cond.administration_fee)}
@@ -1805,9 +1727,7 @@ function ProposalBlocks({
             </div>
           </label>
           <div>
-            <span className="mb-1.5 block text-sm font-medium">
-              Limpeza comercial
-            </span>
+            <span className="mb-1.5 block text-sm font-medium">Limpeza comercial</span>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">R$</span>
               <input
@@ -1815,9 +1735,7 @@ function ProposalBlocks({
                 inputMode="decimal"
                 defaultValue={num(cond.turnover_cleaning_fee)}
                 onBlur={(event) => {
-                  const value = Number(
-                    event.target.value.replace(/\./g, "").replace(",", "."),
-                  );
+                  const value = Number(event.target.value.replace(/\./g, "").replace(",", "."));
                   setC({
                     turnover_cleaning_fee:
                       event.target.value.trim() === "" || Number.isNaN(value)
@@ -1854,14 +1772,8 @@ function ProposalBlocks({
               value={cond.initial_cleaning_option as string}
               onChange={(value) => setC({ initial_cleaning_option: value })}
               options={[
-                {
-                  value: "owner_delivers",
-                  label: "Proprietário entrega limpo",
-                },
-                {
-                  value: "stayo_initial",
-                  label: "Limpeza de implantação STAYO",
-                },
+                { value: "owner_delivers", label: "Proprietário entrega limpo" },
+                { value: "stayo_initial", label: "Limpeza de implantação STAYO" },
                 { value: "stayo_post_construction", label: "Pós-obra" },
                 { value: TBD, label: "A decidir" },
               ]}
@@ -1875,10 +1787,7 @@ function ProposalBlocks({
               options={[
                 { value: "complete", label: "Já possui completo" },
                 { value: "partial", label: "Possui parcialmente" },
-                {
-                  value: "stayo_supplier",
-                  label: "Fornecedor indicado pela STAYO",
-                },
+                { value: "stayo_supplier", label: "Fornecedor indicado pela STAYO" },
                 { value: TBD, label: "A decidir" },
               ]}
             />
@@ -1914,16 +1823,10 @@ function ProposalBlocks({
             <Chips
               label="Exclusividade"
               value={
-                boolChoice ??
-                (cond.exclusivity === null && "exclusivity" in cond
-                  ? TBD
-                  : null)
+                boolChoice ?? (cond.exclusivity === null && "exclusivity" in cond ? TBD : null)
               }
               onChange={(value) =>
-                setC({
-                  exclusivity:
-                    value === "sim" ? true : value === "nao" ? false : null,
-                })
+                setC({ exclusivity: value === "sim" ? true : value === "nao" ? false : null })
               }
               options={[
                 { value: "sim", label: "Sim" },
@@ -1964,9 +1867,7 @@ function ProposalBlocks({
             {cond.owner_use_limit_mode === "limited" && (
               <div className="grid gap-3 pt-1 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Quantidade de dias
-                  </span>
+                  <span className="mb-1.5 block text-sm font-medium">Quantidade de dias</span>
                   <div className="flex items-center gap-2">
                     <input
                       key={num(cond.owner_use_limit_days)}
@@ -1975,9 +1876,7 @@ function ProposalBlocks({
                       onBlur={(event) => {
                         const value = Number.parseInt(event.target.value, 10);
                         setC({
-                          owner_use_limit_days: Number.isNaN(value)
-                            ? null
-                            : Math.max(0, value),
+                          owner_use_limit_days: Number.isNaN(value) ? null : Math.max(0, value),
                         });
                       }}
                       className={inputClass}
@@ -1987,17 +1886,12 @@ function ProposalBlocks({
                   </div>
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium">
-                    Período
-                  </span>
+                  <span className="mb-1.5 block text-sm font-medium">Período</span>
                   <input
                     key={num(cond.owner_use_limit_period)}
                     defaultValue={num(cond.owner_use_limit_period)}
                     onBlur={(event) =>
-                      setC({
-                        owner_use_limit_period:
-                          event.target.value.trim() || null,
-                      })
+                      setC({ owner_use_limit_period: event.target.value.trim() || null })
                     }
                     placeholder="Ex.: por ano"
                     className={inputClass}
@@ -2040,23 +1934,18 @@ function GuidedServices({
   const [addingOther, setAddingOther] = useState(false);
   const [otherName, setOtherName] = useState("");
   const [otherValue, setOtherValue] = useState("");
-  const byTemplate = new Map(
-    options.map((option) => [option.templateKey, option]),
-  );
+  const byTemplate = new Map(options.map((option) => [option.templateKey, option]));
   const custom = options.filter((option) => !option.templateKey);
   const toggleTemplate = (key: string, checked: boolean) => {
     const existing = byTemplate.get(key);
     if (existing) {
       onChange(
-        options.map((option) =>
-          option === existing ? { ...option, included: checked } : option,
-        ),
+        options.map((option) => (option === existing ? { ...option, included: checked } : option)),
       );
       return;
     }
     const template = PROPOSAL_ITEM_TEMPLATES.find((item) => item.key === key);
-    if (template && checked)
-      onChange([...options, optionFromTemplate(template)]);
+    if (template && checked) onChange([...options, optionFromTemplate(template)]);
   };
   const addOther = () => {
     const value = Number(otherValue.replace(".", "").replace(",", "."));
@@ -2102,13 +1991,9 @@ function GuidedServices({
                 <Checkbox
                   className="size-5"
                   checked={Boolean(option?.included)}
-                  onCheckedChange={(checked) =>
-                    toggleTemplate(template.key, checked === true)
-                  }
+                  onCheckedChange={(checked) => toggleTemplate(template.key, checked === true)}
                 />
-                <span className="min-w-0 flex-1 text-sm font-medium">
-                  {template.description}
-                </span>
+                <span className="min-w-0 flex-1 text-sm font-medium">{template.description}</span>
                 <span className="shrink-0 text-sm tabular-nums">
                   {template.unitValue.toLocaleString("pt-BR", {
                     style: "currency",
@@ -2130,21 +2015,14 @@ function GuidedServices({
                 onCheckedChange={(checked) =>
                   onChange(
                     options.map((item) =>
-                      item === option
-                        ? { ...item, included: checked === true }
-                        : item,
+                      item === option ? { ...item, included: checked === true } : item,
                     ),
                   )
                 }
               />
-              <span className="min-w-0 flex-1 text-sm font-medium">
-                {option.description}
-              </span>
+              <span className="min-w-0 flex-1 text-sm font-medium">{option.description}</span>
               <span className="shrink-0 text-sm tabular-nums">
-                {option.unitValue.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
+                {option.unitValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </span>
             </label>
           ))}
@@ -2155,11 +2033,7 @@ function GuidedServices({
           className="grid gap-3 rounded-[var(--radius-control)] border p-3 sm:grid-cols-[1fr_10rem_auto] sm:items-end"
           style={inputStyle}
         >
-          <TextField
-            label="Nome do serviço"
-            value={otherName}
-            onChange={setOtherName}
-          />
+          <TextField label="Nome do serviço" value={otherName} onChange={setOtherName} />
           <TextField
             label="Valor (R$)"
             value={otherValue}
@@ -2261,17 +2135,14 @@ function PublishedProposalSuccess({
         </>
       ) : (
         <div className="mt-4 rounded-[var(--radius-control)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-3">
-          <p className="text-sm">
-            A proposta foi publicada, mas o link ainda não foi gerado.
-          </p>
+          <p className="text-sm">A proposta foi publicada, mas o link ainda não foi gerado.</p>
           <Button
             type="button"
             className="mt-3"
             disabled={generating}
             onClick={() => void generateLink()}
           >
-            <Link2 className="size-4" />{" "}
-            {generating ? "Gerando…" : "Gerar link"}
+            <Link2 className="size-4" /> {generating ? "Gerando…" : "Gerar link"}
           </Button>
         </div>
       )}
@@ -2308,10 +2179,7 @@ function NumberChoice({
           onChange(choice === TBD ? null : Number(choice));
         }}
         options={[
-          ...presets.map((preset) => ({
-            value: preset,
-            label: preset + " " + unit,
-          })),
+          ...presets.map((preset) => ({ value: preset, label: preset + " " + unit })),
           { value: "outro", label: "Outro" },
           { value: TBD, label: "A definir" },
         ]}
@@ -2336,4 +2204,5 @@ function NumberChoice({
     </div>
   );
 }
+
 
