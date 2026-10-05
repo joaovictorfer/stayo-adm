@@ -810,67 +810,67 @@ function JourneyBody({
           onExit={exit}
         />
       ) : (
-        <header className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              aria-label="Voltar para implantações"
-              onClick={() => void exit()}
-              className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
-              style={{ color: "var(--stayo-forest)" }}
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              Implantação
-            </button>
-            <JourneyActions implementation={implementation} />
-          </div>
-          <div className="flex items-center justify-between gap-3">
+      <header className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            aria-label="Voltar para implantações"
+            onClick={() => void exit()}
+            className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
+            style={{ color: "var(--stayo-forest)" }}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Implantação
+          </button>
+          <JourneyActions implementation={implementation} />
+        </div>
+        <div className="flex items-center justify-between gap-3">
             <p className="min-w-0 truncate text-sm font-semibold">
               {implementation.code}
             </p>
-            <div className="flex shrink-0 items-center gap-2">
-              <SaveStatus state={saveState} onRetry={retry} compact />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="min-h-11 px-2 sm:px-3"
-                onClick={() => void exit()}
-              >
-                Salvar e sair
-              </Button>
-            </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <SaveStatus state={saveState} onRetry={retry} compact />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="min-h-11 px-2 sm:px-3"
+              onClick={() => void exit()}
+            >
+              Salvar e sair
+            </Button>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold">
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold">
               {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de{" "}
               {JOURNEY_STEPS.length}
-            </h2>
-            {proposalBlockLabel && (
-              <p className="mt-0.5 text-xs" style={muted}>
-                {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
-              </p>
-            )}
-          </div>
-          <div
-            className="flex gap-1"
-            role="progressbar"
-            aria-valuenow={index + 1}
-            aria-valuemin={1}
-            aria-valuemax={JOURNEY_STEPS.length}
-          >
-            {JOURNEY_STEPS.map((s, i) => (
-              <span
-                key={s.id}
-                className="h-1 flex-1 rounded-full"
-                style={{
+          </h2>
+          {proposalBlockLabel && (
+            <p className="mt-0.5 text-xs" style={muted}>
+              {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
+            </p>
+          )}
+        </div>
+        <div
+          className="flex gap-1"
+          role="progressbar"
+          aria-valuenow={index + 1}
+          aria-valuemin={1}
+          aria-valuemax={JOURNEY_STEPS.length}
+        >
+          {JOURNEY_STEPS.map((s, i) => (
+            <span
+              key={s.id}
+              className="h-1 flex-1 rounded-full"
+              style={{
                   backgroundColor:
                     i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
-                }}
-              />
-            ))}
-          </div>
-        </header>
+              }}
+            />
+          ))}
+        </div>
+      </header>
       )}
 
       <div>{content}</div>
@@ -1367,7 +1367,7 @@ function PropertyQuestions({
       (item) =>
         normalize(item.name) === normalize(name) &&
         normalize(item.city) === normalize(newCondo.city),
-    );
+  );
     if (duplicate) {
       setCreating(false);
       setNewCondoError(null);
@@ -1429,7 +1429,7 @@ function PropertyQuestions({
             Use o cadastro mestre para reaproveitar o endereço e evitar
             informações duplicadas.
           </p>
-        </div>
+          </div>
 
         {mode === "condo" && selected ? (
           <div
@@ -1458,7 +1458,7 @@ function PropertyQuestions({
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-                )}
+        )}
               </div>
               <Button
                 type="button"
@@ -1486,7 +1486,7 @@ function PropertyQuestions({
             </div>
             <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
               <TextField
-                label="Endereço"
+          label="Endereço"
                 value={v.address}
                 onChange={(x) => set("address", x)}
               />
@@ -1494,14 +1494,14 @@ function PropertyQuestions({
                 label="Cidade"
                 value={v.city}
                 onChange={(x) => set("city", x)}
-              />
-              <TextField
-                label="CEP"
-                inputMode="numeric"
-                value={v.postal_code}
-                onChange={(x) => set("postal_code", x)}
-              />
-            </div>
+        />
+            <TextField
+              label="CEP"
+              inputMode="numeric"
+              value={v.postal_code}
+              onChange={(x) => set("postal_code", x)}
+            />
+          </div>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -1556,7 +1556,7 @@ function PropertyQuestions({
               <p className="py-1 text-sm" style={muted}>
                 Nenhum condomínio encontrado.
               </p>
-            )}
+        )}
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <button
@@ -1660,55 +1660,55 @@ function PropertyQuestions({
       >
         <h2 className="mb-4 text-base font-semibold">Características</h2>
         <div className="grid gap-5 lg:grid-cols-3">
-          <Question title="Tipo">
-            <Chips
-              label="Tipo"
+      <Question title="Tipo">
+        <Chips
+          label="Tipo"
               value={v.property_type || null}
-              onChange={(x) => set("property_type", x === "nsei" ? "" : x)}
-              options={[
-                { value: "apartamento", label: "Apartamento" },
-                { value: "casa", label: "Casa" },
-                { value: "studio", label: "Studio" },
-                { value: "outro", label: "Outro" },
-                { value: "nsei", label: "Não sei" },
-              ]}
-            />
-          </Question>
-          <Question title="Quartos">
-            <Chips
-              label="Quartos"
+          onChange={(x) => set("property_type", x === "nsei" ? "" : x)}
+          options={[
+            { value: "apartamento", label: "Apartamento" },
+            { value: "casa", label: "Casa" },
+            { value: "studio", label: "Studio" },
+            { value: "outro", label: "Outro" },
+            { value: "nsei", label: "Não sei" },
+          ]}
+        />
+      </Question>
+      <Question title="Quartos">
+        <Chips
+          label="Quartos"
               value={bedroomsValue || null}
-              onChange={(x) => {
-                if (x === "studio") {
-                  set("property_type", "studio");
-                  set("bedrooms", "0");
-                } else set("bedrooms", x === "nsei" ? "" : x);
-              }}
-              options={[
-                { value: "studio", label: "Studio" },
-                { value: "1", label: "1" },
-                { value: "2", label: "2" },
-                { value: "3", label: "3" },
-                { value: "4", label: "4+" },
-                { value: "nsei", label: "Não sei" },
-              ]}
-            />
-          </Question>
-          <Question title="Capacidade de hóspedes">
-            <Chips
-              label="Capacidade"
+          onChange={(x) => {
+            if (x === "studio") {
+              set("property_type", "studio");
+              set("bedrooms", "0");
+            } else set("bedrooms", x === "nsei" ? "" : x);
+          }}
+          options={[
+            { value: "studio", label: "Studio" },
+            { value: "1", label: "1" },
+            { value: "2", label: "2" },
+            { value: "3", label: "3" },
+            { value: "4", label: "4+" },
+            { value: "nsei", label: "Não sei" },
+          ]}
+        />
+      </Question>
+      <Question title="Capacidade de hóspedes">
+        <Chips
+          label="Capacidade"
               value={capacityValue || null}
-              onChange={(x) => set("capacity", x === "nsei" ? "" : x)}
-              options={[
-                { value: "2", label: "2" },
-                { value: "4", label: "4" },
-                { value: "6", label: "6" },
-                { value: "8", label: "8+" },
-                { value: "nsei", label: "Não sei" },
-              ]}
-            />
-          </Question>
-        </div>
+          onChange={(x) => set("capacity", x === "nsei" ? "" : x)}
+          options={[
+            { value: "2", label: "2" },
+            { value: "4", label: "4" },
+            { value: "6", label: "6" },
+            { value: "8", label: "8+" },
+            { value: "nsei", label: "Não sei" },
+          ]}
+        />
+      </Question>
+    </div>
       </section>
     </div>
   );
@@ -2336,3 +2336,4 @@ function NumberChoice({
     </div>
   );
 }
+
