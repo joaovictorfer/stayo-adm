@@ -5555,3 +5555,25 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pf-chev { transition: transform .2s; }
 .pf-chev.is-open { transform: rotate(90deg); }
 .pf-disclosure-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; padding: 0 4px 0 22px; font-size: 13px; line-height: 1.5; color: var(--portal-muted); }
+
+/* Fase 06 · Seu acesso */
+.ac-step { gap: 28px; }
+.ac-hero { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding-top: 8px; }
+.ac-badge { display: grid; place-items: center; width: 64px; height: 64px; border: 2px solid var(--portal-gold); border-radius: 999px; color: var(--portal-gold); }
+.ac-title { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; color: var(--portal-navy); }
+.ac-lead { margin: 0; max-width: 34ch; font-size: 15px; line-height: 1.5; color: var(--portal-muted); }
+.ac-h3 { margin: 0 0 14px; font-size: 17px; font-weight: 600; color: var(--portal-navy); }
+.ac-timeline { margin: 0; padding: 0; list-style: none; }
+.ac-tl { position: relative; display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 14px; padding-bottom: 18px; }
+.ac-tl:not(:last-child)::before { content: ""; position: absolute; left: 13px; top: 30px; bottom: 4px; width: 1.5px; background: var(--portal-border); }
+.ac-tl strong { display: block; font-size: 15px; color: var(--portal-navy); }
+.ac-tl p { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: var(--portal-muted); }
+.ac-dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; border: 1.5px solid var(--portal-border); background: var(--portal-surface); color: var(--portal-surface); }
+.ac-tl.is-done .ac-dot { border-color: var(--portal-navy); background: var(--portal-navy); }
+.ac-tl.is-current .ac-dot { border-color: color-mix(in srgb, var(--portal-gold) 45%, transparent); box-shadow: inset 0 0 0 6px var(--portal-surface); background: var(--portal-gold); }
+.ac-portal { display: flex; flex-direction: column; gap: 12px; padding: 22px 18px; border-radius: 16px; background: color-mix(in srgb, var(--portal-gold) 9%, var(--portal-surface)); }
+.ac-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--portal-gold); }
+.ac-portal-title { margin: 0; font-size: 20px; font-weight: 600; color: var(--portal-navy); }
+.ac-portal-text { margin: 0; font-size: 14px; line-height: 1.5; color: var(--portal-muted); }
+.ac-lock { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; font-size: 12px; color: var(--portal-muted); }
+.ac-support { display: inline-flex; align-items: center; font-size: 13px; color: var(--portal-muted); }

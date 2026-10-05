@@ -702,7 +702,7 @@ export function OwnerJourney({
     : coverData.source === "condominium"
       ? coverData.label
       : null;
-  const collecting = stage === 2 || stage === 3;
+  const collecting = stage === 2 || stage === 3 || stage === 4;
   const registrationPercent = (() => {
     const ownerDone = ownerFields.filter((field) => !validateOwnerField(field, form[field])).length;
     const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
@@ -712,7 +712,7 @@ export function OwnerJourney({
       ((ownerDone + propertyDone + platformsDone) / (ownerFields.length + propertyKeys.length + 1)) * 100,
     );
   })();
-  const displayStage = stage === 3 && platformsView && !reviewing ? 4 : stage;
+  const displayStage = stage === 4 ? 6 : stage === 3 && platformsView && !reviewing ? 4 : stage;
 
   return (
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
@@ -757,7 +757,7 @@ export function OwnerJourney({
             <div className="pj-top-progress-row">
               <p className="pj-top-progress">
                 Etapa {displayStage} de 6 ·{" "}
-                <strong>{displayStage === 2 ? "Seus dados" : displayStage === 4 ? "Plataformas" : "Seu imóvel"}</strong>
+                <strong>{displayStage === 2 ? "Seus dados" : displayStage === 4 ? "Plataformas" : displayStage === 6 ? "Seu acesso" : "Seu imóvel"}</strong>
               </p>
               <span className="pj-top-percent">Cadastro {registrationPercent}%</span>
             </div>
@@ -923,7 +923,7 @@ export function OwnerJourney({
                 onPassword={setPassword}
                 onPasswordAgain={setPasswordAgain}
                 onCreate={() => createAccount.mutate()}
-                onBack={() => go(3)}
+                onBack={() => go(2)}
                 onEnter={() => void navigate({ to: "/portal/inicio" })}
               />
             )}
@@ -2370,86 +2370,87 @@ function AccessStep({
   onBack: () => void;
   onEnter: () => void;
 }) {
+  const [creatingOpen, setCreatingOpen] = useState(false);
+  const steps = [
+    { title: "Cadastro concluído", text: "Suas informações ficaram registradas.", state: "done" },
+    { title: "Revisão pela STAYO", text: "Vamos conferir os dados e os itens da implantação.", state: "current" },
+    { title: "Preparação e ativação", text: "Você acompanha a evolução pelo Portal.", state: "next" },
+  ] as const;
   return (
-    <section className="space-y-6">
-      <Heading
-        eyebrow="Etapa 4 de 4"
-        title="Seu acesso à STAYO"
-        text="Proposta aceita e cadastro recebido. Agora crie sua senha para acompanhar a implantação e, depois, a operação do imóvel."
-      />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Done label="Proposta" text="Aceita" />
-        <Done label="Seus dados" text="Recebidos" />
-        <Done label="Seu imóvel" text="Recebido" />
+    <section className="pd-step ac-step">
+      <div className="ac-hero">
+        <span className="ac-badge" aria-hidden="true"><Check className="size-7" /></span>
+        <h2 className="ac-title">Tudo certo por aqui</h2>
+        <p className="ac-lead">
+          Seu cadastro inicial foi concluído. Agora a STAYO revisa as informações e conduz os próximos passos da preparação.
+        </p>
       </div>
-      {!authReady ? (
-        <Blocked
-          title="Cadastro concluído"
-          text="O ambiente atual ainda não está conectado ao serviço de autenticação. Seus dados foram preservados e a equipe STAYO poderá liberar o acesso quando o serviço estiver disponível."
-        />
-      ) : accountState === "confirmation_required" ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
-          <CheckCircle2 className="mx-auto size-8 text-emerald-700" />
-          <strong className="mt-3 block text-emerald-950">Confirme seu e-mail</strong>
-          <p className="mt-1 text-sm text-emerald-800">
-            Enviamos uma confirmação para {email}. Depois, volte por este mesmo acesso ou entre no
-            Portal do Proprietário.
+
+      <div>
+        <h3 className="ac-h3">O que acontece agora?</h3>
+        <ol className="ac-timeline">
+          {steps.map((st) => (
+            <li key={st.title} className={`ac-tl is-${st.state}`}>
+              <span className="ac-dot" aria-hidden="true">{st.state === "done" && <Check className="size-3.5" />}</span>
+              <div>
+                <strong>{st.title}</strong>
+                <p>{st.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="ac-portal">
+        <p className="ac-eyebrow">Seu portal</p>
+        <h3 className="ac-portal-title">Continue acompanhando por aqui</h3>
+        <p className="ac-portal-text">Veja pendências, acompanhe a implantação e volte aos seus dados quando precisar.</p>
+        {!authReady ? (
+          <p className="ac-portal-text">O acesso ao portal será liberado pela equipe STAYO. Seus dados estão preservados.</p>
+        ) : accountState === "confirmation_required" ? (
+          <p className="ac-portal-text" role="status">
+            Enviamos uma confirmação para {email}. Confirme o e-mail e depois acesse seu portal.
           </p>
-        </div>
-      ) : accountState === "linked" ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
-          <CheckCircle2 className="mx-auto size-8 text-emerald-700" />
-          <strong className="mt-3 block text-emerald-950">Tudo pronto</strong>
-          <Button type="button" className="mt-4 w-full" onClick={onEnter}>
-            Entrar no Portal do Proprietário
+        ) : accountState === "linked" || !creatingOpen ? (
+          <Button
+            type="button"
+            className="portal-cta pd-cta"
+            onClick={() => (accountState === "linked" ? onEnter() : setCreatingOpen(true))}
+          >
+            Acessar meu portal <ArrowRight className="size-4" aria-hidden="true" />
           </Button>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4 sm:p-5">
-          <div className="mb-4 flex items-start gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--portal-surface-soft)] text-[var(--portal-navy)]">
-              <ShieldCheck className="size-5" />
-            </div>
-            <div>
-              <strong className="text-sm">Crie sua senha</strong>
-              <p className="mt-1 text-xs text-[var(--portal-muted)]">
-                O acesso será vinculado ao mesmo proprietário deste cadastro.
-              </p>
-            </div>
-          </div>
+        ) : (
           <div className="space-y-3">
+            <p className="ac-portal-text">Crie uma senha para o seu acesso pessoal.</p>
             <Field label="E-mail" type="email" value={email} onChange={() => undefined} disabled />
-            <Field
-              label="Crie uma senha"
-              type="password"
-              value={password}
-              onChange={onPassword}
-              hint="Use pelo menos 8 caracteres."
-            />
+            <Field label="Crie uma senha" type="password" value={password} onChange={onPassword} hint="Use pelo menos 8 caracteres." />
             <Field
               label="Confirme a senha"
               type="password"
               value={passwordAgain}
               onChange={onPasswordAgain}
-              error={
-                passwordAgain && password !== passwordAgain ? "As senhas não coincidem." : undefined
-              }
+              error={passwordAgain && password !== passwordAgain ? "As senhas não coincidem." : undefined}
             />
             <Button
               type="button"
-              className="w-full"
+              className="portal-cta pd-cta"
               disabled={creating || password.length < 8 || password !== passwordAgain}
               onClick={onCreate}
             >
-              {creating ? "Preparando acesso..." : "Criar meu acesso"}
-              {!creating && <KeyRound className="size-4" />}
+              {creating ? "Preparando acesso..." : "Criar acesso e entrar"}
             </Button>
+            <button type="button" className="pd-back ac-support w-full justify-center" onClick={onEnter}>
+              Já tenho acesso · Entrar
+            </button>
           </div>
-        </div>
-      )}
-      <Button type="button" variant="ghost" onClick={onBack} className="w-full">
-        <ChevronLeft className="size-4" /> Voltar aos dados do imóvel
-      </Button>
+        )}
+        <p className="ac-lock"><KeyRound className="size-4" aria-hidden="true" /> Seu acesso é pessoal e protegido.</p>
+      </div>
+
+      <div className="pd-actions">
+        <button type="button" className="pd-back" onClick={onBack}>Voltar e revisar meus dados</button>
+        <a className="pd-back ac-support" href={STAYO_SUPPORT_URL}>Falar com a STAYO</a>
+      </div>
     </section>
   );
 }
