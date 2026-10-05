@@ -75,6 +75,8 @@ import type {
 } from "../../types/owner-onboarding";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+// Canal de contato exibido na proposta pública ("Ajuda" / "Falar com a STAYO").
+const STAYO_SUPPORT_URL = "mailto:contato@stayogramado.com.br";
 const STEP = { owner: 20, property: 30, access: 40 } as const;
 type Stage = 1 | 2 | 3 | 4;
 
