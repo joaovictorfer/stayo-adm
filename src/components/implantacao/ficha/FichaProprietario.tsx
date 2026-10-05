@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Building2, ChevronRight, Eye, EyeOff, FileText, Home, LockKeyhole, Mail, Pencil, Phone, Plus, Users } from "lucide-react";
+import { AlertCircle, Building2, ChevronRight, Eye, EyeOff, FileText, Home, LockKeyhole, Pencil, Plus, Users } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
 import { Input } from "../../ui/input";
@@ -111,9 +111,8 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
             <div className="min-w-0"><p className="break-words font-semibold">{name}</p><p className="text-xs text-[var(--stayo-ink-muted)]">{implementation.ownerId ? "Proprietário principal" : "Sem vínculo cadastral"}</p></div>
           </div>
           {[
-            { label: "WhatsApp", value: phone ? formatBrazilianPhone(phone) : "Não informado", icon: <Phone /> },
-            { label: "E-mail", value: showSensitive ? email || "Não informado" : maskedEmail, icon: <Mail /> },
-            { label: "Tipo", value: personType, icon: <Users /> },
+            { label: "WhatsApp", value: phone ? formatBrazilianPhone(phone) : "Não informado" },
+            { label: "E-mail", value: showSensitive ? email || "Não informado" : maskedEmail },
           ].map(item => <Button key={item.label} variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} disabled={!owner} onClick={openEdit}>
             <span className="w-24 shrink-0">{item.label}</span><span className="min-w-0 flex-1 break-words font-medium">{item.value}</span><ChevronRight className="size-4 shrink-0" />
           </Button>)}
@@ -122,6 +121,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
             <Button variant="ghost" size="icon" className="size-8" disabled={!document && !email} aria-label={showSensitive ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"} title={showSensitive ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"} onClick={() => setShowSensitive(value => !value)}>{showSensitive ? <EyeOff /> : <Eye />}</Button>
             <Button variant="ghost" size="icon" className="size-8" aria-label="Editar CPF ou CNPJ" title="Editar CPF ou CNPJ" disabled={!owner} onClick={openEdit}><ChevronRight /></Button>
           </div>
+          <Button variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} disabled={!owner} onClick={openEdit}><span className="w-24 shrink-0">Tipo</span><span className="min-w-0 flex-1 font-medium">{personType}</span><ChevronRight /></Button>
         </section>
         <section className={panel} aria-label="Vínculo com o imóvel">
           <SectionTitle>Vínculo com o imóvel</SectionTitle>
