@@ -1966,9 +1966,11 @@ export type Database = {
           full_name: string | null
           id: string
           implementation_id: string
+          marital_status: string | null
           person_type: string
           phone: string | null
           position: number
+          profession: string | null
           role: string
           updated_at: string
         }
@@ -1979,9 +1981,11 @@ export type Database = {
           full_name?: string | null
           id?: string
           implementation_id: string
+          marital_status?: string | null
           person_type?: string
           phone?: string | null
           position?: number
+          profession?: string | null
           role?: string
           updated_at?: string
         }
@@ -1992,9 +1996,11 @@ export type Database = {
           full_name?: string | null
           id?: string
           implementation_id?: string
+          marital_status?: string | null
           person_type?: string
           phone?: string | null
           position?: number
+          profession?: string | null
           role?: string
           updated_at?: string
         }
