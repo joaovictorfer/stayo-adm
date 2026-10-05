@@ -15,11 +15,23 @@ import {
   Trash2,
   Wrench,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
 
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import {
+  CondominiumForm,
+  emptyCondominiumForm,
+  inputFromForm,
+  type CondominiumFormValues,
+} from "../condominios/CondominiumForm";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,16 +44,30 @@ import { ProposalTab } from "./ProposalTab";
 import { SupplySheet } from "./SupplySheet";
 import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
 import { supabase } from "@/integrations/supabase/client";
-import { useOpportunityAutosave, type SaveState } from "../../hooks/use-opportunity-autosave";
+import {
+  useOpportunityAutosave,
+  type SaveState,
+} from "../../hooks/use-opportunity-autosave";
 import {
   autosaveOpportunity,
   loadOpportunityForm,
   type FormField,
   type FormValues,
 } from "../../lib/api/opportunity-form";
-import { completeOpportunityDraft, saveOpportunityContact } from "../../lib/api/opportunities";
+import {
+  completeOpportunityDraft,
+  saveOpportunityContact,
+} from "../../lib/api/opportunities";
+import {
+  adminApi,
+  adminCondominiumsListQuery,
+  coreApi,
+} from "../../lib/api/queries";
 import { commercialProposalsApi } from "../../lib/api/commercial-proposals";
-import { presentationInvitesApi, presentationUrl } from "../../lib/api/presentation-invites";
+import {
+  presentationInvitesApi,
+  presentationUrl,
+} from "../../lib/api/presentation-invites";
 import {
   buildGuidedDraftInput,
   guidedOptionsFromVersion,
@@ -59,6 +85,7 @@ import {
   type JourneyStep,
 } from "../../lib/opportunity-journey";
 import type { ImplementationProject } from "../../types/core";
+import type { AdminCondominium } from "../../types/admin";
 import { PROPOSAL_ITEM_TEMPLATES } from "../../config/proposal-item-templates";
 import type {
   CommercialProposalVersion,
@@ -442,7 +469,15 @@ function JourneyBody({
       </div>
     );
   } else if (step === "imovel") {
-    content = <PropertyQuestions v={v} set={auto.set} />;
+    content = (
+      <PropertyQuestions
+        implementationId={id}
+        initialCondominiumId={implementation.condominiumId ?? null}
+        v={v}
+        set={auto.set}
+        flush={auto.flush}
+      />
+    );
   } else if (step === "proposta") {
     content = condQ.isPending ? (
       <div className="flex items-center gap-2 py-10 text-sm" style={muted}>
@@ -710,75 +745,105 @@ function JourneyBody({
     );
   }
 
+  const propertyStep = step === "imovel";
+
   return (
-    <div ref={topRef} className="mx-auto flex w-full max-w-2xl flex-col gap-5 pb-28 sm:pb-6">
-      <header className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            aria-label="Voltar para implantações"
-            onClick={() => void exit()}
-            className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
-            style={{ color: "var(--stayo-forest)" }}
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Implantação
-          </button>
-          <JourneyActions implementation={implementation} />
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 truncate text-sm font-semibold">{implementation.code}</p>
-          <div className="flex shrink-0 items-center gap-2">
-            <SaveStatus state={saveState} onRetry={retry} compact />
-            <Button
+    <div
+      ref={topRef}
+      className={`mx-auto flex w-full flex-col pb-28 sm:pb-6 ${
+        propertyStep ? "max-w-5xl gap-6" : "max-w-2xl gap-5"
+      }`}
+    >
+      {propertyStep ? (
+        <PropertyJourneyHeader
+          implementation={implementation}
+          saveState={saveState}
+          onRetry={retry}
+          onExit={exit}
+        />
+      ) : (
+        <header className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="min-h-11 px-2 sm:px-3"
+              aria-label="Voltar para implantações"
               onClick={() => void exit()}
+              className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
+              style={{ color: "var(--stayo-forest)" }}
             >
-              Salvar e sair
-            </Button>
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Implantação
+            </button>
+            <JourneyActions implementation={implementation} />
           </div>
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold">
-            {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de {JOURNEY_STEPS.length}
-          </h2>
-          {proposalBlockLabel && (
-            <p className="mt-0.5 text-xs" style={muted}>
-              {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
+          <div className="flex items-center justify-between gap-3">
+            <p className="min-w-0 truncate text-sm font-semibold">
+              {implementation.code}
             </p>
-          )}
-        </div>
-        <div
-          className="flex gap-1"
-          role="progressbar"
-          aria-valuenow={index + 1}
-          aria-valuemin={1}
-          aria-valuemax={JOURNEY_STEPS.length}
-        >
-          {JOURNEY_STEPS.map((s, i) => (
-            <span
-              key={s.id}
-              className="h-1 flex-1 rounded-full"
-              style={{
-                backgroundColor: i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
-              }}
-            />
-          ))}
-        </div>
-      </header>
+            <div className="flex shrink-0 items-center gap-2">
+              <SaveStatus state={saveState} onRetry={retry} compact />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="min-h-11 px-2 sm:px-3"
+                onClick={() => void exit()}
+              >
+                Salvar e sair
+              </Button>
+            </div>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">
+              {JOURNEY_STEPS[index]!.label} · Etapa {index + 1} de{" "}
+              {JOURNEY_STEPS.length}
+            </h2>
+            {proposalBlockLabel && (
+              <p className="mt-0.5 text-xs" style={muted}>
+                {proposalBlockLabel} · {sub + 1} de {PROPOSAL_BLOCKS.length}
+              </p>
+            )}
+          </div>
+          <div
+            className="flex gap-1"
+            role="progressbar"
+            aria-valuenow={index + 1}
+            aria-valuemin={1}
+            aria-valuemax={JOURNEY_STEPS.length}
+          >
+            {JOURNEY_STEPS.map((s, i) => (
+              <span
+                key={s.id}
+                className="h-1 flex-1 rounded-full"
+                style={{
+                  backgroundColor:
+                    i <= index ? "var(--stayo-forest)" : "var(--stayo-border)",
+                }}
+              />
+            ))}
+          </div>
+        </header>
+      )}
 
       <div>{content}</div>
 
       {!(step === "revisao") && !hub && (
         <footer
           className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:border-0 sm:p-0"
-          style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}
+          style={{
+            backgroundColor: "var(--stayo-surface)",
+            borderColor: "var(--stayo-border)",
+          }}
         >
-          <Button type="button" variant="outline" className="min-h-12" onClick={back}>
-            {step === "proposta" && sub > 0 ? "Voltar ao bloco anterior" : "Voltar etapa"}
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-12"
+            onClick={back}
+          >
+            {step === "proposta" && sub > 0
+              ? "Voltar ao bloco anterior"
+              : "Voltar etapa"}
           </Button>
           <Button
             type="button"
@@ -790,6 +855,142 @@ function JourneyBody({
         </footer>
       )}
     </div>
+  );
+}
+
+const PROPERTY_PROGRESS = [
+  "Contato",
+  "Imóvel",
+  "Comercial",
+  "Preparação",
+  "Revisão",
+] as const;
+
+function PropertyJourneyHeader({
+  implementation,
+  saveState,
+  onRetry,
+  onExit,
+}: {
+  implementation: ImplementationProject;
+  saveState: SaveState;
+  onRetry: () => void;
+  onExit: () => Promise<void>;
+}) {
+  const activeIndex = 1;
+  return (
+    <header className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-semibold">
+            {implementation.code}
+          </span>
+          <span
+            className="rounded-full px-2 py-1 text-[11px] font-semibold"
+            style={{
+              backgroundColor: "var(--stayo-gold-soft)",
+              color: "var(--stayo-ink)",
+            }}
+          >
+            Rascunho
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {saveState === "idle" ? (
+            <p className="flex items-center gap-1 text-xs whitespace-nowrap" style={muted}>
+              <Check className="size-3.5" /> Salvo agora
+            </p>
+          ) : (
+            <SaveStatus
+              state={saveState}
+              onRetry={onRetry}
+              compact
+              savedLabel="Salvo agora"
+            />
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-10 px-3"
+            onClick={() => void onExit()}
+          >
+            Salvar e sair
+          </Button>
+          <JourneyActions implementation={implementation} />
+        </div>
+      </div>
+
+      <div>
+        <p
+          className="text-xs font-semibold uppercase tracking-[0.12em]"
+          style={muted}
+        >
+          Implantação · Etapa 2 de 5
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Dados do imóvel
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>
+          Identifique o imóvel e registre apenas as informações que já são
+          conhecidas.
+        </p>
+      </div>
+
+      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
+        {PROPERTY_PROGRESS.map((label, i) => {
+          const complete = i < activeIndex;
+          const active = i === activeIndex;
+          return (
+            <li
+              key={label}
+              className="relative flex min-w-0 flex-col items-center gap-1.5"
+            >
+              {i < PROPERTY_PROGRESS.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 right-[-50%] top-4 h-px"
+                  style={{
+                    backgroundColor: complete
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-border)",
+                  }}
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold"
+                style={{
+                  borderColor:
+                    complete || active
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-border)",
+                  backgroundColor: complete
+                    ? "var(--stayo-forest)"
+                    : active
+                      ? "var(--stayo-surface)"
+                      : "var(--stayo-surface)",
+                  color: complete
+                    ? "var(--primary-foreground)"
+                    : "var(--stayo-ink)",
+                }}
+              >
+                {complete ? <Check className="size-4" /> : i + 1}
+              </span>
+              <span
+                className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs"
+                style={{
+                  color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)",
+                }}
+                aria-current={active ? "step" : undefined}
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </header>
   );
 }
 
@@ -834,10 +1035,12 @@ function SaveStatus({
   state,
   onRetry,
   compact = false,
+  savedLabel = "Salvo",
 }: {
   state: SaveState;
   onRetry: () => void;
   compact?: boolean;
+  savedLabel?: string;
 }) {
   if (state === "idle") return null;
   if (state === "error")
@@ -872,7 +1075,7 @@ function SaveStatus({
       ) : (
         <Check className="size-3.5" />
       )}
-      {state === "saving" ? "Salvando…" : "Salvo"}
+      {state === "saving" ? "Salvando…" : savedLabel}
     </p>
   );
 }
@@ -1001,11 +1204,154 @@ function ReviewCard({
   );
 }
 
-function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: string) => void }) {
-  const [condo, setCondo] = useState<"sim" | "nao" | "nsei" | null>(
-    v.condominium_name ? "sim" : null,
+function PropertyQuestions({
+  implementationId,
+  initialCondominiumId,
+  v,
+  set,
+  flush,
+}: {
+  implementationId: string;
+  initialCondominiumId: string | null;
+  v: FormValues;
+  set: (f: FormField, x: string) => void;
+  flush: () => Promise<boolean>;
+}) {
+  const queryClient = useQueryClient();
+  const condominiumsQ = useQuery(adminCondominiumsListQuery());
+  const condominiums = condominiumsQ.data ?? [];
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialCondominiumId,
   );
-  const [addr, setAddr] = useState<"sim" | "depois" | null>(v.address || v.city ? "sim" : null);
+  const [mode, setMode] = useState<"search" | "condo" | "standalone">(
+    initialCondominiumId
+      ? "condo"
+      : v.address && !v.condominium_name
+        ? "standalone"
+        : "search",
+  );
+  const [search, setSearch] = useState(
+    initialCondominiumId ? "" : v.condominium_name,
+  );
+  const [creating, setCreating] = useState(false);
+  const [newCondo, setNewCondo] = useState<CondominiumFormValues>(() => ({
+    ...emptyCondominiumForm,
+  }));
+  const [newCondoError, setNewCondoError] = useState<string | null>(null);
+  const [savingCondo, setSavingCondo] = useState(false);
+
+  const selected = condominiums.find((item) => item.id === selectedId) ?? null;
+  const normalize = (value: string | null | undefined) =>
+    (value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLocaleLowerCase("pt-BR");
+  const filtered = condominiums
+    .filter((item) => {
+      const term = normalize(search);
+      return (
+        !term || normalize(`${item.name} ${item.city ?? ""}`).includes(term)
+      );
+    })
+    .slice(0, 6);
+
+  const selectCondominium = async (condominium: AdminCondominium) => {
+    setSavingCondo(true);
+    try {
+      await coreApi.implementations.update(implementationId, {
+        condominiumId: condominium.id,
+      });
+      setSelectedId(condominium.id);
+      setMode("condo");
+      setSearch("");
+      set("condominium_name", condominium.name);
+      set("address", condominium.address ?? "");
+      set("city", condominium.city ?? "");
+      set("postal_code", condominium.postalCode ?? "");
+      if (!(await flush())) {
+        toast.error("Condomínio vinculado, mas o endereço ainda não sincronizou.");
+      }
+      void queryClient.invalidateQueries({ queryKey: ["implementations"] });
+    } catch (error) {
+      toast.error("Não foi possível vincular o condomínio", {
+        description:
+          error instanceof Error ? error.message : "Tente novamente.",
+      });
+    } finally {
+      setSavingCondo(false);
+    }
+  };
+
+  const chooseStandalone = async () => {
+    setSavingCondo(true);
+    try {
+      await coreApi.implementations.update(implementationId, {
+        condominiumId: null,
+      });
+      setSelectedId(null);
+      setMode("standalone");
+      set("condominium_name", "");
+      await flush();
+      void queryClient.invalidateQueries({ queryKey: ["implementations"] });
+    } catch (error) {
+      toast.error("Não foi possível atualizar o imóvel", {
+        description:
+          error instanceof Error ? error.message : "Tente novamente.",
+      });
+    } finally {
+      setSavingCondo(false);
+    }
+  };
+
+  const createCondominium = async () => {
+    const name = newCondo.name.trim();
+    if (!name) {
+      setNewCondoError("Informe o nome do condomínio.");
+      return;
+    }
+    const duplicate = condominiums.find(
+      (item) =>
+        normalize(item.name) === normalize(name) &&
+        normalize(item.city) === normalize(newCondo.city),
+    );
+    if (duplicate) {
+      setCreating(false);
+      setNewCondoError(null);
+      toast.info("Este condomínio já estava cadastrado. Ele foi selecionado.");
+      await selectCondominium(duplicate);
+      return;
+    }
+
+    setSavingCondo(true);
+    setNewCondoError(null);
+    try {
+      const created = await adminApi.condominiums.create(
+        inputFromForm(newCondo),
+      );
+      queryClient.setQueryData<AdminCondominium[]>(
+        ["admin", "condominiums", "list"],
+        (current = []) =>
+          [...current.filter((item) => item.id !== created.id), created].sort(
+            (a, b) => a.name.localeCompare(b.name, "pt-BR"),
+          ),
+      );
+      setCreating(false);
+      setNewCondo({ ...emptyCondominiumForm });
+      await selectCondominium(created);
+      toast.success("Condomínio cadastrado");
+    } catch (error) {
+      setNewCondoError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível cadastrar o condomínio.",
+      );
+    } finally {
+      setSavingCondo(false);
+    }
+  };
+
   const bedroomsValue =
     v.property_type === "studio"
       ? "studio"
@@ -1014,103 +1360,304 @@ function PropertyQuestions({ v, set }: { v: FormValues; set: (f: FormField, x: s
           ? "4"
           : v.bedrooms
         : "";
-  const capacityValue = v.capacity ? (Number(v.capacity) >= 8 ? "8" : v.capacity) : "";
+  const capacityValue = v.capacity
+    ? Number(v.capacity) >= 8
+      ? "8"
+      : v.capacity
+    : "";
   return (
-    <div className="flex flex-col gap-7">
-      <Question title="O imóvel fica em condomínio?">
-        <Chips
-          label="Condomínio"
-          value={condo}
-          onChange={setCondo}
-          options={[
-            { value: "sim", label: "Sim" },
-            { value: "nao", label: "Não" },
-            { value: "nsei", label: "Ainda não sei" },
-          ]}
-        />
-        {condo === "sim" && (
+    <div className="flex flex-col gap-4">
+      <section
+        className="rounded-[var(--radius-card)] border p-4 sm:p-5"
+        style={{ ...inputStyle, backgroundColor: "var(--stayo-surface)" }}
+      >
+        <div className="mb-4">
+          <h2 className="text-base font-semibold">Condomínio e localização</h2>
+          <p className="mt-1 text-xs sm:text-sm" style={muted}>
+            Use o cadastro mestre para reaproveitar o endereço e evitar
+            informações duplicadas.
+          </p>
+        </div>
+
+        {mode === "condo" && selected ? (
+          <div
+            className="rounded-xl border p-3.5"
+            style={{ borderColor: "var(--stayo-border)" }}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{selected.name}</p>
+                <p
+                  className="mt-1 flex items-center gap-1.5 text-xs font-medium"
+                  style={{
+                    color: selected.address
+                      ? "var(--stayo-forest)"
+                      : "var(--stayo-ink-muted)",
+                  }}
+                >
+                  {selected.address && <Check className="size-3.5" />}
+                  {selected.address
+                    ? "Endereço já cadastrado"
+                    : "Endereço pendente no cadastro do condomínio"}
+                </p>
+                {(selected.address || selected.city) && (
+                  <p className="mt-1.5 text-sm" style={muted}>
+                    {[selected.address, selected.city, selected.state]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="min-h-10"
+                onClick={() => setMode("search")}
+              >
+                Trocar
+              </Button>
+            </div>
+          </div>
+        ) : mode === "standalone" ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium">Imóvel sem condomínio</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setMode("search")}
+              >
+                Buscar condomínio
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
+              <TextField
+                label="Endereço"
+                value={v.address}
+                onChange={(x) => set("address", x)}
+              />
+              <TextField
+                label="Cidade"
+                value={v.city}
+                onChange={(x) => set("city", x)}
+              />
+              <TextField
+                label="CEP"
+                inputMode="numeric"
+                value={v.postal_code}
+                onChange={(x) => set("postal_code", x)}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <label className="block">
+              <span className="sr-only">Buscar condomínio cadastrado</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar condomínio cadastrado..."
+                className={inputClass}
+                style={inputStyle}
+                autoComplete="off"
+              />
+            </label>
+            {condominiumsQ.isPending ? (
+              <p className="flex items-center gap-2 py-2 text-sm" style={muted}>
+                <Loader2 className="size-4 animate-spin" /> Buscando
+                condomínios…
+              </p>
+            ) : condominiumsQ.isError ? (
+              <p className="text-sm" style={{ color: "var(--stayo-danger)" }}>
+                Não foi possível carregar os condomínios.
+              </p>
+            ) : filtered.length ? (
+              <div
+                className="divide-y overflow-hidden rounded-xl border"
+                style={{ borderColor: "var(--stayo-border)" }}
+              >
+                {filtered.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    disabled={savingCondo}
+                    onClick={() => void selectCondominium(item)}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-black/[0.025] disabled:opacity-60"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium">
+                        {item.name}
+                      </span>
+                      <span className="block truncate text-xs" style={muted}>
+                        {[item.address, item.city]
+                          .filter(Boolean)
+                          .join(" · ") || "Endereço a completar"}
+                      </span>
+                    </span>
+                    <ChevronRight className="size-4 shrink-0" style={muted} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="py-1 text-sm" style={muted}>
+                Nenhum condomínio encontrado.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <button
+                type="button"
+                className="min-h-10 text-sm font-semibold"
+                style={{ color: "var(--stayo-forest)" }}
+                onClick={() => setCreating((current) => !current)}
+              >
+                + Cadastrar novo condomínio
+              </button>
+              <button
+                type="button"
+                disabled={savingCondo}
+                className="min-h-10 text-sm underline-offset-4 hover:underline disabled:opacity-60"
+                style={muted}
+                onClick={() => void chooseStandalone()}
+              >
+                Imóvel sem condomínio
+              </button>
+            </div>
+
+            {creating && (
+              <div
+                className="mt-1 rounded-xl border p-4"
+                style={{
+                  backgroundColor:
+                    "color-mix(in srgb, var(--stayo-surface) 96%, var(--stayo-forest))",
+                  borderColor: "var(--stayo-border)",
+                }}
+              >
+                <div className="mb-3">
+                  <p className="font-semibold">Novo condomínio</p>
+                  <p className="mt-0.5 text-xs" style={muted}>
+                    O cadastro ficará disponível para as próximas implantações.
+                  </p>
+                </div>
+                <CondominiumForm
+                  values={newCondo}
+                  onChange={setNewCondo}
+                  nameError={newCondoError}
+                />
+                <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setCreating(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={savingCondo}
+                    className="bg-[var(--stayo-forest)] text-[var(--primary-foreground)] hover:bg-[var(--stayo-forest)]/90"
+                    onClick={() => void createCondominium()}
+                  >
+                    {savingCondo && <Loader2 className="size-4 animate-spin" />}
+                    Cadastrar e selecionar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {(mode === "condo" || mode === "standalone") && (
+        <section
+          className="rounded-[var(--radius-card)] border p-4 sm:p-5"
+          style={{ ...inputStyle, backgroundColor: "var(--stayo-surface)" }}
+        >
+          <h2 className="mb-4 text-base font-semibold">Identificação</h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <TextField
-              label="Condomínio / prédio"
-              value={v.condominium_name}
-              onChange={(x) => set("condominium_name", x)}
-            />
-            <TextField label="Torre / bloco" value={v.tower} onChange={(x) => set("tower", x)} />
-            <TextField label="Unidade" value={v.unit} onChange={(x) => set("unit", x)} />
+            {mode === "condo" && (
+              <>
+                <TextField
+                  label="Torre / bloco"
+                  value={v.tower}
+                  onChange={(x) => set("tower", x)}
+                />
+                <TextField
+                  label="Unidade"
+                  value={v.unit}
+                  onChange={(x) => set("unit", x)}
+                />
+              </>
+            )}
+            <div className={mode === "standalone" ? "sm:col-span-3" : ""}>
+              <TextField
+                label="Nome / apelido"
+                value={v.nickname}
+                onChange={(x) => set("nickname", x)}
+              />
+            </div>
           </div>
-        )}
-      </Question>
-      <Question title="Você sabe o endereço agora?">
-        <Chips
-          label="Endereço"
-          value={addr}
-          onChange={setAddr}
-          options={[
-            { value: "sim", label: "Preencher" },
-            { value: "depois", label: "Completar depois" },
-          ]}
-        />
-        {addr === "sim" && (
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
-            <TextField label="Endereço" value={v.address} onChange={(x) => set("address", x)} />
-            <TextField label="Cidade" value={v.city} onChange={(x) => set("city", x)} />
-            <TextField
-              label="CEP"
-              inputMode="numeric"
-              value={v.postal_code}
-              onChange={(x) => set("postal_code", x)}
+        </section>
+      )}
+
+      <section
+        className="rounded-[var(--radius-card)] border p-4 sm:p-5"
+        style={{ ...inputStyle, backgroundColor: "var(--stayo-surface)" }}
+      >
+        <h2 className="mb-4 text-base font-semibold">Características</h2>
+        <div className="grid gap-5 lg:grid-cols-3">
+          <Question title="Tipo">
+            <Chips
+              label="Tipo"
+              value={v.property_type || null}
+              onChange={(x) => set("property_type", x === "nsei" ? "" : x)}
+              options={[
+                { value: "apartamento", label: "Apartamento" },
+                { value: "casa", label: "Casa" },
+                { value: "studio", label: "Studio" },
+                { value: "outro", label: "Outro" },
+                { value: "nsei", label: "Não sei" },
+              ]}
             />
-          </div>
-        )}
-      </Question>
-      <Question title="Tipo">
-        <Chips
-          label="Tipo"
-          value={v.property_type || "nsei"}
-          onChange={(x) => set("property_type", x === "nsei" ? "" : x)}
-          options={[
-            { value: "apartamento", label: "Apartamento" },
-            { value: "casa", label: "Casa" },
-            { value: "studio", label: "Studio" },
-            { value: "outro", label: "Outro" },
-            { value: "nsei", label: "Não sei" },
-          ]}
-        />
-      </Question>
-      <Question title="Quartos">
-        <Chips
-          label="Quartos"
-          value={bedroomsValue || "nsei"}
-          onChange={(x) => {
-            if (x === "studio") {
-              set("property_type", "studio");
-              set("bedrooms", "0");
-            } else set("bedrooms", x === "nsei" ? "" : x);
-          }}
-          options={[
-            { value: "studio", label: "Studio" },
-            { value: "1", label: "1" },
-            { value: "2", label: "2" },
-            { value: "3", label: "3" },
-            { value: "4", label: "4+" },
-            { value: "nsei", label: "Não sei" },
-          ]}
-        />
-      </Question>
-      <Question title="Capacidade de hóspedes">
-        <Chips
-          label="Capacidade"
-          value={capacityValue || "nsei"}
-          onChange={(x) => set("capacity", x === "nsei" ? "" : x)}
-          options={[
-            { value: "2", label: "2" },
-            { value: "4", label: "4" },
-            { value: "6", label: "6" },
-            { value: "8", label: "8+" },
-            { value: "nsei", label: "Não sei" },
-          ]}
-        />
-      </Question>
+          </Question>
+          <Question title="Quartos">
+            <Chips
+              label="Quartos"
+              value={bedroomsValue || null}
+              onChange={(x) => {
+                if (x === "studio") {
+                  set("property_type", "studio");
+                  set("bedrooms", "0");
+                } else set("bedrooms", x === "nsei" ? "" : x);
+              }}
+              options={[
+                { value: "studio", label: "Studio" },
+                { value: "1", label: "1" },
+                { value: "2", label: "2" },
+                { value: "3", label: "3" },
+                { value: "4", label: "4+" },
+                { value: "nsei", label: "Não sei" },
+              ]}
+            />
+          </Question>
+          <Question title="Capacidade de hóspedes">
+            <Chips
+              label="Capacidade"
+              value={capacityValue || null}
+              onChange={(x) => set("capacity", x === "nsei" ? "" : x)}
+              options={[
+                { value: "2", label: "2" },
+                { value: "4", label: "4" },
+                { value: "6", label: "6" },
+                { value: "8", label: "8+" },
+                { value: "nsei", label: "Não sei" },
+              ]}
+            />
+          </Question>
+        </div>
+      </section>
     </div>
   );
 }
