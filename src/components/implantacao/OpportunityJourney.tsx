@@ -896,12 +896,18 @@ function PropertyJourneyHeader({
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <SaveStatus
-            state={saveState}
-            onRetry={onRetry}
-            compact
-            savedLabel="Salvo agora"
-          />
+          {saveState === "idle" ? (
+            <p className="flex items-center gap-1 text-xs whitespace-nowrap" style={muted}>
+              <Check className="size-3.5" /> Salvo agora
+            </p>
+          ) : (
+            <SaveStatus
+              state={saveState}
+              onRetry={onRetry}
+              compact
+              savedLabel="Salvo agora"
+            />
+          )}
           <Button
             type="button"
             variant="outline"
@@ -2211,4 +2217,3 @@ function NumberChoice({
     </div>
   );
 }
-
