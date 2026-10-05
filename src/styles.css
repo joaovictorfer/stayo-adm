@@ -145,3 +145,14 @@
     color: var(--color-foreground);
   }
 }
+
+/* Ficha Imóvel — tokens da referência aprovada */
+:root {
+  --stayo-navy: #0b3150;
+  --ficha-icon-bg: #edf6f0;
+  --ficha-icon-fg: #2f7a55;
+  --ficha-ok: #2f9e64;
+  --ficha-pending-bg: #fdf3ea;
+  --ficha-pending-fg: #e08a1e;
+  --ficha-subtle: #f6f8fa;
+}

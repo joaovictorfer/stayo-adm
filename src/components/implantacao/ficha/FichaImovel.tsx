@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { BedDouble, Building2, CalendarPlus, ChevronDown, ChevronRight, Eye, EyeOff, MapPin, Megaphone, Pencil, Wifi } from "lucide-react";
+import { AlertCircle, Building, CalendarPlus, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Megaphone, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -19,26 +19,33 @@ import {
 } from "../../../lib/api/owner-portal-data";
 import type { ImplementationProject } from "../../../types/core";
 
+const navy = { color: "var(--stayo-navy)" };
 const muted = { color: "var(--stayo-ink-muted)" };
 const border = { borderColor: "var(--stayo-border)" };
-const link = { color: "var(--stayo-forest)" };
+const link = navy;
+const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const input = "mt-1 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm text-[var(--stayo-ink)]";
-const linkCls = "text-xs font-medium underline underline-offset-2";
+const linkCls = "text-sm font-medium underline underline-offset-2";
 
 const ACCESS_LABELS: Record<string, string> = { key: "Chave", lock: "Fechadura digital", concierge: "Portaria", other: "Outro" };
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null };
+type Row = { label: string; value: ReactNode; detail?: string | null; extra?: ReactNode };
 
-function Block({ icon, title, subtitle, action, children }: { icon: ReactNode; title: string; subtitle?: string; action?: ReactNode; children: ReactNode }) {
+function IconDot({ children, size = "size-9" }: { children: ReactNode; size?: string }) {
   return (
-    <section className="rounded-[var(--radius-card)] border bg-white px-4 py-3 sm:px-5" style={border}>
-      <div className="flex items-center justify-between gap-2 pb-2">
+    <span className={`grid ${size} shrink-0 place-items-center rounded-full`} style={{ backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" }}>
+      {children}
+    </span>
+  );
+}
+
+function Card({ icon, title, action, children }: { icon: ReactNode; title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="rounded-xl border bg-white px-4 pb-2 pt-3 sm:px-5" style={border}>
+      <div className="flex items-center justify-between gap-2 border-b pb-2.5" style={border}>
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-forest)" }}>{icon}</span>
-          <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold">{title}</h3>
-            {subtitle && <p className="truncate text-xs" style={muted}>{subtitle}</p>}
-          </div>
+          <IconDot>{icon}</IconDot>
+          <h3 className="truncate text-lg font-semibold" style={display}>{title}</h3>
         </div>
         {action}
       </div>
@@ -51,25 +58,24 @@ function Line({ row, onEdit }: { row: Row; onEdit?: () => void }) {
   const [open, setOpen] = useState(false);
   const expandable = Boolean(row.detail);
   return (
-    <li style={border}>
-      <button
-        type="button"
-        disabled={!expandable && !onEdit}
-        aria-expanded={expandable ? open : undefined}
-        onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())}
-        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 py-2.5 text-left text-sm disabled:cursor-default sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto]"
-      >
-        <span className="font-medium">{row.label}</span>
-        <span className="col-start-1 row-start-2 truncate sm:col-start-2 sm:row-start-1" style={muted}>{row.value || "Não informado"}</span>
-        <span className="row-span-2 sm:row-span-1" style={muted}>
-          {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : onEdit ? <ChevronRight className="size-4" /> : null}
+    <li className="border-b last:border-b-0" style={border}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+        <button type="button" onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())} className="text-left font-medium" style={navy}>{row.label}</button>
+        <button type="button" onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())} className="col-start-1 row-start-2 flex min-w-0 items-center gap-2 text-left sm:col-start-2 sm:row-start-1" style={muted}>
+          <span className="truncate">{row.value || "Não informado"}</span>
+        </button>
+        <span className="row-span-2 flex items-center gap-3 sm:row-span-1">
+          {row.extra}
+          <button type="button" onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())} aria-label={`Editar ${row.label}`} style={navy}>
+            {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : <ChevronRight className="size-4" />}
+          </button>
         </span>
-      </button>
+      </div>
       {expandable && open && (
-        <div className="mb-2.5 flex flex-col gap-2 rounded-md px-3 py-2 text-sm sm:flex-row sm:items-start sm:justify-between" style={{ backgroundColor: "var(--stayo-bg)" }}>
+        <div className="mb-2 flex flex-col gap-2 rounded-md px-3 py-2 text-sm sm:flex-row sm:items-start sm:justify-between" style={{ backgroundColor: "var(--ficha-subtle)" }}>
           <p style={muted}>{row.detail}</p>
           {onEdit && (
-            <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1 font-medium underline underline-offset-2">
+            <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1 font-medium underline underline-offset-2" style={navy}>
               <Pencil className="size-3.5" /> Editar
             </button>
           )}
@@ -79,14 +85,22 @@ function Line({ row, onEdit }: { row: Row; onEdit?: () => void }) {
   );
 }
 
-function SideCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="rounded-[var(--radius-card)] border bg-white p-4" style={border}>
-      <h3 className="text-xs font-semibold uppercase tracking-[0.1em]" style={muted}>{title}</h3>
-      <div className="mt-2.5 space-y-2">{children}</div>
-    </section>
+function ActionRow({ icon, label, onClick, to }: { icon: ReactNode; label: string; onClick?: () => void; to?: { id: string } }) {
+  const content = (
+    <>
+      <span className="flex items-center gap-3"><span style={navy}>{icon}</span><span className={linkCls} style={navy}>{label}</span></span>
+      <ChevronRight className="size-4" style={navy} />
+    </>
+  );
+  const cls = "flex w-full items-center justify-between border-t py-3 text-left";
+  return to ? (
+    <Link to="/condominios/$id" params={to} className={cls} style={border}>{content}</Link>
+  ) : (
+    <button type="button" onClick={onClick} className={cls} style={border}>{content}</button>
   );
 }
+
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
 
 const num = (v: number | null | undefined) => (v != null ? String(v) : "");
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v));
@@ -227,247 +241,302 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const saving = updateImplementation.isPending || saveDetails.isPending;
   const linked = Boolean(implementation.condominiumId);
   const condo = linked ? condoQ.data : null;
+  const condoName = condo?.name ?? implementation.condominiumName;
   const condoAddress = condo ? [condo.address, condo.neighborhood, condo.city, condo.state].filter(Boolean).join(", ") : "";
   const legacyAddress = [implementation.address, implementation.city].filter(Boolean).join(", ");
 
   const pendencies: Array<{ label: string; cta: string; onClick: () => void }> = [];
-  if (!adminCover) pendencies.push({ label: "Fotos do imóvel ainda não adicionadas", cta: "Adicionar fotos", onClick: onGoPortal });
-  if (!linked) pendencies.push({ label: "Imóvel sem condomínio vinculado", cta: "Vincular condomínio", onClick: startEdit });
-  if (d !== undefined && (!d?.wifiNetwork || !d?.wifiPassword)) pendencies.push({ label: "Dados de Wi-Fi não informados", cta: "Completar Wi-Fi", onClick: startEdit });
-  if (d !== undefined && !d?.accessType) pendencies.push({ label: "Forma de acesso não informada", cta: "Definir acesso", onClick: startEdit });
+  if (!adminCover) pendencies.push({ label: "Fotos do imóvel ainda não adicionadas.", cta: "Adicionar fotos", onClick: onGoPortal });
+  if (!linked) pendencies.push({ label: "Imóvel sem condomínio vinculado.", cta: "Vincular", onClick: startEdit });
+  if (d !== undefined && (!d?.wifiNetwork || !d?.wifiPassword)) pendencies.push({ label: "Dados de Wi-Fi não informados.", cta: "Completar", onClick: startEdit });
+  if (d !== undefined && !d?.accessType) pendencies.push({ label: "Forma de acesso não informada.", cta: "Definir", onClick: startEdit });
 
   const sidebar = (
     <>
-      <SideCard title="Condomínio">
+      <Card icon={<FileText className="size-4" />} title="Condomínio">
         {linked ? (
           <>
-            <p className="text-sm font-semibold">{condo?.name ?? implementation.condominiumName}</p>
-            <p className="text-xs" style={muted}>Cadastro compartilhado · endereço vinculado</p>
-            <div className="flex flex-wrap gap-4 pt-1">
-              <Link to="/condominios/$id" params={{ id: implementation.condominiumId as string }} className={linkCls} style={link}>Ver condomínio</Link>
-              <button type="button" onClick={startEdit} className={linkCls} style={link}>Trocar vínculo</button>
+            <div className="flex items-center gap-3 border-b py-3" style={border}>
+              <IconDot size="size-11"><Building className="size-5" /></IconDot>
+              <div className="min-w-0">
+                <p className="truncate font-semibold" style={display}>{condoName}</p>
+                <p className="text-sm" style={muted}>Cadastro compartilhado</p>
+              </div>
             </div>
+            <dl className="grid grid-cols-[6rem_1fr] gap-y-2 py-3 text-sm">
+              <dt className="font-medium" style={navy}>Endereço</dt><dd style={muted}>Vinculado</dd>
+              <dt className="font-medium" style={navy}>Unidades</dt><dd style={muted}>Cadastro reutilizável</dd>
+            </dl>
+            <ActionRow icon={<ExternalLink className="size-4" />} label="Ver condomínio" to={{ id: implementation.condominiumId as string }} />
+            <ActionRow icon={<RefreshCw className="size-4" />} label="Trocar vínculo" onClick={startEdit} />
           </>
         ) : (
           <>
-            <p className="text-sm" style={muted}>{implementation.condominiumName ? `${implementation.condominiumName} · sem cadastro vinculado` : "Nenhum condomínio vinculado"}</p>
-            <button type="button" onClick={startEdit} className={linkCls} style={link}>Vincular condomínio</button>
+            <p className="py-3 text-sm" style={muted}>{implementation.condominiumName ? `${implementation.condominiumName} · sem cadastro vinculado` : "Nenhum condomínio vinculado"}</p>
+            <ActionRow icon={<RefreshCw className="size-4" />} label="Vincular condomínio" onClick={startEdit} />
           </>
         )}
-      </SideCard>
-      <SideCard title="Proprietário">
-        <p className="text-sm font-semibold">{implementation.ownerName || "Não informado"}</p>
-        <button type="button" onClick={onGoOwner} className={linkCls} style={link}>Ver proprietário</button>
-      </SideCard>
-      <SideCard title="Pendências">
+      </Card>
+      <Card icon={<UserRound className="size-4" />} title="Proprietário">
+        <div className="flex items-center gap-3 py-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>{initials(implementation.ownerName ?? "")}</span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold" style={display}>{implementation.ownerName || "Não informado"}</p>
+            <p className="text-sm" style={muted}>Proprietário(a)</p>
+          </div>
+        </div>
+        <ActionRow icon={<ExternalLink className="size-4" />} label="Ver proprietário" onClick={onGoOwner} />
+      </Card>
+      <section className="rounded-xl border bg-white p-4 sm:px-5" style={border}>
+        <div className="flex items-center gap-3 pb-3">
+          <AlertCircle className="size-6 shrink-0" style={{ color: "var(--ficha-pending-fg)" }} />
+          <h3 className="text-lg font-semibold" style={display}>Pendências</h3>
+        </div>
         {pendencies.length === 0 ? (
           <p className="text-sm" style={muted}>Nenhuma pendência no imóvel.</p>
         ) : (
           <ul className="space-y-2">
             {pendencies.map((p) => (
-              <li key={p.label} className="flex items-center justify-between gap-3 rounded-md px-3 py-2" style={{ backgroundColor: "var(--stayo-warning-soft)" }}>
-                <span className="text-sm">{p.label}</span>
-                <button type="button" onClick={p.onClick} className={`${linkCls} shrink-0`} style={link}>{p.cta}</button>
+              <li key={p.label}>
+                <button type="button" onClick={p.onClick} className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-3 text-left" style={{ backgroundColor: "var(--ficha-pending-bg)" }}>
+                  <ImageIcon className="size-5" style={{ color: "var(--stayo-danger)" }} />
+                  <span className="text-sm" style={navy}>{p.label}</span>
+                  <span className="flex items-center gap-1"><span className={linkCls} style={navy}>{p.cta}</span><ChevronRight className="size-4" style={navy} /></span>
+                </button>
               </li>
             ))}
           </ul>
         )}
-      </SideCard>
+      </section>
     </>
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-      <div className="flex min-w-0 flex-col gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)" }}>Dados do imóvel</h2>
-            <p className="text-sm" style={muted}>Informações da unidade e do condomínio.</p>
-          </div>
-          {!editing && (
-            <Button type="button" variant="outline" size="sm" onClick={startEdit}><Pencil /> Editar dados</Button>
-          )}
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Dados do imóvel</h2>
+          <p className="text-sm sm:text-base" style={muted}>Informações da unidade e do condomínio.</p>
         </div>
-
-
-        {editing ? (
-          <section className="space-y-4 rounded-[var(--radius-card)] border bg-white p-4 sm:p-5" style={border}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-xs font-medium" style={muted}>
-                Condomínio cadastrado
-                <select value={condoId} onChange={(e) => setCondoId(e.target.value)} className={input} style={border}>
-                  <option value="">Nenhum condomínio vinculado</option>
-                  {(condoListQ.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </label>
-              <label className="text-xs font-medium" style={muted}>Unidade<input value={unit} onChange={(e) => setUnit(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>Torre / bloco<input value={tower} onChange={(e) => setTower(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>Tipo<input value={ptype} onChange={(e) => setPtype(e.target.value)} placeholder="Apartamento, casa..." className={input} style={border} /></label>
-            </div>
-            <p className="text-xs" style={muted}>O endereço vem do cadastro do condomínio; altere-o na ficha do condomínio.</p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <label className="text-xs font-medium" style={muted}>Quartos<input type="number" min={0} value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>Banheiros<input type="number" min={0} value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>Capacidade<input type="number" min={0} value={capacity} onChange={(e) => setCapacity(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>Vagas<input type="number" min={0} value={parking} onChange={(e) => setParking(e.target.value)} className={input} style={border} /></label>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="text-xs font-medium" style={muted}>
-                Acesso ao imóvel
-                <select value={accessType ?? ""} onChange={(e) => setAccessType((e.target.value || null) as PropertyDetailsInput["accessType"])} className={input} style={border}>
-                  <option value="">Selecione</option>
-                  <option value="key">Chave</option>
-                  <option value="lock">Fechadura digital</option>
-                  <option value="concierge">Portaria</option>
-                  <option value="other">Outro</option>
-                </select>
-              </label>
-              <label className="text-xs font-medium" style={muted}>Orientações<input value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>Senha da fechadura<input type="password" autoComplete="new-password" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className={input} style={border} /></label>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-xs font-medium" style={muted}>Rede Wi-Fi<input value={wifiNetwork} autoComplete="off" onChange={(e) => setWifiNetwork(e.target.value)} className={input} style={border} /></label>
-              <label className="text-xs font-medium" style={muted}>
-                Senha do Wi-Fi
-                <span className="relative mt-1 block">
-                  <input type={showPwd ? "text" : "password"} value={wifiPassword} autoComplete="new-password" onChange={(e) => setWifiPassword(e.target.value)} className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm" style={border} />
-                  <button type="button" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="absolute inset-y-0 right-0 grid w-10 place-items-center" style={muted}>
-                    {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </span>
-              </label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
-              <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave()}>{saving ? "Salvando..." : "Salvar dados"}</Button>
-            </div>
-          </section>
-        ) : (
-          <>
-            <Block icon={<Building2 className="size-4" />} title="Identificação">
-              <ul className="divide-y" style={border}>
-                <Line row={{ label: "Condomínio", value: (condo?.name ?? implementation.condominiumName) ? `${condo?.name ?? implementation.condominiumName}${linked ? " · Cadastrado" : ""}` : null }} onEdit={startEdit} />
-                <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
-                <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
-                <Line row={{ label: "Tipo", value: implementation.propertyType }} onEdit={startEdit} />
-              </ul>
-            </Block>
-
-            <Block
-              icon={<MapPin className="size-4" />}
-              title="Endereço"
-              action={linked ? <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-ink-muted)" }}>Herdado do condomínio</span> : undefined}
-            >
-              <div className="flex flex-col gap-2 rounded-md p-3 sm:flex-row sm:items-center sm:justify-between" style={{ backgroundColor: "var(--stayo-bg)" }}>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{linked ? `Endereço do condomínio ${condo?.name ?? implementation.condominiumName ?? ""}` : "Sem condomínio vinculado"}</p>
-                  <p className="text-xs" style={muted}>
-                    {linked ? condoAddress || "Endereço ainda não preenchido no cadastro do condomínio" : legacyAddress || "Vincule um condomínio cadastrado para reaproveitar o endereço."}
-                  </p>
-                </div>
-                {linked ? (
-                  <Link to="/condominios/$id" params={{ id: implementation.condominiumId as string }} className={`${linkCls} shrink-0`} style={link}>Ver endereço</Link>
-                ) : (
-                  <button type="button" onClick={startEdit} className={`${linkCls} shrink-0`} style={link}>Vincular condomínio</button>
-                )}
-              </div>
-            </Block>
-
-            <Block icon={<BedDouble className="size-4" />} title="Características">
-              <ul className="divide-y" style={border}>
-                <Line row={{ label: "Quartos", value: num(implementation.bedrooms) }} onEdit={startEdit} />
-                <Line row={{ label: "Banheiros", value: num(d?.bathrooms) }} onEdit={startEdit} />
-                <Line row={{ label: "Capacidade", value: implementation.capacity != null ? `${implementation.capacity} hóspedes` : null }} onEdit={startEdit} />
-                <Line row={{ label: "Vagas", value: num(d?.parkingSpots) }} onEdit={startEdit} />
-              </ul>
-            </Block>
-
-            <Block icon={<Wifi className="size-4" />} title="Acesso e conectividade" subtitle="Compartilhado com o proprietário">
-              <ul className="divide-y" style={border}>
-                <Line row={{ label: "Rede Wi-Fi", value: d?.wifiNetwork }} onEdit={startEdit} />
-                <li style={border}>
-                  <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 py-2.5 text-sm sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto]">
-                    <span className="font-medium">Senha Wi-Fi</span>
-                    <span className="col-start-1 row-start-2 flex items-center gap-2 truncate sm:col-start-2 sm:row-start-1" style={muted}>
-                      {d?.wifiPassword ? (showPwd ? d.wifiPassword : "••••••••••") : "Não informado"}
-                      {d?.wifiPassword && (
-                        <button type="button" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? "Ocultar senha do Wi-Fi" : "Mostrar senha do Wi-Fi"}>
-                          {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                        </button>
-                      )}
-                    </span>
-                    <button type="button" onClick={startEdit} aria-label="Editar senha do Wi-Fi" className="row-span-2 sm:row-span-1" style={muted}><ChevronRight className="size-4" /></button>
-                  </div>
-                </li>
-                <Line
-                  row={{
-                    label: "Acesso ao imóvel",
-                    value: d?.accessType ? ACCESS_LABELS[d.accessType] : null,
-                    detail: [d?.accessNotes, d?.accessCode ? "Senha da fechadura cadastrada (edite para ver)" : null].filter(Boolean).join(" · ") || null,
-                  }}
-                  onEdit={startEdit}
-                />
-              </ul>
-            </Block>
-          </>
+        {!editing && (
+          <Button type="button" variant="outline" onClick={startEdit} className="h-11 rounded-lg bg-white px-4" style={navy}>
+            <Pencil /> <span className="hidden sm:inline">Editar dados</span><span className="sm:hidden">Editar</span>
+          </Button>
         )}
-
-        <div className="flex flex-col gap-4 lg:hidden">{sidebar}</div>
-
-        <Collapsible title="Linha do tempo pública" summary="Atualizações visíveis no Portal do Proprietário">
-          <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
-            <input value={timelineTitle} onChange={(e) => setTimelineTitle(e.target.value)} placeholder="Título da atualização" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-            <input value={timelineDescription} onChange={(e) => setTimelineDescription(e.target.value)} placeholder="Mensagem para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-            <Button size="sm" onClick={() => publishUpdate.mutate()} disabled={!timelineTitle.trim() || publishUpdate.isPending}><Megaphone /> Publicar</Button>
-          </div>
-          <div className="mt-4 space-y-2">
-            {(timelineQ.data ?? []).slice(0, 5).map((event) => (
-              <div key={event.id} className="flex items-start justify-between gap-3 border-t pt-3 text-sm" style={border}>
-                <div>
-                  <strong>{event.title}</strong>
-                  {event.description && <p className="text-xs" style={muted}>{event.description}</p>}
-                </div>
-                <span className="shrink-0 text-xs" style={muted}>{new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}</span>
-              </div>
-            ))}
-          </div>
-        </Collapsible>
-
-        <Collapsible title="Vistorias" summary="Agendamento e resumo liberados no portal">
-          <div className="grid gap-3 sm:grid-cols-[13rem_1fr_auto]">
-            <input type="datetime-local" value={inspectionDate} onChange={(e) => setInspectionDate(e.target.value)} className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-            <input value={inspectionNotes} onChange={(e) => setInspectionNotes(e.target.value)} placeholder="Resumo para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-            <Button size="sm" onClick={() => scheduleInspection.mutate()} disabled={!inspectionDate || scheduleInspection.isPending}><CalendarPlus /> Agendar</Button>
-          </div>
-          <div className="mt-4 space-y-2">
-            {(inspectionsQ.data ?? []).map((i) => (
-              <div key={i.id} className="flex items-center justify-between border-t pt-3 text-sm" style={border}>
-                <span>{i.publicNotes || "Vistoria do imóvel"}</span>
-                <strong>{i.status === "completed" ? "Concluída" : "Agendada"}</strong>
-              </div>
-            ))}
-          </div>
-        </Collapsible>
-
-        <Collapsible title="Observações internas" summary="Notas de uso exclusivo da operação">
-          {editingNotes ? (
-            <div className="space-y-3">
-              <textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={5} className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setEditingNotes(false)}>Cancelar</Button>
-                <Button type="button" size="sm" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ notes: notesDraft }, { onSuccess: () => { setEditingNotes(false); toast.success("Observação salva"); } })}>Salvar</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="whitespace-pre-wrap text-sm" style={implementation.notes ? undefined : muted}>{implementation.notes || "Nenhuma observação interna cadastrada."}</p>
-              <button type="button" onClick={() => { setNotesDraft(implementation.notes ?? ""); setEditingNotes(true); }} className={linkCls} style={link}>Editar observação</button>
-            </div>
-          )}
-        </Collapsible>
       </div>
 
-      <aside className="hidden flex-col gap-4 lg:flex">{sidebar}</aside>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(18rem,1fr)] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-4">
+          {editing ? (
+            <section className="space-y-4 rounded-xl border bg-white p-4 sm:p-5" style={border}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-medium" style={muted}>
+                  Condomínio cadastrado
+                  <select value={condoId} onChange={(e) => setCondoId(e.target.value)} className={input} style={border}>
+                    <option value="">Nenhum condomínio vinculado</option>
+                    {(condoListQ.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs font-medium" style={muted}>Unidade<input value={unit} onChange={(e) => setUnit(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Torre / bloco<input value={tower} onChange={(e) => setTower(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Tipo<input value={ptype} onChange={(e) => setPtype(e.target.value)} placeholder="Apartamento, casa..." className={input} style={border} /></label>
+              </div>
+              <p className="text-xs" style={muted}>O endereço vem do cadastro do condomínio; altere-o na ficha do condomínio.</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <label className="text-xs font-medium" style={muted}>Quartos<input type="number" min={0} value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Banheiros<input type="number" min={0} value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Capacidade<input type="number" min={0} value={capacity} onChange={(e) => setCapacity(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Vagas<input type="number" min={0} value={parking} onChange={(e) => setParking(e.target.value)} className={input} style={border} /></label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="text-xs font-medium" style={muted}>
+                  Acesso ao imóvel
+                  <select value={accessType ?? ""} onChange={(e) => setAccessType((e.target.value || null) as PropertyDetailsInput["accessType"])} className={input} style={border}>
+                    <option value="">Selecione</option>
+                    <option value="key">Chave</option>
+                    <option value="lock">Fechadura digital</option>
+                    <option value="concierge">Portaria</option>
+                    <option value="other">Outro</option>
+                  </select>
+                </label>
+                <label className="text-xs font-medium" style={muted}>Orientações<input value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Senha da fechadura<input type="password" autoComplete="new-password" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className={input} style={border} /></label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-medium" style={muted}>Rede Wi-Fi<input value={wifiNetwork} autoComplete="off" onChange={(e) => setWifiNetwork(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>
+                  Senha do Wi-Fi
+                  <span className="relative mt-1 block">
+                    <input type={showPwd ? "text" : "password"} value={wifiPassword} autoComplete="new-password" onChange={(e) => setWifiPassword(e.target.value)} className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm" style={border} />
+                    <button type="button" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="absolute inset-y-0 right-0 grid w-10 place-items-center" style={muted}>
+                      {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </span>
+                </label>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
+                <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave()}>{saving ? "Salvando..." : "Salvar dados"}</Button>
+              </div>
+            </section>
+          ) : (
+            <>
+              <Card icon={<FileText className="size-4" />} title="Identificação">
+                <ul>
+                  <Line
+                    row={{
+                      label: "Condomínio",
+                      value: condoName ? (
+                        <span className="flex items-center gap-3">
+                          <span style={muted}>{condoName}</span>
+                          {linked && <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ficha-ok)" }}><span className="size-2 rounded-full" style={{ backgroundColor: "var(--ficha-ok)" }} />Cadastrado</span>}
+                        </span>
+                      ) : null,
+                      extra: linked ? (
+                        <Link to="/condominios/$id" params={{ id: implementation.condominiumId as string }} className="hidden items-center gap-1.5 text-sm underline underline-offset-2 sm:flex" style={navy}>
+                          Ver condomínio <ExternalLink className="size-4" />
+                        </Link>
+                      ) : undefined,
+                    }}
+                    onEdit={startEdit}
+                  />
+                  <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
+                  <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
+                  <Line row={{ label: "Tipo", value: implementation.propertyType }} onEdit={startEdit} />
+                </ul>
+              </Card>
+
+              <Card
+                icon={<MapPin className="size-4" />}
+                title="Endereço"
+                action={linked ? <span className="rounded-md px-2 py-1 text-xs" style={{ backgroundColor: "var(--ficha-subtle)", ...muted }}>Herdado do condomínio</span> : undefined}
+              >
+                <div className="my-3 grid gap-3 rounded-lg border p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center" style={{ ...border, backgroundColor: "var(--ficha-subtle)" }}>
+                  <span className="grid size-11 place-items-center rounded-full bg-white" style={navy}><Building className="size-5" /></span>
+                  <div className="min-w-0">
+                    <p className="font-semibold" style={navy}>{linked ? `Endereço do condomínio ${condoName ?? ""}` : "Sem condomínio vinculado"}</p>
+                    <p className="text-sm" style={muted}>
+                      {linked ? condoAddress || "Este endereço é reutilizado pelas unidades vinculadas." : legacyAddress || "Vincule um condomínio cadastrado para reaproveitar o endereço."}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1 sm:items-end">
+                    {linked ? (
+                      <>
+                        <span className="text-sm" style={navy}>Endereço vinculado ao condomínio</span>
+                        <Link to="/condominios/$id" params={{ id: implementation.condominiumId as string }} className="flex items-center gap-1.5 text-sm underline underline-offset-2" style={navy}>
+                          Ver endereço <ExternalLink className="size-4" />
+                        </Link>
+                      </>
+                    ) : (
+                      <button type="button" onClick={startEdit} className={linkCls} style={navy}>Vincular condomínio</button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+
+              <Card icon={<Home className="size-4" />} title="Características">
+                <ul>
+                  <Line row={{ label: "Quartos", value: num(implementation.bedrooms) }} onEdit={startEdit} />
+                  <Line row={{ label: "Banheiros", value: num(d?.bathrooms) }} onEdit={startEdit} />
+                  <Line row={{ label: "Capacidade", value: implementation.capacity != null ? `${implementation.capacity} hóspedes` : null }} onEdit={startEdit} />
+                  <Line row={{ label: "Vagas", value: num(d?.parkingSpots) }} onEdit={startEdit} />
+                </ul>
+              </Card>
+
+              <Card icon={<Wifi className="size-4" />} title="Acesso e conectividade">
+                <ul>
+                  <Line row={{ label: "Rede Wi-Fi", value: d?.wifiNetwork }} onEdit={startEdit} />
+                  <Line
+                    row={{
+                      label: "Senha Wi-Fi",
+                      value: d?.wifiPassword ? (
+                        <span className="flex items-center gap-3">
+                          <span className={showPwd ? "" : "tracking-[0.2em]"}>{showPwd ? d.wifiPassword : "••••••••••"}</span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); setShowPwd((v) => !v); }}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); setShowPwd((v) => !v); } }}
+                            aria-label={showPwd ? "Ocultar senha do Wi-Fi" : "Mostrar senha do Wi-Fi"}
+                            style={navy}
+                          >
+                            {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                          </span>
+                        </span>
+                      ) : null,
+                    }}
+                    onEdit={startEdit}
+                  />
+                  <Line
+                    row={{
+                      label: "Acesso ao imóvel",
+                      value: d?.accessType ? ACCESS_LABELS[d.accessType] : null,
+                      detail: [d?.accessNotes, d?.accessCode ? "Senha da fechadura cadastrada (edite para ver)" : null].filter(Boolean).join(" · ") || null,
+                    }}
+                    onEdit={startEdit}
+                  />
+                </ul>
+              </Card>
+            </>
+          )}
+
+          <div className="flex flex-col gap-4 lg:hidden">{sidebar}</div>
+
+          <Collapsible title="Linha do tempo pública" summary="Atualizações visíveis no Portal do Proprietário">
+            <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
+              <input value={timelineTitle} onChange={(e) => setTimelineTitle(e.target.value)} placeholder="Título da atualização" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
+              <input value={timelineDescription} onChange={(e) => setTimelineDescription(e.target.value)} placeholder="Mensagem para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
+              <Button size="sm" onClick={() => publishUpdate.mutate()} disabled={!timelineTitle.trim() || publishUpdate.isPending}><Megaphone /> Publicar</Button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {(timelineQ.data ?? []).slice(0, 5).map((event) => (
+                <div key={event.id} className="flex items-start justify-between gap-3 border-t pt-3 text-sm" style={border}>
+                  <div>
+                    <strong>{event.title}</strong>
+                    {event.description && <p className="text-xs" style={muted}>{event.description}</p>}
+                  </div>
+                  <span className="shrink-0 text-xs" style={muted}>{new Intl.DateTimeFormat("pt-BR").format(new Date(event.date))}</span>
+                </div>
+              ))}
+            </div>
+          </Collapsible>
+
+          <Collapsible title="Vistorias" summary="Agendamento e resumo liberados no portal">
+            <div className="grid gap-3 sm:grid-cols-[13rem_1fr_auto]">
+              <input type="datetime-local" value={inspectionDate} onChange={(e) => setInspectionDate(e.target.value)} className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
+              <input value={inspectionNotes} onChange={(e) => setInspectionNotes(e.target.value)} placeholder="Resumo para o proprietário" className="rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
+              <Button size="sm" onClick={() => scheduleInspection.mutate()} disabled={!inspectionDate || scheduleInspection.isPending}><CalendarPlus /> Agendar</Button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {(inspectionsQ.data ?? []).map((i) => (
+                <div key={i.id} className="flex items-center justify-between border-t pt-3 text-sm" style={border}>
+                  <span>{i.publicNotes || "Vistoria do imóvel"}</span>
+                  <strong>{i.status === "completed" ? "Concluída" : "Agendada"}</strong>
+                </div>
+              ))}
+            </div>
+          </Collapsible>
+
+          <Collapsible title="Observações internas" summary="Notas de uso exclusivo da operação">
+            {editingNotes ? (
+              <div className="space-y-3">
+                <textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={5} className="w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm" style={border} />
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setEditingNotes(false)}>Cancelar</Button>
+                  <Button type="button" size="sm" disabled={updateImplementation.isPending} onClick={() => updateImplementation.mutate({ notes: notesDraft }, { onSuccess: () => { setEditingNotes(false); toast.success("Observação salva"); } })}>Salvar</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="whitespace-pre-wrap text-sm" style={implementation.notes ? undefined : muted}>{implementation.notes || "Nenhuma observação interna cadastrada."}</p>
+                <button type="button" onClick={() => { setNotesDraft(implementation.notes ?? ""); setEditingNotes(true); }} className={linkCls} style={link}>Editar observação</button>
+              </div>
+            )}
+          </Collapsible>
+        </div>
+
+        <aside className="hidden flex-col gap-4 lg:flex">{sidebar}</aside>
+      </div>
     </div>
   );
 }
