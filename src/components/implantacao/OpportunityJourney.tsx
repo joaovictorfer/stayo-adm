@@ -278,9 +278,11 @@ function JourneyBody({
     if (ok && Object.keys(condPending.current).length) return runCondSave();
     return ok;
   }, [id]);
+  const condDefaults = useRef<Cond>({});
   const setC = (patch: Cond) => {
     setCond((c) => ({ ...c, ...patch }));
-    condPending.current = { ...condPending.current, ...patch };
+    condPending.current = { ...condDefaults.current, ...condPending.current, ...patch };
+    condDefaults.current = {};
     setCondState("saving");
     void runCondSave();
   };
@@ -310,7 +312,7 @@ function JourneyBody({
     };
     // Só exibe o padrão; grava junto com a primeira edição ou ao avançar.
     setCond(initial);
-    condPending.current = { ...condPending.current, ...initial };
+    condDefaults.current = initial;
   }, [
     commercialDefaultsQ.data,
     commercialDefaultsQ.isPending,
