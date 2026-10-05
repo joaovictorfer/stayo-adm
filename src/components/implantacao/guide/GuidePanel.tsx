@@ -75,7 +75,7 @@ export function GuidePanel({ implementationId, guideType = "utensilios" }: { imp
   const apply = useMutation({
     mutationFn: () => applyGuide(implementationId, guideType),
     onSuccess: (n) => {
-      toast.success(n ? `${n} itens aplicados` : "Nenhum item novo no catálogo");
+      toast.success(n ? `${n} ${n === 1 ? "item aplicado" : "itens aplicados"}` : "Nenhum item novo no catálogo");
       void invalidate();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível aplicar."),
