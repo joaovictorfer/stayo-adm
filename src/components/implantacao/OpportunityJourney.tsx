@@ -142,11 +142,7 @@ export function OpportunityJourney(props: {
     return (
       <div role="alert" className="py-10 text-sm">
         Não conseguimos abrir o cadastro.{" "}
-        <button
-          type="button"
-          className="underline"
-          onClick={() => void formQ.refetch()}
-        >
+        <button type="button" className="underline" onClick={() => void formQ.refetch()}>
           Tentar novamente
         </button>
       </div>
@@ -209,10 +205,7 @@ function JourneyBody({
     }
   };
   const changeContact = (k: "name" | "phone", value: string) => {
-    setContact((c) => ({
-      ...c,
-      [k]: k === "phone" ? formatBrazilianPhone(value) : value,
-    }));
+    setContact((c) => ({ ...c, [k]: k === "phone" ? formatBrazilianPhone(value) : value }));
     contactDirty.current = true;
     setContactState("saving");
     if (contactTimer.current) window.clearTimeout(contactTimer.current);
@@ -251,19 +244,13 @@ function JourneyBody({
         const { error } = await supabase
           .from("implementation_contract_conditions")
           .upsert(
-            {
-              implementation_id: id,
-              ...patch,
-              updated_at: new Date().toISOString(),
-            } as never,
+            { implementation_id: id, ...patch, updated_at: new Date().toISOString() } as never,
             {
               onConflict: "implementation_id",
             },
           );
         if (error) throw error;
-        setCondState(
-          Object.keys(condPending.current).length ? "saving" : "saved",
-        );
+        setCondState(Object.keys(condPending.current).length ? "saving" : "saved");
         return true;
       } catch {
         condPending.current = { ...patch, ...condPending.current };
@@ -337,17 +324,11 @@ function JourneyBody({
     queryFn: () => commercialProposalsApi.list(id),
   });
   const versions = proposalsQ.data ?? [];
-  const draftProposal =
-    versions.find((version) => version.status === "draft") ?? null;
-  const latestPublished =
-    versions.find((version) => version.status !== "draft") ?? null;
+  const draftProposal = versions.find((version) => version.status === "draft") ?? null;
+  const latestPublished = versions.find((version) => version.status !== "draft") ?? null;
   const proposalSource = draftProposal ?? latestPublished;
-  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>(
-    [],
-  );
-  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(
-    null,
-  );
+  const [proposalOptions, setProposalOptions] = useState<ProposalItemOption[]>([]);
+  const [proposalLoadedKey, setProposalLoadedKey] = useState<string | null>(null);
   const [proposalState, setProposalState] = useState<SaveState>("idle");
   const proposalDirty = useRef(false);
   const proposalOptionsRef = useRef<ProposalItemOption[]>([]);
@@ -367,8 +348,7 @@ function JourneyBody({
   const saveProposal = useCallback(async (): Promise<boolean> => {
     if (proposalRunning.current) await proposalRunning.current;
     const currentOptions = proposalOptionsRef.current;
-    if (!proposalDirty.current || guidedProposalIssue(currentOptions))
-      return true;
+    if (!proposalDirty.current || guidedProposalIssue(currentOptions)) return true;
     setProposalState("saving");
     const request = (async () => {
       try {
@@ -385,9 +365,7 @@ function JourneyBody({
           `${saved.id}:${saved.status}:${saved.draftRevision}:${saved.updatedAt}`,
         );
         setProposalState("saved");
-        await queryClient.invalidateQueries({
-          queryKey: ["commercial-proposals", id],
-        });
+        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
         return true;
       } catch {
         setProposalState("error");
@@ -410,18 +388,13 @@ function JourneyBody({
   };
 
   useEffect(() => {
-    void autosaveOpportunity(id, { draft_step: step }, {}).catch(
-      () => undefined,
-    );
+    void autosaveOpportunity(id, { draft_step: step }, {}).catch(() => undefined);
     window.scrollTo({ top: 0 });
   }, [id, step]);
 
-  const saveState: SaveState = [
-    auto.state,
-    contactState,
-    condState,
-    proposalState,
-  ].includes("error")
+  const saveState: SaveState = [auto.state, contactState, condState, proposalState].includes(
+    "error",
+  )
     ? "error"
     : [auto.state, contactState, condState, proposalState].includes("saving")
       ? "saving"
@@ -490,15 +463,10 @@ function JourneyBody({
       await completeOpportunityDraft(id);
     },
     onSuccess: () => {
-      toast.success("Ficha criada", {
-        description: "Nada foi enviado ao proprietário.",
-      });
+      toast.success("Ficha criada", { description: "Nada foi enviado ao proprietário." });
       onExit();
     },
-    onError: (e) =>
-      toast.error(
-        e instanceof Error ? e.message : "Não foi possível concluir.",
-      ),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível concluir."),
   });
 
   let content: ReactNode = null;
@@ -541,8 +509,7 @@ function JourneyBody({
   } else if (step === "proposta") {
     content = condQ.isPending ? (
       <div className="flex items-center gap-2 py-10 text-sm" style={muted}>
-        <Loader2 className="size-4 animate-spin" /> Carregando condições da
-        proposta…
+        <Loader2 className="size-4 animate-spin" /> Carregando condições da proposta…
       </div>
     ) : (
       <ProposalBlocks
@@ -609,9 +576,7 @@ function JourneyBody({
       </div>
     ) : (
       <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">
-          O que você quer registrar agora?
-        </h3>
+        <h3 className="text-lg font-semibold">O que você quer registrar agora?</h3>
         <p className="text-sm" style={muted}>
           Preencha um, vários ou nenhum.
         </p>
@@ -623,10 +588,7 @@ function JourneyBody({
             className="flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] border px-4 text-left transition hover:border-[var(--stayo-forest)]"
             style={inputStyle}
           >
-            <h.icon
-              className="size-5 shrink-0"
-              style={{ color: "var(--stayo-forest)" }}
-            />
+            <h.icon className="size-5 shrink-0" style={{ color: "var(--stayo-forest)" }} />
             <span className="flex-1 font-medium">{h.label}</span>
             <ChevronRight className="size-4" style={muted} />
           </button>
@@ -662,8 +624,7 @@ function JourneyBody({
       if (!ok) return;
       try {
         const currentVersions = await commercialProposalsApi.list(id);
-        const currentDraft =
-          currentVersions.find((version) => version.status === "draft") ?? null;
+        const currentDraft = currentVersions.find((version) => version.status === "draft") ?? null;
         const currentPublished =
           currentVersions.find((version) => version.status !== "draft") ?? null;
         const saved =
@@ -693,9 +654,7 @@ function JourneyBody({
           // A versão permanece publicada; o link pode ser gerado novamente na tela de sucesso.
         }
         setPublishedResult({ version: published, link });
-        await queryClient.invalidateQueries({
-          queryKey: ["commercial-proposals", id],
-        });
+        await queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
         toast.success("Proposta publicada", {
           description: link
             ? "O link está pronto para copiar."
@@ -704,9 +663,7 @@ function JourneyBody({
       } catch (error) {
         toast.error("Não foi possível publicar a proposta", {
           description:
-            error instanceof Error
-              ? error.message
-              : "Revise os dados e tente novamente.",
+            error instanceof Error ? error.message : "Revise os dados e tente novamente.",
         });
       }
     };
@@ -741,9 +698,7 @@ function JourneyBody({
               : ` · R$ ${Number(cond.turnover_cleaning_fee).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} limpeza`}
           </p>
           <p className="mt-1 text-sm" style={muted}>
-            {cond.duration_months == null
-              ? "Vigência a definir"
-              : `${cond.duration_months} meses`}
+            {cond.duration_months == null ? "Vigência a definir" : `${cond.duration_months} meses`}
             {cond.notice_period_days == null
               ? " · Aviso a definir"
               : ` · ${cond.notice_period_days} dias de aviso`}
@@ -780,9 +735,7 @@ function JourneyBody({
             implementationId={id}
             onBack={onExit}
             onLinkGenerated={(link) =>
-              setPublishedResult((current) =>
-                current ? { ...current, link } : current,
-              )
+              setPublishedResult((current) => (current ? { ...current, link } : current))
             }
           />
         ) : (
@@ -810,10 +763,8 @@ function JourneyBody({
               disabled={complete.isPending}
               onClick={() => complete.mutate()}
             >
-              {complete.isPending && (
-                <Loader2 className="size-4 animate-spin" />
-              )}{" "}
-              Criar ficha sem enviar
+              {complete.isPending && <Loader2 className="size-4 animate-spin" />} Criar ficha sem
+              enviar
             </Button>
           </div>
         )}
@@ -974,10 +925,7 @@ function PropertyJourneyHeader({
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           {saveState === "idle" ? (
-            <p
-              className="flex items-center gap-1 text-xs whitespace-nowrap"
-              style={muted}
-            >
+            <p className="flex items-center gap-1 text-xs whitespace-nowrap" style={muted}>
               <Check className="size-3.5" /> Salvo agora
             </p>
           ) : (
@@ -1203,16 +1151,10 @@ function CommercialJourneyHeader({
   );
 }
 
-function JourneyActions({
-  implementation,
-}: {
-  implementation: ImplementationProject;
-}) {
+function JourneyActions({ implementation }: { implementation: ImplementationProject }) {
   const locked =
     implementation.status === "ativo" ||
-    Boolean(
-      (implementation as { corePropertyId?: string | null }).corePropertyId,
-    );
+    Boolean((implementation as { corePropertyId?: string | null }).corePropertyId);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -1319,10 +1261,7 @@ function TextField({
         style={inputStyle}
       />
       {error && (
-        <span
-          className="mt-1 block text-xs"
-          style={{ color: "var(--stayo-danger)" }}
-        >
+        <span className="mt-1 block text-xs" style={{ color: "var(--stayo-danger)" }}>
           {error}
         </span>
       )}
@@ -1376,12 +1315,8 @@ function Chips<T extends string>({
             onClick={() => onChange(o.value)}
             className="min-h-11 rounded-full border px-4 text-sm font-medium transition"
             style={{
-              borderColor: active
-                ? "var(--stayo-forest)"
-                : "var(--stayo-border)",
-              backgroundColor: active
-                ? "var(--stayo-forest)"
-                : "var(--stayo-surface)",
+              borderColor: active ? "var(--stayo-forest)" : "var(--stayo-border)",
+              backgroundColor: active ? "var(--stayo-forest)" : "var(--stayo-surface)",
               color: active ? "var(--primary-foreground)" : "var(--stayo-ink)",
             }}
           >
@@ -1412,10 +1347,7 @@ function ReviewCard({
   children: ReactNode;
 }) {
   return (
-    <section
-      className="rounded-[var(--radius-card)] border p-4"
-      style={inputStyle}
-    >
+    <section className="rounded-[var(--radius-card)] border p-4" style={inputStyle}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold">{title}</h3>
@@ -1496,9 +1428,7 @@ function PropertyQuestions({
       set("city", condominium.city ?? "");
       set("postal_code", condominium.postalCode ?? "");
       if (!(await flush())) {
-        toast.error(
-          "Condomínio vinculado, mas o endereço ainda não sincronizou.",
-        );
+        toast.error("Condomínio vinculado, mas o endereço ainda não sincronizou.");
       }
       void queryClient.invalidateQueries({ queryKey: ["implementations"] });
     } catch (error) {
@@ -1895,17 +1825,11 @@ function proposalBlockSummaries(c: Cond) {
   return [
     {
       label: "Condições comerciais",
-      value:
-        c.administration_fee != null || c.turnover_cleaning_fee != null
-          ? "ok"
-          : "",
+      value: c.administration_fee != null || c.turnover_cleaning_fee != null ? "ok" : "",
     },
     {
       label: "Preparação do imóvel",
-      value:
-        c.initial_cleaning_option || c.linen_mode || c.advisory_mode
-          ? "ok"
-          : "",
+      value: c.initial_cleaning_option || c.linen_mode || c.advisory_mode ? "ok" : "",
     },
     {
       label: "Condições do contrato",
@@ -2277,23 +2201,18 @@ function GuidedServices({
   const [addingOther, setAddingOther] = useState(false);
   const [otherName, setOtherName] = useState("");
   const [otherValue, setOtherValue] = useState("");
-  const byTemplate = new Map(
-    options.map((option) => [option.templateKey, option]),
-  );
+  const byTemplate = new Map(options.map((option) => [option.templateKey, option]));
   const custom = options.filter((option) => !option.templateKey);
   const toggleTemplate = (key: string, checked: boolean) => {
     const existing = byTemplate.get(key);
     if (existing) {
       onChange(
-        options.map((option) =>
-          option === existing ? { ...option, included: checked } : option,
-        ),
+        options.map((option) => (option === existing ? { ...option, included: checked } : option)),
       );
       return;
     }
     const template = PROPOSAL_ITEM_TEMPLATES.find((item) => item.key === key);
-    if (template && checked)
-      onChange([...options, optionFromTemplate(template)]);
+    if (template && checked) onChange([...options, optionFromTemplate(template)]);
   };
   const addOther = () => {
     const value = Number(otherValue.replace(".", "").replace(",", "."));
@@ -2339,13 +2258,9 @@ function GuidedServices({
                 <Checkbox
                   className="size-5"
                   checked={Boolean(option?.included)}
-                  onCheckedChange={(checked) =>
-                    toggleTemplate(template.key, checked === true)
-                  }
+                  onCheckedChange={(checked) => toggleTemplate(template.key, checked === true)}
                 />
-                <span className="min-w-0 flex-1 text-sm font-medium">
-                  {template.description}
-                </span>
+                <span className="min-w-0 flex-1 text-sm font-medium">{template.description}</span>
                 <span className="shrink-0 text-sm tabular-nums">
                   {template.unitValue.toLocaleString("pt-BR", {
                     style: "currency",
@@ -2367,21 +2282,14 @@ function GuidedServices({
                 onCheckedChange={(checked) =>
                   onChange(
                     options.map((item) =>
-                      item === option
-                        ? { ...item, included: checked === true }
-                        : item,
+                      item === option ? { ...item, included: checked === true } : item,
                     ),
                   )
                 }
               />
-              <span className="min-w-0 flex-1 text-sm font-medium">
-                {option.description}
-              </span>
+              <span className="min-w-0 flex-1 text-sm font-medium">{option.description}</span>
               <span className="shrink-0 text-sm tabular-nums">
-                {option.unitValue.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
+                {option.unitValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </span>
             </label>
           ))}
@@ -2392,11 +2300,7 @@ function GuidedServices({
           className="grid gap-3 rounded-[var(--radius-control)] border p-3 sm:grid-cols-[1fr_10rem_auto] sm:items-end"
           style={inputStyle}
         >
-          <TextField
-            label="Nome do serviço"
-            value={otherName}
-            onChange={setOtherName}
-          />
+          <TextField label="Nome do serviço" value={otherName} onChange={setOtherName} />
           <TextField
             label="Valor (R$)"
             value={otherValue}
@@ -2498,17 +2402,14 @@ function PublishedProposalSuccess({
         </>
       ) : (
         <div className="mt-4 rounded-[var(--radius-control)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-3">
-          <p className="text-sm">
-            A proposta foi publicada, mas o link ainda não foi gerado.
-          </p>
+          <p className="text-sm">A proposta foi publicada, mas o link ainda não foi gerado.</p>
           <Button
             type="button"
             className="mt-3"
             disabled={generating}
             onClick={() => void generateLink()}
           >
-            <Link2 className="size-4" />{" "}
-            {generating ? "Gerando…" : "Gerar link"}
+            <Link2 className="size-4" /> {generating ? "Gerando…" : "Gerar link"}
           </Button>
         </div>
       )}
@@ -2545,10 +2446,7 @@ function NumberChoice({
           onChange(choice === TBD ? null : Number(choice));
         }}
         options={[
-          ...presets.map((preset) => ({
-            value: preset,
-            label: preset + " " + unit,
-          })),
+          ...presets.map((preset) => ({ value: preset, label: preset + " " + unit })),
           { value: "outro", label: "Outro" },
           { value: TBD, label: "A definir" },
         ]}
