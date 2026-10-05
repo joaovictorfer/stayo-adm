@@ -584,7 +584,7 @@ function ImplementationDetailPage() {
                     nextSteps={buildPending()}
                     onGoSection={goSection}
                     implementationId={implementation.id}
-                    proposal={latestProposal ? { version: latestProposal.version, statusLabel: proposalStatusLabel[latestProposal.status] } : null}
+                    proposal={latestProposal ? { version: latestProposal.version, statusLabel: proposalStatusLabel[latestProposal.status], snapshot: latestProposal.status === "draft" ? null : latestProposal.snapshot ?? null, total: latestProposal.total ?? null } : null}
                     onNewVersion={() => setProposalEditing(true)}
                     onHistory={() => setProposalEditing(true)}
                     extras={
