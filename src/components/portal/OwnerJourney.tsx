@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { StayoLogo } from "../brand/StayoLogo";
 import { OwnerCoverBanner } from "./OwnerCoverBanner";
 import { PlatformsStep } from "./PlatformsStep";
+import { PreparationStep, usePreparation } from "./PreparationStep";
 import {
   isValidEmail,
   resolveOwnerPlatforms,
@@ -253,6 +254,17 @@ export function OwnerJourney({
   useEffect(() => {
     if (window.localStorage.getItem(platformsViewKey) === "1") setPlatformsView(true);
   }, [platformsViewKey]);
+  const prepViewKey = `stayo:prep-view:${token.slice(0, 12)}`;
+  const [prepView, setPrepView] = useState(false);
+  const prepQ = usePreparation(token, proposalAccepted);
+  useEffect(() => {
+    if (window.localStorage.getItem(prepViewKey) === "1") setPrepView(true);
+  }, [prepViewKey]);
+  const showPrep = (value: boolean) => {
+    setPrepView(value);
+    window.localStorage.setItem(prepViewKey, value ? "1" : "0");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const showPlatforms = (value: boolean) => {
     setPlatformsView(value);
     window.localStorage.setItem(platformsViewKey, value ? "1" : "0");
@@ -708,11 +720,13 @@ export function OwnerJourney({
     const propertyKeys = Object.keys(emptyPropertyErrorKeys) as Array<keyof PropertyErrors>;
     const propertyDone = propertyKeys.filter((key) => !propertyErrors[key]).length;
     const platformsDone = isValidEmail(platEmail) ? 1 : 0;
+    const prepItems = prepQ.data ?? [];
+    const prepDone = prepItems.length === 0 || prepItems.every((i) => i.answer) ? 1 : 0;
     return Math.round(
-      ((ownerDone + propertyDone + platformsDone) / (ownerFields.length + propertyKeys.length + 1)) * 100,
+      ((ownerDone + propertyDone + platformsDone + prepDone) / (ownerFields.length + propertyKeys.length + 2)) * 100,
     );
   })();
-  const displayStage = stage === 4 ? 6 : stage === 3 && platformsView && !reviewing ? 4 : stage;
+  const displayStage = stage === 4 ? 6 : stage === 3 && platformsView && !reviewing ? (prepView ? 5 : 4) : stage;
 
   return (
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
@@ -757,7 +771,7 @@ export function OwnerJourney({
             <div className="pj-top-progress-row">
               <p className="pj-top-progress">
                 Etapa {displayStage} de 6 ·{" "}
-                <strong>{displayStage === 2 ? "Seus dados" : displayStage === 4 ? "Plataformas" : displayStage === 6 ? "Seu acesso" : "Seu imóvel"}</strong>
+                <strong>{displayStage === 2 ? "Seus dados" : displayStage === 4 ? "Plataformas" : displayStage === 6 ? "Seu acesso" : displayStage === 5 ? "Preparação" : "Seu imóvel"}</strong>
               </p>
               <span className="pj-top-percent">Cadastro {registrationPercent}%</span>
             </div>
@@ -882,13 +896,25 @@ export function OwnerJourney({
                 onSend={sendForReview}
               />
             )}
-            {stage === 3 && !reviewing && platformsView && (
+            {stage === 3 && !reviewing && platformsView && prepView && (
+              prepQ.data ? (
+                <PreparationStep
+                  token={token}
+                  items={prepQ.data}
+                  onBack={() => showPrep(false)}
+                  onContinue={continueProperty}
+                />
+              ) : (
+                <p className="pd-lead">{prepQ.isError ? "Não foi possível carregar os itens agora." : "Carregando itens…"}</p>
+              )
+            )}
+            {stage === 3 && !reviewing && platformsView && !prepView && (
               <PlatformsStep
                 channels={platChannels}
                 airbnbEmail={platEmail}
                 onChange={changePlatforms}
                 onBack={() => showPlatforms(false)}
-                onContinue={continueProperty}
+                onContinue={() => showPrep(true)}
               />
             )}
             {stage === 3 && !reviewing && !platformsView && (
