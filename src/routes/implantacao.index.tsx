@@ -54,6 +54,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { isDraftOrigin, journeyLabel, proposalStage } from "../lib/journey-states";
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
 
+const JOURNEY_NEXT: Record<string, string> = {
+  Rascunho: "Continuar cadastro",
+  "Proposta publicada": "Aguardar aceite da proposta",
+  "Proposta aceita": "Planejar implantação",
+};
+const journeyNextAction = (label: string) => JOURNEY_NEXT[label] ?? null;
+
 /** Mesmo rótulo do cabeçalho e do cadastro: rascunho e proposta reais. */
 function useJourneyLabels() {
   const q = useQuery({
@@ -598,6 +605,7 @@ function CommercialPriority({
   commercial: CommercialOverviewRow | undefined;
   loadState: CommercialLoadState;
 }) {
+  const labelFor = useJourneyLabels();
   if (loadState === "loading") {
     return <span className="text-xs text-[var(--stayo-ink-muted)]">Carregando agenda…</span>;
   }
@@ -651,7 +659,7 @@ function CommercialPriority({
 
   return (
     <span className="text-sm font-medium" style={{ color: "var(--stayo-forest)" }}>
-      {opportunityNextAction(item)}
+      {journeyNextAction(labelFor(item)) ?? opportunityNextAction(item)}
     </span>
   );
 }
