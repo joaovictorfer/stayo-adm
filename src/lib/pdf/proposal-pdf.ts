@@ -1,3 +1,11 @@
+import {
+  ASSIGNMENT_LABELS,
+  LINEN_CHOICES,
+  commercialCleaningFee,
+  initialCleaningText,
+  ownerUseSummary,
+  type AssignmentMode,
+} from "../contract-conditions";
 /**
  * PDFs de proposta.
  *
@@ -214,9 +222,26 @@ export async function generatePublishedProposalPdf(
     if (conditions.administrationFee != null) {
       builder.text(`Administração: ${conditions.administrationFee}%`, { size: 10 });
     }
+    const cleaningFee = commercialCleaningFee(conditions);
+    if (cleaningFee != null) {
+      builder.text(`Taxa de limpeza: ${currency.format(cleaningFee)} por utilização`, { size: 10 });
+    }
     if (conditions.cleaningResponsibility) {
       builder.text(`Limpeza: ${conditions.cleaningResponsibility}`, { size: 10 });
     }
+    const initial = initialCleaningText(conditions);
+    if (initial) builder.text(`Preparação inicial: ${initial}`, { size: 10 });
+    if (conditions.exclusivity != null) {
+      builder.text(`Exclusividade: ${conditions.exclusivity ? "Sim" : "Não"}`, { size: 10 });
+    }
+    const ownerUse = ownerUseSummary(conditions);
+    if (ownerUse) builder.text(`Uso do imóvel pelo proprietário: ${ownerUse}`, { size: 10 });
+    const assignment = conditions.assignmentMode as AssignmentMode | null | undefined;
+    if (assignment && ASSIGNMENT_LABELS[assignment]) {
+      builder.text(`Cessão a terceiros: ${ASSIGNMENT_LABELS[assignment]}`, { size: 10 });
+    }
+    const linen = LINEN_CHOICES.find((o) => o.value === conditions.linenMode)?.label;
+    if (linen) builder.text(`Enxoval: ${linen}`, { size: 10 });
     if (conditions.payoutRule) {
       builder.text(`Repasse: ${conditions.payoutRule}`, { size: 10 });
     }
