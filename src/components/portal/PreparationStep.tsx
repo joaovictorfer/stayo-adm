@@ -81,7 +81,7 @@ export function PreparationStep({
         setIdx(nextOpen >= 0 ? nextOpen : Math.min(pos + 1, total - 1));
       }
     } catch {
-      setAnswers((a) => ({ ...a, [id]: prev }));
+      setAnswers((a) => ({ ...a, [id]: prev ?? { answer: null, note: null } }));
       setFailed({ id, answer, note, advance });
     } finally {
       setSaving(false);
