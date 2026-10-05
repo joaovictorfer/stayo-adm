@@ -706,9 +706,8 @@ export function OwnerJourney({
               <span className="portal-onboarding-cover-tag">{coverNote}</span>
             ) : null}
           </div>
-          {journeyState === "A" && <span className="pj-hero-badge">Proposta personalizada</span>}
           <p className="portal-onboarding-eyebrow">
-            {journeyState === "A" && ownerFullName ? ownerFullName : firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
+            {firstName ? `Olá, ${firstName}` : "Olá!"} · {propertyTitle}
           </p>
           <h1 key={journeyState} className="portal-onboarding-headline">
             {copy.title}
