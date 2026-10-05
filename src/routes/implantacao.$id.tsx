@@ -1507,7 +1507,7 @@ function OwnerPortalPanel({
             </span>
           </li>
         ))}
-      </ol>
+      </ol>}
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
         {status === "ativo" && link && (
