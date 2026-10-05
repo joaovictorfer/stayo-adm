@@ -351,7 +351,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
             <>
               <Card icon={<FileText className="size-4" />} title="Identificação">
                 <ul>
-                  />
                   <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
                   <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
                   <Line row={{ label: "Tipo", value: implementation.propertyType }} onEdit={startEdit} />
