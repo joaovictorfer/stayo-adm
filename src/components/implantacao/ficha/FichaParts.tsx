@@ -6,7 +6,7 @@ import { FICHA_SECTIONS, type FichaSection } from "../../../lib/ficha-next-actio
 const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
 const muted = { color: "var(--stayo-ink-muted)" };
 
-/** Menu da ficha: lateral fixo no desktop, seletor recolhível no celular. */
+/** Abas horizontais da ficha (rolagem lateral no celular). */
 export function FichaNav({
   current,
   onChange,
@@ -16,68 +16,33 @@ export function FichaNav({
   onChange: (s: FichaSection) => void;
   badges?: Partial<Record<FichaSection, string>>;
 }) {
-  const [open, setOpen] = useState(false);
-  const label = FICHA_SECTIONS.find((s) => s.id === current)?.label;
-  const list = (
-    <ul className="flex flex-col gap-0.5">
-      {FICHA_SECTIONS.map((s) => {
-        const active = s.id === current;
-        return (
-          <li key={s.id}>
-            <button
-              type="button"
-              aria-current={active ? "page" : undefined}
-              onClick={() => {
-                onChange(s.id);
-                setOpen(false);
-              }}
-              className="flex min-h-11 w-full items-center justify-between gap-2 rounded-[var(--radius-control)] px-3 text-left text-sm transition"
-              style={{
-                backgroundColor: active ? "var(--stayo-forest-soft)" : "transparent",
-                color: active ? "var(--stayo-forest)" : "var(--stayo-ink)",
-                fontWeight: active ? 600 : 500,
-              }}
-            >
-              <span>{s.label}</span>
-              {badges[s.id] && (
-                <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ backgroundColor: "var(--stayo-bg)", ...muted }}>
-                  {badges[s.id]}
-                </span>
-              )}
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  );
   return (
-    <>
-      <nav aria-label="Seções da ficha" className="sticky top-4 hidden self-start lg:block">
-        {list}
-      </nav>
-      <nav aria-label="Seções da ficha" className="lg:hidden">
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-          className="flex min-h-12 w-full items-center justify-between rounded-[var(--radius-control)] border px-4 text-sm font-semibold"
-          style={surface}
-        >
-          <span>
-            <span className="mr-2 font-normal" style={muted}>
-              Seção
-            </span>
-            {label}
-          </span>
-          <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} />
-        </button>
-        {open && (
-          <div className="mt-2 rounded-[var(--radius-card)] border p-1.5 shadow-sm" style={surface}>
-            {list}
-          </div>
-        )}
-      </nav>
-    </>
+    <nav aria-label="Seções da ficha" className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0" style={{ borderColor: "var(--stayo-border)" }}>
+      <ul className="flex min-w-max gap-1 sm:gap-4">
+        {FICHA_SECTIONS.map((s) => {
+          const active = s.id === current;
+          return (
+            <li key={s.id}>
+              <button
+                type="button"
+                aria-current={active ? "page" : undefined}
+                onClick={() => onChange(s.id)}
+                className="relative flex min-h-11 items-center gap-1.5 px-2 text-sm transition"
+                style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
+              >
+                {s.label}
+                {badges[s.id] && (
+                  <span className="rounded-full px-1.5 text-[11px]" style={{ backgroundColor: "var(--stayo-bg)" }}>
+                    {badges[s.id]}
+                  </span>
+                )}
+                {active && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[3px] rounded-full" style={{ backgroundColor: "var(--stayo-forest)" }} />}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 
