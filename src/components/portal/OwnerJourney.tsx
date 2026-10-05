@@ -2196,7 +2196,7 @@ function PropertyStep({
               </div>
             </>
           ) : (
-            <p className="pd-note">O endereço do condomínio já está conosco.</p>
+            <p className="pd-note">{condominiumName ? "O endereço do condomínio já está conosco." : "O endereço do imóvel já está conosco."}</p>
           )}
         </div>
       )}
