@@ -1153,7 +1153,19 @@ function ProposalStep({
           <p className="pj-confirm-summary">
             Você confirma a proposta versão {current.version}, com implantação definida em {facts.implementation ?? "valor a definir"}.
           </p>
-          <a className="pj-review-link" href="#pj-cond-title">Revisar condições da proposta</a>
+          <button
+            type="button"
+            className="pj-review-link"
+            onClick={() => {
+              setShowConditions(true);
+              window.setTimeout(
+                () => document.getElementById("pj-cond-title")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                80,
+              );
+            }}
+          >
+            Revisar condições da proposta
+          </button>
           <p className="pj-fineprint">
             Este aceite confirma as condições comerciais. O contrato será formalizado em etapa própria.
           </p>
@@ -1189,7 +1201,6 @@ function ProposalStep({
         </div>
       )}
 
-      <ProposalFaq />
     </section>
   );
 }
