@@ -93,6 +93,7 @@ import {
   type SheetRow,
 } from "../components/implantacao/ficha/FichaSummary";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
+import { InspectionsPanel, PortalTimelinePanel } from "../components/implantacao/ficha/PortalUpdatesPanels";
 import { guidedInventoryQuery } from "../lib/api/guided-inventory";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
@@ -621,6 +622,8 @@ function ImplementationDetailPage() {
                     />
                   }
                   more={
+                    <div className="flex flex-col gap-4">
+                    <InspectionsPanel implementationId={implementation.id} />
                     <DomainHub
                       rows={[
                     {
@@ -632,36 +635,6 @@ function ImplementationDetailPage() {
                       ),
                     },
                     {
-                      id: "inventario-guiado",
-                      label: "Inventário guiado",
-                      summary: <GuidedInventorySummary implementationId={implementation.id} />,
-                      content: (
-                        <GuidedInventoryPanel implementationId={implementation.id} title={`${implementation.code}${implementation.nickname ? ` · ${implementation.nickname}` : ""}`} />
-                      ),
-                    },
-                    {
-                      id: "guia",
-                      label: "Guia de utensílios",
-                      summary: (
-                        <GuideSummary implementationId={implementation.id} guideType="utensilios" />
-                      ),
-                      content: (
-                        <GuidePanel implementationId={implementation.id} guideType="utensilios" />
-                      ),
-                    },
-                    {
-                      id: "enxoval",
-                      label: "Enxoval (compras)",
-                      summary: "Peças por ambiente, compra e entrega",
-                      content: <SupplySheet implementationId={implementation.id} />,
-                    },
-                    {
-                      id: "inventario",
-                      label: "Inventário",
-                      summary: "Necessário, existente, faltas e bloqueadores",
-                      content: <InventoryTab implementationId={implementation.id} />,
-                    },
-                    {
                       id: "fornecedores",
                       label: "Fornecedores e instalações",
                       summary: "Quem forneceu, instalou ou atende o imóvel",
@@ -669,6 +642,7 @@ function ImplementationDetailPage() {
                     },
                       ]}
                     />
+                    </div>
                   }
                 />
               ) : section === "proprietario" ? (
