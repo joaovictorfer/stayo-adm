@@ -344,6 +344,13 @@
       "when": 1791224039740,
       "tag": "0048_owner_inventory_visual_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1791239521569,
+      "tag": "0049_owner_distribution_channels",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,8 @@ import {
   type PropertyDetailsInput,
 } from "../../../lib/api/owner-portal-data";
 import type { ImplementationProject } from "../../../types/core";
+import { CHANNEL_LABELS, getImplementationPlatforms } from "../../../lib/api/owner-platforms";
+import { formatDateTime } from "../../../lib/format-datetime";
 
 const navy = { color: "var(--stayo-navy)" };
 const muted = { color: "var(--stayo-ink-muted)" };
@@ -253,6 +255,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         </div>
         <ActionRow icon={<ExternalLink className="size-4" />} label="Ver proprietário" onClick={onGoOwner} />
       </Card>
+      <PlatformsCard implementationId={implementation.id} />
       <section className="rounded-xl border bg-white p-4 sm:px-5" style={border}>
         <div className="flex items-center gap-3 pb-3">
           <AlertCircle className="size-6 shrink-0" style={{ color: "var(--ficha-pending-fg)" }} />
@@ -450,5 +453,33 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         <aside className="hidden flex-col gap-4 lg:flex">{sidebar}</aside>
       </div>
     </div>
+  );
+}
+
+function PlatformsCard({ implementationId }: { implementationId: string }) {
+  const q = useQuery({
+    queryKey: ["implementation-platforms", implementationId],
+    queryFn: () => getImplementationPlatforms(implementationId),
+  });
+  const channels = q.data?.distribution_channels ?? null;
+  return (
+    <section className="rounded-xl border bg-white p-4 sm:px-5" style={border}>
+      <h3 className="pb-2 text-lg font-semibold" style={display}>Plataformas</h3>
+      {q.isPending ? (
+        <p className="text-sm" style={muted}>Carregando…</p>
+      ) : !channels ? (
+        <p className="text-sm" style={muted}>Ainda não escolhidas pelo proprietário.</p>
+      ) : (
+        <div className="space-y-1 text-sm" style={navy}>
+          <p>{channels.map((c) => CHANNEL_LABELS[c] ?? c).join(" · ")}</p>
+          <p className="break-all" style={muted}>Conta Airbnb: {q.data?.airbnb_account_email || "Não informada"}</p>
+          {q.data?.distribution_updated_at && (
+            <p className="text-xs" style={muted}>
+              {q.data.distribution_updated_by === "owner" ? "Informado pelo proprietário" : "Atualizado"} · {formatDateTime(q.data.distribution_updated_at)}
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

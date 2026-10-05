@@ -5533,3 +5533,25 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pd-stepper-ctrl output { min-width: 28px; text-align: center; font-size: 17px; font-weight: 600; color: var(--portal-navy); }
 .pd-more { border-top: 1px solid var(--portal-border); padding-top: 8px; }
 .pd-more summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-size: 14px; color: var(--portal-navy); }
+
+/* Fase 04 · Plataformas */
+.pf-airbnb { display: flex; flex-direction: column; gap: 10px; padding: 18px 16px; border-radius: 16px; background: color-mix(in srgb, var(--portal-gold) 8%, var(--portal-surface)); }
+.pf-airbnb-head { display: flex; align-items: center; gap: 12px; font-size: 20px; color: var(--portal-navy); }
+.pf-badge { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--portal-gold); background: color-mix(in srgb, var(--portal-gold) 16%, transparent); }
+.pf-highlights { display: flex; flex-direction: column; gap: 6px; margin: 0 0 6px; padding: 0 0 0 40px; list-style: none; font-size: 13px; color: var(--portal-muted); }
+.pf-highlights li { display: flex; align-items: center; gap: 8px; }
+.pf-highlights svg { flex-shrink: 0; color: var(--portal-navy); }
+.pf-airbnb label { font-size: 13px; color: var(--portal-navy); }
+.pf-input { min-height: 48px; background: var(--portal-surface); }
+.pf-box { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border: 1.5px solid var(--portal-border); border-radius: 8px; background: var(--portal-surface); color: var(--portal-surface); }
+.pf-box.is-on { border-color: var(--portal-navy); background: var(--portal-navy); }
+.pf-others { display: flex; flex-direction: column; gap: 10px; }
+.pf-others-title { margin: 0 0 2px; font-size: 16px; font-weight: 600; color: var(--portal-navy); }
+.pf-row { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 0 16px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-surface); font-size: 15px; color: var(--portal-navy); text-align: left; }
+.pf-row.is-on { border-color: var(--portal-navy); }
+.pf-disclosure { border-top: 1px solid var(--portal-border); padding-top: 14px; }
+.pf-disclosure-btn { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 16px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-surface); font-size: 14px; color: var(--portal-navy); text-align: left; }
+.pf-disclosure-btn span { flex: 1; }
+.pf-chev { transition: transform .2s; }
+.pf-chev.is-open { transform: rotate(90deg); }
+.pf-disclosure-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; padding: 0 4px 0 22px; font-size: 13px; line-height: 1.5; color: var(--portal-muted); }

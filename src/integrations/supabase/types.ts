@@ -1302,6 +1302,7 @@ export type Database = {
       implementation_projects: {
         Row: {
           address: string | null
+          airbnb_account_email: string | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -1316,6 +1317,9 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          distribution_channels: string[] | null
+          distribution_updated_at: string | null
+          distribution_updated_by: string | null
           draft_completed_at: string | null
           draft_step: string | null
           id: string
@@ -1335,6 +1339,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          airbnb_account_email?: string | null
           bedrooms?: number | null
           capacity?: number | null
           city?: string | null
@@ -1349,6 +1354,9 @@ export type Database = {
           cover_image?: string | null
           cover_source?: string | null
           created_at?: string
+          distribution_channels?: string[] | null
+          distribution_updated_at?: string | null
+          distribution_updated_by?: string | null
           draft_completed_at?: string | null
           draft_step?: string | null
           id?: string
@@ -1368,6 +1376,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          airbnb_account_email?: string | null
           bedrooms?: number | null
           capacity?: number | null
           city?: string | null
@@ -1382,6 +1391,9 @@ export type Database = {
           cover_image?: string | null
           cover_source?: string | null
           created_at?: string
+          distribution_channels?: string[] | null
+          distribution_updated_at?: string | null
+          distribution_updated_by?: string | null
           draft_completed_at?: string | null
           draft_step?: string | null
           id?: string
@@ -3035,6 +3047,7 @@ export type Database = {
         Args: { p_implementation_id: string }
         Returns: {
           address: string | null
+          airbnb_account_email: string | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3049,6 +3062,9 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          distribution_channels: string[] | null
+          distribution_updated_at: string | null
+          distribution_updated_by: string | null
           draft_completed_at: string | null
           draft_step: string | null
           id: string
@@ -3077,6 +3093,7 @@ export type Database = {
         Args: { p_data: Json }
         Returns: {
           address: string | null
+          airbnb_account_email: string | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3091,6 +3108,9 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          distribution_channels: string[] | null
+          distribution_updated_at: string | null
+          distribution_updated_by: string | null
           draft_completed_at: string | null
           draft_step: string | null
           id: string
@@ -3119,6 +3139,7 @@ export type Database = {
         Args: { p_data: Json }
         Returns: {
           address: string | null
+          airbnb_account_email: string | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3133,6 +3154,9 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          distribution_channels: string[] | null
+          distribution_updated_at: string | null
+          distribution_updated_by: string | null
           draft_completed_at: string | null
           draft_step: string | null
           id: string
@@ -3161,6 +3185,7 @@ export type Database = {
         Args: { p_data: Json }
         Returns: {
           address: string | null
+          airbnb_account_email: string | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3175,6 +3200,9 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          distribution_channels: string[] | null
+          distribution_updated_at: string | null
+          distribution_updated_by: string | null
           draft_completed_at: string | null
           draft_step: string | null
           id: string
@@ -3270,6 +3298,7 @@ export type Database = {
         Args: { p_data: Json; p_implementation_id: string }
         Returns: {
           address: string | null
+          airbnb_account_email: string | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3284,6 +3313,9 @@ export type Database = {
           cover_image: string | null
           cover_source: string | null
           created_at: string
+          distribution_channels: string[] | null
+          distribution_updated_at: string | null
+          distribution_updated_by: string | null
           draft_completed_at: string | null
           draft_step: string | null
           id: string
@@ -3488,6 +3520,11 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      owner_platforms_resolve: { Args: { p_token: string }; Returns: Json }
+      owner_platforms_save: {
+        Args: { p_airbnb_email: string; p_channels: string[]; p_token: string }
+        Returns: Json
       }
       owner_portal_accept_proposal: {
         Args: { p_accepted_name: string; p_token: string }
