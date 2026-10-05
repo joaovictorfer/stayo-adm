@@ -321,6 +321,12 @@ function ImplementationDetailPage() {
             timestamp: implementation.createdAt,
             actor: null,
           },
+          ...(implementation.updatedAt !== implementation.createdAt ? [{
+            id: "updated",
+            label: "Ficha atualizada",
+            timestamp: implementation.updatedAt,
+            actor: null,
+          }] : []),
         ]
       : []),
     ...(proposalsQuery.data ?? []).flatMap((p) => [
@@ -533,7 +539,7 @@ function ImplementationDetailPage() {
                         <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
                           <MeetingSummary implementationId={implementation.id} />
                         </Collapsible>
-                        <Collapsible title="Alterar etapa da implantação" summary={statusLabels[implementation.status]}>
+                        <Collapsible title="Alterar etapa da implantação" summary="Etapas administrativas">
                           <StatusStepper
                             status={implementation.status}
                             onChange={(status) => changeStatus.mutate(status)}

@@ -881,16 +881,17 @@ function JourneyBody({
       ) : (
         <header className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-3">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               aria-label="Voltar para ficha"
               onClick={() => void exit()}
               className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
               style={{ color: "var(--stayo-forest)" }}
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Implantação
-            </button>
+              Voltar para ficha
+            </Button>
             <JourneyActions implementation={implementation} />
           </div>
           <div className="flex items-center justify-between gap-3">
@@ -899,15 +900,6 @@ function JourneyBody({
             </p>
             <div className="flex shrink-0 items-center gap-2">
               <SaveStatus state={saveState} onRetry={retry} compact />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="min-h-11 px-2 sm:px-3"
-                onClick={() => void exit()}
-              >
-                Voltar para ficha
-              </Button>
             </div>
           </div>
           <div>

@@ -161,7 +161,7 @@ export function JourneyCard({ status }: { status: ImplementationStatus }) {
                 {done && <Check className="size-3.5" strokeWidth={3} style={{ color: "white" }} />}
                 {active && <span className="size-3 rounded-full" style={{ backgroundColor: "var(--stayo-navy, #0b3150)" }} />}
               </span>
-              <span className="mt-2 w-full truncate px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
+              <span className="mt-2 w-full break-words px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
                 {step.label}
               </span>
               <span className="hidden text-xs sm:block" style={active ? { color: "var(--stayo-navy)" } : muted}>
