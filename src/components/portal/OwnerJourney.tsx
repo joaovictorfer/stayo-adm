@@ -20,7 +20,6 @@ import {
   ArrowRight,
   ChevronDown,
   Loader2,
-  Clock3,
   Sparkles,
   Camera,
   Shirt,
