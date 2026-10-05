@@ -5489,3 +5489,4 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 @media (max-width: 370px) {
   .pj-open-fact dd { font-size: 15px; }
 }
+.pj-confirm[hidden] { display: none !important; }
