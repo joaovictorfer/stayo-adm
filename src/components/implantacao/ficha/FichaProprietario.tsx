@@ -11,6 +11,7 @@ import { adminApi, implementationsListQuery, ownerNoteQuery, ownerOnboardingSubm
 import { ownerNotesStore } from "../../../lib/api/local-store";
 import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, normalizeDocument, ownerAdminEditSchema } from "../../../lib/owner-form-validation";
 import { statusLabels } from "../../../lib/implementation-status";
+import { contractStageLabel, currentContractStage } from "../../../lib/journey-states";
 import { proposalStatusLabel, type FichaSection } from "../../../lib/ficha-next-action";
 import type { PendingEntry } from "./FichaSummary";
 import type { ImplementationProject } from "../../../types/core";
@@ -24,13 +25,13 @@ function SectionTitle({ children, icon }: { children: ReactNode; icon?: ReactNod
   return <h3 className={`${heading} mb-2 flex items-center gap-2`}>{icon && <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)] [&_svg]:size-4">{icon}</span>}{children}</h3>;
 }
 
-export function FichaProprietario({ implementation, portal, review, pending, proposal, hasConditions, onGo }: {
+export function FichaProprietario({ implementation, portal, review, pending, proposal, journey, onGo }: {
   implementation: ImplementationProject;
   portal: ReactNode;
   review: ReactNode;
   pending: PendingEntry[];
   proposal: CommercialProposalVersion | null;
-  hasConditions: boolean;
+  journey: string;
   onGo: (section: FichaSection) => void;
 }) {
   const queryClient = useQueryClient();
@@ -136,7 +137,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
         <section className={panel} aria-label="Outros vínculos">
           <SectionTitle>Outros vínculos</SectionTitle>
           {links.isError || properties.isError ? <p className="text-sm text-destructive">Não foi possível carregar os vínculos.</p> : <>
-            <div className="flex flex-wrap items-center gap-2 text-sm"><Home className="size-4" /><span className="flex-1">Imóveis vinculados</span><span className="text-[var(--stayo-ink-muted)]">{links.isPending && owner ? "Carregando…" : `${(implementation.ownerId ? 1 : 0) + otherImplementations.length + ownerProperties.filter(property => ![implementation, ...otherImplementations].some(item => item.corePropertyId === property.id)).length} vínculo(s)`}</span>
+            <div className="flex flex-wrap items-center gap-2 text-sm"><Home className="size-4" /><span className="flex-1">Imóveis vinculados</span><span className="text-[var(--stayo-ink-muted)]">{links.isPending && owner ? "Carregando…" : (n => `${n} ${n === 1 ? "vínculo" : "vínculos"}`)((implementation.ownerId ? 1 : 0) + otherImplementations.length + ownerProperties.filter(property => ![implementation, ...otherImplementations].some(item => item.corePropertyId === property.id)).length)}</span>
             {implementation.ownerId && <Button asChild variant="link" size="sm" className="px-0"><Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>Ver vínculos <ChevronRight /></Link></Button>}</div>
             {otherImplementations.map(item => <Link key={item.id} to="/implantacao/$id" params={{ id: item.id }} className={`${row} text-sm`}><span className="min-w-0 flex-1 break-words">{item.nickname || [item.condominiumName, item.unit].filter(Boolean).join(" · ") || item.code}</span><span className="text-xs text-[var(--stayo-ink-muted)]">{statusLabels[item.status]}</span><ChevronRight className="size-4 shrink-0" /></Link>)}
             {ownerProperties.filter(property => ![implementation, ...otherImplementations].some(item => item.corePropertyId === property.id)).map(property => <Link key={property.id} to="/imoveis/$id" params={{ id: property.id }} className={`${row} text-sm`}><span className="min-w-0 flex-1 break-words">{property.name}</span><ChevronRight className="size-4 shrink-0" /></Link>)}
@@ -158,9 +159,9 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
         <section className={panel}>
           <SectionTitle icon={<Users />}>Relacionamento</SectionTitle>
           {[
-            { label: "Implantação", value: statusLabels[implementation.status], section: "implantacao" as const },
+            { label: "Implantação", value: journey, section: "implantacao" as const },
             { label: "Proposta", value: proposal ? `v${proposal.version} · ${proposalStatusLabel[proposal.status]}` : "Não criada", section: "proposta" as const },
-            { label: "Contrato", value: hasConditions ? "Condições registradas" : "Condições não definidas", section: "contrato" as const },
+            { label: "Contrato", value: contractStageLabel[currentContractStage()], section: "contrato" as const },
           ].map(item => <Button key={item.label} variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} onClick={() => onGo(item.section)}><span>{item.label}</span><span className="min-w-0 flex-1 text-right text-xs text-[var(--stayo-ink-muted)]">{item.value}</span><ChevronRight /></Button>)}
         </section>
       </aside>

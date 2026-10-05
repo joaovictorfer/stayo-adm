@@ -231,7 +231,7 @@ export function FichaContrato({
           <Block
             icon={<FileText className="size-4" />}
             title="Contrato de gestão STAYO"
-            subtitle={proposal ? `Versão ${proposal.version} · baseada na proposta` : "Sem versão"}
+            subtitle="Versão disponível após a geração do contrato"
             action={
               <Button variant="outline" size="sm" className="h-9 bg-white" style={navy} disabled={!docVersion || pdf.isPending} onClick={() => docVersion && pdf.mutate(docVersion)}>
                 <Eye /> {pdf.isPending ? "Gerando…" : "Visualizar"}

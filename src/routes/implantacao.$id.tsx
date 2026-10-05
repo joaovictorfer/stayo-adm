@@ -1,5 +1,6 @@
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
 import { journeyLabel, proposalStage, contractStageLabel, currentContractStage } from "../lib/journey-states";
+import { usePropertyPendencies } from "../components/implantacao/ficha/property-pendencies";
 import { FichaProprietario } from "../components/implantacao/ficha/FichaProprietario";
 import { FichaImovel } from "@/components/implantacao/ficha/FichaImovel";
 import { FichaImplantacao } from "../components/implantacao/ficha/FichaImplantacao";
@@ -312,6 +313,7 @@ function ImplementationDetailPage() {
     },
   });
   const conditions = conditionsQuery.data;
+  const propertyPendencyCount = usePropertyPendencies(implementation?.id).keys.length;
   const action = nextAction({
     hasOwnerName: Boolean(implementation?.ownerName),
     hasOwnerPhone: Boolean(implementation?.ownerPhone),
@@ -418,8 +420,8 @@ function ImplementationDetailPage() {
                     pend.push({ id: "prop", section: "proposta", icon: "doc", title: "Comercial", detail: latestProposal ? "Publicar proposta" : "Montar a proposta", chip: "Pendente" });
                   else if (latestProposal.status === "published")
                     pend.push({ id: "prop", section: "portal", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
-                  if (missingPropertyFields)
-                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${missingPropertyFields} ${missingPropertyFields === 1 ? "informação" : "informações"} em aberto`, chip: "Pendente" });
+                  if (propertyPendencyCount)
+                    pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${propertyPendencyCount} ${propertyPendencyCount === 1 ? "pendência" : "pendências"} em aberto`, chip: "Pendente" });
                   if (pendingItems.length)
                     pend.push({ id: "impl", section: "implantacao", icon: "list", title: "Implantação", detail: `${pendingItems.length} ${pendingItems.length === 1 ? "item" : "itens"} em aberto${readiness.pendingBlockers ? ` · ${readiness.pendingBlockers} ${readiness.pendingBlockers === 1 ? "bloqueador" : "bloqueadores"}` : ""}`, chip: "Pendente" });
     return pend;
@@ -542,7 +544,7 @@ function ImplementationDetailPage() {
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
                     { section: "contrato", label: "Contrato", status: contractStageLabel[currentContractStage()], tone: "muted" },
-                    { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} ${missingPropertyFields === 1 ? "informação" : "informações"} em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
+                    { section: "imovel", label: "Imóvel", status: propertyPendencyCount ? `${propertyPendencyCount} ${propertyPendencyCount === 1 ? "pendência" : "pendências"} em aberto` : "Dados principais completos", tone: propertyPendencyCount ? "warn" : "ok" },
                     { section: "implantacao", label: "Implantação", status: itemsQuery.isPending || inventoryQ.isPending ? "—" : items.length ? `${done} de ${items.length} ${items.length === 1 ? "item concluído" : "itens concluídos"}` : inventoryTotal ? `Inventário: ${inventoryAnswered} de ${inventoryTotal} respondidos` : "Sem itens", tone: items.length ? (readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress") : inventoryTotal ? (inventoryAnswered === inventoryTotal ? "ok" : "progress") : "muted" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
                     { section: "portal", label: "Portal", status: releasesQuery.isPending ? "Verificando liberação…" : releasesQuery.isError ? "Liberação não verificada" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado", tone: releasesQuery.data?.length ? "ok" : "muted" },
@@ -666,7 +668,7 @@ function ImplementationDetailPage() {
                   review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
                   pending={buildPending().filter((p) => p.id === "owner")}
                   proposal={latestProposal ?? null}
-                  hasConditions={Boolean(conditions)}
+                  journey={journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
                   onGo={goSection}
                 />
               ) : section === "portal" ? (
@@ -827,6 +829,7 @@ function ProposalGate({
           ? new Date(published.publishedAt).toLocaleString("pt-BR", {
               dateStyle: "short",
               timeStyle: "short",
+              timeZone: "America/Sao_Paulo",
             })
           : "—"}{" "}
         · {(published.snapshot?.items ?? published.items).length} {(published.snapshot?.items ?? published.items).length === 1 ? "serviço" : "serviços"} · valor definido{" "}
@@ -1326,7 +1329,7 @@ function OwnerPortalPanel({
 
   const submission = submissionQuery.data;
   const fmt = (iso: string | null | undefined) =>
-    iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : null;
+    iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }) : null;
 
   const steps: { label: string; done: boolean; detail: string }[] = [
     {
