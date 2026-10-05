@@ -717,7 +717,7 @@ export function OwnerJourney({
         <div className="portal-resume-note" role="status">
           <CheckCircle2 aria-hidden="true" />
           <div>
-            <strong>Etapa salva: {stage === 3 ? "Seu imóvel" : "Seus dados"}</strong>
+            <strong>Continue seu cadastro</strong>
             <span>
               {missing.length
                 ? `Falta preencher ${missing.join(" e ")}.`
@@ -839,8 +839,8 @@ function SaveStatus({
   if (state !== "saving") return null;
   return (
     <div className={`portal-autosave is-${state}`} role="status" aria-live="polite">
-      {state === "saved" ? <CheckCircle2 /> : <Cloud />}
-      <span>{state === "saving" ? "Salvando…" : state === "saved" ? "Salvo" : "Rascunho"}</span>
+      <Cloud />
+      <span>Salvando…</span>
     </div>
   );
 }
