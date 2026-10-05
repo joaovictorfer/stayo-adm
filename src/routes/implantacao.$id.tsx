@@ -1,3 +1,4 @@
+import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";
@@ -562,74 +563,22 @@ function ImplementationDetailPage() {
                     <ProposalTab implementationId={implementation.id} />
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4">
-                    <section
-                      className="rounded-[var(--radius-card)] border bg-white p-5"
-                      style={{ borderColor: "var(--stayo-border)" }}
-                    >
-                      <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                        {latestProposal
-                          ? `Versão ${latestProposal.version} · ${proposalStatusLabel[latestProposal.status]}`
-                          : "Nenhuma versão criada"}
-                      </p>
-                      <dl className="mt-3 grid gap-3 sm:grid-cols-3">
-                        <div>
-                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                            Valor definido
-                          </dt>
-                          <dd className="text-lg font-semibold">
-                            {latestProposal ? formatMoney(latestProposal.total) : "—"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                            Taxa de administração
-                          </dt>
-                          <dd className="text-lg font-semibold">
-                            {conditions?.administration_fee != null
-                              ? `${conditions.administration_fee}%`
-                              : "A definir"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-                            Limpeza comercial
-                          </dt>
-                          <dd className="text-lg font-semibold">
-                            {conditions?.turnover_cleaning_fee != null
-                              ? formatMoney(Number(conditions.turnover_cleaning_fee))
-                              : "A definir"}
-                          </dd>
-                        </div>
-                      </dl>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Button className="min-h-11" onClick={() => setProposalEditing(true)}>
-                          <Pencil /> Editar proposta avançada
-                        </Button>
-                        <Button asChild variant="outline" className="min-h-11">
-                          <Link
-                            to="/portal/previa/$id"
-                            params={{ id: implementation.id }}
-                            target="_blank"
-                          >
-                            <Eye /> Ver como proprietário
-                          </Link>
-                        </Button>
-                      </div>
-                    </section>
-                    <Collapsible
-                      title="Condições comerciais e contratuais"
-                      summary="Taxas, limpeza, vigência, uso próprio"
-                    >
-                      <ContractConditionsPanel implementationId={implementation.id} />
-                    </Collapsible>
-                    <Collapsible title="Termos comerciais" summary="Cobranças e percentuais">
-                      <CommercialTermsPanel implementationId={implementation.id} />
-                    </Collapsible>
-                    <Collapsible title="Cobranças iniciais" summary="Geradas após o aceite">
-                      <InitialChargesPanel implementationId={implementation.id} />
-                    </Collapsible>
-                  </div>
+                  <FichaCommercial
+                    implementationId={implementation.id}
+                    proposal={latestProposal ? { version: latestProposal.version, statusLabel: proposalStatusLabel[latestProposal.status] } : null}
+                    onNewVersion={() => setProposalEditing(true)}
+                    onHistory={() => setProposalEditing(true)}
+                    extras={
+                      <>
+                        <Collapsible title="Termos comerciais" summary="Cobranças e percentuais">
+                          <CommercialTermsPanel implementationId={implementation.id} />
+                        </Collapsible>
+                        <Collapsible title="Cobranças iniciais" summary="Geradas após o aceite">
+                          <InitialChargesPanel implementationId={implementation.id} />
+                        </Collapsible>
+                      </>
+                    }
+                  />
                 )
               ) : section === "imovel" ? (
                 <PropertyTab implementation={implementation} />
