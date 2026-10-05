@@ -975,7 +975,7 @@ export function OwnerJourney({
             {stage === 4 && registration.pending.length > 0 && (
               <PendingStep
                 pending={registration.pending}
-                onContinue={() => openPending(registration.pending[0].key)}
+                onContinue={() => openPending(registration.pending[0]?.key ?? "owner")}
               />
             )}
             {stage === 4 && registration.pending.length === 0 && (
