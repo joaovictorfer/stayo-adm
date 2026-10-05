@@ -2411,6 +2411,41 @@ function Stepper({
   );
 }
 
+function PendingStep({
+  pending,
+  onContinue,
+}: {
+  pending: Array<{ key: string; label: string }>;
+  onContinue: () => void;
+}) {
+  return (
+    <section className="pd-step ac-step">
+      <div className="ac-hero">
+        <h2 className="ac-title">Ainda faltam alguns detalhes</h2>
+        <p className="ac-lead">
+          Você pode continuar de onde parou. Suas informações já preenchidas estão guardadas.
+        </p>
+      </div>
+      <div>
+        <h3 className="ac-h3">Etapas com pendência</h3>
+        <ol className="ac-timeline">
+          {pending.map((p, i) => (
+            <li key={p.key} className={`ac-tl is-${i === 0 ? "current" : "next"}`}>
+              <span className="ac-dot" aria-hidden="true" />
+              <div>
+                <strong>{p.label}</strong>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <Button type="button" className="portal-cta pd-cta" onClick={onContinue}>
+        Continuar cadastro <ArrowRight className="size-4" aria-hidden="true" />
+      </Button>
+    </section>
+  );
+}
+
 function AccessStep({
   email,
   password,
