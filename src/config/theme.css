@@ -5611,3 +5611,6 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pp-done p { margin: 0; font-size: 14px; color: var(--portal-muted); }
 .pp-sheet-body { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 20px; }
 .pp-note { min-height: 96px; padding: 12px; }
+.pp-visual .pp-ans { grid-template-columns: 1fr 1fr; }
+.pp-name-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pp-name-row .pp-more { min-width: 44px; }
