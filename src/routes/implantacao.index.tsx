@@ -50,6 +50,38 @@ import { formatBrazilianPhone } from "../lib/owner-form-validation";
 import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implementation-status";
 import type { CommercialAssignee, CommercialOverviewRow } from "../types/commercial-journey";
 import type { ImplementationProject } from "../types/core";
+import { supabase } from "@/integrations/supabase/client";
+import { isDraftOrigin, journeyLabel, proposalStage } from "../lib/journey-states";
+import type { CommercialProposalStatus } from "../types/commercial-proposal";
+
+/** Mesmo rótulo do cabeçalho e do cadastro: rascunho e proposta reais. */
+function useJourneyLabels() {
+  const q = useQuery({
+    queryKey: ["implementations", "journey-states"],
+    queryFn: async () => {
+      const [projects, proposals] = await Promise.all([
+        supabase.from("implementation_projects").select("id, origin, draft_completed_at"),
+        supabase.from("proposals").select("implementation_id, status"),
+      ]);
+      if (projects.error) throw projects.error;
+      if (proposals.error) throw proposals.error;
+      return { projects: projects.data ?? [], proposals: proposals.data ?? [] };
+    },
+    staleTime: 30_000,
+  });
+  return (item: ImplementationProject) => {
+    const p = q.data?.projects.find((r) => r.id === item.id);
+    if (!q.data || !p) return statusLabels[item.status];
+    const versions = q.data.proposals
+      .filter((r) => r.implementation_id === item.id)
+      .map((r) => ({ status: r.status as CommercialProposalStatus }));
+    return journeyLabel({
+      status: item.status,
+      isDraft: isDraftOrigin(p.origin, p.draft_completed_at),
+      proposal: proposalStage(versions),
+    });
+  };
+}
 
 export const Route = createFileRoute("/implantacao/")({
   head: () => ({
@@ -257,6 +289,7 @@ function OpportunityList({
   assigneeById: Map<string, CommercialAssignee>;
   commercialLoadState: CommercialLoadState;
 }) {
+  const labelFor = useJourneyLabels();
   return (
     <Panel>
       <div
@@ -312,7 +345,7 @@ function OpportunityList({
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <AdminStatusBadge tone={tone}>{statusLabels[item.status]}</AdminStatusBadge>
+                      <AdminStatusBadge tone={tone}>{labelFor(item)}</AdminStatusBadge>
                       <ChevronRight
                         className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
                         style={{ color: "var(--stayo-ink-muted)" }}
@@ -365,7 +398,7 @@ function OpportunityList({
                   </p>
                 </div>
                 <div className="hidden sm:block">
-                  <AdminStatusBadge tone={tone}>{statusLabels[item.status]}</AdminStatusBadge>
+                  <AdminStatusBadge tone={tone}>{labelFor(item)}</AdminStatusBadge>
                 </div>
                 <span
                   className="hidden text-sm sm:block"
