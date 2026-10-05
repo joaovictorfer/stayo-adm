@@ -1,3 +1,4 @@
+import { journeyLabel, proposalStage, contractStageLabel, currentContractStage } from "../lib/journey-states";
 import { FichaProprietario } from "../components/implantacao/ficha/FichaProprietario";
 import { FichaImovel } from "@/components/implantacao/ficha/FichaImovel";
 import { FichaImplantacao } from "../components/implantacao/ficha/FichaImplantacao";
@@ -480,7 +481,7 @@ function ImplementationDetailPage() {
                 {propertyName}
               </h1>
               <p className="truncate text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                {implementation.ownerName || "Proprietário não informado"} · {draftQuery.data?.isDraft ? "Rascunho" : statusLabels[implementation.status]}
+                {implementation.ownerName || "Proprietário não informado"} · {journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -520,7 +521,7 @@ function ImplementationDetailPage() {
                   const done = items.length - pendingItems.length;
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
-                    { section: "contrato", label: "Contrato", status: conditionsQuery.isPending ? "—" : conditions ? "Condições registradas" : "Condições não definidas", tone: conditions ? "ok" : "warn" },
+                    { section: "contrato", label: "Contrato", status: contractStageLabel[currentContractStage()], tone: "muted" },
                     { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
                     { section: "implantacao", label: "Implantação", status: itemsQuery.isPending ? "—" : items.length ? `${done} de ${items.length} itens concluídos` : "Sem itens", tone: !items.length ? "muted" : readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
