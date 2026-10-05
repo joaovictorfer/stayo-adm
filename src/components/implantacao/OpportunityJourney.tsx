@@ -881,16 +881,17 @@ function JourneyBody({
       ) : (
         <header className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-3">
-            <button
+            <Button
               type="button"
-              aria-label="Voltar para implantações"
+              variant="ghost"
+              aria-label="Voltar para ficha"
               onClick={() => void exit()}
               className="flex min-h-11 items-center gap-1.5 text-sm font-medium"
               style={{ color: "var(--stayo-forest)" }}
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Implantação
-            </button>
+              Voltar para ficha
+            </Button>
             <JourneyActions implementation={implementation} />
           </div>
           <div className="flex items-center justify-between gap-3">
@@ -899,15 +900,6 @@ function JourneyBody({
             </p>
             <div className="flex shrink-0 items-center gap-2">
               <SaveStatus state={saveState} onRetry={retry} compact />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="min-h-11 px-2 sm:px-3"
-                onClick={() => void exit()}
-              >
-                Salvar e sair
-              </Button>
             </div>
           </div>
           <div>
@@ -1097,21 +1089,11 @@ function PreparationJourneyHeader({
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {saveState === "idle" ? (
-            <p
-              className="flex items-center gap-1 text-xs whitespace-nowrap"
-              style={muted}
-            >
-              <Check className="size-3.5" /> Salvo agora
-            </p>
-          ) : (
-            <SaveStatus
+          <SaveStatus
               state={saveState}
               onRetry={onRetry}
               compact
-              savedLabel="Salvo agora"
             />
-          )}
           <Button
             type="button"
             variant="outline"
@@ -1119,7 +1101,7 @@ function PreparationJourneyHeader({
             className="min-h-10 px-3"
             onClick={() => void onExit()}
           >
-            Salvar e sair
+            Voltar para ficha
           </Button>
           <JourneyActions implementation={implementation} />
         </div>
@@ -1224,21 +1206,11 @@ function ReviewJourneyHeader({
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {saveState === "idle" ? (
-            <p
-              className="flex items-center gap-1 text-xs whitespace-nowrap"
-              style={muted}
-            >
-              <Check className="size-3.5" /> Salvo agora
-            </p>
-          ) : (
-            <SaveStatus
+          <SaveStatus
               state={saveState}
               onRetry={onRetry}
               compact
-              savedLabel="Salvo agora"
             />
-          )}
           <Button
             type="button"
             variant="ghost"
@@ -1246,7 +1218,7 @@ function ReviewJourneyHeader({
             className="min-h-10 px-3"
             onClick={() => void onExit()}
           >
-            Salvar e sair
+            Voltar para ficha
           </Button>
           <JourneyActions implementation={implementation} />
         </div>
@@ -1351,21 +1323,11 @@ function PropertyJourneyHeader({
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {saveState === "idle" ? (
-            <p
-              className="flex items-center gap-1 text-xs whitespace-nowrap"
-              style={muted}
-            >
-              <Check className="size-3.5" /> Salvo agora
-            </p>
-          ) : (
-            <SaveStatus
+          <SaveStatus
               state={saveState}
               onRetry={onRetry}
               compact
-              savedLabel="Salvo agora"
             />
-          )}
           <Button
             type="button"
             variant="outline"
@@ -1373,7 +1335,7 @@ function PropertyJourneyHeader({
             className="min-h-10 px-3"
             onClick={() => void onExit()}
           >
-            Salvar e sair
+            Voltar para ficha
           </Button>
           <JourneyActions implementation={implementation} />
         </div>
@@ -1482,21 +1444,11 @@ function CommercialJourneyHeader({
           </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {saveState === "idle" ? (
-            <p
-              className="flex items-center gap-1 text-xs whitespace-nowrap"
-              style={muted}
-            >
-              <Check className="size-3.5" /> Salvo agora
-            </p>
-          ) : (
-            <SaveStatus
+          <SaveStatus
               state={saveState}
               onRetry={onRetry}
               compact
-              savedLabel="Salvo agora"
             />
-          )}
           <Button
             type="button"
             variant="outline"
@@ -1504,7 +1456,7 @@ function CommercialJourneyHeader({
             className="min-h-10 px-3"
             onClick={() => void onExit()}
           >
-            Salvar e sair
+            Voltar para ficha
           </Button>
           <JourneyActions implementation={implementation} />
         </div>
@@ -1628,14 +1580,12 @@ function SaveStatus({
   state,
   onRetry,
   compact = false,
-  savedLabel = "Salvo",
 }: {
   state: SaveState;
   onRetry: () => void;
   compact?: boolean;
-  savedLabel?: string;
 }) {
-  if (state === "idle") return null;
+  if (state === "idle" || state === "saved") return null;
   if (state === "error")
     return (
       <p
@@ -1668,7 +1618,7 @@ function SaveStatus({
       ) : (
         <Check className="size-3.5" />
       )}
-      {state === "saving" ? "Salvando…" : savedLabel}
+      Salvando…
     </p>
   );
 }

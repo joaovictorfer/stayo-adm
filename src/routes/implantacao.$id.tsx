@@ -85,7 +85,7 @@ import {
 import {
   JourneyCard,
   NextStepCard,
-  PendingCard,
+  LastActivityCard,
   ResponsibleCard,
   SheetOverviewCard,
   type PendingEntry,
@@ -94,6 +94,9 @@ import {
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
+import { getOpportunityDraftState } from "../lib/api/opportunities";
+import { loadOpportunityForm } from "../lib/api/opportunity-form";
+import { listActiveReleases } from "../lib/api/portal-visibility";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
@@ -192,27 +195,6 @@ function ImplementationDetailPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const wizardStep = search.etapa;
-  // Rascunho reaberto sem etapa na URL: volta para a última etapa salva.
-  useEffect(() => {
-    if (search.etapa || typeof window === "undefined") return;
-    if (window.sessionStorage.getItem(`opp-wizard-exit:${id}`)) return;
-    let cancelled = false;
-    void (async () => {
-      const [{ getOpportunityDraftState }, { loadOpportunityForm }] = await Promise.all([
-        import("../lib/api/opportunities"),
-        import("../lib/api/opportunity-form"),
-      ]);
-      const st = await getOpportunityDraftState(id);
-      if (!st.isDraft || cancelled) return;
-      const form = await loadOpportunityForm(id);
-      if (cancelled) return;
-      const etapa = toJourneyStep(form.draftStep) ?? "contato";
-      void navigate({ search: { etapa }, replace: true });
-    })().catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [id, search.etapa, navigate]);
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<
     "resumo" | "proprietario" | "imovel" | "enxoval" | "itens_faltantes" | "checklist" | "proposta"
@@ -220,6 +202,27 @@ function ImplementationDetailPage() {
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const implementation = query.data;
+  const draftQuery = useQuery({
+    queryKey: ["opportunity-draft-state", id],
+    queryFn: () => getOpportunityDraftState(id),
+  });
+  const releasesQuery = useQuery({
+    queryKey: ["portal-visibility", id],
+    queryFn: () => listActiveReleases(id),
+  });
+  const [resuming, setResuming] = useState(false);
+  const resumeRegistration = async () => {
+    if (resuming) return;
+    setResuming(true);
+    try {
+      const form = await loadOpportunityForm(id);
+      await navigate({ search: { etapa: toJourneyStep(form.draftStep) ?? "contato" } });
+    } catch {
+      toast.error("Não foi possível retomar o cadastro. Tente novamente.");
+    } finally {
+      setResuming(false);
+    }
+  };
   const adminCover = useAdminCoverUrl(implementation?.id);
   const nextItem = (itemsQuery.data ?? []).find((item) => item.status !== "concluido");
   const items = itemsQuery.data ?? [];
@@ -318,6 +321,12 @@ function ImplementationDetailPage() {
             timestamp: implementation.createdAt,
             actor: null,
           },
+          ...(implementation.updatedAt !== implementation.createdAt ? [{
+            id: "updated",
+            label: "Ficha atualizada",
+            timestamp: implementation.updatedAt,
+            actor: null,
+          }] : []),
         ]
       : []),
     ...(proposalsQuery.data ?? []).flatMap((p) => [
@@ -453,14 +462,15 @@ function ImplementationDetailPage() {
             void navigate({ search: { etapa, acao: undefined }, replace: true, resetScroll: false })
           }
           onExit={() => {
-            window.sessionStorage.setItem(`opp-wizard-exit:${id}`, "1");
             void queryClient.invalidateQueries({ queryKey: ["implementations"] });
-            void navigate({ search: {}, replace: true });
+            void queryClient.invalidateQueries({ queryKey: ["opportunity-draft-state", id] });
+            void queryClient.invalidateQueries({ queryKey: ["commercial-proposals", id] });
+            void navigate({ search: { secao: "visao" }, replace: true });
           }}
         />
       ) : (
         <div className="flex flex-col gap-4">
-          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3" aria-label="Resumo da implantação">
+          <header className="flex flex-wrap items-start justify-between gap-3" aria-label="Resumo da implantação">
             <div className="min-w-0">
 
               <h1
@@ -470,27 +480,18 @@ function ImplementationDetailPage() {
                 {propertyName}
               </h1>
               <p className="truncate text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                {implementation.ownerName || "Proprietário não informado"} · {statusLabels[implementation.status]} · Responsável:{" "}
-                {responsibleName}
+                {implementation.ownerName || "Proprietário não informado"} · {draftQuery.data?.isDraft ? "Rascunho" : statusLabels[implementation.status]}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span
-                className="hidden items-center gap-2 rounded-[var(--radius-control)] border px-3 py-2 text-sm font-medium sm:inline-flex"
-                style={{ borderColor: "var(--stayo-forest-soft)", backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-ink)" }}
-              >
-                <span className="size-2 rounded-full" style={{ backgroundColor: "var(--stayo-success, #1f8a5b)" }} />
-                Proposta {latestProposal ? proposalStatusLabel[latestProposal.status].toLowerCase() : "não criada"}
-              </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  window.sessionStorage.removeItem(`opp-wizard-exit:${id}`);
-                  void navigate({ search: { etapa: "contato" } });
-                }}
+                className="min-h-10"
+                disabled={resuming}
+                onClick={() => void resumeRegistration()}
               >
-                <Pencil /> <span className="hidden sm:inline">Editar</span>
+                <Pencil /> {resuming ? "Abrindo…" : draftQuery.data?.isDraft ? "Continuar cadastro" : "Editar cadastro"}
               </Button>
               <Button
                 variant="outline"
@@ -516,7 +517,6 @@ function ImplementationDetailPage() {
             >
               {section === "visao" ? (
                 (() => {
-                  const pend = buildPending();
                   const done = items.length - pendingItems.length;
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
@@ -524,34 +524,33 @@ function ImplementationDetailPage() {
                     { section: "imovel", label: "Imóvel", status: missingPropertyFields ? `${missingPropertyFields} informação(ões) em aberto` : "Dados principais completos", tone: missingPropertyFields ? "warn" : "ok" },
                     { section: "implantacao", label: "Implantação", status: itemsQuery.isPending ? "—" : items.length ? `${done} de ${items.length} itens concluídos` : "Sem itens", tone: !items.length ? "muted" : readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
-                    { section: "portal", label: "Portal", status: "Acesso e liberações", tone: "muted" },
+                    { section: "portal", label: "Portal", status: releasesQuery.isPending ? "Verificando liberação…" : releasesQuery.isError ? "Liberação não verificada" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado", tone: releasesQuery.data?.length ? "ok" : "muted" },
                   ];
                   return (
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
                       <div className="flex flex-col gap-4">
                         <div className="hidden lg:block">
-                          <h2 className="text-3xl font-semibold" style={{ fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" }}>Resumo</h2>
+                          <h2 className="text-3xl font-semibold" style={{ fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "0", color: "var(--stayo-navy)" }}>Resumo</h2>
                           <p className="text-base" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
                         </div>
-                        <NextStepCard action={action} onGo={goSection} onPortal={() => goSection("portal")} />
-                        <div className="lg:hidden"><PendingCard entries={pend} onGo={goSection} /></div>
-                        <JourneyCard status={implementation.status} pendingCount={pend.length} />
+                        <NextStepCard action={action} onGo={goSection} />
+                        <JourneyCard status={implementation.status} />
                         <SheetOverviewCard rows={rows} onGo={goSection} />
                         <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
                           <MeetingSummary implementationId={implementation.id} />
                         </Collapsible>
-                        <Collapsible title="Alterar etapa da implantação" summary={statusLabels[implementation.status]}>
+                        <Collapsible title="Alterar etapa da implantação" summary="Etapas administrativas">
                           <StatusStepper
                             status={implementation.status}
                             onChange={(status) => changeStatus.mutate(status)}
                             pending={changeStatus.isPending}
                           />
                         </Collapsible>
-                        <div className="lg:hidden"><ResponsibleCard name={responsibleName} /></div>
+
                       </div>
-                      <aside className="hidden flex-col gap-4 lg:flex">
-                        <PendingCard entries={pend} onGo={goSection} />
+                      <aside className="flex flex-col gap-4">
                         <ResponsibleCard name={responsibleName} />
+                        <LastActivityCard entry={history[0]} onHistory={() => goSection("historico")} />
                       </aside>
                     </div>
                   );

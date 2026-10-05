@@ -1,6 +1,7 @@
 import {
   AlertCircle,
   Check,
+  Clock3,
   ChevronRight,
   FileText,
   ListChecks,
@@ -10,6 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Button } from "../../ui/button";
+import type { TimelineEntry } from "../../patterns/Timeline";
 
 import type { FichaSection, NextAction } from "../../../lib/ficha-next-action";
 import type { ImplementationStatus } from "../../../types/core";
@@ -63,7 +66,7 @@ function Card({ icon: Icon, title, children, tone }: { icon: LucideIcon; title: 
         >
           <Icon className="size-4" />
         </span>
-        <h2 className="text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em" }}>
+        <h2 className="text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "0" }}>
           {title}
         </h2>
       </header>
@@ -96,11 +99,9 @@ function ToneDot({ tone }: { tone: Tone }) {
 export function NextStepCard({
   action,
   onGo,
-  onPortal,
 }: {
   action: NextAction;
   onGo: (s: FichaSection) => void;
-  onPortal: () => void;
 }) {
   return (
     <Card icon={AlertCircle} title="Próximo passo" tone="warn">
@@ -115,25 +116,20 @@ export function NextStepCard({
         </div>
         <div className="flex shrink-0 items-center gap-4">
           {action.cta && action.section !== "visao" && (
-            <button
-              type="button"
+            <Button
               onClick={() => onGo(action.section)}
-              className="min-h-11 rounded-[var(--radius-control)] px-5 text-sm font-semibold"
-              style={{ backgroundColor: "var(--stayo-navy, #0b3150)", color: "white" }}
+              className="min-h-11 bg-[var(--stayo-navy)] text-primary-foreground hover:bg-[var(--stayo-navy)]/90"
             >
               {action.cta}
-            </button>
+            </Button>
           )}
-          <button type="button" onClick={onPortal} className="min-h-11 text-sm font-medium underline underline-offset-4" style={{ color: "var(--stayo-navy)" }}>
-            Abrir Portal
-          </button>
         </div>
       </div>
     </Card>
   );
 }
 
-export function JourneyCard({ status, pendingCount }: { status: ImplementationStatus; pendingCount: number }) {
+export function JourneyCard({ status }: { status: ImplementationStatus }) {
   const current = JOURNEY.findIndex((s) => s.statuses.includes(status));
   return (
     <Card icon={ListChecks} title="Jornada da implantação">
@@ -142,12 +138,12 @@ export function JourneyCard({ status, pendingCount }: { status: ImplementationSt
           Implantação fora do fluxo principal.
         </p>
       )}
-      <ol className="grid grid-cols-5">
+      <ol className="flex overflow-x-auto pb-1">
         {JOURNEY.map((step, i) => {
           const done = current >= 0 && i < current;
           const active = i === current;
           return (
-            <li key={step.label} className="relative flex flex-col items-center text-center">
+            <li key={step.label} className="relative flex min-w-[76px] flex-1 flex-col items-center text-center">
               {i > 0 && (
                 <span
                   aria-hidden
@@ -165,7 +161,7 @@ export function JourneyCard({ status, pendingCount }: { status: ImplementationSt
                 {done && <Check className="size-3.5" strokeWidth={3} style={{ color: "white" }} />}
                 {active && <span className="size-3 rounded-full" style={{ backgroundColor: "var(--stayo-navy, #0b3150)" }} />}
               </span>
-              <span className="mt-2 w-full truncate px-0.5 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
+              <span className="mt-2 w-full px-1 text-[10px] font-medium leading-tight sm:text-sm" style={{ color: "var(--stayo-navy)" }}>
                 {step.label}
               </span>
               <span className="hidden text-xs sm:block" style={active ? { color: "var(--stayo-navy)" } : muted}>
@@ -175,14 +171,6 @@ export function JourneyCard({ status, pendingCount }: { status: ImplementationSt
           );
         })}
       </ol>
-      {pendingCount > 0 && (
-        <p
-          className="mt-4 flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-sm"
-          style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--stayo-navy)" }}
-        >
-          <ToneDot tone="warn" /> {pendingCount} pendência{pendingCount > 1 ? "s" : ""} antes de avançar
-        </p>
-      )}
     </Card>
   );
 }
@@ -263,7 +251,7 @@ export function ResponsibleCard({ name }: { name: string }) {
     .split(/\s+/)
     .filter((w) => /^[A-Za-zÀ-ú]/.test(w))
     .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
+    .map((w) => w.charAt(0).toUpperCase())
     .join("");
   return (
     <Card icon={UsersRound} title="Responsável">
@@ -280,6 +268,23 @@ export function ResponsibleCard({ name }: { name: string }) {
           </span>
         </span>
       </div>
+    </Card>
+  );
+}
+
+export function LastActivityCard({ entry, onHistory }: { entry: TimelineEntry | undefined; onHistory: () => void }) {
+  return (
+    <Card icon={Clock3} title="Última atividade">
+      {entry ? (
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-[var(--stayo-navy)]">{entry.label}</p>
+          <p className="text-xs" style={muted}>{new Date(entry.timestamp).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+          {entry.actor && <p className="text-xs" style={muted}>{entry.actor}</p>}
+        </div>
+      ) : <p className="text-sm" style={muted}>Nenhuma atividade registrada.</p>}
+      <Button variant="link" className="mt-2 h-auto min-h-10 p-0 text-[var(--stayo-navy)]" onClick={onHistory}>
+        Ver histórico <ChevronRight className="size-4" />
+      </Button>
     </Card>
   );
 }

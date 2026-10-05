@@ -401,7 +401,7 @@ function ImplementationRowActions({ item }: { item: ImplementationProject }) {
     item.status === "ativo" || Boolean(item.corePropertyId) || Boolean(item.coreOwnerId);
 
   function openDetails() {
-    void navigate({ to: "/implantacao/$id", params: { id: item.id } });
+    void navigate({ to: "/implantacao/$id", params: { id: item.id }, search: { secao: "visao" } });
   }
 
   async function duplicate() {
@@ -450,7 +450,7 @@ function ImplementationRowActions({ item }: { item: ImplementationProject }) {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuItem onSelect={openDetails}>
             <ExternalLink aria-hidden="true" />
-            Abrir ficha
+            Ver ficha
           </DropdownMenuItem>
           <DropdownMenuItem disabled={duplicating} onSelect={() => void duplicate()}>
             {duplicating ? (

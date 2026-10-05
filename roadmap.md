@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Separar Ver ficha e Continuar cadastro e simplificar Resumo; navegação, retomada, retorno e reload validados com cadastro real em 1440/390/360; ficha já publicada mantém o workspace
+- [ ] Homologar publicação de proposta nesta jornada; aguarda uma proposta autorizada para publicação real, sem publicar dados comerciais apenas para teste
+
 - [x] Refinar aba Proprietário com dados mascarados, vínculos existentes, notas internas e ações do Portal; validado em 1440/390/360, edição e retomada com conta real
 
 - [ ] Inventário do proprietário — Modo Visual implementado; aguarda homologação com proprietário real vinculado a uma implantação com inventário
