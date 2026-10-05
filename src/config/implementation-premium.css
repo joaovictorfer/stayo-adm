@@ -584,3 +584,14 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Ficha: títulos em Outfit azul-marinho, conforme referência aprovada */
+.implementation-workspace {
+  --stayo-font-display: "Outfit", "Figtree", system-ui, sans-serif;
+}
+.implementation-workspace h1,
+.implementation-workspace h2,
+.implementation-property-name {
+  font-family: "Outfit", "Figtree", system-ui, sans-serif !important;
+  color: var(--stayo-navy);
+}
