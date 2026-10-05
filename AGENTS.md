@@ -29,3 +29,4 @@
 - The owner workspace reuses owner records, onboarding people, owner notes and existing invitation actions; presentation changes must not create a second owner or relationship store.
 
 - The implementation route renders the administrative workspace by default; only an explicit etapa search parameter opens the guided registration, and resuming loads draft_step freshly to preserve the same workspace across proposal publication.
+- Contract registration reuses OwnerJourney and invitation-authorized contact reconciliation; commercial intake and read-only presentation keep distinct capabilities to preserve existing links and avoid duplicate contract records.

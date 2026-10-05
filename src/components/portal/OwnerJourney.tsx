@@ -31,6 +31,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { toast } from "sonner";
 
 import { StayoLogo } from "../brand/StayoLogo";
+import { OwnerCoverBanner } from "./OwnerCoverBanner";
+import { reconcileRegistrationContact } from "../../lib/owner-registration-contact";
 import institutionalCover from "../../assets/owner-portal-property-fallback.jpg";
 import { useOwnerCoverByToken } from "../../hooks/use-owner-cover";
 import { Button } from "../ui/button";
@@ -256,6 +258,7 @@ export function OwnerJourney({
           propertyBedrooms: implementation?.bedrooms ?? null,
         };
     if (initial.people.length === 0) initial.people = [primary];
+    const reconciled = reconcileRegistrationContact(initial);
 
     let reached: Stage = 1;
     let current: Stage = 1;
@@ -273,9 +276,9 @@ export function OwnerJourney({
       }
     }
 
-    setForm(initial);
-    formRef.current = initial;
-    lastSaved.current = JSON.stringify(initial);
+    setForm(reconciled);
+    formRef.current = reconciled;
+    lastSaved.current = JSON.stringify(reconciled);
     setStage(current);
     stageRef.current = current;
     setMaxStage(reached);
@@ -565,7 +568,7 @@ export function OwnerJourney({
     "Seu imóvel";
   const journeyState: "loading" | "error" | "A" | "B" | "C" | "D" = journeyQ.isPending
     ? "loading"
-    : journeyQ.isError
+      : journeyQ.isError || draftQ.isError
       ? "error"
       : submitted
         ? "D"
@@ -642,9 +645,25 @@ export function OwnerJourney({
     : coverData.source === "condominium"
       ? coverData.label
       : null;
+  const collecting = stage === 2 || stage === 3;
 
   return (
-    <div className="portal-onboarding">
+    <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
+      {collecting ? (
+        <>
+          <div className="owner-registration-brand"><StayoLogo className="h-12 w-auto" /></div>
+          <OwnerCoverBanner token={token} />
+          <header className="owner-registration-intro">
+            <span className="text-xs font-medium text-[var(--portal-muted)]">CADASTRO PARA CONTRATO</span>
+            <h1>Seu cadastro, passo a passo</h1>
+            <p>Confira seus dados. Você pode continuar depois pelo mesmo link.</p>
+            <div className="owner-registration-progress-meta">
+              <span>Etapa {stage} de 4 · {stage === 2 ? "Seus dados" : "Seu imóvel"}</span>
+              <SaveStatus state={saveState} onRetry={() => void persist(formRef.current, stageRef.current)} />
+            </div>
+          </header>
+        </>
+      ) : (
       <header className={`portal-onboarding-header is-compact${coverData ? " has-photo" : ""}`}>
         {coverSrc && (
           <img
@@ -686,6 +705,7 @@ export function OwnerJourney({
           )}
         </div>
       </header>
+      )}
 
       {journeyState !== "B" && journeyState !== "loading" && journeyState !== "error" && (
         <div className="portal-journey-ruler-wrap">
@@ -693,7 +713,7 @@ export function OwnerJourney({
         </div>
       )}
 
-      {journeyState === "C" && hasSavedDraft && stage < 4 && (
+      {journeyState === "C" && hasSavedDraft && stage < 4 && !collecting && (
         <div className="portal-resume-note" role="status">
           <CheckCircle2 aria-hidden="true" />
           <div>
@@ -728,13 +748,13 @@ export function OwnerJourney({
               />
             )}
             {(stage === 2 || stage === 3) && proposalAccepted && (
-              <button
+              <Button variant="ghost"
                 type="button"
                 onClick={() => go(1)}
                 className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--portal-border)] px-3 text-sm font-medium text-[var(--portal-navy)] focus-visible:outline focus-visible:outline-2"
               >
                 <FileCheck2 className="size-4" /> Ver condições da proposta
-              </button>
+              </Button>
             )}
             {stage === 2 && (
               <OwnerStep
@@ -811,11 +831,12 @@ function SaveStatus({
 }) {
   if (state === "error")
     return (
-      <button type="button" className="portal-autosave is-error" role="status" onClick={onRetry}>
+      <Button variant="ghost" type="button" className="portal-autosave is-error" role="status" onClick={onRetry}>
         <Cloud />
         <span>Não foi possível salvar — tentar novamente</span>
-      </button>
+      </Button>
     );
+  if (state !== "saving") return null;
   return (
     <div className={`portal-autosave is-${state}`} role="status" aria-live="polite">
       {state === "saved" ? <CheckCircle2 /> : <Cloud />}
@@ -1545,8 +1566,8 @@ function OwnerStep({
     <section className="space-y-6">
       <Heading
         eyebrow="Etapa 2 de 4"
-        title="Conte um pouco sobre você"
-        text="Usaremos estes dados para preparar a implantação, os repasses e o relacionamento com a STAYO."
+        title="Seus dados para o contrato"
+        text="Confirme a identificação e o contato dos participantes."
       />
       <Section
         title="Identificação"
@@ -1748,7 +1769,7 @@ function PersonEditor({
   const nameError = showErrors ? validateOwnerField("fullName", person.fullName) : undefined;
   const documentError = showErrors ? validateOwnerField("document", person.document) : undefined;
   return (
-    <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
+    <div className="owner-registration-person">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <strong className="text-sm">

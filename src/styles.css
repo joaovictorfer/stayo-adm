@@ -159,3 +159,49 @@
   --ficha-no-fg: #d92d20;
   --ficha-no-border: #f5b5b0;
 }
+
+/* Cadastro completo: mesma jornada, apresentação clara na coleta para contrato. */
+.owner-contract-registration {
+  --portal-bg: oklch(0.979 0.004 247);
+  --portal-border: oklch(0.916 0.009 247);
+  --registration-shadow: 0 1px 3px color-mix(in oklab, var(--portal-navy) 9%, transparent);
+  background: var(--portal-bg);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: "Figtree", var(--stayo-font-ui);
+  color: var(--portal-navy);
+  letter-spacing: 0;
+  padding-bottom: 24px;
+}
+.owner-registration-brand { display: flex; justify-content: center; padding: 24px 16px 12px; }
+.owner-registration-intro { max-width: 640px; margin: 20px auto 0; padding: 0 24px; }
+.owner-registration-intro h1 { margin-top: 6px; font: 600 24px/1.25 "Outfit", sans-serif; }
+.owner-registration-intro p { margin-top: 8px; color: var(--portal-muted); font-size: 14px; line-height: 1.5; }
+.owner-registration-progress-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; font-size: 12px; color: var(--portal-muted); min-height: 20px; }
+.owner-contract-registration .portal-journey-ruler-wrap { max-width: 640px; margin: 0 auto; padding: 12px 24px 0; }
+.owner-contract-registration .portal-journey-ruler-wrap .portal-journey-step.is-current .portal-journey-step-bar { background: var(--portal-navy); }
+.owner-contract-registration .portal-onboarding-main { max-width: 640px; margin: 18px auto 0; padding: 0 24px; }
+.owner-contract-registration .portal-onboarding-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; padding: 0; }
+.owner-contract-registration .portal-onboarding-stage > section { gap: 16px; }
+.owner-contract-registration h2 { font: 600 21px/1.3 "Outfit", sans-serif; letter-spacing: 0; }
+.owner-contract-registration .portal-onboarding-section { border-radius: 8px; background: var(--portal-surface); border-color: var(--portal-border); box-shadow: var(--registration-shadow); padding: 20px; animation: none; }
+.owner-contract-registration .portal-onboarding-section:focus-within { box-shadow: var(--registration-shadow); }
+.owner-registration-person { padding: 0; }
+.owner-registration-person + .owner-registration-person { padding-top: 20px; border-top: 1px solid var(--portal-border); }
+.owner-contract-registration .portal-input { min-height: 46px; border-radius: 8px; background: var(--portal-surface); color: var(--portal-navy); font-size: 16px; }
+.owner-contract-registration label > span:first-child { color: var(--portal-navy); font-size: 13px; }
+.owner-contract-registration .portal-autosave { border: 0; background: transparent; color: var(--portal-muted); padding: 0; font-size: 12px; }
+.owner-contract-registration .portal-autosave.is-error { color: var(--portal-danger); white-space: normal; text-align: left; height: auto; }
+.owner-contract-registration .portal-onboarding-trust { margin-top: 16px; }
+@media (max-width: 640px) {
+  .owner-registration-brand { padding-top: 18px; }
+  .owner-registration-intro { padding: 0 16px; }
+  .owner-registration-intro h1 { font-size: 22px; }
+  .owner-contract-registration .portal-journey-ruler-wrap { padding: 10px 16px 0; }
+  .owner-contract-registration .portal-onboarding-main { padding: 0 16px; }
+  .owner-contract-registration .portal-onboarding-section { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .owner-contract-registration *, .owner-contract-registration *::before, .owner-contract-registration *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

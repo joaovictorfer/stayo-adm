@@ -166,11 +166,11 @@ export function OwnerIntakeReview({
     >
       <p className="implementation-section-label">Dados recebidos</p>
       <h2 id="owner-intake-heading" className="text-lg font-semibold text-[var(--stayo-ink)]">
-        Cadastro enviado pelo proprietário
+        Coleta comercial inicial
       </h2>
       <p className="mt-1 text-xs text-[var(--stayo-ink-muted)]">
-        Link curto e exclusivo desta oportunidade: contato, localização e características do imóvel.
-        Não pede dados bancários, documentos, senhas ou Wi-Fi. Nada entra na ficha sem aprovação.
+         Contato e características iniciais, sem CPF ou participantes. Para os dados do contrato,
+         use o convite “Proposta e cadastro para contrato”. Nada entra na ficha sem aprovação.
       </p>
 
       {/* Link */}
@@ -197,7 +197,7 @@ export function OwnerIntakeReview({
             </Button>
           )}
           <Button size="sm" disabled={issue.isPending} onClick={() => issue.mutate()}>
-            <Link2 className="size-3.5" /> {link ? "Gerar novo link" : "Gerar link de cadastro"}
+            <Link2 className="size-3.5" /> {link ? "Novo link comercial" : "Gerar link comercial"}
           </Button>
         </div>
       </div>
