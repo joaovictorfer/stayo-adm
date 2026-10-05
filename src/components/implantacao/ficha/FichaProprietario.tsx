@@ -88,8 +88,8 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   const personType = normalizeDocument(document).length === 14 ? "Pessoa jurídica" : normalizeDocument(document).length === 11 ? "Pessoa física" : "Não informado";
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]).join("").toUpperCase();
   const additionalPeople = submission?.people.filter(person => person.role !== "proprietario") ?? [];
-  const otherImplementations = (links.data ?? []).filter(item => item.ownerId === implementation.ownerId && item.id !== implementation.id);
-  const ownerProperties = (properties.data ?? []).filter(item => owner?.coreOwnerId && item.ownerId === owner.coreOwnerId);
+  const otherImplementations = (links.data?.data ?? []).filter(item => item.ownerId === implementation.ownerId && item.id !== implementation.id);
+  const ownerProperties = (properties.data?.data ?? []).filter(item => owner?.coreOwnerId && item.ownerId === owner.coreOwnerId);
   const propertyName = implementation.nickname || [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || implementation.code;
   const openEdit = () => {
     setForm({ name: owner?.name ?? "", phone: owner?.phone ?? "", email: owner?.email ?? "", document: owner?.document ?? "" });
