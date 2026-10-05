@@ -9,11 +9,7 @@ import {
   Link2,
   Loader2,
   MoreHorizontal,
-  NotebookPen,
-  Package,
-  Sofa,
   Trash2,
-  Wrench,
 } from "lucide-react";
 import {
   useCallback,
@@ -39,10 +35,10 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { DeleteImplementationButton } from "./DeleteImplementationButton";
-import { InventoryTab } from "./InventoryTab";
 import { ProposalTab } from "./ProposalTab";
-import { SupplySheet } from "./SupplySheet";
 import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
+import { GuidePanel } from "./guide/GuidePanel";
+import { GuidedInventoryPanel } from "./guide/GuidedInventoryPanel";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useOpportunityAutosave,
@@ -422,14 +418,12 @@ function JourneyBody({
     if (ok) onExit();
   };
 
-  const [hub, setHub] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishedResult, setPublishedResult] = useState<{
     version: CommercialProposalVersion;
     link: string | null;
   } | null>(null);
   useEffect(() => {
-    setHub(null);
     setPublishing(false);
   }, [step]);
 
@@ -439,7 +433,6 @@ function JourneyBody({
     if (!isLast) void go(JOURNEY_STEPS[index + 1]!.id);
   };
   const back = async () => {
-    if (hub) return setHub(null);
     if (publishing) return setPublishing(false);
     if (index > 0) void go(JOURNEY_STEPS[index - 1]!.id);
     else void exit();
@@ -509,79 +502,14 @@ function JourneyBody({
       />
     );
   } else if (step === "implantacao") {
-    const hubs = [
-      {
-        id: "enxoval",
-        label: "Enxoval",
-        icon: Package,
-        node: <SupplySheet implementationId={id} />,
-      },
-      {
-        id: "inventario",
-        label: "Inventário",
-        icon: Sofa,
-        node: <InventoryTab implementationId={id} />,
-      },
-      {
-        id: "fornecedores",
-        label: "Fornecedores",
-        icon: Wrench,
-        node: <PropertySuppliersPanel implementationId={id} />,
-      },
-      {
-        id: "observacoes",
-        label: "Observações",
-        icon: NotebookPen,
-        node: (
-          <div className="flex flex-col gap-4">
-            <TextArea
-              label="Observações internas"
-              value={v.notes}
-              onChange={(x) => auto.set("notes", x)}
-            />
-            <TextArea
-              label="Informações para o proprietário"
-              value={v.owner_facing_notes}
-              onChange={(x) => auto.set("owner_facing_notes", x)}
-            />
-          </div>
-        ),
-      },
-    ];
-    const open = hubs.find((h) => h.id === hub);
-    content = open ? (
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={() => setHub(null)}
-          className="flex min-h-11 items-center gap-1 text-sm font-medium"
-          style={{ color: "var(--stayo-forest)" }}
-        >
-          <ArrowLeft className="size-4" /> Voltar para Implantação
-        </button>
-        <h3 className="text-lg font-semibold">{open.label}</h3>
-        {open.node}
-      </div>
-    ) : (
-      <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">O que você quer registrar agora?</h3>
-        <p className="text-sm" style={muted}>
-          Preencha um, vários ou nenhum.
-        </p>
-        {hubs.map((h) => (
-          <button
-            key={h.id}
-            type="button"
-            onClick={() => setHub(h.id)}
-            className="flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] border px-4 text-left transition hover:border-[var(--stayo-forest)]"
-            style={inputStyle}
-          >
-            <h.icon className="size-5 shrink-0" style={{ color: "var(--stayo-forest)" }} />
-            <span className="flex-1 font-medium">{h.label}</span>
-            <ChevronRight className="size-4" style={muted} />
-          </button>
-        ))}
-      </div>
+    content = (
+      <PreparationWorkspace
+        implementationId={id}
+        notes={v.notes}
+        ownerNotes={v.owner_facing_notes}
+        onNotesChange={(value) => auto.set("notes", value)}
+        onOwnerNotesChange={(value) => auto.set("owner_facing_notes", value)}
+      />
     );
   } else if (publishing) {
     content = (
@@ -762,12 +690,13 @@ function JourneyBody({
 
   const propertyStep = step === "imovel";
   const commercialStep = step === "proposta";
+  const preparationStep = step === "implantacao";
 
   return (
     <div
       ref={topRef}
       className={`mx-auto flex w-full flex-col pb-28 sm:pb-6 ${
-        propertyStep || commercialStep ? "max-w-5xl gap-6" : "max-w-2xl gap-5"
+          propertyStep || commercialStep || preparationStep ? "max-w-5xl gap-6" : "max-w-2xl gap-5"
       }`}
     >
       {propertyStep ? (
@@ -779,6 +708,13 @@ function JourneyBody({
         />
       ) : commercialStep ? (
         <CommercialJourneyHeader
+          implementation={implementation}
+          saveState={saveState}
+          onRetry={retry}
+          onExit={exit}
+        />
+      ) : preparationStep ? (
+        <PreparationJourneyHeader
           implementation={implementation}
           saveState={saveState}
           onRetry={retry}
@@ -845,7 +781,7 @@ function JourneyBody({
 
       <div>{content}</div>
 
-      {!(step === "revisao") && !hub && (
+      {step !== "revisao" && (
         <footer
           className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:border-0 sm:p-0"
           style={{
@@ -881,6 +817,111 @@ const PROPERTY_PROGRESS = [
   "Preparação",
   "Revisão",
 ] as const;
+
+type PreparationTab = "inventario" | "enxoval" | "fornecedores" | "observacoes";
+
+const PREPARATION_TABS: Array<{ id: PreparationTab; label: string }> = [
+  { id: "inventario", label: "Inventário" },
+  { id: "enxoval", label: "Enxoval" },
+  { id: "fornecedores", label: "Fornecedores" },
+  { id: "observacoes", label: "Observações" },
+];
+
+function PreparationWorkspace({
+  implementationId,
+  notes,
+  ownerNotes,
+  onNotesChange,
+  onOwnerNotesChange,
+}: {
+  implementationId: string;
+  notes: string;
+  ownerNotes: string;
+  onNotesChange: (value: string) => void;
+  onOwnerNotesChange: (value: string) => void;
+}) {
+  const [tab, setTab] = useState<PreparationTab>("inventario");
+  return (
+    <section className="overflow-hidden rounded-[var(--radius-card)] border" style={{ backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" }}>
+      <nav className="flex overflow-x-auto border-b px-2 pt-2 sm:px-4" style={{ borderColor: "var(--stayo-border)" }} role="tablist" aria-label="Preparação do imóvel">
+        {PREPARATION_TABS.map((entry) => {
+          const active = tab === entry.id;
+          return (
+            <button key={entry.id} type="button" role="tab" aria-selected={active} onClick={() => setTab(entry.id)} className="relative min-h-11 shrink-0 px-3 text-sm font-medium sm:px-4" style={{ color: active ? "var(--stayo-forest)" : "var(--stayo-ink-muted)" }}>
+              {entry.label}
+              {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full" style={{ backgroundColor: "var(--stayo-forest)" }} />}
+            </button>
+          );
+        })}
+      </nav>
+      <div className="p-3 sm:p-5">
+        {tab === "inventario" ? (
+          <GuidedInventoryPanel implementationId={implementationId} />
+        ) : tab === "enxoval" ? (
+          <GuidePanel implementationId={implementationId} guideType="enxoval" />
+        ) : tab === "fornecedores" ? (
+          <PropertySuppliersPanel implementationId={implementationId} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextArea label="Observações internas" value={notes} onChange={onNotesChange} />
+            <TextArea label="Informações para o proprietário" value={ownerNotes} onChange={onOwnerNotesChange} />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PreparationJourneyHeader({
+  implementation,
+  saveState,
+  onRetry,
+  onExit,
+}: {
+  implementation: ImplementationProject;
+  saveState: SaveState;
+  onRetry: () => void;
+  onExit: () => Promise<void>;
+}) {
+  const activeIndex = 3;
+  return (
+    <header className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-semibold">{implementation.code}</span>
+          <span className="rounded-full px-2 py-1 text-[11px] font-semibold" style={{ backgroundColor: "var(--stayo-gold-soft)", color: "var(--stayo-ink)" }}>Rascunho</span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {saveState === "idle" ? (
+            <p className="flex items-center gap-1 text-xs whitespace-nowrap" style={muted}><Check className="size-3.5" /> Salvo agora</p>
+          ) : (
+            <SaveStatus state={saveState} onRetry={onRetry} compact savedLabel="Salvo agora" />
+          )}
+          <Button type="button" variant="outline" size="sm" className="min-h-10 px-3" onClick={() => void onExit()}>Salvar e sair</Button>
+          <JourneyActions implementation={implementation} />
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={muted}>Implantação · Etapa 4 de 5</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Preparação do imóvel</h1>
+        <p className="mt-1.5 max-w-2xl text-sm" style={muted}>Confira inventário e enxoval com poucos cliques. Fornecedores e observações continuam opcionais.</p>
+      </div>
+      <ol className="grid grid-cols-5" aria-label="Etapas da implantação">
+        {PROPERTY_PROGRESS.map((label, i) => {
+          const complete = i < activeIndex;
+          const active = i === activeIndex;
+          return (
+            <li key={label} className="relative flex min-w-0 flex-col items-center gap-1.5">
+              {i < PROPERTY_PROGRESS.length - 1 && <span aria-hidden="true" className="absolute left-1/2 right-[-50%] top-4 h-px" style={{ backgroundColor: complete ? "var(--stayo-forest)" : "var(--stayo-border)" }} />}
+              <span aria-hidden="true" className="relative z-10 grid size-8 place-items-center rounded-full border text-xs font-semibold" style={{ borderColor: complete || active ? "var(--stayo-forest)" : "var(--stayo-border)", backgroundColor: complete ? "var(--stayo-forest)" : "var(--stayo-surface)", color: complete ? "var(--primary-foreground)" : "var(--stayo-ink)" }}>{complete ? <Check className="size-4" /> : i + 1}</span>
+              <span className="max-w-full text-center text-[10px] font-medium leading-tight sm:text-xs" style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)" }} aria-current={active ? "step" : undefined}>{label}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </header>
+  );
+}
 
 function PropertyJourneyHeader({
   implementation,
