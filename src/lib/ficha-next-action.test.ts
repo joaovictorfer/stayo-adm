@@ -31,7 +31,7 @@ describe("próxima ação da ficha", () => {
     expect(toFichaSection("x")).toBeUndefined();
   });
   it("publicação direciona ao convite sem afirmar que o Portal está liberado", () => {
-    expect(nextAction({ ...base, proposalStatus: "published" }).cta).toBe("Gerenciar convite");
+    expect(nextAction({ ...base, proposalStatus: "published" }).cta).toBe("Abrir aba Portal");
     expect(nextAction({ ...base, intakeSubmitted: false }).cta).toBe("Gerenciar cadastro");
   });
 });
