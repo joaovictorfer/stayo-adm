@@ -1,3 +1,4 @@
+import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";

@@ -146,9 +146,9 @@ export function FichaCommercial({
     { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule },
     { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null },
     { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não" },
-    ...(assignment ? <Row[]>[{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null }] : []),
-    ...(c?.notice_period_days ? <Row[]>[{ label: "Aviso prévio", value: days(c.notice_period_days) }] : []),
-    ...(c?.maintenance_limit != null ? <Row[]>[{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}` }] : []),
+    ...(assignment ? ([{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null }] as Row[]) : []),
+    ...(c?.notice_period_days ? ([{ label: "Aviso prévio", value: days(c.notice_period_days) }] as Row[]) : []),
+    ...(c?.maintenance_limit != null ? ([{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}` }] as Row[]) : []),
   ];
   const services: Row[] = [
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes },
