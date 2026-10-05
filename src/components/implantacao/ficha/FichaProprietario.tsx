@@ -147,7 +147,6 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
           <p className="whitespace-pre-wrap break-words text-sm text-[var(--stayo-ink-muted)]">{note.isError ? "Não foi possível carregar as observações." : note.data?.content || "Nenhuma observação interna."}</p>
           <p className="mt-1 flex items-center gap-1 text-xs text-[var(--stayo-ink-muted)]"><LockKeyhole className="size-3" />Visível somente para a equipe STAYO.</p>
         </section>
-        <Collapsible title="Cadastro do proprietário" summary={submission?.submittedAt ? "Cadastro recebido · revisar informações" : submission ? "Cadastro em andamento" : "Link e revisão de dados cadastrais"}>{review}</Collapsible>
       </div>
       <aside className="min-w-0 space-y-3" aria-label="Relacionamento do proprietário">
         {portal}

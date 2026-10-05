@@ -91,10 +91,10 @@ export function OwnerInviteSection({
       setToken(r.token);
       setPreviewOpen(false);
       await refresh();
-      toast.success("Convite publicado");
+      toast.success("Link da proposta gerado");
     },
     onError: (e) =>
-      toast.error("Não foi possível publicar o convite", {
+      toast.error("Não foi possível gerar o link da proposta", {
         description: e instanceof Error ? e.message : undefined,
       }),
   });
@@ -103,7 +103,7 @@ export function OwnerInviteSection({
     onSuccess: async () => {
       setToken(null);
       await refresh();
-      toast.success("Convite revogado");
+      toast.success("Link da proposta revogado");
     },
   });
 
@@ -173,7 +173,7 @@ export function OwnerInviteSection({
             <div className="mt-4 flex gap-2 rounded-[var(--radius-card)] border border-[var(--stayo-warning)] bg-[var(--stayo-gold-soft)] p-3 text-sm">
               <Lock className="mt-0.5 size-4 shrink-0 text-[var(--stayo-warning)]" />
               Bloqueado: nenhuma versão da proposta foi publicada. Publique uma versão na aba
-              Proposta para liberar o convite.
+              Proposta para liberar o link da proposta.
             </div>
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_9rem_auto] sm:items-end">
@@ -226,7 +226,7 @@ export function OwnerInviteSection({
                 </p>
                 <Button disabled={issue.isPending} onClick={() => issue.mutate()}>
                   <Link2 className="size-4" />
-                  {issue.isPending ? "Publicando…" : "Publicar convite"}
+                  {issue.isPending ? "Gerando…" : "Gerar link da proposta"}
                 </Button>
               </div>
             </div>
@@ -272,7 +272,7 @@ export function OwnerInviteSection({
                   ) : (
                     <MessageCircle className="size-4" />
                   )}
-                  {copied === "msg" ? "Mensagem copiada" : "Copiar mensagem para WhatsApp"}
+                  {copied === "msg" ? "Mensagem copiada" : "Copiar mensagem"}
                 </Button>
               </div>
             </div>
@@ -280,7 +280,7 @@ export function OwnerInviteSection({
 
           <p className="mt-4 text-xs text-[var(--stayo-ink-muted)]">
             Este link não permite preencher cadastro nem confirmar a proposta. Para seguir com
-            os dados do contrato, use o convite “Proposta e cadastro para contrato”.
+            os dados do contrato, use o “Link de acesso do proprietário”.
           </p>
         </>
       )}

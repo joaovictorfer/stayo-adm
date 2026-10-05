@@ -1,3 +1,4 @@
+import type { CommercialProposalStatus } from "../types/commercial-proposal";
 import { journeyLabel, proposalStage, contractStageLabel, currentContractStage } from "../lib/journey-states";
 import { FichaProprietario } from "../components/implantacao/ficha/FichaProprietario";
 import { FichaImovel } from "@/components/implantacao/ficha/FichaImovel";
@@ -93,7 +94,7 @@ import {
   type SheetRow,
 } from "../components/implantacao/ficha/FichaSummary";
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
-import { PortalStatusCard } from "../components/implantacao/ficha/PortalStatusCard";
+import { OwnerJourneyStatus } from "../components/implantacao/ficha/OwnerJourneyStatus";
 import { InspectionsPanel, PortalTimelinePanel } from "../components/implantacao/ficha/PortalUpdatesPanels";
 import { guidedInventoryQuery } from "../lib/api/guided-inventory";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
@@ -649,7 +650,7 @@ function ImplementationDetailPage() {
               ) : section === "proprietario" ? (
                 <FichaProprietario
                   implementation={implementation}
-                  portal={<PortalStatusCard status={releasesQuery.isPending ? "Verificando…" : releasesQuery.isError ? "Não verificado" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado"} onOpen={() => goSection("portal")} />}
+                  portal={<OwnerJourneyStatus implementationId={implementation.id} versions={proposalsQuery.data ?? []} onOpenPortal={() => goSection("portal")} />}
                   review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
                   pending={buildPending().filter((p) => p.id === "owner")}
                   proposal={latestProposal ?? null}
@@ -657,7 +658,7 @@ function ImplementationDetailPage() {
                   onGo={goSection}
                 />
               ) : section === "portal" ? (
-                <OwnerTab implementation={implementation} part="portal" />
+                <OwnerTab implementation={implementation} part="portal" versions={proposalsQuery.data ?? []} />
               ) : (
                 <div className="flex flex-col gap-4">
                   <section
@@ -788,7 +789,7 @@ function ProposalGate({
           Falta publicar as condições comerciais
         </p>
         <p className="mt-1 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
-          A oportunidade continua em rascunho. Para enviar o convite com proposta, revise e publique
+          A oportunidade continua em rascunho. Para enviar o link de acesso ao proprietário, revise e publique
           as condições; é a versão publicada que o proprietário verá no link.
         </p>
         <Button size="sm" variant="outline" className="mt-2 min-h-10" onClick={goToConditions}>
@@ -931,12 +932,23 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
   );
 }
 
+function JourneyHeading({ n, title, hint }: { n: number; title: string; hint: string }) {
+  return (
+    <div className="pt-2">
+      <h3 className="text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "Outfit, var(--stayo-font-ui), sans-serif" }}>{n}. {title}</h3>
+      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{hint}</p>
+    </div>
+  );
+}
+
 function OwnerTab({
   implementation,
   part,
+  versions = [],
 }: {
   implementation: ImplementationProject;
   part: "owner" | "portal";
+  versions?: Array<{ status: CommercialProposalStatus }>;
 }) {
   const owner = useQuery({
     ...ownerQuery(implementation.ownerId ?? ""),
@@ -985,6 +997,13 @@ function OwnerTab({
   if (part === "portal")
     return (
       <div className="space-y-4">
+        <OwnerJourneyStatus implementationId={implementation.id} versions={versions} />
+        <JourneyHeading n={1} title="Proposta" hint="Link somente leitura para o proprietário conhecer e revisar a proposta publicada." />
+        <OwnerInviteSection
+          implementationId={implementation.id}
+          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
+        />
+        <JourneyHeading n={2} title="Cadastro e Portal" hint="Link de acesso do proprietário: confirma a proposta, preenche o cadastro para contrato e cria a conta do Portal." />
         <div id="portal-owner-panel">
           <OwnerPortalPanel
             implementationId={implementation.id}
@@ -992,13 +1011,11 @@ function OwnerTab({
             ownerName={ownerData?.name ?? implementation.ownerName ?? null}
           />
         </div>
-        <PortalTimelinePanel implementationId={implementation.id} />
-        <Collapsible title="Convite da proposta" summary="Link de apresentação e aceite">
-          <OwnerInviteSection
-            implementationId={implementation.id}
-            ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-          />
+        <Collapsible title="Coleta comercial (link separado)" summary="Dados iniciais enviados antes do contrato · revisão">
+          <OwnerIntakeReview implementationId={implementation.id} ownerName={ownerData?.name ?? implementation.ownerName ?? null} />
         </Collapsible>
+        <JourneyHeading n={3} title="Conteúdo do Portal" hint="O que o proprietário vê depois de entrar." />
+        <PortalTimelinePanel implementationId={implementation.id} />
         <Collapsible title="Visibilidade no portal" summary="O que o proprietário pode ver">
           <OwnerVisibilityPanel
             implementationId={implementation.id}
@@ -1301,7 +1318,7 @@ function OwnerPortalPanel({
 
   const steps: { label: string; done: boolean; detail: string }[] = [
     {
-      label: "Link gerado",
+      label: "Link de acesso gerado",
       done: Boolean(link),
       detail: link ? (fmt(link.createdAt) ?? "") : "Ainda não gerado",
     },
@@ -1349,7 +1366,7 @@ function OwnerPortalPanel({
             className="text-base font-semibold"
             style={{ fontFamily: compact ? "Outfit, sans-serif" : "var(--stayo-font-display)", color: "var(--stayo-navy)" }}
           >
-             {status === "usado" ? "Portal do proprietário" : "Proposta e cadastro para contrato"}
+             {status === "usado" ? "Portal do proprietário" : "Link de acesso do proprietário"}
           </h2>
           <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
             {linkQuery.isPending ? "Verificando link…" : statusDetail}
@@ -1382,7 +1399,7 @@ function OwnerPortalPanel({
               disabled={createLink.isPending}
               className="min-h-11"
             >
-               <Send /> {createLink.isPending ? "Gerando…" : "Gerar convite"}
+               <Send /> {createLink.isPending ? "Gerando…" : "Gerar link de acesso"}
             </Button>
           </div>
         ) : ownerUrl ? (
@@ -1408,7 +1425,7 @@ function OwnerPortalPanel({
                 disabled={!canSend}
                 onClick={() => void copy(message, "Mensagem copiada")}
               >
-                <Copy /> {compact ? "Copiar convite" : "Copiar mensagem"}
+                <Copy /> Copiar mensagem
               </Button>
               <Button asChild variant="outline" className="min-h-11">
                 <a
@@ -1422,14 +1439,14 @@ function OwnerPortalPanel({
               </Button>
             </div>
             <details open={compact ? undefined : true} className="mt-3">
-            {compact && <summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do convite</summary>}
+            {<summary className="cursor-pointer text-xs text-[var(--stayo-ink-muted)]">Mensagem do link de acesso</summary>}
             <div
               className="mt-3 rounded-[var(--radius-control)] border p-3"
               style={{ borderColor: "var(--stayo-border)" }}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>
-                  Mensagem do convite (WhatsApp)
+                  Mensagem do link de acesso (WhatsApp)
                 </span>
                 <button
                   type="button"
@@ -1444,7 +1461,7 @@ function OwnerPortalPanel({
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
                   rows={4}
-                  aria-label="Mensagem do convite"
+                  aria-label="Mensagem do link de acesso"
                   className="mt-2 w-full rounded-[var(--radius-control)] border px-3 py-2 text-sm"
                 />
               ) : (

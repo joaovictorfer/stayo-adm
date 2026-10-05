@@ -170,7 +170,7 @@ export function OwnerIntakeReview({
       </h2>
       <p className="mt-1 text-xs text-[var(--stayo-ink-muted)]">
          Contato e características iniciais, sem CPF ou participantes. Para os dados do contrato,
-         use o convite “Proposta e cadastro para contrato”. Nada entra na ficha sem aprovação.
+         use o “Link de acesso do proprietário”. Nada entra na ficha sem aprovação.
       </p>
 
       {/* Link */}
