@@ -756,7 +756,7 @@ export function OwnerJourney({
       </header>
       )}
 
-      {journeyState !== "A" && journeyState !== "B" && journeyState !== "loading" && journeyState !== "error" && (
+      {journeyState !== "A" && journeyState !== "B" && journeyState !== "loading" && journeyState !== "error" && !collecting && (
         <div className="portal-journey-ruler-wrap">
           <Timeline stage={stage} maxStage={maxStage} onSelect={go} showFollowUp={submitted} />
         </div>
