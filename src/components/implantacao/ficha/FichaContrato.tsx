@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, BarChart3, ChevronDown, ChevronRight, Eye, FileText, History, Pencil, Plus, Users } from "lucide-react";
+import { AlertCircle, ArrowLeft, BarChart3, ChevronDown, ChevronRight, ExternalLink, Eye, FileText, History, Plus, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,20 +16,26 @@ import { ContractConditionsPanel } from "../ContractConditionsPanel";
 import type { CommercialProposalVersion } from "../../../types/commercial-proposal";
 
 const muted = { color: "var(--stayo-ink-muted)" };
+const navy = { color: "var(--stayo-navy)" };
 const border = { borderColor: "var(--stayo-border)" };
+const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const days = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined };
+type Row = { label: string; value: ReactNode; detail?: string | null | undefined };
+
+function IconDot({ children }: { children: ReactNode }) {
+  return <span className="grid size-9 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" }}>{children}</span>;
+}
 
 function Block({ icon, title, subtitle, action, children }: { icon: ReactNode; title: string; subtitle?: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-[var(--radius-card)] border bg-white px-4 py-3 sm:px-5" style={border}>
-      <div className="flex items-center justify-between gap-2 pb-2">
+    <section className="rounded-xl border bg-white px-4 pb-2 pt-3 sm:px-5" style={border}>
+      <div className="flex items-center justify-between gap-2 border-b pb-2.5" style={border}>
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-forest)" }}>{icon}</span>
+          <IconDot>{icon}</IconDot>
           <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold">{title}</h3>
+            <h3 className="truncate text-lg font-semibold" style={display}>{title}</h3>
             {subtitle && <p className="truncate text-xs" style={muted}>{subtitle}</p>}
           </div>
         </div>
@@ -45,28 +51,26 @@ function Line({ row, onEdit }: { row: Row; onEdit?: () => void }) {
   const expandable = Boolean(row.detail);
   const clickable = expandable || Boolean(onEdit);
   return (
-    <li style={border}>
+    <li className="border-b last:border-b-0" style={{ ...border, backgroundColor: open ? "var(--ficha-subtle)" : undefined }}>
       <button
         type="button"
         disabled={!clickable}
         aria-expanded={expandable ? open : undefined}
         onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())}
-        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 py-2.5 text-left text-sm disabled:cursor-default sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto]"
+        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 px-1 py-2 text-left text-sm disabled:cursor-default sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
       >
-        <span className="font-medium">{row.label}</span>
-        <span className="col-start-1 row-start-2 truncate sm:col-start-2 sm:row-start-1" style={{ color: row.value ? "var(--stayo-ink-muted)" : "var(--stayo-warning, var(--stayo-ink-muted))" }}>
-          {row.value ?? TBD}
-        </span>
-        <span className="row-span-2 sm:row-span-1" style={muted}>
-          {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : onEdit ? <ChevronRight className="size-4" /> : null}
+        <span className="font-medium" style={navy}>{row.label}</span>
+        <span className="col-start-1 row-start-2 truncate sm:col-start-2 sm:row-start-1" style={muted}>{row.value ?? TBD}</span>
+        <span className="row-span-2 sm:row-span-1" style={navy}>
+          {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : onEdit ? <ChevronRight className="size-4" /> : <span className="block size-4" />}
         </span>
       </button>
       {expandable && open && (
-        <div className="mb-2.5 flex flex-col gap-2 rounded-md px-3 py-2 text-sm sm:flex-row sm:items-start sm:justify-between" style={{ backgroundColor: "var(--stayo-bg)" }}>
+        <div className="flex flex-col gap-2 px-3 pb-2.5 text-sm sm:flex-row sm:items-end sm:justify-between">
           <p style={muted}>{row.detail}</p>
           {onEdit && (
-            <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1 font-medium underline underline-offset-2">
-              <Pencil className="size-3.5" /> Editar cláusula
+            <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1.5 underline underline-offset-2" style={navy}>
+              Ver cláusula <ExternalLink className="size-4" />
             </button>
           )}
         </div>
@@ -79,14 +83,14 @@ const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2)
 
 function Party({ name, role, onClick }: { name: string; role: string; onClick?: () => void }) {
   return (
-    <li style={border}>
+    <li className="border-b last:border-b-0" style={border}>
       <button type="button" disabled={!onClick} onClick={onClick} className="flex w-full items-center gap-3 py-2 text-left disabled:cursor-default">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full text-xs font-semibold" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-navy)" }}>{initials(name)}</span>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>{initials(name)}</span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{name}</span>
+          <span className="block truncate text-sm font-semibold" style={navy}>{name}</span>
           <span className="block truncate text-xs" style={muted}>{role}</span>
         </span>
-        {onClick && <ChevronRight className="size-4" style={muted} />}
+        <ChevronRight className="size-4" style={navy} />
       </button>
     </li>
   );
@@ -193,58 +197,65 @@ export function FichaContrato({
     ...(c?.turnover_cleaning_team || payer ? [{ label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null }] : []),
   ];
 
+  const statusColor = published ? "var(--ficha-ok)" : "var(--ficha-pending-fg)";
   const statusDot = (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="size-2 rounded-full" style={{ backgroundColor: published ? "var(--stayo-success)" : "var(--stayo-warning)" }} />
+    <span className="inline-flex items-center gap-2" style={{ color: statusColor }}>
+      <span className="size-2.5 rounded-full" style={{ backgroundColor: statusColor }} />
       {status}
     </span>
   );
+  const primary = { backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" };
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--stayo-font-display)" }}>Contrato</h2>
-          <p className="text-sm" style={muted}>Documento, partes e andamento do contrato.</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Contrato</h2>
+          <p className="text-sm sm:text-base" style={muted}>Documento, partes e andamento do contrato.</p>
         </div>
-        {current.next.cta && (
-          <Button className="min-h-11" onClick={runNext}>
-            <FileText /> {current.next.cta}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <span className="flex h-11 min-w-36 flex-1 items-center gap-2 rounded-lg border bg-white px-4 text-sm sm:flex-none" style={{ ...border, ...navy }}>
+            <span className="size-2.5 rounded-full" style={{ backgroundColor: statusColor }} /> {status}
+          </span>
+          {current.next.cta && (
+            <button type="button" onClick={runNext} className="flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-medium" style={primary}>
+              <FileText className="size-4" /> {current.next.cta}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-        <div className="order-2 flex flex-col gap-4 lg:order-1">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(18rem,1fr)]">
+        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-1">
           <Block
             icon={<FileText className="size-4" />}
             title="Contrato de gestão STAYO"
             subtitle={proposal ? `Versão ${proposal.version} · baseada na proposta` : "Sem versão"}
             action={
-              <Button variant="outline" size="sm" disabled={!docVersion || pdf.isPending} onClick={() => docVersion && pdf.mutate(docVersion)}>
+              <Button variant="outline" size="sm" className="h-9 bg-white" style={navy} disabled={!docVersion || pdf.isPending} onClick={() => docVersion && pdf.mutate(docVersion)}>
                 <Eye /> {pdf.isPending ? "Gerando…" : "Visualizar"}
               </Button>
             }
           >
-            <ul className="divide-y text-sm" style={border}>
-              <li className="grid grid-cols-[1fr_auto] py-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto]" style={border}>
-                <span className="font-medium">Status</span><span style={muted}>{statusDot}</span>
+            <ul className="text-sm">
+              <li className="grid grid-cols-[1fr_auto] border-b px-1 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]" style={border}>
+                <span className="font-medium" style={navy}>Status</span><span>{statusDot}</span><span className="hidden size-4 sm:block" />
               </li>
-              <Line row={{ label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null }} onEdit={edit} />
+              <Line row={{ label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null }} />
               <Line row={{ label: "Início", value: null }} />
               <Line row={{ label: "Término", value: null }} />
             </ul>
           </Block>
 
           <Block icon={<Users className="size-4" />} title="Partes">
-            <ul className="divide-y" style={border}>
+            <ul>
               <Party name="STAYO" role="Administradora" />
-              <Party name={ownerName || "Proprietário não informado"} role="Proprietário" onClick={onGoOwner} />
+              <Party name={ownerName || "Proprietário não informado"} role="Proprietário(a)" onClick={onGoOwner} />
               {(proposal?.requiredSignatories ?? []).map((s, i) => (
                 <Party key={`${s.label}-${i}`} name={s.label} role={s.role || "Signatário"} onClick={onEditProposal} />
               ))}
             </ul>
-            <button type="button" onClick={onEditProposal} className="mt-2 flex min-h-10 w-full items-center gap-2 rounded-md border border-dashed px-3 text-sm" style={border}>
+            <button type="button" onClick={onEditProposal} className="mb-2 mt-1 flex min-h-10 w-full items-center gap-2 rounded-lg border border-dashed px-3 text-sm" style={{ ...border, ...navy }}>
               <Plus className="size-4" /> Adicionar parte
             </button>
           </Block>
@@ -253,7 +264,7 @@ export function FichaContrato({
             {q.isLoading ? (
               <p className="py-2 text-sm" style={muted}>Carregando…</p>
             ) : (
-              <ul className="divide-y" style={border}>
+              <ul>
                 {(clauses as Row[]).map((r) => <Line key={r.label} row={r} onEdit={r.label === "Objeto do contrato" ? onEditProposal : edit} />)}
               </ul>
             )}
@@ -261,55 +272,67 @@ export function FichaContrato({
         </div>
 
         <aside className="order-1 flex flex-col gap-4 lg:order-2">
-          <section className="rounded-[var(--radius-card)] border bg-white px-4 py-3 sm:px-5" style={border}>
-            <h3 className="flex items-center gap-2 pb-3 text-base font-semibold"><BarChart3 className="size-4" style={{ color: "var(--stayo-forest)" }} /> Andamento</h3>
-            <ol className="flex flex-col">
+          <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
+            <div className="flex items-center gap-3 border-b pb-2.5" style={border}>
+              <span style={navy}><BarChart3 className="size-5" /></span>
+              <h3 className="text-lg font-semibold" style={display}>Andamento</h3>
+            </div>
+            <ol className="flex flex-col pt-3">
               {stages.map((s, i) => {
                 const isNext = i === nextIdx;
+                const ring = s.done ? "var(--ficha-ok)" : isNext ? "var(--ficha-pending-fg)" : "var(--stayo-border)";
                 return (
-                  <li key={s.key} className="relative flex gap-3 pb-3 last:pb-0">
-                    {i < stages.length - 1 && <span className="absolute left-[9px] top-5 h-full w-px" style={{ backgroundColor: "var(--stayo-border)" }} />}
-                    <span
-                      className="relative z-10 mt-0.5 grid size-[19px] shrink-0 place-items-center rounded-full border-2 bg-white text-[10px]"
-                      style={{ borderColor: s.done ? "var(--stayo-success)" : isNext ? "var(--stayo-warning)" : "var(--stayo-border)", backgroundColor: s.done ? "var(--stayo-success)" : "white", color: "white" }}
-                    >
-                      {s.done ? "✓" : isNext ? <span className="size-2 rounded-full" style={{ backgroundColor: "var(--stayo-warning)" }} /> : null}
+                  <li key={s.key} className="relative flex gap-3 pb-4 last:pb-0">
+                    {i < stages.length - 1 && <span className="absolute left-[10px] top-6 h-[calc(100%-1rem)] w-0.5" style={{ backgroundColor: "var(--stayo-border)" }} />}
+                    <span className="relative z-10 mt-0.5 grid size-[22px] shrink-0 place-items-center rounded-full border-2 bg-white" style={{ borderColor: ring }}>
+                      {(s.done || isNext) && <span className="size-2.5 rounded-full" style={{ backgroundColor: ring }} />}
                     </span>
                     <div>
-                      <p className="text-sm font-medium" style={!s.done && !isNext ? muted : undefined}>{s.label}</p>
+                      <p className="text-sm font-semibold" style={navy}>{s.label}</p>
                       <p className="text-xs" style={muted}>{s.detail}</p>
                     </div>
                   </li>
                 );
               })}
             </ol>
-            <div className="mt-3 flex gap-2 rounded-md p-3" style={{ backgroundColor: "var(--stayo-warning-soft)" }}>
-              <AlertCircle className="mt-0.5 size-4 shrink-0" style={{ color: "var(--stayo-warning)" }} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">Próximo passo</p>
-                <p className="text-xs" style={muted}>{current.next.detail}</p>
+            <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg p-3" style={{ backgroundColor: "var(--ficha-pending-bg)" }}>
+              <AlertCircle className="size-5" style={{ color: "var(--ficha-pending-fg)" }} />
+              <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold" style={navy}>Próximo passo</p>
+                  <p className="text-xs" style={navy}>{current.next.detail}</p>
+                </div>
                 {current.next.cta && (
-                  <Button size="sm" className="mt-2" onClick={runNext}>{current.next.cta}</Button>
+                  <button type="button" onClick={runNext} className="flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-medium" style={primary}>
+                    <FileText className="size-4" /> {current.next.cta}
+                  </button>
                 )}
               </div>
             </div>
           </section>
 
-          <section className="rounded-[var(--radius-card)] border bg-white px-4 py-3 sm:px-5" style={border}>
-            <h3 className="flex items-center gap-2 pb-2 text-base font-semibold"><FileText className="size-4" /> Documentos</h3>
+          <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
+            <div className="flex items-center gap-3 border-b pb-2.5" style={border}>
+              <span style={navy}><FileText className="size-5" /></span>
+              <h3 className="text-lg font-semibold" style={display}>Documentos</h3>
+            </div>
             {docVersion ? (
-              <button type="button" onClick={() => pdf.mutate(docVersion)} className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border px-3 text-left text-sm" style={border}>
-                <span className="truncate">Proposta · v{docVersion.version} (PDF)</span>
-                <Eye className="size-4" style={muted} />
+              <button type="button" onClick={() => pdf.mutate(docVersion)} className="mt-3 grid min-h-11 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-3 text-left text-sm" style={border}>
+                <span className="truncate" style={navy}>Proposta · v{docVersion.version} (PDF)</span>
+                <span style={{ color: statusColor }} className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: statusColor }} />{status}</span>
               </button>
             ) : (
-              <p className="text-sm" style={muted}>Nenhum documento publicado ainda.</p>
+              <p className="mt-3 text-sm" style={muted}>Nenhum documento publicado ainda.</p>
             )}
             {pdf.isError && <p className="mt-1 text-xs" style={{ color: "var(--stayo-danger)" }}>Não foi possível gerar o documento.</p>}
+            <button type="button" disabled={!docVersion} onClick={() => docVersion && pdf.mutate(docVersion)} className="mt-2 flex w-full items-center justify-between py-2.5 text-left disabled:opacity-50">
+              <span className="flex items-center gap-3 text-sm underline underline-offset-2" style={navy}><ExternalLink className="size-4" /> Ver documentos</span>
+              <ChevronRight className="size-4" style={navy} />
+            </button>
           </section>
 
-          <button type="button" onClick={onHistory} className="flex min-h-12 items-center gap-2 rounded-[var(--radius-card)] border bg-white px-4 text-left text-sm underline-offset-2 hover:underline" style={border}>
-            <History className="size-4" /> <span className="flex-1">Ver histórico do contrato</span> <ChevronRight className="size-4" style={muted} />
+          <button type="button" onClick={onHistory} className="flex min-h-14 items-center gap-3 rounded-xl border bg-white px-4 text-left text-sm" style={border}>
+            <History className="size-5" style={navy} /> <span className="flex-1 underline underline-offset-2" style={navy}>Ver histórico do contrato</span> <ChevronRight className="size-4" style={navy} />
           </button>
         </aside>
       </div>
