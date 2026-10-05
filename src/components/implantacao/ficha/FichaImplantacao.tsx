@@ -31,6 +31,7 @@ import {
   addInventoryItem,
   duplicateInventoryItem,
   guidedInventoryQuery,
+  ensureGuidedInventorySnapshot,
   removeInventoryItem,
   setInventoryAnswer,
   updateInventoryDetails,
@@ -279,6 +280,14 @@ export function InventoryWorkspace({
   const [newName, setNewName] = useState("");
   const [failed, setFailed] = useState<{ item: InventorySnapshotItem; answer: InventoryAnswer | null } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
+  // Copiar o catálogo para a implantação é uma escrita: só por ação explícita.
+  const applySnapshot = useMutation({
+    mutationFn: () => ensureGuidedInventorySnapshot(implementationId),
+    onSuccess: async () => {
+      await refresh();
+      await qc.invalidateQueries({ queryKey: ["guided-inventory-extras", implementationId] });
+    },
+  });
 
   const extras = useQuery({
     queryKey: ["guided-inventory-extras", implementationId],
@@ -416,6 +425,16 @@ export function InventoryWorkspace({
         {roomItems.length === 0 && (
           <li className="px-2 py-6 text-center text-sm" style={muted}>
             {onlyOpen ? "Nada pendente neste ambiente." : "Nenhum item neste ambiente ainda."}
+            {(q.data?.length ?? 0) === 0 && (
+              <button
+                type="button"
+                className="mt-2 block w-full font-medium underline"
+                disabled={applySnapshot.isPending}
+                onClick={() => applySnapshot.mutate()}
+              >
+                {applySnapshot.isPending ? "Carregando…" : "Carregar itens do guia"}
+              </button>
+            )}
           </li>
         )}
         {roomItems.map((i) => {

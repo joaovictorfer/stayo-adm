@@ -38,14 +38,10 @@ export async function ensureGuidedInventorySnapshot(
   return data ?? 0;
 }
 
-export async function openGuidedInventory(implementationId: string) {
-  await ensureGuidedInventorySnapshot(implementationId);
-  return listGuidedInventory(implementationId);
-}
-
+/** Somente leitura: abrir o inventário nunca aplica o guia. */
 export const guidedInventoryQuery = (implementationId: string) => ({
   queryKey: ["guided-inventory", implementationId] as const,
-  queryFn: () => openGuidedInventory(implementationId),
+  queryFn: () => listGuidedInventory(implementationId),
   retry: 1,
 });
 
