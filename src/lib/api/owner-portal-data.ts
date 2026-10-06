@@ -12,6 +12,8 @@ export interface PropertyDetails {
   state: string | null;
   propertyType: string | null;
   bedrooms: number | null;
+  parkingBox?: string | null;
+  lavatories?: number | null;
   suites: number | null;
   bathrooms: number | null;
   parkingSpots: number | null;
@@ -98,6 +100,8 @@ function detailsFromRow(row: Record<string, unknown>): PropertyDetails {
     state: (row["state"] as string | null) ?? null,
     propertyType: (row["property_type"] as string | null) ?? null,
     bedrooms: (row["bedrooms"] as number | null) ?? null,
+    parkingBox: (row["parking_box"] as string | null) ?? null,
+    lavatories: (row["lavatories"] as number | null) ?? null,
     suites: (row["suites"] as number | null) ?? null,
     bathrooms: (row["bathrooms"] as number | null) ?? null,
     parkingSpots: (row["parking_spots"] as number | null) ?? null,
@@ -120,13 +124,22 @@ export async function getPropertyDetails(
     .eq("implementation_id", implementationId)
     .maybeSingle();
   if (error) throw error;
-  return data ? detailsFromRow(data as Record<string, unknown>) : null;
+  if (!data) return null;
+  const project = await client().from("implementation_projects").select("bedrooms").eq("id", implementationId).single();
+  if (project.error) throw project.error;
+  return { ...detailsFromRow(data as Record<string, unknown>), bedrooms: project.data.bedrooms };
 }
 
 export async function savePropertyDetails(
   implementationId: string,
   input: PropertyDetailsInput,
 ): Promise<PropertyDetails> {
+  const project = await client().from("implementation_projects").select("bedrooms").eq("id", implementationId).single();
+  if (project.error) throw project.error;
+  if (project.data.bedrooms !== input.bedrooms) {
+    const changed = await client().from("implementation_projects").update({ bedrooms: input.bedrooms }).eq("id", implementationId);
+    if (changed.error) throw changed.error;
+  }
   const { data, error } = await client()
     .from("implementation_property_details")
     .upsert({
@@ -139,10 +152,11 @@ export async function savePropertyDetails(
       city: input.city,
       state: input.state,
       property_type: input.propertyType,
-      bedrooms: input.bedrooms,
       suites: input.suites,
       bathrooms: input.bathrooms,
       parking_spots: input.parkingSpots,
+      ...(input.parkingBox !== undefined ? { parking_box: input.parkingBox } : {}),
+      ...(input.lavatories !== undefined ? { lavatories: input.lavatories } : {}),
       access_type: input.accessType,
       access_notes: input.accessNotes,
       access_code: input.accessCode,
@@ -154,7 +168,7 @@ export async function savePropertyDetails(
     .select("*")
     .single();
   if (error) throw error;
-  return detailsFromRow(data as Record<string, unknown>);
+  return { ...detailsFromRow(data as Record<string, unknown>), bedrooms: input.bedrooms };
 }
 
 export async function listPortalInspections(implementationId: string): Promise<PortalInspection[]> {

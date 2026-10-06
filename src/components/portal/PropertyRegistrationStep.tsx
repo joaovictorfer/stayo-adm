@@ -27,7 +27,7 @@ export function PropertyRegistrationStep({ token, form, finishing, onSet, onBack
   const field = (key: "propertyCondominiumName" | "propertyUnit" | "propertyParkingBox", label: string) => (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
-      <input className="pd-input" aria-label={label} value={form[key] ?? ""} maxLength={160}
+      <input className="portal-input w-full" aria-label={label} value={form[key] ?? ""} maxLength={160}
         onChange={(event) => onSet(key, event.target.value)} />
       {touched && key !== "propertyParkingBox" && errors[key] && <span className="block text-sm text-destructive">{errors[key]}</span>}
     </label>
