@@ -1074,6 +1074,11 @@ function ownerOnboardingFromDraft(
     propertyCity: text("propertyCity"),
     propertyState: text("propertyState"),
     propertyType: text("propertyType"),
+    propertyCondominiumName: text("propertyCondominiumName"),
+    propertyCondominiumLinked: value["propertyCondominiumLinked"] === true,
+    propertyUnit: text("propertyUnit"),
+    propertyParkingBox: text("propertyParkingBox"),
+    propertyLavatories: typeof value["propertyLavatories"] === "number" ? value["propertyLavatories"] : null,
     propertyBedrooms:
       typeof value["propertyBedrooms"] === "number" ? value["propertyBedrooms"] : null,
     propertySuites: typeof value["propertySuites"] === "number" ? value["propertySuites"] : null,
@@ -1702,24 +1707,16 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
       ]);
       if (draftResult.error) throw draftResult.error;
       if (propertyResult.error) throw propertyResult.error;
-      return draftResult.data
+      return draftResult.data || propertyResult.data
         ? ownerOnboardingFromDraft({
             ...(draftResult.data as Record<string, unknown>),
             ...((propertyResult.data as Record<string, unknown> | null) ?? {}),
           })
         : null;
     },
-    saveDraft: async (token, input, currentStep, submit = false, saveProperty = true) => {
+    saveDraft: async (token, input, currentStep, submit = false, _saveProperty = true) => {
       const supabase = publicClient();
-      // Dados do imóvel só são regravados quando mudaram (ou no envio final);
-      // editar dados pessoais grava apenas o cadastro do proprietário.
-      if (saveProperty || submit) {
-        const { error: propertyError } = await supabase.rpc("owner_property_details_save_by_token", {
-          p_token: token,
-          p_data: input,
-        });
-        if (propertyError) throw propertyError;
-      }
+      // Property edits are separate field-level PATCH calls; never replay the entire property on submit.
       const { data, error } = await supabase.rpc("owner_onboarding_draft_save_v2", {
         p_token: token,
         p_submit: submit,
