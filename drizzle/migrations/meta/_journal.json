@@ -372,6 +372,13 @@
       "when": 1791245614051,
       "tag": "0052_owner_property_non_sensitive_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1791316468430,
+      "tag": "0053_owner_onboarding_resubmit_until_review",
+      "breakpoints": true
     }
   ]
 }
