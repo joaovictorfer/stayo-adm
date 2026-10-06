@@ -444,10 +444,14 @@ export function OwnerJourney({
     };
   }, [persist]);
 
+  const holderTouched = useRef(false);
   const set = <K extends keyof OwnerOnboardingSubmissionInput>(
     key: K,
     value: OwnerOnboardingSubmissionInput[K],
-  ) => setForm((current) => ({ ...current, [key]: value }));
+  ) => {
+    if (key === "accountHolder" || key === "holderTaxId") holderTouched.current = true;
+    setForm((current) => ({ ...current, [key]: value }));
+  };
 
   const people = form.people.length > 0 ? form.people : emptyForm.people;
   const updatePerson = (index: number, patch: Partial<OwnerOnboardingPerson>) => {
@@ -1993,14 +1997,14 @@ function OwnerStep({
               label="Titular da conta"
               value={form.accountHolder}
               hint="Preenchido com seus dados. Você pode alterar se a conta for de outra pessoa."
-              onChange={(value) => { holderTouched.current = true; onSet("accountHolder", value); }}
+              onChange={(value) => onSet("accountHolder", value)}
               error={error(3, "accountHolder")}
             />
             <Field
               label="CPF/CNPJ do titular"
               inputMode="numeric"
               value={formatBrazilianDocument(form.holderTaxId)}
-              onChange={(value) => { holderTouched.current = true; onSet("holderTaxId", formatBrazilianDocument(value)); }}
+              onChange={(value) => onSet("holderTaxId", formatBrazilianDocument(value))}
               error={error(3, "holderTaxId")}
             />
           </div>
