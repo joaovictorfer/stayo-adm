@@ -564,15 +564,25 @@ export function OwnerJourney({
   const finish = useMutation({
     mutationFn: async () => {
       if (Object.keys(propertyRegistrationErrors(form)).length) throw new Error("Complete os dados do imóvel.");
-      await persist(formRef.current, stageRef.current);
-      const parsed = ownerOnboardingFormSchema.parse(form);
+      const parsed = ownerOnboardingFormSchema.parse(formRef.current);
       finalizing.current = true;
-      await queue.current;
-      return adminApi.ownerOnboarding.saveDraft(
-        token,
-        normalizeOwnerSubmission(parsed),
-        STEP.access,
-        true,
+      const withTimeout = <T,>(promise: Promise<T>) =>
+        Promise.race([
+          promise,
+          new Promise<never>((_, reject) =>
+            window.setTimeout(() => reject(new Error("A conexão demorou demais. Tente enviar novamente.")), 20000),
+          ),
+        ]);
+      // Aguarda um autosave em andamento sem bloquear o envio indefinidamente.
+      await withTimeout(queue.current.catch(() => undefined));
+      // Só o imóvel precisa ser gravado à parte; os dados pessoais vão no próprio envio.
+      const patch = propertyPatch(lastPropertySaved.current, formRef.current);
+      if (patch) {
+        await withTimeout(saveOwnerPropertyPatch(token, patch));
+        lastPropertySaved.current = formRef.current;
+      }
+      return withTimeout(
+        adminApi.ownerOnboarding.saveDraft(token, normalizeOwnerSubmission(parsed), STEP.access, true),
       );
     },
     onSuccess: (submission) => {
