@@ -405,7 +405,7 @@ export function OwnerJourney({
           );
           const saved = ownerChanged
             ? await adminApi.ownerOnboarding.saveDraft(token, snapshot, code, false, false)
-            : { ...snapshot, implementationId, currentStep: code, submittedAt: null };
+            : { ...snapshot, implementationId, currentStep: code, submittedAt: draftQ.data?.submittedAt ?? null };
           if (ownerChanged) lastOwnerSaved.current = snapshot;
           lastSaved.current = signature;
           queryClient.setQueryData(["owner-onboarding-draft", token], saved);
