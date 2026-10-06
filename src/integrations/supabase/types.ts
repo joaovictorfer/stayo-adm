@@ -3508,6 +3508,7 @@ export type Database = {
         Args: { p_data: Json; p_submit?: boolean; p_token: string }
         Returns: Json
       }
+      owner_onboarding_locked: { Args: { p_impl: string }; Returns: boolean }
       owner_onboarding_resolve_token: {
         Args: { p_token: string }
         Returns: {
