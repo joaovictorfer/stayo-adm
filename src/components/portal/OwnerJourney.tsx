@@ -383,7 +383,6 @@ export function OwnerJourney({
         finalizing.current ||
         target < 2 ||
         !proposalAccepted ||
-        submitted ||
         snapshot.people.length === 0 ||
         signature === lastSaved.current
       )
@@ -419,11 +418,11 @@ export function OwnerJourney({
         .catch(() => setSaveState("error"));
       return queue.current;
     },
-    [implementationId, proposalAccepted, queryClient, submitted, token],
+    [implementationId, proposalAccepted, queryClient, token],
   );
 
   useEffect(() => {
-    if (!hydrated.current || stage < 2 || submitted || finalizing.current) return;
+    if (!hydrated.current || stage < 2 || finalizing.current) return;
     const timer = window.setTimeout(() => void persist(form, stage), 900);
     return () => window.clearTimeout(timer);
   }, [form, persist, stage, submitted]);
@@ -2560,7 +2559,8 @@ function ownerErrorMessage(error: unknown) {
         ? String((error as { message: unknown }).message)
         : "";
   const message = raw.toLocaleLowerCase("pt-BR");
-  if (message.includes("já enviado")) return "Seu cadastro já foi enviado para análise.";
+  if (message.includes("já revisado") || message.includes("já enviado"))
+    return "A STAYO já revisou seu cadastro. Para corrigir algo, fale com a STAYO.";
   if (message.includes("confirme as condições"))
     return "Confirme as condições da proposta antes de continuar.";
   if (message.includes("acesso inválido")) return "Este link não está mais disponível.";
