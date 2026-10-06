@@ -512,7 +512,10 @@ export function OwnerJourney({
       }
       if (!changed) return current;
       // Valores derivados (titular/Pix sugeridos) não são edição do usuário: abrir a tela não grava.
-      if (JSON.stringify(current) === lastSaved.current) lastSaved.current = JSON.stringify(next);
+      if (JSON.stringify(current) === lastSaved.current) {
+        lastSaved.current = JSON.stringify(next);
+        lastOwnerSaved.current = next;
+      }
       return next;
     });
   }, [people]);
