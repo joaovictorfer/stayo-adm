@@ -170,7 +170,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         city: d?.city ?? implementation.city,
         state: d?.state ?? null,
         propertyType: d?.propertyType ?? implementation.propertyType,
-        bedrooms: d?.bedrooms ?? implementation.bedrooms,
+        bedrooms: toNum(bedrooms),
         suites: d?.suites ?? null,
         bathrooms: toNum(bathrooms),
         parkingSpots: toNum(parking),

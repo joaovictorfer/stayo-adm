@@ -365,6 +365,13 @@
       "when": 1791244338941,
       "tag": "0051_owner_onboarding_marital_profession",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1791245614051,
+      "tag": "0052_owner_property_non_sensitive_patch",
+      "breakpoints": true
     }
   ]
 }

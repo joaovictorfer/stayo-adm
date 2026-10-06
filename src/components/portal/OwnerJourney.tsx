@@ -1,3 +1,6 @@
+import { PropertyRegistrationStep } from "./PropertyRegistrationStep";
+import { propertyPatch, propertyRegistrationErrors, PROPERTY_REQUIRED, hasOwnerChanges } from "../../lib/owner-property-registration";
+import { saveOwnerPropertyPatch } from "../../lib/api/owner-property-registration";
 import { computeRegistrationProgress } from "../../lib/owner-registration-progress";
 import { OwnerGuide } from "@/components/portal/OwnerGuide";
 import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSection";
@@ -126,6 +129,11 @@ const emptyForm: OwnerOnboardingSubmissionInput = {
   propertyCity: "",
   propertyState: "",
   propertyType: "",
+  propertyCondominiumName: "",
+  propertyCondominiumLinked: false,
+  propertyUnit: "",
+  propertyParkingBox: "",
+  propertyLavatories: null,
   propertyBedrooms: null,
   propertySuites: null,
   propertyBathrooms: null,
@@ -154,32 +162,8 @@ const ownerFields: OwnerFormField[] = [
   "pixKey",
 ];
 
-/** Somente campos do imóvel: decide se a gravação do imóvel é necessária. */
-function propertySignature(form: OwnerOnboardingSubmissionInput) {
-  return JSON.stringify(
-    Object.fromEntries(Object.entries(form).filter(([key]) => key.startsWith("property"))),
-  );
-}
-
-const emptyPropertyErrorKeys: Record<keyof PropertyErrors, true> = {
-  propertyPostalCode: true,
-  propertyStreet: true,
-  propertyNumber: true,
-  propertyDistrict: true,
-  propertyCity: true,
-  propertyState: true,
-  propertyType: true,
-};
-
-interface PropertyErrors {
-  propertyPostalCode?: string | undefined;
-  propertyStreet?: string | undefined;
-  propertyNumber?: string | undefined;
-  propertyDistrict?: string | undefined;
-  propertyCity?: string | undefined;
-  propertyState?: string | undefined;
-  propertyType?: string | undefined;
-}
+const emptyPropertyErrorKeys = Object.fromEntries(PROPERTY_REQUIRED.map((key) => [key, true]));
+type PropertyErrors = ReturnType<typeof propertyRegistrationErrors>;
 
 export function OwnerJourney({
   implementationId,
@@ -229,7 +213,8 @@ export function OwnerJourney({
   const stageRef = useRef<Stage>(stage);
   const maxStageRef = useRef<Stage>(maxStage);
   const lastSaved = useRef("");
-  const lastPropertySaved = useRef("");
+  const lastPropertySaved = useRef<OwnerOnboardingSubmissionInput>(emptyForm);
+  const lastOwnerSaved = useRef<OwnerOnboardingSubmissionInput>(emptyForm);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const finalizing = useRef(false);
 
@@ -342,6 +327,8 @@ export function OwnerJourney({
           propertyCity: implementation?.city ?? "",
           propertyType: implementation?.propertyType ?? "",
           propertyBedrooms: implementation?.bedrooms ?? null,
+          propertyCondominiumName: implementation?.condominiumName ?? "",
+          propertyUnit: implementation?.unit ?? "",
         };
     if (initial.people.length === 0) initial.people = [primary];
     const reconciled = reconcileRegistrationContact(initial);
@@ -365,7 +352,8 @@ export function OwnerJourney({
     setForm(reconciled);
     formRef.current = reconciled;
     lastSaved.current = JSON.stringify(reconciled);
-    lastPropertySaved.current = propertySignature(reconciled);
+    lastPropertySaved.current = reconciled;
+    lastOwnerSaved.current = reconciled;
     setStage(current);
     stageRef.current = current;
     setMaxStage(reached);
@@ -406,12 +394,21 @@ export function OwnerJourney({
       queue.current = queue.current
         .catch(() => undefined)
         .then(async () => {
-          const propSig = propertySignature(snapshot);
-          const saved = await adminApi.ownerOnboarding.saveDraft(
-            token, snapshot, code, false, propSig !== lastPropertySaved.current,
+          if (signature === lastSaved.current) return;
+          const patch = propertyPatch(lastPropertySaved.current, snapshot);
+          if (patch) {
+            await saveOwnerPropertyPatch(token, patch);
+            lastPropertySaved.current = snapshot;
+          }
+          const ownerChanged = hasOwnerChanges(
+            lastOwnerSaved.current as unknown as Record<string, unknown>,
+            snapshot as unknown as Record<string, unknown>,
           );
+          const saved = ownerChanged
+            ? await adminApi.ownerOnboarding.saveDraft(token, snapshot, code, false, false)
+            : { ...snapshot, implementationId, currentStep: code, submittedAt: null };
+          if (ownerChanged) lastOwnerSaved.current = snapshot;
           lastSaved.current = signature;
-          lastPropertySaved.current = propSig;
           queryClient.setQueryData(["owner-onboarding-draft", token], saved);
           queryClient.setQueryData(
             ownerOnboardingSubmissionQuery(implementationId).queryKey,
@@ -515,7 +512,10 @@ export function OwnerJourney({
       }
       if (!changed) return current;
       // Valores derivados (titular/Pix sugeridos) não são edição do usuário: abrir a tela não grava.
-      if (JSON.stringify(current) === lastSaved.current) lastSaved.current = JSON.stringify(next);
+      if (JSON.stringify(current) === lastSaved.current) {
+        lastSaved.current = JSON.stringify(next);
+        lastOwnerSaved.current = next;
+      }
       return next;
     });
   }, [people]);
@@ -559,6 +559,8 @@ export function OwnerJourney({
 
   const finish = useMutation({
     mutationFn: async () => {
+      if (Object.keys(propertyRegistrationErrors(form)).length) throw new Error("Complete os dados do imóvel.");
+      await persist(formRef.current, stageRef.current);
       const parsed = ownerOnboardingFormSchema.parse(form);
       finalizing.current = true;
       await queue.current;
@@ -958,12 +960,9 @@ export function OwnerJourney({
               />
             )}
             {stage === 3 && !reviewing && !platformsView && (
-              <PropertyStep
+              <PropertyRegistrationStep
                 token={token}
                 form={form}
-                condominiumName={implementationQ.data?.condominiumName || null}
-                unit={implementationQ.data?.unit || null}
-                errors={showPropertyErrors ? propertyErrors : {}}
                 finishing={finish.isPending}
                 onSet={set}
                 onBack={() => go(2)}
@@ -1073,11 +1072,13 @@ function ReviewStep({
     ["Chave Pix", form.pixKey],
   ]);
   const property = rows([
-    ["Endereço", address],
-    ["Tipo", form.propertyType],
+    ["Condomínio", form.propertyCondominiumName],
+    ["Apartamento", form.propertyUnit],
+    ["Box", form.propertyParkingBox],
     ["Quartos", form.propertyBedrooms],
     ["Banheiros", form.propertyBathrooms],
-    ["Vagas", form.propertyParkingSpots],
+    ["Suítes", form.propertySuites],
+    ["Lavabos", form.propertyLavatories],
   ]);
   const block = (title: string, list: typeof owner, onEdit: () => void) => (
     <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
@@ -2125,253 +2126,6 @@ function PersonEditor({
   );
 }
 
-type PropertySubStep = 1 | 2;
-
-function PropertyStep({
-  token,
-  form,
-  condominiumName,
-  unit,
-  errors,
-  finishing,
-  onSet,
-  onBack,
-  onContinue,
-}: {
-  token: string;
-  form: OwnerOnboardingSubmissionInput;
-  condominiumName: string | null;
-  unit: string | null;
-  errors: PropertyErrors;
-  finishing: boolean;
-  onSet: <K extends keyof OwnerOnboardingSubmissionInput>(
-    key: K,
-    value: OwnerOnboardingSubmissionInput[K],
-  ) => void;
-  onBack: () => void;
-  onContinue: () => void;
-}) {
-  const storageKey = `stayo:property-substep:${token.slice(0, 12)}`;
-  const [sub, setSub] = useState<PropertySubStep>(1);
-  const [touched, setTouched] = useState(false);
-  const topRef = useRef<HTMLElement | null>(null);
-
-  // Retoma o passo interno salvo neste aparelho (somente o número do passo).
-  useEffect(() => {
-    if (window.localStorage.getItem(storageKey) === "2") setSub(2);
-  }, [storageKey]);
-  useEffect(() => {
-    window.localStorage.setItem(storageKey, String(sub));
-  }, [sub, storageKey]);
-
-  const live = getPropertyErrors(form);
-  const shown: PropertyErrors = touched ? { ...live, ...errors } : errors;
-  const addressKeys: Array<keyof PropertyErrors> = [
-    "propertyPostalCode",
-    "propertyStreet",
-    "propertyNumber",
-    "propertyDistrict",
-    "propertyCity",
-    "propertyState",
-  ];
-  // Endereço vem do condomínio já vinculado; só pede o que realmente falta.
-  const [needsAddress] = useState(() => addressKeys.some((key) => live[key]));
-  const [needsType] = useState(() => Boolean(live.propertyType));
-  const unitOk = !needsAddress && !needsType
-    ? true
-    : ![...addressKeys, "propertyType" as const].some((key) => live[key]);
-
-  const goTo = (step: PropertySubStep) => {
-    setSub(step);
-    requestAnimationFrame(() => topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  };
-  const next = () => {
-    setTouched(true);
-    if (sub === 1) {
-      if (!unitOk) {
-        toast.error("Complete os dados do imóvel");
-        return;
-      }
-      goTo(2);
-      return;
-    }
-    onContinue();
-  };
-  const back = () => (sub === 2 ? goTo(1) : onBack());
-
-  return (
-    <section className="pd-step" ref={topRef}>
-      {sub === 1 && (
-        <div className="pd-head">
-          <h2 className="pd-title">Agora, vamos confirmar seu imóvel</h2>
-          <p className="pd-lead">A STAYO já preencheu o que sabemos. Confira e complete apenas o que faltar.</p>
-        </div>
-      )}
-      <p className="pd-sub">
-        <span>
-          {sub === 1 ? "Unidade" : "Ambientes"} · {sub} de 2
-        </span>
-      </p>
-
-      {sub === 1 && (
-        <div className="pd-fields">
-          <div>
-            <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">Condomínio</span>
-            <div className="pd-readonly">
-              <span>{condominiumName || "A confirmar com a STAYO"}</span>
-              {condominiumName && (
-                <span className="pd-check" aria-hidden="true">
-                  <Check className="size-4" />
-                </span>
-              )}
-            </div>
-            {condominiumName && <p className="pd-hint">Cadastrado pela STAYO</p>}
-          </div>
-          {unit && (
-            <div>
-              <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">Apartamento</span>
-              <div className="pd-readonly">
-                <span>{unit}</span>
-              </div>
-              <p className="pd-hint">Precisa corrigir? Fale com a STAYO pelo botão Ajuda.</p>
-            </div>
-          )}
-          {needsType && (
-            <Field
-              label="Tipo do imóvel"
-              value={form.propertyType}
-              onChange={(value) => onSet("propertyType", value)}
-              placeholder="Ex.: Apartamento"
-              error={shown.propertyType}
-            />
-          )}
-          {needsAddress ? (
-            <>
-              <p className="pd-group">Endereço do imóvel</p>
-              <div className="grid gap-4 sm:grid-cols-6">
-                <Field
-                  className="sm:col-span-2"
-                  label="CEP"
-                  inputMode="numeric"
-                  value={formatBrazilianPostalCode(form.propertyPostalCode)}
-                  onChange={(value) => onSet("propertyPostalCode", formatBrazilianPostalCode(value))}
-                  onBlur={() => void findCep(form.propertyPostalCode, onSet, true)}
-                  error={shown.propertyPostalCode}
-                />
-                <Field
-                  className="sm:col-span-4"
-                  label="Endereço"
-                  value={form.propertyStreet}
-                  onChange={(value) => onSet("propertyStreet", value)}
-                  error={shown.propertyStreet}
-                />
-                <Field
-                  className="sm:col-span-2"
-                  label="Número"
-                  value={form.propertyNumber}
-                  onChange={(value) => onSet("propertyNumber", value)}
-                  error={shown.propertyNumber}
-                />
-                <Field
-                  className="sm:col-span-4"
-                  label="Bairro"
-                  value={form.propertyDistrict}
-                  onChange={(value) => onSet("propertyDistrict", value)}
-                  error={shown.propertyDistrict}
-                />
-                <Field
-                  className="sm:col-span-4"
-                  label="Cidade"
-                  value={form.propertyCity}
-                  onChange={(value) => onSet("propertyCity", value)}
-                  error={shown.propertyCity}
-                />
-                <Field
-                  className="sm:col-span-2"
-                  label="UF"
-                  value={form.propertyState}
-                  onChange={(value) =>
-                    onSet("propertyState", value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2))
-                  }
-                  error={shown.propertyState}
-                />
-              </div>
-            </>
-          ) : (
-            <p className="pd-note">{condominiumName ? "O endereço do condomínio já está conosco." : "O endereço do imóvel já está conosco."}</p>
-          )}
-        </div>
-      )}
-
-      {sub === 2 && (
-        <div className="pd-fields">
-          <p className="pd-lead">Uma visão inicial basta. A vistoria completa o restante.</p>
-          <div className="pd-steppers">
-            <Stepper label="Quartos" value={form.propertyBedrooms} onChange={(v) => onSet("propertyBedrooms", v)} />
-            <Stepper label="Banheiros" value={form.propertyBathrooms} onChange={(v) => onSet("propertyBathrooms", v)} />
-            <Stepper label="Suítes" value={form.propertySuites} onChange={(v) => onSet("propertySuites", v)} />
-          </div>
-          <details className="pd-more">
-            <summary>Fornecedores, utensílios e enxoval (opcional)</summary>
-            <div className="mt-4 space-y-6">
-              <OwnerSuppliersSection token={token} />
-              <OwnerGuide token={token} guideType="utensilios" />
-              <OwnerGuide token={token} guideType="enxoval" />
-            </div>
-          </details>
-        </div>
-      )}
-
-      <div className="pd-actions">
-        <Button type="button" className="portal-cta pd-cta" onClick={next} disabled={finishing}>
-          Continuar <ArrowRight className="size-4" aria-hidden="true" />
-        </Button>
-        <button type="button" className="pd-back" onClick={back}>
-          Voltar
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function Stepper({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number | null;
-  onChange: (value: number) => void;
-}) {
-  const current = value ?? 0;
-  return (
-    <div className="pd-stepper">
-      <span className="pd-stepper-label">{label}</span>
-      <div className="pd-stepper-ctrl">
-        <button
-          type="button"
-          aria-label={`Diminuir ${label.toLowerCase()}`}
-          disabled={current <= 0}
-          onClick={() => onChange(Math.max(0, current - 1))}
-        >
-          <Minus className="size-4" aria-hidden="true" />
-        </button>
-        <output aria-live="polite" aria-label={label}>
-          {value ?? "–"}
-        </output>
-        <button
-          type="button"
-          aria-label={`Aumentar ${label.toLowerCase()}`}
-          disabled={current >= 20}
-          onClick={() => onChange(Math.min(20, current + 1))}
-        >
-          <Plus className="size-4" aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function PendingStep({
   pending,
   onContinue,
@@ -2734,19 +2488,7 @@ function Blocked({
   );
 }
 
-function getPropertyErrors(form: OwnerOnboardingSubmissionInput): PropertyErrors {
-  const errors: PropertyErrors = {};
-  if (form.propertyPostalCode && form.propertyPostalCode.replace(/\D/g, "").length !== 8)
-    errors.propertyPostalCode = "Confira o CEP informado.";
-  if (form.propertyStreet.trim().length < 2)
-    errors.propertyStreet = "Informe o endereço do imóvel.";
-  if (!form.propertyNumber.trim()) errors.propertyNumber = "Informe o número ou unidade.";
-  if (form.propertyDistrict.trim().length < 2) errors.propertyDistrict = "Informe o bairro.";
-  if (form.propertyCity.trim().length < 2) errors.propertyCity = "Informe a cidade.";
-  if (form.propertyState.trim().length !== 2) errors.propertyState = "Informe a UF.";
-  if (form.propertyType.trim().length < 2) errors.propertyType = "Informe o tipo do imóvel.";
-  return errors;
-}
+const getPropertyErrors = propertyRegistrationErrors;
 
 async function findCep(
   value: string,

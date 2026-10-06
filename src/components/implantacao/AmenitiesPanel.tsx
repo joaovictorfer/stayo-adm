@@ -126,7 +126,7 @@ export function AmenitiesPanel({
       supabase.from("implementation_projects").update({ bedrooms: next.bedrooms }).eq("id", implementationId),
       supabase
         .from("implementation_property_details")
-        .upsert({ implementation_id: implementationId, bedrooms: next.bedrooms, bathrooms: next.bathrooms, lavatories: next.lavatories }),
+        .upsert({ implementation_id: implementationId, bathrooms: next.bathrooms, lavatories: next.lavatories }),
     ]);
     if (p1.error || p2.error) setSave("error");
     else void qc.invalidateQueries({ queryKey: ["implementation", implementationId] });

@@ -76,6 +76,11 @@ export interface OwnerOnboardingSubmission {
   propertyCity: string;
   propertyState: string;
   propertyType: string;
+  propertyCondominiumName?: string;
+  propertyCondominiumLinked?: boolean;
+  propertyUnit?: string;
+  propertyParkingBox?: string;
+  propertyLavatories?: number | null;
   propertyBedrooms: number | null;
   propertySuites: number | null;
   propertyBathrooms: number | null;
