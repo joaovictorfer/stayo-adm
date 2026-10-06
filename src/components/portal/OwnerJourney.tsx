@@ -495,11 +495,11 @@ export function OwnerJourney({
     setForm((current) => {
       const next = { ...current };
       let changed = false;
-      if (!current.accountHolder && primary.fullName) {
+      if (!holderTouched.current && !current.accountHolder && primary.fullName) {
         next.accountHolder = primary.fullName;
         changed = true;
       }
-      if (!current.holderTaxId && primary.document) {
+      if (!holderTouched.current && !current.holderTaxId && primary.document) {
         next.holderTaxId = primary.document;
         changed = true;
       }
@@ -1953,14 +1953,22 @@ function OwnerStep({
           </div>
           <p className="pd-group">Conta bancária</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Select
-              label="Banco"
-              value={form.bankName}
-              onChange={(value) => onSet("bankName", value)}
-              options={BRAZILIAN_BANKS.map((bank) => ({ value: bank, label: bank }))}
-              placeholder="Selecione o banco"
-              error={error(3, "bankName")}
-            />
+            <label className="block text-sm">
+              <span className="mb-1.5 block text-xs font-medium text-[var(--portal-muted)]">Banco</span>
+              <input
+                className="portal-input w-full rounded-xl px-3 py-2.5"
+                list="pd-bank-options"
+                value={form.bankName}
+                placeholder="Escolha ou digite o nome do banco"
+                onChange={(event) => onSet("bankName", event.target.value)}
+                aria-invalid={Boolean(error(3, "bankName"))}
+              />
+              <datalist id="pd-bank-options">
+                {BRAZILIAN_BANKS.map((bank) => <option key={bank} value={bank} />)}
+              </datalist>
+              <span className="mt-1 block text-xs text-[var(--portal-muted)]">Não encontrou? Digite o nome do seu banco.</span>
+              {error(3, "bankName") && <span className="pd-error mt-1 block">{error(3, "bankName")}</span>}
+            </label>
             <Select
               label="Tipo de conta"
               value={form.accountType}
@@ -1984,14 +1992,15 @@ function OwnerStep({
             <Field
               label="Titular da conta"
               value={form.accountHolder}
-              onChange={(value) => onSet("accountHolder", value)}
+              hint="Preenchido com seus dados. Você pode alterar se a conta for de outra pessoa."
+              onChange={(value) => { holderTouched.current = true; onSet("accountHolder", value); }}
               error={error(3, "accountHolder")}
             />
             <Field
               label="CPF/CNPJ do titular"
               inputMode="numeric"
               value={formatBrazilianDocument(form.holderTaxId)}
-              onChange={(value) => onSet("holderTaxId", formatBrazilianDocument(value))}
+              onChange={(value) => { holderTouched.current = true; onSet("holderTaxId", formatBrazilianDocument(value)); }}
               error={error(3, "holderTaxId")}
             />
           </div>
