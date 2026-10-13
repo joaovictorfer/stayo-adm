@@ -605,6 +605,12 @@ function ItemRow({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      {st.on && subNodes && (
+        <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</p>
+          {subNodes}
+        </div>
+      )}
       <Sheet open={details} onOpenChange={setDetails}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader><SheetTitle>{def.label}</SheetTitle></SheetHeader>
