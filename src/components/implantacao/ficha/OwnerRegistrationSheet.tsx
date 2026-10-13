@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, Pencil } from "lucide-react";
+import { Building2, Check, Copy, Globe, KeyRound, Landmark, Pencil, UserRound, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ownerOnboardingSubmissionQuery } from "../../../lib/api/queries";
@@ -96,8 +96,8 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
   const status = !sub ? { text: "Aguardando proprietário", tone: "muted" } : sub.submittedAt ? { text: `Enviada em ${new Date(sub.submittedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, tone: "ok" } : { text: "Em preenchimento", tone: "pending" };
   const property = [implementation.condominiumName, implementation.unit && `Apto ${implementation.unit}`].filter(Boolean).join(" · ");
 
-  return <div className="overflow-hidden rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)]">
-    <header className="flex flex-wrap items-center gap-3 border-b border-[var(--stayo-border)] px-4 py-3.5 sm:px-5">
+  return <div className="space-y-3">
+    <header className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-4 py-3.5 sm:px-5">
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--stayo-navy)] font-[Outfit] text-sm font-semibold text-[var(--stayo-surface)]">{initials || "?"}</span>
       <div className="min-w-0 flex-1">
         <h2 className="truncate font-[Outfit] text-lg font-semibold leading-tight text-[var(--stayo-navy)]">{name}</h2>
@@ -107,27 +107,27 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
       {onEditOwner && <button type="button" onClick={onEditOwner} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--stayo-border)] px-2.5 py-1.5 text-xs font-medium text-[var(--stayo-navy)] transition hover:border-[var(--stayo-navy)]"><Pencil className="size-3.5" />Editar</button>}
     </header>
 
-    <div className="grid gap-2.5 bg-[var(--ficha-icon-bg)]/40 px-4 py-3.5 sm:grid-cols-2 sm:px-5">
+    <div className="grid gap-3 sm:grid-cols-2">
       <div className="min-w-0 space-y-1.5">
-        <Highlight label="E-mail da conta Airbnb" value={platforms?.airbnb_account_email} empty="Não informado" />
+        <Highlight icon={<Globe />} label="E-mail da conta Airbnb" value={platforms?.airbnb_account_email} empty="Não informado" />
         {channels.length > 0 && <div className="flex flex-wrap gap-1 px-0.5">{channels.map(c => <span key={c} className="rounded-full border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-2 py-0.5 text-[11px] text-[var(--stayo-ink-muted)]">{CHANNEL_LABELS[c]}</span>)}</div>}
       </div>
-      <Highlight label="Chave Pix" hint={sub?.pixKey ? pixLabel[sub.pixType] : null} value={sub?.pixKey} empty="Não informada" />
+      <Highlight icon={<KeyRound />} label="Chave Pix" hint={sub?.pixKey ? pixLabel[sub.pixType] : null} value={sub?.pixKey} empty="Não informada" />
     </div>
 
-    <div className="space-y-4 px-2 py-4 sm:px-3">
-      {people.length === 0
-        ? <Section title="Proponentes" lines={[]} empty="Nenhum proponente informado." />
-        : people.map((p, i) => <Section key={i} title={p.fullName || `Proponente ${i + 1}`} meta={roleLabel[p.role]} lines={[
-            { label: "CPF/CNPJ", value: doc(p.document) },
-            { label: "Telefone", value: phone(p.phone) },
-            { label: "E-mail", value: p.email },
-            { label: "Nome completo", value: p.fullName },
-            { label: "Estado civil", value: p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null },
-            { label: "Profissão", value: p.profession },
-          ]} />)}
+    {people.length === 0
+      ? <Section icon={<UserRound />} title="Proponentes" lines={[]} empty="Nenhum proponente informado." />
+      : people.map((p, i) => <Section key={i} icon={i === 0 ? <UserRound /> : <Users />} title={p.fullName || `Proponente ${i + 1}`} meta={roleLabel[p.role]} lines={[
+          { label: "CPF/CNPJ", value: doc(p.document) },
+          { label: "Telefone", value: phone(p.phone) },
+          { label: "E-mail", value: p.email },
+          { label: "Nome completo", value: p.fullName },
+          { label: "Estado civil", value: p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null },
+          { label: "Profissão", value: p.profession },
+        ]} />)}
 
-      <Section title="Imóvel" meta={property || undefined} lines={[
+    <div className="grid items-start gap-3 xl:grid-cols-2">
+      <Section icon={<Building2 />} title="Imóvel" meta={property || undefined} lines={[
         { label: "Condomínio", value: implementation.condominiumName },
         { label: "Apartamento", value: implementation.unit },
         { label: "Box / vagas", value: [details?.parkingBox && `Box ${details.parkingBox}`, details?.parkingSpots != null && `${details.parkingSpots} vaga(s)`].filter(Boolean).join(" · ") || null },
@@ -136,7 +136,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
         { label: "Banheiros / lavabos", value: [num(details?.bathrooms), num(details?.lavatories)].some(Boolean) ? `${details?.bathrooms ?? 0} / ${details?.lavatories ?? 0}` : null },
       ]} />
 
-      <Section title="Dados bancários" empty="Recebimentos ainda não informados." lines={sub ? [
+      <Section icon={<Landmark />} title="Dados bancários" meta="Recebimento dos repasses" empty="Recebimentos ainda não informados." lines={sub ? [
         { label: "Banco", value: sub.bankName },
         { label: "Agência", value: sub.bankBranch },
         { label: "Conta", value: sub.accountNumber },
