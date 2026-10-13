@@ -231,6 +231,35 @@ export function AmenitiesPanel({
         for (const def of allDefs) {
           const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), def.label);
           const install = installs.find((entry) => amenityDisplayKey(entry.label) === amenityDisplayKey(def.label));
+          const isGroup = !!def.subAnswers && !!def.sub;
+          const groupSubs: ReactNode[] = [];
+          let groupItems = room.items;
+          if (isGroup && def.sub) {
+            if (match) used.add(match.id);
+            const pool = inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades");
+            for (const child of def.sub) {
+              const cm = matchingInventoryItem(pool, child.label);
+              if (cm) {
+                used.add(cm.id);
+                if (groupItems[child.key]?.on === undefined && cm.inventory_answer) {
+                  groupItems = { ...groupItems, [child.key]: { ...groupItems[child.key], on: cm.inventory_answer === "tenho" } };
+                }
+                groupSubs.push(renderItem(cm));
+              } else {
+                const st = groupItems[child.key] ?? {};
+                const setChild = (on: boolean) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key], on } } }));
+                groupSubs.push(
+                  <div key={`${room.id}:${def.key}:${child.key}`} className="flex items-center justify-between gap-2 py-0.5" data-testid="amenity-sub-row">
+                    <span className="text-sm text-foreground">{child.label}</span>
+                    <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${child.label}`}>
+                      <SubBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
+                      <SubBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
+                    </div>
+                  </div>,
+                );
+              }
+            }
+          }
           const fields = (
             <div key={`${room.id}:${def.key}`} className="space-y-4">
               {rs.length > 1 && <p className="text-sm font-medium text-foreground">{room.name}</p>}
@@ -239,17 +268,17 @@ export function AmenitiesPanel({
               {!match && !install && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly />}
             </div>
           );
-          if (match && !install) {
+          if (match && !install && !isGroup) {
             used.add(match.id);
             rows.push(renderItem(match, fields, !!install));
           } else {
             if (match) used.add(match.id);
             const displayedItems = match && room.items[def.key]?.on === undefined && match.inventory_answer
               ? { ...room.items, [def.key]: { ...room.items[def.key], on: match.inventory_answer === "tenho" } } : room.items;
-            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={displayedItems} setItem={(key, patch) => {
+            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={isGroup ? groupItems : displayedItems} setItem={(key, patch) => {
               if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
               else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
-            }} unified extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
+            }} unified subNodes={groupSubs.length ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
           }
         }
         for (const custom of room.custom) {
@@ -540,12 +569,14 @@ function ItemRow({
   extraFields,
   hideBrand,
   installationSummary,
+  subNodes,
 }: {
   installationSummary?: string;
   hideBrand?: boolean;
   unified?: boolean;
   fieldsOnly?: boolean;
   extraFields?: ReactNode;
+  subNodes?: ReactNode;
   def: ItemDef;
   items: Record<string, ItemState>;
   setItem: (key: string, patch: Partial<ItemState>) => void;
@@ -574,6 +605,12 @@ function ItemRow({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      {st.on && subNodes && (
+        <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</p>
+          {subNodes}
+        </div>
+      )}
       <Sheet open={details} onOpenChange={setDetails}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader><SheetTitle>{def.label}</SheetTitle></SheetHeader>
@@ -672,6 +709,20 @@ function ItemRow({
         </div>
       )}
     </div>
+  );
+}
+
+function SubBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClick: () => void }) {
+  const yes = kind === "yes";
+  const style = on
+    ? yes
+      ? { backgroundColor: "var(--ficha-icon-fg)", color: "var(--admin-surface, #fff)", borderColor: "var(--ficha-icon-fg)" }
+      : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
+    : { backgroundColor: "var(--admin-surface, #fff)", borderColor: "var(--stayo-border)", color: "var(--stayo-navy)" };
+  return (
+    <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={`h-8 gap-1 rounded-md px-2.5 text-xs font-medium${on ? " admin-answer-pop" : ""}`} style={style}>
+      {yes ? <Check className="size-3.5" /> : <X className="size-3.5" />} {yes ? "Sim" : "Não"}
+    </Button>
   );
 }
 

@@ -12,6 +12,8 @@ export interface ItemDef {
   company?: boolean;
   /** Subitens abertos quando o item está marcado. */
   sub?: ItemDef[];
+  /** No painel unificado, subitens entram como linhas Sim/Não dentro da própria linha. */
+  subAnswers?: boolean;
 }
 
 export interface SectionDef {
@@ -78,9 +80,19 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
     {
       title: "Utensílios",
       items: [
-        "Abridor de vinho", "Forma de pizza", "Formas diversas", "Forma de bolo", "Panelas", "Copos",
-        "Taças de vinho", "Taças de espumante", "Facas de corte", "Talheres",
-      ].map((l) => ({ key: slug(l), label: l })),
+        "Abridor de vinho", "Forma de pizza", "Formas diversas", "Forma de bolo", "Panelas",
+        {
+          key: "copos", label: "Copos", subAnswers: true,
+          sub: [
+            { key: "copos_de_vidro", label: "Copos" },
+            { key: "tacas_de_vinho", label: "Taça de vinho" },
+            { key: "tacas_de_espumante", label: "Taça de espumante" },
+            { key: "xicaras_de_cafe_com_pires", label: "Xícara" },
+            { key: "pires", label: "Píres" },
+          ],
+        },
+        "Facas de corte", "Talheres",
+      ].map((l) => (typeof l === "string" ? { key: slug(l), label: l } : l)),
     },
     {
       title: "Pia e limpeza",
