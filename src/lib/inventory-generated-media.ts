@@ -43,6 +43,9 @@ import barbecueBoard from "@/assets/inventory-generated/tabua-de-churrasco.jpg";
 import doubleSkewer from "@/assets/inventory-generated/espeto-duplo.jpg";
 import singleSkewer from "@/assets/inventory-generated/espeto-simples.jpg";
 import sideSupport from "@/assets/inventory-generated/suporte-lateral.jpg";
+import frigobar from "@/assets/inventory-generated/frigobar.jpg";
+import wineCellar from "@/assets/inventory-generated/adega.jpg";
+import capsuleCoffee from "@/assets/inventory-generated/cafeteira-de-capsulas.jpg";
 import { amenityDisplayKey } from "./inventory-amenities-view";
 
 const images: Record<string, string> = {
@@ -94,6 +97,9 @@ const images: Record<string, string> = {
   "utensilios_de_churrasco": image34,
   "varal": image35,
   "vassoura": image36,
+  "frigobar": frigobar,
+  "adega": wineCellar,
+  "cafeteira_de_capsulas": capsuleCoffee,
 };
 
 export function generatedInventoryImage(name: string): string | undefined {

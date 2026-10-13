@@ -51,8 +51,10 @@ export function buildSyncRows(data: AmenitiesData): SyncRow[] {
       for (const sub of def.sub ?? []) {
         // Subitem com o mesmo rótulo do grupo (ex.: "Copos" dentro de "Copos") não cria item próprio.
         if (sub.label === def.label) continue;
-        const ss = items[`${def.key}.${sub.key}`] ?? items[sub.key];
-        if (ss) push(`${prefix}:${def.key}.${sub.key}`, kind, label, sub.label, { ...ss, on: !!ss.on && !!s?.on }, sub);
+        const nested = items[`${def.key}.${sub.key}`];
+        const ss = nested ?? items[sub.key];
+        // Resposta gravada pela chave própria (histórico) vale mais que a chave agrupada e mantém o espelho.
+        if (ss) push(`${prefix}:${nested ? `${def.key}.${sub.key}` : sub.key}`, kind, label, sub.label, { ...ss, on: !!ss.on && s?.on !== false }, sub);
       }
     }
     for (const c of custom) if (c.name?.trim()) push(`${prefix}:c:${c.id}`, kind, label, c.name.trim(), c);

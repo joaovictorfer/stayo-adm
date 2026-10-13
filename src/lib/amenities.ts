@@ -73,9 +73,24 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
   cozinha: [
     {
       title: "Eletrodomésticos",
-      items: ["Micro-ondas", "Torradeira", "Purificador de água", "Chaleira elétrica", "Geladeira", "Forno convencional", "Air fryer"].map(
-        (l) => ({ key: slug(l), label: l }),
-      ),
+      items: [
+        {
+          key: "eletrodomesticos", label: "Eletrodomésticos", subAnswers: true,
+          sub: [
+            { key: "micro_ondas", label: "Micro-ondas" },
+            { key: "forno_convencional", label: "Forno convencional" },
+            { key: "air_fryer", label: "Airfryer" },
+            { key: "torradeira", label: "Torradeira" },
+            { key: "cafeteira_de_capsulas", label: "Cafeteira de cápsulas" },
+            { key: "cafeteira_eletrica", label: "Cafeteira elétrica" },
+            { key: "chaleira_eletrica", label: "Chaleira elétrica" },
+            { key: "geladeira", label: "Geladeira" },
+            { key: "frigobar", label: "Frigobar" },
+            { key: "adega", label: "Adega" },
+            { key: "purificador_de_agua", label: "Purificador de água" },
+          ],
+        },
+      ],
     },
     {
       title: "Utensílios",

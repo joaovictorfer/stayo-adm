@@ -289,7 +289,7 @@ export function AmenitiesPanel({
             const row = <ItemRow key={`${room.id}:${def.key}`} def={def} items={isGroup ? groupItems : displayedItems} setItem={(key, patch) => {
               if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
               else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
-            }} unified subNodes={groupSubs.length ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
+            }} unified subNodes={groupSubs.length && room.items[def.key]?.on !== false && (room.items[def.key]?.on === true || def.sub?.some((c) => groupItems[c.key]?.on !== undefined)) ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
             if (install) supplierRows.push(row);
             else rows.push(row);
           }
@@ -631,7 +631,7 @@ function ItemRow({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      {st.on && subNodes && (
+      {subNodes && st.on !== false && (
         <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</p>
           {subNodes}
