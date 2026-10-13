@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Check, Copy, Globe, Landmark, Pencil, UserRound } from "lucide-react";
+import { Check, Copy, Pencil } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ownerOnboardingSubmissionQuery } from "../../../lib/api/queries";
@@ -13,48 +13,71 @@ const accountLabel = { checking: "Conta corrente", savings: "Poupança", payment
 const pixLabel = { cpf: "CPF", cnpj: "CNPJ", phone: "Telefone", email: "E-mail", random: "Aleatória" } as const;
 const maritalLabel: Record<string, string> = { solteiro: "Solteiro(a)", casado: "Casado(a)", divorciado: "Divorciado(a)", viuvo: "Viúvo(a)", uniao_estavel: "União estável", separado: "Separado(a)" };
 
-const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
-type Line = { label: string; value: string | null | undefined };
+type Line = { label: string; value: string | null | undefined; wide?: boolean };
 
 async function copy(text: string, label = "Copiado") {
   try { await navigator.clipboard.writeText(text); toast.success(label); } catch { toast.error("Não foi possível copiar."); }
 }
 
-function Block({ title, subtitle, icon, lines, empty, action, children }: { title: string; subtitle?: string; icon: ReactNode; lines: Line[]; empty?: string; action?: ReactNode; children?: ReactNode }) {
-  const filled = lines.filter(l => l.value);
-  return <section className="rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-4 pb-1 pt-3 sm:px-5" aria-label={title}>
-    <div className="flex items-center justify-between gap-2 border-b border-[var(--stayo-border)] pb-2.5">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)] [&_svg]:size-4">{icon}</span>
-        <div className="min-w-0">
-          <h3 className="truncate text-lg font-semibold" style={display}>{title}</h3>
-          {subtitle && <p className="truncate text-xs text-[var(--stayo-ink-muted)]">{subtitle}</p>}
-        </div>
+function useFlash() {
+  const [done, setDone] = useState(false);
+  return [done, () => { setDone(true); setTimeout(() => setDone(false), 1400); }] as const;
+}
+
+function CopyIcon({ done, visible }: { done: boolean; visible?: boolean }) {
+  return done ? <Check className="size-3.5 text-[var(--stayo-navy)]" /> : <Copy className={`size-3.5 text-[var(--stayo-ink-muted)] transition ${visible ? "" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"}`} />;
+}
+
+function Field({ label, value, wide }: Line) {
+  const [done, flash] = useFlash();
+  return <button type="button" disabled={!value} title={value ? "Copiar" : undefined}
+    onClick={() => { if (!value) return; void copy(value, `${label} copiado`); flash(); }}
+    className={`group min-w-0 rounded-md px-2 py-1.5 text-left transition hover:bg-[var(--stayo-surface-muted,rgba(11,49,80,0.04))] disabled:cursor-default disabled:hover:bg-transparent ${wide ? "col-span-full" : ""}`}>
+    <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--stayo-ink-muted)]">{label}</span>
+    <span className="mt-0.5 flex items-center gap-1.5">
+      <span className={`min-w-0 break-words text-sm ${value ? "font-medium text-[var(--stayo-navy)]" : "text-[var(--stayo-ink-muted)]"}`}>{value || "—"}</span>
+      {value && <CopyIcon done={done} />}
+    </span>
+  </button>;
+}
+
+function Section({ title, meta, lines, action, children, empty }: { title: string; meta?: ReactNode; lines?: Line[]; action?: ReactNode; children?: ReactNode; empty?: string }) {
+  const filled = (lines ?? []).filter(l => l.value);
+  const [done, flash] = useFlash();
+  return <section aria-label={title} className="border-t border-[var(--stayo-border)] pt-4 first:border-t-0 first:pt-0">
+    <header className="mb-2 flex items-center justify-between gap-3 px-2">
+      <div className="flex min-w-0 items-baseline gap-2">
+        <h3 className="font-[Outfit] text-[15px] font-semibold text-[var(--stayo-navy)]">{title}</h3>
+        {meta && <span className="truncate text-xs text-[var(--stayo-ink-muted)]">{meta}</span>}
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-1">
         {action}
-        {filled.length > 0 && <button type="button" className="text-sm font-medium text-[var(--stayo-navy)] underline underline-offset-2" onClick={() => void copy(filled.map(l => `${l.label}: ${l.value}`).join("\n"), `${title} copiado`)}>Copiar bloco</button>}
+        {filled.length > 0 && <button type="button" onClick={() => { void copy(filled.map(l => `${l.label}: ${l.value}`).join("\n"), `${title} copiado`); flash(); }}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-[var(--stayo-ink-muted)] transition hover:bg-[var(--stayo-surface-muted,rgba(11,49,80,0.05))] hover:text-[var(--stayo-navy)]">
+          {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}Copiar
+        </button>}
       </div>
-    </div>
+    </header>
     {children}
-    {filled.length === 0 && empty ? <p className="py-3 text-sm text-[var(--stayo-ink-muted)]">{empty}</p> : <ul>{lines.map(l => <Row key={l.label} {...l} />)}</ul>}
+    {lines && (filled.length === 0 && empty
+      ? <p className="px-2 text-sm text-[var(--stayo-ink-muted)]">{empty}</p>
+      : <div className="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-3">{lines.map(l => <Field key={l.label} {...l} />)}</div>)}
   </section>;
 }
 
-function Row({ label, value }: Line) {
-  const [done, setDone] = useState(false);
-  return <li className="border-b border-[var(--stayo-border)] last:border-b-0">
-    <button type="button" disabled={!value} title={value ? "Clique para copiar" : undefined}
-      onClick={() => { if (!value) return; void copy(value, `${label} copiado`); setDone(true); setTimeout(() => setDone(false), 1400); }}
-      className="group grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 py-2.5 text-left text-sm disabled:cursor-default sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto]">
-      <span className="font-medium text-[var(--stayo-navy)]">{label}</span>
-      <span className={`col-start-1 row-start-2 break-words sm:col-start-2 sm:row-start-1 ${value ? "text-[var(--stayo-ink)]" : "text-[var(--stayo-ink-muted)]"}`}>{value || "Não informado"}</span>
-      <span className="row-span-2 text-[var(--stayo-ink-muted)] sm:row-span-1">{value ? (done ? <Check className="size-4" /> : <Copy className="size-4 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100" />) : <span className="block size-4" />}</span>
-    </button>
-  </li>;
+function Highlight({ label, value, hint, empty }: { label: string; value: string | null | undefined; hint?: string | null; empty: string }) {
+  const [done, flash] = useFlash();
+  return <button type="button" disabled={!value} onClick={() => { if (!value) return; void copy(value, `${label} copiado`); flash(); }}
+    className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-3.5 py-3 text-left transition hover:border-[var(--stayo-navy)] disabled:cursor-default disabled:hover:border-[var(--stayo-border)]">
+    <span className="min-w-0">
+      <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--stayo-ink-muted)]">{label}{hint ? ` · ${hint}` : ""}</span>
+      <span className={`mt-0.5 block break-all text-[15px] ${value ? "font-semibold text-[var(--stayo-navy)]" : "text-[var(--stayo-ink-muted)]"}`}>{value || empty}</span>
+    </span>
+    {value && <span className="grid size-8 shrink-0 place-items-center rounded-md bg-[var(--ficha-icon-bg)]"><CopyIcon done={done} visible /></span>}
+  </button>;
 }
 
-/** Ficha de cadastro do proprietário em linhas copiáveis (somente leitura, equipe STAYO). */
+/** Dossiê cadastral do proprietário (somente leitura, equipe STAYO). */
 export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implementation: ImplementationProject; onEditOwner?: (() => void) | undefined }) {
   const sub = useQuery(ownerOnboardingSubmissionQuery(implementation.id)).data;
   const platforms = useQuery({ queryKey: ["implementation-platforms", implementation.id], queryFn: () => getImplementationPlatforms(implementation.id) }).data;
@@ -63,49 +86,61 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
   const doc = (d: string | null | undefined) => (d ? formatBrazilianDocument(d) : null);
   const phone = (p: string | null | undefined) => (p ? formatBrazilianPhone(p.replace(/^55(?=\d{10,11}$)/, "")) : null);
   const people = sub?.people ?? [];
-  const airbnb = platforms?.airbnb_account_email;
-  const status = !sub ? "Aguardando preenchimento pelo proprietário" : sub.submittedAt ? `Enviada em ${new Date(sub.submittedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })}` : "Em preenchimento pelo proprietário";
-  const edit = onEditOwner && <button type="button" onClick={onEditOwner} aria-label="Editar dados do proprietário" className="text-[var(--stayo-navy)]"><Pencil className="size-4" /></button>;
+  const principal = people[0];
+  const name = principal?.fullName || implementation.ownerName || "Proprietário não informado";
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join("");
+  const channels = platforms?.distribution_channels ?? [];
+  const status = !sub ? { text: "Aguardando proprietário", tone: "muted" } : sub.submittedAt ? { text: `Enviada em ${new Date(sub.submittedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, tone: "ok" } : { text: "Em preenchimento", tone: "pending" };
+  const property = [implementation.condominiumName, implementation.unit && `Apto ${implementation.unit}`].filter(Boolean).join(" · ");
 
-  return <div className="space-y-3">
-    <p className="text-sm text-[var(--stayo-ink-muted)]">{status} · clique em um valor para copiar</p>
+  return <div className="overflow-hidden rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)]">
+    <header className="flex flex-wrap items-center gap-3 border-b border-[var(--stayo-border)] px-4 py-3.5 sm:px-5">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--stayo-navy)] font-[Outfit] text-sm font-semibold text-[var(--stayo-surface)]">{initials || "?"}</span>
+      <div className="min-w-0 flex-1">
+        <h2 className="truncate font-[Outfit] text-lg font-semibold leading-tight text-[var(--stayo-navy)]">{name}</h2>
+        <p className="truncate text-xs text-[var(--stayo-ink-muted)]">Ficha cadastral{property ? ` · ${property}` : ""}</p>
+      </div>
+      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${status.tone === "pending" ? "bg-[var(--ficha-pending-bg)] text-[var(--ficha-pending-fg)]" : "bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)]"}`}>{status.text}</span>
+      {onEditOwner && <button type="button" onClick={onEditOwner} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--stayo-border)] px-2.5 py-1.5 text-xs font-medium text-[var(--stayo-navy)] transition hover:border-[var(--stayo-navy)]"><Pencil className="size-3.5" />Editar</button>}
+    </header>
 
-    {people.length === 0
-      ? <Block title="Proponentes" icon={<UserRound />} lines={[]} empty="Nenhum proponente informado." action={edit} />
-      : people.map((person, i) => <Block key={i} icon={<UserRound />} title={person.fullName || `Proponente ${i + 1}`} subtitle={roleLabel[person.role]} action={i === 0 ? edit : undefined} lines={[
-          { label: "Nome completo", value: person.fullName },
-          { label: "CPF/CNPJ", value: doc(person.document) },
-          { label: "Telefone", value: phone(person.phone) },
-          { label: "E-mail", value: person.email },
-          { label: "Estado civil", value: person.maritalStatus ? maritalLabel[person.maritalStatus] ?? person.maritalStatus : null },
-          { label: "Profissão", value: person.profession },
-        ]} />)}
+    <div className="grid gap-2.5 bg-[var(--ficha-icon-bg)]/40 px-4 py-3.5 sm:grid-cols-2 sm:px-5">
+      <div className="min-w-0 space-y-1.5">
+        <Highlight label="E-mail da conta Airbnb" value={platforms?.airbnb_account_email} empty="Não informado" />
+        {channels.length > 0 && <div className="flex flex-wrap gap-1 px-0.5">{channels.map(c => <span key={c} className="rounded-full border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-2 py-0.5 text-[11px] text-[var(--stayo-ink-muted)]">{CHANNEL_LABELS[c]}</span>)}</div>}
+      </div>
+      <Highlight label="Chave Pix" hint={sub?.pixKey ? pixLabel[sub.pixType] : null} value={sub?.pixKey} empty="Não informada" />
+    </div>
 
-    <Block title="Airbnb e canais" icon={<Globe />} lines={[
-      { label: "E-mail da conta Airbnb", value: airbnb },
-      { label: "Canais", value: platforms?.distribution_channels?.length ? platforms.distribution_channels.map(c => CHANNEL_LABELS[c]).join(", ") : null },
-    ]} />
+    <div className="space-y-4 px-2 py-4 sm:px-3">
+      {people.length === 0
+        ? <Section title="Proponentes" lines={[]} empty="Nenhum proponente informado." />
+        : people.map((p, i) => <Section key={i} title={p.fullName || `Proponente ${i + 1}`} meta={roleLabel[p.role]} lines={[
+            { label: "CPF/CNPJ", value: doc(p.document) },
+            { label: "Telefone", value: phone(p.phone) },
+            { label: "E-mail", value: p.email },
+            { label: "Nome completo", value: p.fullName },
+            { label: "Estado civil", value: p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null },
+            { label: "Profissão", value: p.profession },
+          ]} />)}
 
-    <Block title="Dados do imóvel" icon={<Building2 />} lines={[
-      { label: "Condomínio", value: implementation.condominiumName },
-      { label: "Apartamento", value: implementation.unit },
-      { label: "Box", value: details?.parkingBox },
-      { label: "Vagas", value: num(details?.parkingSpots) },
-      { label: "Quartos", value: num(details?.bedrooms ?? implementation.bedrooms) },
-      { label: "Suítes", value: num(details?.suites) },
-      { label: "Banheiros", value: num(details?.bathrooms) },
-      { label: "Lavabos", value: num(details?.lavatories) },
-    ]} />
+      <Section title="Imóvel" meta={property || undefined} lines={[
+        { label: "Condomínio", value: implementation.condominiumName },
+        { label: "Apartamento", value: implementation.unit },
+        { label: "Box / vagas", value: [details?.parkingBox && `Box ${details.parkingBox}`, details?.parkingSpots != null && `${details.parkingSpots} vaga(s)`].filter(Boolean).join(" · ") || null },
+        { label: "Quartos", value: num(implementation.bedrooms ?? details?.bedrooms) },
+        { label: "Suítes", value: num(details?.suites) },
+        { label: "Banheiros / lavabos", value: [num(details?.bathrooms), num(details?.lavatories)].some(Boolean) ? `${details?.bathrooms ?? 0} / ${details?.lavatories ?? 0}` : null },
+      ]} />
 
-    <Block title="Dados financeiros" icon={<Landmark />} empty="Recebimentos ainda não informados." lines={sub ? [
-      { label: "Chave Pix", value: sub.pixKey },
-      { label: "Tipo da chave", value: sub.pixKey ? pixLabel[sub.pixType] : null },
-      { label: "Banco", value: sub.bankName },
-      { label: "Tipo de conta", value: sub.accountNumber ? accountLabel[sub.accountType] : null },
-      { label: "Agência", value: sub.bankBranch },
-      { label: "Conta", value: sub.accountNumber },
-      { label: "Titular", value: sub.accountHolder },
-      { label: "CPF/CNPJ do titular", value: doc(sub.holderTaxId) },
-    ] : []} />
+      <Section title="Dados bancários" empty="Recebimentos ainda não informados." lines={sub ? [
+        { label: "Banco", value: sub.bankName },
+        { label: "Agência", value: sub.bankBranch },
+        { label: "Conta", value: sub.accountNumber },
+        { label: "Tipo de conta", value: sub.accountNumber ? accountLabel[sub.accountType] : null },
+        { label: "Titular", value: sub.accountHolder },
+        { label: "CPF/CNPJ do titular", value: doc(sub.holderTaxId) },
+      ] : []} />
+    </div>
   </div>;
 }
