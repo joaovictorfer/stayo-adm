@@ -1,4 +1,3 @@
-import { Collapsible } from "./FichaParts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -33,6 +32,7 @@ import {
   duplicateInventoryItem,
   guidedInventoryQuery,
   ensureGuidedInventorySnapshot,
+  replicateBedroomItems,
   removeInventoryItem,
   setInventoryAnswer,
   updateInventoryDetails,
@@ -76,7 +76,7 @@ const persisted = (r: string): InventoryRoom =>
 const quartoCategory = (r: string) =>
   r.startsWith("quarto") && r !== "quarto1" ? `Quarto ${r.slice(6)}` : undefined;
 
-type Extra = { image_path: string | null; purchase_url: string | null; description: string | null; recommended_quantity: number | null };
+type Extra = { quantity_text: string | null; tip: string | null; image_path: string | null; purchase_url: string | null; description: string | null; recommended_quantity: number | null };
 
 function when(iso?: string | null) {
   if (!iso) return null;
@@ -98,8 +98,10 @@ export function FichaImplantacao({
   checklist,
   checklistPending,
   more,
+  top,
   onOpenPortal,
 }: {
+  top?: ReactNode;
   implementationId: string;
   checklist: ReactNode;
   checklistPending: number;
@@ -165,6 +167,7 @@ export function FichaImplantacao({
         <div className="order-2 min-w-0 lg:order-1">
           {tab === "inventario" ? (
             <div className="flex flex-col gap-4">
+            {top}
             <InventoryWorkspace
               implementationId={implementationId}
               adding={adding}
@@ -172,9 +175,6 @@ export function FichaImplantacao({
               reviewing={reviewing}
               pendingReviewIds={new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x))}
             />
-            <Collapsible title="Recomendações do guia de utensílios" summary="Itens sugeridos pelo guia para este imóvel">
-              <GuidePanel implementationId={implementationId} guideType="utensilios" />
-            </Collapsible>
             </div>
           ) : tab === "faltantes" ? (
             <Surface>
@@ -307,7 +307,10 @@ export function InventoryWorkspace({
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
   // Copiar o catálogo para a implantação é uma escrita: só por ação explícita.
   const applySnapshot = useMutation({
-    mutationFn: () => ensureGuidedInventorySnapshot(implementationId),
+    mutationFn: async () => {
+      await ensureGuidedInventorySnapshot(implementationId);
+      await replicateBedroomItems(implementationId, Math.max(1, bedroomsQ.data ?? 1));
+    },
     onSuccess: async () => {
       await refresh();
       await qc.invalidateQueries({ queryKey: ["guided-inventory-extras", implementationId] });
@@ -319,7 +322,7 @@ export function InventoryWorkspace({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("implementation_guide_items")
-        .select("id, image_path, purchase_url, description, recommended_quantity")
+        .select("id, image_path, purchase_url, description, recommended_quantity, quantity_text, tip")
         .eq("implementation_id", implementationId)
         .eq("guide_type", "inventario");
       if (error) throw error;
@@ -369,6 +372,21 @@ export function InventoryWorkspace({
   const roomAll = rooms.find((r) => r.id === room)?.items ?? [];
   const roomDone = roomAll.filter((i) => i.inventory_answer).length;
   const detailItem = items.find((i) => i.id === detail) ?? null;
+  const bedroomCount = Math.max(1, bedroomsQ.data ?? 1);
+  const emptyBedrooms = ROOMS.filter((r) => r.id.startsWith("quarto") && r.id !== "quarto1" && Number(r.id.slice(6)) <= bedroomCount)
+    .filter((r) => !items.some((i) => inRoom(i, r.id))).length;
+  const catalogCount = useQuery({
+    queryKey: ["inventory-catalog-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase.from("guide_catalog_items").select("id", { count: "exact", head: true }).eq("guide_type", "inventario").eq("active", true);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 5 * 60_000,
+  });
+  const fromCatalog = new Set((q.data ?? []).map((i) => i.catalog_item_id).filter(Boolean)).size;
+  const newFromGuide = Math.max(0, (catalogCount.data ?? 0) - fromCatalog);
+  const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
 
   if (q.isPending)
     return (
@@ -439,6 +457,17 @@ export function InventoryWorkspace({
         })}
       </div>
 
+      {needsSync && (
+        <div className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm sm:mx-5" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>
+          <span>
+            {[newFromGuide > 0 && `${newFromGuide} ${newFromGuide === 1 ? "item novo" : "itens novos"} do guia de utensílios`, emptyBedrooms > 0 && `${emptyBedrooms} ${emptyBedrooms === 1 ? "quarto sem itens" : "quartos sem itens"}`].filter(Boolean).join(" · ")}
+          </span>
+          <button type="button" disabled={applySnapshot.isPending} onClick={() => applySnapshot.mutate()} className="h-9 rounded-lg px-3 font-medium disabled:opacity-50" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}>
+            {applySnapshot.isPending ? "Atualizando…" : "Completar inventário"}
+          </button>
+        </div>
+      )}
+
       {failed && (
         <p className="flex items-center gap-2 px-5 pt-3 text-xs" role="alert" style={{ color: "var(--stayo-danger, #b42318)" }}>
           Não salvou “{failed.item.name}”.
@@ -476,6 +505,7 @@ export function InventoryWorkspace({
               <button type="button" onClick={() => setDetail(i.id)} className="min-w-0 text-left">
                 <span className="block truncate font-semibold" style={navy}>{i.name}</span>
                 <span className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm" style={muted}>
+                  {ex?.quantity_text && <span className="truncate">{ex.quantity_text} ·</span>}
                   <span className="truncate">{meta}</span>
                   {a === "nao_aplica" && <span>· N/A</span>}
                   {review && (
