@@ -37,8 +37,10 @@ import {
   replicateBedroomItems,
   removeInventoryItem,
   setInventoryAnswer,
+  setInventorySubanswer,
   updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
+import { inventorySubItemsFor, mergeSubAnswer, subAnswerFor } from "@/lib/inventory-subitems";
 import { signGuideImages } from "../../../lib/api/guides";
 import { inventoryReferenceFor, loadInventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { inventorySubmissionsQuery } from "../../../lib/api/owner-inventory";
