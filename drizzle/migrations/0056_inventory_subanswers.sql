@@ -1,0 +1,2 @@
+ALTER TABLE public.implementation_guide_items ADD COLUMN IF NOT EXISTS inventory_subanswers jsonb;
+COMMENT ON COLUMN public.implementation_guide_items.inventory_subanswers IS 'Respostas de subitens (ex.: pratos do jogo de jantar): { chave: tenho|nao_tenho|null }';

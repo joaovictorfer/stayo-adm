@@ -786,6 +786,7 @@ export type Database = {
           inventory_quantity: number | null
           inventory_review_status: string
           inventory_source: string
+          inventory_subanswers: Json | null
           inventory_updated_at: string | null
           inventory_updated_by: string | null
           name: string
@@ -820,6 +821,7 @@ export type Database = {
           inventory_quantity?: number | null
           inventory_review_status?: string
           inventory_source?: string
+          inventory_subanswers?: Json | null
           inventory_updated_at?: string | null
           inventory_updated_by?: string | null
           name: string
@@ -854,6 +856,7 @@ export type Database = {
           inventory_quantity?: number | null
           inventory_review_status?: string
           inventory_source?: string
+          inventory_subanswers?: Json | null
           inventory_updated_at?: string | null
           inventory_updated_by?: string | null
           name?: string
