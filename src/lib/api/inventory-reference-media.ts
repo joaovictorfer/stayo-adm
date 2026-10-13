@@ -11,7 +11,12 @@ export interface InventoryReferenceMedia {
 }
 
 export function inventoryReferenceFor(name: string, references?: Record<string, InventoryReferenceMedia>): InventoryReferenceMedia {
-  const reference = references?.[amenityDisplayKey(name)];
+  const key = amenityDisplayKey(name);
+  const referenceAliases: Record<string, string> = {
+    souplast: "jogo_americano_ou_sousplat",
+    sousplat: "jogo_americano_ou_sousplat",
+  };
+  const reference = references?.[key] ?? references?.[referenceAliases[key]];
   const url = reference?.url ?? generatedInventoryImage(name);
   return {
     description: reference?.description ?? null,
