@@ -9,7 +9,6 @@ import { FichaContrato } from "@/components/implantacao/ficha/FichaContrato";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDateTime } from "@/lib/format-datetime";
-import { PropertySuppliersPanel } from "@/components/suppliers/PropertySuppliersPanel";
 import { countsInDefinedTotal } from "../lib/proposal-pricing";
 import { commercialProposalsApi } from "../lib/api/commercial-proposals";
 import type { CommercialProposalVersion } from "../types/commercial-proposal";
@@ -78,7 +77,6 @@ import { OwnerVisibilityPanel } from "../components/implantacao/OwnerVisibilityP
 import { SupplySheet } from "../components/implantacao/SupplySheet";
 import {
   Collapsible,
-  DomainHub,
   FichaNav,
   OverviewCard,
 } from "../components/implantacao/ficha/FichaParts";
@@ -641,19 +639,7 @@ function ImplementationDetailPage() {
                     />
                   }
                   more={
-                    <div className="flex flex-col gap-4">
                     <InspectionsPanel implementationId={implementation.id} />
-                    <DomainHub
-                      rows={[
-                    {
-                      id: "fornecedores",
-                      label: "Fornecedores e instalações",
-                      summary: "Quem forneceu, instalou ou atende o imóvel",
-                      content: <PropertySuppliersPanel implementationId={implementation.id} />,
-                    },
-                      ]}
-                    />
-                    </div>
                   }
                 />
               ) : section === "proprietario" ? (

@@ -3,7 +3,6 @@ import { propertyPatch, propertyRegistrationErrors, PROPERTY_REQUIRED, hasOwnerC
 import { saveOwnerPropertyPatch } from "../../lib/api/owner-property-registration";
 import { computeRegistrationProgress } from "../../lib/owner-registration-progress";
 import { OwnerGuide } from "@/components/portal/OwnerGuide";
-import { OwnerSuppliersSection } from "@/components/suppliers/OwnerSuppliersSection";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
