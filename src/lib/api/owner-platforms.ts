@@ -35,6 +35,13 @@ export const PLATFORM_COPY = {
   lockedHint: "Definido pela STAYO para este imóvel",
 };
 
+/** Mesmo critério aceito pela RPC no banco, para a tela não prometer o que o banco recusa. */
+const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
+export function isValidEmail(value: string): boolean {
+  return EMAIL_RE.test(value.trim());
+}
+
 /**
  * `null` = todas as plataformas liberadas (comportamento histórico dos imóveis
  * já cadastrados). Airbnb é sempre permitido: a operação não anuncia sem ele.
@@ -78,32 +85,33 @@ export async function resolveOwnerPlatforms(token: string): Promise<OwnerPlatfor
   const row = (data ?? {}) as Record<string, unknown>;
   return {
     channels: toChannels(row.channels),
-    airbnbEmail: row.airbnb_email ? String(row.airbnb_email) : null,
+    airbnbEmail: row.airbnbEmail ? String(row.airbnbEmail) : null,
     allowedChannels: toChannels(row.allowedChannels),
   };
 }
 
-/** Salva canais + e-mail da conta Airbnb (RPC com whitelist de canais). */
+/** Salva canais + e-mail da conta Airbnb (RPC recusa canal fora da liberação da STAYO). */
 export async function saveOwnerPlatforms(
   token: string,
-  input: { channels: DistributionChannel[]; airbnbEmail: string },
+  channels: DistributionChannel[],
+  airbnbEmail: string,
 ): Promise<OwnerPlatforms> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("owner_platforms_save", {
     p_token: token,
-    p_channels: input.channels,
-    p_airbnb_email: input.airbnbEmail,
+    p_channels: channels,
+    p_airbnb_email: airbnbEmail,
   });
   if (error) throw new Error(error.message);
   const row = (data ?? {}) as Record<string, unknown>;
   return {
     channels: toChannels(row.channels),
-    airbnbEmail: row.airbnb_email ? String(row.airbnb_email) : null,
+    airbnbEmail: row.airbnbEmail ? String(row.airbnbEmail) : null,
     allowedChannels: toChannels(row.allowedChannels),
   };
 }
 
-/** Leitura da ficha: resposta do proprietário + política da STAYO, sem token. */
+/** Leitura da ficha: resposta do proprietário + liberação da STAYO, sem token. */
 export async function getImplementationPlatforms(implementationId: string): Promise<{
   implementation_id: string;
   distribution_channels: DistributionChannel[] | null;
@@ -116,13 +124,13 @@ export async function getImplementationPlatforms(implementationId: string): Prom
   const { data, error } = await supabase
     .from("implementation_projects")
     .select(
-      "implementation_id, distribution_channels, airbnb_account_email, allowed_channels, distribution_updated_at, distribution_updated_by",
+      "id, distribution_channels, airbnb_account_email, allowed_channels, distribution_updated_at, distribution_updated_by",
     )
-    .eq("implementation_id", implementationId)
+    .eq("id", implementationId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return {
-    implementation_id: String(data?.implementation_id ?? implementationId),
+    implementation_id: String(data?.id ?? implementationId),
     distribution_channels: toChannels(data?.distribution_channels),
     airbnb_account_email: data?.airbnb_account_email ? String(data.airbnb_account_email) : null,
     allowed_channels: toChannels(data?.allowed_channels),
@@ -133,8 +141,8 @@ export async function getImplementationPlatforms(implementationId: string): Prom
 
 /**
  * Define quais plataformas a STAYO libera para este imóvel (Admin/Operações).
- * `null` libera todas. Airbnb é sempre mantido, e o que sair da lista é podado
- * da resposta do proprietário por trigger no banco.
+ * `null` libera todas. Airbnb é sempre mantido, e o que sair da liberação é
+ * podado da escolha do proprietário por trigger no banco.
  */
 export async function setImplementationAllowedChannels(
   implementationId: string,
@@ -149,6 +157,6 @@ export async function setImplementationAllowedChannels(
   const { error } = await supabase
     .from("implementation_projects")
     .update({ allowed_channels: allowed })
-    .eq("implementation_id", implementationId);
+    .eq("id", implementationId);
   if (error) throw new Error(error.message);
 }
