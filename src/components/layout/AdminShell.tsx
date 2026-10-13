@@ -105,7 +105,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
   );
 
   return (
-    <nav className="flex flex-col gap-5 px-3 py-4 text-sm" aria-label="Navegação principal">
+    <nav className="admin-sidebar-nav flex flex-col gap-5 px-3 py-4 text-sm" aria-label="Navegação principal">
       {navigationGroups.map((group) => {
         const groupItems = group.itemIds
           .map((id) => navigation.find((item) => item.id === id))
@@ -140,6 +140,8 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
                   <Button
                     type="button"
                     variant="ghost"
+                    aria-expanded={expanded}
+                    aria-controls={`admin-submenu-${item.id}`}
                     onClick={() => setOpen((s) => ({ ...s, [item.id]: !expanded }))}
                     className={cn(
                       "h-auto w-full justify-start gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] font-normal text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
@@ -153,7 +155,8 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
                       className={cn("transition-transform", expanded && "rotate-180")}
                     />
                   </Button>
-                  {expanded && (
+                  <div id={`admin-submenu-${item.id}`} className="admin-submenu" data-expanded={expanded} inert={!expanded} aria-hidden={!expanded}>
+                    <div className="admin-submenu-inner">
                     <div className="ml-5 mt-1 flex flex-col gap-0.5 border-l border-[var(--admin-sidebar-hover)] pl-2">
                       {item.children.map((child) => (
                         <NavLink
@@ -171,7 +174,8 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
                         </NavLink>
                       ))}
                     </div>
-                  )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -204,10 +208,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-[color-mix(in_srgb,var(--admin-sidebar-strong)_60%,transparent)] backdrop-blur-sm"
+            className="admin-menu-backdrop absolute inset-0 bg-[color-mix(in_srgb,var(--admin-sidebar-strong)_60%,transparent)] backdrop-blur-sm"
             onClick={() => setDrawer(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-[var(--admin-sidebar)] text-[var(--admin-sidebar-text)] shadow-2xl">
+          <div className="admin-menu-panel absolute left-0 top-0 flex h-full w-[min(18rem,88vw)] flex-col bg-[var(--admin-sidebar)] text-[var(--admin-sidebar-text)] shadow-2xl">
             <div className="flex items-center justify-between">
               <Brand />
               <Button
@@ -253,7 +257,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <label className="hidden items-center gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-1.5 text-sm md:flex">
+            <label className="admin-header-search hidden items-center gap-2 rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-1.5 text-sm md:flex">
               <Search size={15} className="text-[var(--admin-muted)]" />
               <input
                 type="search"
@@ -276,7 +280,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AccountMenu />
           </div>
         </header>
-        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-5 xl:p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-5 xl:p-6"><div key={pathname} className="admin-page-enter min-w-0">{children}</div></main>
       </div>
     </div>
   );
