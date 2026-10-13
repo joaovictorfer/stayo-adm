@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,10 +52,13 @@ export function AmenitiesPanel({
   implementationId,
   bedrooms,
   bathrooms,
+  render,
 }: {
   implementationId: string;
   bedrooms: number | null | undefined;
   bathrooms?: number | null;
+  /** Modo integrado: composição no topo e ambientes entregues por aba ao inventário. */
+  render?: (slot: (tab: string) => ReactNode) => ReactNode;
 }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["amenities", implementationId], queryFn: () => load(implementationId) });
@@ -154,6 +157,83 @@ export function AmenitiesPanel({
 
   const catalog = q.data?.catalog ?? [];
 
+  const card = (room: RoomState, forceOpen = false) => (
+    <RoomCard
+      key={room.id}
+      room={room}
+      open={forceOpen ? open !== `closed:${room.id}` : open === room.id}
+      onToggle={() =>
+        forceOpen
+          ? setOpen(open === `closed:${room.id}` ? null : `closed:${room.id}`)
+          : setOpen(open === room.id ? null : room.id)
+      }
+      onChange={(fn) => updateRoom(room.id, fn)}
+      onSuite={(on) =>
+        update((d) => {
+          const rooms = d.rooms.map((r) => (r.id === room.id ? toggleSuite(r, on) : r));
+          return { rooms: comp ? reconcileRooms(rooms, comp) : rooms };
+        })
+      }
+      onRemove={() => update((d) => ({ rooms: d.rooms.filter((r) => r.id !== room.id) }))}
+      onInstall={(k, f, v) => update((d) => ({ rooms: setInstall(d.rooms, room.id, k, f, v) }))}
+      catalog={catalog}
+      onNewCompany={addCompany}
+    />
+  );
+
+  const addRoom = (
+    <AddRoom
+      onAdd={(kind, name) => {
+        const id = uid();
+        update((d) => ({ rooms: [...d.rooms, { id, kind, name, items: {}, custom: [] }] }));
+        setOpen(id);
+      }}
+      bedroomsCount={data.rooms.filter((r) => r.kind === "quarto").length}
+    />
+  );
+
+  if (render) {
+    const quartos = data.rooms.filter((r) => r.kind === "quarto");
+    const slot = (tab: string): ReactNode => {
+      let rs: RoomState[] = [];
+      if (tab.startsWith("quarto")) {
+        const r = quartos[Number(tab.slice(6)) - 1];
+        rs = r ? [r] : [];
+      } else {
+        const kinds: Record<string, RoomKind[]> = {
+          cozinha: ["cozinha"], sala: ["sala"], banheiro: ["banheiro", "lavabo"],
+          lavanderia: ["servico"], outros: ["geral", "externa", "outro"],
+        };
+        rs = data.rooms.filter((r) => (kinds[tab] ?? []).includes(r.kind));
+      }
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+              Comodidades e instalações
+            </h4>
+            <SaveBadge state={save} onRetry={() => void persist()} />
+          </div>
+          {rs.length ? rs.map((r) => card(r, true)) : (
+            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Nenhum ambiente deste tipo cadastrado.</p>
+          )}
+          {tab === "outros" && addRoom}
+        </div>
+      );
+    };
+    return (
+      <div className="flex flex-col gap-4">
+        {comp && (
+          <section className="rounded-xl border bg-white p-4" style={{ borderColor: "var(--stayo-border)" }}>
+            <h3 className="mb-2 text-base font-semibold" style={{ color: "var(--stayo-navy)" }}>Composição do imóvel</h3>
+            <CompositionBar value={comp} onChange={(c) => void changeComp(c)} />
+          </section>
+        )}
+        {render(slot)}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -162,37 +242,9 @@ export function AmenitiesPanel({
         </p>
         <SaveBadge state={save} onRetry={() => void persist()} />
       </div>
-
       {comp && <CompositionBar value={comp} onChange={(c) => void changeComp(c)} />}
-
-      {data.rooms.map((room) => (
-        <RoomCard
-          key={room.id}
-          room={room}
-          open={open === room.id}
-          onToggle={() => setOpen(open === room.id ? null : room.id)}
-          onChange={(fn) => updateRoom(room.id, fn)}
-          onSuite={(on) =>
-            update((d) => {
-              const rooms = d.rooms.map((r) => (r.id === room.id ? toggleSuite(r, on) : r));
-              return { rooms: comp ? reconcileRooms(rooms, comp) : rooms };
-            })
-          }
-          onRemove={() => update((d) => ({ rooms: d.rooms.filter((r) => r.id !== room.id) }))}
-          onInstall={(k, f, v) => update((d) => ({ rooms: setInstall(d.rooms, room.id, k, f, v) }))}
-          catalog={catalog}
-          onNewCompany={addCompany}
-        />
-      ))}
-
-      <AddRoom
-        onAdd={(kind, name) => {
-          const id = uid();
-          update((d) => ({ rooms: [...d.rooms, { id, kind, name, items: {}, custom: [] }] }));
-          setOpen(id);
-        }}
-        bedroomsCount={data.rooms.filter((r) => r.kind === "quarto").length}
-      />
+      {data.rooms.map((room) => card(room))}
+      {addRoom}
     </div>
   );
 }
