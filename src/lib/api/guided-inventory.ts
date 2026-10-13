@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mergeSubAnswer } from "../inventory-subitems";
 import {
   buildDuplicate,
   INVENTORY_GUIDE_TYPE,
