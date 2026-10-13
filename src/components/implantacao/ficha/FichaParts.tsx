@@ -17,6 +17,13 @@ export function FichaNav({
   badges?: Partial<Record<FichaSection, string>>;
 }) {
   const idx = FICHA_SECTIONS.findIndex((s) => s.id === current);
+  // Rola só a barra de abas (horizontal); nunca a página, para não pular ao salvar.
+  function centerTabHorizontally(el: HTMLButtonElement | null) {
+    const nav = el?.closest("nav");
+    if (!el || !nav) return;
+    const target = el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2;
+    if (Math.abs(nav.scrollLeft - target) > 4) nav.scrollLeft = target;
+  }
   return (
     <div className="relative">
       <nav
@@ -32,7 +39,7 @@ export function FichaNav({
                 <button
                   type="button"
                   aria-current={active ? "page" : undefined}
-                  ref={active ? (el) => el?.scrollIntoView({ block: "nearest", inline: "center" }) : undefined}
+                  ref={active ? centerTabHorizontally : undefined}
                   onClick={() => onChange(s.id)}
                   className="relative flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2 text-sm transition"
                   style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
