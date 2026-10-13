@@ -569,12 +569,14 @@ function ItemRow({
   extraFields,
   hideBrand,
   installationSummary,
+  subNodes,
 }: {
   installationSummary?: string;
   hideBrand?: boolean;
   unified?: boolean;
   fieldsOnly?: boolean;
   extraFields?: ReactNode;
+  subNodes?: ReactNode;
   def: ItemDef;
   items: Record<string, ItemState>;
   setItem: (key: string, patch: Partial<ItemState>) => void;
