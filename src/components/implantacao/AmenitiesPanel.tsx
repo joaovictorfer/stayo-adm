@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ImageIcon, Loader2, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
+import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
 import { Switch } from "@/components/ui/switch";
 import {
   ROOM_KIND_LABEL,
@@ -58,7 +62,7 @@ export function AmenitiesPanel({
   bedrooms: number | null | undefined;
   bathrooms?: number | null;
   /** Modo integrado: composição no topo e ambientes entregues por aba ao inventário. */
-  render?: (slot: (tab: string) => ReactNode) => ReactNode;
+  render?: (slot: InventoryRoomSlot) => ReactNode;
 }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["amenities", implementationId], queryFn: () => load(implementationId) });
@@ -197,7 +201,7 @@ export function AmenitiesPanel({
 
   if (render) {
     const quartos = data.rooms.filter((r) => r.kind === "quarto");
-    const slot = (tab: string): ReactNode => {
+    const slot: InventoryRoomSlot = (tab, inventoryItems, renderItem) => {
       let rs: RoomState[] = [];
       if (tab.startsWith("quarto")) {
         const r = quartos[Number(tab.slice(6)) - 1];
@@ -209,20 +213,54 @@ export function AmenitiesPanel({
         };
         rs = data.rooms.filter((r) => (kinds[tab] ?? []).includes(r.kind));
       }
-      return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
-              Comodidades e instalações
-            </h4>
-            <SaveBadge state={save} onRetry={() => void persist()} />
-          </div>
-          {rs.length ? rs.map((r) => card(r, true)) : (
-            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>Nenhum ambiente deste tipo cadastrado.</p>
-          )}
-          {tab === "outros" && addRoom}
-        </div>
-      );
+      const used = new Set<string>();
+      const rows: ReactNode[] = [];
+      for (const room of rs) {
+        const definitions = ROOM_SECTIONS[room.kind].flatMap((section) => section.items);
+        const installs = hasInstall(room.kind) ? INSTALL_ROWS : [];
+        const allDefs = [...definitions];
+        for (const install of installs) {
+          if (!allDefs.some((def) => amenityDisplayKey(def.label) === amenityDisplayKey(install.label))) {
+            allDefs.push({ key: install.key === "ar" ? "ar_condicionado" : install.key === "aquecimento" ? "aquecedor" : "moveis", label: install.label });
+          }
+        }
+        for (const def of allDefs) {
+          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), def.label);
+          const install = installs.find((entry) => amenityDisplayKey(entry.label) === amenityDisplayKey(def.label));
+          const fields = (
+            <div key={`${room.id}:${def.key}`} className="space-y-4">
+              {rs.length > 1 && <p className="text-sm font-medium text-foreground">{room.name}</p>}
+              {install && <InstallationFields room={room} installKey={install.key} label={install.label} catalog={catalog} onChange={(field, value) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, field, value) }))} onNewCompany={addCompany} />}
+              {!match && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly hideBrand={!!install} />}
+            </div>
+          );
+          if (match) {
+            used.add(match.id);
+            rows.push(renderItem(match, fields));
+          } else {
+            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} unified extraFields={install ? fields : undefined} />);
+          }
+        }
+        for (const custom of room.custom) {
+          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), custom.name);
+          if (match) { used.add(match.id); rows.push(renderItem(match)); }
+          else rows.push(<ItemRow key={custom.id} def={{ key: custom.id, label: custom.name }} items={{ [custom.id]: custom }} setItem={(_key, patch) => updateRoom(room.id, (r) => ({ ...r, custom: r.custom.map((item) => item.id === custom.id ? { ...item, ...patch } : item) }))} unified />);
+        }
+        if (room.suite && room.bath) {
+          for (const def of ROOM_SECTIONS.banheiro.flatMap((section) => section.items)) {
+            rows.push(<ItemRow key={`${room.id}:bath:${def.key}`} def={{ ...def, label: `${def.label} · Banheiro da suíte` }} items={room.bath.items} setItem={(key, patch) => updateRoom(room.id, (r) => r.bath ? ({ ...r, bath: { ...r.bath, items: { ...r.bath.items, [key]: { ...r.bath.items[key], ...patch } } } }) : r)} unified />);
+          }
+        }
+      }
+      // Synced amenity rows are represented by their editable source above, not twice.
+      rows.push(...inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades").map((item) => renderItem(item)));
+      return <>
+        {rows}
+        <li className="flex flex-wrap items-center justify-between gap-2 px-2 py-3">
+          {tab === "outros" ? addRoom : <span />}
+          <SaveBadge state={save} onRetry={() => void persist()} />
+        </li>
+      </>;
     };
     return (
       <div className="flex flex-col gap-4">
@@ -460,12 +498,28 @@ function RoomCard({
   );
 }
 
+function InstallationFields({ room, installKey, label, catalog, onChange, onNewCompany }: { room: RoomState; installKey: InstallKey; label: string; catalog: string[]; onChange: (field: InstallField, value: string) => void; onNewCompany: (value: string) => Promise<void> }) {
+  return <div className="space-y-3">
+    <label className="block space-y-1 text-sm"><span className="text-muted-foreground">Marca · {label}</span><Input value={installValue(room, installKey, "brand")} aria-label={`${label} — marca`} onChange={(e) => onChange("brand", e.target.value)} /></label>
+    <label className="block space-y-1 text-sm"><span className="text-muted-foreground">Instalador / fornecedor</span><Input list={`integrated-suppliers-${room.id}`} value={installValue(room, installKey, "installer")} aria-label={`${label} — instalador`} onChange={(e) => onChange("installer", e.target.value)} onBlur={(e) => { const value = e.target.value.trim(); if (installKey === "moveis" && value && !catalog.includes(value)) void onNewCompany(value); }} /></label>
+    <datalist id={`integrated-suppliers-${room.id}`}>{catalog.map((name) => <option key={name} value={name} />)}</datalist>
+  </div>;
+}
+
 function ItemRow({
   def,
   items,
   setItem,
   nested,
+  unified,
+  fieldsOnly,
+  extraFields,
+  hideBrand,
 }: {
+  hideBrand?: boolean;
+  unified?: boolean;
+  fieldsOnly?: boolean;
+  extraFields?: ReactNode;
   def: ItemDef;
   items: Record<string, ItemState>;
   setItem: (key: string, patch: Partial<ItemState>) => void;
@@ -473,13 +527,39 @@ function ItemRow({
 }) {
   const st = items[def.key] ?? {};
   const [details, setDetails] = useState(false);
-  const on = !!st.on;
+  const on = fieldsOnly || !!st.on;
+  if (unified) return (
+    <li className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-border px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-inventory-row">
+      <Button variant="ghost" className="size-12 rounded-lg bg-muted p-0 sm:size-14" aria-label={`Detalhes de ${def.label}`} onClick={() => setDetails(true)}><ImageIcon className="text-muted-foreground" /></Button>
+      <Button variant="ghost" className="h-auto min-w-0 flex-col items-start gap-0 whitespace-normal p-0 text-left hover:bg-transparent" onClick={() => setDetails(true)}>
+        <span className="font-semibold text-foreground">{def.label}</span>
+        <span className="text-xs font-normal text-muted-foreground sm:text-sm">{summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
+      </Button>
+      <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${def.label}`}>
+        <AnswerBtn kind="no" on={st.on === false} onClick={() => setItem(def.key, { on: false })} />
+        <AnswerBtn kind="yes" on={st.on === true} onClick={() => setItem(def.key, { on: true })} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button variant="outline" className="h-10 w-11 shrink-0 rounded-lg p-0" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setDetails(true)}>Detalhes</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDetails(true)}>Marca e observação</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <Sheet open={details} onOpenChange={setDetails}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          <SheetHeader><SheetTitle>{def.label}</SheetTitle></SheetHeader>
+          <div className="mt-5 space-y-4">{extraFields ?? <ItemRow def={def} items={items} setItem={setItem} fieldsOnly />}</div>
+        </SheetContent>
+      </Sheet>
+    </li>
+  );
   return (
     <div
-      className={`rounded-lg border ${nested ? "bg-white" : ""}`}
+      className={fieldsOnly ? "space-y-3" : `rounded-lg border ${nested ? "bg-white" : ""}`}
       style={{ borderColor: on ? "var(--stayo-forest)" : "var(--stayo-border)", backgroundColor: on && !nested ? "var(--stayo-bg)" : undefined }}
     >
-      <div className="flex min-h-11 items-center gap-3 px-3 py-2">
+      {!fieldsOnly && <div className="flex min-h-11 items-center gap-3 px-3 py-2">
         <Switch checked={on} onCheckedChange={(v) => setItem(def.key, { on: v })} aria-label={def.label} />
         <span className="flex-1 text-sm font-medium">{def.label}</span>
         {on && !def.sub && (
@@ -487,7 +567,7 @@ function ItemRow({
             {details ? "Fechar" : summary(st, def) || "Detalhes"}
           </button>
         )}
-      </div>
+      </div>}
 
       {on && def.options && (
         <div className="flex flex-wrap gap-2 px-3 pb-2">
@@ -530,21 +610,23 @@ function ItemRow({
         </div>
       )}
 
-      {on && details && !def.sub && (
-        <div className="grid gap-2 px-3 pb-3 sm:grid-cols-3">
+      {on && (details || fieldsOnly) && (
+        <div className={fieldsOnly ? "grid gap-3" : "grid gap-2 px-3 pb-3 sm:grid-cols-3"}>
           {!def.options && (
             <Input
               type="number"
               min={0}
-              placeholder="Qtd"
+              placeholder="Quantidade"
+              aria-label="Quantidade"
               value={st.qty ?? ""}
               onChange={(e) => setItem(def.key, { qty: e.target.value === "" ? null : Number(e.target.value) })}
               className="h-9"
             />
           )}
-          <Input placeholder="Marca" value={st.brand ?? ""} onChange={(e) => setItem(def.key, { brand: e.target.value })} className="h-9" />
+          {!hideBrand && <Input placeholder="Marca" aria-label="Marca" value={st.brand ?? ""} onChange={(e) => setItem(def.key, { brand: e.target.value })} className="h-9" />}
           <Input
             placeholder="Observação"
+            aria-label="Observação"
             value={st.notes ?? ""}
             onChange={(e) => setItem(def.key, { notes: e.target.value })}
             className="h-9 sm:col-span-1"
