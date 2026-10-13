@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -51,6 +52,8 @@ const navy = { color: "var(--stayo-navy)" };
 const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
+
+export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode) => ReactNode) => ReactNode;
 
 const QUARTO_CATEGORY = /^Quarto (\d+)$/;
 const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
@@ -102,7 +105,7 @@ export function FichaImplantacao({
   onOpenPortal,
 }: {
   /** Envolve o inventário: recebe o render do inventário e entrega o conteúdo extra por aba. */
-  wrapInventory?: (inventory: (slot?: (tab: string) => ReactNode) => ReactNode) => ReactNode;
+  wrapInventory?: (inventory: (slot?: InventoryRoomSlot) => ReactNode) => ReactNode;
   implementationId: string;
   checklist: ReactNode;
   checklistPending: number;
@@ -168,7 +171,7 @@ export function FichaImplantacao({
         <div className="order-2 min-w-0 lg:order-1">
           {tab === "inventario" ? (
             (() => {
-              const inv = (slot?: (t: string) => ReactNode) => (
+              const inv = (slot?: InventoryRoomSlot) => (
                 <InventoryWorkspace
                   implementationId={implementationId}
                   adding={adding}
@@ -286,7 +289,7 @@ export function InventoryWorkspace({
   setAdding: (v: boolean) => void;
   reviewing: boolean;
   pendingReviewIds: Set<string>;
-  roomSlot?: ((tab: string) => ReactNode) | undefined;
+  roomSlot?: InventoryRoomSlot;
 }) {
   const qc = useQueryClient();
   const query = guidedInventoryQuery(implementationId);
@@ -308,6 +311,7 @@ export function InventoryWorkspace({
   const ROOMS = roomTabsFor(bedroomsQ.data ?? 2);
   const [onlyOpen, setOnlyOpen] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
+  const [detailExtra, setDetailExtra] = useState<ReactNode>(null);
   const [newName, setNewName] = useState("");
   const [failed, setFailed] = useState<{ item: InventorySnapshotItem; answer: InventoryAnswer | null } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
@@ -393,6 +397,56 @@ export function InventoryWorkspace({
   const fromCatalog = new Set((q.data ?? []).map((i) => i.catalog_item_id).filter(Boolean)).size;
   const newFromGuide = Math.max(0, (catalogCount.data ?? 0) - fromCatalog);
   const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
+
+  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode) => {
+          const openDetail = () => { setDetail(i.id); setDetailExtra(extra ?? null); };
+          const ex = extras.data?.[i.id];
+          const who = i.inventory_source === "proprietario" ? "Proprietário" : "STAYO";
+          const meta = i.inventory_answer ? [who, when(i.inventory_updated_at)].filter(Boolean).join(" · ") : "Ainda não respondido";
+          const review = pendingReviewIds.has(i.id);
+          const a = i.inventory_answer;
+          return (
+            <li key={i.id} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b px-2 py-2.5 last:border-b-0 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border} data-testid="inventory-row">
+              <button type="button" onClick={() => openDetail()} className="size-12 overflow-hidden rounded-lg sm:size-14" style={{ backgroundColor: "var(--ficha-subtle)" }} aria-label={`Detalhes de ${i.name}`}>
+                {ex?.url ? <img src={ex.url} alt="" loading="lazy" className="size-full object-cover" /> : <ImageIcon className="m-auto size-5" style={muted} />}
+              </button>
+              <button type="button" onClick={() => openDetail()} className="min-w-0 text-left">
+                <span className="block truncate font-semibold" style={navy}>{i.name}</span>
+                <span className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm" style={muted}>
+                  {ex?.quantity_text && <span className="truncate">{ex.quantity_text} ·</span>}
+                  <span className="truncate">{meta}</span>
+                  {a === "nao_aplica" && <span>· N/A</span>}
+                  {review && (
+                    <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs" style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--ficha-pending-fg)" }}>
+                      <span className="size-1.5 rounded-full" style={{ backgroundColor: "var(--ficha-pending-fg)" }} /> Alterado pelo proprietário · Revisar
+                    </span>
+                  )}
+                </span>
+              </button>
+              <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
+                <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
+                <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => answer.mutate({ item: i, answer: a === "tenho" ? null : "tenho" })} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="grid h-10 w-11 shrink-0 place-items-center rounded-lg border bg-white" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
+                    <MoreHorizontal className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => answer.mutate({ item: i, answer: a === "nao_aplica" ? null : "nao_aplica" })}>
+                      {a === "nao_aplica" ? "Remover N/A" : "Não se aplica (N/A)"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => openDetail()}>Observação</DropdownMenuItem>
+                    {safeUrl(ex?.purchase_url) && (
+                      <DropdownMenuItem asChild>
+                        <a href={safeUrl(ex?.purchase_url)!} target="_blank" rel="noopener noreferrer">Onde comprar</a>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onSelect={() => openDetail()}>Detalhes</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </li>
+          );
+  };
 
   if (q.isPending)
     return (
@@ -481,13 +535,8 @@ export function InventoryWorkspace({
         </p>
       )}
 
-      {roomSlot && <div className="px-4 pt-3 sm:px-5">{roomSlot(room)}</div>}
-
-      {roomSlot && (
-        <h4 className="px-4 pt-4 text-xs font-semibold uppercase tracking-wide sm:px-5" style={muted}>Itens do inventário</h4>
-      )}
       <ul className="px-2 sm:px-3">
-        {roomItems.length === 0 && (
+        {roomItems.length === 0 && !roomSlot && (
           <li className="px-2 py-6 text-center text-sm" style={muted}>
             {onlyOpen ? "Nada pendente neste ambiente." : "Nenhum item neste ambiente ainda."}
             {(q.data?.length ?? 0) === 0 && (
@@ -502,54 +551,7 @@ export function InventoryWorkspace({
             )}
           </li>
         )}
-        {roomItems.map((i) => {
-          const ex = extras.data?.[i.id];
-          const who = i.inventory_source === "proprietario" ? "Proprietário" : "STAYO";
-          const meta = i.inventory_answer ? [who, when(i.inventory_updated_at)].filter(Boolean).join(" · ") : "Ainda não respondido";
-          const review = pendingReviewIds.has(i.id);
-          const a = i.inventory_answer;
-          return (
-            <li key={i.id} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b px-2 py-2.5 last:border-b-0 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border} data-testid="inventory-row">
-              <button type="button" onClick={() => setDetail(i.id)} className="size-12 overflow-hidden rounded-lg sm:size-14" style={{ backgroundColor: "var(--ficha-subtle)" }} aria-label={`Detalhes de ${i.name}`}>
-                {ex?.url ? <img src={ex.url} alt="" loading="lazy" className="size-full object-cover" /> : <ImageIcon className="m-auto size-5" style={muted} />}
-              </button>
-              <button type="button" onClick={() => setDetail(i.id)} className="min-w-0 text-left">
-                <span className="block truncate font-semibold" style={navy}>{i.name}</span>
-                <span className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm" style={muted}>
-                  {ex?.quantity_text && <span className="truncate">{ex.quantity_text} ·</span>}
-                  <span className="truncate">{meta}</span>
-                  {a === "nao_aplica" && <span>· N/A</span>}
-                  {review && (
-                    <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs" style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--ficha-pending-fg)" }}>
-                      <span className="size-1.5 rounded-full" style={{ backgroundColor: "var(--ficha-pending-fg)" }} /> Alterado pelo proprietário · Revisar
-                    </span>
-                  )}
-                </span>
-              </button>
-              <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
-                <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
-                <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => answer.mutate({ item: i, answer: a === "tenho" ? null : "tenho" })} />
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="grid h-10 w-11 shrink-0 place-items-center rounded-lg border bg-white" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
-                    <MoreHorizontal className="size-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => answer.mutate({ item: i, answer: a === "nao_aplica" ? null : "nao_aplica" })}>
-                      {a === "nao_aplica" ? "Remover N/A" : "Não se aplica (N/A)"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDetail(i.id)}>Observação</DropdownMenuItem>
-                    {safeUrl(ex?.purchase_url) && (
-                      <DropdownMenuItem asChild>
-                        <a href={safeUrl(ex?.purchase_url)!} target="_blank" rel="noopener noreferrer">Onde comprar</a>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onSelect={() => setDetail(i.id)}>Detalhes</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </li>
-          );
-        })}
+        {roomSlot ? roomSlot(room, roomItems, renderItem) : roomItems.map((i) => renderItem(i))}
       </ul>
 
       {adding && (
@@ -639,6 +641,7 @@ export function InventoryWorkspace({
                     <p className="mt-1 text-xs" style={{ color: "var(--ficha-pending-fg)" }}>Alterado pelo proprietário · aguardando revisão</p>
                   )}
                 </div>
+                {detailExtra}
                 <InventoryItemDetails
                   item={detailItem}
                   onClose={() => setDetail(null)}
@@ -665,7 +668,7 @@ export function InventoryWorkspace({
   );
 }
 
-function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClick: () => void }) {
+export function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClick: () => void }) {
   const yes = kind === "yes";
   const style = on
     ? yes
@@ -673,8 +676,8 @@ function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onC
       : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
     : { ...border, ...navy, backgroundColor: "var(--admin-surface, #fff)" };
   return (
-    <button type="button" role="radio" aria-checked={on} onClick={onClick} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium sm:w-24 sm:flex-none" style={style}>
+    <Button variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className="h-10 flex-1 gap-2 rounded-lg px-4 text-sm font-medium sm:w-24 sm:flex-none" style={style}>
       {yes ? <Check className="size-4" /> : <X className="size-4" />} {yes ? "Sim" : "Não"}
-    </button>
+    </Button>
   );
 }
