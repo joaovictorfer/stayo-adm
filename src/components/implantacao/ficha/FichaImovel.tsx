@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, Building, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
+import { AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +13,13 @@ import {
   type PropertyDetailsInput,
 } from "../../../lib/api/owner-portal-data";
 import type { ImplementationProject } from "../../../types/core";
-import { CHANNEL_LABELS, getImplementationPlatforms } from "../../../lib/api/owner-platforms";
+import {
+  ALL_CHANNELS,
+  CHANNEL_LABELS,
+  getImplementationPlatforms,
+  setImplementationAllowedChannels,
+  type DistributionChannel,
+} from "../../../lib/api/owner-platforms";
 import { formatDateTime } from "../../../lib/format-datetime";
 
 const navy = { color: "var(--stayo-navy)" };
@@ -457,27 +463,97 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 }
 
 function PlatformsCard({ implementationId }: { implementationId: string }) {
+  const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["implementation-platforms", implementationId],
     queryFn: () => getImplementationPlatforms(implementationId),
   });
+  const saved = q.data?.allowed_channels ?? null;
+  const [draft, setDraft] = useState<DistributionChannel[] | null>(null);
+  const allowed = draft ?? saved;
   const channels = q.data?.distribution_channels ?? null;
+
+  const signature = (value: DistributionChannel[] | null) => (value === null ? "*" : [...value].sort().join("|"));
+  const dirty = signature(allowed) !== signature(saved);
+
+  const save = useMutation({
+    mutationFn: (next: DistributionChannel[] | null) => setImplementationAllowedChannels(implementationId, next),
+    onSuccess: (_result, next) => {
+      setDraft(null);
+      queryClient.invalidateQueries({ queryKey: ["implementation-platforms", implementationId] });
+      queryClient.invalidateQueries({ queryKey: ["implementations"] });
+      toast.success(next === null ? "Todas as plataformas liberadas" : `Liberado: ${next.map((c) => CHANNEL_LABELS[c]).join(" · ")}`);
+    },
+    onError: (error) =>
+      toast.error("Não foi possível salvar as plataformas", {
+        description: error instanceof Error ? error.message : "Tente novamente.",
+      }),
+  });
+
+  const toggle = (key: DistributionChannel) => {
+    if (key === "airbnb" || save.isPending) return;
+    const current = allowed ?? ALL_CHANNELS;
+    setDraft(current.includes(key) ? current.filter((c) => c !== key) : [...current, key]);
+  };
+
   return (
     <section className="rounded-xl border bg-white p-4 sm:px-5" style={border}>
-      <h3 className="pb-2 text-lg font-semibold" style={display}>Plataformas</h3>
+      <h3 className="pb-1 text-lg font-semibold" style={display}>Plataformas</h3>
+      <p className="pb-3 text-xs" style={muted}>
+        Escolha onde este imóvel pode ser anunciado. O que ficar desmarcado aparece desativado para o proprietário.
+      </p>
       {q.isPending ? (
         <p className="text-sm" style={muted}>Carregando…</p>
-      ) : !channels ? (
-        <p className="text-sm" style={muted}>Ainda não escolhidas pelo proprietário.</p>
       ) : (
-        <div className="space-y-1 text-sm" style={navy}>
-          <p>{channels.map((c) => CHANNEL_LABELS[c] ?? c).join(" · ")}</p>
-          <p className="break-all" style={muted}>Conta Airbnb: {q.data?.airbnb_account_email || "Não informada"}</p>
-          {q.data?.distribution_updated_at && (
-            <p className="text-xs" style={muted}>
-              {q.data.distribution_updated_by === "owner" ? "Informado pelo proprietário" : "Atualizado"} · {formatDateTime(q.data.distribution_updated_at)}
-            </p>
-          )}
+        <div className="flex flex-col gap-1.5">
+          {ALL_CHANNELS.map((key) => {
+            const on = allowed === null ? true : allowed.includes(key);
+            const locked = key === "airbnb";
+            return (
+              <button
+                key={key}
+                type="button"
+                role="checkbox"
+                aria-checked={on}
+                aria-disabled={locked || save.isPending || undefined}
+                onClick={() => toggle(key)}
+                className="flex items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors hover:border-[var(--stayo-navy)]"
+                style={{ ...border, color: "var(--stayo-navy)" }}
+              >
+                <span
+                  className="grid size-5 shrink-0 place-items-center rounded border"
+                  style={on ? { borderColor: "var(--stayo-navy)", backgroundColor: "var(--stayo-navy)", color: "var(--stayo-surface)" } : border}
+                >
+                  {on && <Check className="size-3.5" aria-hidden="true" />}
+                </span>
+                <span className="flex-1 font-medium">{CHANNEL_LABELS[key]}</span>
+                {locked && <span className="text-[11px]" style={muted}>Padrão</span>}
+              </button>
+            );
+          })}
+
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <Button type="button" variant="outline" size="sm" disabled={save.isPending} onClick={() => save.mutate(["airbnb"])}>
+              Somente Airbnb
+            </Button>
+            <Button type="button" variant="outline" size="sm" disabled={save.isPending} onClick={() => save.mutate(null)}>
+              Todas
+            </Button>
+            <Button type="button" size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate(allowed)}>
+              {save.isPending ? "Salvando…" : "Salvar"}
+            </Button>
+          </div>
+
+          <div className="mt-2 space-y-1 border-t pt-2 text-sm" style={border}>
+            <p className="text-xs" style={muted}>Escolha do proprietário</p>
+            <p style={navy}>{channels ? channels.map((c) => CHANNEL_LABELS[c] ?? c).join(" · ") : "Ainda não escolhida."}</p>
+            <p className="break-all" style={muted}>Conta Airbnb: {q.data?.airbnb_account_email || "Não informada"}</p>
+            {q.data?.distribution_updated_at && (
+              <p className="text-xs" style={muted}>
+                {q.data.distribution_updated_by === "owner" ? "Informado pelo proprietário" : "Atualizado"} · {formatDateTime(q.data.distribution_updated_at)}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </section>
