@@ -247,7 +247,7 @@ export function AmenitiesPanel({
             rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={displayedItems} setItem={(key, patch) => {
               if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
               else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
-            }} unified extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : "" />);
+            }} unified extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
           }
         }
         for (const custom of room.custom) {
