@@ -19,7 +19,7 @@
   --stayo-forest-strong: #0b2e23;
   --stayo-forest-soft: #eaf3ef;
   --stayo-bg: #f7f5f0;
-  --stayo-font-ui: "Figtree", "IBM Plex Sans", system-ui, sans-serif;
+  --stayo-font-ui: "Figtree", system-ui, sans-serif;
   --admin-primary: #0f3d2e;
   --admin-info-soft: #eaf3ef;
   font-family: var(--stayo-font-ui);
