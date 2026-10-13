@@ -111,7 +111,19 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
     },
     {
       title: "Pia e limpeza",
-      items: ["Escorredor de pia", "Lixeira", "Vassoura", "Pá de lixo", "Aspirador de pó", "Rodo / mop"].map((l) => ({ key: slug(l), label: l })),
+      items: [
+        "Escorredor de pia",
+        {
+          key: "limpeza", label: "Limpeza", subAnswers: true,
+          sub: [
+            { key: "lixeira", label: "Lixeira" },
+            { key: "vassoura", label: "Vassoura" },
+            { key: "pa_de_lixo", label: "Pá de lixo" },
+            { key: "aspirador_de_po", label: "Aspirador de pó" },
+            { key: "rodo_mop", label: "Rodo / mop" },
+          ],
+        },
+      ].map((l) => (typeof l === "string" ? { key: slug(l), label: l } : l)),
     },
     {
       title: "Churrasqueira",
