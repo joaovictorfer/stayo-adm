@@ -91,7 +91,14 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
             { key: "pires", label: "Píres" },
           ],
         },
-        "Facas de corte", "Talheres",
+        {
+          key: "talheres", label: "Talheres", subAnswers: true,
+          sub: [
+            { key: "talheres", label: "Talheres" },
+            { key: "talheres_infantis", label: "Talheres infantis" },
+            { key: "facas_de_corte", label: "Facas de corte" },
+          ],
+        },
       ].map((l) => (typeof l === "string" ? { key: slug(l), label: l } : l)),
     },
     {

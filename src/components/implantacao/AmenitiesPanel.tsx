@@ -229,9 +229,9 @@ export function AmenitiesPanel({
           }
         }
         for (const def of allDefs) {
-          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), def.label);
-          const install = installs.find((entry) => amenityDisplayKey(entry.label) === amenityDisplayKey(def.label));
           const isGroup = !!def.subAnswers && !!def.sub;
+          const match = isGroup ? null : matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), def.label);
+          const install = installs.find((entry) => amenityDisplayKey(entry.label) === amenityDisplayKey(def.label));
           const groupSubs: ReactNode[] = [];
           let groupItems = room.items;
           if (isGroup && def.sub) {
