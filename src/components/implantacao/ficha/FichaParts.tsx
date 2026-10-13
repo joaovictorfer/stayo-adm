@@ -122,7 +122,7 @@ export function DomainHub({ rows, intro }: { rows: HubRow[]; intro?: ReactNode }
 }
 
 /** Bloco recolhível — fechado por padrão. */
-export function Collapsible({ title, summary, children, defaultOpen = false }: { title: string; summary?: string; children: ReactNode; defaultOpen?: boolean }) {
+export function Collapsible({ title, summary, children, defaultOpen = false }: { title: string; summary?: ReactNode; children: ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section className="overflow-hidden rounded-[var(--radius-card)] border" style={surface}>
