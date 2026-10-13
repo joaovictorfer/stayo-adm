@@ -242,6 +242,9 @@ export interface InstallState {
   installer?: string;
   /** Campos ajustados à mão neste ambiente ("brand" | "installer"); não recebem replicação. */
   manual?: InstallField[];
+  source?: Partial<Record<InstallField, string>>;
+  onSource?: string;
+  onManual?: boolean;
 }
 export type RoomInstall = Partial<Record<InstallKey, InstallState>>;
 
@@ -258,15 +261,33 @@ export function installValue(room: RoomState, key: InstallKey, field: InstallFie
  * demais ambientes que ainda não tiveram esse campo ajustado manualmente.
  */
 export function setInstall(rooms: RoomState[], roomId: string, key: InstallKey, field: InstallField, value: string): RoomState[] {
+  const source = rooms.find((r) => r.install?.[key]?.source?.[field])?.install?.[key]?.source?.[field]
+    ?? rooms.find((r) => r.install?.[key]?.manual?.includes(field))?.id;
+  const replicate = !source || source === roomId;
+  const previous = rooms.find((r) => r.id === roomId);
+  const previousValue = previous ? installValue(previous, key, field) : "";
   return rooms.map((r) => {
     if (!hasInstall(r.kind)) return r;
     const cur = (r.install ?? {}) as RoomInstall;
     const st = cur[key] ?? {};
     const isSource = r.id === roomId;
-    if (!isSource && st.manual?.includes(field)) return r;
+    if (!isSource && (!replicate || st.manual?.includes(field))) return r;
+    if (!isSource && installValue(r, key, field) && installValue(r, key, field) !== previousValue) return r;
     const manual = isSource ? Array.from(new Set([...(st.manual ?? []), field])) : st.manual;
-    const next = { ...r, install: { ...cur, [key]: { ...st, [field]: value, manual } } } as RoomState;
+    const next = { ...r, install: { ...cur, [key]: { ...st, [field]: value, manual, source: { ...st.source, [field]: source ?? roomId } } } } as RoomState;
     if (key === "moveis" && field === "installer") next.furnitureSupplier = value || null;
     return next;
+  });
+}
+
+export function setInstallationAnswer(rooms: RoomState[], roomId: string, key: InstallKey, on: boolean): RoomState[] {
+  const itemKey = key === "ar" ? "ar_condicionado" : key === "aquecimento" ? "aquecedor" : "moveis";
+  const source = rooms.find((r) => r.install?.[key]?.onSource)?.install?.[key]?.onSource;
+  return rooms.map((r) => {
+    if (!hasInstall(r.kind)) return r;
+    const st = r.install?.[key] ?? {};
+    const local = r.id === roomId;
+    if (!local && (on === false || (source && source !== roomId) || st.onManual || r.items[itemKey]?.on === false)) return r;
+    return { ...r, items: { ...r.items, [itemKey]: { ...r.items[itemKey], on } }, install: { ...r.install, [key]: { ...st, onSource: source ?? roomId, onManual: local || st.onManual === true } } };
   });
 }

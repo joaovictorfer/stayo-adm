@@ -29,6 +29,7 @@ import {
   hasInstall,
   installValue,
   setInstall,
+  setInstallationAnswer,
   type InstallKey,
   type InstallField,
 } from "@/lib/amenities";
@@ -236,11 +237,17 @@ export function AmenitiesPanel({
               {!match && !install && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly />}
             </div>
           );
-          if (match) {
+          if (match && !install) {
             used.add(match.id);
             rows.push(renderItem(match, fields, !!install));
           } else {
-            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} unified extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
+            if (match) used.add(match.id);
+            const displayedItems = match && room.items[def.key]?.on === undefined && match.inventory_answer
+              ? { ...room.items, [def.key]: { ...room.items[def.key], on: match.inventory_answer === "tenho" } } : room.items;
+            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={displayedItems} setItem={(key, patch) => {
+              if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
+              else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
+            }} unified extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
           }
         }
         for (const custom of room.custom) {
