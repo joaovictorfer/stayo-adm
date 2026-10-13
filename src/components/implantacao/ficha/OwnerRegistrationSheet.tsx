@@ -108,7 +108,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
       {onEditOwner && <button type="button" onClick={onEditOwner} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--stayo-border)] px-2.5 py-1.5 text-xs font-medium text-[var(--stayo-navy)] transition hover:border-[var(--stayo-navy)]"><Pencil className="size-3.5" />Editar</button>}
     </header>
 
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 lg:grid-cols-2">
       <div className="min-w-0 space-y-1.5">
         <Highlight icon={<Globe />} label="E-mail da conta Airbnb" value={platforms?.airbnb_account_email} empty="Não informado" />
         {channels.length > 0 && <div className="flex flex-wrap gap-1 px-0.5">{channels.map(c => <span key={c} className="rounded-full border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-2 py-0.5 text-[11px] text-[var(--stayo-ink-muted)]">{CHANNEL_LABELS[c]}</span>)}</div>}
