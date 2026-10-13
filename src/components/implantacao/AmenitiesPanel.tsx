@@ -231,7 +231,7 @@ export function AmenitiesPanel({
             <div key={`${room.id}:${def.key}`} className="space-y-4">
               {rs.length > 1 && <p className="text-sm font-medium text-foreground">{room.name}</p>}
               {install && <InstallationFields room={room} installKey={install.key} label={install.label} catalog={catalog} onChange={(field, value) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, field, value) }))} onNewCompany={addCompany} />}
-              {!match && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly />}
+              {!match && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly hideBrand={!!install} />}
             </div>
           );
           if (match) {
@@ -514,7 +514,9 @@ function ItemRow({
   unified,
   fieldsOnly,
   extraFields,
+  hideBrand,
 }: {
+  hideBrand?: boolean;
   unified?: boolean;
   fieldsOnly?: boolean;
   extraFields?: ReactNode;
@@ -621,7 +623,7 @@ function ItemRow({
               className="h-9"
             />
           )}
-          <Input placeholder="Marca" aria-label="Marca" value={st.brand ?? ""} onChange={(e) => setItem(def.key, { brand: e.target.value })} className="h-9" />
+          {!hideBrand && <Input placeholder="Marca" aria-label="Marca" value={st.brand ?? ""} onChange={(e) => setItem(def.key, { brand: e.target.value })} className="h-9" />}
           <Input
             placeholder="Observação"
             aria-label="Observação"
