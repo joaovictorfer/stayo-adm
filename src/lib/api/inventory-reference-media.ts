@@ -1,12 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { signGuideImages } from "./guides";
 import { amenityDisplayKey } from "../inventory-amenities-view";
+import { generatedInventoryImage } from "../inventory-generated-media";
 
 export interface InventoryReferenceMedia {
   url?: string;
   description: string | null;
   tip: string | null;
   quantity_text: string | null;
+}
+
+export function inventoryReferenceFor(name: string, references?: Record<string, InventoryReferenceMedia>): InventoryReferenceMedia {
+  const reference = references?.[amenityDisplayKey(name)];
+  return {
+    description: reference?.description ?? null,
+    tip: reference?.tip ?? null,
+    quantity_text: reference?.quantity_text ?? null,
+    url: reference?.url ?? generatedInventoryImage(name),
+  };
 }
 
 /** Read-only reference enrichment, independent of applying a snapshot or answering an item. */

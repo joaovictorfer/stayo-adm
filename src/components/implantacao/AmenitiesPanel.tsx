@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
 import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
-import { loadInventoryReferenceMedia, type InventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
+import { inventoryReferenceFor, loadInventoryReferenceMedia, type InventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { Switch } from "@/components/ui/switch";
 import {
   ROOM_KIND_LABEL,
@@ -531,7 +531,7 @@ function ItemRow({
 }) {
   const st = items[def.key] ?? {};
   const mediaQuery = useQuery({ queryKey: ["inventory-reference-media"], queryFn: loadInventoryReferenceMedia, staleTime: 30 * 60_000, enabled: !!unified });
-  const media = mediaQuery.data?.[amenityDisplayKey(def.label)];
+  const media = inventoryReferenceFor(def.label, mediaQuery.data);
   const [details, setDetails] = useState(false);
   const on = fieldsOnly || !!st.on;
   if (unified) return (
