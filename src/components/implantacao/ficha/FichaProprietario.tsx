@@ -100,53 +100,12 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   };
 
   return <div className="space-y-4 text-[var(--stayo-navy)]">
-    <header className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[var(--stayo-navy)] font-[Outfit] text-base font-semibold text-[var(--stayo-surface)]">{initials || "?"}</span>
-        <div className="min-w-0">
-          <h2 className="break-words font-[Outfit] text-2xl font-semibold leading-tight">{name}</h2>
-          <p className="text-sm text-[var(--stayo-ink-muted)]">{propertyName} · {implementation.ownerId ? "Proprietário principal" : "Sem vínculo cadastral"}</p>
-        </div>
-      </div>
-      <Button size="sm" variant="outline" disabled={!owner} onClick={openEdit}><Pencil /> Editar dados</Button>
-    </header>
-    <div role="tablist" aria-label="Seções do proprietário" className="inline-flex rounded-full border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-1">
-      {([["ficha", "Ficha cadastral"], ["gestao", "Gestão e vínculos"]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)} className={`min-h-10 rounded-full px-4 text-sm font-medium transition ${tab === key ? "bg-[var(--stayo-navy)] text-[var(--stayo-surface)]" : "text-[var(--stayo-ink-muted)] hover:text-[var(--stayo-navy)]"}`}>{label}</button>)}
-    </div>
+    {ownerQueryResult.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void ownerQueryResult.refetch()}>Tentar novamente</Button></p>}
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
       <div className="min-w-0 space-y-3">
-        {tab === "ficha" ? <OwnerRegistrationSheet implementation={implementation} /> : <>
-        <section className={panel} aria-label="Dados principais">
-          <SectionTitle>Dados principais</SectionTitle>
-          {ownerQueryResult.isError && <p role="alert" className="mb-3 text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void ownerQueryResult.refetch()}>Tentar novamente</Button></p>}
-          <div className="mb-1 flex items-center gap-3 py-2">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--ficha-icon-bg)] font-semibold text-[var(--ficha-icon-fg)]">{initials}</span>
-            <div className="min-w-0"><p className="break-words font-semibold">{name}</p><p className="text-xs text-[var(--stayo-ink-muted)]">{implementation.ownerId ? "Proprietário principal" : "Sem vínculo cadastral"}</p></div>
-          </div>
-          {[
-            { label: "WhatsApp", value: phone ? formatBrazilianPhone(phone) : "Não informado" },
-            { label: "E-mail", value: showSensitive ? email || "Não informado" : maskedEmail },
-          ].map(item => <Button key={item.label} variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} disabled={!owner} onClick={openEdit}>
-            <span className="w-24 shrink-0">{item.label}</span><span className="min-w-0 flex-1 break-words font-medium">{item.value}</span><ChevronRight className="size-4 shrink-0" />
-          </Button>)}
-          <div className={`${row} border-t`}>
-            <span className="w-24 shrink-0 text-sm">CPF/CNPJ</span><span className="min-w-0 flex-1 break-words text-sm font-medium">{showSensitive ? formatBrazilianDocument(document) || "Não informado" : maskDocument(document)}</span>
-            <Button variant="ghost" size="icon" className="size-8" disabled={!document && !email} aria-label={showSensitive ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"} title={showSensitive ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"} onClick={() => setShowSensitive(value => !value)}>{showSensitive ? <EyeOff /> : <Eye />}</Button>
-            <Button variant="ghost" size="icon" className="size-8" aria-label="Editar CPF ou CNPJ" title="Editar CPF ou CNPJ" disabled={!owner} onClick={openEdit}><ChevronRight /></Button>
-          </div>
-          <Button variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} disabled={!owner} onClick={openEdit}><span className="w-24 shrink-0">Tipo</span><span className="min-w-0 flex-1 font-medium">{personType}</span><ChevronRight /></Button>
-        </section>
-        <section className={panel} aria-label="Vínculo com o imóvel">
-          <SectionTitle>Vínculo com o imóvel</SectionTitle>
-          <Button variant="ghost" className="h-auto min-h-12 w-full justify-start rounded-none px-0 text-left whitespace-normal" onClick={() => onGo("imovel")}>
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)]"><Building2 /></span>
-            <span className="min-w-0 flex-1"><span className="block break-words font-semibold">{propertyName}</span><span className="text-xs font-normal text-[var(--stayo-ink-muted)]">{implementation.ownerId ? "Proprietário principal" : "Sem proprietário vinculado"}</span></span><span className="hidden text-xs sm:inline">Ver imóvel</span><ChevronRight />
-          </Button>
-          <div className={row}><span className="text-sm">Participação</span><span className="text-right text-sm font-medium">{implementation.ownerId ? "Proprietário principal" : "Não informado"}</span></div>
-          {additionalPeople.map((person, index) => <div key={`${person.document}-${index}`} className={row}><span className="min-w-0"><span className="block break-words text-sm font-medium">{person.fullName}</span><span className="text-xs text-[var(--stayo-ink-muted)]">{person.role === "coproprietario" ? "Coproprietário" : "Proponente"} · {submission?.submittedAt ? "Cadastro recebido" : "Cadastro em andamento"}</span></span><span className="shrink-0 text-xs">{showSensitive ? formatBrazilianDocument(person.document) : maskDocument(person.document)}</span></div>)}
-          {additionalPeople.length === 0 && <p className="pt-2 text-xs text-[var(--stayo-ink-muted)]">Nenhum coproprietário ou representante informado.</p>}
-        </section>
+        <OwnerRegistrationSheet implementation={implementation} onEditOwner={owner ? openEdit : undefined} />
         <section className={panel} aria-label="Outros vínculos">
+
           <SectionTitle>Outros vínculos</SectionTitle>
           {links.isError || properties.isError ? <p className="text-sm text-destructive">Não foi possível carregar os vínculos.</p> : <>
             <div className="flex flex-wrap items-center gap-2 text-sm"><Home className="size-4" /><span className="flex-1">Imóveis vinculados</span><span className="text-[var(--stayo-ink-muted)]">{links.isPending && owner ? "Carregando…" : (n => `${n} ${n === 1 ? "vínculo" : "vínculos"}`)((implementation.ownerId ? 1 : 0) + otherImplementations.length + ownerProperties.filter(property => ![implementation, ...otherImplementations].some(item => item.corePropertyId === property.id)).length)}</span>
