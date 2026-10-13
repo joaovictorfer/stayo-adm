@@ -594,7 +594,11 @@ export function InventoryWorkspace({
                 {(detailItem.tip || extras.data?.[detailItem.id]?.description) && (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Recomendação STAYO</p>
-                    <p style={navy}>{extras.data?.[detailItem.id]?.description || detailItem.tip}</p>
+                    {extras.data?.[detailItem.id]?.quantity_text && (
+                      <p className="font-medium" style={navy}>Quantidade: {extras.data[detailItem.id]!.quantity_text}</p>
+                    )}
+                    {extras.data?.[detailItem.id]?.description && <p style={navy}>{extras.data[detailItem.id]!.description}</p>}
+                    {detailItem.tip && <p className="mt-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>Dica: {detailItem.tip}</p>}
                   </div>
                 )}
                 {(detailItem.inventory_quantity != null || detailItem.inventory_brand || detailItem.inventory_condition) && (
