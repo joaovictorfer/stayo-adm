@@ -363,6 +363,22 @@ export function InventoryWorkspace({
     onSuccess: () => setFailed(null),
   });
 
+  const subanswer = useMutation({
+    mutationFn: (v: { item: InventorySnapshotItem; subKey: string; answer: "tenho" | "nao_tenho" | null }) =>
+      setInventorySubanswer(v.item, implementationId, v.subKey, v.answer),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: query.queryKey });
+      const prev = qc.getQueryData<InventorySnapshotItem[]>(query.queryKey);
+      qc.setQueryData<InventorySnapshotItem[]>(query.queryKey, (old) =>
+        (old ?? []).map((i) => (i.id === v.item.id ? { ...i, inventory_subanswers: mergeSubAnswer(i.inventory_subanswers, v.subKey, v.answer) } : i)),
+      );
+      return { prev };
+    },
+    onError: (_e, v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(query.queryKey, ctx.prev);
+    },
+  });
+
   const add = useMutation({
     mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room)),
     onSuccess: async () => {
