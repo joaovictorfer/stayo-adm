@@ -25,6 +25,7 @@ export interface ItemState {
   brand?: string;
   company?: string;
   notes?: string;
+  characteristics?: Record<string, string>;
   opts?: Record<string, number>;
 }
 

@@ -26,7 +26,7 @@
 - Guias utensílios/enxoval/inventário compartilham tabelas e snapshot `admin_apply_guide`; proprietário do inventário só propõe via `owner_inventory_*` (sessão+vínculo) e STAYO decide em `admin_review_inventory_submission`.
 - Comodidades e itens do imóvel ficam em implementation_amenities (jsonb por implantação, autosave); empresas novas de móveis entram em supplier_catalog para reaproveitar.
 - Comodidades sincronizam o inventário guiado por `amenity_key` (upsert idempotente); desmarcar só desativa o item, nunca grava "Não tenho" nem cria pendência.
-- The administrative inventory associates amenities with existing rows in a presentation-only adapter and exposes installation fields in item details; keep existing persistence paths separate to avoid rewriting historical answers.
+- Inventory matches amenities through a presentation adapter; installations and item characteristics use per-room amenities JSON in details, preserving separate writes and historical answers.
 - Installation defaults and per-room overrides live in the existing amenities JSON, with field-level source metadata; a later room edit remains local so supplier exceptions never propagate back to other rooms.
 - Inventory reference media is read independently of snapshots, with PDF utensil references preferred and generated assets used only as visual fallbacks; opening a reference never creates or updates inventory records.
 - The owner workspace reuses owner records, onboarding people, owner notes and existing invitation actions; presentation changes must not create a second owner or relationship store.
