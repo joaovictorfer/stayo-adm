@@ -20,6 +20,12 @@ import {
   type ItemState,
   type RoomKind,
   type RoomState,
+  INSTALL_ROWS,
+  hasInstall,
+  installValue,
+  setInstall,
+  type InstallKey,
+  type InstallField,
 } from "@/lib/amenities";
 
 import { buildSyncRows } from "@/lib/amenities-sync";
@@ -173,6 +179,7 @@ export function AmenitiesPanel({
             })
           }
           onRemove={() => update((d) => ({ rooms: d.rooms.filter((r) => r.id !== room.id) }))}
+          onInstall={(k, f, v) => update((d) => ({ rooms: setInstall(d.rooms, room.id, k, f, v) }))}
           catalog={catalog}
           onNewCompany={addCompany}
         />
@@ -228,7 +235,9 @@ function RoomCard({
   onSuite,
   catalog,
   onNewCompany,
+  onInstall,
 }: {
+  onInstall: (k: InstallKey, f: InstallField, v: string) => void;
   onSuite: (on: boolean) => void;
   room: RoomState;
   open: boolean;
@@ -301,14 +310,44 @@ function RoomCard({
 
       {open && (
         <div className="flex flex-col gap-4 border-t p-3" style={{ borderColor: "var(--stayo-border)" }}>
-          {room.kind !== "geral" && (
-            <CompanyPicker
-              label="Quem forneceu os móveis deste ambiente?"
-              value={room.furnitureSupplier ?? ""}
-              catalog={catalog}
-              onChange={(v) => onChange((r) => ({ ...r, furnitureSupplier: v || null }))}
-              onNew={onNewCompany}
-            />
+          {hasInstall(room.kind) && (
+            <div>
+              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>
+                Equipamentos e instalações
+              </h4>
+              <p className="mb-2 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                O que você preencher aqui vale para todos os ambientes; ajuste em cada um se for diferente.
+              </p>
+              <datalist id={`fornecedores-${room.id}`}>
+                {catalog.map((c) => <option key={c} value={c} />)}
+              </datalist>
+              <div className="flex flex-col gap-1.5">
+                {INSTALL_ROWS.map((row) => (
+                  <div key={row.key} className="grid items-center gap-2 rounded-lg border px-3 py-2 sm:grid-cols-[8rem_1fr_1fr]" style={{ borderColor: "var(--stayo-border)" }}>
+                    <span className="text-sm font-medium">{row.label}</span>
+                    <Input
+                      placeholder="Marca"
+                      aria-label={`${row.label} — marca`}
+                      value={installValue(room, row.key, "brand")}
+                      onChange={(e) => onInstall(row.key, "brand", e.target.value)}
+                      className="h-9"
+                    />
+                    <Input
+                      placeholder="Instalador / fornecedor"
+                      aria-label={`${row.label} — instalador`}
+                      list={`fornecedores-${room.id}`}
+                      value={installValue(room, row.key, "installer")}
+                      onChange={(e) => onInstall(row.key, "installer", e.target.value)}
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        if (row.key === "moveis" && v && !catalog.includes(v)) void onNewCompany(v);
+                      }}
+                      className="h-9"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {ROOM_SECTIONS[room.kind].map((s) => (
