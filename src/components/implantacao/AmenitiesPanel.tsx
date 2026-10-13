@@ -534,8 +534,8 @@ function ItemRow({
         <span className="text-xs font-normal text-muted-foreground sm:text-sm">{summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
       </Button>
       <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${def.label}`}>
-        <AnswerBtn kind="no" on={st.on === false} onClick={() => setItem(def.key, { on: st.on === false ? undefined : false })} />
-        <AnswerBtn kind="yes" on={st.on === true} onClick={() => setItem(def.key, { on: st.on === true ? undefined : true })} />
+        <AnswerBtn kind="no" on={st.on === false} onClick={() => setItem(def.key, { on: false })} />
+        <AnswerBtn kind="yes" on={st.on === true} onClick={() => setItem(def.key, { on: true })} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="outline" className="h-10 w-11 shrink-0 rounded-lg p-0" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">

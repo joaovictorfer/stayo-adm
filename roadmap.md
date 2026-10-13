@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Unificar visualmente comodidades e instalações com as linhas do inventário; detalhes pelo menu, sem alterar banco.
 - [x] Fase 05 Preparação
 - [x] Fase 06 Seu acesso
 - [x] Correção 03A: PATCH não sensível, Quartos canônicos, Unidade/Ambientes e testes unitários/visuais simulados.

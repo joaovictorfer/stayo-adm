@@ -289,7 +289,7 @@ export function InventoryWorkspace({
   setAdding: (v: boolean) => void;
   reviewing: boolean;
   pendingReviewIds: Set<string>;
-  roomSlot?: InventoryRoomSlot;
+  roomSlot?: InventoryRoomSlot | undefined;
 }) {
   const qc = useQueryClient();
   const query = guidedInventoryQuery(implementationId);
