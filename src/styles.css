@@ -222,8 +222,8 @@
 
 /* Subtle motion scoped to the administrative workspace. */
 .stayo-admin-theme {
-  --admin-motion-fast: 140ms;
-  --admin-motion-normal: 220ms;
+  --admin-motion-fast: 100ms;
+  --admin-motion-normal: 160ms;
   --admin-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --admin-focus-shadow: 0 0 0 3px color-mix(in oklab, var(--admin-primary) 16%, transparent);
 }
@@ -252,7 +252,13 @@
 .admin-submenu[data-expanded="true"] { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
 .admin-submenu-inner { min-height: 0; overflow: hidden; }
 .admin-menu-backdrop { animation: admin-fade-in var(--admin-motion-normal) ease both; }
-.admin-menu-panel { animation: admin-menu-in 280ms var(--admin-motion-ease) both; }
+.admin-menu-panel { animation: admin-menu-in 200ms var(--admin-motion-ease) both; }
+.admin-answer-pop { animation: admin-answer-pop 180ms var(--admin-motion-ease); }
+@keyframes admin-answer-pop {
+  0% { transform: scale(0.94); }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
 .admin-page-enter { animation: admin-page-in var(--admin-motion-normal) var(--admin-motion-ease) both; }
 .stayo-admin-theme :is(.admin-header-search, .admin-search-field) {
   transition: border-color var(--admin-motion-fast) ease, box-shadow var(--admin-motion-fast) ease;
