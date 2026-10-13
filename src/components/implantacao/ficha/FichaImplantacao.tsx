@@ -286,6 +286,20 @@ export function InventoryWorkspace({
   const query = guidedInventoryQuery(implementationId);
   const q = useQuery(query);
   const [room, setRoom] = useState("cozinha");
+  const bedroomsQ = useQuery({
+    queryKey: ["implementation-bedrooms", implementationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("implementation_projects")
+        .select("bedrooms")
+        .eq("id", implementationId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { bedrooms: number | null } | null)?.bedrooms ?? null;
+    },
+    staleTime: 60_000,
+  });
+  const ROOMS = roomTabsFor(bedroomsQ.data ?? 2);
   const [onlyOpen, setOnlyOpen] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
