@@ -225,7 +225,7 @@ export function AmenitiesPanel({
           }
         }
         for (const def of allDefs) {
-          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id)), def.label);
+          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), def.label);
           const install = installs.find((entry) => amenityDisplayKey(entry.label) === amenityDisplayKey(def.label));
           const fields = (
             <div key={`${room.id}:${def.key}`} className="space-y-4">
@@ -242,7 +242,7 @@ export function AmenitiesPanel({
           }
         }
         for (const custom of room.custom) {
-          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id)), custom.name);
+          const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), custom.name);
           if (match) { used.add(match.id); rows.push(renderItem(match)); }
           else rows.push(<ItemRow key={custom.id} def={{ key: custom.id, label: custom.name }} items={{ [custom.id]: custom }} setItem={(_key, patch) => updateRoom(room.id, (r) => ({ ...r, custom: r.custom.map((item) => item.id === custom.id ? { ...item, ...patch } : item) }))} unified />);
         }

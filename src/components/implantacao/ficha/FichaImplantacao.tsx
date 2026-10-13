@@ -13,7 +13,7 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -311,7 +311,7 @@ export function InventoryWorkspace({
   const ROOMS = roomTabsFor(bedroomsQ.data ?? 2);
   const [onlyOpen, setOnlyOpen] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
-  const [detailExtra, setDetailExtra] = useState<ReactNode>(null);
+  const detailExtras = useRef(new Map<string, ReactNode>());
   const [newName, setNewName] = useState("");
   const [failed, setFailed] = useState<{ item: InventorySnapshotItem; answer: InventoryAnswer | null } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
@@ -399,7 +399,8 @@ export function InventoryWorkspace({
   const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
 
   const renderItem = (i: InventorySnapshotItem, extra?: ReactNode) => {
-          const openDetail = () => { setDetail(i.id); setDetailExtra(extra ?? null); };
+          detailExtras.current.set(i.id, extra ?? null);
+          const openDetail = () => { setDetail(i.id); };
           const ex = extras.data?.[i.id];
           const who = i.inventory_source === "proprietario" ? "Proprietário" : "STAYO";
           const meta = i.inventory_answer ? [who, when(i.inventory_updated_at)].filter(Boolean).join(" · ") : "Ainda não respondido";
@@ -641,7 +642,7 @@ export function InventoryWorkspace({
                     <p className="mt-1 text-xs" style={{ color: "var(--ficha-pending-fg)" }}>Alterado pelo proprietário · aguardando revisão</p>
                   )}
                 </div>
-                {detailExtra}
+                {detailExtras.current.get(detailItem.id)}
                 <InventoryItemDetails
                   item={detailItem}
                   onClose={() => setDetail(null)}
