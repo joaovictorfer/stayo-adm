@@ -739,15 +739,5 @@ export function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boole
 }
 
 function SubAnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClick: () => void }) {
-  const yes = kind === "yes";
-  const style = on
-    ? yes
-      ? { backgroundColor: "var(--ficha-icon-fg)", color: "var(--admin-surface, #fff)", borderColor: "var(--ficha-icon-fg)" }
-      : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
-    : { ...border, ...navy, backgroundColor: "var(--admin-surface, #fff)" };
-  return (
-    <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("h-8 gap-1 rounded-md px-2.5 text-xs font-medium", on && "admin-answer-pop")} style={style}>
-      {yes ? <Check className="size-3.5" /> : <X className="size-3.5" />} {yes ? "Sim" : "Não"}
-    </Button>
-  );
+  return <AnswerBtn kind={kind} on={on} onClick={onClick} />;
 }
