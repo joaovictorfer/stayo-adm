@@ -53,7 +53,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
 
-export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode) => ReactNode) => ReactNode;
+export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean) => ReactNode) => ReactNode;
 
 const QUARTO_CATEGORY = /^Quarto (\d+)$/;
 const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
@@ -398,7 +398,7 @@ export function InventoryWorkspace({
   const newFromGuide = Math.max(0, (catalogCount.data ?? 0) - fromCatalog);
   const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
 
-  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode) => {
+  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false) => {
           detailExtras.current.set(i.id, extra ?? null);
           const openDetail = () => { setDetail(i.id); };
           const ex = extras.data?.[i.id];
@@ -426,7 +426,7 @@ export function InventoryWorkspace({
               </button>
               <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
                 <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
-                <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => answer.mutate({ item: i, answer: a === "tenho" ? null : "tenho" })} />
+                <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: installation ? "tenho" : a === "tenho" ? null : "tenho" }); if (installation) openDetail(); }} />
                 <DropdownMenu>
                   <DropdownMenuTrigger className="grid h-10 w-11 shrink-0 place-items-center rounded-lg border bg-white" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
                     <MoreHorizontal className="size-4" />
@@ -436,6 +436,7 @@ export function InventoryWorkspace({
                       {a === "nao_aplica" ? "Remover N/A" : "Não se aplica (N/A)"}
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => openDetail()}>Observação</DropdownMenuItem>
+                    {installation && <DropdownMenuItem onSelect={() => openDetail()}>Marca e instalador</DropdownMenuItem>}
                     {safeUrl(ex?.purchase_url) && (
                       <DropdownMenuItem asChild>
                         <a href={safeUrl(ex?.purchase_url)!} target="_blank" rel="noopener noreferrer">Onde comprar</a>
