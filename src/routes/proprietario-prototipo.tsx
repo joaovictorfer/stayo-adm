@@ -113,7 +113,7 @@ function HomeScreen({ go }: { go: (s: Screen) => void }) {
         <div className="relative mt-4 overflow-hidden rounded-3xl">
           <img src={propertyPhoto} alt="Vêneto A201" className="aspect-[4/3] w-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-105 md:aspect-[5/4]" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--portal-navy)]/85 to-transparent p-5 pt-16 text-[var(--portal-surface)]">
-            <h1 className="font-serif text-3xl leading-tight">Vêneto A201</h1>
+            <h1 className="font-display text-3xl leading-tight">Vêneto A201</h1>
             <p className="mt-1 text-sm opacity-85">Canela · RS</p>
           </div>
         </div>
@@ -152,7 +152,7 @@ function SubPage({ title, onBack, children }: { title: string; onBack: () => voi
     >
       {dx > 20 && <span className="pointer-events-none fixed left-3 top-1/2 z-40 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-[var(--portal-navy)] text-[var(--portal-surface)] shadow-lg" style={{ opacity: Math.min(1, dx / 110), transform: `translateY(-50%) scale(${0.6 + Math.min(1, dx / 110) * 0.4})` }}><ArrowLeft className="h-5 w-5" /></span>}
       <button type="button" onClick={onBack} className="-ml-2 inline-flex min-h-11 items-center gap-1 px-2 text-sm font-medium"><ArrowLeft className="h-4 w-4" /> Início</button>
-      <h1 className="mt-2 mb-6 font-serif text-3xl">{title}</h1>
+      <h1 className="mt-2 mb-6 font-display text-3xl">{title}</h1>
       <div className="space-y-3 [&>*]:animate-in [&>*]:fade-in [&>*]:slide-in-from-bottom-2 [&>*]:duration-500">{children}</div>
       <p className="pt-8 text-center text-[11px] text-[var(--portal-muted)] md:hidden">Deslize para a direita para voltar</p>
     </div>
@@ -205,7 +205,7 @@ function CalendarScreen({ range, setRange, onBack, onSubmit }: { range: [number 
       {nights > 0 ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 pt-2">
           <div className="rounded-3xl bg-[var(--portal-surface)] p-5 text-center">
-            <p className="font-serif text-2xl">{start} set → {end} set</p>
+            <p className="font-display text-2xl">{start} set → {end} set</p>
             <p className="mt-1 text-sm text-[var(--portal-muted)]">{nights} {nights === 1 ? "noite" : "noites"}</p>
           </div>
           <label className="block">
@@ -232,12 +232,12 @@ function StatusScreen({ icon, title, subtitle, status, period, celebrate, action
           {celebrate && <span className="absolute inset-0 animate-ping rounded-full bg-[var(--portal-success-soft)] [animation-iteration-count:2]" />}
           <Icon className="relative h-9 w-9" />
         </div>
-        <h2 className="mt-5 font-serif text-2xl">{title}{icon !== "x" ? " ✓" : ""}</h2>
+        <h2 className="mt-5 font-display text-2xl">{title}{icon !== "x" ? " ✓" : ""}</h2>
         {subtitle && <p className="mt-2 text-sm text-[var(--portal-muted)]">{subtitle}</p>}
       </div>
       {period && (
         <div className="rounded-3xl bg-[var(--portal-surface)] p-5 text-center">
-          <p className="font-serif text-xl">15 → 18 de setembro</p>
+          <p className="font-display text-xl">15 → 18 de setembro</p>
           <p className="mt-1 text-sm text-[var(--portal-muted)]">3 noites</p>
         </div>
       )}
@@ -256,7 +256,7 @@ function PixScreen({ copied, onCopy, onBack }: { copied: boolean; onCopy: () => 
       </div>
       <div className="rounded-3xl bg-[var(--portal-surface)] p-5 text-center">
         <p className="text-sm text-[var(--portal-muted)]">Taxa de limpeza</p>
-        <p className="mt-1 font-serif text-4xl">R$ 250,00</p>
+        <p className="mt-1 font-display text-4xl">R$ 250,00</p>
         <p className="mt-1 text-[11px] text-[var(--portal-muted)]">Valor de exemplo</p>
         <div className="animate-in fade-in zoom-in-90 duration-700 relative mx-auto mt-5 w-48">
           <DemoQr />
