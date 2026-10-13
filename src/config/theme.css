@@ -5549,6 +5549,10 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pf-others-title { margin: 0 0 2px; font-size: 16px; font-weight: 600; color: var(--portal-navy); }
 .pf-row { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 0 16px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-surface); font-size: 15px; color: var(--portal-navy); text-align: left; }
 .pf-row.is-on { border-color: var(--portal-navy); }
+.pf-row.is-off { opacity: 0.6; cursor: not-allowed; background: color-mix(in srgb, var(--portal-muted) 7%, var(--portal-surface)); }
+.pf-row.is-off .pf-box { border-color: var(--portal-border); background: var(--portal-surface); }
+.pf-row-label { display: flex; flex-direction: column; gap: 2px; }
+.pf-row-note { font-size: 12px; font-weight: 400; color: var(--portal-muted); }
 .pf-disclosure { border-top: 1px solid var(--portal-border); padding-top: 14px; }
 .pf-disclosure-btn { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 16px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-surface); font-size: 14px; color: var(--portal-navy); text-align: left; }
 .pf-disclosure-btn span { flex: 1; }
