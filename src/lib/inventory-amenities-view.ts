@@ -8,6 +8,11 @@ const aliases: Record<string, string> = {
   mesa: "mesa_de_jantar",
   mesa_jantar: "mesa_de_jantar",
   copos: "copos_de_vidro",
+  abridor_de_vinho: "abridor_de_vinho_e_garrafa",
+  forma_de_bolo: "forma_de_bolo_assadeira_retangular",
+  escorredor_de_pia: "escorredor_de_loucas",
+  pa_de_lixo: "pa_de_lixo_vassourinha",
+  ferro_de_passar: "ferro_de_passar_roupa",
 };
 
 export function amenityDisplayKey(name: string): string {
