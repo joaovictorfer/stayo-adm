@@ -7,13 +7,13 @@ const data = (items: RoomState["items"]): AmenitiesData => ({
 });
 
 describe("comodidades em grupo → inventário", () => {
-  const group = ROOM_SECTIONS.cozinha[0].items[0];
+  const group = ROOM_SECTIONS.cozinha.flatMap((s) => s.items).find((i) => i.key === "eletrodomesticos");
 
-  it("reúne os eletrodomésticos declarados pelo Victor num único grupo", () => {
-    expect(group.key).toBe("eletrodomesticos");
-    expect(group.label).toBe("Eletrodomésticos");
-    expect(group.subAnswers).toBe(true);
-    expect((group.sub ?? []).map((s) => s.label)).toEqual([
+  it("reúne os eletrodomésticos pedidos na ficha num único grupo", () => {
+    expect(group?.key).toBe("eletrodomesticos");
+    expect(group?.label).toBe("Eletrodomésticos");
+    expect(group?.subAnswers).toBe(true);
+    expect((group?.sub ?? []).map((s) => s.label)).toEqual([
       "Micro-ondas",
       "Forno convencional",
       "Airfryer",

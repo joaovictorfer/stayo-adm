@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Eletrodomésticos unificados numa linha só (Micro-ondas, Forno convencional, Airfryer, Torradeira, Cafeteira de cápsulas, Cafeteira elétrica, Chaleira elétrica, Geladeira, Frigobar, Adega, Purificador): conferir no navegador que as respostas existentes continuam visíveis e que nada foi gravado por engano.
 - [x] Agrupar Frigideira em Panelas e reunir instalações e móveis em Fornecedores; abertura dos grupos conferida na ficha real, sem alterar dados por ambiente.
 - [x] Mostrar fotos nos filhos de todos os grupos, com prioridade às referências do PDF e imagens geradas para os itens faltantes; 21 fotos conferidas na ficha real sem alterar respostas.
 - [x] Liberação de plataformas por imóvel na ficha: STAYO escolhe onde anunciar (ex.: só Airbnb), o que não for liberado aparece desativado para o proprietário e a escolha dele é podada; fluxo conferido no Admin e no Portal.
