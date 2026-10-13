@@ -43,7 +43,6 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { DeleteImplementationButton } from "./DeleteImplementationButton";
-import { PropertySuppliersPanel } from "../suppliers/PropertySuppliersPanel";
 import { GuidePanel } from "./guide/GuidePanel";
 import { GuidedInventoryPanel } from "./guide/GuidedInventoryPanel";
 import { supabase } from "@/integrations/supabase/client";
