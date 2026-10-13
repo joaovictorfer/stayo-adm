@@ -44,6 +44,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   const properties = useQuery({ ...propertiesListQuery(), enabled: Boolean(owner?.coreOwnerId) });
   const note = useQuery({ ...ownerNoteQuery(implementation.ownerId ?? ""), enabled: Boolean(implementation.ownerId) });
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<"ficha" | "gestao">("ficha");
   const [showSensitive, setShowSensitive] = useState(false);
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
@@ -99,13 +100,22 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   };
 
   return <div className="space-y-4 text-[var(--stayo-navy)]">
-    <header className="flex flex-wrap items-start justify-between gap-3">
-      <h2 className="font-[Outfit] text-2xl font-semibold">Proprietário</h2>
+    <header className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[var(--stayo-navy)] font-[Outfit] text-base font-semibold text-[var(--stayo-surface)]">{initials || "?"}</span>
+        <div className="min-w-0">
+          <h2 className="break-words font-[Outfit] text-2xl font-semibold leading-tight">{name}</h2>
+          <p className="text-sm text-[var(--stayo-ink-muted)]">{propertyName} · {implementation.ownerId ? "Proprietário principal" : "Sem vínculo cadastral"}</p>
+        </div>
+      </div>
       <Button size="sm" variant="outline" disabled={!owner} onClick={openEdit}><Pencil /> Editar dados</Button>
     </header>
+    <div role="tablist" aria-label="Seções do proprietário" className="inline-flex rounded-full border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-1">
+      {([["ficha", "Ficha cadastral"], ["gestao", "Gestão e vínculos"]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)} className={`min-h-10 rounded-full px-4 text-sm font-medium transition ${tab === key ? "bg-[var(--stayo-navy)] text-[var(--stayo-surface)]" : "text-[var(--stayo-ink-muted)] hover:text-[var(--stayo-navy)]"}`}>{label}</button>)}
+    </div>
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
       <div className="min-w-0 space-y-3">
-        <OwnerRegistrationSheet implementation={implementation} />
+        {tab === "ficha" ? <OwnerRegistrationSheet implementation={implementation} /> : <>
         <section className={panel} aria-label="Dados principais">
           <SectionTitle>Dados principais</SectionTitle>
           {ownerQueryResult.isError && <p role="alert" className="mb-3 text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void ownerQueryResult.refetch()}>Tentar novamente</Button></p>}
@@ -150,6 +160,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
           <p className="whitespace-pre-wrap break-words text-sm text-[var(--stayo-ink-muted)]">{note.isError ? "Não foi possível carregar as observações." : note.data?.content || "Nenhuma observação interna."}</p>
           <p className="mt-1 flex items-center gap-1 text-xs text-[var(--stayo-ink-muted)]"><LockKeyhole className="size-3" />Visível somente para a equipe STAYO.</p>
         </section>
+        </>}
       </div>
       <aside className="min-w-0 space-y-3" aria-label="Relacionamento do proprietário">
         {portal}
