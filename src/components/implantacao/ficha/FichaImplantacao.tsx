@@ -348,7 +348,7 @@ export function InventoryWorkspace({
   });
 
   const add = useMutation({
-    mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), room === "quarto2" ? "Quarto 2" : undefined),
+    mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room)),
     onSuccess: async () => {
       setNewName("");
       setAdding(false);
@@ -358,7 +358,7 @@ export function InventoryWorkspace({
   });
 
   const items = useMemo(() => (q.data ?? []).filter((i) => i.enabled), [q.data]);
-  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) })).filter((r) => r.items.length > 0 || r.id === room);
+  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) })).filter((r) => r.items.length > 0 || r.id === room || r.id.startsWith("quarto"));
   const roomItems = (rooms.find((r) => r.id === room)?.items ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order)
