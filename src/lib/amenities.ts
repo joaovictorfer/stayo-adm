@@ -80,7 +80,15 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
     {
       title: "Utensílios",
       items: [
-        "Abridor de vinho", "Forma de pizza", "Formas diversas", "Forma de bolo", "Panelas",
+        "Abridor de vinho", "Panelas",
+        {
+          key: "formas", label: "Formas", subAnswers: true,
+          sub: [
+            { key: "forma_de_pizza", label: "Forma de pizza" },
+            { key: "formas_diversas", label: "Formas diversas" },
+            { key: "forma_de_bolo", label: "Forma de bolo" },
+          ],
+        },
         {
           key: "copos", label: "Copos", subAnswers: true,
           sub: [
