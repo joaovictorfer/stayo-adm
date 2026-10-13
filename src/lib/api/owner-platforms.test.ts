@@ -15,7 +15,8 @@ describe("restrição de plataformas definida pela STAYO", () => {
 
   it("mantém Airbnb mesmo quando a lista liberada não o traz", () => {
     expect(isChannelAllowed("airbnb", ["booking"])).toBe(true);
-    expect(filterAllowedChannels(["airbnb", "booking"], ["booking"])).toEqual(["airbnb"]);
+    expect(filterAllowedChannels(["airbnb", "booking"], ["booking"])).toEqual(["airbnb", "booking"]);
+    expect(filterAllowedChannels(["airbnb", "decolar"], ["booking"])).toEqual(["airbnb"]);
   });
 
   it("remove canal que a STAYO não liberou", () => {
