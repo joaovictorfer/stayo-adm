@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, Pencil } from "lucide-react";
+import { Building2, Check, Copy, Globe, KeyRound, Landmark, Pencil, UserRound, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ownerOnboardingSubmissionQuery } from "../../../lib/api/queries";
@@ -41,14 +41,17 @@ function Field({ label, value, wide }: Line) {
   </button>;
 }
 
-function Section({ title, meta, lines, action, children, empty }: { title: string; meta?: ReactNode; lines?: Line[]; action?: ReactNode; children?: ReactNode; empty?: string }) {
+function Section({ title, meta, icon, lines, action, children, empty }: { title: string; meta?: ReactNode; icon: ReactNode; lines?: Line[]; action?: ReactNode; children?: ReactNode; empty?: string }) {
   const filled = (lines ?? []).filter(l => l.value);
   const [done, flash] = useFlash();
-  return <section aria-label={title} className="border-t border-[var(--stayo-border)] pt-4 first:border-t-0 first:pt-0">
-    <header className="mb-2 flex items-center justify-between gap-3 px-2">
-      <div className="flex min-w-0 items-baseline gap-2">
-        <h3 className="font-[Outfit] text-[15px] font-semibold text-[var(--stayo-navy)]">{title}</h3>
-        {meta && <span className="truncate text-xs text-[var(--stayo-ink-muted)]">{meta}</span>}
+  return <section aria-label={title} className="rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-2 pb-2 pt-3 shadow-[0_1px_2px_rgba(11,49,80,0.04)] sm:px-3">
+    <header className="mb-2 flex items-center justify-between gap-3 border-b border-[var(--stayo-border)] px-2 pb-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)] [&_svg]:size-4">{icon}</span>
+        <div className="min-w-0">
+          <h3 className="truncate font-[Outfit] text-[15px] font-semibold leading-tight text-[var(--stayo-navy)]">{title}</h3>
+          {meta && <p className="truncate text-xs text-[var(--stayo-ink-muted)]">{meta}</p>}
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {action}
@@ -65,11 +68,12 @@ function Section({ title, meta, lines, action, children, empty }: { title: strin
   </section>;
 }
 
-function Highlight({ label, value, hint, empty }: { label: string; value: string | null | undefined; hint?: string | null; empty: string }) {
+function Highlight({ icon, label, value, hint, empty }: { icon: ReactNode; label: string; value: string | null | undefined; hint?: string | null; empty: string }) {
   const [done, flash] = useFlash();
   return <button type="button" disabled={!value} onClick={() => { if (!value) return; void copy(value, `${label} copiado`); flash(); }}
-    className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-3.5 py-3 text-left transition hover:border-[var(--stayo-navy)] disabled:cursor-default disabled:hover:border-[var(--stayo-border)]">
-    <span className="min-w-0">
+    className="group flex w-full min-w-0 items-center gap-3 rounded-xl border border-[var(--stayo-border)] border-l-4 border-l-[var(--stayo-navy)] bg-[var(--stayo-surface)] px-3.5 py-3 text-left shadow-[0_1px_2px_rgba(11,49,80,0.04)] transition hover:border-[var(--stayo-navy)] disabled:cursor-default">
+    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--stayo-navy)] text-[var(--stayo-surface)] [&_svg]:size-4">{icon}</span>
+    <span className="min-w-0 flex-1">
       <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--stayo-ink-muted)]">{label}{hint ? ` · ${hint}` : ""}</span>
       <span className={`mt-0.5 block break-all text-[15px] ${value ? "font-semibold text-[var(--stayo-navy)]" : "text-[var(--stayo-ink-muted)]"}`}>{value || empty}</span>
     </span>
@@ -93,8 +97,8 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
   const status = !sub ? { text: "Aguardando proprietário", tone: "muted" } : sub.submittedAt ? { text: `Enviada em ${new Date(sub.submittedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, tone: "ok" } : { text: "Em preenchimento", tone: "pending" };
   const property = [implementation.condominiumName, implementation.unit && `Apto ${implementation.unit}`].filter(Boolean).join(" · ");
 
-  return <div className="overflow-hidden rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)]">
-    <header className="flex flex-wrap items-center gap-3 border-b border-[var(--stayo-border)] px-4 py-3.5 sm:px-5">
+  return <div className="space-y-3">
+    <header className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-4 py-3.5 sm:px-5">
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--stayo-navy)] font-[Outfit] text-sm font-semibold text-[var(--stayo-surface)]">{initials || "?"}</span>
       <div className="min-w-0 flex-1">
         <h2 className="truncate font-[Outfit] text-lg font-semibold leading-tight text-[var(--stayo-navy)]">{name}</h2>
@@ -104,27 +108,27 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
       {onEditOwner && <button type="button" onClick={onEditOwner} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--stayo-border)] px-2.5 py-1.5 text-xs font-medium text-[var(--stayo-navy)] transition hover:border-[var(--stayo-navy)]"><Pencil className="size-3.5" />Editar</button>}
     </header>
 
-    <div className="grid gap-2.5 bg-[var(--ficha-icon-bg)]/40 px-4 py-3.5 sm:grid-cols-2 sm:px-5">
+    <div className="grid gap-3 sm:grid-cols-2">
       <div className="min-w-0 space-y-1.5">
-        <Highlight label="E-mail da conta Airbnb" value={platforms?.airbnb_account_email} empty="Não informado" />
+        <Highlight icon={<Globe />} label="E-mail da conta Airbnb" value={platforms?.airbnb_account_email} empty="Não informado" />
         {channels.length > 0 && <div className="flex flex-wrap gap-1 px-0.5">{channels.map(c => <span key={c} className="rounded-full border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-2 py-0.5 text-[11px] text-[var(--stayo-ink-muted)]">{CHANNEL_LABELS[c]}</span>)}</div>}
       </div>
-      <Highlight label="Chave Pix" hint={sub?.pixKey ? pixLabel[sub.pixType] : null} value={sub?.pixKey} empty="Não informada" />
+      <Highlight icon={<KeyRound />} label="Chave Pix" hint={sub?.pixKey ? pixLabel[sub.pixType] : null} value={sub?.pixKey} empty="Não informada" />
     </div>
 
-    <div className="space-y-4 px-2 py-4 sm:px-3">
-      {people.length === 0
-        ? <Section title="Proponentes" lines={[]} empty="Nenhum proponente informado." />
-        : people.map((p, i) => <Section key={i} title={p.fullName || `Proponente ${i + 1}`} meta={roleLabel[p.role]} lines={[
-            { label: "CPF/CNPJ", value: doc(p.document) },
-            { label: "Telefone", value: phone(p.phone) },
-            { label: "E-mail", value: p.email },
-            { label: "Nome completo", value: p.fullName },
-            { label: "Estado civil", value: p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null },
-            { label: "Profissão", value: p.profession },
-          ]} />)}
+    {people.length === 0
+      ? <Section icon={<UserRound />} title="Proponentes" lines={[]} empty="Nenhum proponente informado." />
+      : people.map((p, i) => <Section key={i} icon={i === 0 ? <UserRound /> : <Users />} title={p.fullName || `Proponente ${i + 1}`} meta={roleLabel[p.role]} lines={[
+          { label: "CPF/CNPJ", value: doc(p.document) },
+          { label: "Telefone", value: phone(p.phone) },
+          { label: "E-mail", value: p.email },
+          { label: "Nome completo", value: p.fullName },
+          { label: "Estado civil", value: p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null },
+          { label: "Profissão", value: p.profession },
+        ]} />)}
 
-      <Section title="Imóvel" meta={property || undefined} lines={[
+    <div className="grid items-start gap-3 xl:grid-cols-2">
+      <Section icon={<Building2 />} title="Imóvel" meta={property || undefined} lines={[
         { label: "Condomínio", value: implementation.condominiumName },
         { label: "Apartamento", value: implementation.unit },
         { label: "Box / vagas", value: [details?.parkingBox && `Box ${details.parkingBox}`, details?.parkingSpots != null && `${details.parkingSpots} vaga(s)`].filter(Boolean).join(" · ") || null },
@@ -133,7 +137,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
         { label: "Banheiros / lavabos", value: [num(details?.bathrooms), num(details?.lavatories)].some(Boolean) ? `${details?.bathrooms ?? 0} / ${details?.lavatories ?? 0}` : null },
       ]} />
 
-      <Section title="Dados bancários" empty="Recebimentos ainda não informados." lines={sub ? [
+      <Section icon={<Landmark />} title="Dados bancários" meta="Recebimento dos repasses" empty="Recebimentos ainda não informados." lines={sub ? [
         { label: "Banco", value: sub.bankName },
         { label: "Agência", value: sub.bankBranch },
         { label: "Conta", value: sub.accountNumber },
