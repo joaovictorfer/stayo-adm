@@ -230,7 +230,13 @@ export function AmenitiesPanel({
         }
         for (const def of allDefs) {
           const isGroup = !!def.subAnswers && !!def.sub;
-          const match = isGroup ? null : matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), def.label);
+          const free = inventoryItems.filter((item) => !used.has(item.id));
+          // Espelho de sincronização (categoria "Comodidades") entra só como último recurso,
+          // quando o item real do guia não existe — mantém a linha unificada com foto e detalhes.
+          const match = isGroup
+            ? null
+            : matchingInventoryItem(free.filter((item) => item.category !== "Comodidades"), def.label) ??
+              matchingInventoryItem(free.filter((item) => item.category === "Comodidades" && item.enabled), def.label);
           const install = installs.find((entry) => amenityDisplayKey(entry.label) === amenityDisplayKey(def.label));
           const groupSubs: ReactNode[] = [];
           let groupItems = room.items;
@@ -270,7 +276,7 @@ export function AmenitiesPanel({
           );
           if (match && !install && !isGroup) {
             used.add(match.id);
-            rows.push(renderItem(match, fields, !!install));
+            rows.push(renderItem(match.category === "Comodidades" ? { ...match, name: def.label } : match, fields, !!install));
           } else {
             if (match) used.add(match.id);
             const displayedItems = match && room.items[def.key]?.on === undefined && match.inventory_answer
