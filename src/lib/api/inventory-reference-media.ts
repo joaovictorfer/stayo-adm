@@ -16,7 +16,8 @@ export function inventoryReferenceFor(name: string, references?: Record<string, 
     souplast: "jogo_americano_ou_sousplat",
     sousplat: "jogo_americano_ou_sousplat",
   };
-  const reference = references?.[key] ?? references?.[referenceAliases[key]];
+  const alias = referenceAliases[key];
+  const reference = references?.[key] ?? (alias ? references?.[alias] : undefined);
   const url = reference?.url ?? generatedInventoryImage(name);
   return {
     description: reference?.description ?? null,

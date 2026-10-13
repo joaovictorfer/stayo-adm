@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Mostrar fotos nos filhos de todos os grupos, com prioridade às referências do PDF e imagens geradas para os itens faltantes; conferir na ficha real.
+- [x] Mostrar fotos nos filhos de todos os grupos, com prioridade às referências do PDF e imagens geradas para os itens faltantes; 21 fotos conferidas na ficha real sem alterar respostas.
 - [x] Liberação de plataformas por imóvel na ficha: STAYO escolhe onde anunciar (ex.: só Airbnb), o que não for liberado aparece desativado para o proprietário e a escolha dele é podada; fluxo conferido no Admin e no Portal.
 - [x] Corrigir consultas repetidas de sessão/perfil e recarregamentos desnecessários; medição autenticada: implantação 7,7s → 3,4s, retornos sem consultas repetidas; ficha e saída da conta conferidas.
 - [x] Microinterações no menu, ações e painéis administrativos; navegação autenticada e movimento reduzido conferidos.
