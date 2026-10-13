@@ -55,7 +55,7 @@ function Row({ label, value }: Line) {
 }
 
 /** Ficha de cadastro do proprietário em linhas copiáveis (somente leitura, equipe STAYO). */
-export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implementation: ImplementationProject; onEditOwner?: () => void }) {
+export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implementation: ImplementationProject; onEditOwner?: (() => void) | undefined }) {
   const sub = useQuery(ownerOnboardingSubmissionQuery(implementation.id)).data;
   const platforms = useQuery({ queryKey: ["implementation-platforms", implementation.id], queryFn: () => getImplementationPlatforms(implementation.id) }).data;
   const details = useQuery({ queryKey: ["property-details", implementation.id], queryFn: () => getPropertyDetails(implementation.id) }).data;
