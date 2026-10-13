@@ -220,6 +220,7 @@ export function AmenitiesPanel({
       const used = new Set<string>();
       const rows: ReactNode[] = [];
       for (const room of rs) {
+        const supplierRows: ReactNode[] = [];
         const definitions = ROOM_SECTIONS[room.kind].flatMap((section) => section.items);
         const installs = hasInstall(room.kind) ? INSTALL_ROWS : [];
         const allDefs = [...definitions];
@@ -285,11 +286,26 @@ export function AmenitiesPanel({
             if (match) used.add(match.id);
             const displayedItems = match && room.items[def.key]?.on === undefined && match.inventory_answer
               ? { ...room.items, [def.key]: { ...room.items[def.key], on: match.inventory_answer === "tenho" } } : room.items;
-            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={isGroup ? groupItems : displayedItems} setItem={(key, patch) => {
+            const row = <ItemRow key={`${room.id}:${def.key}`} def={def} items={isGroup ? groupItems : displayedItems} setItem={(key, patch) => {
               if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
               else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
-            }} unified subNodes={groupSubs.length ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
+            }} unified subNodes={groupSubs.length ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
+            if (install) supplierRows.push(row);
+            else rows.push(row);
           }
+        }
+        if (supplierRows.length) {
+          rows.push(
+            <li key={`${room.id}:suppliers`} className="list-none border-b border-border py-2">
+              <details className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                  <span>Fornecedores{rs.length > 1 ? ` · ${room.name}` : ""}</span>
+                  <ChevronDown className="size-4 text-muted-foreground transition-transform duration-100 group-open:rotate-180 motion-reduce:transition-none" />
+                </summary>
+                <ul className="ml-2 border-l-4 border-border pl-3">{supplierRows}</ul>
+              </details>
+            </li>,
+          );
         }
         for (const custom of room.custom) {
           const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), custom.name);
