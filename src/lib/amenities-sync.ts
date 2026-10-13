@@ -49,6 +49,8 @@ export function buildSyncRows(data: AmenitiesData): SyncRow[] {
       if (!s && !parentOn) continue;
       if (s) push(`${prefix}:${def.key}`, kind, label, def.label, s, def);
       for (const sub of def.sub ?? []) {
+        // Subitem com o mesmo rótulo do grupo (ex.: "Copos" dentro de "Copos") não cria item próprio.
+        if (sub.label === def.label) continue;
         const ss = items[`${def.key}.${sub.key}`] ?? items[sub.key];
         if (ss) push(`${prefix}:${def.key}.${sub.key}`, kind, label, sub.label, { ...ss, on: !!ss.on && !!s?.on }, sub);
       }
