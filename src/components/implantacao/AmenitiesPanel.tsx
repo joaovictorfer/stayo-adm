@@ -253,11 +253,15 @@ export function AmenitiesPanel({
                 groupSubs.push(renderItem(cm));
               } else {
                 const st = groupItems[child.key] ?? {};
+                const media = inventoryReferenceFor(child.label, mediaQuery.data);
                 const setChild = (on: boolean) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key], on } } }));
                 groupSubs.push(
-                  <div key={`${room.id}:${def.key}:${child.key}`} className="flex items-center justify-between gap-2 py-0.5" data-testid="amenity-sub-row">
-                    <span className="text-sm text-foreground">{child.label}</span>
-                    <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${child.label}`}>
+                  <div key={`${room.id}:${def.key}:${child.key}`} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
+                    <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
+                      {media.url ? <img src={media.url} alt={child.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
+                    </span>
+                    <span className="min-w-0 text-sm text-foreground">{child.label}</span>
+                    <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${child.label}`}>
                       <SubBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
                       <SubBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
                     </div>

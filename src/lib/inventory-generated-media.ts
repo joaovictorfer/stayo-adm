@@ -35,9 +35,28 @@ import image33 from "@/assets/inventory-generated/travesseiros.jpg";
 import image34 from "@/assets/inventory-generated/utensilios-de-churrasco.jpg";
 import image35 from "@/assets/inventory-generated/varal.jpg";
 import image36 from "@/assets/inventory-generated/vassoura.jpg";
+import plates from "@/assets/inventory-generated/pratos.jpg";
+import saucer from "@/assets/inventory-generated/pires.jpg";
+import childrenCutlery from "@/assets/inventory-generated/talheres-infantis.jpg";
+import barbecueKnife from "@/assets/inventory-generated/faca-para-churrasco.jpg";
+import barbecueBoard from "@/assets/inventory-generated/tabua-de-churrasco.jpg";
+import doubleSkewer from "@/assets/inventory-generated/espeto-duplo.jpg";
+import singleSkewer from "@/assets/inventory-generated/espeto-simples.jpg";
+import sideSupport from "@/assets/inventory-generated/suporte-lateral.jpg";
 import { amenityDisplayKey } from "./inventory-amenities-view";
 
 const images: Record<string, string> = {
+  prato_de_sobremesa: plates,
+  prato_fundo: plates,
+  prato_raso: plates,
+  pires: saucer,
+  talheres_infantis: childrenCutlery,
+  faca_para_churrasco: barbecueKnife,
+  tabua_de_churrasco: barbecueBoard,
+  espeto_duplo: doubleSkewer,
+  espeto_simples: singleSkewer,
+  suporte_lateral: sideSupport,
+  lampada: image23,
   "acessorios_da_churrasqueira": image0,
   "aquecimento_da_agua": image1,
   "aquecimento": image2,
