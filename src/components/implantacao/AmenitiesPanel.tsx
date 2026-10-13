@@ -138,7 +138,10 @@ export function AmenitiesPanel({
         .upsert({ implementation_id: implementationId, bathrooms: next.bathrooms, lavatories: next.lavatories }),
     ]);
     if (p1.error || p2.error) setSave("error");
-    else void qc.invalidateQueries({ queryKey: ["implementation", implementationId] });
+    else {
+      void qc.invalidateQueries({ queryKey: ["implementation", implementationId] });
+      void qc.invalidateQueries({ queryKey: ["implementation-bedrooms", implementationId] });
+    }
   };
 
   if (q.isPending || !data)
