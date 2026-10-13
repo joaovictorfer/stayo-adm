@@ -257,7 +257,7 @@ export function AmenitiesPanel({
                 const media = inventoryReferenceFor(child.label, mediaQuery.data);
                 const setChild = (on: boolean) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key], on } } }));
                 groupSubs.push(
-                  <div key={`${room.id}:${def.key}:${child.key}`} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
+                  <li key={`${room.id}:${def.key}:${child.key}`} className="list-none grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
                     <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
                       {media.url ? <img src={media.url} alt={child.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
                     </span>
@@ -266,7 +266,7 @@ export function AmenitiesPanel({
                       <SubBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
                       <SubBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
                     </div>
-                  </div>,
+                  </li>,
                 );
               }
             }
@@ -632,10 +632,10 @@ function ItemRow({
         </DropdownMenu>
       </div>
       {subNodes && st.on !== false && (
-        <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</p>
+        <ul className="col-span-full flex list-none flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
+          <li className="list-none text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</li>
           {subNodes}
-        </div>
+        </ul>
       )}
       <Sheet open={details} onOpenChange={setDetails}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
