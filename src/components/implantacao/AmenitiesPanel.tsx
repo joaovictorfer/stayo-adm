@@ -712,6 +712,20 @@ function ItemRow({
   );
 }
 
+function SubBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClick: () => void }) {
+  const yes = kind === "yes";
+  const style = on
+    ? yes
+      ? { backgroundColor: "var(--ficha-icon-fg)", color: "var(--admin-surface, #fff)", borderColor: "var(--ficha-icon-fg)" }
+      : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
+    : { backgroundColor: "var(--admin-surface, #fff)", borderColor: "var(--stayo-border)", color: "var(--stayo-navy)" };
+  return (
+    <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={`h-8 gap-1 rounded-md px-2.5 text-xs font-medium${on ? " admin-answer-pop" : ""}`} style={style}>
+      {yes ? <Check className="size-3.5" /> : <X className="size-3.5" />} {yes ? "Sim" : "Não"}
+    </Button>
+  );
+}
+
 function summary(st: ItemState, def: ItemDef) {
   return [!def.options && st.qty ? `${st.qty} un.` : "", st.brand, st.notes ? "obs." : ""].filter(Boolean).join(" · ");
 }
