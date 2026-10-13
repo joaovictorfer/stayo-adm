@@ -628,11 +628,9 @@ function ImplementationDetailPage() {
                   implementationId={implementation.id}
                   checklistPending={pendingItems.length}
                   onOpenPortal={() => goSection("portal")}
-                  top={
-                    <Collapsible title="Comodidades e itens do imóvel" summary={<AmenitiesSummary implementationId={implementation.id} />} defaultOpen>
-                      <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} />
-                    </Collapsible>
-                  }
+                  wrapInventory={(inventory) => (
+                    <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} render={inventory} />
+                  )}
                   checklist={
                     <Checklist
                       implementationId={implementation.id}
