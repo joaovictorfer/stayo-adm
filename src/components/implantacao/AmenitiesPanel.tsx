@@ -884,9 +884,9 @@ function CompositionBar({ value, onChange }: { value: Composition; onChange: (c:
     ["lavatories", "Lavabos", 0],
   ];
   return (
-    <div className="grid grid-cols-3 gap-2 rounded-[var(--radius-card)] border bg-white p-3" style={{ borderColor: "var(--stayo-border)" }}>
+    <div className="grid gap-2 rounded-[var(--radius-card)] border bg-white p-3 sm:grid-cols-3" style={{ borderColor: "var(--stayo-border)" }}>
       {fields.map(([k, label, min]) => (
-        <div key={k} className="flex flex-col items-center gap-1">
+        <div key={k} className="flex items-center justify-between gap-2 sm:flex-col sm:items-center sm:gap-1">
           <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
           <div className="flex items-center gap-0.5">
             <Button
