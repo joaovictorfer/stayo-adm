@@ -68,11 +68,12 @@ function Section({ title, meta, icon, lines, action, children, empty }: { title:
   </section>;
 }
 
-function Highlight({ label, value, hint, empty }: { label: string; value: string | null | undefined; hint?: string | null; empty: string }) {
+function Highlight({ icon, label, value, hint, empty }: { icon: ReactNode; label: string; value: string | null | undefined; hint?: string | null; empty: string }) {
   const [done, flash] = useFlash();
   return <button type="button" disabled={!value} onClick={() => { if (!value) return; void copy(value, `${label} copiado`); flash(); }}
-    className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-3.5 py-3 text-left transition hover:border-[var(--stayo-navy)] disabled:cursor-default disabled:hover:border-[var(--stayo-border)]">
-    <span className="min-w-0">
+    className="group flex w-full min-w-0 items-center gap-3 rounded-xl border border-[var(--stayo-border)] border-l-4 border-l-[var(--stayo-navy)] bg-[var(--stayo-surface)] px-3.5 py-3 text-left shadow-[0_1px_2px_rgba(11,49,80,0.04)] transition hover:border-[var(--stayo-navy)] disabled:cursor-default">
+    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[var(--stayo-navy)] text-[var(--stayo-surface)] [&_svg]:size-4">{icon}</span>
+    <span className="min-w-0 flex-1">
       <span className="block text-[11px] font-medium uppercase tracking-wide text-[var(--stayo-ink-muted)]">{label}{hint ? ` · ${hint}` : ""}</span>
       <span className={`mt-0.5 block break-all text-[15px] ${value ? "font-semibold text-[var(--stayo-navy)]" : "text-[var(--stayo-ink-muted)]"}`}>{value || empty}</span>
     </span>
