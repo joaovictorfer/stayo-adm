@@ -50,6 +50,8 @@ export interface RoomState {
   /** Quarto com banheiro privativo. */
   suite?: boolean;
   bath?: BathState;
+  /** Marca e instalador de ar, aquecimento e móveis. */
+  install?: RoomInstall;
 }
 
 export interface AmenitiesData {
@@ -225,4 +227,46 @@ export function roomProgress(room: RoomState) {
     Object.values(items).filter((i) => i.on).length + custom.length;
   const bath = room.suite && room.bath ? count(room.bath.items, room.bath.custom) : 0;
   return { marked: count(room.items, room.custom) + bath, total: allDefs(room.kind).length + room.custom.length };
+}
+
+// ---- Equipamentos e instalações por ambiente (marca + instalador) ----
+export type InstallKey = "ar" | "aquecimento" | "moveis";
+export type InstallField = "brand" | "installer";
+export const INSTALL_ROWS: Array<{ key: InstallKey; label: string }> = [
+  { key: "ar", label: "Ar-condicionado" },
+  { key: "aquecimento", label: "Aquecimento" },
+  { key: "moveis", label: "Móveis" },
+];
+export interface InstallState {
+  brand?: string;
+  installer?: string;
+  /** Campos ajustados à mão neste ambiente ("brand" | "installer"); não recebem replicação. */
+  manual?: InstallField[];
+}
+export type RoomInstall = Partial<Record<InstallKey, InstallState>>;
+
+export const hasInstall = (kind: RoomKind) => kind !== "geral";
+
+export function installValue(room: RoomState, key: InstallKey, field: InstallField) {
+  const v = room.install?.[key]?.[field];
+  if (v !== undefined) return v;
+  return key === "moveis" && field === "installer" ? room.furnitureSupplier ?? "" : "";
+}
+
+/**
+ * Grava o campo no ambiente editado (marcado como manual) e replica para os
+ * demais ambientes que ainda não tiveram esse campo ajustado manualmente.
+ */
+export function setInstall(rooms: RoomState[], roomId: string, key: InstallKey, field: InstallField, value: string): RoomState[] {
+  return rooms.map((r) => {
+    if (!hasInstall(r.kind)) return r;
+    const cur = (r.install ?? {}) as RoomInstall;
+    const st = cur[key] ?? {};
+    const isSource = r.id === roomId;
+    if (!isSource && st.manual?.includes(field)) return r;
+    const manual = isSource ? Array.from(new Set([...(st.manual ?? []), field])) : st.manual;
+    const next = { ...r, install: { ...cur, [key]: { ...st, [field]: value, manual } } } as RoomState;
+    if (key === "moveis" && field === "installer") next.furnitureSupplier = value || null;
+    return next;
+  });
 }

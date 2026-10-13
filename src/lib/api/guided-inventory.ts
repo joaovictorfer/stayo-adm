@@ -258,3 +258,50 @@ export async function syncAmenitiesToInventory(
     if (error) throw error;
   }
 }
+
+/**
+ * Replica os itens do Quarto 1 para os demais quartos declarados (categoria "Quarto N").
+ * Idempotente: só cria o que ainda não existe pelo nome naquele quarto. Respostas não são copiadas.
+ */
+export async function replicateBedroomItems(implementationId: string, bedrooms: number) {
+  if (bedrooms < 2) return 0;
+  const { data, error } = await supabase
+    .from("implementation_guide_items")
+    .select("room, category, name, tip, description, quantity_text, image_path, purchase_url, recommended_quantity, classification, display_order, catalog_item_id, base_catalog_item_id, enabled")
+    .eq("implementation_id", implementationId)
+    .eq("guide_type", INVENTORY_GUIDE_TYPE)
+    .eq("room", "quartos");
+  if (error) throw error;
+  const rows = data ?? [];
+  const num = (c: string | null) => Number(/^Quarto (\d+)$/.exec(c ?? "")?.[1] ?? 1);
+  const base = rows.filter((r) => r.enabled && num(r.category) === 1);
+  const inserts = [];
+  for (let k = 2; k <= bedrooms; k++) {
+    const have = new Set(rows.filter((r) => num(r.category) === k).map((r) => r.name.trim().toLowerCase()));
+    for (const r of base) {
+      if (have.has(r.name.trim().toLowerCase())) continue;
+      inserts.push({
+        implementation_id: implementationId,
+        guide_type: INVENTORY_GUIDE_TYPE,
+        room: "quartos",
+        category: `Quarto ${k}`,
+        name: r.name,
+        tip: r.tip,
+        description: r.description,
+        quantity_text: r.quantity_text,
+        image_path: r.image_path,
+        purchase_url: r.purchase_url,
+        recommended_quantity: r.recommended_quantity,
+        classification: r.classification,
+        display_order: r.display_order,
+        catalog_item_id: null,
+        base_catalog_item_id: r.catalog_item_id ?? r.base_catalog_item_id ?? null,
+        inventory_source: "equipe" as const,
+      });
+    }
+  }
+  if (!inserts.length) return 0;
+  const { error: e2 } = await supabase.from("implementation_guide_items").insert(inserts);
+  if (e2) throw e2;
+  return inserts.length;
+}

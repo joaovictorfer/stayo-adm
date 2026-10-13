@@ -628,6 +628,11 @@ function ImplementationDetailPage() {
                   implementationId={implementation.id}
                   checklistPending={pendingItems.length}
                   onOpenPortal={() => goSection("portal")}
+                  top={
+                    <Collapsible title="Comodidades e itens do imóvel" summary={<AmenitiesSummary implementationId={implementation.id} />} defaultOpen>
+                      <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} />
+                    </Collapsible>
+                  }
                   checklist={
                     <Checklist
                       implementationId={implementation.id}
@@ -642,14 +647,6 @@ function ImplementationDetailPage() {
                     <InspectionsPanel implementationId={implementation.id} />
                     <DomainHub
                       rows={[
-                    {
-                      id: "comodidades",
-                      label: "Comodidades e itens do imóvel",
-                      summary: <AmenitiesSummary implementationId={implementation.id} />,
-                      content: (
-                        <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} />
-                      ),
-                    },
                     {
                       id: "fornecedores",
                       label: "Fornecedores e instalações",
