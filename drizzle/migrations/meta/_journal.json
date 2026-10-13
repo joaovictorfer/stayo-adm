@@ -379,6 +379,13 @@
       "when": 1791316468430,
       "tag": "0053_owner_onboarding_resubmit_until_review",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1791913461743,
+      "tag": "0054_guide_pdf_images_and_unified_inventory",
+      "breakpoints": true
     }
   ]
 }
