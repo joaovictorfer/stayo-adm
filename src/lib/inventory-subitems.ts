@@ -25,7 +25,7 @@ export type InventorySubAnswers = Record<string, "tenho" | "nao_tenho" | "nao_ap
 export function subAnswerFor(
   subanswers: InventorySubAnswers | null | undefined,
   key: string,
-): "tenho" | "nao_tenho" | null {
+): InventorySubAnswers[string] {
   return subanswers?.[key] ?? null;
 }
 
