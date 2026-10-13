@@ -52,24 +52,29 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
 
-const ROOMS: Array<{ id: string; label: string }> = [
+const QUARTO_CATEGORY = /^Quarto (\d+)$/;
+const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
   { id: "cozinha", label: "Cozinha" },
   { id: "sala", label: "Sala" },
-  { id: "quarto1", label: "Quarto 1" },
-  { id: "quarto2", label: "Quarto 2" },
+  ...Array.from({ length: Math.max(1, bedrooms) }, (_, i) => ({ id: `quarto${i + 1}`, label: `Quarto ${i + 1}` })),
   { id: "banheiro", label: "Banheiro" },
   { id: "lavanderia", label: "Lavanderia" },
   { id: "outros", label: "Outros" },
 ];
 const inRoom = (i: InventorySnapshotItem, r: string) => {
-  if (r === "quarto1") return i.room === "quartos" && i.category !== "Quarto 2";
-  if (r === "quarto2") return i.room === "quartos" && i.category === "Quarto 2";
+  if (r.startsWith("quarto")) {
+    if (i.room !== "quartos") return false;
+    const m = i.category ? QUARTO_CATEGORY.exec(i.category) : null;
+    return (m ? Number(m[1]) : 1) === Number(r.slice(6));
+  }
   if (r === "banheiro") return i.room === "banheiros";
   if (r === "outros") return i.room === "outros" || i.room === "externa";
   return i.room === r;
 };
 const persisted = (r: string): InventoryRoom =>
-  r === "quarto1" || r === "quarto2" ? "quartos" : r === "banheiro" ? "banheiros" : (r as InventoryRoom);
+  r.startsWith("quarto") ? "quartos" : r === "banheiro" ? "banheiros" : (r as InventoryRoom);
+const quartoCategory = (r: string) =>
+  r.startsWith("quarto") && r !== "quarto1" ? `Quarto ${r.slice(6)}` : undefined;
 
 type Extra = { image_path: string | null; purchase_url: string | null; description: string | null; recommended_quantity: number | null };
 
@@ -281,6 +286,20 @@ export function InventoryWorkspace({
   const query = guidedInventoryQuery(implementationId);
   const q = useQuery(query);
   const [room, setRoom] = useState("cozinha");
+  const bedroomsQ = useQuery({
+    queryKey: ["implementation-bedrooms", implementationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("implementation_projects")
+        .select("bedrooms")
+        .eq("id", implementationId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { bedrooms: number | null } | null)?.bedrooms ?? null;
+    },
+    staleTime: 60_000,
+  });
+  const ROOMS = roomTabsFor(bedroomsQ.data ?? 2);
   const [onlyOpen, setOnlyOpen] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
@@ -329,7 +348,7 @@ export function InventoryWorkspace({
   });
 
   const add = useMutation({
-    mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), room === "quarto2" ? "Quarto 2" : undefined),
+    mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room)),
     onSuccess: async () => {
       setNewName("");
       setAdding(false);
@@ -339,7 +358,7 @@ export function InventoryWorkspace({
   });
 
   const items = useMemo(() => (q.data ?? []).filter((i) => i.enabled), [q.data]);
-  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) })).filter((r) => r.items.length > 0 || r.id === room);
+  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) })).filter((r) => r.items.length > 0 || r.id === room || r.id.startsWith("quarto"));
   const roomItems = (rooms.find((r) => r.id === room)?.items ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order)
