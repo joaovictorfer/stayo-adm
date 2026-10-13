@@ -276,7 +276,7 @@ export function AmenitiesPanel({
           );
           if (match && !install && !isGroup) {
             used.add(match.id);
-            rows.push(renderItem(match, fields, !!install));
+            rows.push(renderItem(match.category === "Comodidades" ? { ...match, name: def.label } : match, fields, !!install));
           } else {
             if (match) used.add(match.id);
             const displayedItems = match && room.items[def.key]?.on === undefined && match.inventory_answer
