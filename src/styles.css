@@ -219,3 +219,70 @@
 @media (prefers-reduced-motion: reduce) {
   .owner-contract-registration *, .owner-contract-registration *::before, .owner-contract-registration *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Subtle motion scoped to the administrative workspace. */
+.stayo-admin-theme {
+  --admin-motion-fast: 140ms;
+  --admin-motion-normal: 220ms;
+  --admin-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --admin-focus-shadow: 0 0 0 3px color-mix(in oklab, var(--admin-primary) 16%, transparent);
+}
+.stayo-admin-theme .stayo-button, .admin-sidebar-nav a {
+  transition: background-color var(--admin-motion-fast) ease, color var(--admin-motion-fast) ease,
+    border-color var(--admin-motion-fast) ease, box-shadow var(--admin-motion-fast) ease,
+    transform var(--admin-motion-fast) var(--admin-motion-ease);
+}
+.stayo-admin-theme .stayo-button:active:not(:disabled):not([aria-disabled="true"]),
+.admin-sidebar-nav a:active { transform: scale(0.98); }
+.admin-sidebar-nav :is(a, button):focus-visible {
+  outline: 2px solid var(--admin-sidebar-text);
+  outline-offset: -2px;
+}
+.admin-sidebar-nav :is(a, button) > svg {
+  transition: transform var(--admin-motion-normal) var(--admin-motion-ease);
+}
+.admin-submenu {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows var(--admin-motion-normal) var(--admin-motion-ease),
+    opacity var(--admin-motion-fast) ease, visibility var(--admin-motion-normal);
+}
+.admin-submenu[data-expanded="true"] { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
+.admin-submenu-inner { min-height: 0; overflow: hidden; }
+.admin-menu-backdrop { animation: admin-fade-in var(--admin-motion-normal) ease both; }
+.admin-menu-panel { animation: admin-menu-in 280ms var(--admin-motion-ease) both; }
+.admin-page-enter { animation: admin-page-in var(--admin-motion-normal) var(--admin-motion-ease) both; }
+.stayo-admin-theme :is(.admin-header-search, .admin-search-field) {
+  transition: border-color var(--admin-motion-fast) ease, box-shadow var(--admin-motion-fast) ease;
+}
+.stayo-admin-theme :is(.admin-header-search, .admin-search-field):focus-within {
+  border-color: var(--admin-primary);
+  box-shadow: var(--admin-focus-shadow);
+}
+.stayo-admin-theme :is(.admin-data-row, .reservation-card) {
+  transition: background-color var(--admin-motion-fast) ease, border-color var(--admin-motion-fast) ease;
+}
+.stayo-admin-theme .admin-inline-link svg { transition: transform var(--admin-motion-fast) var(--admin-motion-ease); }
+@media (hover: hover) and (pointer: fine) {
+  .admin-sidebar-nav :is(a, button):hover > svg:first-child { transform: translateX(2px); }
+  .stayo-admin-theme :is(a, button):hover .admin-inline-link svg { transform: translateX(3px); }
+  .stayo-admin-theme :is(a, button).admin-data-row:hover,
+  .stayo-admin-theme :is(a, button).reservation-card:hover {
+    background-color: var(--admin-info-soft);
+    border-color: var(--admin-primary);
+  }
+}
+@keyframes admin-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes admin-menu-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes admin-page-in { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .stayo-admin-theme *, .stayo-admin-theme *::before, .stayo-admin-theme *::after {
+    animation: none !important; transition: none !important; scroll-behavior: auto !important;
+  }
+  .stayo-admin-theme :is(.stayo-button, a, button):active,
+  .stayo-admin-theme :is(a, button):hover > svg,
+  .stayo-admin-theme :is(a, button):hover .admin-inline-link svg,
+  .stayo-admin-theme .portfolio-card:hover { transform: none !important; }
+}

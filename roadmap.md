@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Microinterações no menu, ações e painéis administrativos; conferir movimento reduzido e navegação.
 - [x] Recuperar referências do PDF em todas as linhas e completar imagens ausentes com IA.
 - [x] Ar-condicionado, aquecimento e móveis abrem marca e instalador ao marcar Sim.
 - [x] Unificar visualmente comodidades e instalações com as linhas do inventário; detalhes pelo menu, sem alterar banco.
