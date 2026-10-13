@@ -15,7 +15,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { AdminShell } from "../components/layout/AdminShell";
 import { Toaster } from "../components/ui/sonner";
-import { useAuthSession } from "../lib/auth/session";
+import { AuthSessionProvider, useAuthSession } from "../lib/auth/session";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -127,6 +127,15 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthSessionProvider><RootContent /></AuthSessionProvider>
+    </QueryClientProvider>
+  );
+}
+
+function RootContent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   /** Rotas /portal/* são páginas públicas (link do proprietário) — sem o shell administrativo. */

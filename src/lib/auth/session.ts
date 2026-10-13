@@ -13,7 +13,8 @@
  */
 
 import type { Session } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "../api/supabase-client";
 import type { AdminProfile } from "../../types/admin";
@@ -123,7 +124,11 @@ export function requiresLoginGate(state: AuthState): boolean {
   return state.status === "unauthenticated";
 }
 
-export function useAuthSession(): AuthState {
+const AuthSessionContext = createContext<AuthState | null>(null);
+
+/** One subscription per browser tree, never a shared server session. */
+export function AuthSessionProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [state, setState] = useState<AuthState>({
     status: isSupabaseConfigured() ? "loading" : "not_required",
     session: null,
@@ -133,23 +138,46 @@ export function useAuthSession(): AuthState {
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
     let cancelled = false;
+    let lastToken: string | null | undefined;
+    let lastUserId: string | null | undefined;
+    let revision = 0;
 
     const apply = async (session: Session | null) => {
+      const token = session?.access_token ?? null;
+      if (cancelled || token === lastToken) return;
+      lastToken = token;
+      const currentRevision = ++revision;
+      const userId = session?.user.id ?? null;
+      if (lastUserId !== undefined && userId !== lastUserId) {
+        void queryClient.cancelQueries();
+        queryClient.clear();
+        setState({ status: session ? "loading" : "unauthenticated", session: null, profile: null });
+      }
+      lastUserId = userId;
       if (!session) {
         if (!cancelled) setState({ status: "unauthenticated", session: null, profile: null });
         return;
       }
       const profile = await getAdminProfile(session.user.id).catch(() => null);
-      if (!cancelled) setState({ status: "authenticated", session, profile });
+      if (!cancelled && revision === currentRevision) setState({ status: "authenticated", session, profile });
     };
 
     void getCurrentSession().then(apply);
-    const unsubscribe = onAuthStateChange((session) => void apply(session));
+    const unsubscribe = onAuthStateChange((session) => {
+      // Avoid network reads inside the auth client's callback lock.
+      queueMicrotask(() => void apply(session));
+    });
     return () => {
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
+  return createElement(AuthSessionContext.Provider, { value: state }, children);
+}
+
+export function useAuthSession(): AuthState {
+  const state = useContext(AuthSessionContext);
+  if (!state) throw new Error("AuthSessionProvider ausente");
   return state;
 }
