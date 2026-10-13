@@ -41,14 +41,17 @@ function Field({ label, value, wide }: Line) {
   </button>;
 }
 
-function Section({ title, meta, lines, action, children, empty }: { title: string; meta?: ReactNode; lines?: Line[]; action?: ReactNode; children?: ReactNode; empty?: string }) {
+function Section({ title, meta, icon, lines, action, children, empty }: { title: string; meta?: ReactNode; icon: ReactNode; lines?: Line[]; action?: ReactNode; children?: ReactNode; empty?: string }) {
   const filled = (lines ?? []).filter(l => l.value);
   const [done, flash] = useFlash();
-  return <section aria-label={title} className="border-t border-[var(--stayo-border)] pt-4 first:border-t-0 first:pt-0">
-    <header className="mb-2 flex items-center justify-between gap-3 px-2">
-      <div className="flex min-w-0 items-baseline gap-2">
-        <h3 className="font-[Outfit] text-[15px] font-semibold text-[var(--stayo-navy)]">{title}</h3>
-        {meta && <span className="truncate text-xs text-[var(--stayo-ink-muted)]">{meta}</span>}
+  return <section aria-label={title} className="rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] px-2 pb-2 pt-3 shadow-[0_1px_2px_rgba(11,49,80,0.04)] sm:px-3">
+    <header className="mb-2 flex items-center justify-between gap-3 border-b border-[var(--stayo-border)] px-2 pb-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)] [&_svg]:size-4">{icon}</span>
+        <div className="min-w-0">
+          <h3 className="truncate font-[Outfit] text-[15px] font-semibold leading-tight text-[var(--stayo-navy)]">{title}</h3>
+          {meta && <p className="truncate text-xs text-[var(--stayo-ink-muted)]">{meta}</p>}
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {action}
