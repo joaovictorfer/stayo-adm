@@ -41,6 +41,8 @@ export interface InventorySnapshotItem {
   enabled: boolean;
   tip: string | null;
   inventory_answer?: InventoryAnswer | null;
+  /** Respostas de subitens (ex.: pratos do jogo de jantar). */
+  inventory_subanswers?: Record<string, InventoryAnswer | null> | null;
   inventory_quantity?: number | null;
   inventory_brand?: string | null;
   inventory_condition?: InventoryCondition | null;
