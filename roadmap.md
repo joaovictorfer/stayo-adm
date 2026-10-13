@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Corrigir consultas repetidas de sessão/perfil e recarregamentos desnecessários; medir navegação autenticada antes/depois.
 - [x] Microinterações no menu, ações e painéis administrativos; navegação autenticada e movimento reduzido conferidos.
 - [x] Recuperar referências do PDF em todas as linhas e completar imagens ausentes com IA.
 - [x] Ar-condicionado, aquecimento e móveis abrem marca e instalador ao marcar Sim.
