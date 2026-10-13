@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 import { Collapsible } from "./FichaParts";
+import { OwnerRegistrationSheet } from "./OwnerRegistrationSheet";
 import { adminApi, implementationsListQuery, ownerNoteQuery, ownerOnboardingSubmissionQuery, ownerQuery, propertiesListQuery } from "../../../lib/api/queries";
 import { ownerNotesStore } from "../../../lib/api/local-store";
 import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, normalizeDocument, ownerAdminEditSchema } from "../../../lib/owner-form-validation";
@@ -104,6 +105,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
     </header>
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
       <div className="min-w-0 space-y-3">
+        <OwnerRegistrationSheet implementation={implementation} />
         <section className={panel} aria-label="Dados principais">
           <SectionTitle>Dados principais</SectionTitle>
           {ownerQueryResult.isError && <p role="alert" className="mb-3 text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void ownerQueryResult.refetch()}>Tentar novamente</Button></p>}

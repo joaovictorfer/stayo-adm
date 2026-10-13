@@ -1669,16 +1669,40 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
               .maybeSingle(),
             client()
               .from("owner_onboarding_people")
-              .select("role,person_type,full_name,document,email,phone")
+              .select("role,person_type,full_name,document,email,phone,marital_status,profession")
               .eq("implementation_id", implementationId)
               .order("position", { ascending: true }),
           ]);
         if (payoutError) throw payoutError;
         if (peopleError) throw peopleError;
+        // Colunas do banco vêm em snake_case; o adaptador espera camelCase.
+        const p = profile as Record<string, unknown>;
+        const b = (payout ?? {}) as Record<string, unknown>;
         return ownerOnboardingFromDraft(
           {
-            ...profile,
-            ...(payout ?? {}),
+            personType: p["person_type"],
+            legalName: p["legal_name"],
+            taxId: p["tax_id"],
+            email: p["email"],
+            phone: p["phone"],
+            postalCode: p["postal_code"],
+            street: p["street"],
+            number: p["number"],
+            complement: p["complement"],
+            district: p["district"],
+            city: p["city"],
+            state: p["state"],
+            currentStep: p["current_step"],
+            submittedAt: p["submitted_at"],
+            bankName: b["bank_name"],
+            bankBranch: b["bank_branch"],
+            accountNumber: b["account_number"],
+            accountType: b["account_type"],
+            accountHolder: b["account_holder"],
+            holderTaxId: b["holder_tax_id"],
+            pixType: b["pix_type"],
+            pixKey: b["pix_key"],
+            isPrimary: b["is_primary"],
             people: (people ?? []).map((person) => ({
               role: person.role,
               personType: person.person_type,
@@ -1686,6 +1710,8 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
               document: person.document,
               email: person.email,
               phone: person.phone,
+              maritalStatus: person.marital_status,
+              profession: person.profession,
             })),
           },
           implementationId,
