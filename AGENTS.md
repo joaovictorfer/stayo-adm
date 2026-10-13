@@ -25,9 +25,8 @@
 - Protótipos de Guias usam rota isolada e estado local, sem APIs.
 - Guias utensílios/enxoval/inventário compartilham tabelas e snapshot `admin_apply_guide`; proprietário do inventário só propõe via `owner_inventory_*` (sessão+vínculo) e STAYO decide em `admin_review_inventory_submission`.
 - Comodidades e itens do imóvel ficam em implementation_amenities (jsonb por implantação, autosave); empresas novas de móveis entram em supplier_catalog para reaproveitar.
-- Comodidades sincronizam o inventário guiado por `amenity_key` (upsert idempotente); desmarcar só desativa o item, nunca grava "Não tenho" nem cria pendência.
-- Inventory matches amenities through a presentation adapter; installations and item characteristics use per-room amenities JSON in details, preserving separate writes and historical answers.
-- Installation defaults and per-room overrides live in the existing amenities JSON, with field-level source metadata; a later room edit remains local so supplier exceptions never propagate back to other rooms.
+- Comodidades sincronizam o inventário guiado por `amenity_key` (upsert idempotente); desmarcar só desativa o item, nunca grava "Não tenho" nem cria pendência. Item agrupado mantém a `amenity_key` própria e só desliga se o grupo for "Não"; agrupar nunca apaga resposta nem espelho anterior.
+- Amenities match inventory rows through a presentation adapter; installation defaults, per-room overrides and item characteristics live in the amenities JSON with field-level source metadata, so a later room edit stays local and never propagates to other rooms.
 - All inventory rows, including grouped children, share read-only reference media: prefer PDF photos, fall back to generated assets, and never alter records when displaying photos.
 - Shared tokens govern fonts/admin motion with reduced motion; one root auth provider deduplicates session/profile reads and clears request-local query caches on identity changes for account isolation.
 - The owner workspace reuses owner records, onboarding people, owner notes and existing invitation actions; presentation changes must not create a second owner or relationship store.

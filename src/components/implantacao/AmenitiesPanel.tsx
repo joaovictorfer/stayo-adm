@@ -257,7 +257,7 @@ export function AmenitiesPanel({
                 const media = inventoryReferenceFor(child.label, mediaQuery.data);
                 const setChild = (on: boolean) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key], on } } }));
                 groupSubs.push(
-                  <div key={`${room.id}:${def.key}:${child.key}`} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
+                  <li key={`${room.id}:${def.key}:${child.key}`} className="list-none grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
                     <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
                       {media.url ? <img src={media.url} alt={child.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
                     </span>
@@ -266,7 +266,7 @@ export function AmenitiesPanel({
                       <SubBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
                       <SubBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
                     </div>
-                  </div>,
+                  </li>,
                 );
               }
             }
@@ -289,7 +289,7 @@ export function AmenitiesPanel({
             const row = <ItemRow key={`${room.id}:${def.key}`} def={def} items={isGroup ? groupItems : displayedItems} setItem={(key, patch) => {
               if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
               else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
-            }} unified subNodes={groupSubs.length ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
+            }} unified subNodes={groupSubs.length && room.items[def.key]?.on !== false && (room.items[def.key]?.on === true || def.sub?.some((c) => groupItems[c.key]?.on !== undefined)) ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
             if (install) supplierRows.push(row);
             else rows.push(row);
           }
@@ -631,11 +631,11 @@ function ItemRow({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      {st.on && subNodes && (
-        <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</p>
+      {subNodes && st.on !== false && (
+        <ul className="col-span-full flex list-none flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
+          <li className="list-none text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</li>
           {subNodes}
-        </div>
+        </ul>
       )}
       <Sheet open={details} onOpenChange={setDetails}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
@@ -884,9 +884,9 @@ function CompositionBar({ value, onChange }: { value: Composition; onChange: (c:
     ["lavatories", "Lavabos", 0],
   ];
   return (
-    <div className="grid grid-cols-3 gap-2 rounded-[var(--radius-card)] border bg-white p-3" style={{ borderColor: "var(--stayo-border)" }}>
+    <div className="grid gap-2 rounded-[var(--radius-card)] border bg-white p-3 sm:grid-cols-3" style={{ borderColor: "var(--stayo-border)" }}>
       {fields.map(([k, label, min]) => (
-        <div key={k} className="flex flex-col items-center gap-1">
+        <div key={k} className="flex items-center justify-between gap-2 sm:flex-col sm:items-center sm:gap-1">
           <span className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{label}</span>
           <div className="flex items-center gap-0.5">
             <Button
