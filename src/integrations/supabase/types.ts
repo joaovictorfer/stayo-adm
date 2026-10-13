@@ -1303,6 +1303,7 @@ export type Database = {
         Row: {
           address: string | null
           airbnb_account_email: string | null
+          allowed_channels: string[] | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -1340,6 +1341,7 @@ export type Database = {
         Insert: {
           address?: string | null
           airbnb_account_email?: string | null
+          allowed_channels?: string[] | null
           bedrooms?: number | null
           capacity?: number | null
           city?: string | null
@@ -1377,6 +1379,7 @@ export type Database = {
         Update: {
           address?: string | null
           airbnb_account_email?: string | null
+          allowed_channels?: string[] | null
           bedrooms?: number | null
           capacity?: number | null
           city?: string | null
@@ -3054,6 +3057,7 @@ export type Database = {
         Returns: {
           address: string | null
           airbnb_account_email: string | null
+          allowed_channels: string[] | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3100,6 +3104,7 @@ export type Database = {
         Returns: {
           address: string | null
           airbnb_account_email: string | null
+          allowed_channels: string[] | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3146,6 +3151,7 @@ export type Database = {
         Returns: {
           address: string | null
           airbnb_account_email: string | null
+          allowed_channels: string[] | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3192,6 +3198,7 @@ export type Database = {
         Returns: {
           address: string | null
           airbnb_account_email: string | null
+          allowed_channels: string[] | null
           bedrooms: number | null
           capacity: number | null
           city: string | null
@@ -3305,6 +3312,7 @@ export type Database = {
         Returns: {
           address: string | null
           airbnb_account_email: string | null
+          allowed_channels: string[] | null
           bedrooms: number | null
           capacity: number | null
           city: string | null

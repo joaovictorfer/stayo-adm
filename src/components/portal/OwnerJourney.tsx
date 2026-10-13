@@ -39,6 +39,7 @@ import { OwnerCoverBanner } from "./OwnerCoverBanner";
 import { PlatformsStep } from "./PlatformsStep";
 import { PreparationStep, usePreparation } from "./PreparationStep";
 import {
+  filterAllowedChannels,
   isValidEmail,
   resolveOwnerPlatforms,
   saveOwnerPlatforms,
@@ -240,7 +241,7 @@ export function OwnerJourney({
   useEffect(() => {
     if (platHydrated.current || !platformsQ.data) return;
     platHydrated.current = true;
-    setPlatChannels(Array.from(new Set<DistributionChannel>(["airbnb", ...(platformsQ.data.channels ?? [])])));
+    setPlatChannels(filterAllowedChannels(platformsQ.data.channels ?? [], platformsQ.data.allowedChannels));
     setPlatEmail(platformsQ.data.airbnbEmail ?? "");
   }, [platformsQ.data]);
   useEffect(() => {
@@ -263,7 +264,7 @@ export function OwnerJourney({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const changePlatforms = (channels: DistributionChannel[], email: string) => {
-    const nextChannels = Array.from(new Set<DistributionChannel>(["airbnb", ...channels]));
+    const nextChannels = filterAllowedChannels(channels, platformsQ.data?.allowedChannels);
     setPlatChannels(nextChannels);
     setPlatEmail(email);
     if (!platHydrated.current || submitted) return;
@@ -967,6 +968,7 @@ export function OwnerJourney({
               <PlatformsStep
                 channels={platChannels}
                 airbnbEmail={platEmail}
+                allowedChannels={platformsQ.data?.allowedChannels ?? null}
                 onChange={changePlatforms}
                 onBack={() => showPlatforms(false)}
                 onContinue={() => showPrep(true)}

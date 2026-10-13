@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import {
   OPTIONAL_CHANNELS,
   PLATFORM_COPY,
+  isChannelAllowed,
   isValidEmail,
   type DistributionChannel,
 } from "../../lib/api/owner-platforms";
@@ -13,12 +14,15 @@ import {
 export function PlatformsStep({
   channels,
   airbnbEmail,
+  allowedChannels = null,
   onChange,
   onBack,
   onContinue,
 }: {
   channels: DistributionChannel[];
   airbnbEmail: string;
+  /** Plataformas liberadas pela STAYO para este imóvel; `null` = todas. */
+  allowedChannels?: DistributionChannel[] | null;
   onChange: (channels: DistributionChannel[], airbnbEmail: string) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -37,9 +41,12 @@ export function PlatformsStep({
       : null;
 
   const toggle = (key: DistributionChannel) => {
+    if (!isChannelAllowed(key, allowedChannels)) return;
     const next = channels.includes(key) ? channels.filter((c) => c !== key) : [...channels, key];
     onChange(next, airbnbEmail);
   };
+
+  const anyOpen = OPTIONAL_CHANNELS.some((c) => isChannelAllowed(c.key, allowedChannels));
 
   const next = () => {
     setTouched(true);
@@ -88,20 +95,25 @@ export function PlatformsStep({
       </div>
 
       <div className="pf-others">
-        <h3 className="pf-others-title">Quer ampliar sua distribuição?</h3>
+        <h3 className="pf-others-title">{anyOpen ? "Quer ampliar sua distribuição?" : "Outros canais"}</h3>
         {OPTIONAL_CHANNELS.map((c) => {
           const on = channels.includes(c.key);
+          const locked = !isChannelAllowed(c.key, allowedChannels);
           return (
             <button
               key={c.key}
               type="button"
               role="checkbox"
               aria-checked={on}
-              className={`pf-row${on ? " is-on" : ""}`}
+              aria-disabled={locked || undefined}
+              className={`pf-row${on ? " is-on" : ""}${locked ? " is-off" : ""}`}
               onClick={() => toggle(c.key)}
             >
               <span className={`pf-box${on ? " is-on" : ""}`} aria-hidden="true">{on && <Check className="size-4" />}</span>
-              {c.label}
+              <span className="pf-row-label">
+                {c.label}
+                {locked && <span className="pf-row-note">{PLATFORM_COPY.lockedHint}</span>}
+              </span>
             </button>
           );
         })}
