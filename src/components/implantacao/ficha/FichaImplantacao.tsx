@@ -98,10 +98,11 @@ export function FichaImplantacao({
   checklist,
   checklistPending,
   more,
-  top,
+  wrapInventory,
   onOpenPortal,
 }: {
-  top?: ReactNode;
+  /** Envolve o inventário: recebe o render do inventário e entrega o conteúdo extra por aba. */
+  wrapInventory?: (inventory: (slot?: (tab: string) => ReactNode) => ReactNode) => ReactNode;
   implementationId: string;
   checklist: ReactNode;
   checklistPending: number;
@@ -166,16 +167,19 @@ export function FichaImplantacao({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="order-2 min-w-0 lg:order-1">
           {tab === "inventario" ? (
-            <div className="flex flex-col gap-4">
-            {top}
-            <InventoryWorkspace
-              implementationId={implementationId}
-              adding={adding}
-              setAdding={setAdding}
-              reviewing={reviewing}
-              pendingReviewIds={new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x))}
-            />
-            </div>
+            (() => {
+              const inv = (slot?: (t: string) => ReactNode) => (
+                <InventoryWorkspace
+                  implementationId={implementationId}
+                  adding={adding}
+                  setAdding={setAdding}
+                  reviewing={reviewing}
+                  pendingReviewIds={new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x))}
+                  roomSlot={slot}
+                />
+              );
+              return wrapInventory ? wrapInventory(inv) : inv();
+            })()
           ) : tab === "faltantes" ? (
             <Surface>
               <MissingSlot implementationId={implementationId} />
@@ -275,12 +279,14 @@ export function InventoryWorkspace({
   setAdding,
   reviewing,
   pendingReviewIds,
+  roomSlot,
 }: {
   implementationId: string;
   adding: boolean;
   setAdding: (v: boolean) => void;
   reviewing: boolean;
   pendingReviewIds: Set<string>;
+  roomSlot?: (tab: string) => ReactNode;
 }) {
   const qc = useQueryClient();
   const query = guidedInventoryQuery(implementationId);
@@ -475,6 +481,11 @@ export function InventoryWorkspace({
         </p>
       )}
 
+      {roomSlot && <div className="px-4 pt-3 sm:px-5">{roomSlot(room)}</div>}
+
+      {roomSlot && (
+        <h4 className="px-4 pt-4 text-xs font-semibold uppercase tracking-wide sm:px-5" style={muted}>Itens do inventário</h4>
+      )}
       <ul className="px-2 sm:px-3">
         {roomItems.length === 0 && (
           <li className="px-2 py-6 text-center text-sm" style={muted}>
