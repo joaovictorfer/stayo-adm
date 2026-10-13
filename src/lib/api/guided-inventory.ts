@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mergeSubAnswer } from "../inventory-subitems";
 import {
   buildDuplicate,
   INVENTORY_GUIDE_TYPE,
@@ -9,7 +10,7 @@ import {
 } from "../guided-inventory";
 
 const COLS =
-  "id, implementation_id, catalog_item_id, room, category, name, display_order, enabled, tip, inventory_answer, inventory_quantity, inventory_brand, inventory_condition, inventory_internal_notes, base_catalog_item_id, inventory_source, inventory_review_status, inventory_updated_at";
+  "id, implementation_id, catalog_item_id, room, category, name, display_order, enabled, tip, inventory_answer, inventory_subanswers, inventory_quantity, inventory_brand, inventory_condition, inventory_internal_notes, base_catalog_item_id, inventory_source, inventory_review_status, inventory_updated_at";
 
 /** Fonte única: banco (RLS por papel administrativo). Nada em localStorage. */
 export async function listGuidedInventory(
@@ -109,6 +110,26 @@ export async function setInventoryAnswer(
       inventory_answer: answer,
       inventory_answered_at: answer ? new Date().toISOString() : null,
       inventory_answered_by: answer ? (u.user?.id ?? null) : null,
+    })
+    .eq("id", item.id)
+    .eq("implementation_id", implementationId)
+    .eq("guide_type", INVENTORY_GUIDE_TYPE)
+    .select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("sem permissão para gravar");
+}
+
+/** Grava só a resposta de um subitem (ex.: prato do jogo de jantar). Sem pendência nem segunda lista. */
+export async function setInventorySubanswer(
+  item: InventorySnapshotItem,
+  implementationId: string,
+  subKey: string,
+  answer: "tenho" | "nao_tenho" | null,
+) {
+  const { data, error } = await supabase
+    .from("implementation_guide_items")
+    .update({
+      inventory_subanswers: mergeSubAnswer(item.inventory_subanswers, subKey, answer),
     })
     .eq("id", item.id)
     .eq("implementation_id", implementationId)

@@ -37,8 +37,10 @@ import {
   replicateBedroomItems,
   removeInventoryItem,
   setInventoryAnswer,
+  setInventorySubanswer,
   updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
+import { inventorySubItemsFor, mergeSubAnswer, subAnswerFor } from "@/lib/inventory-subitems";
 import { signGuideImages } from "../../../lib/api/guides";
 import { inventoryReferenceFor, loadInventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { inventorySubmissionsQuery } from "../../../lib/api/owner-inventory";
@@ -363,6 +365,22 @@ export function InventoryWorkspace({
     onSuccess: () => setFailed(null),
   });
 
+  const subanswer = useMutation({
+    mutationFn: (v: { item: InventorySnapshotItem; subKey: string; answer: "tenho" | "nao_tenho" | null }) =>
+      setInventorySubanswer(v.item, implementationId, v.subKey, v.answer),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: query.queryKey });
+      const prev = qc.getQueryData<InventorySnapshotItem[]>(query.queryKey);
+      qc.setQueryData<InventorySnapshotItem[]>(query.queryKey, (old) =>
+        (old ?? []).map((i) => (i.id === v.item.id ? { ...i, inventory_subanswers: mergeSubAnswer(i.inventory_subanswers, v.subKey, v.answer) } : i)),
+      );
+      return { prev };
+    },
+    onError: (_e, v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(query.queryKey, ctx.prev);
+    },
+  });
+
   const add = useMutation({
     mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room)),
     onSuccess: async () => {
@@ -461,6 +479,23 @@ export function InventoryWorkspace({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+              {inventorySubItemsFor(i.name).length > 0 && a === "tenho" && (
+                <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
+                  <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Itens do jogo</p>
+                  {inventorySubItemsFor(i.name).map((s) => {
+                    const sa = subAnswerFor(i.inventory_subanswers, s.key);
+                    return (
+                      <div key={s.key} className="flex items-center justify-between gap-2 py-0.5">
+                        <span className="text-sm" style={navy}>{s.label}</span>
+                        <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${s.label}`}>
+                          <SubAnswerBtn kind="no" on={sa === "nao_tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "nao_tenho" ? null : "nao_tenho" })} />
+                          <SubAnswerBtn kind="yes" on={sa === "tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "tenho" ? null : "tenho" })} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </li>
           );
   };
@@ -695,6 +730,20 @@ export function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boole
   return (
     <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("h-10 flex-1 gap-2 rounded-lg px-4 text-sm font-medium sm:w-24 sm:flex-none", on && "admin-answer-pop")} style={style}>
       {yes ? <Check className="size-4" /> : <X className="size-4" />} {yes ? "Sim" : "Não"}
+    </Button>
+  );
+}
+
+function SubAnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClick: () => void }) {
+  const yes = kind === "yes";
+  const style = on
+    ? yes
+      ? { backgroundColor: "var(--ficha-icon-fg)", color: "var(--admin-surface, #fff)", borderColor: "var(--ficha-icon-fg)" }
+      : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
+    : { ...border, ...navy, backgroundColor: "var(--admin-surface, #fff)" };
+  return (
+    <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("h-8 gap-1 rounded-md px-2.5 text-xs font-medium", on && "admin-answer-pop")} style={style}>
+      {yes ? <Check className="size-3.5" /> : <X className="size-3.5" />} {yes ? "Sim" : "Não"}
     </Button>
   );
 }
