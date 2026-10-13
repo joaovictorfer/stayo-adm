@@ -15,10 +15,10 @@ describe("equipamentos por ambiente", () => {
   });
   it("Sim replica, mas Não posterior é apenas local", () => {
     let rs = setInstallationAnswer([room("sala", "sala"), room("quarto"), room("banheiro", "banheiro")], "sala", "moveis", true);
-    expect(rs.map((r) => r.items.moveis?.on)).toEqual([true, true, true]);
+    expect(rs.map((r) => r.items["moveis"]?.on)).toEqual([true, true, true]);
     rs = setInstallationAnswer(rs, "banheiro", "moveis", false);
     rs = setInstallationAnswer(rs, "sala", "moveis", true);
-    expect(rs.map((r) => r.items.moveis?.on)).toEqual([true, true, false]);
+    expect(rs.map((r) => r.items["moveis"]?.on)).toEqual([true, true, false]);
   });
   it.each(["ar", "aquecimento", "moveis"] as const)("preserva marca e instalador de %s separadamente", (key) => {
     let rs = setInstall([room("a"), room("b")], "a", key, "brand", "Marca A");
