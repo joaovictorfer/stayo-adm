@@ -44,8 +44,6 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   const properties = useQuery({ ...propertiesListQuery(), enabled: Boolean(owner?.coreOwnerId) });
   const note = useQuery({ ...ownerNoteQuery(implementation.ownerId ?? ""), enabled: Boolean(implementation.ownerId) });
   const [editing, setEditing] = useState(false);
-  const [tab, setTab] = useState<"ficha" | "gestao">("ficha");
-  const [showSensitive, setShowSensitive] = useState(false);
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", document: "" });
@@ -85,12 +83,6 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   });
   const name = owner?.name || implementation.ownerName || "Proprietário não informado";
   const document = owner?.document ?? "";
-  const phone = owner?.phone || implementation.ownerPhone;
-  const email = owner?.email;
-  const maskedEmail = email ? email.replace(/^(.{1,3})[^@]*(@.*)$/, "$1•••$2") : "Não informado";
-  const personType = normalizeDocument(document).length === 14 ? "Pessoa jurídica" : normalizeDocument(document).length === 11 ? "Pessoa física" : "Não informado";
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]).join("").toUpperCase();
-  const additionalPeople = submission?.people.filter(person => person.role !== "proprietario") ?? [];
   const otherImplementations = (links.data?.data ?? []).filter(item => item.ownerId === implementation.ownerId && item.id !== implementation.id);
   const ownerProperties = (properties.data?.data ?? []).filter(item => owner?.coreOwnerId && item.ownerId === owner.coreOwnerId);
   const propertyName = implementation.nickname || [implementation.condominiumName, implementation.unit].filter(Boolean).join(" · ") || implementation.code;
@@ -119,7 +111,6 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
           <p className="whitespace-pre-wrap break-words text-sm text-[var(--stayo-ink-muted)]">{note.isError ? "Não foi possível carregar as observações." : note.data?.content || "Nenhuma observação interna."}</p>
           <p className="mt-1 flex items-center gap-1 text-xs text-[var(--stayo-ink-muted)]"><LockKeyhole className="size-3" />Visível somente para a equipe STAYO.</p>
         </section>
-        </>}
       </div>
       <aside className="min-w-0 space-y-3" aria-label="Relacionamento do proprietário">
         {portal}
