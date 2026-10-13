@@ -118,6 +118,26 @@ export async function setInventoryAnswer(
   if (!data?.length) throw new Error("sem permissão para gravar");
 }
 
+/** Grava só a resposta de um subitem (ex.: prato do jogo de jantar). Sem pendência nem segunda lista. */
+export async function setInventorySubanswer(
+  item: InventorySnapshotItem,
+  implementationId: string,
+  subKey: string,
+  answer: "tenho" | "nao_tenho" | null,
+) {
+  const { data, error } = await supabase
+    .from("implementation_guide_items")
+    .update({
+      inventory_subanswers: mergeSubAnswer(item.inventory_subanswers, subKey, answer),
+    })
+    .eq("id", item.id)
+    .eq("implementation_id", implementationId)
+    .eq("guide_type", INVENTORY_GUIDE_TYPE)
+    .select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("sem permissão para gravar");
+}
+
 export async function addInventoryItem(
   implementationId: string,
   room: InventoryRoom,
