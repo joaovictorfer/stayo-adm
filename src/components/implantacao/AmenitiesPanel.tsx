@@ -231,14 +231,14 @@ export function AmenitiesPanel({
             <div key={`${room.id}:${def.key}`} className="space-y-4">
               {rs.length > 1 && <p className="text-sm font-medium text-foreground">{room.name}</p>}
               {install && <InstallationFields room={room} installKey={install.key} label={install.label} catalog={catalog} onChange={(field, value) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, field, value) }))} onNewCompany={addCompany} />}
-              {!match && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly hideBrand={!!install} />}
+              {!match && !install && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly />}
             </div>
           );
           if (match) {
             used.add(match.id);
-            rows.push(renderItem(match, fields));
+            rows.push(renderItem(match, fields, !!install));
           } else {
-            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} unified extraFields={install ? fields : undefined} />);
+            rows.push(<ItemRow key={`${room.id}:${def.key}`} def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} unified extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />);
           }
         }
         for (const custom of room.custom) {
@@ -515,7 +515,9 @@ function ItemRow({
   fieldsOnly,
   extraFields,
   hideBrand,
+  installationSummary,
 }: {
+  installationSummary?: string;
   hideBrand?: boolean;
   unified?: boolean;
   fieldsOnly?: boolean;
@@ -533,16 +535,16 @@ function ItemRow({
       <Button variant="ghost" className="size-12 rounded-lg bg-muted p-0 sm:size-14" aria-label={`Detalhes de ${def.label}`} onClick={() => setDetails(true)}><ImageIcon className="text-muted-foreground" /></Button>
       <Button variant="ghost" className="h-auto min-w-0 flex-col items-start gap-0 whitespace-normal p-0 text-left hover:bg-transparent" onClick={() => setDetails(true)}>
         <span className="font-semibold text-foreground">{def.label}</span>
-        <span className="text-xs font-normal text-muted-foreground sm:text-sm">{summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
+        <span className="text-xs font-normal text-muted-foreground sm:text-sm">{installationSummary || summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
       </Button>
       <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${def.label}`}>
         <AnswerBtn kind="no" on={st.on === false} onClick={() => setItem(def.key, { on: false })} />
-        <AnswerBtn kind="yes" on={st.on === true} onClick={() => setItem(def.key, { on: true })} />
+        <AnswerBtn kind="yes" on={st.on === true} onClick={() => { setItem(def.key, { on: true }); if (extraFields) setDetails(true); }} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="outline" className="h-10 w-11 shrink-0 rounded-lg p-0" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => setDetails(true)}>Detalhes</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setDetails(true)}>Marca e observação</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDetails(true)}>{extraFields ? "Marca e instalador" : "Marca e observação"}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Ar-condicionado, aquecimento e móveis abrem marca e instalador ao marcar Sim.
 - [x] Unificar visualmente comodidades e instalações com as linhas do inventário; detalhes pelo menu, sem alterar banco.
 - [x] Fase 05 Preparação
 - [x] Fase 06 Seu acesso
