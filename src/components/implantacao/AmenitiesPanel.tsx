@@ -10,6 +10,7 @@ import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
 import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
 import { inventoryReferenceFor, loadInventoryReferenceMedia, type InventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { Switch } from "@/components/ui/switch";
+import { inventoryCharacteristic } from "@/lib/inventory-characteristics";
 import {
   ROOM_KIND_LABEL,
   ROOM_SECTIONS,
@@ -234,6 +235,7 @@ export function AmenitiesPanel({
             <div key={`${room.id}:${def.key}`} className="space-y-4">
               {rs.length > 1 && <p className="text-sm font-medium text-foreground">{room.name}</p>}
               {install && <InstallationFields room={room} installKey={install.key} label={install.label} catalog={catalog} onChange={(field, value) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, field, value) }))} onNewCompany={addCompany} />}
+              {(install || match) && <CharacteristicFields name={def.label} state={room.items[def.key] ?? {}} onChange={(patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [def.key]: { ...r.items[def.key], ...patch } } }))} />}
               {!match && !install && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly />}
             </div>
           );
@@ -515,6 +517,19 @@ function InstallationFields({ room, installKey, label, catalog, onChange, onNewC
   </div>;
 }
 
+function CharacteristicFields({ name, state, onChange }: { name: string; state: ItemState; onChange: (patch: Partial<ItemState>) => void }) {
+  const field = inventoryCharacteristic(name);
+  if (!field) return null;
+  const value = state.characteristics?.[field.key] ?? "";
+  const change = (next: string) => onChange({ characteristics: { ...state.characteristics, [field.key]: next } });
+  return <div className="space-y-2">
+    <p className="text-sm text-muted-foreground">{field.label}</p>
+    {field.options ? <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={field.label}>
+      {field.options.map((option) => <Button key={option} type="button" variant={value === option ? "default" : "outline"} role="radio" aria-checked={value === option} onClick={() => change(option)}>{option}</Button>)}
+    </div> : <Input type="number" min={1} step={1} aria-label={field.label} value={value} onChange={(e) => { const next = e.target.value; if (!next || (Number.isInteger(Number(next)) && Number(next) >= 1)) change(next); }} />}
+  </div>;
+}
+
 function ItemRow({
   def,
   items,
@@ -626,6 +641,7 @@ function ItemRow({
 
       {on && (details || fieldsOnly) && (
         <div className={fieldsOnly ? "grid gap-3" : "grid gap-2 px-3 pb-3 sm:grid-cols-3"}>
+          <div className="sm:col-span-full"><CharacteristicFields name={def.label} state={st} onChange={(patch) => setItem(def.key, patch)} /></div>
           {!def.options && (
             <Input
               type="number"
