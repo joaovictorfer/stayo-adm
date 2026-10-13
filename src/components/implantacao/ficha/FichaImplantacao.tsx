@@ -286,7 +286,7 @@ export function InventoryWorkspace({
   setAdding: (v: boolean) => void;
   reviewing: boolean;
   pendingReviewIds: Set<string>;
-  roomSlot?: (tab: string) => ReactNode;
+  roomSlot?: ((tab: string) => ReactNode) | undefined;
 }) {
   const qc = useQueryClient();
   const query = guidedInventoryQuery(implementationId);
