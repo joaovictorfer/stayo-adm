@@ -63,7 +63,7 @@ function InboxPage() {
             : rows.length === 0 ? <AdminEmptyState icon={MessageCircle} title="Nenhuma conversa" description="As conversas chegam do STAYO APP após a integração." />
             : <ul className="divide-y divide-[var(--stayo-border)]">{rows.map((c) => <li key={c.id}>
                 <button type="button" onClick={() => setSelected(c.id)} className={cn("flex w-full items-start gap-3 p-4 text-left transition hover:bg-[var(--stayo-forest-soft)]/40", selected === c.id && "bg-[var(--stayo-forest-soft)]/60")}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--stayo-forest-soft)] font-serif text-[var(--stayo-forest)]">{(c.participantName ?? "?").slice(0, 1)}</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--stayo-forest-soft)] font-display text-[var(--stayo-forest)]">{(c.participantName ?? "?").slice(0, 1)}</span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2"><b className="truncate text-sm">{c.participantName ?? c.subject ?? "Conversa"}</b>{c.unreadCount > 0 && <span className="ml-auto rounded-full bg-[var(--stayo-gold)] px-2 text-[11px] text-[var(--stayo-surface)]">{c.unreadCount}</span>}</span>
                     <small className="block truncate text-[var(--admin-muted)]">{c.propertyName ?? "Sem imóvel"}{c.reservationCode ? ` · ${c.reservationCode}` : ""}</small>

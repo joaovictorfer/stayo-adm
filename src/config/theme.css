@@ -25,8 +25,8 @@
   --stayo-success: #3f7a55;
   --stayo-warning: #a66b16;
   --stayo-danger: #a24139;
-  --stayo-font-display: "Outfit", "IBM Plex Sans", system-ui, sans-serif;
-  --stayo-font-ui: "IBM Plex Sans", system-ui, sans-serif;
+  --stayo-font-display: "Outfit", "Figtree", system-ui, sans-serif;
+  --stayo-font-ui: "Figtree", system-ui, sans-serif;
   --radius-card: 10px;
   --radius-control: 8px;
 }
@@ -77,7 +77,7 @@
   --stayo-success: var(--admin-success);
   --stayo-warning: var(--admin-warning);
   --stayo-danger: var(--admin-danger);
-  --stayo-font-display: "Fraunces", Georgia, serif;
+  --stayo-font-display: "Outfit", "Figtree", system-ui, sans-serif;
   --background: oklch(0.975 0.004 248);
   --foreground: oklch(0.24 0.028 248);
   --card: oklch(1 0 0);
@@ -214,7 +214,7 @@
   --implementation-green-soft: #eef5f1;
   --implementation-border: #e2e9e6;
   color: var(--admin-text);
-  font-family: "Manrope", var(--stayo-font-ui);
+  font-family: var(--stayo-font-ui);
 }
 .implementation-workspace-stack {
   display: flex;
@@ -241,7 +241,7 @@
 }
 .implementation-mobile-heading strong {
   color: var(--admin-navy, var(--admin-primary));
-  font-family: "Sora", var(--stayo-font-display);
+  font-family: var(--stayo-font-display);
   font-size: 1rem;
 }
 .implementation-back-button {
@@ -315,7 +315,7 @@
 }
 .implementation-property-name {
   color: var(--admin-primary);
-  font-family: "Sora", var(--stayo-font-display);
+  font-family: var(--stayo-font-display);
   font-size: clamp(1.3rem, 2.5vw, 1.7rem);
   font-weight: 700;
   line-height: 1.12;
@@ -439,7 +439,7 @@
 }
 .implementation-current-stage strong {
   color: var(--admin-primary);
-  font-family: "Sora", var(--stayo-font-display);
+  font-family: var(--stayo-font-display);
 }
 .implementation-current-stage span {
   color: var(--admin-muted);
@@ -1025,7 +1025,7 @@ a.admin-data-row:hover,
   --stayo-gold: var(--portal-gold);
   --stayo-gold-soft: var(--portal-gold-soft);
   color-scheme: light;
-  font-family: "Figtree", var(--stayo-font-ui);
+  font-family: var(--stayo-font-ui);
 }
 
 .portal-onboarding {
@@ -1068,7 +1068,7 @@ a.admin-data-row:hover,
 }
 .portal-onboarding-header h1 {
   margin-top: 0.35rem;
-  font-family: "Sora", var(--stayo-font-display);
+  font-family: var(--stayo-font-display);
   font-size: clamp(1.8rem, 6vw, 2.6rem);
   font-weight: 600;
   line-height: 1.1;
@@ -1462,7 +1462,7 @@ a.admin-data-row:hover,
 
 .portal-form-title {
   color: var(--portal-navy);
-  font-family: "Sora", var(--stayo-font-display);
+  font-family: var(--stayo-font-display);
   font-size: 1.12rem;
   font-weight: 600;
 }
@@ -2328,7 +2328,7 @@ a.admin-data-row:hover,
   max-width: 32rem;
   margin-top: 0.35rem;
   color: var(--portal-navy);
-  font-family: "Sora", var(--stayo-font-display);
+  font-family: var(--stayo-font-display);
   font-size: clamp(1.6rem, 4vw, 2.25rem);
   font-weight: 600;
 }

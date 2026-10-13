@@ -22,6 +22,8 @@
  */
 
 @theme inline {
+  --font-sans: var(--stayo-font-ui);
+  --font-display: var(--stayo-font-display);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -143,6 +145,18 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--stayo-font-ui);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--stayo-font-display);
+    letter-spacing: 0;
+  }
+
+  :where(button, input, select, textarea) {
+    font-family: var(--stayo-font-ui);
   }
 }
 

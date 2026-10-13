@@ -70,7 +70,7 @@ function GuestsPage() {
         : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{rows.map((g) => {
             const phone = maskPhone(g.phone); const email = maskEmail(g.email);
             return <Link key={g.id} to="/hospedes/$id" params={{ id: g.id }} className="admin-panel flex items-center gap-3 p-4 transition hover:-translate-y-0.5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--stayo-forest-soft)] font-serif text-lg text-[var(--stayo-forest)]">{g.name.slice(0, 1).toUpperCase()}</span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--stayo-forest-soft)] font-display text-lg text-[var(--stayo-forest)]">{g.name.slice(0, 1).toUpperCase()}</span>
               <span className="min-w-0">
                 <b className="block truncate text-sm">{g.name}</b>
                 <small className="flex flex-wrap gap-x-3 text-[var(--admin-muted)]">
