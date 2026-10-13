@@ -72,22 +72,31 @@ export interface OwnerPlatforms {
   allowedChannels: DistributionChannel[] | null;
 }
 
+function client() {
+  const value = getSupabaseBrowserClient();
+  if (!value) throw new Error("Plataformas indisponíveis");
+  return value;
+}
+
 function toChannels(value: unknown): DistributionChannel[] | null {
   if (!Array.isArray(value)) return null;
   return value.filter((channel): channel is DistributionChannel => typeof channel === "string");
 }
 
+function fromRpc(row: unknown): OwnerPlatforms {
+  const data = (row ?? {}) as Record<string, unknown>;
+  return {
+    channels: toChannels(data["channels"]),
+    airbnbEmail: data["airbnbEmail"] ? String(data["airbnbEmail"]) : null,
+    allowedChannels: toChannels(data["allowedChannels"]),
+  };
+}
+
 /** Resolve a resposta salva do proprietário a partir do token do convite. */
 export async function resolveOwnerPlatforms(token: string): Promise<OwnerPlatforms> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("owner_platforms_resolve", { p_token: token });
+  const { data, error } = await client().rpc("owner_platforms_resolve", { p_token: token });
   if (error) throw new Error(error.message);
-  const row = (data ?? {}) as Record<string, unknown>;
-  return {
-    channels: toChannels(row.channels),
-    airbnbEmail: row.airbnbEmail ? String(row.airbnbEmail) : null,
-    allowedChannels: toChannels(row.allowedChannels),
-  };
+  return fromRpc(data);
 }
 
 /** Salva canais + e-mail da conta Airbnb (RPC recusa canal fora da liberação da STAYO). */
@@ -96,19 +105,13 @@ export async function saveOwnerPlatforms(
   channels: DistributionChannel[],
   airbnbEmail: string,
 ): Promise<OwnerPlatforms> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("owner_platforms_save", {
+  const { data, error } = await client().rpc("owner_platforms_save", {
     p_token: token,
     p_channels: channels,
     p_airbnb_email: airbnbEmail,
   });
   if (error) throw new Error(error.message);
-  const row = (data ?? {}) as Record<string, unknown>;
-  return {
-    channels: toChannels(row.channels),
-    airbnbEmail: row.airbnbEmail ? String(row.airbnbEmail) : null,
-    allowedChannels: toChannels(row.allowedChannels),
-  };
+  return fromRpc(data);
 }
 
 /** Leitura da ficha: resposta do proprietário + liberação da STAYO, sem token. */
@@ -120,8 +123,7 @@ export async function getImplementationPlatforms(implementationId: string): Prom
   distribution_updated_at: string | null;
   distribution_updated_by: string | null;
 }> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
+  const { data, error } = await client()
     .from("implementation_projects")
     .select(
       "id, distribution_channels, airbnb_account_email, allowed_channels, distribution_updated_at, distribution_updated_by",
@@ -153,8 +155,7 @@ export async function setImplementationAllowedChannels(
     if (unknown.length) throw new Error(`Canais desconhecidos: ${unknown.join(", ")}`);
     if (!allowed.includes("airbnb")) throw new Error("Airbnb é sempre uma plataforma liberada.");
   }
-  const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase
+  const { error } = await client()
     .from("implementation_projects")
     .update({ allowed_channels: allowed })
     .eq("id", implementationId);
