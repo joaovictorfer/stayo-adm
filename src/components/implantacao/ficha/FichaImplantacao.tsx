@@ -39,6 +39,7 @@ import {
   updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
 import { signGuideImages } from "../../../lib/api/guides";
+import { inventoryReferenceFor, loadInventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { inventorySubmissionsQuery } from "../../../lib/api/owner-inventory";
 import {
   inventoryConditionLabel,
@@ -327,6 +328,7 @@ export function InventoryWorkspace({
     },
   });
 
+  const referenceMedia = useQuery({ queryKey: ["inventory-reference-media"], queryFn: loadInventoryReferenceMedia, staleTime: 30 * 60_000 });
   const extras = useQuery({
     queryKey: ["guided-inventory-extras", implementationId],
     queryFn: async () => {
@@ -382,6 +384,18 @@ export function InventoryWorkspace({
   const roomAll = rooms.find((r) => r.id === room)?.items ?? [];
   const roomDone = roomAll.filter((i) => i.inventory_answer).length;
   const detailItem = items.find((i) => i.id === detail) ?? null;
+  const itemMedia = (i: InventorySnapshotItem) => {
+    const reference = inventoryReferenceFor(i.name, referenceMedia.data);
+    const snapshot = extras.data?.[i.id];
+    return {
+      ...snapshot,
+      url: reference.url ?? snapshot?.url,
+      description: reference.description ?? snapshot?.description,
+      quantity_text: reference.quantity_text ?? snapshot?.quantity_text,
+      tip: reference.tip ?? snapshot?.tip ?? i.tip,
+    };
+  };
+  const detailMedia = detailItem ? itemMedia(detailItem) : null;
   const bedroomCount = Math.max(1, bedroomsQ.data ?? 1);
   const emptyBedrooms = ROOMS.filter((r) => r.id.startsWith("quarto") && r.id !== "quarto1" && Number(r.id.slice(6)) <= bedroomCount)
     .filter((r) => !items.some((i) => inRoom(i, r.id))).length;
@@ -401,7 +415,7 @@ export function InventoryWorkspace({
   const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false) => {
           detailExtras.current.set(i.id, extra ?? null);
           const openDetail = () => { setDetail(i.id); };
-          const ex = extras.data?.[i.id];
+          const ex = itemMedia(i);
           const who = i.inventory_source === "proprietario" ? "Proprietário" : "STAYO";
           const meta = i.inventory_answer ? [who, when(i.inventory_updated_at)].filter(Boolean).join(" · ") : "Ainda não respondido";
           const review = pendingReviewIds.has(i.id);
@@ -600,20 +614,20 @@ export function InventoryWorkspace({
               </SheetHeader>
               <div className="mt-3 space-y-4 text-sm">
                 <div className="aspect-[4/3] overflow-hidden rounded-xl" style={{ backgroundColor: "var(--ficha-subtle)" }}>
-                  {extras.data?.[detailItem.id]?.url ? (
-                    <img src={extras.data[detailItem.id]!.url!} alt={detailItem.name} className="size-full object-cover" />
+                  {detailMedia?.url ? (
+                    <img src={detailMedia.url} alt={detailItem.name} className="size-full object-contain" />
                   ) : (
                     <ImageIcon className="m-auto mt-20 size-8" style={muted} />
                   )}
                 </div>
-                {(detailItem.tip || extras.data?.[detailItem.id]?.description) && (
+                {(detailMedia?.tip || detailMedia?.description || detailMedia?.quantity_text) && (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Recomendação STAYO</p>
-                    {extras.data?.[detailItem.id]?.quantity_text && (
-                      <p className="font-medium" style={navy}>Quantidade: {extras.data[detailItem.id]!.quantity_text}</p>
+                    {detailMedia?.quantity_text && (
+                      <p className="font-medium" style={navy}>Quantidade: {detailMedia.quantity_text}</p>
                     )}
-                    {extras.data?.[detailItem.id]?.description && <p style={navy}>{extras.data[detailItem.id]!.description}</p>}
-                    {detailItem.tip && <p className="mt-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>Dica: {detailItem.tip}</p>}
+                    {detailMedia?.description && <p style={navy}>{detailMedia.description}</p>}
+                    {detailMedia?.tip && <p className="mt-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>Dica: {detailMedia.tip}</p>}
                   </div>
                 )}
                 {(detailItem.inventory_quantity != null || detailItem.inventory_brand || detailItem.inventory_condition) && (

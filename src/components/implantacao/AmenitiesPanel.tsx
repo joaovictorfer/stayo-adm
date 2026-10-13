@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
 import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
+import { inventoryReferenceFor, loadInventoryReferenceMedia, type InventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { Switch } from "@/components/ui/switch";
 import {
   ROOM_KIND_LABEL,
@@ -65,6 +66,7 @@ export function AmenitiesPanel({
   render?: (slot: InventoryRoomSlot) => ReactNode;
 }) {
   const qc = useQueryClient();
+  const mediaQuery = useQuery({ queryKey: ["inventory-reference-media"], queryFn: loadInventoryReferenceMedia, staleTime: 30 * 60_000 });
   const q = useQuery({ queryKey: ["amenities", implementationId], queryFn: () => load(implementationId) });
   const [data, setData] = useState<AmenitiesData | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -528,11 +530,13 @@ function ItemRow({
   nested?: boolean;
 }) {
   const st = items[def.key] ?? {};
+  const mediaQuery = useQuery({ queryKey: ["inventory-reference-media"], queryFn: loadInventoryReferenceMedia, staleTime: 30 * 60_000, enabled: !!unified });
+  const media = inventoryReferenceFor(def.label, mediaQuery.data);
   const [details, setDetails] = useState(false);
   const on = fieldsOnly || !!st.on;
   if (unified) return (
     <li className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-border px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-inventory-row">
-      <Button variant="ghost" className="size-12 rounded-lg bg-muted p-0 sm:size-14" aria-label={`Detalhes de ${def.label}`} onClick={() => setDetails(true)}><ImageIcon className="text-muted-foreground" /></Button>
+      <Button variant="ghost" className="size-12 overflow-hidden rounded-lg bg-muted p-0 sm:size-14" aria-label={`Detalhes de ${def.label}`} onClick={() => setDetails(true)}>{media?.url ? <img src={media.url} alt={def.label} loading="lazy" className="size-full object-cover" /> : <ImageIcon className="text-muted-foreground" />}</Button>
       <Button variant="ghost" className="h-auto min-w-0 flex-col items-start gap-0 whitespace-normal p-0 text-left hover:bg-transparent" onClick={() => setDetails(true)}>
         <span className="font-semibold text-foreground">{def.label}</span>
         <span className="text-xs font-normal text-muted-foreground sm:text-sm">{installationSummary || summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
@@ -551,6 +555,7 @@ function ItemRow({
       <Sheet open={details} onOpenChange={setDetails}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader><SheetTitle>{def.label}</SheetTitle></SheetHeader>
+          {media && <ReferenceMedia media={media} label={def.label} />}
           <div className="mt-5 space-y-4">{extraFields ?? <ItemRow def={def} items={items} setItem={setItem} fieldsOnly />}</div>
         </SheetContent>
       </Sheet>
@@ -649,6 +654,15 @@ function ItemRow({
 
 function summary(st: ItemState, def: ItemDef) {
   return [!def.options && st.qty ? `${st.qty} un.` : "", st.brand, st.notes ? "obs." : ""].filter(Boolean).join(" · ");
+}
+
+function ReferenceMedia({ media, label }: { media: InventoryReferenceMedia; label: string }) {
+  return <div className="mt-4 space-y-3 text-sm text-foreground">
+    {media.url && <img src={media.url} alt={label} className="aspect-[4/3] w-full rounded-lg object-contain bg-muted" />}
+    {media.quantity_text && <p className="font-medium">Quantidade recomendada: {media.quantity_text}</p>}
+    {media.description && <p>{media.description}</p>}
+    {media.tip && <p className="rounded-lg bg-muted p-3 text-muted-foreground">{media.tip}</p>}
+  </div>;
 }
 
 function CustomItems({ items, onChange }: { items: CustomItem[]; onChange: (c: CustomItem[]) => void }) {
