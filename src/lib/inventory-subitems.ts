@@ -20,7 +20,7 @@ export function inventorySubItemsFor(name: string): InventorySubItem[] {
   return INVENTORY_SUBITEMS[amenityDisplayKey(name)] ?? [];
 }
 
-export type InventorySubAnswers = Record<string, "tenho" | "nao_tenho" | null>;
+export type InventorySubAnswers = Record<string, "tenho" | "nao_tenho" | "nao_aplica" | null>;
 
 export function subAnswerFor(
   subanswers: InventorySubAnswers | null | undefined,
