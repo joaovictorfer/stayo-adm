@@ -16,6 +16,7 @@ import {
 import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -692,7 +693,7 @@ export function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boole
       : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
     : { ...border, ...navy, backgroundColor: "var(--admin-surface, #fff)" };
   return (
-    <Button variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className="h-10 flex-1 gap-2 rounded-lg px-4 text-sm font-medium sm:w-24 sm:flex-none" style={style}>
+    <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("h-10 flex-1 gap-2 rounded-lg px-4 text-sm font-medium sm:w-24 sm:flex-none", on && "admin-answer-pop")} style={style}>
       {yes ? <Check className="size-4" /> : <X className="size-4" />} {yes ? "Sim" : "Não"}
     </Button>
   );
