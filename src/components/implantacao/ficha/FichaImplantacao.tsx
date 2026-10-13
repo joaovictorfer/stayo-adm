@@ -461,6 +461,23 @@ export function InventoryWorkspace({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+              {inventorySubItemsFor(i.name).length > 0 && a === "tenho" && (
+                <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
+                  <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Itens do jogo</p>
+                  {inventorySubItemsFor(i.name).map((s) => {
+                    const sa = subAnswerFor(i.inventory_subanswers, s.key);
+                    return (
+                      <div key={s.key} className="flex items-center justify-between gap-2 py-0.5">
+                        <span className="text-sm" style={navy}>{s.label}</span>
+                        <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${s.label}`}>
+                          <SubAnswerBtn kind="no" on={sa === "nao_tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "nao_tenho" ? null : "nao_tenho" })} />
+                          <SubAnswerBtn kind="yes" on={sa === "tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "tenho" ? null : "tenho" })} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </li>
           );
   };
