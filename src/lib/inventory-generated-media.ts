@@ -46,6 +46,9 @@ import sideSupport from "@/assets/inventory-generated/suporte-lateral.jpg";
 import frigobar from "@/assets/inventory-generated/frigobar.jpg";
 import wineCellar from "@/assets/inventory-generated/adega.jpg";
 import capsuleCoffee from "@/assets/inventory-generated/cafeteira-de-capsulas.jpg";
+import appliancesGroup from "@/assets/inventory-generated/eletrodomesticos.jpg";
+import pansGroup from "@/assets/inventory-generated/formas.jpg";
+import cleaningGroup from "@/assets/inventory-generated/limpeza.jpg";
 import { amenityDisplayKey } from "./inventory-amenities-view";
 
 const images: Record<string, string> = {
@@ -100,6 +103,9 @@ const images: Record<string, string> = {
   "frigobar": frigobar,
   "adega": wineCellar,
   "cafeteira_de_capsulas": capsuleCoffee,
+  "eletrodomesticos": appliancesGroup,
+  "formas": pansGroup,
+  "limpeza": cleaningGroup,
 };
 
 export function generatedInventoryImage(name: string): string | undefined {
