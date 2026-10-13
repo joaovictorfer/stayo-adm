@@ -484,10 +484,14 @@ export function InventoryWorkspace({
                   <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Itens do jogo</p>
                   {inventorySubItemsFor(i.name).map((s) => {
                     const sa = subAnswerFor(i.inventory_subanswers, s.key);
+                    const media = inventoryReferenceFor(s.label, referenceMedia.data);
                     return (
-                      <div key={s.key} className="flex items-center justify-between gap-2 py-0.5">
-                        <span className="text-sm" style={navy}>{s.label}</span>
-                        <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${s.label}`}>
+                      <div key={s.key} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]">
+                        <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
+                          {media.url ? <img src={media.url} alt={s.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
+                        </span>
+                        <span className="min-w-0 text-sm" style={navy}>{s.label}</span>
+                        <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${s.label}`}>
                           <SubAnswerBtn kind="no" on={sa === "nao_tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "nao_tenho" ? null : "nao_tenho" })} />
                           <SubAnswerBtn kind="yes" on={sa === "tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "tenho" ? null : "tenho" })} />
                         </div>
