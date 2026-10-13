@@ -257,14 +257,15 @@ export function AmenitiesPanel({
                 const media = inventoryReferenceFor(child.label, mediaQuery.data);
                 const setChild = (on: boolean) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key], on } } }));
                 groupSubs.push(
-                  <li key={`${room.id}:${def.key}:${child.key}`} className="list-none grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
+                  <li key={`${room.id}:${def.key}:${child.key}`} className="list-none grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
                     <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
                       {media.url ? <img src={media.url} alt={child.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
                     </span>
-                    <span className="min-w-0 text-sm text-foreground">{child.label}</span>
+                    <span className="min-w-0"><span className="block truncate font-semibold text-foreground">{child.label}</span><span className="text-xs text-muted-foreground sm:text-sm">{st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível"}</span></span>
                     <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${child.label}`}>
-                      <SubBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
-                      <SubBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
+                      <AnswerBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
+                      <AnswerBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
+                      <span aria-hidden className="w-11 shrink-0" />
                     </div>
                   </li>,
                 );
@@ -632,8 +633,8 @@ function ItemRow({
         </DropdownMenu>
       </div>
       {subNodes && st.on !== false && (
-        <ul className="col-span-full flex list-none flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
-          <li className="list-none text-xs font-medium uppercase tracking-wide text-muted-foreground">Itens de {def.label.toLowerCase()}</li>
+        <ul className="col-span-full mt-1 flex list-none flex-col gap-2 rounded-xl border p-2 sm:ml-[4.25rem] sm:p-3 [&>li[data-testid]]:rounded-lg [&>li[data-testid]]:border [&>li[data-testid]]:border-border [&>li[data-testid]]:bg-card [&>li[data-testid]]:shadow-sm" style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--ficha-subtle)" }}>
+          <li className="flex list-none items-center justify-between px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><span>Itens de {def.label.toLowerCase()}</span><span className="rounded-full bg-card px-2 py-0.5 normal-case tracking-normal">{Array.isArray(subNodes) ? subNodes.length : 0} itens</span></li>
           {subNodes}
         </ul>
       )}

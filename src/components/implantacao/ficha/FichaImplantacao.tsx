@@ -480,20 +480,21 @@ export function InventoryWorkspace({
                 </DropdownMenu>
               </div>
               {inventorySubItemsFor(i.name).length > 0 && a === "tenho" && (
-                <div className="col-span-full flex flex-col gap-1 rounded-lg border-l-4 py-2 pl-3" style={{ borderColor: "var(--ficha-icon-fg)", backgroundColor: "var(--ficha-subtle)" }}>
-                  <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Itens do jogo</p>
+                <div className="col-span-full mt-1 flex flex-col gap-2 rounded-xl border p-2 sm:ml-[4.25rem] sm:p-3" style={{ ...border, backgroundColor: "var(--ficha-subtle)" }}>
+                  <p className="px-1 text-xs font-semibold uppercase tracking-wide" style={muted}>Itens do jogo</p>
                   {inventorySubItemsFor(i.name).map((s) => {
                     const sa = subAnswerFor(i.inventory_subanswers, s.key);
                     const media = inventoryReferenceFor(s.label, referenceMedia.data);
                     return (
-                      <div key={s.key} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]">
+                      <div key={s.key} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-lg border bg-card px-2 py-2.5 shadow-sm sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border}>
                         <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
                           {media.url ? <img src={media.url} alt={s.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
                         </span>
-                        <span className="min-w-0 text-sm" style={navy}>{s.label}</span>
+                        <span className="min-w-0"><span className="block truncate font-semibold" style={navy}>{s.label}</span><span className="text-xs sm:text-sm" style={muted}>{sa ? "STAYO" : "Ainda não respondido"}</span></span>
                         <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${s.label}`}>
-                          <SubAnswerBtn kind="no" on={sa === "nao_tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "nao_tenho" ? null : "nao_tenho" })} />
-                          <SubAnswerBtn kind="yes" on={sa === "tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "tenho" ? null : "tenho" })} />
+                          <AnswerBtn kind="no" on={sa === "nao_tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "nao_tenho" ? null : "nao_tenho" })} />
+                          <AnswerBtn kind="yes" on={sa === "tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "tenho" ? null : "tenho" })} />
+                          <span aria-hidden className="w-11 shrink-0" />
                         </div>
                       </div>
                     );
