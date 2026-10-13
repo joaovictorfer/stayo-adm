@@ -52,24 +52,29 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
 
-const ROOMS: Array<{ id: string; label: string }> = [
+const QUARTO_CATEGORY = /^Quarto (\d+)$/;
+const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
   { id: "cozinha", label: "Cozinha" },
   { id: "sala", label: "Sala" },
-  { id: "quarto1", label: "Quarto 1" },
-  { id: "quarto2", label: "Quarto 2" },
+  ...Array.from({ length: Math.max(1, bedrooms) }, (_, i) => ({ id: `quarto${i + 1}`, label: `Quarto ${i + 1}` })),
   { id: "banheiro", label: "Banheiro" },
   { id: "lavanderia", label: "Lavanderia" },
   { id: "outros", label: "Outros" },
 ];
 const inRoom = (i: InventorySnapshotItem, r: string) => {
-  if (r === "quarto1") return i.room === "quartos" && i.category !== "Quarto 2";
-  if (r === "quarto2") return i.room === "quartos" && i.category === "Quarto 2";
+  if (r.startsWith("quarto")) {
+    if (i.room !== "quartos") return false;
+    const m = i.category ? QUARTO_CATEGORY.exec(i.category) : null;
+    return (m ? Number(m[1]) : 1) === Number(r.slice(6));
+  }
   if (r === "banheiro") return i.room === "banheiros";
   if (r === "outros") return i.room === "outros" || i.room === "externa";
   return i.room === r;
 };
 const persisted = (r: string): InventoryRoom =>
-  r === "quarto1" || r === "quarto2" ? "quartos" : r === "banheiro" ? "banheiros" : (r as InventoryRoom);
+  r.startsWith("quarto") ? "quartos" : r === "banheiro" ? "banheiros" : (r as InventoryRoom);
+const quartoCategory = (r: string) =>
+  r.startsWith("quarto") && r !== "quarto1" ? `Quarto ${r.slice(6)}` : undefined;
 
 type Extra = { image_path: string | null; purchase_url: string | null; description: string | null; recommended_quantity: number | null };
 
