@@ -16,6 +16,7 @@ const aliases: Record<string, string> = {
   escorredor_de_pia: "escorredor_de_loucas",
   pa_de_lixo: "pa_de_lixo_vassourinha",
   ferro_de_passar: "ferro_de_passar_roupa",
+  secadora: "maquina_de_secar",
 };
 
 export function amenityDisplayKey(name: string): string {

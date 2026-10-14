@@ -88,6 +88,7 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
             { key: "frigobar", label: "Frigobar" },
             { key: "adega", label: "Adega" },
             { key: "purificador_de_agua", label: "Purificador de água" },
+            { key: "maquina_de_lavar_louca", label: "Máquina de lavar louça" },
           ],
         },
       ],
@@ -191,13 +192,26 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
     climate,
   ],
   banheiro: [
-    { title: "Itens", items: ["Lixeira", "Decoração", "Secador de cabelo"].map((l) => ({ key: slug(l), label: l })) },
+    { title: "Itens", items: ["Lixeira", "Decoração", "Secador de cabelo", "Toalheiro elétrico"].map((l) => ({ key: slug(l), label: l })) },
   ],
   lavabo: [
     { title: "Itens", items: ["Lixeira", "Decoração", "Porta-toalha"].map((l) => ({ key: slug(l), label: l })) },
   ],
   servico: [
-    { title: "Itens", items: ["Máquina de lavar", "Secadora", "Ferro de passar", "Tábua de passar", "Varal"].map((l) => ({ key: slug(l), label: l })) },
+    {
+      title: "Lavanderia",
+      items: [
+        {
+          key: "lavanderia", label: "Lavanderia", subAnswers: true,
+          sub: [
+            { key: "maquina_de_lavar", label: "Máquina de lavar" },
+            { key: "maquina_lava_e_seca", label: "Máquina lava e seca" },
+            { key: "maquina_de_secar", label: "Máquina de secar" },
+          ],
+        },
+        "Ferro de passar", "Tábua de passar", "Varal",
+      ].map((l) => (typeof l === "string" ? { key: slug(l), label: l } : l)),
+    },
   ],
   externa: [{ title: "Itens", items: ["Mesa externa", "Cadeiras", "Espreguiçadeira"].map((l) => ({ key: slug(l), label: l })) }],
   geral: [
