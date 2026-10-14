@@ -1,7 +1,7 @@
 import { conditionPendingIssues, contractRowToSnapshot } from "../../lib/contract-conditions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -247,6 +247,7 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
   const optionsSupported = true;
 
   const [items, setItems] = useState<DraftItem[]>([]);
+  const [openUid, setOpenUid] = useState<string | null>(null);
   const [partnershipObject, setPartnershipObject] = useState("");
   const [responsibilities, setResponsibilities] = useState<Responsibility[]>([]);
   const [signatoriesList, setSignatoriesList] = useState<Signatory[]>([]);
@@ -799,17 +800,12 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           Serviços e valores da implantação
         </h3>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Itens desligados não entram no total nem na versão publicada. Ligar um item não gera
-          cobrança, nota ou pagamento.
+          Toque num item para editar. Desmarcado, fica fora do total.
         </p>
 
         {missingTemplates.length > 0 && (
-          <div className="mt-4 rounded-lg border border-dashed p-3">
-            <p className="text-xs font-semibold">Itens padrão de implantação</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Sugestões do modelo. Ao adicionar, vira uma cópia editável deste rascunho, desligada
-              até você incluir.
-            </p>
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-muted-foreground">Adicionar item padrão</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {missingTemplates.map((t) => (
                 <Button
@@ -881,16 +877,6 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
               {openUid === item.uid && (
               <div className="border-t p-3">
               <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_70px_130px_130px_auto] md:items-end">
-                <label className="flex min-h-10 items-center gap-2 text-xs font-medium">
-                  <input
-                    type="checkbox"
-                    checked={item.included}
-                    onChange={(e) => updateItem(item.uid, { included: e.target.checked })}
-                    className="size-4"
-                    aria-label={`Incluir ${item.description || "item"}`}
-                  />
-                  <span className="md:sr-only">Incluir</span>
-                </label>
                 <label className="text-[11px] font-medium text-muted-foreground">
                   Nome do serviço
                   <Input
@@ -929,18 +915,6 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
                     className="mt-1"
                   />
                 </label>
-                <div className="text-[11px] font-medium text-muted-foreground">
-                  Total
-                  <p className="mt-1 flex h-10 items-center justify-end font-semibold tabular-nums text-foreground">
-                    {!item.included
-                      ? "Fora do total"
-                      : resolvePricing(item) === "tbd"
-                        ? "A definir"
-                        : resolvePricing(item) === "fixed"
-                          ? formatBRL(lineTotal(item))
-                          : `${formatBRL(lineTotal(item))}*`}
-                  </p>
-                </div>
                 <div className="flex items-center justify-end gap-1">
                   <button
                     type="button"
