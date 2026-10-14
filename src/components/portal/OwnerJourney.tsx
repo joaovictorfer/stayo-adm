@@ -1246,7 +1246,12 @@ function ProposalStep({
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
   const confirmed = !needs && confirmation;
-  const implPaid = Boolean(journey?.paidItems?.["implementation"]?.paid);
+  // "Pago" só aparece quando TODOS os serviços de valor fixo estão pagos —
+  // mesma regra da faixa de total em "Preparação do imóvel".
+  const implPaid = (() => {
+    const fixed = proposalFacts(shown).groups.fixed;
+    return fixed.length > 0 && fixed.every((it) => Boolean((it as { paid?: boolean }).paid));
+  })();
 
   return (
     <section className="pj-proposal">
