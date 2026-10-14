@@ -5358,6 +5358,12 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
     linear-gradient(180deg, color-mix(in srgb, var(--portal-navy) 45%, transparent) 0%, transparent 32%),
     linear-gradient(0deg, color-mix(in srgb, var(--portal-navy) 92%, transparent) 0%, color-mix(in srgb, var(--portal-navy) 40%, transparent) 38%, transparent 65%);
 }
+.pj-hero-logo {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  z-index: 1;
+}
 .pj-hero-content {
   position: absolute;
   inset: auto 22px 20px 22px;

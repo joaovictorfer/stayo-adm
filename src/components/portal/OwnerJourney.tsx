@@ -803,8 +803,8 @@ export function OwnerJourney({
               />
             )}
             <div className="pj-hero-shade" aria-hidden="true" />
+            <StayoLogo variant="white" className="pj-hero-logo h-10 w-auto" />
             <div className="pj-hero-content">
-              <StayoLogo variant="white" className="h-10 w-auto" />
               <p className="pj-hero-title">{propertyTitle}</p>
             </div>
           </div>
