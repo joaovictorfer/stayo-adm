@@ -53,12 +53,17 @@ export interface InventorySnapshotItem {
   inventory_updated_at?: string | null;
 }
 
-export type InventoryCondition = "bom" | "atencao" | "danificado";
+export type InventoryCondition = "novo" | "bom" | "desgaste" | "trocar" | "atencao" | "danificado";
 export const inventoryConditionLabel: Record<InventoryCondition, string> = {
+  novo: "Novo",
   bom: "Bom",
+  desgaste: "Desgaste",
+  trocar: "Trocar",
   atencao: "Atenção",
   danificado: "Danificado",
 };
+/** Estados usados na vistoria de implantação (os demais são legados). */
+export const surveyConditions = ["novo", "bom", "desgaste", "trocar"] as const;
 
 /** Origem exibida: catálogo, cópia de um item-base ou item novo (equipe/proprietário). */
 export function inventoryOriginLabel(i: Pick<InventorySnapshotItem, "catalog_item_id" | "base_catalog_item_id" | "inventory_source">): string {
