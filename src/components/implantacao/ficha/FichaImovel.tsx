@@ -433,12 +433,12 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         <aside className="hidden flex-col gap-4 lg:flex">{sidebar}</aside>
       </div>
       <Dialog open={editing} onOpenChange={setEditing}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90dvh] max-w-lg flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-4 py-3 sm:px-6">
             <DialogTitle>{GROUP_TITLE[group]}</DialogTitle>
             <DialogDescription>Preencha só o que souber; o resto pode ficar para depois.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
               {(group === "all" || group === "ident") && (
                 <div className="space-y-3">
                   {group === "all" && <h4 className="text-sm font-semibold" style={display}>Identificação</h4>}
