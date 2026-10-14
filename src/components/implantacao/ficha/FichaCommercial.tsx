@@ -28,6 +28,8 @@ import {
 } from "../../../lib/contract-conditions";
 import { formatBRL } from "../../../lib/money";
 import { ContractConditionsPanel } from "../ContractConditionsPanel";
+import { ImplementationDecisionsPanel } from "../ImplementationDecisionsPanel";
+import { ProposalTab } from "../ProposalTab";
 import type { CommercialProposalSnapshot } from "../../../types/commercial-proposal";
 
 const muted = { color: "var(--stayo-ink-muted)" };
@@ -36,7 +38,13 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; section?: number | undefined };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; section?: number | undefined; open?: Pop };
+type Pop = "decisions" | "services" | "terms";
+const POP_TITLE: Record<Pop, [string, string]> = {
+  decisions: ["Decisões da implantação", "Limpeza inicial, enxoval e escopo da assessoria. Salva sozinho."],
+  services: ["Serviços e valores da implantação", "Ligue, edite ou adicione serviços. Itens desligados não entram no total."],
+  terms: ["Objeto e responsabilidades", "O que a STAYO fará, quem faz o quê e quem participa do aceite."],
+};
 
 function Block({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -252,6 +260,7 @@ export function FichaCommercial({
   const [editing, setEditing] = useState(false);
   const [editFocus, setEditFocus] = useState<number | null>(null);
   const [quick, setQuick] = useState<QuickKey | null>(null);
+  const [pop, setPop] = useState<Pop | null>(null);
   const q = useQuery({
     queryKey: ["implementation-contract-conditions", implementationId, "commercial-view"],
     queryFn: async () => {
@@ -303,9 +312,12 @@ export function FichaCommercial({
     ...(c?.maintenance_limit != null ? ([{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}`, section: 1 }] as Row[]) : []),
   ];
   const services: Row[] = [
-    { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes },
+    { label: "Serviços da implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, open: "services" },
+    { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes, open: "decisions" },
+    { label: "Enxoval", value: linen, detail: c?.linen_notes, open: "decisions" },
+    { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
     { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null, section: 2 },
-    { label: "Enxoval", value: linen, detail: c?.linen_notes },
+    { label: "Objeto e responsabilidades", value: snap?.partnershipObject ? "Definido" : null, detail: snap?.partnershipObject, open: "terms" },
   ];
 
   const stepIcon = { owner: UserRound, doc: FileText, home: House, list: ListChecks } as Record<string, typeof FileText>;
@@ -352,13 +364,23 @@ export function FichaCommercial({
                 {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { setEditFocus(r.section ?? null); edit(); }} />)}
               </Block>
               <Block icon={<Settings2 className="size-4" />} title="Preparação e serviços">
-                {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { setEditFocus(r.section ?? null); edit(); }} />)}
+                {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { if (r.open) { setPop(r.open); return; } setEditFocus(r.section ?? null); edit(); }} />)}
               </Block>
             </>
           )}
           {extras}
         </div>
-        <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onFullEdit={edit} onNewVersion={onNewVersion} />
+        <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onFullEdit={edit} onNewVersion={() => { setQuick(null); setPop("services"); }} />
+        <Dialog open={pop != null} onOpenChange={(o) => { if (!o) { setPop(null); void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] }); void qc.invalidateQueries(); } }}>
+          <DialogContent className="flex max-h-[90dvh] max-w-3xl flex-col overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{pop ? POP_TITLE[pop][0] : ""}</DialogTitle>
+              <DialogDescription>{pop ? POP_TITLE[pop][1] : ""}</DialogDescription>
+            </DialogHeader>
+            {pop === "decisions" && <ImplementationDecisionsPanel implementationId={implementationId} />}
+            {(pop === "services" || pop === "terms") && <ProposalTab implementationId={implementationId} only={pop} />}
+          </DialogContent>
+        </Dialog>
         <Dialog
           open={editing}
           onOpenChange={(o) => {
