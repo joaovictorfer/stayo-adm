@@ -1786,7 +1786,9 @@ export type Database = {
           done_at: string | null
           id: string
           implementation_id: string
+          notes: string | null
           position: number
+          status: string
           title: string
         }
         Insert: {
@@ -1794,7 +1796,9 @@ export type Database = {
           done_at?: string | null
           id?: string
           implementation_id: string
+          notes?: string | null
           position?: number
+          status?: string
           title: string
         }
         Update: {
@@ -1802,7 +1806,9 @@ export type Database = {
           done_at?: string | null
           id?: string
           implementation_id?: string
+          notes?: string | null
           position?: number
+          status?: string
           title?: string
         }
         Relationships: [
