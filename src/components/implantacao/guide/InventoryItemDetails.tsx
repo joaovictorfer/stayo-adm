@@ -3,18 +3,8 @@ import { InventoryDetailFields } from "./InventoryDetailFields";
 import { Copy, Trash2 } from "lucide-react";
 
 import { Button } from "../../ui/button";
-import {
-  inventoryConditionLabel,
-  inventoryOriginLabel,
-  type InventoryCondition,
-  type InventorySnapshotItem,
-} from "../../../lib/guided-inventory";
+import { type InventorySnapshotItem } from "../../../lib/guided-inventory";
 import type { InventoryDetails } from "../../../lib/api/guided-inventory";
-
-const muted = { color: "var(--stayo-ink-muted)" };
-const field = "mt-1 h-10 w-full rounded-lg border px-3 text-sm";
-const border = { borderColor: "var(--stayo-border)" };
-const CONDITIONS: InventoryCondition[] = ["bom", "atencao", "danificado"];
 
 interface Props {
   item: InventorySnapshotItem | null;
@@ -107,7 +97,7 @@ export function InventoryItemDetails({
           <p
             className="text-xs"
             role="alert"
-            style={{ color: "var(--stayo-danger, #b42318)" }}
+            className="text-xs text-destructive"
           >
             {err}
           </p>
