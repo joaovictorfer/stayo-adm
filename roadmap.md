@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Unificar linhas e subitens do inventário, adicionar item em cada ambiente e priorizar itens avulsos em Outros; conferir inclusão e persistência na ficha real.
 - [x] Remover "Fornecedores e instalações" do fim da ficha de implantação (duplicava os itens já preenchidos no inventário por ambiente); imports mortos limpos, ficha conferida no navegador sem erros.
 - [x] Eletrodomésticos unificados numa linha só (Micro-ondas, Forno convencional, Airfryer, Torradeira, Cafeteira de cápsulas, Cafeteira elétrica, Chaleira elétrica, Geladeira, Frigobar, Adega, Purificador): respostas existentes conferidas no navegador, espelhos do banco preservados, fotos em todos os itens e seletor de composição sem sobreposição no celular.
 - [x] Agrupar Frigideira em Panelas e reunir instalações e móveis em Fornecedores; abertura dos grupos conferida na ficha real, sem alterar dados por ambiente.
