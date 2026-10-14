@@ -202,7 +202,7 @@ const eyebrow = "text-[11px] font-semibold uppercase tracking-[0.14em] text-[var
 
 // ---------------------------------------------------------------------------
 
-export function ProposalTab({ implementationId }: { implementationId: EntityId }) {
+export function ProposalTab({ implementationId, only }: { implementationId: EntityId; only?: "services" | "terms" }) {
   const queryClient = useQueryClient();
   const versionsQuery = useQuery({
     queryKey: ["commercial-proposals", implementationId],
@@ -439,11 +439,11 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       : null;
 
   return (
-    <div className="space-y-4">
+    <div className={only ? "flex flex-col gap-4" : "space-y-4"}>
       {/* Cabeçalho da versão */}
-      <section className={card}>
+      <section className={only ? "order-last sticky bottom-0 z-10 rounded-xl border bg-white p-3 shadow-sm" : card}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
+          <div className={only ? "hidden" : "min-w-0"}>
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Editar proposta avançada
             </p>
@@ -494,8 +494,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       </section>
 
       {/* A. Condições da proposta */}
+      {only !== "services" && (
       <section className={card} aria-labelledby="area-condicoes">
-        <p className={eyebrow}>A</p>
+        {!only && <p className={eyebrow}>A</p>}
         <h3 id="area-condicoes" className="text-lg font-semibold">
           Condições da proposta
         </h3>
@@ -568,10 +569,13 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           )}
         </div>
 
+        {!only && (
         <div className="mt-5">
           <ImplementationDecisionsPanel implementationId={implementationId} />
         </div>
+        )}
 
+        {!only && (
         <div className="mt-5">
           <ContractConditionsPanel
             implementationId={implementationId}
@@ -585,6 +589,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               }))}
           />
         </div>
+        )}
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <div>
@@ -714,10 +719,12 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         </div>
       </section>
+      )}
 
       {/* B. Serviços e valores */}
+      {only !== "terms" && (
       <section className={card} aria-labelledby="area-servicos">
-        <p className={eyebrow}>B</p>
+        {!only && <p className={eyebrow}>B</p>}
         <h3 id="area-servicos" className="text-lg font-semibold">
           Serviços e valores da implantação
         </h3>
@@ -949,6 +956,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         </dl>
       </section>
+      )}
 
       {(previewId === "draft" || selectedVersion?.snapshot) && (
         <section
@@ -974,6 +982,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </section>
       )}
 
+      {!only && (
       <section className={card}>
         <div className="mb-4">
           <h3 className="font-semibold">Histórico de versões</h3>
@@ -1034,6 +1043,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         )}
       </section>
+      )}
 
       <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
         <AlertDialogContent>
