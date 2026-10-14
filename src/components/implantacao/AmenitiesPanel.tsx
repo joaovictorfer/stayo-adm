@@ -257,15 +257,15 @@ export function AmenitiesPanel({
                 const media = inventoryReferenceFor(child.label, mediaQuery.data);
                 const setChild = (on: boolean) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key], on } } }));
                 groupSubs.push(
-                  <li key={`${room.id}:${def.key}:${child.key}`} className="list-none grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
+                  <li key={`${room.id}:${def.key}:${child.key}`} className="list-none grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-sub-row">
                     <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
                       {media.url ? <img src={media.url} alt={child.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
                     </span>
                     <span className="min-w-0"><span className="block truncate font-semibold text-foreground">{child.label}</span><span className="text-xs text-muted-foreground sm:text-sm">{st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível"}</span></span>
-                    <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${child.label}`}>
+                    <div className="flex shrink-0 items-center gap-2" role="radiogroup" aria-label={`Resposta para ${child.label}`}>
                       <AnswerBtn kind="no" on={st.on === false} onClick={() => setChild(false)} />
                       <AnswerBtn kind="yes" on={st.on === true} onClick={() => setChild(true)} />
-                      <span aria-hidden className="w-11 shrink-0" />
+                      <span aria-hidden className="hidden w-11 shrink-0 sm:block" />
                     </div>
                   </li>,
                 );
