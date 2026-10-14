@@ -468,11 +468,11 @@ function ImplementationDetailPage() {
         />
       ) : (
         <div className="flex flex-col gap-4">
-          <header className="flex flex-wrap items-start justify-between gap-3" aria-label="Resumo da implantação">
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:justify-between" aria-label="Resumo da implantação">
             <div className="min-w-0">
 
               <h1
-                className="truncate text-2xl font-semibold sm:text-3xl"
+                className="truncate text-xl font-semibold sm:text-3xl"
                 style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
               >
                 {propertyName}
@@ -485,11 +485,11 @@ function ImplementationDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="min-h-10"
+                className="size-10 min-h-10 px-0 sm:w-auto sm:px-3"
                 disabled={resuming}
                 onClick={() => void resumeRegistration()}
               >
-                <Pencil /> {resuming ? "Abrindo…" : draftQuery.data?.isDraft ? "Continuar cadastro" : "Editar cadastro"}
+                <Pencil /> <span className="sr-only sm:not-sr-only">{resuming ? "Abrindo…" : draftQuery.data?.isDraft ? "Continuar cadastro" : "Editar cadastro"}</span>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

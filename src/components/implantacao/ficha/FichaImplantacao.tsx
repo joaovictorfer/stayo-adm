@@ -137,8 +137,8 @@ export function FichaImplantacao({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
-          <h2 className="text-2xl font-semibold sm:text-[1.75rem]" style={display}>Implantação</h2>
-          <p className="text-sm sm:text-base" style={muted}>Conferência e preparação do imóvel para operação.</p>
+          <h2 className="text-xl font-semibold sm:text-[1.75rem]" style={display}>Implantação</h2>
+          <p className="hidden text-sm sm:block sm:text-base" style={muted}>Conferência e preparação do imóvel para operação.</p>
         </div>
         <button
           type="button"
@@ -153,7 +153,7 @@ export function FichaImplantacao({
         </button>
       </div>
 
-      <nav className="grid grid-cols-2 gap-x-1 border-b sm:flex" style={border} role="tablist" aria-label="Áreas da implantação">
+      <nav className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:gap-x-1 sm:border-b sm:px-0 sm:pb-0" style={border} role="tablist" aria-label="Áreas da implantação">
         {tabs.map((t) => {
           const on = tab === t.id;
           return (
@@ -162,8 +162,8 @@ export function FichaImplantacao({
               role="tab"
               aria-selected={on}
               onClick={() => setTab(t.id)}
-              className="-mb-px min-h-11 shrink-0 whitespace-nowrap border-b-[3px] px-2 py-2.5 text-sm sm:px-4"
-              style={{ ...navy, borderColor: on ? "var(--ficha-icon-fg)" : "transparent", fontWeight: on ? 600 : 400 }}
+              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm sm:-mb-px sm:min-h-11 sm:rounded-none sm:border-0 sm:border-b-[3px] ${on ? "max-sm:bg-[var(--stayo-navy)] max-sm:text-white" : "max-sm:bg-white"}`}
+              style={{ borderColor: on ? "var(--ficha-icon-fg)" : "var(--stayo-border)", fontWeight: on ? 600 : 400, color: on ? undefined : navy.color }}
             >
               {t.label}
             </button>
@@ -202,8 +202,8 @@ export function FichaImplantacao({
         </div>
 
         <aside className="order-1 flex flex-col gap-4 lg:order-2">
-          <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
-            <div className="flex items-center gap-3 border-b pb-3 pt-1" style={border}>
+          <section className="rounded-xl border bg-white px-3 py-2 sm:px-5 sm:py-3" style={border}>
+            <div className="hidden items-center gap-3 border-b pb-3 pt-1 sm:flex" style={border}>
               <span className="grid size-9 place-items-center rounded-full" style={iconCircle}>
                 <FileCheck2 className="size-4" />
               </span>
@@ -219,11 +219,11 @@ export function FichaImplantacao({
                 key={r.label}
                 type="button"
                 onClick={() => setTab(r.go)}
-                className={`grid min-h-12 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-left text-sm ${idx < arr.length - 1 ? "border-b" : ""}`}
+                className={`grid min-h-11 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-left text-sm ${idx < arr.length - 1 ? "border-b" : ""}`}
                 style={border}
               >
                 <span className="font-medium" style={navy}>{r.label}</span>
-                <span className="text-sm" style={muted}>{r.value}</span>
+                <span className="truncate text-xs sm:text-sm" style={muted}>{r.value}</span>
                 <ChevronRight className="size-4" style={navy} />
               </button>
             ))}
