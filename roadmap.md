@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Padronizar detalhes de itens e itens manuais no celular e tablet, preservando campos e gravações existentes.
 - [x] Unificar linhas e subitens do inventário, adicionar item em cada ambiente e priorizar itens avulsos em Outros; inclusão e persistência conferidas na ficha real, registros de teste removidos.
 - [x] Remover "Fornecedores e instalações" do fim da ficha de implantação (duplicava os itens já preenchidos no inventário por ambiente); imports mortos limpos, ficha conferida no navegador sem erros.
 - [x] Eletrodomésticos unificados numa linha só (Micro-ondas, Forno convencional, Airfryer, Torradeira, Cafeteira de cápsulas, Cafeteira elétrica, Chaleira elétrica, Geladeira, Frigobar, Adega, Purificador): respostas existentes conferidas no navegador, espelhos do banco preservados, fotos em todos os itens e seletor de composição sem sobreposição no celular.
