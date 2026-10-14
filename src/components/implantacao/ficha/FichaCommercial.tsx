@@ -315,7 +315,7 @@ export function FichaCommercial({
     { label: "Serviços da implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, open: "services" },
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes, open: "decisions" },
     { label: "Enxoval", value: linen, detail: c?.linen_notes, open: "decisions" },
-    { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
+    { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation_only" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
     { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null, section: 2 },
     { label: "Objeto e responsabilidades", value: snap?.partnershipObject ? "Definido" : null, detail: snap?.partnershipObject, open: "terms" },
   ];
@@ -371,7 +371,7 @@ export function FichaCommercial({
           {extras}
         </div>
         <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onFullEdit={edit} onNewVersion={() => { setQuick(null); setPop("services"); }} />
-        <Dialog open={pop != null} onOpenChange={(o) => { if (!o) { setPop(null); void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] }); void qc.invalidateQueries(); } }}>
+        <Dialog open={pop != null} onOpenChange={(o) => { if (!o) { setPop(null); void qc.invalidateQueries(); } }}>
           <DialogContent className="flex max-h-[90dvh] max-w-3xl flex-col overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{pop ? POP_TITLE[pop][0] : ""}</DialogTitle>
