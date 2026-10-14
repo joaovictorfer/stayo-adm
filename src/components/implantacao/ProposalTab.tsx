@@ -1,5 +1,5 @@
 import { conditionPendingIssues, contractRowToSnapshot } from "../../lib/contract-conditions";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
 
@@ -348,6 +348,59 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
   });
 
   const touch = () => setDirty(true);
+
+  // Janela simplificada (only): salva sozinha e, ao fechar, passa a valer para o proprietário.
+  const draftInputRef = useRef(draftInput);
+  draftInputRef.current = draftInput;
+  const revRef = useRef<{ id: string; rev: number } | null>(null);
+  const chainRef = useRef<Promise<void>>(Promise.resolve());
+  const changedRef = useRef(false);
+  const [autoStatus, setAutoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const runSave = (publishAfter: boolean) => {
+    chainRef.current = chainRef.current
+      .then(async () => {
+        const base = draftInputRef.current();
+        if (base.items.length === 0) return;
+        const r = revRef.current;
+        const saved = await commercialProposalsApi.saveDraft({
+          ...base,
+          proposalId: r?.id ?? base.proposalId,
+          expectedRevision: r ? r.rev : base.expectedRevision,
+        });
+        revRef.current = { id: saved.id, rev: saved.draftRevision };
+        if (publishAfter) {
+          await commercialProposalsApi.publish({
+            proposalId: saved.id,
+            expectedRevision: saved.draftRevision,
+            commandId: crypto.randomUUID(),
+          });
+          revRef.current = null;
+          await invalidate();
+          await queryClient.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
+        } else if (!publishAfter) {
+          setAutoStatus("saved");
+        }
+      })
+      .catch(() => setAutoStatus("error"));
+  };
+  useEffect(() => {
+    if (!only || !dirty) return;
+    changedRef.current = true;
+    setAutoStatus("saving");
+    const t = setTimeout(() => {
+      setDirty(false);
+      runSave(false);
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [only, dirty, items, partnershipObject, responsibilities, signatoriesList]);
+  useEffect(() => {
+    if (!only) return;
+    return () => {
+      if (changedRef.current) runSave(true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [only]);
   const updateItem = (id: string, patch: Partial<DraftItem>) => {
     setItems((cur) => cur.map((i) => (i.uid === id ? { ...i, ...patch } : i)));
     touch();
@@ -441,9 +494,21 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
   return (
     <div className={only ? "flex flex-col gap-4" : "space-y-4"}>
       {/* Cabeçalho da versão */}
-      <section className={only ? "order-last sticky bottom-0 z-10 rounded-xl border bg-white p-3 shadow-sm" : card}>
+      {only && (
+        <p className="order-last sticky bottom-0 z-10 rounded-xl border bg-white px-3 py-2 text-xs text-muted-foreground shadow-sm">
+          {autoStatus === "saving"
+            ? "Salvando…"
+            : autoStatus === "error"
+              ? "Não foi possível salvar. O que você preencheu continua na tela."
+              : autoStatus === "saved"
+                ? "Salvo · passa a valer para o proprietário ao fechar a janela."
+                : "Alterações salvam sozinhas."}
+        </p>
+      )}
+      {!only && (
+      <section className={card}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className={only ? "hidden" : "min-w-0"}>
+          <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Editar proposta avançada
             </p>
@@ -492,6 +557,7 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           <p className="mt-3 text-xs text-[var(--stayo-success)]">Rascunho salvo.</p>
         )}
       </section>
+      )}
 
       {/* A. Condições da proposta */}
       {only !== "services" && (
