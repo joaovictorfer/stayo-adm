@@ -71,7 +71,7 @@ export function ImplementationTimeline({ implementationId }: { implementationId:
   }, [q.data]);
 
   async function persistOrder(list: Step[]) {
-    const changed = list.map((s, i) => ({ ...s, position: i })).filter((s, i) => list[i].position !== i || true);
+    const changed = list.map((s, i) => ({ ...s, position: i }));
     setLocal(changed);
     await Promise.all(changed.map((s) => supabase.from(TABLE).update({ position: s.position }).eq("id", s.id)));
     refresh();
@@ -116,6 +116,7 @@ export function ImplementationTimeline({ implementationId }: { implementationId:
     if (drag === null || drag === to) return;
     const list = [...steps];
     const [m] = list.splice(drag, 1);
+    if (!m) return;
     list.splice(to, 0, m);
     persistOrder(list);
   }
