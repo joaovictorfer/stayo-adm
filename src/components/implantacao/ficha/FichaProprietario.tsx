@@ -124,7 +124,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
           {[
             { label: "Implantação", value: journey, section: "implantacao" as const },
             { label: "Proposta", value: proposal ? `v${proposal.version} · ${proposalStatusLabel[proposal.status]}` : "Não criada", section: "proposta" as const },
-            { label: "Contrato", value: contractStageLabel[currentContractStage()], section: "contrato" as const },
+            { label: "Contrato", value: contractStageLabel[currentContractStage()], section: "proposta" as const },
           ].map(item => <Button key={item.label} variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} onClick={() => onGo(item.section)}><span>{item.label}</span><span className="min-w-0 flex-1 text-right text-xs text-[var(--stayo-ink-muted)]">{item.value}</span><ChevronRight /></Button>)}
         </section>
       </aside>
