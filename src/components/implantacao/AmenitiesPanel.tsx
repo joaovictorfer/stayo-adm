@@ -68,7 +68,6 @@ export function AmenitiesPanel({
   render?: (slot: InventoryRoomSlot) => ReactNode;
 }) {
   const qc = useQueryClient();
-  const mediaQuery = useQuery({ queryKey: ["inventory-reference-media"], queryFn: loadInventoryReferenceMedia, staleTime: 30 * 60_000 });
   const q = useQuery({ queryKey: ["amenities", implementationId], queryFn: () => load(implementationId) });
   const [data, setData] = useState<AmenitiesData | null>(null);
   const [open, setOpen] = useState<string | null>(null);
