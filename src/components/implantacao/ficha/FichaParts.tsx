@@ -28,8 +28,7 @@ export function FichaNav({
     <div className="relative">
       <nav
         aria-label="Seções da ficha"
-        className="-mx-4 overflow-x-auto scroll-smooth border-b px-4 [scrollbar-width:none] sm:mx-0 sm:px-0"
-        style={{ borderColor: "var(--stayo-border)" }}
+        className="-mx-4 overflow-x-auto scroll-smooth px-4 pb-px [scrollbar-width:none] sm:mx-0 sm:px-0"
       >
         <ul className="flex min-w-max gap-1 pr-10 sm:gap-4 sm:pr-0">
           {FICHA_SECTIONS.map((s) => {
