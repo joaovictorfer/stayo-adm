@@ -139,6 +139,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const { keys: pendencyKeys, detailsQ } = usePropertyPendencies(implementation.id);
   const [editing, setEditing] = useState(false);
   const [group, setGroup] = useState<EditGroup>("all");
+  const [showOptional, setShowOptional] = useState(false);
 
   const condoQ = useQuery({ ...adminCondominiumQuery(implementation.condominiumId ?? ""), enabled: Boolean(implementation.condominiumId) });
   const condoListQ = useQuery({ ...adminCondominiumsListQuery(), enabled: editing });
