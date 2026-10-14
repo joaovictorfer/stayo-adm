@@ -1027,7 +1027,9 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           variant="outline"
           size="sm"
           onClick={() => {
-            setItems((cur) => [...cur, newItem()]);
+            const fresh = newItem();
+            setItems((cur) => [...cur, fresh]);
+            setOpenUid(fresh.uid);
             touch();
           }}
         >
