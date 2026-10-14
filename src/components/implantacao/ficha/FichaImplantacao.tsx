@@ -54,6 +54,7 @@ import { inventorySubmissionsQuery } from "../../../lib/api/owner-inventory";
 import {
   inventoryConditionLabel,
   type InventoryAnswer,
+  type InventoryCondition,
   type InventoryRoom,
   type InventorySnapshotItem,
 } from "../../../lib/guided-inventory";
@@ -327,6 +328,7 @@ export function InventoryWorkspace({
   const [newQuantity, setNewQuantity] = useState("");
   const [newBrand, setNewBrand] = useState("");
   const [newNotes, setNewNotes] = useState("");
+  const [newCondition, setNewCondition] = useState<InventoryCondition | "">("");
   const [subDetail, setSubDetail] = useState<{ label: string; parentId: string; key: string } | null>(null);
   const [failed, setFailed] = useState<{ item: InventorySnapshotItem; answer: InventoryAnswer | null } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
@@ -396,7 +398,7 @@ export function InventoryWorkspace({
     mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room), {
       inventory_quantity: newQuantity ? Number(newQuantity) : null,
       inventory_brand: newBrand.trim() || null,
-      inventory_condition: null,
+      inventory_condition: newCondition || null,
       inventory_internal_notes: newNotes.trim() || null,
     }),
     onSuccess: async () => {
@@ -404,6 +406,7 @@ export function InventoryWorkspace({
       setNewQuantity("");
       setNewBrand("");
       setNewNotes("");
+      setNewCondition("");
       setAdding(false);
       await refresh();
       await qc.invalidateQueries({ queryKey: ["guided-inventory-extras", implementationId] });
@@ -646,6 +649,7 @@ export function InventoryWorkspace({
                   <label className="block space-y-2 text-sm">Quantidade<Input type="number" min="0" step="1" className="h-11" value={newQuantity} onChange={(e) => setNewQuantity(e.target.value)} /></label>
                   <label className="block space-y-2 text-sm">Marca<Input className="h-11" maxLength={120} value={newBrand} onChange={(e) => setNewBrand(e.target.value)} /></label>
                 </div>
+                <label className="block space-y-2 text-sm">Estado<select className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm" value={newCondition} onChange={(e) => setNewCondition(e.target.value as InventoryCondition | "")}><option value="">Não informado</option>{(["bom", "atencao", "danificado"] as const).map((value) => <option key={value} value={value}>{inventoryConditionLabel[value]}</option>)}</select></label>
                 <label className="block space-y-2 text-sm">Observação interna<Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="min-h-20" maxLength={2000} /></label>
               </div>
             </details>
