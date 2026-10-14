@@ -19,6 +19,9 @@ import { createSurveyLink } from "@/lib/api/implementation-survey";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { InventoryRow } from "./InventoryRow";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -320,6 +323,7 @@ export function InventoryWorkspace({
   const [detail, setDetail] = useState<string | null>(null);
   const detailExtras = useRef(new Map<string, ReactNode>());
   const [newName, setNewName] = useState("");
+  const [subDetail, setSubDetail] = useState<{ label: string; parentId: string; key: string } | null>(null);
   const [failed, setFailed] = useState<{ item: InventorySnapshotItem; answer: InventoryAnswer | null } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
   // Copiar o catálogo para a implantação é uma escrita: só por ação explícita.
@@ -395,7 +399,7 @@ export function InventoryWorkspace({
   });
 
   const items = useMemo(() => (q.data ?? []).filter((i) => i.enabled), [q.data]);
-  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) })).filter((r) => r.items.length > 0 || r.id === room || r.id.startsWith("quarto"));
+  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) }));
   const roomItems = (rooms.find((r) => r.id === room)?.items ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order)
@@ -443,24 +447,10 @@ export function InventoryWorkspace({
           const review = pendingReviewIds.has(i.id);
           const a = i.inventory_answer;
           return (
-            <li key={i.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 border-b px-2 py-2.5 last:border-b-0 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border} data-testid="inventory-row">
-              <button type="button" onClick={() => openDetail()} className="size-12 overflow-hidden rounded-lg sm:size-14" style={{ backgroundColor: "var(--ficha-subtle)" }} aria-label={`Detalhes de ${i.name}`}>
-                {ex?.url ? <img src={ex.url} alt="" loading="lazy" className="size-full object-cover" /> : <ImageIcon className="m-auto size-5" style={muted} />}
-              </button>
-              <button type="button" onClick={() => openDetail()} className="min-w-0 text-left">
-                <span className="block truncate font-semibold" style={navy}>{i.name}</span>
-                <span className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm" style={muted}>
-                  {ex?.quantity_text && <span className="truncate">{ex.quantity_text} ·</span>}
-                  <span className="truncate">{meta}</span>
-                  {a === "nao_aplica" && <span>· N/A</span>}
-                  {review && (
-                    <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs" style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--ficha-pending-fg)" }}>
-                      <span className="size-1.5 rounded-full" style={{ backgroundColor: "var(--ficha-pending-fg)" }} /> Alterado pelo proprietário · Revisar
-                    </span>
-                  )}
-                </span>
-              </button>
-              <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
+            <InventoryRow key={i.id} name={i.name} image={ex?.url} onOpen={openDetail}
+              group={inventorySubItemsFor(i.name).length > 0}
+              meta={inventorySubItemsFor(i.name).length ? `Grupo · ${inventorySubItemsFor(i.name).length} itens` : <>{meta}{a === "nao_aplica" ? " · N/A" : ""}{review ? " · Revisar" : ""}</>}
+              actions={<>
                 <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
                 <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: installation ? "tenho" : a === "tenho" ? null : "tenho" }); if (installation) openDetail(); }} />
                 <DropdownMenu>
@@ -481,30 +471,23 @@ export function InventoryWorkspace({
                     <DropdownMenuItem onSelect={() => openDetail()}>Detalhes</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-              {inventorySubItemsFor(i.name).length > 0 && a === "tenho" && (
-                <div className="col-span-full mt-1 flex flex-col gap-2 rounded-xl border p-2 sm:ml-[4.25rem] sm:p-3" style={{ ...border, backgroundColor: "var(--ficha-subtle)" }}>
-                  <p className="px-1 text-xs font-semibold uppercase tracking-wide" style={muted}>Itens do jogo</p>
+              </>}
+              >
+              {inventorySubItemsFor(i.name).length > 0 && (
+                <ul className="col-span-full ml-2 list-none border-l border-border pl-2 sm:ml-7 sm:pl-3">
                   {inventorySubItemsFor(i.name).map((s) => {
                     const sa = subAnswerFor(i.inventory_subanswers, s.key);
                     const media = inventoryReferenceFor(s.label, referenceMedia.data);
                     return (
-                      <div key={s.key} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-lg border bg-card px-2 py-2.5 shadow-sm sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border}>
-                        <span className="size-12 overflow-hidden rounded-lg bg-muted sm:size-14">
-                          {media.url ? <img src={media.url} alt={s.label} loading="lazy" className="size-full object-contain" /> : <ImageIcon className="m-auto mt-3 size-5 text-muted-foreground" />}
-                        </span>
-                        <span className="min-w-0"><span className="block truncate font-semibold" style={navy}>{s.label}</span><span className="text-xs sm:text-sm" style={muted}>{sa ? "STAYO" : "Ainda não respondido"}</span></span>
-                        <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${s.label}`}>
+                      <InventoryRow key={s.key} name={s.label} image={media.url} meta={sa ? "STAYO" : "Ainda não respondido"} onOpen={() => setSubDetail({ label: s.label, parentId: i.id, key: s.key })} actions={<>
                           <AnswerBtn kind="no" on={sa === "nao_tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "nao_tenho" ? null : "nao_tenho" })} />
                           <AnswerBtn kind="yes" on={sa === "tenho"} onClick={() => subanswer.mutate({ item: i, subKey: s.key, answer: sa === "tenho" ? null : "tenho" })} />
-                          <span aria-hidden className="w-11 shrink-0" />
-                        </div>
-                      </div>
+                      </>} />
                     );
                   })}
-                </div>
+                </ul>
               )}
-            </li>
+            </InventoryRow>
           );
   };
 
@@ -633,31 +616,36 @@ export function InventoryWorkspace({
         {roomSlot ? roomSlot(room, roomItems, renderItem) : roomItems.map((i) => renderItem(i))}
       </ul>
 
-      {adding && (
-        <form
-          className="flex gap-2 border-t px-4 py-3 sm:px-5"
-          style={border}
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (newName.trim()) add.mutate(newName.trim());
-          }}
-        >
-          <input
-            autoFocus
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder={`Novo item em ${ROOMS.find((r) => r.id === room)?.label}`}
-            maxLength={120}
-            className="h-10 min-w-0 flex-1 rounded-lg border px-3 text-sm"
-            style={border}
-            aria-label="Nome do novo item"
-          />
-          <button type="submit" disabled={!newName.trim() || add.isPending} className="h-10 rounded-lg px-4 text-sm font-medium disabled:opacity-50" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}>
-            Adicionar
-          </button>
-          <button type="button" onClick={() => setAdding(false)} className="h-10 px-2 text-sm" style={muted}>Cancelar</button>
-        </form>
-      )}
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <span className="min-w-0 text-sm text-muted-foreground">{room === "outros" ? "Itens avulsos do proprietário" : ROOMS.find((r) => r.id === room)?.label}</span>
+        <Button variant="outline" onClick={() => { setNewName(""); add.reset(); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
+      </div>
+      <Dialog open={adding} onOpenChange={setAdding}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Adicionar item · {ROOMS.find((r) => r.id === room)?.label}</DialogTitle></DialogHeader>
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (newName.trim()) add.mutate(newName.trim()); }}>
+            <label className="block space-y-2 text-sm font-medium">Nome do item<Input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={room === "outros" ? "Ex.: coleção de livros" : "Ex.: máquina de café"} maxLength={120} aria-label="Nome do novo item" /></label>
+            {add.isError && <p role="alert" className="text-sm text-destructive">Não foi possível adicionar. Tente novamente.</p>}
+            <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancelar</Button><Button type="submit" disabled={!newName.trim() || add.isPending}>{add.isPending ? "Adicionando…" : "Adicionar"}</Button></div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Sheet open={!!subDetail} onOpenChange={(open) => { if (!open) setSubDetail(null); }}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          <SheetHeader><SheetTitle>{subDetail?.label}</SheetTitle></SheetHeader>
+          {subDetail && (() => {
+            const media = inventoryReferenceFor(subDetail.label, referenceMedia.data);
+            const parent = items.find((item) => item.id === subDetail.parentId);
+            const selected = subAnswerFor(parent?.inventory_subanswers, subDetail.key);
+            return <div className="mt-4 space-y-4">
+              {media.url && <img src={media.url} alt={subDetail.label} className="h-44 w-full rounded-lg bg-muted object-contain" />}
+              {media.description && <p className="text-sm text-foreground">{media.description}</p>}
+              {media.tip && <p className="text-sm text-muted-foreground">{media.tip}</p>}
+              {parent && <div className="flex gap-2" role="radiogroup" aria-label={`Resposta para ${subDetail.label}`}><AnswerBtn kind="no" on={selected === "nao_tenho"} onClick={() => subanswer.mutate({ item: parent, subKey: subDetail.key, answer: selected === "nao_tenho" ? null : "nao_tenho" })} /><AnswerBtn kind="yes" on={selected === "tenho"} onClick={() => subanswer.mutate({ item: parent, subKey: subDetail.key, answer: selected === "tenho" ? null : "tenho" })} /></div>}
+            </div>;
+          })()}
+        </SheetContent>
+      </Sheet>
 
       <div className="flex items-center gap-4 border-t px-4 py-3 text-sm sm:px-5" style={border}>
         <span className="shrink-0" style={muted}>
@@ -745,9 +733,9 @@ export function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boole
       : { backgroundColor: "var(--stayo-danger)", color: "var(--admin-surface, #fff)", borderColor: "var(--stayo-danger)" }
     : { borderColor: "var(--stayo-border)", color: yes ? "var(--ficha-icon-fg)" : "var(--stayo-danger)", backgroundColor: "var(--admin-surface, #fff)" };
   return (
-    <button key={String(on)} type="button" role="radio" aria-checked={on} aria-label={yes ? "Sim, tem" : "Não tem"} title={yes ? "Sim" : "Não"} onClick={onClick} className={cn("grid size-11 shrink-0 place-items-center rounded-full border-2 transition-colors", on ? "admin-answer-pop" : "opacity-70 hover:opacity-100")} style={style}>
+    <Button variant="outline" key={String(on)} type="button" role="radio" aria-checked={on} aria-label={yes ? "Sim, tem" : "Não tem"} title={yes ? "Sim" : "Não"} onClick={onClick} className={cn("grid size-11 shrink-0 place-items-center rounded-full border-2 p-0 transition-colors", on ? "admin-answer-pop" : "opacity-70 hover:opacity-100")} style={style}>
       {yes ? <Check className="size-5" strokeWidth={3} /> : <X className="size-5" strokeWidth={3} />}
-    </button>
+    </Button>
   );
 }
 
