@@ -202,11 +202,14 @@ export function ContractConditionsPanel({
   showMeetings = true,
   initialOpen = false,
   focusSection = null,
+  onEditorClose,
 }: {
   implementationId: EntityId;
   showMeetings?: boolean;
   /** Abre a janela de edição direto, sem passar pelo resumo. */
   initialOpen?: boolean;
+  /** Chamado quando a janela de edição fecha (uso embutido, sem resumo visível). */
+  onEditorClose?: () => void;
   /** Número da seção (1, 2, 3, 5, 6, 7, 8) para rolar até ela ao abrir. */
   focusSection?: number | null;
   /** Itens de limpeza do rascunho da proposta (reuso; nunca cria cobrança). */
@@ -291,6 +294,7 @@ export function ContractConditionsPanel({
       });
       toast.success("Condições salvas");
       setOpen(false);
+      onEditorClose?.();
     },
     onError: (error) => {
       setSaveError(
@@ -336,6 +340,7 @@ export function ContractConditionsPanel({
                 if (!window.confirm("Descartar as alterações não salvas?")) return;
               }
               setOpen(next);
+              if (!next) onEditorClose?.();
             }}
           >
             <DialogTrigger asChild>
