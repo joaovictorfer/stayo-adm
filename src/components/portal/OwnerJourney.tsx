@@ -1248,6 +1248,7 @@ function ProposalStep({
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
   const confirmed = !needs && confirmation;
+  const implPaid = Boolean(journey?.paidItems?.["implementation"]?.paid);
 
   return (
     <section className="pj-proposal">
@@ -1284,13 +1285,13 @@ function ProposalStep({
           <span className="pj-open-note-icon" aria-hidden="true"><FileText className="size-4" /></span>
           <p>
             <strong>Implantação</strong>
-            <span>{facts.implementation ?? "Valor definido após avaliação."}</span>
-            <span>Combinaremos tudo antes de qualquer cobrança.</span>
+            <span>{facts.implementation ?? "Valor definido após avaliação."}{implPaid ? " · Pago" : ""}</span>
+            <span>{implPaid ? "Pagamento já recebido pela STAYO." : "Combinaremos tudo antes de qualquer cobrança."}</span>
           </p>
         </div>
       </div>
 
-      <ProposalSnapshotSummary snapshot={shown} />
+      <ProposalSnapshotSummary snapshot={shown} implementationPaid={implPaid} />
 
       {confirmed ? (
         <div className="pj-confirmed">
@@ -1517,7 +1518,7 @@ function proposalFacts(snapshot: CommercialProposalSnapshot) {
   };
 }
 
-function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSnapshot }) {
+function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { snapshot: CommercialProposalSnapshot; implementationPaid?: boolean }) {
   const blocks = publicBlocks(snapshot);
   const facts = proposalFacts(snapshot);
   const { groups } = facts;
@@ -1582,8 +1583,8 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
           </ul>
           <div className="pj-totals">
             <div className="pj-total">
-              <span>Valor definido da implantação</span>
-              <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}</strong>
+              <span>{implementationPaid ? "Implantação · já paga" : "Valor definido da implantação"}</span>
+              <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}{implementationPaid ? " ✓" : ""}</strong>
             </div>
             {pending.length + optional.length > 0 && (
               <div className="pj-total is-soft">

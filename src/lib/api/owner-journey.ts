@@ -27,6 +27,8 @@ export interface OwnerJourneyProposal {
   confirmation: OwnerJourneyConfirmation | null;
   /** Há versão publicada que ainda não foi confirmada (inclui nova versão). */
   needsConfirmation: boolean;
+  /** Itens já pagos marcados pela STAYO (ex.: implementation). */
+  paidItems: Record<string, { paid?: boolean; paid_at?: string | null }>;
 }
 
 type RpcClient = {
@@ -48,6 +50,7 @@ function parse(data: unknown): OwnerJourneyProposal {
     current: d.current ?? null,
     confirmation: d.confirmation ?? null,
     needsConfirmation: Boolean(d.needsConfirmation),
+    paidItems: (d.paidItems ?? {}) as OwnerJourneyProposal["paidItems"],
   };
 }
 
