@@ -364,7 +364,7 @@ export function FichaCommercial({
         </div>
         <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onNewVersion={() => { setQuick(null); setPop("services"); }} />
         <Dialog open={pop != null} onOpenChange={(o) => { if (!o) { setPop(null); void qc.invalidateQueries(); } }}>
-          <DialogContent className="flex max-h-[90dvh] max-w-3xl flex-col overflow-y-auto">
+          <DialogContent className={`flex max-h-[90dvh] flex-col overflow-y-auto ${pop === "services" ? "max-w-5xl" : "max-w-3xl"}`}>
             <DialogHeader>
               <DialogTitle>{pop ? POP_TITLE[pop][0] : ""}</DialogTitle>
               <DialogDescription>{pop ? POP_TITLE[pop][1] : ""}</DialogDescription>
