@@ -931,9 +931,12 @@ function CommercialTermsPanel({ implementationId }: { implementationId: EntityId
 
 function JourneyHeading({ n, title, hint }: { n: number; title: string; hint: string }) {
   return (
-    <div className="pt-2">
-      <h3 className="text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "Outfit, var(--stayo-font-ui), sans-serif" }}>{n}. {title}</h3>
-      <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{hint}</p>
+    <div className="flex items-start gap-3 pt-4">
+      <span className="grid size-7 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ background: "var(--stayo-navy)", color: "white" }}>{n}</span>
+      <div className="min-w-0">
+        <h3 className="text-base font-semibold sm:text-lg" style={{ color: "var(--stayo-navy)" }}>{title}</h3>
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{hint}</p>
+      </div>
     </div>
   );
 }
@@ -995,12 +998,12 @@ function OwnerTab({
     return (
       <div className="space-y-4">
         <OwnerJourneyStatus implementationId={implementation.id} versions={versions} />
-        <JourneyHeading n={1} title="Proposta" hint="Link somente leitura para o proprietário conhecer e revisar a proposta publicada." />
+        <JourneyHeading n={1} title="Proposta" hint="Link só de leitura para o proprietário ver a proposta." />
         <OwnerInviteSection
           implementationId={implementation.id}
           ownerName={ownerData?.name ?? implementation.ownerName ?? null}
         />
-        <JourneyHeading n={2} title="Cadastro e Portal" hint="Link de acesso do proprietário: confirma a proposta, preenche o cadastro para contrato e cria a conta do Portal." />
+        <JourneyHeading n={2} title="Cadastro e Portal" hint="Link para confirmar a proposta, preencher o cadastro e criar a conta." />
         <div id="portal-owner-panel">
           <OwnerPortalPanel
             implementationId={implementation.id}
