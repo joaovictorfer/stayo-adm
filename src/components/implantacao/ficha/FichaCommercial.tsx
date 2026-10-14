@@ -37,7 +37,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; section?: number | undefined };
 
 function Block({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -282,17 +282,17 @@ export function FichaCommercial({
     { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap["implementation"]?.paid },
   ];
   const clauses: Row[] = [
-    { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null },
-    { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule },
-    { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null },
-    { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não" },
-    ...(assignment ? ([{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null }] as Row[]) : []),
-    ...(c?.notice_period_days ? ([{ label: "Aviso prévio", value: days(c.notice_period_days) }] as Row[]) : []),
-    ...(c?.maintenance_limit != null ? ([{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}` }] as Row[]) : []),
+    { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null, section: 5 },
+    { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule, section: 7 },
+    { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null, section: 3 },
+    { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não", section: 8 },
+    ...(assignment ? ([{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null, section: 6 }] as Row[]) : []),
+    ...(c?.notice_period_days ? ([{ label: "Aviso prévio", value: days(c.notice_period_days), section: 8 }] as Row[]) : []),
+    ...(c?.maintenance_limit != null ? ([{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}`, section: 1 }] as Row[]) : []),
   ];
   const services: Row[] = [
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes },
-    { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null },
+    { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null, section: 2 },
     { label: "Enxoval", value: linen, detail: c?.linen_notes },
   ];
 
