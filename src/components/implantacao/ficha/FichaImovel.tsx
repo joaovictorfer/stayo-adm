@@ -466,7 +466,19 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
               </div>
                 </div>
               )}
-              {(group === "all" || group === "acesso") && (
+              {group === "all" && (
+                <button
+                  type="button"
+                  onClick={() => setShowOptional((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors hover:bg-[var(--ficha-subtle)]"
+                  style={{ ...border, ...navy }}
+                  aria-expanded={showOptional}
+                >
+                  Detalhes opcionais (acesso, Wi-Fi)
+                  <ChevronDown className={`size-4 transition ${showOptional ? "rotate-180" : ""}`} />
+                </button>
+              )}
+              {((group === "all" && showOptional) || group === "acesso") && (
                 <div className="space-y-3">
                   {group === "all" && <h4 className="text-sm font-semibold" style={display}>Acesso e conectividade</h4>}
               <div className="grid gap-3 sm:grid-cols-2">
