@@ -169,6 +169,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
   function startEdit(g: EditGroup = "all") {
     setGroup(g);
+    setShowOptional(false);
     setCondoId(implementation.condominiumId ?? "");
     setUnit(implementation.unit ?? "");
     setTower(implementation.tower ?? "");
