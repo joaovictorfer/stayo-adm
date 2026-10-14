@@ -494,6 +494,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
       </section>
 
       {/* A. Condições da proposta */}
+      {only !== "services" && (
       <section className={card} aria-labelledby="area-condicoes">
         <p className={eyebrow}>A</p>
         <h3 id="area-condicoes" className="text-lg font-semibold">
@@ -568,10 +569,13 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           )}
         </div>
 
+        {!only && (
         <div className="mt-5">
           <ImplementationDecisionsPanel implementationId={implementationId} />
         </div>
+        )}
 
+        {!only && (
         <div className="mt-5">
           <ContractConditionsPanel
             implementationId={implementationId}
@@ -585,6 +589,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
               }))}
           />
         </div>
+        )}
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <div>
@@ -715,7 +720,9 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </div>
       </section>
 
+
       {/* B. Serviços e valores */}
+      {only !== "terms" && (
       <section className={card} aria-labelledby="area-servicos">
         <p className={eyebrow}>B</p>
         <h3 id="area-servicos" className="text-lg font-semibold">
@@ -949,6 +956,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         </dl>
       </section>
+      )}
 
       {(previewId === "draft" || selectedVersion?.snapshot) && (
         <section
@@ -974,6 +982,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
         </section>
       )}
 
+      {!only && (
       <section className={card}>
         <div className="mb-4">
           <h3 className="font-semibold">Histórico de versões</h3>
@@ -1034,6 +1043,7 @@ export function ProposalTab({ implementationId }: { implementationId: EntityId }
           </div>
         )}
       </section>
+      )}
 
       <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
         <AlertDialogContent>
