@@ -1780,6 +1780,41 @@ export type Database = {
         }
         Relationships: []
       }
+      implementation_timeline_steps: {
+        Row: {
+          created_at: string
+          done_at: string | null
+          id: string
+          implementation_id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          implementation_id: string
+          position?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          implementation_id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_timeline_steps_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_timeline_updates: {
         Row: {
           created_at: string

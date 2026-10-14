@@ -3,6 +3,7 @@ import { journeyLabel, proposalStage, contractStageLabel, currentContractStage }
 import { usePropertyPendencies } from "../components/implantacao/ficha/property-pendencies";
 import { FichaProprietario } from "../components/implantacao/ficha/FichaProprietario";
 import { FichaImovel } from "@/components/implantacao/ficha/FichaImovel";
+import { ImplementationTimeline } from "@/components/implantacao/ficha/ImplementationTimeline";
 import { FichaImplantacao } from "../components/implantacao/ficha/FichaImplantacao";
 import { FichaCommercial } from "@/components/implantacao/ficha/FichaCommercial";
 import { FichaContrato } from "@/components/implantacao/ficha/FichaContrato";
@@ -657,6 +658,7 @@ function ImplementationDetailPage() {
                 <OwnerTab implementation={implementation} part="portal" versions={proposalsQuery.data ?? []} />
               ) : (
                 <div className="flex flex-col gap-4">
+                  <ImplementationTimeline implementationId={implementation.id} />
                   <section
                     className="rounded-[var(--radius-card)] border bg-white p-5"
                     style={{ borderColor: "var(--stayo-border)" }}
