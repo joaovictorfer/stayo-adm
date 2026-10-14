@@ -139,6 +139,113 @@ const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2)
 const num = (v: number | null | undefined) => (v != null ? String(v) : "");
 const toNum = (v: string) => (v.trim() === "" ? null : Number(v));
 
+/** Foto de capa do imóvel: upload ou arrastar, em destaque no topo da aba. */
+function PropertyCoverCard({ implementationId }: { implementationId: string }) {
+  const qc = useQueryClient();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const key = ["implementation-cover", implementationId];
+  const coverQ = useQuery({ queryKey: key, queryFn: () => getAdminCoverState(implementationId) });
+
+  const run = useMutation({
+    mutationFn: async (action: () => Promise<void>) => action(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: key });
+      toast.success("Foto da ficha atualizada.");
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Não foi possível enviar a foto."),
+  });
+
+  function pick(file: File | undefined | null) {
+    if (file && !run.isPending) run.mutate(() => uploadImplementationCoverFor(implementationId, file));
+  }
+
+  const url = coverQ.data?.implementationUrl ?? null;
+
+  return (
+    <section className="rounded-xl border bg-white p-4 sm:px-5" style={border}>
+      <div className="flex items-center justify-between gap-2 pb-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <IconDot><ImageIcon className="size-4" /></IconDot>
+          <div className="min-w-0">
+            <h3 className="truncate text-lg font-semibold" style={display}>Foto do imóvel</h3>
+            <p className="text-xs" style={muted}>Usada na ficha e no portal do proprietário.</p>
+          </div>
+        </div>
+        {run.isPending && <Loader2 className="size-4 animate-spin" style={muted} aria-label="Enviando foto" />}
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        aria-label="Enviar foto do imóvel"
+        onChange={(e) => {
+          pick(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      <button
+        type="button"
+        disabled={run.isPending}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          pick(e.dataTransfer.files?.[0]);
+        }}
+        className="relative block h-44 w-full overflow-hidden rounded-lg border-2 border-dashed text-left transition-colors sm:h-52"
+        style={{
+          borderColor: dragOver ? "var(--stayo-navy)" : "var(--stayo-border)",
+          backgroundColor: dragOver ? "var(--ficha-subtle)" : "var(--stayo-bg)",
+        }}
+        aria-label={url ? "Trocar foto do imóvel" : "Adicionar foto do imóvel"}
+      >
+        {coverQ.isPending ? (
+          <span className="absolute inset-0 animate-pulse bg-[var(--stayo-bg)]" />
+        ) : url ? (
+          <>
+            <img src={url} alt="Foto do imóvel" className="absolute inset-0 h-full w-full object-cover" />
+            <span className="absolute bottom-2 right-2 rounded-full bg-[rgba(11,49,80,0.75)] px-3 py-1.5 text-xs font-medium text-[var(--stayo-surface)]">
+              Toque ou arraste para trocar
+            </span>
+          </>
+        ) : (
+          <span className="absolute inset-0 grid place-items-center p-4">
+            <span className="flex flex-col items-center gap-2 text-center">
+              <Upload className="size-6" style={navy} />
+              <span className="text-sm font-medium" style={navy}>Toque para enviar ou arraste a foto aqui</span>
+              <span className="text-xs" style={muted}>JPG, PNG ou WebP</span>
+            </span>
+          </span>
+        )}
+      </button>
+
+      {url && (
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            disabled={run.isPending}
+            onClick={() => run.mutate(() => removeImplementationCover(implementationId))}
+            className="flex items-center gap-1.5 text-xs font-medium"
+            style={{ color: "var(--stayo-danger)" }}
+          >
+            <Trash2 className="size-3.5" /> Remover foto
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { implementation: ImplementationProject; onGoOwner: () => void; onGoPortal: () => void }) {
   const qc = useQueryClient();
   const { keys: pendencyKeys, detailsQ } = usePropertyPendencies(implementation.id);
