@@ -675,54 +675,31 @@ export function InventoryWorkspace({
               <SheetHeader>
                 <SheetTitle style={display}>{detailItem.name}</SheetTitle>
               </SheetHeader>
-              <div className="mt-3 space-y-4 text-sm">
-                <div className="aspect-[4/3] overflow-hidden rounded-xl" style={{ backgroundColor: "var(--ficha-subtle)" }}>
+              <div className="mt-2 space-y-3 text-sm">
+                <div className="flex h-44 items-center justify-center overflow-hidden rounded-xl sm:h-52" style={{ backgroundColor: "var(--ficha-subtle)" }}>
                   {detailMedia?.url ? (
-                    <img src={detailMedia.url} alt={detailItem.name} className="size-full object-contain" />
+                    <img src={detailMedia.url} alt={detailItem.name} className="h-full w-full object-contain p-2" />
                   ) : (
-                    <ImageIcon className="m-auto mt-20 size-8" style={muted} />
+                    <ImageIcon className="size-8" style={muted} />
                   )}
                 </div>
                 {(detailMedia?.tip || detailMedia?.description || detailMedia?.quantity_text) && (
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Recomendação STAYO</p>
-                    {detailMedia?.quantity_text && (
-                      <p className="font-medium" style={navy}>Quantidade: {detailMedia.quantity_text}</p>
-                    )}
-                    {detailMedia?.description && <p style={navy}>{detailMedia.description}</p>}
-                    {detailMedia?.tip && <p className="mt-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>Dica: {detailMedia.tip}</p>}
+                  <div className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--stayo-border)" }}>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide" style={muted}>
+                      Recomendação{detailMedia?.quantity_text ? ` · ${detailMedia.quantity_text}` : ""}
+                    </p>
+                    {detailMedia?.description && <p className="mt-0.5 text-[13px] leading-snug" style={navy}>{detailMedia.description}</p>}
+                    {detailMedia?.tip && <p className="mt-1.5 text-xs leading-snug" style={muted}>{detailMedia.tip}</p>}
                   </div>
                 )}
-                {(detailItem.inventory_quantity != null || detailItem.inventory_brand || detailItem.inventory_condition) && (
-                  <p style={navy}>
-                    {[
-                      detailItem.inventory_quantity != null ? `${detailItem.inventory_quantity} un.` : null,
-                      detailItem.inventory_brand,
-                      detailItem.inventory_condition ? inventoryConditionLabel[detailItem.inventory_condition] : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                )}
                 {safeUrl(extras.data?.[detailItem.id]?.purchase_url) && (
-                  <a href={safeUrl(extras.data?.[detailItem.id]?.purchase_url)!} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline underline-offset-2" style={navy}>
+                  <a href={safeUrl(extras.data?.[detailItem.id]?.purchase_url)!} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm underline underline-offset-2" style={navy}>
                     <ExternalLink className="size-4" /> Onde comprar
                   </a>
                 )}
-                <button type="button" className="self-start text-sm underline underline-offset-2" style={navy} onClick={() => answer.mutate({ item: detailItem, answer: detailItem.inventory_answer === "nao_aplica" ? null : "nao_aplica" })}>
-                  {detailItem.inventory_answer === "nao_aplica" ? "Remover “Não se aplica”" : "Marcar como “Não se aplica”"}
-                </button>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Histórico</p>
-                  <p style={navy}>
-                    {detailItem.inventory_answer
-                      ? `${detailItem.inventory_source === "proprietario" ? "Proprietário" : "STAYO"}${detailItem.inventory_updated_at ? ` · ${new Date(detailItem.inventory_updated_at).toLocaleString("pt-BR")}` : ""}${detailItem.inventory_review_status === "revisado_stayo" ? " · revisado pela STAYO" : ""}`
-                      : "Ainda não respondido"}
-                  </p>
-                  {pendingReviewIds.has(detailItem.id) && (
-                    <p className="mt-1 text-xs" style={{ color: "var(--ficha-pending-fg)" }}>Alterado pelo proprietário · aguardando revisão</p>
-                  )}
-                </div>
+                {pendingReviewIds.has(detailItem.id) && (
+                  <p className="text-xs" style={{ color: "var(--ficha-pending-fg)" }}>Alterado pelo proprietário · aguardando revisão</p>
+                )}
                 {detailExtras.current.get(detailItem.id)}
                 <InventoryItemDetails
                   item={detailItem}
@@ -741,6 +718,16 @@ export function InventoryWorkspace({
                     await refresh();
                   }}
                 />
+                <div className="flex items-center justify-between gap-3 pt-1 text-[11px]" style={muted}>
+                  <span className="min-w-0 truncate">
+                    {detailItem.inventory_answer
+                      ? `${detailItem.inventory_source === "proprietario" ? "Proprietário" : "STAYO"}${detailItem.inventory_updated_at ? ` · ${new Date(detailItem.inventory_updated_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}` : ""}${detailItem.inventory_review_status === "revisado_stayo" ? " · revisado" : ""}`
+                      : "Ainda não respondido"}
+                  </span>
+                  <button type="button" className="shrink-0 rounded-full border px-3 py-1 text-xs" style={{ borderColor: "var(--stayo-border)", ...navy }} onClick={() => answer.mutate({ item: detailItem, answer: detailItem.inventory_answer === "nao_aplica" ? null : "nao_aplica" })}>
+                    {detailItem.inventory_answer === "nao_aplica" ? "Remover N/A" : "Não se aplica"}
+                  </button>
+                </div>
               </div>
             </>
           )}
