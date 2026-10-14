@@ -435,6 +435,13 @@
       "when": 1791989689764,
       "tag": "0061_owner_journey_paid_items",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791991632604,
+      "tag": "0062_proposal_item_paid_status",
+      "breakpoints": true
     }
   ]
 }
