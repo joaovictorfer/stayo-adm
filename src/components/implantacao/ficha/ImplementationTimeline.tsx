@@ -146,7 +146,7 @@ export function ImplementationTimeline({ implementationId }: { implementationId:
         <button
           type="button"
           onClick={() => { setInsertAt(index); setInsertTitle(""); }}
-          className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center gap-1 text-xs font-semibold opacity-0 transition-opacity focus:opacity-100 group-hover/slot:opacity-100"
+          className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center gap-1 text-xs font-semibold opacity-40 transition-opacity sm:opacity-0 focus:opacity-100 group-hover/slot:opacity-100"
           style={{ color: "var(--stayo-navy)" }}
           aria-label="Inserir etapa aqui"
         >
