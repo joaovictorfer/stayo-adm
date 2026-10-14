@@ -391,7 +391,7 @@ export function AmenitiesPanel({
       </>;
     };
     slot.bathTabs = [
-      ...(banheiros.length ? banheiros : [{ name: "Banheiro" } as RoomState]).map((r, i) => ({ id: `banheiro${i + 1}`, label: r.name.replace(/^Banheiro social$/, "Banheiro") })),
+      ...(banheiros.length ? banheiros : [{ name: "Banheiro" } as RoomState]).map((r, i) => ({ id: `banheiro${i + 1}`, label: /^Banheiro( social)?( \d+)?$/.test(r.name) ? `Banheiro ${String(i + 1).padStart(2, "0")}` : r.name })),
       ...lavabos.map((r, i) => ({ id: `lavabo${i + 1}`, label: r.name })),
     ];
     return (
