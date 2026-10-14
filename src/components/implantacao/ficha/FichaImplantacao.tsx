@@ -12,7 +12,10 @@ import {
   Plus,
   RotateCcw,
   X,
+  Tablet,
 } from "lucide-react";
+import { toast } from "sonner";
+import { createSurveyLink } from "@/lib/api/implementation-survey";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -532,6 +535,24 @@ export function InventoryWorkspace({
             <b style={navy}>{answered}</b> respondidos · {missing} faltando · {total - answered} pendentes
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={async () => {
+            const tab = window.open("", "_blank");
+            try {
+              const token = await createSurveyLink(implementationId);
+              const url = `${window.location.origin}/vistoria-implantacao/${token}`;
+              if (tab) tab.location.href = url; else window.location.href = url;
+            } catch {
+              tab?.close();
+              toast.error("Não foi possível abrir a vistoria");
+            }
+          }}
+          className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-primary-foreground bg-primary"
+        >
+          <Tablet className="size-4" /> <span className="hidden sm:inline">Vistoria no tablet</span>
+        </button>
         <button
           type="button"
           onClick={() => setOnlyOpen((v) => !v)}
@@ -542,6 +563,7 @@ export function InventoryWorkspace({
         >
           <Filter className="size-4" />
         </button>
+        </div>
       </div>
 
       {reviewing && (

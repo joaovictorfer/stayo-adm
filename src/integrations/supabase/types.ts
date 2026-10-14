@@ -1679,6 +1679,83 @@ export type Database = {
           },
         ]
       }
+      implementation_survey_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          implementation_id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          implementation_id: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          implementation_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_survey_links_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_survey_photos: {
+        Row: {
+          created_at: string
+          guide_item_id: string
+          id: string
+          implementation_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          guide_item_id: string
+          id?: string
+          implementation_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          guide_item_id?: string
+          id?: string
+          implementation_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_survey_photos_guide_item_id_fkey"
+            columns: ["guide_item_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_guide_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_survey_photos_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_templates: {
         Row: {
           created_at: string
@@ -1792,6 +1869,42 @@ export type Database = {
           payment_reference?: string | null
           proposal_id?: string
           status?: Database["public"]["Enums"]["initial_charge_status"]
+        }
+        Relationships: []
+      }
+      inventory_brand_options: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      inventory_note_presets: {
+        Row: {
+          created_at: string
+          id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          text?: string
         }
         Relationships: []
       }
@@ -3626,6 +3739,24 @@ export type Database = {
           total: number
           version: number
         }[]
+      }
+      survey_add_note_preset: {
+        Args: { p_text: string; p_token: string }
+        Returns: undefined
+      }
+      survey_link_ctx: { Args: { p_token: string }; Returns: string }
+      survey_resolve: { Args: { p_token: string }; Returns: Json }
+      survey_save_item: {
+        Args: {
+          p_answer: string
+          p_brand: string
+          p_condition: string
+          p_item_id: string
+          p_notes: string
+          p_quantity: number
+          p_token: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

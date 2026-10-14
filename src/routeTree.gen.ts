@@ -75,6 +75,7 @@ import { Route as ProprietariosIdRouteImport } from './routes/proprietarios.$id'
 import { Route as ProprietariosCadastrosRouteImport } from './routes/proprietarios.cadastros'
 import { Route as ReservasIndexRouteImport } from './routes/reservas.index'
 import { Route as ReservasIdRouteImport } from './routes/reservas.$id'
+import { Route as VistoriaImplantacaoTokenRouteImport } from './routes/vistoria-implantacao.$token'
 import { Route as VistoriasIndexRouteImport } from './routes/vistorias.index'
 import { Route as VistoriasIdRouteImport } from './routes/vistorias.$id'
 import { Route as PortalApresentacaoTokenRouteImport } from './routes/portal.apresentacao.$token'
@@ -430,6 +431,12 @@ const ReservasIdRoute = ReservasIdRouteImport.update({
   path: '/reservas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VistoriaImplantacaoTokenRoute =
+  VistoriaImplantacaoTokenRouteImport.update({
+    id: '/vistoria-implantacao/$token',
+    path: '/vistoria-implantacao/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const VistoriasIndexRoute = VistoriasIndexRouteImport.update({
   id: '/vistorias/',
   path: '/vistorias/',
@@ -535,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
+  '/vistoria-implantacao/$token': typeof VistoriaImplantacaoTokenRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
   '/configuracoes/': typeof ConfiguracoesIndexRoute
@@ -613,6 +621,7 @@ export interface FileRoutesByTo {
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
+  '/vistoria-implantacao/$token': typeof VistoriaImplantacaoTokenRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios': typeof CondominiosIndexRoute
   '/configuracoes': typeof ConfiguracoesIndexRoute
@@ -692,6 +701,7 @@ export interface FileRoutesById {
   '/proprietarios/$id': typeof ProprietariosIdRoute
   '/proprietarios/cadastros': typeof ProprietariosCadastrosRoute
   '/reservas/$id': typeof ReservasIdRoute
+  '/vistoria-implantacao/$token': typeof VistoriaImplantacaoTokenRoute
   '/vistorias/$id': typeof VistoriasIdRoute
   '/condominios/': typeof CondominiosIndexRoute
   '/configuracoes/': typeof ConfiguracoesIndexRoute
@@ -772,6 +782,7 @@ export interface FileRouteTypes {
     | '/proprietarios/$id'
     | '/proprietarios/cadastros'
     | '/reservas/$id'
+    | '/vistoria-implantacao/$token'
     | '/vistorias/$id'
     | '/condominios/'
     | '/configuracoes/'
@@ -850,6 +861,7 @@ export interface FileRouteTypes {
     | '/proprietarios/$id'
     | '/proprietarios/cadastros'
     | '/reservas/$id'
+    | '/vistoria-implantacao/$token'
     | '/vistorias/$id'
     | '/condominios'
     | '/configuracoes'
@@ -928,6 +940,7 @@ export interface FileRouteTypes {
     | '/proprietarios/$id'
     | '/proprietarios/cadastros'
     | '/reservas/$id'
+    | '/vistoria-implantacao/$token'
     | '/vistorias/$id'
     | '/condominios/'
     | '/configuracoes/'
@@ -1007,6 +1020,7 @@ export interface RootRouteChildren {
   ProprietariosIdRoute: typeof ProprietariosIdRoute
   ProprietariosCadastrosRoute: typeof ProprietariosCadastrosRoute
   ReservasIdRoute: typeof ReservasIdRoute
+  VistoriaImplantacaoTokenRoute: typeof VistoriaImplantacaoTokenRoute
   VistoriasIdRoute: typeof VistoriasIdRoute
   CondominiosIndexRoute: typeof CondominiosIndexRoute
   ConfiguracoesIndexRoute: typeof ConfiguracoesIndexRoute
@@ -1497,6 +1511,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReservasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vistoria-implantacao/$token': {
+      id: '/vistoria-implantacao/$token'
+      path: '/vistoria-implantacao/$token'
+      fullPath: '/vistoria-implantacao/$token'
+      preLoaderRoute: typeof VistoriaImplantacaoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vistorias/': {
       id: '/vistorias/'
       path: '/vistorias'
@@ -1623,6 +1644,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProprietariosIdRoute: ProprietariosIdRoute,
   ProprietariosCadastrosRoute: ProprietariosCadastrosRoute,
   ReservasIdRoute: ReservasIdRoute,
+  VistoriaImplantacaoTokenRoute: VistoriaImplantacaoTokenRoute,
   VistoriasIdRoute: VistoriasIdRoute,
   CondominiosIndexRoute: CondominiosIndexRoute,
   ConfiguracoesIndexRoute: ConfiguracoesIndexRoute,
