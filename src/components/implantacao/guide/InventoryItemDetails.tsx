@@ -95,7 +95,6 @@ export function InventoryItemDetails({
       }} actions={<>
         {err && (
           <p
-            className="text-xs"
             role="alert"
             className="text-xs text-destructive"
           >
