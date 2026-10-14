@@ -200,14 +200,20 @@ function validate(f: ContractForm): Partial<Record<keyof ContractForm, string>> 
 export function ContractConditionsPanel({
   implementationId,
   showMeetings = true,
+  initialOpen = false,
+  focusSection = null,
 }: {
   implementationId: EntityId;
   showMeetings?: boolean;
+  /** Abre a janela de edição direto, sem passar pelo resumo. */
+  initialOpen?: boolean;
+  /** Número da seção (1, 2, 3, 5, 6, 7, 8) para rolar até ela ao abrir. */
+  focusSection?: number | null;
   /** Itens de limpeza do rascunho da proposta (reuso; nunca cria cobrança). */
   cleaningItems?: CleaningProposalItem[];
 }) {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [form, setForm] = useState<ContractForm>(toForm(null));
   const [initial, setInitial] = useState<ContractForm>(toForm(null));
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -234,6 +240,15 @@ export function ContractConditionsPanel({
     setSaveError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Ao abrir a edição com uma seção de destino, rola até ela.
+  useEffect(() => {
+    if (!open || focusSection == null) return;
+    const t = window.setTimeout(() => {
+      document.getElementById(`cc-section-${focusSection}`)?.scrollIntoView({ block: "start" });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [open, focusSection]);
 
   const errors = validate(form);
   const hasErrors = Object.keys(errors).length > 0;
@@ -607,7 +622,7 @@ export function ContractConditionsPanel({
 
 function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-3 rounded-md border p-4" style={{ borderColor: "var(--stayo-border)" }}>
+    <section id={`cc-section-${n}`} className="space-y-3 rounded-md border p-4" style={{ borderColor: "var(--stayo-border)" }}>
       <h3 className="text-sm font-semibold">
         <span className="mr-2 text-muted-foreground">{n}.</span>
         {title}
