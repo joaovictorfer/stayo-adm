@@ -30,7 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { InventoryDetailLayout } from "../guide/InventoryDetailLayout";
 import { InventoryItemDetails } from "../guide/InventoryItemDetails";
 import { InventorySubmissionsReview } from "../guide/InventorySubmissionsReview";
 import { GuidePanel, GuideSummary } from "../guide/GuidePanel";
@@ -63,7 +63,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
 
-export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean) => ReactNode) => ReactNode;
+export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean, subFields?: Record<string, ReactNode>) => ReactNode) => ReactNode;
 
 const QUARTO_CATEGORY = /^Quarto (\d+)$/;
 const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
@@ -438,8 +438,9 @@ export function InventoryWorkspace({
   const newFromGuide = Math.max(0, (catalogCount.data ?? 0) - fromCatalog);
   const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
 
-  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false) => {
+  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false, subFields?: Record<string, ReactNode>) => {
           detailExtras.current.set(i.id, extra ?? null);
+          for (const [key, fields] of Object.entries(subFields ?? {})) detailExtras.current.set(`${i.id}:${key}`, fields);
           const openDetail = () => { setDetail(i.id); };
           const ex = itemMedia(i);
           const who = i.inventory_source === "proprietario" ? "Proprietário" : "STAYO";
@@ -630,22 +631,17 @@ export function InventoryWorkspace({
           </form>
         </DialogContent>
       </Dialog>
-      <Sheet open={!!subDetail} onOpenChange={(open) => { if (!open) setSubDetail(null); }}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader><SheetTitle>{subDetail?.label}</SheetTitle></SheetHeader>
+      <InventoryDetailLayout open={!!subDetail} onOpenChange={(open) => { if (!open) setSubDetail(null); }} name={subDetail?.label ?? "Item"} media={subDetail ? inventoryReferenceFor(subDetail.label, referenceMedia.data) : undefined}>
           {subDetail && (() => {
             const media = inventoryReferenceFor(subDetail.label, referenceMedia.data);
             const parent = items.find((item) => item.id === subDetail.parentId);
             const selected = subAnswerFor(parent?.inventory_subanswers, subDetail.key);
             return <div className="mt-4 space-y-4">
-              {media.url && <img src={media.url} alt={subDetail.label} className="h-44 w-full rounded-lg bg-muted object-contain" />}
-              {media.description && <p className="text-sm text-foreground">{media.description}</p>}
-              {media.tip && <p className="text-sm text-muted-foreground">{media.tip}</p>}
               {parent && <div className="flex gap-2" role="radiogroup" aria-label={`Resposta para ${subDetail.label}`}><AnswerBtn kind="no" on={selected === "nao_tenho"} onClick={() => subanswer.mutate({ item: parent, subKey: subDetail.key, answer: selected === "nao_tenho" ? null : "nao_tenho" })} /><AnswerBtn kind="yes" on={selected === "tenho"} onClick={() => subanswer.mutate({ item: parent, subKey: subDetail.key, answer: selected === "tenho" ? null : "tenho" })} /></div>}
+              {detailExtras.current.get(`${subDetail.parentId}:${subDetail.key}`)}
             </div>;
           })()}
-        </SheetContent>
-      </Sheet>
+      </InventoryDetailLayout>
 
       <div className="flex items-center gap-4 border-t px-4 py-3 text-sm sm:px-5" style={border}>
         <span className="shrink-0" style={muted}>
@@ -656,32 +652,10 @@ export function InventoryWorkspace({
         </div>
       </div>
 
-      <Sheet open={!!detailItem} onOpenChange={(o) => !o && setDetail(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          {detailItem && (
-            <>
-              <SheetHeader>
-                <SheetTitle style={display}>{detailItem.name}</SheetTitle>
-              </SheetHeader>
-              <div className="mt-2 space-y-3 text-sm">
-                <div className="flex h-44 items-center justify-center overflow-hidden rounded-xl sm:h-52" style={{ backgroundColor: "var(--ficha-subtle)" }}>
-                  {detailMedia?.url ? (
-                    <img src={detailMedia.url} alt={detailItem.name} className="h-full w-full object-contain p-2" />
-                  ) : (
-                    <ImageIcon className="size-8" style={muted} />
-                  )}
-                </div>
-                {(detailMedia?.tip || detailMedia?.description || detailMedia?.quantity_text) && (
-                  <div className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--stayo-border)" }}>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide" style={muted}>
-                      Recomendação{detailMedia?.quantity_text ? ` · ${detailMedia.quantity_text}` : ""}
-                    </p>
-                    {detailMedia?.description && <p className="mt-0.5 text-[13px] leading-snug" style={navy}>{detailMedia.description}</p>}
-                    {detailMedia?.tip && <p className="mt-1.5 text-xs leading-snug" style={muted}>{detailMedia.tip}</p>}
-                  </div>
-                )}
+      <InventoryDetailLayout open={!!detailItem} onOpenChange={(o) => { if (!o) setDetail(null); }} name={detailItem?.name ?? "Item"} media={detailMedia ?? undefined}>
+        {detailItem && <div className="space-y-4">
                 {safeUrl(extras.data?.[detailItem.id]?.purchase_url) && (
-                  <a href={safeUrl(extras.data?.[detailItem.id]?.purchase_url)!} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm underline underline-offset-2" style={navy}>
+                  <a href={safeUrl(extras.data?.[detailItem.id]?.purchase_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm underline underline-offset-2" style={navy}>
                     <ExternalLink className="size-4" /> Onde comprar
                   </a>
                 )}
@@ -716,11 +690,8 @@ export function InventoryWorkspace({
                     {detailItem.inventory_answer === "nao_aplica" ? "Remover N/A" : "Não se aplica"}
                   </button>
                 </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+        </div>}
+      </InventoryDetailLayout>
     </section>
   );
 }

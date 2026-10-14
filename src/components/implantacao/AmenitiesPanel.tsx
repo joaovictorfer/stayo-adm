@@ -4,12 +4,15 @@ import { Check, ChevronDown, ImageIcon, Loader2, MoreHorizontal, Pencil, Plus, T
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { InventoryDetailLayout } from "./guide/InventoryDetailLayout";
+import { InventoryDetailFields } from "./guide/InventoryDetailFields";
+import type { InventoryCondition } from "@/lib/guided-inventory";
+import { inventorySubItemsFor } from "@/lib/inventory-subitems";
 import { InventoryRow } from "./ficha/InventoryRow";
 import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
 import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
-import { inventoryReferenceFor, loadInventoryReferenceMedia, type InventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
+import { inventoryReferenceFor, loadInventoryReferenceMedia } from "@/lib/api/inventory-reference-media";
 import { Switch } from "@/components/ui/switch";
 import { inventoryCharacteristic } from "@/lib/inventory-characteristics";
 import {
@@ -313,7 +316,20 @@ export function AmenitiesPanel({
         }
       }
       // Synced amenity rows are represented by their editable source above, not twice.
-      rows.push(...inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades").map((item) => renderItem(item)));
+      rows.push(...inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades").map((item) => {
+        const room = rs[0];
+        const subFields: Record<string, ReactNode> = {};
+        if (room) for (const child of inventorySubItemsFor(item.name)) {
+          const st = room.items[child.key] ?? {};
+          subFields[child.key] = <InventoryDetailFields values={{ name: child.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: (st.characteristics?.['inventory_condition'] as InventoryCondition) || null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key],
+            ...(patch.quantity !== undefined ? { qty: patch.quantity === "" ? null : Number(patch.quantity) } : {}),
+            ...(patch.brand !== undefined ? { brand: patch.brand } : {}),
+            ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+            ...(patch.condition !== undefined ? { characteristics: { ...r.items[child.key]?.characteristics, inventory_condition: patch.condition ?? "" } } : {}),
+          } } }))} />;
+        }
+        return renderItem(item, undefined, false, subFields);
+      }));
       return <>
         {rows}
         <li className="flex flex-wrap items-center justify-between gap-2 px-2 py-3">
@@ -627,13 +643,14 @@ function ItemRow({
                     {subNodes}
         </ul>
       )}
-      <Sheet open={details} onOpenChange={setDetails}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader><SheetTitle>{def.label}</SheetTitle></SheetHeader>
-          {media && <ReferenceMedia media={media} label={def.label} />}
-          <div className="mt-5 space-y-4">{extraFields ?? <ItemRow def={def} items={items} setItem={setItem} fieldsOnly />}</div>
-        </SheetContent>
-      </Sheet>
+      <InventoryDetailLayout open={details} onOpenChange={setDetails} name={def.label} media={media}>
+        <InventoryDetailFields values={{ name: def.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: (st.characteristics?.['inventory_condition'] as InventoryCondition) || null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => setItem(def.key, {
+          ...(patch.quantity !== undefined ? { qty: patch.quantity === "" ? null : Number(patch.quantity) } : {}),
+          ...(patch.brand !== undefined ? { brand: patch.brand } : {}),
+          ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+          ...(patch.condition !== undefined ? { characteristics: { ...st.characteristics, inventory_condition: patch.condition ?? "" } } : {}),
+        })} extra={extraFields ?? <CharacteristicFields name={def.label} state={st} onChange={(patch) => setItem(def.key, patch)} />} />
+      </InventoryDetailLayout>
     </InventoryRow>
   );
   return (
@@ -734,15 +751,6 @@ function SubBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boolean; onClic
 
 function summary(st: ItemState, def: ItemDef) {
   return [!def.options && st.qty ? `${st.qty} un.` : "", st.brand, st.notes ? "obs." : ""].filter(Boolean).join(" · ");
-}
-
-function ReferenceMedia({ media, label }: { media: InventoryReferenceMedia; label: string }) {
-  return <div className="mt-4 space-y-3 text-sm text-foreground">
-    {media.url && <img src={media.url} alt={label} className="aspect-[4/3] w-full rounded-lg object-contain bg-muted" />}
-    {media.quantity_text && <p className="font-medium">Quantidade recomendada: {media.quantity_text}</p>}
-    {media.description && <p>{media.description}</p>}
-    {media.tip && <p className="rounded-lg bg-muted p-3 text-muted-foreground">{media.tip}</p>}
-  </div>;
 }
 
 function CustomItems({ items, onChange }: { items: CustomItem[]; onChange: (c: CustomItem[]) => void }) {
