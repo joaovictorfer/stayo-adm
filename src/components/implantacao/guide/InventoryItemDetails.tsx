@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Copy, Loader2, Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 
 import { Button } from "../../ui/button";
 import {
