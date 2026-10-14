@@ -138,6 +138,18 @@ export function AmenitiesPanel({
       });
     }
   }, [q.data, data, comp, bedrooms]);
+  // Ajusta os ambientes à composição salva (ex.: 2 banheiros → 2 abas), sem apagar nada marcado.
+  const reconciled = useRef(false);
+  useEffect(() => {
+    if (!comp || !data || reconciled.current) return;
+    reconciled.current = true;
+    const next = reconcileRooms(data.rooms, comp);
+    if (next.length !== data.rooms.length) update(() => ({ rooms: next }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comp, data]);
+  useEffect(() => {
+    void 0;
+  }, [q.data, data, comp, bedrooms]);
 
   const changeComp = async (next: Composition) => {
     setComp(next);
@@ -208,20 +220,60 @@ export function AmenitiesPanel({
 
   if (render) {
     const quartos = data.rooms.filter((r) => r.kind === "quarto");
+    const banheiros = data.rooms.filter((r) => r.kind === "banheiro");
+    const lavabos = data.rooms.filter((r) => r.kind === "lavabo");
+    const setSuite = (roomId: string, on: boolean) =>
+      update((d) => {
+        const rooms = d.rooms.map((r) => (r.id === roomId ? toggleSuite(r, on) : r));
+        return { rooms: comp ? reconcileRooms(rooms, comp) : rooms };
+      });
     const slot: InventoryRoomSlot = (tab, inventoryItems, renderItem) => {
       let rs: RoomState[] = [];
       if (tab.startsWith("quarto")) {
         const r = quartos[Number(tab.slice(6)) - 1];
         rs = r ? [r] : [];
+      } else if (tab.startsWith("banheiro")) {
+        const r = banheiros[Number(tab.slice(8) || 1) - 1];
+        rs = r ? [r] : [];
+      } else if (tab.startsWith("lavabo")) {
+        const r = lavabos[Number(tab.slice(6)) - 1];
+        rs = r ? [r] : [];
       } else {
         const kinds: Record<string, RoomKind[]> = {
-          cozinha: ["cozinha"], sala: ["sala"], banheiro: ["banheiro", "lavabo"],
+          cozinha: ["cozinha"], sala: ["sala"],
           lavanderia: ["servico"], outros: ["geral", "externa", "outro"],
         };
         rs = data.rooms.filter((r) => (kinds[tab] ?? []).includes(r.kind));
       }
       const used = new Set<string>();
       const rows: ReactNode[] = [];
+      const bedroom = tab.startsWith("quarto") ? rs[0] : undefined;
+      if (bedroom) {
+        const totalBaths = comp?.bathrooms ?? 0;
+        const suites = quartos.filter((r) => r.suite).length;
+        const canLink = bedroom.suite || suites < totalBaths;
+        rows.push(
+          <li key={`${bedroom.id}:suite`} className="flex flex-wrap items-center justify-between gap-3 border-b px-3 py-3" style={{ borderColor: "var(--stayo-border)" }}>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold" style={{ color: "var(--stayo-navy)" }}>{bedroom.suite ? "Suíte com banheiro privativo" : "Banheiro vinculado"}</p>
+              <p className="text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                {bedroom.suite ? "Os itens do banheiro deste quarto aparecem logo abaixo." : canLink ? "Marque se este quarto tem banheiro próprio." : "Todos os banheiros já estão vinculados. Aumente o número de banheiros no topo."}
+              </p>
+            </div>
+            <Button type="button" size="sm" variant={bedroom.suite ? "default" : "outline"} disabled={!canLink} aria-pressed={!!bedroom.suite} onClick={() => setSuite(bedroom.id, !bedroom.suite)}>
+              {bedroom.suite ? "✓ É suíte" : "Vincular banheiro"}
+            </Button>
+          </li>,
+        );
+      }
+      if (tab.startsWith("banheiro") && tab === "banheiro1") {
+        const linked = quartos.filter((r) => r.suite);
+        if (linked.length) rows.push(
+          <li key="suite-note" className="border-b px-3 py-2.5 text-xs" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-ink-muted)" }}>
+            {linked.length === 1 ? "Banheiro da suíte" : "Banheiros das suítes"} ({linked.map((r) => r.name).join(", ")}) {linked.length === 1 ? "fica" : "ficam"} dentro do próprio quarto.
+          </li>,
+        );
+      }
       for (const room of rs) {
         const supplierRows: ReactNode[] = [];
         const definitions = tab === "outros" ? ROOM_SECTIONS[room.kind].flatMap((section) => section.items).filter((def) => room.items[def.key]?.on !== undefined) : ROOM_SECTIONS[room.kind].flatMap((section) => section.items);
@@ -338,6 +390,10 @@ export function AmenitiesPanel({
         </li>
       </>;
     };
+    slot.bathTabs = [
+      ...(banheiros.length ? banheiros : [{ name: "Banheiro" } as RoomState]).map((r, i) => ({ id: `banheiro${i + 1}`, label: r.name.replace(/^Banheiro social$/, "Banheiro") })),
+      ...lavabos.map((r, i) => ({ id: `lavabo${i + 1}`, label: r.name })),
+    ];
     return (
       <div className="flex flex-col gap-4">
         {comp && (
