@@ -444,6 +444,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(18rem,1fr)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-4">
+              <PropertyCoverCard implementationId={implementation.id} />
               <Card icon={<FileText className="size-4" />} title="Identificação">
                 <ul>
                   <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={() => startEdit("ident")} />
