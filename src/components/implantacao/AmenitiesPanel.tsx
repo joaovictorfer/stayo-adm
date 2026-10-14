@@ -138,6 +138,18 @@ export function AmenitiesPanel({
       });
     }
   }, [q.data, data, comp, bedrooms]);
+  // Ajusta os ambientes à composição salva (ex.: 2 banheiros → 2 abas), sem apagar nada marcado.
+  const reconciled = useRef(false);
+  useEffect(() => {
+    if (!comp || !data || reconciled.current) return;
+    reconciled.current = true;
+    const next = reconcileRooms(data.rooms, comp);
+    if (next.length !== data.rooms.length) update(() => ({ rooms: next }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comp, data]);
+  useEffect(() => {
+    void 0;
+  }, [q.data, data, comp, bedrooms]);
 
   const changeComp = async (next: Composition) => {
     setComp(next);
