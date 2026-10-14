@@ -61,36 +61,29 @@ function Block({ icon, title, children }: { icon: ReactNode; title: string; chil
 }
 
 function ValueLine({ row, onEdit }: { row: Row; onEdit: () => void }) {
-  const [open, setOpen] = useState(false);
-  const expandable = Boolean(row.detail);
   const value = row.value ?? TBD;
   return (
     <li className="border-b last:border-b-0" style={border}>
       <button
         type="button"
-        aria-expanded={expandable ? open : undefined}
-        onClick={() => (expandable ? setOpen((o) => !o) : onEdit())}
+        onClick={onEdit}
+        aria-label={`Editar ${row.label}`}
         className="group grid min-h-14 w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 rounded-lg px-2 py-2.5 text-left text-sm transition-colors hover:bg-[var(--ficha-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--stayo-navy)]/30 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
       >
         <span className="text-xs font-medium uppercase tracking-wide sm:text-sm sm:normal-case sm:tracking-normal" style={muted}>{row.label}</span>
-        <span className="col-start-1 row-start-2 flex min-w-0 items-center gap-2 sm:col-start-2 sm:row-start-1">
-          <span className="truncate text-[0.95rem] font-semibold tabular-nums" style={row.value ? navy : { color: "var(--ficha-pending-fg)" }}>{value}</span>
-          {row.paid && (
-            <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}>Pago</span>
-          )}
+        <span className="col-start-1 row-start-2 flex min-w-0 flex-col sm:col-start-2 sm:row-start-1">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-[0.95rem] font-semibold tabular-nums" style={row.value ? navy : { color: "var(--ficha-pending-fg)" }}>{value}</span>
+            {row.paid && (
+              <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}>Pago</span>
+            )}
+          </span>
+          {row.detail && row.detail !== row.value && <span className="truncate text-xs" style={muted}>{row.detail}</span>}
         </span>
-        <span className="row-span-2 grid size-9 place-items-center rounded-full opacity-60 transition group-hover:bg-white group-hover:opacity-100 sm:row-span-1" style={navy} aria-label={expandable ? "Expandir" : `Editar ${row.label}`}>
-          {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : <Pencil className="size-4" />}
+        <span className="row-span-2 grid size-9 place-items-center rounded-full opacity-60 transition group-hover:bg-white group-hover:opacity-100 sm:row-span-1" style={navy} aria-hidden>
+          <Pencil className="size-4" />
         </span>
       </button>
-      {expandable && open && (
-        <div className="mb-2 flex flex-col gap-2 rounded-md px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between" style={{ backgroundColor: "var(--ficha-subtle)" }}>
-          <p style={muted}>{row.detail}</p>
-          <button type="button" onClick={onEdit} className="flex shrink-0 items-center gap-1.5 underline underline-offset-2" style={navy}>
-            <Pencil className="size-4" /> Editar cláusula
-          </button>
-        </div>
-      )}
     </li>
   );
 }
