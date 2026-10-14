@@ -196,7 +196,7 @@ function QuickEditDialog({
           {cfg?.kind === "none" && (
             <p className="text-sm" style={muted}>
               O valor é a soma dos serviços da implantação.{" "}
-              <button type="button" className="underline" style={navy} onClick={() => { close(); onNewVersion(); }}>Editar serviços</button>
+              <button type="button" className="underline" style={navy} onClick={() => { close(); onNewVersion(); }}>Editar itens da implantação</button>
             </p>
           )}
           {cfg?.payable && (
@@ -305,7 +305,6 @@ export function FichaCommercial({
     { label: "Manutenção sem autorização", value: c?.maintenance_limit != null ? `até ${formatBRL(Number(c.maintenance_limit))}` : null, clause: "maintenance" },
   ];
   const services: Row[] = [
-    { label: "Itens da implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, open: "services" },
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes, open: "decisions" },
     { label: "Enxoval", value: linen, detail: c?.linen_notes, open: "decisions" },
     { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation_only" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
@@ -351,7 +350,7 @@ export function FichaCommercial({
               </div>
               <p className="text-xs" style={muted}>Alterações salvam sozinhas e já passam a valer.</p>
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
-                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.open ? setPop(r.open) : r.quick === "implementation" ? setPop("services") : r.quick && setQuick(r.quick))} />)}
+                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.open ? setPop(r.open) : r.quick && setQuick(r.quick))} />)}
               </Block>
               <Block icon={<FileText className="size-4" />} title="Condições do contrato">
                 {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.clause && setClause(r.clause)} />)}
