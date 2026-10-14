@@ -512,7 +512,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                 </div>
               )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
             <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
             <Button type="button" disabled={saving} onClick={() => void handleSave()}>{saving ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
