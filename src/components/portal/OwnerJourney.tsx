@@ -1408,8 +1408,8 @@ function ItemRow({ item, badge }: { item: SnapItem; badge: ItemPricing }) {
         <span className="pj-item-name">
           {item.quantity > 1 ? `${item.quantity}× ` : ""}{item.description}
         </span>
-        <em className={`pj-badge is-${badge}`}>{status}</em>
-        {item.paid && <em className="pj-badge is-fixed">Já pago ✓</em>}
+        {badge !== "fixed" && <em className={`pj-badge is-${badge}`}>{status}</em>}
+        {item.paid && <em className="pj-badge is-fixed">Pago</em>}
       </span>
       <span className={`pj-item-value${badge === "fixed" ? "" : " is-soft"}`}>{value}</span>
       {hasDetails && <ChevronDown className="pj-chevron" aria-hidden="true" />}
@@ -1522,6 +1522,8 @@ function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { sna
   const facts = proposalFacts(snapshot);
   const { groups } = facts;
   const { fixed, optional, pending, fixedTotal } = groups;
+  void implementationPaid;
+  const allPaid = fixed.length > 0 && fixed.every((it) => Boolean((it as { paid?: boolean }).paid));
   const [openBlock, setOpenBlock] = useState<string | null>(null);
   const content = [...(snapshot.content ?? [])].sort((a, b) => a.displayOrder - b.displayOrder);
   const responsibilities = (snapshot.responsibilities ?? []).filter((r) => r?.trim());
@@ -1582,8 +1584,8 @@ function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { sna
           </ul>
           <div className="pj-totals">
             <div className="pj-total">
-              <span>{implementationPaid ? "Implantação · já paga" : "Valor definido da implantação"}</span>
-              <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}{implementationPaid ? " ✓" : ""}</strong>
+              <span>{allPaid ? "Implantação · paga" : "Valor definido da implantação"}</span>
+              <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}{allPaid ? " ✓" : ""}</strong>
             </div>
             {pending.length + optional.length > 0 && (
               <div className="pj-total is-soft">
