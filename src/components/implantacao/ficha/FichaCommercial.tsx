@@ -3,7 +3,7 @@ import type { PendingEntry } from "./FichaSummary";
 import type { FichaSection } from "../../../lib/ficha-next-action";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Plus, Settings2 } from "lucide-react";
+import { Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Settings2 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
   type TurnoverPayer,
 } from "../../../lib/contract-conditions";
 import { formatBRL } from "../../../lib/money";
-import { ContractConditionsPanel } from "../ContractConditionsPanel";
+import { ClauseEditDialog, type ClauseKey } from "./ClauseEditDialog";
 import { ImplementationDecisionsPanel } from "../ImplementationDecisionsPanel";
 import { ProposalTab } from "../ProposalTab";
 import type { CommercialProposalSnapshot } from "../../../types/commercial-proposal";
@@ -38,7 +38,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; section?: number | undefined; open?: Pop };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; clause?: ClauseKey; open?: Pop };
 type Pop = "decisions" | "services" | "terms";
 const POP_TITLE: Record<Pop, [string, string]> = {
   decisions: ["Decisões da implantação", "Limpeza inicial, enxoval e escopo da assessoria. Salva sozinho."],
@@ -105,7 +105,6 @@ function QuickEditDialog({
   field,
   row,
   onClose,
-  onFullEdit,
   onNewVersion,
 }: {
   implementationId: string;
@@ -113,7 +112,6 @@ function QuickEditDialog({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   row: any;
   onClose: () => void;
-  onFullEdit: () => void;
   onNewVersion: () => void;
 }) {
   const qc = useQueryClient();
@@ -215,9 +213,6 @@ function QuickEditDialog({
               )}
             </div>
           )}
-          <button type="button" onClick={() => { close(); onFullEdit(); }} className="self-start text-sm underline underline-offset-2" style={muted}>
-            Ver todas as condições
-          </button>
         </div>
         <DialogFooter>
           <span className="mr-auto self-center text-xs" style={muted}>
@@ -250,8 +245,7 @@ export function FichaCommercial({
   onGoSection: (s: FichaSection) => void;
 }) {
   const qc = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [editFocus, setEditFocus] = useState<number | null>(null);
+  const [clause, setClause] = useState<ClauseKey | null>(null);
   const [quick, setQuick] = useState<QuickKey | null>(null);
   const [pop, setPop] = useState<Pop | null>(null);
   const q = useQuery({
@@ -269,7 +263,6 @@ export function FichaCommercial({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = (q.data ?? snapRow) as any;
     const implTotal = snap ? snap.total : proposal?.total ?? null;
-  const edit = () => setEditing(true);
   const cleaningFee = c?.turnover_cleaning_fee != null ? formatBRL(Number(c.turnover_cleaning_fee)) : null;
   const initialOpt = c?.initial_cleaning_option as InitialCleaningOption | null | undefined;
   const initial = initialOpt ? (initialOpt === "other" ? c?.initial_cleaning_other || "Outra condição" : INITIAL_CLEANING_LABELS[initialOpt]) : null;
@@ -296,20 +289,20 @@ export function FichaCommercial({
     { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap["implementation"]?.paid },
   ];
   const clauses: Row[] = [
-    { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null, section: 5 },
-    { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule, section: 7 },
-    { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null, section: 3 },
-    { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não", section: 8 },
-    ...(assignment ? ([{ label: "Cessão a terceiros", value: ASSIGNMENT_LABELS[assignment], detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null, section: 6 }] as Row[]) : []),
-    ...(c?.notice_period_days ? ([{ label: "Aviso prévio", value: days(c.notice_period_days), section: 8 }] as Row[]) : []),
-    ...(c?.maintenance_limit != null ? ([{ label: "Manutenção sem autorização", value: `até ${formatBRL(Number(c.maintenance_limit))}`, section: 1 }] as Row[]) : []),
+    { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null, clause: "owner_use" },
+    { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule, clause: "payout" },
+    { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null, clause: "turnover" },
+    { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não", clause: "exclusivity" },
+    { label: "Cessão a terceiros", value: assignment ? ASSIGNMENT_LABELS[assignment] : null, detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null, clause: "assignment" },
+    { label: "Aviso prévio", value: c?.notice_period_days ? days(c.notice_period_days) : null, clause: "notice" },
+    { label: "Manutenção sem autorização", value: c?.maintenance_limit != null ? `até ${formatBRL(Number(c.maintenance_limit))}` : null, clause: "maintenance" },
   ];
   const services: Row[] = [
     { label: "Serviços da implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, open: "services" },
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes, open: "decisions" },
     { label: "Enxoval", value: linen, detail: c?.linen_notes, open: "decisions" },
     { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation_only" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
-    { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null, section: 2 },
+    { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null, quick: "turnover_cleaning_fee" },
     { label: "Objeto e responsabilidades", value: snap?.partnershipObject ? "Definido" : null, detail: snap?.partnershipObject, open: "terms" },
   ];
 
@@ -351,19 +344,19 @@ export function FichaCommercial({
               </div>
               <p className="text-xs" style={muted}>Alterações salvam sozinhas e já passam a valer.</p>
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
-                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.quick ? setQuick(r.quick) : edit())} />)}
+                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.quick && setQuick(r.quick)} />)}
               </Block>
               <Block icon={<FileText className="size-4" />} title="Condições do contrato">
-                {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { setEditFocus(r.section ?? null); edit(); }} />)}
+                {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.clause && setClause(r.clause)} />)}
               </Block>
               <Block icon={<Settings2 className="size-4" />} title="Preparação e serviços">
-                {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { if (r.open) { setPop(r.open); return; } setEditFocus(r.section ?? null); edit(); }} />)}
+                {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { if (r.open) setPop(r.open); else if (r.quick) setQuick(r.quick); }} />)}
               </Block>
             </>
           )}
           {extras}
         </div>
-        <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onFullEdit={edit} onNewVersion={() => { setQuick(null); setPop("services"); }} />
+        <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onNewVersion={() => { setQuick(null); setPop("services"); }} />
         <Dialog open={pop != null} onOpenChange={(o) => { if (!o) { setPop(null); void qc.invalidateQueries(); } }}>
           <DialogContent className="flex max-h-[90dvh] max-w-3xl flex-col overflow-y-auto">
             <DialogHeader>
@@ -374,19 +367,7 @@ export function FichaCommercial({
             {(pop === "services" || pop === "terms") && <ProposalTab implementationId={implementationId} only={pop} />}
           </DialogContent>
         </Dialog>
-        {editing && (
-          <div className="hidden">
-            <ContractConditionsPanel
-              implementationId={implementationId}
-              initialOpen
-              focusSection={editFocus}
-              onEditorClose={() => {
-                setEditing(false);
-                void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
-              }}
-            />
-          </div>
-        )}
+        <ClauseEditDialog implementationId={implementationId} clause={clause} row={q.data as Record<string, unknown> | null} onClose={() => setClause(null)} />
       </div>
       <aside className="lg:pt-0">
         <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
