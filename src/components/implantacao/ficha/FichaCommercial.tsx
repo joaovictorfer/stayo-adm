@@ -149,7 +149,7 @@ function QuickEditDialog({
       }
       patch[field] = cfg.kind === "months" && n != null ? Math.round(n) : n;
     }
-    if (cfg.payable) patch.paid_items = { ...paidMap, [field]: { paid, paid_at: paid ? paidAt || null : null } };
+    if (cfg.payable) patch["paid_items"] = { ...paidMap, [field]: { paid, paid_at: paid ? paidAt || null : null } };
     const { supabase } = await import("@/integrations/supabase/client");
     const { error } = await supabase
       .from("implementation_contract_conditions")
