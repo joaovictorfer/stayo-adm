@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { InventoryDetailLayout } from "./guide/InventoryDetailLayout";
 import { InventoryDetailFields } from "./guide/InventoryDetailFields";
 import type { InventoryCondition } from "@/lib/guided-inventory";
+import { inventorySubItemsFor } from "@/lib/inventory-subitems";
 import { InventoryRow } from "./ficha/InventoryRow";
 import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
 import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
@@ -316,7 +317,20 @@ export function AmenitiesPanel({
         }
       }
       // Synced amenity rows are represented by their editable source above, not twice.
-      rows.push(...inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades").map((item) => renderItem(item)));
+      rows.push(...inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades").map((item) => {
+        const room = rs[0];
+        const subFields: Record<string, ReactNode> = {};
+        if (room) for (const child of inventorySubItemsFor(item.name)) {
+          const st = room.items[child.key] ?? {};
+          subFields[child.key] = <InventoryDetailFields values={{ name: child.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: (st.characteristics?.inventory_condition as InventoryCondition) || null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [child.key]: { ...r.items[child.key],
+            ...(patch.quantity !== undefined ? { qty: patch.quantity === "" ? null : Number(patch.quantity) } : {}),
+            ...(patch.brand !== undefined ? { brand: patch.brand } : {}),
+            ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+            ...(patch.condition !== undefined ? { characteristics: { ...r.items[child.key]?.characteristics, inventory_condition: patch.condition ?? "" } } : {}),
+          } } }))} />;
+        }
+        return renderItem(item, undefined, false, subFields);
+      }));
       return <>
         {rows}
         <li className="flex flex-wrap items-center justify-between gap-2 px-2 py-3">
@@ -631,7 +645,7 @@ function ItemRow({
         </ul>
       )}
       <InventoryDetailLayout open={details} onOpenChange={setDetails} name={def.label} media={media}>
-        <InventoryDetailFields values={{ name: def.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: st.characteristics?.inventory_condition as InventoryCondition ?? null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => setItem(def.key, {
+        <InventoryDetailFields values={{ name: def.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: (st.characteristics?.inventory_condition as InventoryCondition) || null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => setItem(def.key, {
           ...(patch.quantity !== undefined ? { qty: patch.quantity === "" ? null : Number(patch.quantity) } : {}),
           ...(patch.brand !== undefined ? { brand: patch.brand } : {}),
           ...(patch.notes !== undefined ? { notes: patch.notes } : {}),

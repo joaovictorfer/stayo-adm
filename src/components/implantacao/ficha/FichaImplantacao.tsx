@@ -64,7 +64,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
 
-export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean) => ReactNode) => ReactNode;
+export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean, subFields?: Record<string, ReactNode>) => ReactNode) => ReactNode;
 
 const QUARTO_CATEGORY = /^Quarto (\d+)$/;
 const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
@@ -439,8 +439,9 @@ export function InventoryWorkspace({
   const newFromGuide = Math.max(0, (catalogCount.data ?? 0) - fromCatalog);
   const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
 
-  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false) => {
+  const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false, subFields?: Record<string, ReactNode>) => {
           detailExtras.current.set(i.id, extra ?? null);
+          for (const [key, fields] of Object.entries(subFields ?? {})) detailExtras.current.set(`${i.id}:${key}`, fields);
           const openDetail = () => { setDetail(i.id); };
           const ex = itemMedia(i);
           const who = i.inventory_source === "proprietario" ? "Proprietário" : "STAYO";
@@ -631,22 +632,17 @@ export function InventoryWorkspace({
           </form>
         </DialogContent>
       </Dialog>
-      <Sheet open={!!subDetail} onOpenChange={(open) => { if (!open) setSubDetail(null); }}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader><SheetTitle>{subDetail?.label}</SheetTitle></SheetHeader>
+      <InventoryDetailLayout open={!!subDetail} onOpenChange={(open) => { if (!open) setSubDetail(null); }} name={subDetail?.label ?? "Item"} media={subDetail ? inventoryReferenceFor(subDetail.label, referenceMedia.data) : undefined}>
           {subDetail && (() => {
             const media = inventoryReferenceFor(subDetail.label, referenceMedia.data);
             const parent = items.find((item) => item.id === subDetail.parentId);
             const selected = subAnswerFor(parent?.inventory_subanswers, subDetail.key);
             return <div className="mt-4 space-y-4">
-              {media.url && <img src={media.url} alt={subDetail.label} className="h-44 w-full rounded-lg bg-muted object-contain" />}
-              {media.description && <p className="text-sm text-foreground">{media.description}</p>}
-              {media.tip && <p className="text-sm text-muted-foreground">{media.tip}</p>}
               {parent && <div className="flex gap-2" role="radiogroup" aria-label={`Resposta para ${subDetail.label}`}><AnswerBtn kind="no" on={selected === "nao_tenho"} onClick={() => subanswer.mutate({ item: parent, subKey: subDetail.key, answer: selected === "nao_tenho" ? null : "nao_tenho" })} /><AnswerBtn kind="yes" on={selected === "tenho"} onClick={() => subanswer.mutate({ item: parent, subKey: subDetail.key, answer: selected === "tenho" ? null : "tenho" })} /></div>}
+              {detailExtras.current.get(`${subDetail.parentId}:${subDetail.key}`)}
             </div>;
           })()}
-        </SheetContent>
-      </Sheet>
+      </InventoryDetailLayout>
 
       <div className="flex items-center gap-4 border-t px-4 py-3 text-sm sm:px-5" style={border}>
         <span className="shrink-0" style={muted}>
