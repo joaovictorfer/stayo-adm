@@ -381,21 +381,19 @@ export function FichaCommercial({
             {(pop === "services" || pop === "terms") && <ProposalTab implementationId={implementationId} only={pop} />}
           </DialogContent>
         </Dialog>
-        <Dialog
-          open={editing}
-          onOpenChange={(o) => {
-            setEditing(o);
-            if (!o) void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
-          }}
-        >
-          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Condições do contrato</DialogTitle>
-              <DialogDescription>Edite e salve; a janela pode ser fechada a qualquer momento.</DialogDescription>
-            </DialogHeader>
-            <ContractConditionsPanel implementationId={implementationId} initialOpen focusSection={editFocus} />
-          </DialogContent>
-        </Dialog>
+        {editing && (
+          <div className="hidden">
+            <ContractConditionsPanel
+              implementationId={implementationId}
+              initialOpen
+              focusSection={editFocus}
+              onEditorClose={() => {
+                setEditing(false);
+                void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
+              }}
+            />
+          </div>
+        )}
       </div>
       <aside className="lg:pt-0">
         <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
