@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Copy, Loader2, Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 
 import { Button } from "../../ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 import type { InventoryDetails } from "../../../lib/api/guided-inventory";
 
 const muted = { color: "var(--stayo-ink-muted)" };
-const field = "h-10 w-full rounded-md border px-3 text-sm";
+const field = "mt-1 h-10 w-full rounded-lg border px-3 text-sm";
 const border = { borderColor: "var(--stayo-border)" };
 const CONDITIONS: InventoryCondition[] = ["bom", "atencao", "danificado"];
 
@@ -94,26 +94,10 @@ export function InventoryItemDetails({
 
   return item && d ? (
     <div
-      className="mt-2 rounded-lg bg-[var(--stayo-bg)] p-3"
+      className="space-y-3"
       data-testid="inventory-inline-details"
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-xs" style={muted}>
-          {inventoryOriginLabel(item)} · detalhes opcionais
-        </p>
-        <span
-          className="flex items-center gap-1 text-[11px]"
-          style={save === "error" ? { color: "var(--stayo-danger)" } : muted}
-          aria-live="polite"
-        >
-          {save === "saving" && (
-            <>
-              <Loader2 className="size-3 animate-spin" /> Salvando…
-            </>
-          )}
-          {save === "error" && "Erro ao salvar"}
-        </span>
-      </div>
+      <span className="sr-only" aria-live="polite">{save === "saving" ? "Salvando" : save === "error" ? "Erro ao salvar" : ""}</span>
       <div className="space-y-3">
         <label className="block text-xs" style={muted}>
           Nome
@@ -169,7 +153,7 @@ export function InventoryItemDetails({
                   onClick={() =>
                     setD({ ...d, inventory_condition: on ? null : c })
                   }
-                  className="min-h-9 flex-1 rounded-md border text-xs"
+                  className="min-h-10 flex-1 rounded-lg border text-xs font-medium"
                   style={
                     on
                       ? {
@@ -187,9 +171,9 @@ export function InventoryItemDetails({
           </div>
         </div>
         <label className="block text-xs" style={muted}>
-          Observação interna (não aparece para o proprietário)
+          Observação interna
           <textarea
-            className="min-h-20 w-full rounded-md border p-2 text-sm"
+            className="mt-1 min-h-16 w-full rounded-md border p-2 text-sm"
             style={border}
             maxLength={1000}
             value={d.inventory_internal_notes ?? ""}
@@ -199,12 +183,6 @@ export function InventoryItemDetails({
             placeholder="Ex.: Instalador: On Instaladora"
           />
         </label>
-        {item.inventory_updated_at && (
-          <p className="text-[11px]" style={muted}>
-            Última alteração:{" "}
-            {new Date(item.inventory_updated_at).toLocaleString("pt-BR")}
-          </p>
-        )}
         {err && (
           <p
             className="text-xs"
@@ -214,7 +192,7 @@ export function InventoryItemDetails({
             {err}
           </p>
         )}
-        <div className="flex flex-wrap gap-2 border-t pt-3">
+        <div className="flex flex-wrap gap-2 pt-1">
           <Button
             type="button"
             size="sm"
@@ -248,15 +226,6 @@ export function InventoryItemDetails({
               <Trash2 className="size-3.5" /> Excluir
             </Button>
           )}
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="ml-auto"
-            onClick={onClose}
-          >
-            Fechar detalhes
-          </Button>
         </div>
       </div>
     </div>
