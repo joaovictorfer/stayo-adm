@@ -42,6 +42,7 @@ import {
   guidedInventoryQuery,
   ensureGuidedInventorySnapshot,
   replicateBedroomItems,
+  replicateBathroomItems,
   removeInventoryItem,
   setInventoryAnswer,
   setInventorySubanswer,
@@ -65,14 +66,18 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--ficha-icon-fg)" };
 
-export type InventoryRoomSlot = (tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean, subFields?: Record<string, ReactNode>) => ReactNode) => ReactNode;
+export type InventoryRoomSlot = ((tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean, subFields?: Record<string, ReactNode>) => ReactNode) => ReactNode) & {
+  /** Banheiros sociais e lavabos como abas próprias (banheiroN / lavaboN). Suítes ficam dentro do quarto. */
+  bathTabs?: Array<{ id: string; label: string }>;
+};
 
 const QUARTO_CATEGORY = /^Quarto (\d+)$/;
-const roomTabsFor = (bedrooms: number): Array<{ id: string; label: string }> => [
+const BANHEIRO_CATEGORY = /^Banheiro (\d+)$/;
+const roomTabsFor = (bedrooms: number, bathTabs?: Array<{ id: string; label: string }>): Array<{ id: string; label: string }> => [
   { id: "cozinha", label: "Cozinha" },
   { id: "sala", label: "Sala" },
   ...Array.from({ length: Math.max(1, bedrooms) }, (_, i) => ({ id: `quarto${i + 1}`, label: `Quarto ${i + 1}` })),
-  { id: "banheiro", label: "Banheiro" },
+  ...(bathTabs?.length ? bathTabs : [{ id: "banheiro1", label: "Banheiro" }]),
   { id: "lavanderia", label: "Lavanderia" },
   { id: "outros", label: "Outros" },
 ];
@@ -82,14 +87,22 @@ const inRoom = (i: InventorySnapshotItem, r: string) => {
     const m = i.category ? QUARTO_CATEGORY.exec(i.category) : null;
     return (m ? Number(m[1]) : 1) === Number(r.slice(6));
   }
-  if (r === "banheiro") return i.room === "banheiros";
+  if (r.startsWith("banheiro")) {
+    if (i.room !== "banheiros") return false;
+    if (i.category && /^Lavabo \d+$/.test(i.category)) return false;
+    const m = i.category ? BANHEIRO_CATEGORY.exec(i.category) : null;
+    return (m ? Number(m[1]) : 1) === Number(r.slice(8) || 1);
+  }
+  if (r.startsWith("lavabo")) return i.room === "banheiros" && i.category === `Lavabo ${r.slice(6)}`;
   if (r === "outros") return i.room === "outros" || i.room === "externa";
   return i.room === r;
 };
 const persisted = (r: string): InventoryRoom =>
-  r.startsWith("quarto") ? "quartos" : r === "banheiro" ? "banheiros" : (r as InventoryRoom);
+  r.startsWith("quarto") ? "quartos" : r.startsWith("banheiro") || r.startsWith("lavabo") ? "banheiros" : (r as InventoryRoom);
 const quartoCategory = (r: string) =>
-  r.startsWith("quarto") && r !== "quarto1" ? `Quarto ${r.slice(6)}` : undefined;
+  r.startsWith("quarto") && r !== "quarto1" ? `Quarto ${r.slice(6)}`
+  : r.startsWith("banheiro") && r !== "banheiro1" ? `Banheiro ${r.slice(8)}`
+  : r.startsWith("lavabo") ? `Lavabo ${r.slice(6)}` : undefined;
 
 type Extra = { quantity_text: string | null; tip: string | null; image_path: string | null; purchase_url: string | null; description: string | null; recommended_quantity: number | null };
 
@@ -320,7 +333,8 @@ export function InventoryWorkspace({
     },
     staleTime: 60_000,
   });
-  const ROOMS = roomTabsFor(bedroomsQ.data ?? 2);
+  const ROOMS = roomTabsFor(bedroomsQ.data ?? 2, roomSlot?.bathTabs);
+  const socialBaths = Math.max(1, ROOMS.filter((r) => r.id.startsWith("banheiro")).length);
   const [onlyOpen, setOnlyOpen] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const detailExtras = useRef(new Map<string, ReactNode>());
@@ -337,6 +351,7 @@ export function InventoryWorkspace({
     mutationFn: async () => {
       await ensureGuidedInventorySnapshot(implementationId);
       await replicateBedroomItems(implementationId, Math.max(1, bedroomsQ.data ?? 1));
+      await replicateBathroomItems(implementationId, socialBaths);
     },
     onSuccess: async () => {
       await refresh();
