@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { InventoryDetailFields } from "./InventoryDetailFields";
 import { Copy, Trash2 } from "lucide-react";
 
 import { Button } from "../../ui/button";
@@ -98,91 +99,10 @@ export function InventoryItemDetails({
       data-testid="inventory-inline-details"
     >
       <span className="sr-only" aria-live="polite">{save === "saving" ? "Salvando" : save === "error" ? "Erro ao salvar" : ""}</span>
-      <div className="space-y-3">
-        <label className="block text-xs" style={muted}>
-          Nome
-          <input
-            autoFocus={item.name.endsWith(" (cópia)")}
-            className={field}
-            style={border}
-            value={d.name}
-            maxLength={120}
-            required
-            onChange={(e) => setD({ ...d, name: e.target.value })}
-          />
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs" style={muted}>
-            Quantidade
-            <input
-              className={field}
-              style={border}
-              inputMode="numeric"
-              value={qty}
-              onChange={(e) => setQty(e.target.value.replace(/\D/g, ""))}
-              placeholder="—"
-            />
-          </label>
-          <label className="block text-xs" style={muted}>
-            Marca
-            <input
-              className={field}
-              style={border}
-              value={d.inventory_brand ?? ""}
-              maxLength={80}
-              onChange={(e) => setD({ ...d, inventory_brand: e.target.value })}
-              placeholder="Ex.: LG"
-            />
-          </label>
-        </div>
-        <div className="text-xs" style={muted}>
-          Estado
-          <div
-            className="mt-1 flex gap-1"
-            role="radiogroup"
-            aria-label="Estado"
-          >
-            {CONDITIONS.map((c) => {
-              const on = d.inventory_condition === c;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() =>
-                    setD({ ...d, inventory_condition: on ? null : c })
-                  }
-                  className="min-h-10 flex-1 rounded-lg border text-xs font-medium"
-                  style={
-                    on
-                      ? {
-                          backgroundColor: "var(--stayo-primary, #0b3150)",
-                          color: "var(--stayo-on-primary, #fff)",
-                          borderColor: "transparent",
-                        }
-                      : border
-                  }
-                >
-                  {inventoryConditionLabel[c]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <label className="block text-xs" style={muted}>
-          Observação interna
-          <textarea
-            className="mt-1 min-h-16 w-full rounded-md border p-2 text-sm"
-            style={border}
-            maxLength={1000}
-            value={d.inventory_internal_notes ?? ""}
-            onChange={(e) =>
-              setD({ ...d, inventory_internal_notes: e.target.value })
-            }
-            placeholder="Ex.: Instalador: On Instaladora"
-          />
-        </label>
+      <InventoryDetailFields values={{ name: d.name ?? item.name, quantity: qty, brand: d.inventory_brand ?? "", condition: d.inventory_condition ?? null, notes: d.inventory_internal_notes ?? "" }} onChange={(patch) => {
+        if (patch.quantity !== undefined) setQty(patch.quantity);
+        setD({ ...d, ...(patch.name !== undefined ? { name: patch.name } : {}), ...(patch.brand !== undefined ? { inventory_brand: patch.brand } : {}), ...(patch.condition !== undefined ? { inventory_condition: patch.condition } : {}), ...(patch.notes !== undefined ? { inventory_internal_notes: patch.notes } : {}) });
+      }} actions={<>
         {err && (
           <p
             className="text-xs"
@@ -227,7 +147,7 @@ export function InventoryItemDetails({
             </Button>
           )}
         </div>
-      </div>
+      </>} />
     </div>
   ) : null;
 }

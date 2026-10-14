@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { InventoryDetailLayout } from "./guide/InventoryDetailLayout";
+import { InventoryDetailFields } from "./guide/InventoryDetailFields";
+import type { InventoryCondition } from "@/lib/guided-inventory";
 import { InventoryRow } from "./ficha/InventoryRow";
 import { AnswerBtn, type InventoryRoomSlot } from "./ficha/FichaImplantacao";
 import { matchingInventoryItem, amenityDisplayKey } from "@/lib/inventory-amenities-view";
@@ -627,13 +630,14 @@ function ItemRow({
                     {subNodes}
         </ul>
       )}
-      <Sheet open={details} onOpenChange={setDetails}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          <SheetHeader><SheetTitle>{def.label}</SheetTitle></SheetHeader>
-          {media && <ReferenceMedia media={media} label={def.label} />}
-          <div className="mt-5 space-y-4">{extraFields ?? <ItemRow def={def} items={items} setItem={setItem} fieldsOnly />}</div>
-        </SheetContent>
-      </Sheet>
+      <InventoryDetailLayout open={details} onOpenChange={setDetails} name={def.label} media={media}>
+        <InventoryDetailFields values={{ name: def.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: st.characteristics?.inventory_condition as InventoryCondition ?? null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => setItem(def.key, {
+          ...(patch.quantity !== undefined ? { qty: patch.quantity === "" ? null : Number(patch.quantity) } : {}),
+          ...(patch.brand !== undefined ? { brand: patch.brand } : {}),
+          ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+          ...(patch.condition !== undefined ? { characteristics: { ...st.characteristics, inventory_condition: patch.condition ?? "" } } : {}),
+        })} extra={extraFields ?? <CharacteristicFields name={def.label} state={st} onChange={(patch) => setItem(def.key, patch)} />} />
+      </InventoryDetailLayout>
     </InventoryRow>
   );
   return (
