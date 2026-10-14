@@ -241,6 +241,15 @@ export function ContractConditionsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Ao abrir a edição com uma seção de destino, rola até ela.
+  useEffect(() => {
+    if (!open || focusSection == null) return;
+    const t = window.setTimeout(() => {
+      document.getElementById(`cc-section-${focusSection}`)?.scrollIntoView({ block: "start" });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [open, focusSection]);
+
   const errors = validate(form);
   const hasErrors = Object.keys(errors).length > 0;
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
