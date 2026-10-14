@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Minus, Plus, AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { Minus, Plus, AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, Loader2, MapPin, Pencil, RefreshCw, Trash2, Upload, UserRound, Wifi } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "../../ui/button";
@@ -22,6 +22,11 @@ import {
   type DistributionChannel,
 } from "../../../lib/api/owner-platforms";
 import { formatDateTime } from "../../../lib/format-datetime";
+import {
+  getAdminCoverState,
+  removeImplementationCover,
+  uploadImplementationCoverFor,
+} from "../../../lib/api/implementation-covers";
 
 const navy = { color: "var(--stayo-navy)" };
 const muted = { color: "var(--stayo-ink-muted)" };
