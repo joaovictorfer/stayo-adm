@@ -49,7 +49,7 @@ export function FichaNav({
                       {badges[s.id]}
                     </span>
                   )}
-                  {active && <span aria-hidden className="absolute inset-x-0 -bottom-px h-[3px] rounded-full" style={{ backgroundColor: "var(--stayo-forest)" }} />}
+                  {active && <span aria-hidden className="absolute inset-x-1.5 -bottom-px h-[2px] rounded-full opacity-70" style={{ backgroundColor: "var(--stayo-forest)" }} />}
                 </button>
               </li>
             );
