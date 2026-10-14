@@ -5618,3 +5618,12 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pp-visual .pp-ans { grid-template-columns: 1fr 1fr; }
 .pp-name-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pp-name-row .pp-more { min-width: 44px; }
+
+/* Proposta do proprietário — condições agrupadas num cartão único */
+.pj-proposal .pj-accordion { margin-top: 0.75rem; display: grid; gap: 0; border: 1px solid var(--portal-border); border-radius: 14px; overflow: hidden; background: var(--portal-surface); }
+.pj-proposal .pj-accordion > .pj-acc { border: 0; border-radius: 0; background: transparent; }
+.pj-proposal .pj-accordion > .pj-acc + .pj-acc { border-top: 1px solid var(--portal-border); }
+.pj-proposal .pj-accordion > .pj-acc[open] { background: color-mix(in srgb, var(--portal-navy) 3%, transparent); }
+.pj-proposal .pj-section-lead { margin-top: 0.25rem; font-size: 0.86rem; color: var(--portal-muted); }
+.pj-proposal .pj-confirm { display: grid; gap: 0.85rem; }
+.pj-proposal .pj-confirm .pj-open-support-row { margin-top: 0.25rem; }
