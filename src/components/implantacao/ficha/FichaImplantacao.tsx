@@ -12,7 +12,10 @@ import {
   Plus,
   RotateCcw,
   X,
+  Tablet,
 } from "lucide-react";
+import { toast } from "sonner";
+import { createSurveyLink } from "@/lib/api/implementation-survey";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -560,6 +563,7 @@ export function InventoryWorkspace({
         >
           <Filter className="size-4" />
         </button>
+        </div>
       </div>
 
       {reviewing && (
