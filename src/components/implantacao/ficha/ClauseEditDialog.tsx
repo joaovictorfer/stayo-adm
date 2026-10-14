@@ -37,8 +37,8 @@ export const CLAUSES: Record<ClauseKey, { title: string; fields: Field[] }> = {
     title: "Uso do imóvel pelo proprietário",
     fields: [
       { key: "owner_use_limit_mode", label: "Limite de uso", type: "choice", options: opts(OWNER_USE_LIMIT_LABELS) },
-      { key: "owner_use_limit_days", label: "Quantidade de dias", type: "number", suffix: "dias", showIf: (v) => v.owner_use_limit_mode === "limited" },
-      { key: "owner_use_limit_period", label: "Período", type: "text", placeholder: "por ano", showIf: (v) => v.owner_use_limit_mode === "limited" },
+      { key: "owner_use_limit_days", label: "Quantidade de dias", type: "number", suffix: "dias", showIf: (v) => v["owner_use_limit_mode"] === "limited" },
+      { key: "owner_use_limit_period", label: "Período", type: "text", placeholder: "por ano", showIf: (v) => v["owner_use_limit_mode"] === "limited" },
       { key: "owner_use_notice_days", label: "Antecedência do pedido", type: "number", suffix: "dias" },
       { key: "owner_use_notes", label: "Observações (opcional)", type: "textarea" },
     ],
