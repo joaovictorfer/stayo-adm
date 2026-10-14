@@ -787,26 +787,27 @@ export function OwnerJourney({
     <div className={`portal-onboarding${collecting ? " owner-contract-registration" : ""}`}>
       {journeyState === "A" ? (
         <header className="pj-top">
-          <div className="pj-top-row">
-            <StayoLogo className="h-8 w-auto" />
-            <a className="pj-top-help" href={STAYO_SUPPORT_URL}>
-              Ajuda
-            </a>
+          <div className="pj-hero">
+            {coverSrc && (
+              <img
+                key={coverSrc}
+                src={coverSrc}
+                onLoad={() => setCoverReady(true)}
+                onError={() => {
+                  setCoverReady(false);
+                  setCoverBroken(true);
+                }}
+                alt=""
+                aria-hidden="true"
+                className={`pj-top-photo${coverReady ? " is-ready" : ""}`}
+              />
+            )}
+            <div className="pj-hero-shade" aria-hidden="true" />
+            <div className="pj-hero-content">
+              <StayoLogo variant="white" className="h-10 w-auto" />
+              <p className="pj-hero-title">{propertyTitle}</p>
+            </div>
           </div>
-          {coverSrc && (
-            <img
-              key={coverSrc}
-              src={coverSrc}
-              onLoad={() => setCoverReady(true)}
-              onError={() => {
-                setCoverReady(false);
-                setCoverBroken(true);
-              }}
-              alt=""
-              aria-hidden="true"
-              className={`pj-top-photo${coverReady ? " is-ready" : ""}`}
-            />
-          )}
           <p className="pj-top-progress">Etapa 1 de 6 · <strong>Proposta</strong></p>
           <div className="pj-top-segments" aria-hidden="true">
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -819,9 +820,6 @@ export function OwnerJourney({
           <header className="pj-top">
             <div className="pj-top-row">
               <StayoLogo className="h-8 w-auto" />
-              <a className="pj-top-help" href={STAYO_SUPPORT_URL}>
-                Ajuda
-              </a>
             </div>
             <div className="pj-top-progress-row">
               <p className="pj-top-progress">
