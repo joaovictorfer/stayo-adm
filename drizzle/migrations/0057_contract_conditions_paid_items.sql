@@ -1,0 +1,1 @@
+ALTER TABLE public.implementation_contract_conditions ADD COLUMN IF NOT EXISTS paid_items jsonb NOT NULL DEFAULT '{}'::jsonb;

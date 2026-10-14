@@ -605,6 +605,7 @@ export type Database = {
           owner_use_limit_period: string | null
           owner_use_notes: string | null
           owner_use_notice_days: number | null
+          paid_items: Json
           payout_rule: string | null
           turnover_cleaning_fee: number | null
           turnover_cleaning_payer: string | null
@@ -639,6 +640,7 @@ export type Database = {
           owner_use_limit_period?: string | null
           owner_use_notes?: string | null
           owner_use_notice_days?: number | null
+          paid_items?: Json
           payout_rule?: string | null
           turnover_cleaning_fee?: number | null
           turnover_cleaning_payer?: string | null
@@ -673,6 +675,7 @@ export type Database = {
           owner_use_limit_period?: string | null
           owner_use_notes?: string | null
           owner_use_notice_days?: number | null
+          paid_items?: Json
           payout_rule?: string | null
           turnover_cleaning_fee?: number | null
           turnover_cleaning_payer?: string | null
