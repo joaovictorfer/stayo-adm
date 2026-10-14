@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
+import { Minus, Plus, AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, MapPin, Pencil, RefreshCw, UserRound, Wifi } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "../../ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
 import { usePropertyPendencies } from "./property-pendencies";
 import { Collapsible } from "./FichaParts";
 import { adminCondominiumQuery, adminCondominiumsListQuery, coreApi } from "../../../lib/api/queries";
@@ -60,18 +61,25 @@ function Card({ icon, title, action, children }: { icon: ReactNode; title: strin
 function Line({ row, onEdit }: { row: Row; onEdit?: () => void }) {
   const [open, setOpen] = useState(false);
   const expandable = Boolean(row.detail);
+  const act = () => (expandable ? setOpen((o) => !o) : onEdit?.());
   return (
     <li className="border-b last:border-b-0" style={border}>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
-        <button type="button" onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())} className="text-left font-medium" style={navy}>{row.label}</button>
-        <button type="button" onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())} className="col-start-1 row-start-2 flex min-w-0 items-center gap-2 text-left sm:col-start-2 sm:row-start-1" style={muted}>
-          <span className="truncate">{row.value || "Não informado"}</span>
-        </button>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={act}
+        onKeyDown={(e) => { if (e.key === "Enter") act(); }}
+        className="group -mx-2 grid min-h-12 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-[var(--ficha-subtle)] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
+      >
+        <span className="text-xs font-medium uppercase tracking-wide sm:text-sm sm:normal-case sm:tracking-normal" style={muted}>{row.label}</span>
+        <span className="col-start-1 row-start-2 flex min-w-0 items-center gap-2 sm:col-start-2 sm:row-start-1">
+          <span className="truncate text-[0.95rem] font-semibold" style={row.value ? navy : { color: "var(--ficha-pending-fg)" }}>{row.value || "Não informado"}</span>
+        </span>
         <span className="row-span-2 flex items-center gap-3 sm:row-span-1">
           {row.extra}
-          <button type="button" onClick={() => (expandable ? setOpen((o) => !o) : onEdit?.())} aria-label={`Editar ${row.label}`} style={navy}>
-            {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : <ChevronRight className="size-4" />}
-          </button>
+          <span className="grid size-9 place-items-center rounded-full opacity-60 transition group-hover:bg-white group-hover:opacity-100" style={navy} aria-label={`Editar ${row.label}`}>
+            {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : <Pencil className="size-4" />}
+          </span>
         </span>
       </div>
       {expandable && open && (
@@ -87,6 +95,24 @@ function Line({ row, onEdit }: { row: Row; onEdit?: () => void }) {
     </li>
   );
 }
+
+function Stepper({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const n = value === "" ? 0 : Number(value);
+  const set = (v: number) => onChange(String(Math.max(0, v)));
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border bg-white px-3 py-2" style={border}>
+      <span className="text-sm font-medium" style={navy}>{label}</span>
+      <span className="flex items-center gap-1">
+        <button type="button" aria-label={`Diminuir ${label}`} onClick={() => set(n - 1)} className="grid size-9 place-items-center rounded-full border" style={{ ...border, ...navy }}><Minus className="size-4" /></button>
+        <input inputMode="numeric" value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))} className="w-10 bg-transparent text-center text-base font-semibold tabular-nums" style={navy} aria-label={label} />
+        <button type="button" aria-label={`Aumentar ${label}`} onClick={() => set(n + 1)} className="grid size-9 place-items-center rounded-full border" style={{ ...border, ...navy }}><Plus className="size-4" /></button>
+      </span>
+    </div>
+  );
+}
+
+type EditGroup = "all" | "ident" | "carac" | "acesso";
+const GROUP_TITLE: Record<EditGroup, string> = { all: "Dados do imóvel", ident: "Identificação", carac: "Características", acesso: "Acesso e conectividade" };
 
 function ActionRow({ icon, label, onClick, to }: { icon: ReactNode; label: string; onClick?: () => void; to?: { id: string } }) {
   const content = (
@@ -112,6 +138,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const qc = useQueryClient();
   const { keys: pendencyKeys, detailsQ } = usePropertyPendencies(implementation.id);
   const [editing, setEditing] = useState(false);
+  const [group, setGroup] = useState<EditGroup>("all");
 
   const condoQ = useQuery({ ...adminCondominiumQuery(implementation.condominiumId ?? ""), enabled: Boolean(implementation.condominiumId) });
   const condoListQ = useQuery({ ...adminCondominiumsListQuery(), enabled: editing });
@@ -139,7 +166,8 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
     if (!editing) setShowPwd(false);
   }, [editing]);
 
-  function startEdit() {
+  function startEdit(g: EditGroup = "all") {
+    setGroup(g);
     setCondoId(implementation.condominiumId ?? "");
     setUnit(implementation.unit ?? "");
     setTower(implementation.tower ?? "");
@@ -222,8 +250,8 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
   const pendencies: Array<{ label: string; cta: string; onClick: () => void }> = [];
   if (pendencyKeys.includes("cover")) pendencies.push({ label: "Fotos do imóvel ainda não adicionadas.", cta: "Adicionar fotos", onClick: onGoPortal });
-  if (pendencyKeys.includes("wifi")) pendencies.push({ label: "Dados de Wi-Fi não informados.", cta: "Completar", onClick: startEdit });
-  if (pendencyKeys.includes("access")) pendencies.push({ label: "Forma de acesso não informada.", cta: "Definir", onClick: startEdit });
+  if (pendencyKeys.includes("wifi")) pendencies.push({ label: "Dados de Wi-Fi não informados.", cta: "Completar", onClick: () => startEdit("acesso") });
+  if (pendencyKeys.includes("access")) pendencies.push({ label: "Forma de acesso não informada.", cta: "Definir", onClick: () => startEdit("acesso") });
 
   const sidebar = (
     <>
@@ -242,12 +270,12 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
               <dt className="font-medium" style={navy}>Unidades</dt><dd style={muted}>Cadastro reutilizável</dd>
             </dl>
             <ActionRow icon={<ExternalLink className="size-4" />} label="Ver condomínio" to={{ id: implementation.condominiumId as string }} />
-            <ActionRow icon={<RefreshCw className="size-4" />} label="Trocar vínculo" onClick={startEdit} />
+            <ActionRow icon={<RefreshCw className="size-4" />} label="Trocar vínculo" onClick={() => startEdit("ident")} />
           </>
         ) : (
           <>
             <p className="py-3 text-sm" style={muted}>{implementation.condominiumName ? `${implementation.condominiumName} · sem cadastro vinculado` : "Nenhum condomínio vinculado"}</p>
-            <ActionRow icon={<RefreshCw className="size-4" />} label="Vincular condomínio" onClick={startEdit} />
+            <ActionRow icon={<RefreshCw className="size-4" />} label="Vincular condomínio" onClick={() => startEdit("ident")} />
           </>
         )}
       </Card>
@@ -293,8 +321,8 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
           <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Dados do imóvel</h2>
           <p className="hidden text-sm sm:block sm:text-base" style={muted}>Informações da unidade e do condomínio.</p>
         </div>
-        {!editing && (
-          <Button type="button" variant="outline" onClick={startEdit} className="h-11 rounded-lg bg-white px-4" style={navy}>
+        {(
+          <Button type="button" variant="outline" onClick={() => startEdit()} className="h-11 rounded-lg bg-white px-4" style={navy}>
             <Pencil /> <span className="hidden sm:inline">Editar dados</span><span className="sm:hidden">Editar</span>
           </Button>
         )}
@@ -302,65 +330,11 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(18rem,1fr)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-4">
-          {editing ? (
-            <section className="space-y-4 rounded-xl border bg-white p-4 sm:p-5" style={border}>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-xs font-medium" style={muted}>
-                  Condomínio cadastrado
-                  <select value={condoId} onChange={(e) => setCondoId(e.target.value)} className={input} style={border}>
-                    <option value="">Nenhum condomínio vinculado</option>
-                    {(condoListQ.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </label>
-                <label className="text-xs font-medium" style={muted}>Unidade<input value={unit} onChange={(e) => setUnit(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>Torre / bloco<input value={tower} onChange={(e) => setTower(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>Tipo<input value={ptype} onChange={(e) => setPtype(e.target.value)} placeholder="Apartamento, casa..." className={input} style={border} /></label>
-              </div>
-              <p className="text-xs" style={muted}>O endereço vem do cadastro do condomínio; altere-o na ficha do condomínio.</p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <label className="text-xs font-medium" style={muted}>Quartos<input type="number" min={0} value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>Banheiros<input type="number" min={0} value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>Capacidade<input type="number" min={0} value={capacity} onChange={(e) => setCapacity(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>Vagas<input type="number" min={0} value={parking} onChange={(e) => setParking(e.target.value)} className={input} style={border} /></label>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <label className="text-xs font-medium" style={muted}>
-                  Acesso ao imóvel
-                  <select value={accessType ?? ""} onChange={(e) => setAccessType((e.target.value || null) as PropertyDetailsInput["accessType"])} className={input} style={border}>
-                    <option value="">Selecione</option>
-                    <option value="key">Chave</option>
-                    <option value="lock">Fechadura digital</option>
-                    <option value="concierge">Portaria</option>
-                    <option value="other">Outro</option>
-                  </select>
-                </label>
-                <label className="text-xs font-medium" style={muted}>Orientações<input value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>Senha da fechadura<input type="password" autoComplete="new-password" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className={input} style={border} /></label>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-xs font-medium" style={muted}>Rede Wi-Fi<input value={wifiNetwork} autoComplete="off" onChange={(e) => setWifiNetwork(e.target.value)} className={input} style={border} /></label>
-                <label className="text-xs font-medium" style={muted}>
-                  Senha do Wi-Fi
-                  <span className="relative mt-1 block">
-                    <input type={showPwd ? "text" : "password"} value={wifiPassword} autoComplete="new-password" onChange={(e) => setWifiPassword(e.target.value)} className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm" style={border} />
-                    <button type="button" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="absolute inset-y-0 right-0 grid w-10 place-items-center" style={muted}>
-                      {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </button>
-                  </span>
-                </label>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
-                <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave()}>{saving ? "Salvando..." : "Salvar dados"}</Button>
-              </div>
-            </section>
-          ) : (
-            <>
               <Card icon={<FileText className="size-4" />} title="Identificação">
                 <ul>
-                  <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={startEdit} />
-                  <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={startEdit} />
-                  <Line row={{ label: "Tipo", value: implementation.propertyType ? implementation.propertyType.charAt(0).toLocaleUpperCase("pt-BR") + implementation.propertyType.slice(1) : implementation.propertyType }} onEdit={startEdit} />
+                  <Line row={{ label: "Unidade", value: implementation.unit }} onEdit={() => startEdit("ident")} />
+                  <Line row={{ label: "Torre / bloco", value: implementation.tower }} onEdit={() => startEdit("ident")} />
+                  <Line row={{ label: "Tipo", value: implementation.propertyType ? implementation.propertyType.charAt(0).toLocaleUpperCase("pt-BR") + implementation.propertyType.slice(1) : implementation.propertyType }} onEdit={() => startEdit("ident")} />
                 </ul>
               </Card>
 
@@ -392,16 +366,16 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
               <Card icon={<Home className="size-4" />} title="Características">
                 <ul>
-                  <Line row={{ label: "Quartos", value: num(implementation.bedrooms) }} onEdit={startEdit} />
-                  <Line row={{ label: "Banheiros", value: num(d?.bathrooms) }} onEdit={startEdit} />
-                  <Line row={{ label: "Capacidade", value: implementation.capacity != null ? `${implementation.capacity} hóspedes` : null }} onEdit={startEdit} />
-                  <Line row={{ label: "Vagas", value: num(d?.parkingSpots) }} onEdit={startEdit} />
+                  <Line row={{ label: "Quartos", value: num(implementation.bedrooms) }} onEdit={() => startEdit("carac")} />
+                  <Line row={{ label: "Banheiros", value: num(d?.bathrooms) }} onEdit={() => startEdit("carac")} />
+                  <Line row={{ label: "Capacidade", value: implementation.capacity != null ? `${implementation.capacity} hóspedes` : null }} onEdit={() => startEdit("carac")} />
+                  <Line row={{ label: "Vagas", value: num(d?.parkingSpots) }} onEdit={() => startEdit("carac")} />
                 </ul>
               </Card>
 
               <Card icon={<Wifi className="size-4" />} title="Acesso e conectividade">
                 <ul>
-                  <Line row={{ label: "Rede Wi-Fi", value: d?.wifiNetwork }} onEdit={startEdit} />
+                  <Line row={{ label: "Rede Wi-Fi", value: d?.wifiNetwork }} onEdit={() => startEdit("acesso")} />
                   <Line
                     row={{
                       label: "Senha Wi-Fi",
@@ -421,7 +395,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                         </span>
                       ) : null,
                     }}
-                    onEdit={startEdit}
+                    onEdit={() => startEdit("acesso")}
                   />
                   <Line
                     row={{
@@ -429,12 +403,10 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                       value: d?.accessType ? ACCESS_LABELS[d.accessType] : null,
                       detail: [d?.accessNotes, d?.accessCode ? "Senha da fechadura cadastrada (edite para ver)" : null].filter(Boolean).join(" · ") || null,
                     }}
-                    onEdit={startEdit}
+                    onEdit={() => startEdit("acesso")}
                   />
                 </ul>
               </Card>
-            </>
-          )}
 
           <div className="flex flex-col gap-4 lg:hidden">{sidebar}</div>
 
@@ -458,6 +430,80 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
 
         <aside className="hidden flex-col gap-4 lg:flex">{sidebar}</aside>
       </div>
+      <Dialog open={editing} onOpenChange={setEditing}>
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{GROUP_TITLE[group]}</DialogTitle>
+            <DialogDescription>Preencha só o que souber; o resto pode ficar para depois.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5">
+              {(group === "all" || group === "ident") && (
+                <div className="space-y-3">
+                  {group === "all" && <h4 className="text-sm font-semibold" style={display}>Identificação</h4>}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-medium" style={muted}>
+                  Condomínio cadastrado
+                  <select value={condoId} onChange={(e) => setCondoId(e.target.value)} className={input} style={border}>
+                    <option value="">Nenhum condomínio vinculado</option>
+                    {(condoListQ.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs font-medium" style={muted}>Unidade<input value={unit} onChange={(e) => setUnit(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Torre / bloco<input value={tower} onChange={(e) => setTower(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Tipo<input value={ptype} onChange={(e) => setPtype(e.target.value)} placeholder="Apartamento, casa..." className={input} style={border} /></label>
+              </div>
+              <p className="text-xs" style={muted}>O endereço vem do cadastro do condomínio; altere-o na ficha do condomínio.</p>
+                </div>
+              )}
+              {(group === "all" || group === "carac") && (
+                <div className="space-y-3">
+                  {group === "all" && <h4 className="text-sm font-semibold" style={display}>Características</h4>}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Stepper label="Quartos" value={bedrooms} onChange={setBedrooms} />
+                <Stepper label="Banheiros" value={bathrooms} onChange={setBathrooms} />
+                <Stepper label="Hóspedes" value={capacity} onChange={setCapacity} />
+                <Stepper label="Vagas" value={parking} onChange={setParking} />
+              </div>
+                </div>
+              )}
+              {(group === "all" || group === "acesso") && (
+                <div className="space-y-3">
+                  {group === "all" && <h4 className="text-sm font-semibold" style={display}>Acesso e conectividade</h4>}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-medium" style={muted}>
+                  Acesso ao imóvel
+                  <select value={accessType ?? ""} onChange={(e) => setAccessType((e.target.value || null) as PropertyDetailsInput["accessType"])} className={input} style={border}>
+                    <option value="">Selecione</option>
+                    <option value="key">Chave</option>
+                    <option value="lock">Fechadura digital</option>
+                    <option value="concierge">Portaria</option>
+                    <option value="other">Outro</option>
+                  </select>
+                </label>
+                <label className="text-xs font-medium" style={muted}>Orientações<input value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Senha da fechadura<input type="password" autoComplete="new-password" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className={input} style={border} /></label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-medium" style={muted}>Rede Wi-Fi<input value={wifiNetwork} autoComplete="off" onChange={(e) => setWifiNetwork(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>
+                  Senha do Wi-Fi
+                  <span className="relative mt-1 block">
+                    <input type={showPwd ? "text" : "password"} value={wifiPassword} autoComplete="new-password" onChange={(e) => setWifiPassword(e.target.value)} className="w-full rounded-[var(--radius-control)] border py-2 pl-3 pr-11 text-sm" style={border} />
+                    <button type="button" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="absolute inset-y-0 right-0 grid w-10 place-items-center" style={muted}>
+                      {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </span>
+                </label>
+              </div>
+                </div>
+              )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancelar</Button>
+            <Button type="button" disabled={saving} onClick={() => void handleSave()}>{saving ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
