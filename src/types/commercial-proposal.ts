@@ -69,6 +69,9 @@ export interface ProposalItemOption {
   details?: string | null;
   scope?: string[];
   pricing?: "fixed" | "optional" | "conditional" | "tbd" | null;
+  /** Situação de pagamento (aditivo): já pago pelo proprietário ou a pagar. */
+  paid?: boolean;
+  paidAt?: string | null;
 }
 
 export interface CommercialProposalSnapshot {
