@@ -25,6 +25,7 @@ describe("comodidades em grupo → inventário", () => {
       "Frigobar",
       "Adega",
       "Purificador de água",
+      "Máquina de lavar louça",
     ]);
   });
 
