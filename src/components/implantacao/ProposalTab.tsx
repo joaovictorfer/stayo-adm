@@ -130,6 +130,8 @@ function toProposalItems(items: DraftItem[]): ProposalItem[] {
       details: i.details?.trim() || null,
       scope: cleanScope(i.scope),
       pricing: resolvePricing(i),
+      paid: Boolean(i.paid),
+      paidAt: i.paid ? i.paidAt || null : null,
     }));
 }
 
@@ -165,6 +167,8 @@ function fromVersion(
         details: i.details ?? "",
         scope: i.scope ?? [],
         pricing: i.pricing ?? null,
+        paid: i.paid ?? false,
+        paidAt: i.paidAt ?? null,
       }))
     : [];
 }
@@ -959,6 +963,34 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
                     ))}
                   </select>
                 </label>
+                <label className="flex items-center gap-1.5">
+                  Pagamento
+                  <select
+                    value={item.paid ? "paid" : "pending"}
+                    onChange={(e) =>
+                      updateItem(item.uid, {
+                        paid: e.target.value === "paid",
+                        paidAt: e.target.value === "paid" ? item.paidAt ?? null : null,
+                      })
+                    }
+                    className="h-8 rounded-md border bg-background px-2 text-[11px] text-foreground"
+                  >
+                    <option value="pending">A pagar</option>
+                    <option value="paid">Já foi pago</option>
+                  </select>
+                </label>
+                {item.paid && (
+                  <>
+                    <Input
+                      type="date"
+                      aria-label="Data do pagamento"
+                      value={item.paidAt ?? ""}
+                      onChange={(e) => updateItem(item.uid, { paidAt: e.target.value || null })}
+                      className="h-8 w-36 text-[11px]"
+                    />
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">Pago</span>
+                  </>
+                )}
                 {item.included &&
                   pricingIssues(item).map((msg) => (
                     <span key={msg} className="text-[var(--stayo-warning)]">

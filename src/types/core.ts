@@ -183,6 +183,9 @@ export interface ProposalItem {
   scope?: string[];
   /** Tipo de valor (aditivo). Ausente em versões antigas; ver resolvePricing. */
   pricing?: "fixed" | "optional" | "conditional" | "tbd" | null;
+  /** Situação de pagamento (aditivo): já pago pelo proprietário ou a pagar. */
+  paid?: boolean;
+  paidAt?: string | null;
 }
 
 export interface Proposal {

@@ -1411,6 +1411,7 @@ function ItemRow({ item, badge }: { item: SnapItem; badge: ItemPricing }) {
           {item.quantity > 1 ? `${item.quantity}× ` : ""}{item.description}
         </span>
         <em className={`pj-badge is-${badge}`}>{status}</em>
+        {item.paid && <em className="pj-badge is-fixed">Já pago ✓</em>}
       </span>
       <span className={`pj-item-value${badge === "fixed" ? "" : " is-soft"}`}>{value}</span>
       {hasDetails && <ChevronDown className="pj-chevron" aria-hidden="true" />}

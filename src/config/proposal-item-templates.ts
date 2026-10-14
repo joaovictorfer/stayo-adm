@@ -35,5 +35,6 @@ export const PROPOSAL_ITEM_TEMPLATES: ProposalItemTemplate[] = [
     details: "",
     scope: [],
   },
+  { key: "limpeza-comercial", description: "Limpeza comercial", unitValue: 250, details: "", scope: [] },
   { key: "lavagem-enxoval", description: "Lavagem de enxoval", unitValue: 200, details: "", scope: [] },
 ];

@@ -47,7 +47,10 @@ export function ProposalPresentationView({ snapshot }: { snapshot: CommercialPro
                     {item.quantity > 1 ? `${item.quantity}× ` : ""}
                     {item.description}
                   </span>
-                  <span className="shrink-0 font-medium">{formatBRL(item.total)}</span>
+                  <span className="shrink-0 font-medium">
+                    {formatBRL(item.total)}
+                    {item.paid ? " · Pago" : ""}
+                  </span>
                 </div>
                 {item.details && (
                   <p className="mt-1 whitespace-pre-line text-xs text-[var(--stayo-ink-muted)]">
