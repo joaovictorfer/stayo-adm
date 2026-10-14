@@ -3,7 +3,6 @@ import type { CommercialProposalStatus } from "../types/commercial-proposal";
 export const FICHA_SECTIONS = [
   { id: "visao", label: "Resumo" },
   { id: "proposta", label: "Comercial" },
-  { id: "contrato", label: "Contrato" },
   { id: "imovel", label: "Imóvel" },
   { id: "implantacao", label: "Implantação" },
   { id: "proprietario", label: "Proprietário" },
@@ -13,6 +12,7 @@ export const FICHA_SECTIONS = [
 export type FichaSection = (typeof FICHA_SECTIONS)[number]["id"];
 
 export function toFichaSection(value: unknown): FichaSection | undefined {
+  if (value === "contrato") return "proposta"; // Contrato foi unificado em Comercial
   return FICHA_SECTIONS.some((s) => s.id === value) ? (value as FichaSection) : undefined;
 }
 
