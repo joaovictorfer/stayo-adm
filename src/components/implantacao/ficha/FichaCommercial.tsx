@@ -37,7 +37,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined };
 
 function Block({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -118,7 +118,7 @@ function QuickEditDialog({
 }) {
   const qc = useQueryClient();
   const cfg = field ? QUICK[field] : null;
-  const paidMap: PaidMap = (row?.paid_items as PaidMap) ?? {};
+  const paidMap: PaidMap = (row?.["paid_items"] as PaidMap) ?? {};
   const [num, setNum] = useState<number>(0);
   const [text, setText] = useState("");
   const [paid, setPaid] = useState(false);
@@ -276,10 +276,10 @@ export function FichaCommercial({
   const initialFee = c?.initial_cleaning_fee != null && Number(c.initial_cleaning_fee) > 0 ? formatBRL(Number(c.initial_cleaning_fee)) : null;
   const values: Row[] = [
     { label: "Taxa de administração", value: formatPercent(c?.administration_fee), quick: "administration_fee" },
-    { label: "Taxa de limpeza", value: cleaningFee, quick: "turnover_cleaning_fee", paid: paidMap.turnover_cleaning_fee?.paid },
-    { label: "Preparação inicial", value: [initial, initialFee].filter(Boolean).join(" · ") || null, quick: "initial_cleaning_fee", paid: paidMap.initial_cleaning_fee?.paid },
+    { label: "Taxa de limpeza", value: cleaningFee, quick: "turnover_cleaning_fee", paid: paidMap["turnover_cleaning_fee"]?.paid },
+    { label: "Preparação inicial", value: [initial, initialFee].filter(Boolean).join(" · ") || null, quick: "initial_cleaning_fee", paid: paidMap["initial_cleaning_fee"]?.paid },
     { label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null, quick: "duration_months" },
-    { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap.implementation?.paid },
+    { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap["implementation"]?.paid },
   ];
   const clauses: Row[] = [
     { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null },
