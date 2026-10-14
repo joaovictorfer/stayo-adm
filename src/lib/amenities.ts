@@ -279,7 +279,7 @@ export function reconcileRooms(rooms: RoomState[], c: Composition): RoomState[] 
   };
   fit("quarto", c.bedrooms, (i) => `Quarto ${pad(i + 1)}`);
   const suites = out.filter((r) => r.kind === "quarto" && r.suite).length;
-  fit("banheiro", Math.max(0, c.bathrooms - suites), (i, t) => (t > 1 ? `Banheiro social ${pad(i + 1)}` : "Banheiro social"));
+  fit("banheiro", Math.max(0, c.bathrooms - suites), (i) => `Banheiro ${pad(i + 1)}`);
   fit("lavabo", c.lavatories, (i, t) => (t > 1 ? `Lavabo ${pad(i + 1)}` : "Lavabo"));
   return out;
 }
