@@ -27,7 +27,7 @@
 - Comodidades e itens do imóvel ficam em implementation_amenities (jsonb por implantação, autosave); empresas novas de móveis entram em supplier_catalog para reaproveitar.
 - Comodidades sincronizam o inventário guiado por `amenity_key` (upsert idempotente); desmarcar só desativa o item, nunca grava "Não tenho" nem cria pendência. Item agrupado mantém a `amenity_key` própria e só desliga se o grupo for "Não"; agrupar nunca apaga resposta nem espelho anterior.
 - Amenities match inventory rows through a presentation adapter; installation defaults, per-room overrides and characteristics live in the amenities JSON with field-level source metadata, so a room edit stays local.
-- All inventory rows, including grouped children, share read-only reference media: prefer PDF photos, fall back to generated assets, and never alter records when displaying photos.
+- Inventory lines reuse InventoryRow and read-only reference media (PDF first, generated fallback); additions reuse addInventoryItem in the active room, not a second store.
 - Shared tokens govern fonts/admin motion with reduced motion; one root auth provider deduplicates session/profile reads and clears request-local query caches on identity changes for account isolation.
 - The owner workspace reuses owner records, onboarding people, owner notes and existing invitation actions; presentation changes must not create a second owner or relationship store.
 

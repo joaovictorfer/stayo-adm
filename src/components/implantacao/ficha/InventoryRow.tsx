@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 /** The same touch-safe layout for catalog, amenity and grouped inventory items. */
 export function InventoryRow({ name, image, meta, onOpen, actions, children, group = false, testId = "inventory-row" }: {
   name: string;
-  image?: string | null;
+  image?: string | null | undefined;
   meta: ReactNode;
   onOpen: () => void;
   actions?: ReactNode;
