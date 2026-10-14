@@ -162,8 +162,8 @@ export function FichaImplantacao({
               role="tab"
               aria-selected={on}
               onClick={() => setTab(t.id)}
-              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm sm:-mb-px sm:min-h-11 sm:rounded-none sm:border-0 sm:border-b-[3px] ${on ? "max-sm:bg-[var(--stayo-navy)] max-sm:text-white" : "max-sm:bg-white"}`}
-              style={{ borderColor: on ? "var(--ficha-icon-fg)" : "var(--stayo-border)", fontWeight: on ? 600 : 400, color: on ? undefined : navy.color }}
+              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full border px-4 text-[var(--stayo-navy)] text-sm sm:-mb-px sm:min-h-11 sm:rounded-none sm:border-0 sm:border-b-[3px] ${on ? "max-sm:bg-[var(--stayo-navy)] max-sm:text-[var(--admin-surface,#fff)]" : "max-sm:bg-white"}`}
+              style={{ borderColor: on ? "var(--ficha-icon-fg)" : "var(--stayo-border)", fontWeight: on ? 600 : 400 }}
             >
               {t.label}
             </button>

@@ -212,7 +212,7 @@ export function FichaContrato({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
         <div className="min-w-0">
           <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Contrato</h2>
-          <p className="text-sm sm:text-base" style={muted}>Documento, partes e andamento do contrato.</p>
+          <p className="hidden text-sm sm:block sm:text-base" style={muted}>Documento, partes e andamento do contrato.</p>
         </div>
         <div className="flex gap-2">
           <span className="flex h-11 min-w-36 flex-1 items-center gap-2 rounded-lg border bg-white px-4 text-sm sm:flex-none" style={{ ...border, ...navy }}>

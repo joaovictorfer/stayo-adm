@@ -302,8 +302,8 @@ export function FichaCommercial({
       <div className="flex min-w-0 flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
           <div className="min-w-0">
-            <h2 className="text-2xl font-semibold sm:text-[1.75rem]" style={display}>Condições comerciais</h2>
-            <p className="text-sm sm:text-base" style={muted}>O que foi acordado com o proprietário.</p>
+            <h2 className="text-xl font-semibold sm:text-[1.75rem]" style={display}>Condições comerciais</h2>
+            <p className="hidden text-sm sm:block sm:text-base" style={muted}>O que foi acordado com o proprietário.</p>
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={onHistory} className="flex h-10 flex-1 items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm sm:flex-none" style={{ ...border, ...navy }}>

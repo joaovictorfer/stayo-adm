@@ -291,7 +291,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-semibold sm:text-3xl" style={display}>Dados do imóvel</h2>
-          <p className="text-sm sm:text-base" style={muted}>Informações da unidade e do condomínio.</p>
+          <p className="hidden text-sm sm:block sm:text-base" style={muted}>Informações da unidade e do condomínio.</p>
         </div>
         {!editing && (
           <Button type="button" variant="outline" onClick={startEdit} className="h-11 rounded-lg bg-white px-4" style={navy}>
