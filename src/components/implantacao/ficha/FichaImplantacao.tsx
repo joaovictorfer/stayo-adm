@@ -440,7 +440,7 @@ export function InventoryWorkspace({
           const review = pendingReviewIds.has(i.id);
           const a = i.inventory_answer;
           return (
-            <li key={i.id} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b px-2 py-2.5 last:border-b-0 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border} data-testid="inventory-row">
+            <li key={i.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 border-b px-2 py-2.5 last:border-b-0 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" style={border} data-testid="inventory-row">
               <button type="button" onClick={() => openDetail()} className="size-12 overflow-hidden rounded-lg sm:size-14" style={{ backgroundColor: "var(--ficha-subtle)" }} aria-label={`Detalhes de ${i.name}`}>
                 {ex?.url ? <img src={ex.url} alt="" loading="lazy" className="size-full object-cover" /> : <ImageIcon className="m-auto size-5" style={muted} />}
               </button>
@@ -457,11 +457,11 @@ export function InventoryWorkspace({
                   )}
                 </span>
               </button>
-              <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
+              <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${i.name}`}>
                 <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
                 <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: installation ? "tenho" : a === "tenho" ? null : "tenho" }); if (installation) openDetail(); }} />
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="grid h-10 w-11 shrink-0 place-items-center rounded-lg border bg-white" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
+                  <DropdownMenuTrigger className="hidden h-11 w-9 shrink-0 place-items-center rounded-lg sm:grid" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
                     <MoreHorizontal className="size-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -687,6 +687,9 @@ export function InventoryWorkspace({
                     <ExternalLink className="size-4" /> Onde comprar
                   </a>
                 )}
+                <button type="button" className="self-start text-sm underline underline-offset-2" style={navy} onClick={() => answer.mutate({ item: detailItem, answer: detailItem.inventory_answer === "nao_aplica" ? null : "nao_aplica" })}>
+                  {detailItem.inventory_answer === "nao_aplica" ? "Remover “Não se aplica”" : "Marcar como “Não se aplica”"}
+                </button>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide" style={muted}>Histórico</p>
                   <p style={navy}>
@@ -730,12 +733,12 @@ export function AnswerBtn({ kind, on, onClick }: { kind: "no" | "yes"; on: boole
   const style = on
     ? yes
       ? { backgroundColor: "var(--ficha-icon-fg)", color: "var(--admin-surface, #fff)", borderColor: "var(--ficha-icon-fg)" }
-      : { backgroundColor: "var(--ficha-no-bg)", color: "var(--ficha-no-fg)", borderColor: "var(--ficha-no-border)" }
-    : { ...border, ...navy, backgroundColor: "var(--admin-surface, #fff)" };
+      : { backgroundColor: "var(--stayo-danger)", color: "var(--admin-surface, #fff)", borderColor: "var(--stayo-danger)" }
+    : { borderColor: "var(--stayo-border)", color: yes ? "var(--ficha-icon-fg)" : "var(--stayo-danger)", backgroundColor: "var(--admin-surface, #fff)" };
   return (
-    <Button key={String(on)} variant="outline" type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("h-10 flex-1 gap-2 rounded-lg px-4 text-sm font-medium sm:w-24 sm:flex-none", on && "admin-answer-pop")} style={style}>
-      {yes ? <Check className="size-4" /> : <X className="size-4" />} {yes ? "Sim" : "Não"}
-    </Button>
+    <button key={String(on)} type="button" role="radio" aria-checked={on} aria-label={yes ? "Sim, tem" : "Não tem"} title={yes ? "Sim" : "Não"} onClick={onClick} className={cn("grid size-11 shrink-0 place-items-center rounded-full border-2 transition-colors", on ? "admin-answer-pop" : "opacity-70 hover:opacity-100")} style={style}>
+      {yes ? <Check className="size-5" strokeWidth={3} /> : <X className="size-5" strokeWidth={3} />}
+    </button>
   );
 }
 

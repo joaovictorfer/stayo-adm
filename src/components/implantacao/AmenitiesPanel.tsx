@@ -615,27 +615,26 @@ function ItemRow({
   const [details, setDetails] = useState(false);
   const on = fieldsOnly || !!st.on;
   if (unified) return (
-    <li className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-border px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-inventory-row">
+    <li className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-border px-2 py-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]" data-testid="amenity-inventory-row">
       <Button variant="ghost" className="size-12 overflow-hidden rounded-lg bg-muted p-0 sm:size-14" aria-label={`Detalhes de ${def.label}`} onClick={() => setDetails(true)}>{media?.url ? <img src={media.url} alt={def.label} loading="lazy" className="size-full object-cover" /> : <ImageIcon className="text-muted-foreground" />}</Button>
       <Button variant="ghost" className="h-auto min-w-0 flex-col items-start gap-0 whitespace-normal p-0 text-left hover:bg-transparent" onClick={() => setDetails(true)}>
         <span className="font-semibold text-foreground">{def.label}</span>
-        <span className="text-xs font-normal text-muted-foreground sm:text-sm">{installationSummary || summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
+        <span className="text-xs font-normal text-muted-foreground sm:text-sm">{subNodes ? `Grupo · ${Array.isArray(subNodes) ? subNodes.length : 0} itens` : installationSummary || summary(st, def) || (st.on === undefined ? "Ainda não respondido" : st.on ? "STAYO · Disponível" : "STAYO · Não disponível")}</span>
       </Button>
-      <div className="col-span-2 flex items-center gap-2 sm:col-span-1" role="radiogroup" aria-label={`Resposta para ${def.label}`}>
+      {subNodes ? <span /> : <div className="flex items-center gap-2" role="radiogroup" aria-label={`Resposta para ${def.label}`}>
         <AnswerBtn kind="no" on={st.on === false} onClick={() => setItem(def.key, { on: false })} />
         <AnswerBtn kind="yes" on={st.on === true} onClick={() => { setItem(def.key, { on: true }); if (extraFields) setDetails(true); }} />
         <DropdownMenu>
-          <DropdownMenuTrigger asChild><Button variant="outline" className="h-10 w-11 shrink-0 rounded-lg p-0" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild><Button variant="ghost" className="hidden h-11 w-9 shrink-0 rounded-lg p-0 sm:inline-flex" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => setDetails(true)}>Detalhes</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setDetails(true)}>{extraFields ? "Marca e instalador" : "Marca e observação"}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-      {subNodes && st.on !== false && (
-        <ul className="col-span-full mt-1 flex list-none flex-col gap-2 rounded-xl border p-2 sm:ml-[4.25rem] sm:p-3 [&>li[data-testid]]:rounded-lg [&>li[data-testid]]:border [&>li[data-testid]]:border-border [&>li[data-testid]]:bg-card [&>li[data-testid]]:shadow-sm" style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--ficha-subtle)" }}>
-          <li className="flex list-none items-center justify-between px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><span>Itens de {def.label.toLowerCase()}</span><span className="rounded-full bg-card px-2 py-0.5 normal-case tracking-normal">{Array.isArray(subNodes) ? subNodes.length : 0} itens</span></li>
-          {subNodes}
+      </div>}
+      {subNodes && (
+        <ul className="col-span-full mt-1 flex list-none flex-col gap-2 rounded-xl border p-2 sm:ml-[4.25rem] sm:p-3 [&>li[data-testid]]:border-b-0 [&>li[data-testid]]:rounded-lg [&>li[data-testid]]:border [&>li[data-testid]]:border-border [&>li[data-testid]]:bg-card [&>li[data-testid]]:shadow-sm" style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--ficha-subtle)" }}>
+                    {subNodes}
         </ul>
       )}
       <Sheet open={details} onOpenChange={setDetails}>
