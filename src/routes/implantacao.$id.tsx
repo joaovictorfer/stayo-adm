@@ -541,7 +541,7 @@ function ImplementationDetailPage() {
                   const inventoryAnswered = inv.filter((i) => i.inventory_answer).length;
                   const rows: SheetRow[] = [
                     { section: "proposta", label: "Comercial", status: latestProposal ? `Proposta v${latestProposal.version} ${proposalStatusLabel[latestProposal.status].toLowerCase()}` : "Proposta não criada", tone: !latestProposal ? "muted" : latestProposal.status === "draft" ? "warn" : "ok" },
-                    { section: "contrato", label: "Contrato", status: contractStageLabel[currentContractStage()], tone: "muted" },
+                    { section: "proposta", label: "Contrato", status: contractStageLabel[currentContractStage()], tone: "muted" },
                     { section: "imovel", label: "Imóvel", status: propertyPendencyCount ? `${propertyPendencyCount} ${propertyPendencyCount === 1 ? "pendência" : "pendências"} em aberto` : "Dados principais completos", tone: propertyPendencyCount ? "warn" : "ok" },
                     { section: "implantacao", label: "Implantação", status: itemsQuery.isPending || inventoryQ.isPending ? "—" : items.length ? `${done} de ${items.length} ${items.length === 1 ? "item concluído" : "itens concluídos"}` : inventoryTotal ? `Inventário: ${inventoryAnswered} de ${inventoryTotal} respondidos` : "Sem itens", tone: items.length ? (readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress") : inventoryTotal ? (inventoryAnswered === inventoryTotal ? "ok" : "progress") : "muted" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
@@ -576,16 +576,6 @@ function ImplementationDetailPage() {
                     </div>
                   );
                 })()
-              ) : section === "contrato" ? (
-                <FichaContrato
-                  implementationId={implementation.id}
-                  implementationCode={implementation.code}
-                  ownerName={implementation.ownerName}
-                  proposal={latestProposal ?? null}
-                  onGoOwner={() => goSection("proprietario")}
-                  onEditProposal={() => { goSection("proposta"); setProposalEditing(true); }}
-                  onHistory={() => goSection("historico")}
-                />
               ) : section === "proposta" ? (
                 proposalEditing ? (
                   <div className="flex flex-col gap-4">
@@ -614,6 +604,17 @@ function ImplementationDetailPage() {
                         </Collapsible>
                         <Collapsible title="Cobranças iniciais" summary="Geradas após o aceite">
                           <InitialChargesPanel implementationId={implementation.id} />
+                        </Collapsible>
+                        <Collapsible title="Contrato" summary="Partes, andamento e documentos">
+                          <FichaContrato
+                            implementationId={implementation.id}
+                            implementationCode={implementation.code}
+                            ownerName={implementation.ownerName}
+                            proposal={latestProposal ?? null}
+                            onGoOwner={() => goSection("proprietario")}
+                            onEditProposal={() => setProposalEditing(true)}
+                            onHistory={() => goSection("historico")}
+                          />
                         </Collapsible>
                       </>
                     }
