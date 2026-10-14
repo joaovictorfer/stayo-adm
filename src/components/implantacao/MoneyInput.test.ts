@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBRLInput } from "./MoneyInput";
+import { parseBRLInput } from "../../lib/money-input";
 
 describe("parseBRLInput", () => {
   it("digitar 250 vira R$ 250,00", () => expect(parseBRLInput("250")).toBe(250));
