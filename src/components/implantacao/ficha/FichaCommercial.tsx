@@ -4,7 +4,7 @@ import type { FichaSection } from "../../../lib/ficha-next-action";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Plus, Settings2 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,7 +19,6 @@ import {
   LINEN_CHOICES,
   OWNER_USE_LIMIT_LABELS,
   TURNOVER_PAYER_LABELS,
-  conditionsDivergence,
   formatPercent,
   snapshotConditionsToRow,
   type AssignmentMode,
@@ -123,7 +122,6 @@ function QuickEditDialog({
   const [text, setText] = useState("");
   const [paid, setPaid] = useState(false);
   const [paidAt, setPaidAt] = useState("");
-  const [saving, setSaving] = useState(false);
   const [lastField, setLastField] = useState<QuickKey | null>(null);
   if (field !== lastField) {
     setLastField(field);
@@ -135,82 +133,96 @@ function QuickEditDialog({
       setPaidAt(paidMap[field]?.paid_at ?? "");
     }
   }
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const dirty = useRef(false);
+  const touch = <T,>(fn: (v: T) => void) => (v: T) => { dirty.current = true; fn(v); };
   const save = async () => {
     if (!field || !cfg) return;
-    setSaving(true);
     const patch: Record<string, unknown> = {};
     if (cfg.kind === "money") patch[field] = num > 0 ? num : null;
     if (cfg.kind === "percent" || cfg.kind === "months") {
       const n = text.trim() === "" ? null : Number(text.replace(",", "."));
       if (n != null && (!Number.isFinite(n) || n < 0 || (cfg.kind === "percent" && n > 100))) {
-        setSaving(false);
-        toast.error("Valor inválido.");
+        setStatus("error");
         return;
       }
       patch[field] = cfg.kind === "months" && n != null ? Math.round(n) : n;
     }
     if (cfg.payable) patch["paid_items"] = { ...paidMap, [field]: { paid, paid_at: paid ? paidAt || null : null } };
+    setStatus("saving");
     const { supabase } = await import("@/integrations/supabase/client");
     const { error } = await supabase
       .from("implementation_contract_conditions")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .upsert({ implementation_id: implementationId, ...patch } as any, { onConflict: "implementation_id" });
-    setSaving(false);
     if (error) {
+      setStatus("error");
       toast.error("Não foi possível salvar.");
       return;
     }
-    toast.success("Salvo");
+    setStatus("saved");
     await qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
+  };
+  useEffect(() => {
+    if (!dirty.current) return;
+    const t = setTimeout(() => { dirty.current = false; void save(); }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [num, text, paid, paidAt]);
+  const close = () => {
+    if (dirty.current) { dirty.current = false; void save(); }
+    setStatus("idle");
     onClose();
   };
   return (
-    <Dialog open={field != null} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={field != null} onOpenChange={(o) => !o && close()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{cfg?.title}</DialogTitle>
-          <DialogDescription>Vale para esta implantação. A proposta publicada só muda ao publicar nova versão.</DialogDescription>
+          <DialogDescription>Salva automaticamente e já passa a valer.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           {cfg?.kind === "money" && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="qe-value">Valor</Label>
-              <MoneyInput id="qe-value" value={num} onValueChange={setNum} />
+              <MoneyInput id="qe-value" value={num} onValueChange={touch(setNum)} />
             </div>
           )}
           {(cfg?.kind === "percent" || cfg?.kind === "months") && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="qe-value">{cfg.kind === "percent" ? "Percentual (%)" : "Meses"}</Label>
-              <Input id="qe-value" inputMode="decimal" value={text} onChange={(e) => setText(e.target.value.replace(/[^\d,.]/g, ""))} />
+              <Input id="qe-value" inputMode="decimal" value={text} onChange={(e) => touch(setText)(e.target.value.replace(/[^\d,.]/g, ""))} />
             </div>
           )}
           {cfg?.kind === "none" && (
             <p className="text-sm" style={muted}>
-              O valor vem da proposta. Para alterá-lo, crie uma nova versão.{" "}
-              <button type="button" className="underline" style={navy} onClick={() => { onClose(); onNewVersion(); }}>Nova versão</button>
+              O valor é a soma dos serviços da implantação.{" "}
+              <button type="button" className="underline" style={navy} onClick={() => { close(); onNewVersion(); }}>Editar serviços</button>
             </p>
           )}
           {cfg?.payable && (
             <div className="flex flex-col gap-3 rounded-lg border p-3" style={border}>
               <label className="flex items-center justify-between gap-3 text-sm font-medium" style={navy}>
                 Já foi pago pelo proprietário
-                <Switch checked={paid} onCheckedChange={setPaid} />
+                <Switch checked={paid} onCheckedChange={touch(setPaid)} />
               </label>
               {paid && (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="qe-date">Data do pagamento (opcional)</Label>
-                  <Input id="qe-date" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+                  <Input id="qe-date" type="date" value={paidAt} onChange={(e) => touch(setPaidAt)(e.target.value)} />
                 </div>
               )}
             </div>
           )}
-          <button type="button" onClick={() => { onClose(); onFullEdit(); }} className="self-start text-sm underline underline-offset-2" style={muted}>
+          <button type="button" onClick={() => { close(); onFullEdit(); }} className="self-start text-sm underline underline-offset-2" style={muted}>
             Ver todas as condições
           </button>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+          <span className="mr-auto self-center text-xs" style={muted}>
+            {status === "saving" ? "Salvando…" : status === "saved" ? "Salvo" : status === "error" ? "Valor inválido" : ""}
+          </span>
+          <Button onClick={close}>Concluir</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -253,9 +265,8 @@ export function FichaCommercial({
   const snap = proposal?.snapshot ?? null;
   const snapRow = snap ? snapshotConditionsToRow(snap.contractConditions ?? {}) : null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const c = (snapRow ?? q.data) as any;
-  const diverged = snapRow ? conditionsDivergence(snapRow, q.data as Record<string, unknown> | null) : [];
-  const implTotal = snap ? snap.total : proposal?.total ?? null;
+  const c = (q.data ?? snapRow) as any;
+    const implTotal = snap ? snap.total : proposal?.total ?? null;
   const edit = () => setEditing(true);
   const cleaningFee = c?.turnover_cleaning_fee != null ? formatBRL(Number(c.turnover_cleaning_fee)) : null;
   const initialOpt = c?.initial_cleaning_option as InitialCleaningOption | null | undefined;
@@ -308,10 +319,7 @@ export function FichaCommercial({
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={onHistory} className="flex h-10 flex-1 items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm sm:flex-none" style={{ ...border, ...navy }}>
-              {proposal ? `Proposta v${proposal.version} · ${proposal.statusLabel}` : "Sem proposta"} <ChevronDown className="ml-3 size-4" />
-            </button>
-            <button type="button" onClick={onNewVersion} className="flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}>
-              <Plus className="size-4" /> Nova versão
+              Histórico <ChevronDown className="ml-3 size-4" />
             </button>
           </div>
         </div>
@@ -336,16 +344,7 @@ export function FichaCommercial({
                   </div>
                 ))}
               </div>
-              {snap && (
-                <p className="text-xs" style={muted}>
-                  Valores da proposta v{snap.version} publicada — os mesmos do link e do PDF.
-                  {diverged.length > 0 && (
-                    <span style={{ color: "var(--ficha-pending-fg)" }}>
-                      {" "}Condições alteradas depois da publicação ({diverged.join(", ")}). Valem para o proprietário só após publicar nova versão.
-                    </span>
-                  )}
-                </p>
-              )}
+              <p className="text-xs" style={muted}>Alterações salvam sozinhas e já passam a valer.</p>
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
                 {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.quick ? setQuick(r.quick) : edit())} />)}
               </Block>
