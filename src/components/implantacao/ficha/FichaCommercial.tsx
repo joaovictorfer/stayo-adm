@@ -42,7 +42,7 @@ type Row = { label: string; value: string | null | undefined; detail?: string | 
 type Pop = "decisions" | "services" | "terms";
 const POP_TITLE: Record<Pop, [string, string]> = {
   decisions: ["Decisões da implantação", "Limpeza inicial, enxoval e escopo da assessoria. Salva sozinho."],
-  services: ["Serviços e valores da implantação", "Ligue, edite ou adicione serviços. Itens desligados não entram no total."],
+  services: ["Itens da implantação", "O que será cobrado na implantação: nome, valor e descrição de cada item. Salva sozinho."],
   terms: ["Objeto e responsabilidades", "O que a STAYO fará, quem faz o quê e quem participa do aceite."],
 };
 
@@ -281,12 +281,19 @@ export function FichaCommercial({
 
   const paidMap = ((q.data as { paid_items?: PaidMap } | null)?.paid_items ?? {}) as PaidMap;
   const initialFee = c?.initial_cleaning_fee != null && Number(c.initial_cleaning_fee) > 0 ? formatBRL(Number(c.initial_cleaning_fee)) : null;
+  const snapItems = (snap?.items ?? []) as Array<{ description: string; total: number }>;
   const values: Row[] = [
     { label: "Taxa de administração", value: formatPercent(c?.administration_fee), quick: "administration_fee" },
     { label: "Taxa de limpeza", value: cleaningFee, quick: "turnover_cleaning_fee", paid: paidMap["turnover_cleaning_fee"]?.paid },
     { label: "Preparação inicial", value: [initial, initialFee].filter(Boolean).join(" · ") || null, quick: "initial_cleaning_fee", paid: paidMap["initial_cleaning_fee"]?.paid },
     { label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null, quick: "duration_months" },
     { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap["implementation"]?.paid },
+    {
+      label: "Itens da implantação",
+      value: snapItems.length ? `${snapItems.length} ${snapItems.length === 1 ? "item" : "itens"}` : null,
+      detail: snapItems.map((i) => `${i.description} · ${formatBRL(Number(i.total))}`).join(" · ") || null,
+      open: "services",
+    },
   ];
   const clauses: Row[] = [
     { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null, clause: "owner_use" },
@@ -298,7 +305,7 @@ export function FichaCommercial({
     { label: "Manutenção sem autorização", value: c?.maintenance_limit != null ? `até ${formatBRL(Number(c.maintenance_limit))}` : null, clause: "maintenance" },
   ];
   const services: Row[] = [
-    { label: "Serviços da implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, open: "services" },
+    { label: "Itens da implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, open: "services" },
     { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes, open: "decisions" },
     { label: "Enxoval", value: linen, detail: c?.linen_notes, open: "decisions" },
     { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation_only" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
@@ -344,7 +351,7 @@ export function FichaCommercial({
               </div>
               <p className="text-xs" style={muted}>Alterações salvam sozinhas e já passam a valer.</p>
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
-                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.quick && setQuick(r.quick)} />)}
+                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.open ? setPop(r.open) : r.quick === "implementation" ? setPop("services") : r.quick && setQuick(r.quick))} />)}
               </Block>
               <Block icon={<FileText className="size-4" />} title="Condições do contrato">
                 {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.clause && setClause(r.clause)} />)}
