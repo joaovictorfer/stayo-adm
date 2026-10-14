@@ -238,6 +238,7 @@ export function FichaCommercial({
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [editFocus, setEditFocus] = useState<number | null>(null);
   const [quick, setQuick] = useState<QuickKey | null>(null);
   const q = useQuery({
     queryKey: ["implementation-contract-conditions", implementationId, "commercial-view"],
@@ -349,10 +350,10 @@ export function FichaCommercial({
                 {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.quick ? setQuick(r.quick) : edit())} />)}
               </Block>
               <Block icon={<FileText className="size-4" />} title="Condições do contrato">
-                {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={edit} />)}
+                {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { setEditFocus(r.section ?? null); edit(); }} />)}
               </Block>
               <Block icon={<Settings2 className="size-4" />} title="Preparação e serviços">
-                {services.map((r) => <ValueLine key={r.label} row={r} onEdit={edit} />)}
+                {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { setEditFocus(r.section ?? null); edit(); }} />)}
               </Block>
             </>
           )}
@@ -371,7 +372,7 @@ export function FichaCommercial({
               <DialogTitle>Condições do contrato</DialogTitle>
               <DialogDescription>Edite e salve; a janela pode ser fechada a qualquer momento.</DialogDescription>
             </DialogHeader>
-            <ContractConditionsPanel implementationId={implementationId} />
+            <ContractConditionsPanel implementationId={implementationId} initialOpen focusSection={editFocus} />
           </DialogContent>
         </Dialog>
       </div>
