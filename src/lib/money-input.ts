@@ -12,7 +12,7 @@ export function parseBRLInput(text: string): number {
     t = `${int}.${rest.join("").slice(0, 2)}`;
   } else {
     const parts = t.split(".");
-    const last = parts[parts.length - 1];
+    const last = parts[parts.length - 1] ?? "";
     if (parts.length > 1 && last.length <= 2) {
       t = `${parts.slice(0, -1).join("")}.${last}`;
     } else {
