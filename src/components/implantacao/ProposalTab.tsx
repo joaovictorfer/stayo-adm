@@ -850,9 +850,37 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           {items.map((item, index) => (
             <li
               key={item.uid}
-              className={`rounded-lg border p-3 transition-opacity ${item.included ? "" : "bg-slate-50 opacity-70"}`}
+              className={`rounded-lg border transition-opacity ${item.included ? "" : "bg-slate-50 opacity-70"}`}
             >
-              <div className="grid gap-2 md:grid-cols-[auto_minmax(0,1fr)_70px_130px_130px_120px_auto] md:items-end">
+              <div className="flex min-h-12 items-center gap-3 px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={item.included}
+                  onChange={(e) => updateItem(item.uid, { included: e.target.checked })}
+                  className="size-4 shrink-0"
+                  aria-label={`Incluir ${item.description || "item"}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setOpenUid(openUid === item.uid ? null : item.uid)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  aria-expanded={openUid === item.uid}
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {item.description || "Item sem nome"}
+                  </span>
+                  {item.paid && (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Pago</span>
+                  )}
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--stayo-navy,#0b3150)]">
+                    {!item.included ? "Fora" : resolvePricing(item) === "tbd" ? "A definir" : formatBRL(lineTotal(item))}
+                  </span>
+                  <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${openUid === item.uid ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              {openUid === item.uid && (
+              <div className="border-t p-3">
+              <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_70px_130px_130px_auto] md:items-end">
                 <label className="flex min-h-10 items-center gap-2 text-xs font-medium">
                   <input
                     type="checkbox"
@@ -1013,6 +1041,8 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
                     rascunho.
                   </p>
                 )
+              )}
+              </div>
               )}
             </li>
           ))}
