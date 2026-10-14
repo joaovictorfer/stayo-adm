@@ -145,6 +145,7 @@ export async function addInventoryItem(
   name: string,
   order: number,
   category = "Adicionado",
+  details?: Omit<InventoryDetails, "name">,
 ) {
   const { error } = await supabase.from("implementation_guide_items").insert({
     implementation_id: implementationId,
@@ -156,6 +157,7 @@ export async function addInventoryItem(
     classification: "recomendado",
     display_order: order,
     inventory_source: "equipe",
+    ...details,
   });
   if (error) throw error;
 }

@@ -20,6 +20,7 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InventoryRow } from "./InventoryRow";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ import { inventorySubmissionsQuery } from "../../../lib/api/owner-inventory";
 import {
   inventoryConditionLabel,
   type InventoryAnswer,
+  type InventoryCondition,
   type InventoryRoom,
   type InventorySnapshotItem,
 } from "../../../lib/guided-inventory";
@@ -323,6 +325,10 @@ export function InventoryWorkspace({
   const [detail, setDetail] = useState<string | null>(null);
   const detailExtras = useRef(new Map<string, ReactNode>());
   const [newName, setNewName] = useState("");
+  const [newQuantity, setNewQuantity] = useState("");
+  const [newBrand, setNewBrand] = useState("");
+  const [newNotes, setNewNotes] = useState("");
+  const [newCondition, setNewCondition] = useState<InventoryCondition | "">("");
   const [subDetail, setSubDetail] = useState<{ label: string; parentId: string; key: string } | null>(null);
   const [failed, setFailed] = useState<{ item: InventorySnapshotItem; answer: InventoryAnswer | null } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: query.queryKey });
@@ -389,9 +395,18 @@ export function InventoryWorkspace({
   });
 
   const add = useMutation({
-    mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room)),
+    mutationFn: (name: string) => addInventoryItem(implementationId, persisted(room), name, 1000 + (q.data?.length ?? 0), quartoCategory(room), {
+      inventory_quantity: newQuantity ? Number(newQuantity) : null,
+      inventory_brand: newBrand.trim() || null,
+      inventory_condition: newCondition || null,
+      inventory_internal_notes: newNotes.trim() || null,
+    }),
     onSuccess: async () => {
       setNewName("");
+      setNewQuantity("");
+      setNewBrand("");
+      setNewNotes("");
+      setNewCondition("");
       setAdding(false);
       await refresh();
       await qc.invalidateQueries({ queryKey: ["guided-inventory-extras", implementationId] });
@@ -622,10 +637,22 @@ export function InventoryWorkspace({
         <Button variant="outline" onClick={() => { setNewName(""); add.reset(); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
       </div>
       <Dialog open={adding} onOpenChange={setAdding}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Adicionar item · {ROOMS.find((r) => r.id === room)?.label}</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
+          <DialogHeader><DialogTitle>Adicionar item</DialogTitle></DialogHeader>
           <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (newName.trim()) add.mutate(newName.trim()); }}>
+            <label className="block space-y-2 text-sm font-medium">Ambiente<Input value={ROOMS.find((r) => r.id === room)?.label ?? room} readOnly className="h-11 bg-muted text-muted-foreground" /></label>
             <label className="block space-y-2 text-sm font-medium">Nome do item<Input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={room === "outros" ? "Ex.: coleção de livros" : "Ex.: máquina de café"} maxLength={120} aria-label="Nome do novo item" /></label>
+            <details className="rounded-lg border border-border p-3">
+              <summary className="cursor-pointer text-sm font-medium">Detalhes opcionais</summary>
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block space-y-2 text-sm">Quantidade<Input type="number" min="0" step="1" className="h-11" value={newQuantity} onChange={(e) => setNewQuantity(e.target.value)} /></label>
+                  <label className="block space-y-2 text-sm">Marca<Input className="h-11" maxLength={120} value={newBrand} onChange={(e) => setNewBrand(e.target.value)} /></label>
+                </div>
+                <label className="block space-y-2 text-sm">Estado<select className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm" value={newCondition} onChange={(e) => setNewCondition(e.target.value as InventoryCondition | "")}><option value="">Não informado</option>{(["bom", "atencao", "danificado"] as const).map((value) => <option key={value} value={value}>{inventoryConditionLabel[value]}</option>)}</select></label>
+                <label className="block space-y-2 text-sm">Observação interna<Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="min-h-20" maxLength={2000} /></label>
+              </div>
+            </details>
             {add.isError && <p role="alert" className="text-sm text-destructive">Não foi possível adicionar. Tente novamente.</p>}
             <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancelar</Button><Button type="submit" disabled={!newName.trim() || add.isPending}>{add.isPending ? "Adicionando…" : "Adicionar"}</Button></div>
           </form>
