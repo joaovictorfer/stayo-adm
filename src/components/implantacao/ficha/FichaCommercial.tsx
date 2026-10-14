@@ -3,10 +3,16 @@ import type { PendingEntry } from "./FichaSummary";
 import type { FichaSection } from "../../../lib/ficha-next-action";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Plus, Settings2 } from "lucide-react";
+import { Banknote, ChevronDown, ChevronRight, ExternalLink, FileText, History, Pencil, Plus, Settings2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import { MoneyInput } from "../MoneyInput";
 import {
   ASSIGNMENT_LABELS,
   INITIAL_CLEANING_LABELS,
@@ -31,7 +37,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean };
 
 function Block({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -60,7 +66,12 @@ function ValueLine({ row, onEdit }: { row: Row; onEdit: () => void }) {
         className="grid w-full grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 px-1 py-2 text-left text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
       >
         <span className="font-medium" style={navy}>{row.label}</span>
-        <span className="col-start-1 row-start-2 truncate sm:col-start-2 sm:row-start-1" style={muted}>{value}</span>
+        <span className="col-start-1 row-start-2 flex min-w-0 items-center gap-2 sm:col-start-2 sm:row-start-1" style={muted}>
+          <span className="truncate">{value}</span>
+          {row.paid && (
+            <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}>Pago</span>
+          )}
+        </span>
         <span className="row-span-2 sm:row-span-1" style={navy} aria-label={expandable ? "Expandir" : `Editar ${row.label}`}>
           {expandable ? <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} /> : <Pencil className="size-4" />}
         </span>
@@ -77,6 +88,134 @@ function ValueLine({ row, onEdit }: { row: Row; onEdit: () => void }) {
   );
 }
 
+
+type QuickKey = "administration_fee" | "turnover_cleaning_fee" | "initial_cleaning_fee" | "duration_months" | "implementation";
+type PaidMap = Record<string, { paid: boolean; paid_at?: string | null }>;
+
+const QUICK: Record<QuickKey, { title: string; kind: "percent" | "money" | "months" | "none"; payable: boolean }> = {
+  administration_fee: { title: "Taxa de administração", kind: "percent", payable: false },
+  turnover_cleaning_fee: { title: "Taxa de limpeza", kind: "money", payable: true },
+  initial_cleaning_fee: { title: "Preparação inicial", kind: "money", payable: true },
+  duration_months: { title: "Vigência", kind: "months", payable: false },
+  implementation: { title: "Valor de implantação", kind: "none", payable: true },
+};
+
+function QuickEditDialog({
+  implementationId,
+  field,
+  row,
+  onClose,
+  onFullEdit,
+  onNewVersion,
+}: {
+  implementationId: string;
+  field: QuickKey | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  row: any;
+  onClose: () => void;
+  onFullEdit: () => void;
+  onNewVersion: () => void;
+}) {
+  const qc = useQueryClient();
+  const cfg = field ? QUICK[field] : null;
+  const paidMap: PaidMap = (row?.paid_items as PaidMap) ?? {};
+  const [num, setNum] = useState<number>(0);
+  const [text, setText] = useState("");
+  const [paid, setPaid] = useState(false);
+  const [paidAt, setPaidAt] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [lastField, setLastField] = useState<QuickKey | null>(null);
+  if (field !== lastField) {
+    setLastField(field);
+    if (field) {
+      const raw = field === "implementation" ? null : row?.[field];
+      setNum(raw == null ? 0 : Number(raw));
+      setText(raw == null ? "" : String(raw).replace(".", ","));
+      setPaid(Boolean(paidMap[field]?.paid));
+      setPaidAt(paidMap[field]?.paid_at ?? "");
+    }
+  }
+  const save = async () => {
+    if (!field || !cfg) return;
+    setSaving(true);
+    const patch: Record<string, unknown> = {};
+    if (cfg.kind === "money") patch[field] = num > 0 ? num : null;
+    if (cfg.kind === "percent" || cfg.kind === "months") {
+      const n = text.trim() === "" ? null : Number(text.replace(",", "."));
+      if (n != null && (!Number.isFinite(n) || n < 0 || (cfg.kind === "percent" && n > 100))) {
+        setSaving(false);
+        toast.error("Valor inválido.");
+        return;
+      }
+      patch[field] = cfg.kind === "months" && n != null ? Math.round(n) : n;
+    }
+    if (cfg.payable) patch.paid_items = { ...paidMap, [field]: { paid, paid_at: paid ? paidAt || null : null } };
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { error } = await supabase
+      .from("implementation_contract_conditions")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .upsert({ implementation_id: implementationId, ...patch } as any, { onConflict: "implementation_id" });
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar.");
+      return;
+    }
+    toast.success("Salvo");
+    await qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
+    onClose();
+  };
+  return (
+    <Dialog open={field != null} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{cfg?.title}</DialogTitle>
+          <DialogDescription>Vale para esta implantação. A proposta publicada só muda ao publicar nova versão.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          {cfg?.kind === "money" && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="qe-value">Valor</Label>
+              <MoneyInput id="qe-value" value={num} onValueChange={setNum} />
+            </div>
+          )}
+          {(cfg?.kind === "percent" || cfg?.kind === "months") && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="qe-value">{cfg.kind === "percent" ? "Percentual (%)" : "Meses"}</Label>
+              <Input id="qe-value" inputMode="decimal" value={text} onChange={(e) => setText(e.target.value.replace(/[^\d,.]/g, ""))} />
+            </div>
+          )}
+          {cfg?.kind === "none" && (
+            <p className="text-sm" style={muted}>
+              O valor vem da proposta. Para alterá-lo, crie uma nova versão.{" "}
+              <button type="button" className="underline" style={navy} onClick={() => { onClose(); onNewVersion(); }}>Nova versão</button>
+            </p>
+          )}
+          {cfg?.payable && (
+            <div className="flex flex-col gap-3 rounded-lg border p-3" style={border}>
+              <label className="flex items-center justify-between gap-3 text-sm font-medium" style={navy}>
+                Já foi pago pelo proprietário
+                <Switch checked={paid} onCheckedChange={setPaid} />
+              </label>
+              {paid && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="qe-date">Data do pagamento (opcional)</Label>
+                  <Input id="qe-date" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+                </div>
+              )}
+            </div>
+          )}
+          <button type="button" onClick={() => { onClose(); onFullEdit(); }} className="self-start text-sm underline underline-offset-2" style={muted}>
+            Ver todas as condições
+          </button>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 const days = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
 
@@ -99,6 +238,7 @@ export function FichaCommercial({
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [quick, setQuick] = useState<QuickKey | null>(null);
   const q = useQuery({
     queryKey: ["implementation-contract-conditions", implementationId, "commercial-view"],
     queryFn: async () => {
@@ -107,26 +247,6 @@ export function FichaCommercial({
       return data;
     },
   });
-
-  if (editing)
-    return (
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={() => {
-            setEditing(false);
-            void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
-          }}
-          className="flex min-h-11 items-center gap-1 self-start text-sm font-medium"
-          style={{ color: "var(--stayo-forest)" }}
-        >
-          <ArrowLeft className="size-4" /> Voltar às condições
-        </button>
-        <section className="rounded-[var(--radius-card)] border bg-white p-4 sm:p-5" style={border}>
-          <ContractConditionsPanel implementationId={implementationId} />
-        </section>
-      </div>
-    );
 
   // Proposta publicada/aceita: mostra exatamente o snapshot (o mesmo do link e do PDF).
   const snap = proposal?.snapshot ?? null;
@@ -152,12 +272,14 @@ export function FichaCommercial({
   const assignment = c?.assignment_mode as AssignmentMode | null | undefined;
   const linen = LINEN_CHOICES.find((o) => o.value === c?.linen_mode)?.label ?? null;
 
+  const paidMap = ((q.data as { paid_items?: PaidMap } | null)?.paid_items ?? {}) as PaidMap;
+  const initialFee = c?.initial_cleaning_fee != null && Number(c.initial_cleaning_fee) > 0 ? formatBRL(Number(c.initial_cleaning_fee)) : null;
   const values: Row[] = [
-    { label: "Taxa de administração", value: formatPercent(c?.administration_fee) },
-    { label: "Taxa de limpeza", value: cleaningFee },
-    { label: "Preparação inicial", value: initial },
-    { label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null },
-    { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null },
+    { label: "Taxa de administração", value: formatPercent(c?.administration_fee), quick: "administration_fee" },
+    { label: "Taxa de limpeza", value: cleaningFee, quick: "turnover_cleaning_fee", paid: paidMap.turnover_cleaning_fee?.paid },
+    { label: "Preparação inicial", value: [initial, initialFee].filter(Boolean).join(" · ") || null, quick: "initial_cleaning_fee", paid: paidMap.initial_cleaning_fee?.paid },
+    { label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null, quick: "duration_months" },
+    { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap.implementation?.paid },
   ];
   const clauses: Row[] = [
     { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null },
@@ -208,7 +330,7 @@ export function FichaCommercial({
                 </p>
               )}
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
-                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={edit} />)}
+                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.quick ? setQuick(r.quick) : edit())} />)}
               </Block>
               <Block icon={<FileText className="size-4" />} title="Condições do contrato">
                 {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={edit} />)}
@@ -220,6 +342,22 @@ export function FichaCommercial({
           )}
           {extras}
         </div>
+        <QuickEditDialog implementationId={implementationId} field={quick} row={q.data} onClose={() => setQuick(null)} onFullEdit={edit} onNewVersion={onNewVersion} />
+        <Dialog
+          open={editing}
+          onOpenChange={(o) => {
+            setEditing(o);
+            if (!o) void qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
+          }}
+        >
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Condições do contrato</DialogTitle>
+              <DialogDescription>Edite e salve; a janela pode ser fechada a qualquer momento.</DialogDescription>
+            </DialogHeader>
+            <ContractConditionsPanel implementationId={implementationId} />
+          </DialogContent>
+        </Dialog>
       </div>
       <aside className="lg:pt-0">
         <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
