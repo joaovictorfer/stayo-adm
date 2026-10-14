@@ -30,7 +30,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { InventoryDetailLayout } from "../guide/InventoryDetailLayout";
 import { InventoryItemDetails } from "../guide/InventoryItemDetails";
 import { InventorySubmissionsReview } from "../guide/InventorySubmissionsReview";
@@ -653,7 +652,7 @@ export function InventoryWorkspace({
         </div>
       </div>
 
-      <InventoryDetailLayout open={!!detailItem} onOpenChange={(o) => { if (!o) setDetail(null); }} name={detailItem?.name ?? "Item"} media={detailMedia}>
+      <InventoryDetailLayout open={!!detailItem} onOpenChange={(o) => { if (!o) setDetail(null); }} name={detailItem?.name ?? "Item"} media={detailMedia ?? undefined}>
         {detailItem && <div className="space-y-4">
                 {safeUrl(extras.data?.[detailItem.id]?.purchase_url) && (
                   <a href={safeUrl(extras.data?.[detailItem.id]?.purchase_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm underline underline-offset-2" style={navy}>
