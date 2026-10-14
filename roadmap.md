@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Simplificar cadastro de item em janela sobre a lista, ambiente atual e detalhes opcionais.
+- [x] Simplificar cadastro de item em janela sobre a lista, ambiente atual e detalhes opcionais; cadastro conferido no celular e tablet, registros de teste removidos.
 - [x] Padronizar detalhes no celular e tablet: catálogo, xícaras, pratos e itens manuais conferidos; marca de item manual persistiu após recarregar e testes foram removidos.
 - [x] Unificar linhas e subitens do inventário, adicionar item em cada ambiente e priorizar itens avulsos em Outros; inclusão e persistência conferidas na ficha real, registros de teste removidos.
 - [x] Remover "Fornecedores e instalações" do fim da ficha de implantação (duplicava os itens já preenchidos no inventário por ambiente); imports mortos limpos, ficha conferida no navegador sem erros.
