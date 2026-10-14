@@ -167,6 +167,8 @@ function fromVersion(
         details: i.details ?? "",
         scope: i.scope ?? [],
         pricing: i.pricing ?? null,
+        paid: i.paid ?? false,
+        paidAt: i.paidAt ?? null,
       }))
     : [];
 }
