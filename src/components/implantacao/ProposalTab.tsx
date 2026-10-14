@@ -1,7 +1,7 @@
 import { conditionPendingIssues, contractRowToSnapshot } from "../../lib/contract-conditions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Eye, FileText, Info, Plus, Save, Send, Trash2 } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -247,6 +247,7 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
   const optionsSupported = true;
 
   const [items, setItems] = useState<DraftItem[]>([]);
+  const [openUid, setOpenUid] = useState<string | null>(null);
   const [partnershipObject, setPartnershipObject] = useState("");
   const [responsibilities, setResponsibilities] = useState<Responsibility[]>([]);
   const [signatoriesList, setSignatoriesList] = useState<Signatory[]>([]);
@@ -799,17 +800,12 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           Serviços e valores da implantação
         </h3>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Itens desligados não entram no total nem na versão publicada. Ligar um item não gera
-          cobrança, nota ou pagamento.
+          Toque num item para editar. Desmarcado, fica fora do total.
         </p>
 
         {missingTemplates.length > 0 && (
-          <div className="mt-4 rounded-lg border border-dashed p-3">
-            <p className="text-xs font-semibold">Itens padrão de implantação</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Sugestões do modelo. Ao adicionar, vira uma cópia editável deste rascunho, desligada
-              até você incluir.
-            </p>
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-muted-foreground">Adicionar item padrão</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {missingTemplates.map((t) => (
                 <Button
@@ -850,19 +846,37 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           {items.map((item, index) => (
             <li
               key={item.uid}
-              className={`rounded-lg border p-3 transition-opacity ${item.included ? "" : "bg-slate-50 opacity-70"}`}
+              className={`rounded-lg border transition-opacity ${item.included ? "" : "bg-slate-50 opacity-70"}`}
             >
-              <div className="grid gap-2 md:grid-cols-[auto_minmax(0,1fr)_70px_130px_130px_120px_auto] md:items-end">
-                <label className="flex min-h-10 items-center gap-2 text-xs font-medium">
-                  <input
-                    type="checkbox"
-                    checked={item.included}
-                    onChange={(e) => updateItem(item.uid, { included: e.target.checked })}
-                    className="size-4"
-                    aria-label={`Incluir ${item.description || "item"}`}
-                  />
-                  <span className="md:sr-only">Incluir</span>
-                </label>
+              <div className="flex min-h-12 items-center gap-3 px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={item.included}
+                  onChange={(e) => updateItem(item.uid, { included: e.target.checked })}
+                  className="size-4 shrink-0"
+                  aria-label={`Incluir ${item.description || "item"}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setOpenUid(openUid === item.uid ? null : item.uid)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  aria-expanded={openUid === item.uid}
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {item.description || "Item sem nome"}
+                  </span>
+                  {item.paid && (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Pago</span>
+                  )}
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--stayo-navy,#0b3150)]">
+                    {!item.included ? "Fora" : resolvePricing(item) === "tbd" ? "A definir" : formatBRL(lineTotal(item))}
+                  </span>
+                  <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${openUid === item.uid ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              {openUid === item.uid && (
+              <div className="border-t p-3">
+              <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_70px_130px_130px_auto] md:items-end">
                 <label className="text-[11px] font-medium text-muted-foreground">
                   Nome do serviço
                   <Input
@@ -901,18 +915,6 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
                     className="mt-1"
                   />
                 </label>
-                <div className="text-[11px] font-medium text-muted-foreground">
-                  Total
-                  <p className="mt-1 flex h-10 items-center justify-end font-semibold tabular-nums text-foreground">
-                    {!item.included
-                      ? "Fora do total"
-                      : resolvePricing(item) === "tbd"
-                        ? "A definir"
-                        : resolvePricing(item) === "fixed"
-                          ? formatBRL(lineTotal(item))
-                          : `${formatBRL(lineTotal(item))}*`}
-                  </p>
-                </div>
                 <div className="flex items-center justify-end gap-1">
                   <button
                     type="button"
@@ -1014,6 +1016,8 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
                   </p>
                 )
               )}
+              </div>
+              )}
             </li>
           ))}
         </ul>
@@ -1023,7 +1027,9 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
           variant="outline"
           size="sm"
           onClick={() => {
-            setItems((cur) => [...cur, newItem()]);
+            const fresh = newItem();
+            setItems((cur) => [...cur, fresh]);
+            setOpenUid(fresh.uid);
             touch();
           }}
         >
