@@ -1247,8 +1247,6 @@ function ProposalStep({
   // Após confirmar, mostra exatamente o texto confirmado.
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
   const facts = proposalFacts(current.snapshot);
-  const [showConditions, setShowConditions] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const confirmed = !needs && confirmation;
 
   return (
@@ -1257,8 +1255,8 @@ function ProposalStep({
         <div className="pj-notice" role="status">
           <strong>Há uma nova versão da proposta.</strong>
           <span>
-            Você confirmou a versão {confirmation.version} em {formatDateTime(confirmation.confirmedAt)}, e ela
-            continua guardada. Para seguir, confirme a versão {current.version}.
+            Você já confirmou uma proposta em {formatDateTime(confirmation.confirmedAt)}, e ela continua
+            guardada. Para seguir, confira e confirme a proposta atualizada.
           </span>
         </div>
       )}
@@ -1266,9 +1264,8 @@ function ProposalStep({
       <div className="pj-open">
         <div className="pj-open-title-row">
           <h2 className="pj-open-title">Sua proposta STAYO</h2>
-          <span className="pj-version-chip">Versão {current.version}</span>
         </div>
-        <p className="pj-open-lead">Confira o essencial. Os detalhes ficam disponíveis quando você quiser.</p>
+        <p className="pj-open-lead">Os principais pontos do acordo, em resumo.</p>
         <dl className="pj-open-facts">
           <div className="pj-open-fact">
             <dt>Administração</dt>
@@ -1291,56 +1288,18 @@ function ProposalStep({
             <span>Combinaremos tudo antes de qualquer cobrança.</span>
           </p>
         </div>
-        <button
-          type="button"
-          className="pj-open-conditions"
-          aria-expanded={showConditions}
-          onClick={() => setShowConditions((value) => !value)}
-        >
-          {showConditions ? "Ocultar as condições" : "Ver todas as condições"}
-          <ChevronDown className="size-4" aria-hidden="true" />
-        </button>
-        {!confirmed && (
-          <>
-            <Button
-              type="button"
-              className="portal-cta h-12 w-full text-sm"
-              onClick={() => {
-                setReviewing(true);
-                window.setTimeout(
-                  () =>
-                    document
-                      .getElementById("confirmar-proposta")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-                  0,
-                );
-              }}
-            >
-              Revisar e confirmar <ChevronRight className="size-4" />
-            </Button>
-            <p className="pj-open-legal">A confirmação desta proposta não substitui o contrato.</p>
-            <div className="pj-open-support-row">
-              <a className="pj-open-support" href={STAYO_SUPPORT_URL}>
-                Falar com a STAYO
-              </a>
-              <a className="pj-open-support pj-open-support--alt" href={STAYO_SUPPORT_EMAIL_URL}>
-                stayogramado@gmail.com
-              </a>
-            </div>
-          </>
-        )}
       </div>
 
-      {showConditions && <ProposalSnapshotSummary snapshot={shown} />}
+      <ProposalSnapshotSummary snapshot={shown} />
 
       {confirmed ? (
         <div className="pj-confirmed">
           <CheckCircle2 aria-hidden="true" />
           <div>
-            <strong>Você confirmou a versão {confirmation.version}</strong>
+            <strong>Proposta confirmada</strong>
             <p>
-              Confirmada por {confirmation.confirmedName} em {formatDateTime(confirmation.confirmedAt)}. Esta é a
-              versão exibida acima. A formalização contratual será realizada em etapa própria.
+              Confirmada por {confirmation.confirmedName} em {formatDateTime(confirmation.confirmedAt)}. A
+              formalização contratual será realizada em etapa própria.
             </p>
             <Button type="button" className="portal-cta mt-4 w-full sm:w-auto" onClick={onContinue}>
               Voltar ao cadastro <ChevronRight className="size-4" />
@@ -1348,27 +1307,11 @@ function ProposalStep({
           </div>
         </div>
       ) : (
-        <div id="confirmar-proposta" className="pj-confirm" hidden={!reviewing}>
-          <p className="pj-confirm-eyebrow">Confirmação</p>
-          <h2 className="pj-confirm-title">Você está confirmando a proposta versão {current.version}</h2>
-          <p className="pj-confirm-summary">
-            Você confirma a proposta versão {current.version}, com implantação definida em {facts.implementation ?? "valor a definir"}.
-          </p>
-          <button
-            type="button"
-            className="pj-review-link"
-            onClick={() => {
-              setShowConditions(true);
-              window.setTimeout(
-                () => document.getElementById("pj-cond-title")?.scrollIntoView({ behavior: "smooth", block: "start" }),
-                80,
-              );
-            }}
-          >
-            Revisar condições da proposta
-          </button>
+        <div id="confirmar-proposta" className="pj-confirm">
+          <p className="pj-confirm-eyebrow">Último passo</p>
+          <h2 className="pj-confirm-title">Confirmar a proposta</h2>
           <p className="pj-fineprint">
-            Este aceite confirma as condições comerciais. O contrato será formalizado em etapa própria.
+            Este aceite confirma as condições comerciais acima. O contrato será formalizado em etapa própria.
           </p>
           <label className="pj-field">
             <span>Nome completo</span>
@@ -1399,6 +1342,10 @@ function ProposalStep({
           {(!agreed || acceptName.trim().length < 3) && !accepting && (
             <p className="pj-hint">Informe seu nome completo e marque a confirmação para continuar.</p>
           )}
+          <div className="pj-open-support-row">
+            <a className="pj-open-support" href={STAYO_SUPPORT_URL}>Falar com a STAYO</a>
+            <a className="pj-open-support pj-open-support--alt" href={STAYO_SUPPORT_EMAIL_URL}>stayogramado@gmail.com</a>
+          </div>
         </div>
       )}
 
@@ -1592,7 +1539,8 @@ function ProposalSnapshotSummary({ snapshot }: { snapshot: CommercialProposalSna
     <div className="pj-blocks">
       {blocks.length > 0 && (
         <section aria-labelledby="pj-cond-title">
-          <h2 id="pj-cond-title" className="pj-section-title">Condições comerciais e contratuais</h2>
+          <h2 id="pj-cond-title" className="pj-section-title">Condições do acordo</h2>
+          <p className="pj-section-lead">Toque em cada tema para ver os detalhes.</p>
           <div className="pj-accordion">
             {blocks.map((b) => (
               <details
