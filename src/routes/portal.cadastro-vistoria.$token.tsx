@@ -13,6 +13,7 @@ export const Route = createFileRoute("/portal/cadastro-vistoria/$token")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
+      { name: "referrer", content: "no-referrer" },
     ],
   }),
   component: Page,

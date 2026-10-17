@@ -174,7 +174,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
   async function go(next: number) {
-    if (!values) return;
+    if (!values || busy) return;
     if (
       next > 1 &&
       (!values.condominium.trim() ||
@@ -207,15 +207,22 @@ export function FieldRegistrationForm({ token }: { token: string }) {
         setBusy(false);
       }
     }
-    setStep(next);
-    stepRef.current = next;
-    pending.current = { ...pending.current };
     const r = current.current;
     if (r) {
-      const saved = await save({ data: { token, revision: r.revision, step: next, patch: {} } });
-      current.current = saved;
-      setRecord(saved);
+      setBusy(true);
+      try {
+        const saved = await save({ data: { token, revision: r.revision, step: next, patch: {} } });
+        current.current = saved;
+        setRecord(saved);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Não foi possível avançar. Tente novamente.");
+        return;
+      } finally {
+        setBusy(false);
+      }
     }
+    setStep(next);
+    stepRef.current = next;
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   if (!record || !values)
@@ -283,8 +290,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
             <Button
               variant="ghost"
               onClick={() => {
-                setStep(2);
-                stepRef.current = 2;
+                void go(2);
               }}
             >
               <ChevronLeft className="size-4" />
