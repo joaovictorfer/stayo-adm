@@ -19,7 +19,7 @@
 
 ## Aba Proprietário (auditoria)
 - [x] Fase 1: card Jornada vertical na lateral + proteção contra tela de erro
-- [ ] Fase 2: refino do dossiê cadastral
+- [ ] Fase 2: refino do dossiê cadastral — conferir leitura, detalhes, cópia e edição na ficha real
 - [ ] Fase 3: links e convites direto na aba Proprietário
 
 ## Mercado & Empório (novo)
