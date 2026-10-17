@@ -302,11 +302,16 @@
   --background: var(--stayo-surface);
   --muted: var(--stayo-bg);
   --border: var(--stayo-border);
+  --card: var(--stayo-surface);
 }
 .field-registration button {
   transition-duration: 100ms;
   touch-action: manipulation;
 }
+.field-stage-enter { animation: admin-page-in 160ms ease both; }
+.field-registration button:active:not(:disabled) { transform: scale(0.97); }
+.field-bed-card { transition: background-color 120ms ease, border-color 120ms ease; }
 @media (prefers-reduced-motion: reduce) {
-  .field-registration button { transition: none; }
+  .field-registration *, .field-registration *::before, .field-registration *::after { transition: none !important; animation: none !important; }
+  .field-registration button:active:not(:disabled) { transform: none; }
 }
