@@ -22,7 +22,7 @@ import {
   type SurveyItem,
 } from "@/lib/api/implementation-survey";
 import { deleteSurveyPhoto, getSurveyMedia, uploadSurveyPhoto } from "@/lib/survey.functions";
-import { surveyStickerText, watermarkPhoto } from "@/lib/survey-watermark";
+import { watermarkPhoto } from "@/lib/survey-watermark";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -251,7 +251,7 @@ export function SurveyExperience({
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto grid max-w-5xl gap-6 p-4 xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:p-6">
-              <section className="order-2 space-y-3 md:order-1">
+              <section className="order-2 space-y-3 xl:order-1">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-background shadow-sm md:aspect-square">
                   {itemPhotos.length ? (
                     <img
@@ -284,7 +284,7 @@ export function SurveyExperience({
                 />
               </section>
 
-              <section className="order-1 space-y-6 md:order-2">
+              <section className="order-1 space-y-6 xl:order-2">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-primary">
                     {roomLabel(item.room)} · {item.category}
@@ -765,11 +765,7 @@ function PhotoStrip({
           </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">
-        {failed
-          ? "Uma foto não foi enviada. Tente de novo."
-          : `As fotos saem com a logo, ${propertyName} e “${surveyStickerText()}”.`}
-      </p>
+      {failed && <p role="alert" className="text-xs text-destructive">Uma foto não foi enviada. Tente de novo.</p>}
       <input
         ref={input}
         type="file"
