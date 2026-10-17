@@ -54,7 +54,8 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     pending = useRef<FieldPatch>({}),
     running = useRef<Promise<boolean> | null>(null),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null),
-    stepRef = useRef(0);
+    stepRef = useRef(0),
+    navigating = useRef(false);
   useEffect(() => {
     let active = true;
     resolve({ data: { token } })
@@ -174,7 +175,9 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
   async function go(next: number) {
-    if (!values || busy) return;
+    if (!values || navigating.current) return;
+    navigating.current = true;
+    try {
     if (
       next > 1 &&
       (!values.condominium.trim() ||
@@ -224,6 +227,9 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     setStep(next);
     stepRef.current = next;
     window.scrollTo({ top: 0, behavior: "instant" });
+    } finally {
+      navigating.current = false;
+    }
   }
   if (!record || !values)
     return (

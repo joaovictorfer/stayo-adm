@@ -193,7 +193,7 @@ export function SurveyExperience({
         )}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-80 overflow-y-auto border-r bg-background transition-transform lg:static lg:z-0 lg:w-72 lg:translate-x-0",
+            "fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] overflow-y-auto border-r bg-background transition-transform motion-reduce:transition-none lg:static lg:z-0 lg:w-72 lg:translate-x-0",
             sidebar ? "translate-x-0" : "-translate-x-full",
           )}
         >
@@ -216,7 +216,7 @@ export function SurveyExperience({
                     type="button"
                     onClick={() => go(idx)}
                     className={cn(
-                      "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted",
+                      "flex w-full justify-start items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted",
                       idx === index && "bg-primary/10 font-semibold text-primary",
                     )}
                   >
