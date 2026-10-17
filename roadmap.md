@@ -24,3 +24,6 @@
 
 ## Mercado & Empório (novo)
 - [ ] Abas: Pedidos ativos, Reposição por imóvel, Catálogo & preços; consumo por reserva (aguardando escopo)
+
+## VF - Financeiro
+- [ ] Conectar envio de despesas operacionais e consulta de demonstrativos/repasses; localizar contrato existente e ativar acesso autorizado, sem enviar despesas de teste reais.
