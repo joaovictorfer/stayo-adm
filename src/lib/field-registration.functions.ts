@@ -107,9 +107,11 @@ export const prepareFieldInventory = createServerFn({ method: "POST" })
       p_token: data.token,
       p_revision: data.revision,
     });
-    if (error)
+    if (error) {
+      console.error("Field inventory preparation failed", error.code, error.message);
       throw new Error(
         "Não foi possível preparar o inventário. Confira os ambientes e tente novamente.",
       );
+    }
     return result as unknown as FieldRegistration;
   });
