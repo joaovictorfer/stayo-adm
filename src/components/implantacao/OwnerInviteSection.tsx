@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Eye, Link2, Lock, MessageCircle, ShieldOff } from "lucide-react";
+import { Check, Copy, ExternalLink, Eye, Link2, Lock, MessageCircle, ShieldOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -222,7 +222,7 @@ export function OwnerInviteSection({
               <ProposalPresentationView snapshot={selected.snapshot} />
               <div className="mt-4 flex flex-col gap-2 border-t border-[var(--stayo-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-[var(--stayo-ink-muted)]">
-                  Publicar gera um link novo e desativa qualquer link anterior desta oportunidade.
+                  Gerar um link novo desativa o link anterior desta oportunidade.
                 </p>
                 <Button disabled={issue.isPending} onClick={() => issue.mutate()}>
                   <Link2 className="size-4" />
@@ -235,7 +235,7 @@ export function OwnerInviteSection({
           {link && (
             <div className="mt-4 space-y-3 rounded-[var(--radius-card)] border border-[var(--stayo-success)] bg-[var(--stayo-forest-soft)] p-4">
               <p className="text-xs text-[var(--stayo-ink-muted)]">
-                Copie agora: por segurança o link não fica guardado. Se perder, publique de novo.
+                Copie agora: por segurança o link não fica guardado. Se perder, gere um novo.
               </p>
               <input
                 readOnly
@@ -274,6 +274,7 @@ export function OwnerInviteSection({
                   )}
                   {copied === "msg" ? "Mensagem copiada" : "Copiar mensagem"}
                 </Button>
+                <Button asChild variant="outline"><a href={link} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4" />Abrir proposta</a></Button>
               </div>
             </div>
           )}

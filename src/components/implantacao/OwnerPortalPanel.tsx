@@ -265,7 +265,7 @@ export function OwnerPortalPanel({
   return (
     <section
       aria-labelledby="owner-link-title"
-      className={compact ? "min-w-0 rounded-lg border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4 text-[var(--stayo-navy)]" : "rounded-[var(--radius-card)] border-2 bg-white p-4 shadow-sm sm:p-5"}
+      className={compact ? "min-w-0 text-[var(--stayo-navy)]" : "rounded-[var(--radius-card)] border-2 bg-white p-4 shadow-sm sm:p-5"}
       style={compact ? undefined : { borderColor: "var(--stayo-forest)" }}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
@@ -287,6 +287,7 @@ export function OwnerPortalPanel({
       </div>
 
       <div className="mt-4">
+        {needsNewLink && <ProposalGate implementationId={implementationId} pending={proposalsQuery.isPending} error={proposalsQuery.isError} published={published ?? null} hasDraftChanges={hasDraftChanges} />}
         {linkQuery.isError ? (
           <p className="text-sm text-[var(--stayo-danger)]">
             Não foi possível verificar o link agora.{" "}
