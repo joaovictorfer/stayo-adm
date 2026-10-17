@@ -26,4 +26,5 @@
 - [ ] Abas: Pedidos ativos, Reposição por imóvel, Catálogo & preços; consumo por reserva (aguardando escopo)
 
 ## VF - Financeiro
-- [ ] Conectar envio de despesas operacionais e consulta de demonstrativos/repasses; localizar contrato existente e ativar acesso autorizado, sem enviar despesas de teste reais.
+- [x] Localizar VF - Financeiro e contrato existente: POST /api/public/stayo-expenses e GET /api/public/stayo-statements; autenticação servidor a servidor e despesas idempotentes.
+- [ ] Ativar conexão e implementar envio/consulta no Admin: bloqueado porque a consulta publicada em https://vf-hub.lovable.app/api/public/stayo-statements?month=2026-10 retorna 404; publicar os endpoints no VF - Financeiro e configurar acesso autorizado antes de conectar. Nenhuma despesa real enviada.
