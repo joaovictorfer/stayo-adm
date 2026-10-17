@@ -1,0 +1,575 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  BedDouble,
+  Building2,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Eye,
+  EyeOff,
+  Loader2,
+  Minus,
+  Plus,
+  UserRound,
+} from "lucide-react";
+import { StayoLogo } from "@/components/brand/StayoLogo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SurveyExperience } from "./SurveyExperience";
+import {
+  resolveFieldRegistration,
+  saveFieldRegistration,
+  prepareFieldInventory,
+} from "@/lib/field-registration.functions";
+import {
+  bedTypes,
+  contactReady,
+  type FieldPatch,
+  type FieldRegistration,
+  type FieldValues,
+} from "@/lib/field-registration";
+import { cn } from "@/lib/utils";
+const steps = [
+  { title: "Proprietário", icon: UserRound },
+  { title: "Imóvel", icon: Building2 },
+  { title: "Quartos e camas", icon: BedDouble },
+  { title: "Vistoria", icon: ClipboardCheck },
+];
+export function FieldRegistrationForm({ token }: { token: string }) {
+  const resolve = useServerFn(resolveFieldRegistration),
+    save = useServerFn(saveFieldRegistration),
+    prepare = useServerFn(prepareFieldInventory);
+  const [record, setRecord] = useState<FieldRegistration | null>(null),
+    [values, setValues] = useState<FieldValues | null>(null);
+  const [step, setStep] = useState(0),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [dirty, setDirty] = useState(false),
+    [reveal, setReveal] = useState(false),
+    [inventoryReady, setInventoryReady] = useState(false);
+  const current = useRef<FieldRegistration | null>(null),
+    local = useRef<FieldValues | null>(null),
+    pending = useRef<FieldPatch>({}),
+    running = useRef<Promise<boolean> | null>(null),
+    timer = useRef<ReturnType<typeof setTimeout> | null>(null),
+    stepRef = useRef(0),
+    navigating = useRef(false);
+  useEffect(() => {
+    let active = true;
+    resolve({ data: { token } })
+      .then((r) => {
+        if (!active) return;
+        current.current = r;
+        local.current = r.values;
+        setRecord(r);
+        setValues(r.values);
+        const resume = Math.min(r.step, 2);
+        setStep(resume);
+        stepRef.current = resume;
+      })
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Não foi possível abrir o cadastro."),
+      );
+    return () => {
+      active = false;
+    };
+  }, [token, resolve]);
+  async function flush(): Promise<boolean> {
+    if (timer.current) clearTimeout(timer.current);
+    if (running.current) {
+      const ok = await running.current;
+      return ok ? flush() : false;
+    }
+    const r = current.current,
+      v = local.current;
+    if (!r || !v) return false;
+    if (!contactReady(v.name, v.phone)) {
+      setError("Preencha nome e telefone válidos.");
+      return false;
+    }
+    if (!Object.keys(pending.current).length) return true;
+    const patch = { ...pending.current };
+    pending.current = {};
+    if (!r.implementationId || (!r.contactLocked && !r.values.name)) {
+      patch.name = v.name;
+      patch.phone = v.phone;
+    }
+    setBusy(true);
+    setError("");
+    const task = (async () => {
+      try {
+        const next = await save({
+          data: { token, revision: r.revision, step: stepRef.current, patch },
+        });
+        current.current = next;
+        setRecord(next);
+        const merged = {
+          ...next.values,
+          ...local.current,
+          rooms: pending.current.beds
+            ? (local.current?.rooms ?? next.values.rooms)
+            : next.values.rooms,
+        };
+        local.current = merged;
+        setValues(merged);
+        setDirty(Object.keys(pending.current).length > 0);
+        return true;
+      } catch (e) {
+        pending.current = { ...patch, ...pending.current };
+        setError(e instanceof Error ? e.message : "Não foi possível salvar.");
+        return false;
+      } finally {
+        setBusy(false);
+        running.current = null;
+      }
+    })();
+    running.current = task;
+    return task;
+  }
+  function change(patch: FieldPatch) {
+    if (!local.current) return;
+    const { beds, ...fields } = patch;
+    let next: FieldValues = { ...local.current };
+    for (const key of Object.keys(fields) as Array<keyof typeof fields>) {
+      const value = fields[key];
+      if (value !== undefined) Object.assign(next, { [key]: value });
+    }
+    if (beds)
+      next = {
+        ...next,
+        rooms: next.rooms.map((r) => {
+          const edit = beds.find((b) => b.roomId === r.id);
+          return edit
+            ? {
+                ...r,
+                items: {
+                  ...r.items,
+                  camas: {
+                    ...r.items["camas"],
+                    on: Object.values(edit.options).some((n) => (n ?? 0) > 0),
+                    opts: edit.options as Record<string, number>,
+                  },
+                },
+              }
+            : r;
+        }),
+      };
+    local.current = next;
+    setValues(next);
+    pending.current = {
+      ...pending.current,
+      ...patch,
+      ...(beds ? { beds: [...(pending.current.beds ?? []).filter((b) => !beds.some((edit) => edit.roomId === b.roomId)), ...beds] } : {}),
+    };
+    setDirty(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      if (local.current && contactReady(local.current.name, local.current.phone)) void flush();
+    }, 700);
+  }
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (Object.keys(pending.current).length || running.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
+  async function go(next: number) {
+    if (!values || navigating.current) return;
+    navigating.current = true;
+    try {
+    if (
+      next > 1 &&
+      (!values.condominium.trim() ||
+        !values.unit.trim() ||
+        values.bedrooms === null ||
+        values.bathrooms === null ||
+        values.lavatories === null)
+    ) {
+      setError("Informe empreendimento, unidade e as quantidades de ambientes.");
+      return;
+    }
+    if (!(await flush())) return;
+    if (next === 2 && !current.current?.values.rooms.length) {
+      pending.current = {
+        bedrooms: values.bedrooms,
+        bathrooms: values.bathrooms,
+        lavatories: values.lavatories,
+      };
+      if (!(await flush())) return;
+    }
+    if (next === 3) {
+      setBusy(true);
+      try {
+        const r = current.current;
+        if (!r) return;
+        const saved = await prepare({ data: { token, revision: r.revision } });
+        current.current = saved;
+        setRecord(saved);
+        setInventoryReady(true);
+      } catch {
+        setError("Não foi possível preparar a vistoria. Tente novamente.");
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
+    const r = current.current;
+    if (r && next !== 3) {
+      setBusy(true);
+      try {
+        const saved = await save({ data: { token, revision: r.revision, step: next, patch: {} } });
+        current.current = saved;
+        setRecord(saved);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Não foi possível avançar. Tente novamente.");
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
+    setStep(next);
+    stepRef.current = next;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    } finally {
+      navigating.current = false;
+    }
+  }
+  if (!record || !values)
+    return (
+      <div className="grid min-h-dvh place-items-center bg-background p-6">
+        <div className="space-y-4 text-center">
+          <StayoLogo className="mx-auto h-12" />
+          {error ? (
+            <p role="alert">{error}</p>
+          ) : (
+            <Loader2 className="mx-auto size-6 animate-spin text-primary" />
+          )}
+        </div>
+      </div>
+    );
+  return (
+    <div
+      className={cn(
+        "field-registration bg-background text-foreground",
+        step === 3 ? "flex h-dvh flex-col overflow-hidden" : "min-h-dvh",
+      )}
+    >
+      <header className="border-b bg-primary text-primary-foreground">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
+          <StayoLogo variant="white" className="h-9 w-auto" />
+          <div className="text-right">
+            <p className="text-sm font-semibold">Cadastro e vistoria</p>
+            <p className="text-xs opacity-80">
+              {values.condominium || "Novo imóvel"}
+              {values.unit ? ` · ${values.unit}` : ""}
+            </p>
+          </div>
+        </div>
+      </header>
+      <nav aria-label="Etapas do cadastro" className="border-b">
+        <div className="mx-auto grid max-w-5xl grid-cols-4 gap-1 px-3 py-3">
+          {steps.map((s, i) => (
+            <Button
+              key={s.title}
+              variant="ghost"
+              disabled={busy || i > step + 1}
+              onClick={() => void go(i)}
+              aria-current={step === i ? "step" : undefined}
+              className={cn(
+                "h-auto min-h-16 flex-col gap-1 rounded-lg px-1 text-xs sm:flex-row sm:gap-2 sm:text-sm",
+                step === i ? "bg-primary/10 text-primary" : "text-muted-foreground",
+              )}
+            >
+              <span
+                className={cn(
+                  "grid size-7 shrink-0 place-items-center rounded-full",
+                  step === i ? "bg-primary text-primary-foreground" : "bg-muted",
+                )}
+              >
+                {i < step ? <Check className="size-4" /> : <s.icon className="size-4" />}
+              </span>
+              <span className="whitespace-normal text-center">{s.title}</span>
+            </Button>
+          ))}
+        </div>
+      </nav>
+      {step === 3 && inventoryReady ? (
+        <>
+          <div className="mx-auto max-w-5xl px-4 py-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                void go(2);
+              }}
+            >
+              <ChevronLeft className="size-4" />
+              Quartos e camas
+            </Button>
+          </div>
+          <SurveyExperience token={token} embedded />
+        </>
+      ) : (
+        <>
+          <main className="mx-auto max-w-3xl px-5 pb-32 pt-7 sm:pt-10">
+            <div className="mb-7 flex items-center gap-3">
+              <span className="grid size-12 place-items-center rounded-lg bg-primary/10 text-primary">
+                {step === 0 ? <UserRound /> : step === 1 ? <Building2 /> : <BedDouble />}
+              </span>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Etapa {step + 1} de 4</p>
+                <h1 className="text-2xl font-semibold text-primary">{steps[step]?.title}</h1>
+              </div>
+            </div>
+            {step === 0 && (
+              <div className="space-y-6">
+                <Field label="Nome completo *">
+                  <Input
+                    className="h-14 text-base"
+                    autoComplete="name"
+                    value={values.name}
+                    disabled={record.contactLocked}
+                    maxLength={200}
+                    onChange={(e) => change({ name: e.target.value })}
+                    onBlur={() => {
+                      if (contactReady(values.name, values.phone)) void flush();
+                    }}
+                  />
+                </Field>
+                <Field label="Telefone / WhatsApp *">
+                  <Input
+                    className="h-14 text-base"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="(54) 99999-9999"
+                    value={values.phone}
+                    disabled={record.contactLocked}
+                    onChange={(e) => change({ phone: e.target.value })}
+                  />
+                </Field>
+                {record.contactLocked && (
+                  <p className="text-sm text-muted-foreground">
+                    Contato já vinculado. Alterações devem ser solicitadas à STAYO.
+                  </p>
+                )}
+              </div>
+            )}
+            {step === 1 && (
+              <div className="space-y-7">
+                <Field label="Empreendimento *">
+                  <Input
+                    className="h-14 text-base"
+                    value={values.condominium}
+                    disabled={record.condominiumLocked}
+                    onChange={(e) => change({ condominium: e.target.value })}
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Unidade *">
+                    <Input
+                      className="h-14 text-base"
+                      value={values.unit}
+                      onChange={(e) => change({ unit: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Box / vaga">
+                    <Input
+                      className="h-14 text-base"
+                      value={values.box}
+                      onChange={(e) => change({ box: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <section className="space-y-4 border-t pt-6">
+                  <h2 className="text-lg font-semibold text-primary">Ambientes</h2>
+                  {(["bedrooms", "bathrooms", "lavatories"] as const).map((key, i) => (
+                    <div
+                      key={key}
+                      className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"
+                    >
+                      <span className="font-medium">
+                        {["Quartos", "Banheiros", "Lavabos"][i]} *
+                      </span>
+                      <Counter
+                        label={["Quartos", "Banheiros", "Lavabos"][i] ?? key}
+                        value={values[key]}
+                        onChange={(n) => change({ [key]: n })}
+                      />
+                    </div>
+                  ))}
+                </section>
+                <details className="border-b pb-4">
+                  <summary className="cursor-pointer py-3 font-semibold text-primary">
+                    Wi-Fi · opcional
+                  </summary>
+                  <div className="space-y-4 pt-3">
+                    <Field label="Nome da rede">
+                      <Input
+                        className="h-14"
+                        value={values.wifiNetwork}
+                        onChange={(e) => change({ wifiNetwork: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="Senha do Wi-Fi">
+                      <div className="flex gap-2">
+                        <Input
+                          className="h-14"
+                          autoComplete="off"
+                          type={reveal ? "text" : "password"}
+                          value={values.wifiPassword}
+                          onChange={(e) => change({ wifiPassword: e.target.value })}
+                        />
+                        <Button
+                          variant="outline"
+                          className="size-14 shrink-0"
+                          aria-label={reveal ? "Ocultar senha" : "Mostrar senha"}
+                          onClick={() => setReveal(!reveal)}
+                        >
+                          {reveal ? <EyeOff /> : <Eye />}
+                        </Button>
+                      </div>
+                    </Field>
+                  </div>
+                </details>
+              </div>
+            )}
+            {step === 2 && (
+              <div className="space-y-8">
+                {values.rooms
+                  .filter((r) => r.kind === "quarto")
+                  .map((room) => (
+                    <section key={room.id} className="border-b pb-7">
+                      <h2 className="mb-4 text-lg font-semibold text-primary">{room.name}</h2>
+                      <div className="space-y-3">
+                        {bedTypes.map((type) => (
+                          <div key={type} className="flex items-center justify-between gap-3">
+                            <span className="font-medium">{type}</span>
+                            <Counter
+                              label={`${room.name} · ${type}`}
+                              value={room.items["camas"]?.opts?.[type] ?? 0}
+                              onChange={(n) =>
+                                change({
+                                  beds: values.rooms
+                                    .filter((r) => r.kind === "quarto")
+                                    .map((r) => ({
+                                      roomId: r.id,
+                                      options: {
+                                        ...r.items["camas"]?.opts,
+                                        ...(r.id === room.id ? { [type]: n } : {}),
+                                      },
+                                    })),
+                                })
+                              }
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                {values.bedrooms === 0 && (
+                  <p className="text-muted-foreground">Nenhum quarto informado.</p>
+                )}
+              </div>
+            )}
+            {error && (
+              <div
+                role="alert"
+                className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+              >
+                {error}
+                <Button
+                  variant="link"
+                  className="mt-1 block px-0 text-destructive"
+                  onClick={() => void flush()}
+                >
+                  Tentar salvar novamente
+                </Button>
+              </div>
+            )}
+          </main>
+          <footer className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)]">
+            <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
+              <Button
+                variant="outline"
+                className="size-12 shrink-0"
+                aria-label="Etapa anterior"
+                disabled={step === 0 || busy}
+                onClick={() => void go(step - 1)}
+              >
+                <ChevronLeft />
+              </Button>
+              <span role="status" className="min-w-0 flex-1 text-xs text-muted-foreground">
+                {busy
+                  ? "Salvando…"
+                  : dirty
+                    ? "Alterações pendentes"
+                    : record.implementationId
+                      ? "Ficha em andamento"
+                      : ""}
+              </span>
+              <Button className="h-12 gap-2 px-5" disabled={busy} onClick={() => void go(step + 1)}>
+                {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                {step === 2 ? "Iniciar vistoria" : "Continuar"}
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </footer>
+        </>
+      )}
+    </div>
+  );
+}
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block space-y-2">
+      <span className="text-sm font-medium text-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
+function Counter({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <Button
+        variant="outline"
+        className="size-12"
+        aria-label={`Diminuir ${label}`}
+        disabled={value === null || value === 0}
+        onClick={() => onChange(Math.max(0, (value ?? 0) - 1))}
+      >
+        <Minus className="size-5" />
+      </Button>
+      <Input
+        aria-label={label}
+        className="h-12 w-14 px-1 text-center text-lg font-semibold"
+        inputMode="numeric"
+        placeholder="—"
+        value={value ?? ""}
+        onChange={(e) => {
+          if (/^\d{0,2}$/.test(e.target.value)) onChange(Math.min(20, Number(e.target.value)));
+        }}
+      />
+      <Button
+        variant="outline"
+        className="size-12"
+        aria-label={`Aumentar ${label}`}
+        disabled={value === 20}
+        onClick={() => onChange(Math.min(20, (value ?? 0) + 1))}
+      >
+        <Plus className="size-5" />
+      </Button>
+    </div>
+  );
+}

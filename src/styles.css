@@ -292,3 +292,21 @@
   .stayo-admin-theme :is(a, button):hover .admin-inline-link svg,
   .stayo-admin-theme .portfolio-card:hover { transform: none !important; }
 }
+
+/* Jornada de campo: identidade institucional e áreas de toque estáveis. */
+.field-registration {
+  --primary: var(--stayo-navy);
+  --primary-foreground: var(--stayo-surface);
+  --foreground: var(--stayo-ink);
+  --muted-foreground: var(--stayo-ink-muted);
+  --background: var(--stayo-surface);
+  --muted: var(--stayo-bg);
+  --border: var(--stayo-border);
+}
+.field-registration button {
+  transition-duration: 100ms;
+  touch-action: manipulation;
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-registration button { transition: none; }
+}

@@ -23,7 +23,7 @@
 - Instalações e prestadores do imóvel se registram por ambiente no inventário; a ficha não tem painel separado — `property_supplier_entries` é histórico imutável, lido só em `/implantacao/fornecedores`.
 - Inventário e pendências usam `implementation_supply_items`; falta deriva das quantidades.
 - Protótipos de Guias usam rota isolada e estado local, sem APIs.
-- Guias utensílios/enxoval/inventário compartilham tabelas e snapshot `admin_apply_guide`; proprietário do inventário só propõe via `owner_inventory_*` (sessão+vínculo) e STAYO decide em `admin_review_inventory_submission`.
+- Guides share snapshots via admin_apply_guide; existing owner_inventory_* links submit for STAYO review.
 - Comodidades e itens do imóvel ficam em implementation_amenities (jsonb por implantação, autosave); empresas novas de móveis entram em supplier_catalog para reaproveitar.
 - Comodidades sincronizam o inventário guiado por `amenity_key` (upsert idempotente); desmarcar só desativa o item, nunca grava "Não tenho" nem cria pendência. Item agrupado mantém a `amenity_key` própria e só desliga se o grupo for "Não"; agrupar nunca apaga resposta nem espelho anterior.
 - Amenities match inventory rows through a presentation adapter; installation defaults, per-room overrides and characteristics live in the amenities JSON with field-level source metadata, so a room edit stays local.
@@ -34,7 +34,8 @@
 - The implementation route renders the administrative workspace by default; only an explicit etapa search parameter opens the guided registration, and resuming loads draft_step freshly to preserve the same workspace across proposal publication.
 - Contract registration reuses OwnerJourney and invitation-authorized contact reconciliation; commercial intake and read-only presentation keep distinct capabilities to preserve existing links and avoid duplicate contract records.
 - Owner channels live on implementation_projects (distribution_channels, airbnb_account_email) via owner_platforms_save; allowed_channels is the STAYO release policy (NULL = all, Airbnb always on, trigger prunes the owner answer); copy in src/lib/api/owner-platforms.ts.
-- Pre-account owner answers to the implementation inventory go through owner_inventory_*_by_token (invitation token + confirmed proposal), stored as implementation_inventory_submissions with submitted_by = invitation id, so STAYO's existing review stays the only path to the official item.
+- Existing invitation inventory uses owner_inventory_*_by_token after proposal confirmation; submitted_by is the invitation id and STAYO reviews.
 - Owner onboarding marital status and profession live per person in owner_onboarding_people (position 0 = principal); public onboarding no longer requires owner address or person type, and saves never null out existing address values — keeps one source for contract data.
 - Bedrooms is canonical in implementation_projects; invitation edits use whitelisted conflict-aware PATCH. details.bedrooms is only a legacy mirror; property panels use getPropertyDetails.
 - VF Financeiro uses role-protected server functions and strict DTOs; credentials stay server-only. Expense transmission requires deployment opt-in and per-call confirmation to prevent unauthorized writes.
+- Dedicated field registration uses a separate expiring hashed capability, transactional creation and project-serialized revisioned whitelist saves into canonical records; atomic inventory entry and shared SurveyExperience preserve existing link behavior while closing the dedicated capability with the project.

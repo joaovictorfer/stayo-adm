@@ -1,0 +1,56 @@
+import { describe, expect, it } from "vitest";
+import {
+  applyRoomBeds,
+  contactReady,
+  fieldPatchSchema,
+  registrationRooms,
+} from "./field-registration";
+describe("cadastro e vistoria dedicados", () => {
+  it("exige nome e telefone antes de criar a ficha", () => {
+    expect(contactReady("", "(54) 99999-1234")).toBe(false);
+    expect(contactReady("Victor", "")).toBe(false);
+    expect(contactReady("Victor", "(54) 99999-1234")).toBe(true);
+  });
+  it("captura quartos, banheiros e lavabos sem confundir zero com vazio", () => {
+    expect(fieldPatchSchema.parse({ bedrooms: 2, bathrooms: 2, lavatories: 0 })).toEqual({
+      bedrooms: 2,
+      bathrooms: 2,
+      lavatories: 0,
+    });
+    const rooms = registrationRooms([], 2, 2, 0);
+    expect(rooms.filter((r) => r.kind === "quarto")).toHaveLength(2);
+    expect(rooms.filter((r) => r.kind === "banheiro").map((r) => r.name)).toEqual([
+      "Banheiro 01",
+      "Banheiro 02",
+    ]);
+    expect(fieldPatchSchema.safeParse({ bedrooms: -1 }).success).toBe(false);
+  });
+  it("distribui camas por quarto sem alterar o outro quarto", () => {
+    const rooms = registrationRooms([], 2, 2, 0);
+    const first = rooms.find((r) => r.kind === "quarto");
+    if (!first) throw new Error("quarto ausente");
+    const changed = applyRoomBeds(rooms, [
+      { roomId: first.id, options: { Queen: 1, Solteiro: 2 } },
+    ]);
+    expect(changed.find((r) => r.id === first.id)?.items["camas"]?.opts).toEqual({
+      Queen: 1,
+      Solteiro: 2,
+    });
+    expect(changed.filter((r) => r.kind === "quarto")[1]?.items["camas"]).toBeUndefined();
+  });
+  it("não aceita campos de contrato ou credenciais operacionais", () => {
+    expect(fieldPatchSchema.safeParse({ coreOwnerId: "x" }).success).toBe(false);
+    expect(
+      fieldPatchSchema.safeParse({ wifiNetwork: "Rede", wifiPassword: "campo opcional" }).success,
+    ).toBe(true);
+  });
+  it("zero camas desativa o quarto sem apagar suas opções", () => {
+    const rooms = registrationRooms([], 1, 0, 0);
+    const first = rooms.find((r) => r.kind === "quarto");
+    if (!first) throw new Error("quarto ausente");
+    const changed = applyRoomBeds(rooms, [{ roomId: first.id, options: { Queen: 0 } }]);
+    expect(changed.find((r) => r.id === first.id)?.items["camas"]?.on).toBe(false);
+    expect(changed.find((r) => r.id === first.id)?.items["camas"]?.opts).toEqual({ Queen: 0 });
+    expect(registrationRooms([], 0, 0, 0).some((r) => r.kind === "quarto")).toBe(false);
+  });
+});

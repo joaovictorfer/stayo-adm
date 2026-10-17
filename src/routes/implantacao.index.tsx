@@ -22,6 +22,7 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPrimitives";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
+import { FieldLinkDialog } from "@/components/field/FieldLinkDialog";
 import { NewOpportunityDrawer } from "../components/implantacao/NewOpportunityDrawer";
 import {
   EmptyRows,
@@ -186,6 +187,7 @@ function ImplementationsPage() {
   return (
     <>
       <PageHeader title="Implantações" count={query.isSuccess ? rows.length : undefined}>
+        <FieldLinkDialog />
         <AdminActionButton type="button" onClick={() => setDrawerOpen(true)}>
           <Plus className="size-4" />
           Nova oportunidade

@@ -733,6 +733,53 @@ export type Database = {
           },
         ]
       }
+      implementation_field_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          implementation_id: string | null
+          owns_contact: boolean
+          revision: number
+          revoked_at: string | null
+          step: number
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          implementation_id?: string | null
+          owns_contact?: boolean
+          revision?: number
+          revoked_at?: string | null
+          step?: number
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          implementation_id?: string | null
+          owns_contact?: boolean
+          revision?: number
+          revoked_at?: string | null
+          step?: number
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_field_links_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implementation_field_sources: {
         Row: {
           actor_id: string | null
@@ -3306,6 +3353,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_create_field_link: {
+        Args: { p_hash: string; p_implementation_id?: string }
+        Returns: string
+      }
       admin_create_implementation: {
         Args: { p_data: Json }
         Returns: {
@@ -3530,6 +3581,37 @@ export type Database = {
       current_admin_role: {
         Args: never
         Returns: Database["public"]["Enums"]["admin_role"]
+      }
+      field_registration_enter_inventory: {
+        Args: { p_revision: number; p_token: string }
+        Returns: Json
+      }
+      field_registration_prepare_inventory: {
+        Args: { p_token: string }
+        Returns: undefined
+      }
+      field_registration_resolve: { Args: { p_token: string }; Returns: Json }
+      field_registration_save: {
+        Args: {
+          p_patch: Json
+          p_revision: number
+          p_step: number
+          p_token: string
+        }
+        Returns: Json
+      }
+      field_registration_save_guarded: {
+        Args: {
+          p_patch: Json
+          p_revision: number
+          p_step: number
+          p_token: string
+        }
+        Returns: Json
+      }
+      field_retire_beds: {
+        Args: { p_implementation_id: string }
+        Returns: undefined
       }
       guide_block_for: { Args: { p_guide_type: string }; Returns: string }
       has_admin_role: {
