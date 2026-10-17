@@ -3609,6 +3609,10 @@ export type Database = {
         }
         Returns: Json
       }
+      field_retire_beds: {
+        Args: { p_implementation_id: string }
+        Returns: undefined
+      }
       guide_block_for: { Args: { p_guide_type: string }; Returns: string }
       has_admin_role: {
         Args: { roles: Database["public"]["Enums"]["admin_role"][] }

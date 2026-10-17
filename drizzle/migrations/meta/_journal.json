@@ -463,6 +463,13 @@
       "when": 1792259502639,
       "tag": "0065_field_registration_consistency",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1792259636858,
+      "tag": "0066_field_bed_retirement",
+      "breakpoints": true
     }
   ]
 }
