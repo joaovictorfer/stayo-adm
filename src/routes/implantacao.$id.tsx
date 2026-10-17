@@ -100,6 +100,7 @@ import {
 import { GuidePanel, GuideSummary } from "../components/implantacao/guide/GuidePanel";
 import { OwnerJourneyStatus } from "../components/implantacao/ficha/OwnerJourneyStatus";
 import { InspectionsPanel, PortalTimelinePanel } from "../components/implantacao/ficha/PortalUpdatesPanels";
+import { SectionBoundary } from "../components/implantacao/ficha/SectionBoundary";
 import { guidedInventoryQuery } from "../lib/api/guided-inventory";
 import { GuidedInventoryPanel, GuidedInventorySummary } from "../components/implantacao/guide/GuidedInventoryPanel";
 import { AmenitiesPanel, AmenitiesSummary } from "../components/implantacao/AmenitiesPanel";
@@ -645,17 +646,21 @@ function ImplementationDetailPage() {
                   }
                 />
               ) : section === "proprietario" ? (
+                <SectionBoundary label="a ficha do proprietário">
                 <FichaProprietario
                   implementation={implementation}
-                  portal={<OwnerJourneyStatus implementationId={implementation.id} versions={proposalsQuery.data ?? []} onOpenPortal={() => goSection("portal")} />}
+                  portal={<SectionBoundary label="a jornada do proprietário"><OwnerJourneyStatus implementationId={implementation.id} versions={proposalsQuery.data ?? []} onOpenPortal={() => goSection("portal")} /></SectionBoundary>}
                   review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
                   pending={buildPending().filter((p) => p.id === "owner")}
                   proposal={latestProposal ?? null}
                   journey={journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
                   onGo={goSection}
                 />
+                </SectionBoundary>
               ) : section === "portal" ? (
+                <SectionBoundary label="a aba Portal">
                 <OwnerTab implementation={implementation} part="portal" versions={proposalsQuery.data ?? []} />
+                </SectionBoundary>
               ) : (
                 <div className="flex flex-col gap-4">
                   <ImplementationTimeline implementationId={implementation.id} />

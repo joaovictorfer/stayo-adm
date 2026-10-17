@@ -71,19 +71,19 @@ export function OwnerJourneyStatus({
     { label: "Portal", hint: "Conta do proprietário", value: s.portal },
   ];
   return (
-    <section className="rounded-2xl border bg-white p-4 sm:p-5" style={{ borderColor: "var(--stayo-border)" }} aria-label="Jornada do proprietário">
-      <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--stayo-ink-muted)" }}>Jornada do proprietário</h3>
-      <ol className="mt-3 grid gap-2 sm:grid-cols-3">
+    <section className="@container rounded-xl border bg-[var(--stayo-surface)] px-4 py-3" style={{ borderColor: "var(--stayo-border)" }} aria-label="Jornada do proprietário">
+      <h3 className="font-[Outfit] text-base font-semibold" style={{ color: "var(--stayo-navy)" }}>Jornada do proprietário</h3>
+      <ol className="mt-2 grid gap-2 @2xl:grid-cols-3">
         {rows.map((r, i) => {
           const t = tone(r.value);
           return (
-            <li key={r.label} className="flex min-w-0 items-center gap-3 rounded-xl border p-3" style={{ borderColor: "var(--stayo-border)" }}>
-              <span className="grid size-8 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ background: t.bg, color: t.fg }}>{i + 1}</span>
+            <li key={r.label} className="flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "var(--stayo-border)" }}>
+              <span className="grid size-7 shrink-0 place-items-center rounded-full font-[Outfit] text-xs font-semibold text-[var(--stayo-surface)]" style={{ background: "var(--stayo-navy)" }}>{i + 1}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold" style={{ color: "var(--stayo-navy)" }}>{r.label}</p>
-                <p className="truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{r.hint}</p>
+                <p className="text-sm font-semibold leading-tight" style={{ color: "var(--stayo-navy)" }}>{r.label}</p>
+                <p className="text-xs leading-tight" style={{ color: "var(--stayo-ink-muted)" }}>{r.hint}</p>
               </div>
-              <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: t.bg, color: t.fg }}>{r.value}</span>
+              <span className="max-w-[55%] shrink-0 whitespace-normal rounded-full px-2.5 py-1 text-right text-xs font-semibold leading-tight" style={{ background: t.bg, color: t.fg }}>{r.value === "Link de acesso gerado" ? "Link gerado" : r.value}</span>
             </li>
           );
         })}
