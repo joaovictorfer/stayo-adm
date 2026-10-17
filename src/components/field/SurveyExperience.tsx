@@ -25,7 +25,13 @@ import { deleteSurveyPhoto, getSurveyMedia, uploadSurveyPhoto } from "@/lib/surv
 import { watermarkPhoto } from "@/lib/survey-watermark";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Photo = { id: string; itemId: string; url: string };
 const BRAND_SPECIAL = ["N/A", "Não identificada"];
@@ -150,7 +156,12 @@ export function SurveyExperience({
       )}
     >
       {/* Topo */}
-      <header className={cn("flex items-center gap-3 border-b px-4 py-3", embedded ? "bg-background text-foreground" : "bg-primary text-primary-foreground")}>
+      <header
+        className={cn(
+          "flex items-center gap-3 border-b px-4 py-3",
+          embedded ? "bg-background text-foreground" : "bg-primary text-primary-foreground",
+        )}
+      >
         <Button
           variant="ghost"
           type="button"
@@ -202,49 +213,72 @@ export function SurveyExperience({
           <div className="sticky top-0 z-10 space-y-2 border-b bg-background p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-primary">Ambiente</span>
-              <Button variant="ghost" className="size-11 p-0 md:hidden" aria-label="Fechar lista de itens" onClick={() => setSidebar(false)}><X /></Button>
+              <Button
+                variant="ghost"
+                className="size-11 p-0 md:hidden"
+                aria-label="Fechar lista de itens"
+                onClick={() => setSidebar(false)}
+              >
+                <X />
+              </Button>
             </div>
-            <Select value={activeRoom} onValueChange={(room) => {
-              const first = rooms.find(([key]) => key === room)?.[1][0];
-              if (first) setIndex(first.idx);
-            }}>
-              <SelectTrigger aria-label="Selecionar ambiente" className="h-12 bg-background text-base font-medium"><SelectValue /></SelectTrigger>
-              <SelectContent>{rooms.map(([room]) => <SelectItem key={room} value={room} className="min-h-12">{roomLabel(room)}</SelectItem>)}</SelectContent>
+            <Select
+              value={activeRoom}
+              onValueChange={(room) => {
+                const first = rooms.find(([key]) => key === room)?.[1][0];
+                if (first) setIndex(first.idx);
+              }}
+            >
+              <SelectTrigger
+                aria-label="Selecionar ambiente"
+                className="h-12 bg-background text-base font-medium"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {rooms.map(([room]) => (
+                  <SelectItem key={room} value={room} className="min-h-12">
+                    {roomLabel(room)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
-          {rooms.filter(([room]) => room === activeRoom).map(([room, list]) => {
-            const done = list.filter((l) => l.item.answer).length;
-            return (
-              <div key={room} className="border-b">
-                <div className="flex items-center justify-between bg-background px-4 py-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {roomLabel(room)}
-                  </span>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {done}/{list.length}
-                  </span>
+          {rooms
+            .filter(([room]) => room === activeRoom)
+            .map(([room, list]) => {
+              const done = list.filter((l) => l.item.answer).length;
+              return (
+                <div key={room} className="border-b">
+                  <div className="flex items-center justify-between bg-background px-4 py-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {roomLabel(room)}
+                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {done}/{list.length}
+                    </span>
+                  </div>
+                  {list.map(({ item: it, idx }) => (
+                    <Button
+                      variant="ghost"
+                      key={it.id}
+                      type="button"
+                      onClick={() => go(idx)}
+                      className={cn(
+                        "flex h-auto min-h-14 w-full justify-start items-center gap-3 rounded-none border-b px-4 py-3 text-left text-sm transition-colors hover:bg-muted",
+                        idx === index && "bg-primary/10 font-semibold text-primary",
+                      )}
+                    >
+                      <StatusDot answer={it.answer} />
+                      <span className="min-w-0 whitespace-normal">{it.name}</span>
+                      {photos.some((p) => p.itemId === it.id) && (
+                        <Camera className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
+                      )}
+                    </Button>
+                  ))}
                 </div>
-                {list.map(({ item: it, idx }) => (
-                  <Button
-                    variant="ghost"
-                    key={it.id}
-                    type="button"
-                    onClick={() => go(idx)}
-                    className={cn(
-                      "flex h-auto min-h-14 w-full justify-start items-center gap-3 rounded-none border-b px-4 py-3 text-left text-sm transition-colors hover:bg-muted",
-                      idx === index && "bg-primary/10 font-semibold text-primary",
-                    )}
-                  >
-                    <StatusDot answer={it.answer} />
-                    <span className="min-w-0 whitespace-normal">{it.name}</span>
-                    {photos.some((p) => p.itemId === it.id) && (
-                      <Camera className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
-                    )}
-                  </Button>
-                ))}
-              </div>
-            );
-          })}
+              );
+            })}
         </aside>
 
         {/* Item em tela cheia */}
@@ -290,7 +324,12 @@ export function SurveyExperience({
                     {roomLabel(item.room)} · {item.category}
                   </p>
                   <h1 className="mt-1 text-3xl font-semibold">{item.name}</h1>
-                  {item.tip && <details className="mt-2 text-sm text-muted-foreground"><summary className="cursor-pointer py-2">Dica</summary><p>{item.tip}</p></details>}
+                  {item.tip && (
+                    <details className="mt-2 text-sm text-muted-foreground">
+                      <summary className="cursor-pointer py-2">Dica</summary>
+                      <p>{item.tip}</p>
+                    </details>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -376,25 +415,35 @@ export function SurveyExperience({
                         ))}
                       </div>
                     </Field>
-                    <details className="border-t pt-2"><summary className="cursor-pointer py-3 text-sm font-semibold">Marca{item.brand ? ` · ${item.brand}` : ""}</summary><BrandField
-                      value={item.brand}
-                      brands={data.brands}
-                      onChange={(brand) => update({ brand })}
-                    /></details>
+                    <details className="border-t pt-2">
+                      <summary className="cursor-pointer py-3 text-sm font-semibold">
+                        Marca{item.brand ? ` · ${item.brand}` : ""}
+                      </summary>
+                      <BrandField
+                        value={item.brand}
+                        brands={data.brands}
+                        onChange={(brand) => update({ brand })}
+                      />
+                    </details>
                   </div>
                 )}
 
-                <details className="border-t pt-2"><summary className="cursor-pointer py-3 text-sm font-semibold">Observações{item.notes ? " · Registradas" : ""}</summary><NotesField
-                  token={token}
-                  value={item.notes}
-                  presets={data.notes}
-                  onChange={(notes) => update({ notes })}
-                  onPreset={(t) =>
-                    setData((d) =>
-                      d && !d.notes.includes(t) ? { ...d, notes: [...d.notes, t] } : d,
-                    )
-                  }
-                /></details>
+                <details className="border-t pt-2">
+                  <summary className="cursor-pointer py-3 text-sm font-semibold">
+                    Observações{item.notes ? " · Registradas" : ""}
+                  </summary>
+                  <NotesField
+                    token={token}
+                    value={item.notes}
+                    presets={data.notes}
+                    onChange={(notes) => update({ notes })}
+                    onPreset={(t) =>
+                      setData((d) =>
+                        d && !d.notes.includes(t) ? { ...d, notes: [...d.notes, t] } : d,
+                      )
+                    }
+                  />
+                </details>
               </section>
             </div>
           </div>
@@ -765,7 +814,11 @@ function PhotoStrip({
           </div>
         ))}
       </div>
-      {failed && <p role="alert" className="text-xs text-destructive">Uma foto não foi enviada. Tente de novo.</p>}
+      {failed && (
+        <p role="alert" className="text-xs text-destructive">
+          Uma foto não foi enviada. Tente de novo.
+        </p>
+      )}
       <input
         ref={input}
         type="file"
