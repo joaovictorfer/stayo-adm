@@ -3,14 +3,14 @@ import { AlertCircle } from "lucide-react";
 
 /** Contém falhas de um bloco da ficha para que o resto da tela continue funcionando. */
 export class SectionBoundary extends Component<{ children: ReactNode; label?: string }, { failed: boolean }> {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
-  componentDidCatch(error: unknown) {
+  override componentDidCatch(error: unknown) {
     console.error(error);
   }
-  render() {
+  override render() {
     if (!this.state.failed) return this.props.children;
     return (
       <div role="alert" className="flex items-start gap-3 rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)] p-4 text-sm text-[var(--stayo-navy)]">
