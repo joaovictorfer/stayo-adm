@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Refinar visual do cadastro e vistoria dedicado: etapas visuais, seleções rápidas de ambientes e cards de camas, preservando autosave.
-- [ ] Colocar seletor de ambiente no topo da lista lateral da vistoria de implantação.
+- [x] Refinar visual do cadastro e vistoria dedicado: etapas visuais, seleções rápidas de ambientes e cards de camas; autosave e recuperação de camas conferidos, ficha de teste removida.
+- [x] Colocar seletor de ambiente no topo da lista lateral da vistoria de implantação; troca de ambientes conferida no tablet e celular.
 - [x] Cadastro e vistoria dedicados: link seguro, criação de ficha com nome/telefone, imóvel, ambientes/camas e inventário; autosave, retomada e validação celular/tablet conferidos.
 - [x] Simplificar cadastro de item em janela sobre a lista, ambiente atual e detalhes opcionais; cadastro conferido no celular e tablet, registros de teste removidos.
 - [x] Padronizar detalhes no celular e tablet: catálogo, xícaras, pratos e itens manuais conferidos; marca de item manual persistiu após recarregar e testes foram removidos.
