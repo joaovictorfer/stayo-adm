@@ -10,7 +10,7 @@ export function QuantityPicker({ label, value, onChange, compact = false }: {
     {options.map((n) => <Button key={n} variant="outline" aria-label={`${label}: ${n}`} aria-pressed={value === n} onClick={() => onChange(n)} className={cn("size-12 rounded-full p-0 font-display text-lg shadow-none", compact && "size-11", value === n && "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground")}>{n}</Button>)}
     <div className={cn("flex items-center gap-1", compact && "w-full justify-between")}>
       <Button variant="ghost" className="size-11 p-0" aria-label={`Diminuir ${label}`} disabled={value === null || value === 0} onClick={() => onChange(Math.max(0, (value ?? 0) - 1))}><Minus /></Button>
-      {value !== null && value > options[options.length - 1] && <output aria-label={`Total ${label}`} className="min-w-7 text-center font-display text-xl font-semibold">{value}</output>}
+      {value !== null && value > (compact ? 2 : 5) && <output aria-label={`Total ${label}`} className="min-w-7 text-center font-display text-xl font-semibold">{value}</output>}
       <Button variant="ghost" className="size-11 p-0" aria-label={`Aumentar ${label}`} disabled={value === 20} onClick={() => onChange(Math.min(20, (value ?? 0) + 1))}><Plus /></Button>
     </div>
   </div>;

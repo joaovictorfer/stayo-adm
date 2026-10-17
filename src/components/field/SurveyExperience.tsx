@@ -25,6 +25,7 @@ import { deleteSurveyPhoto, getSurveyMedia, uploadSurveyPhoto } from "@/lib/surv
 import { surveyStickerText, watermarkPhoto } from "@/lib/survey-watermark";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Photo = { id: string; itemId: string; url: string };
 const BRAND_SPECIAL = ["N/A", "Não identificada"];
@@ -134,6 +135,7 @@ export function SurveyExperience({
     );
 
   const itemPhotos = photos.filter((p) => p.itemId === item.id);
+  const activeRoom = ["quartos", "banheiros"].includes(item.room) ? item.category : item.room;
   const reference = refs[item.name] ?? generatedInventoryImage(item.name);
   const go = (i: number) => {
     setIndex(Math.max(0, Math.min(items.length - 1, i)));
@@ -148,21 +150,21 @@ export function SurveyExperience({
       )}
     >
       {/* Topo */}
-      <header className="flex items-center gap-3 border-b bg-primary px-4 py-3 text-primary-foreground">
+      <header className={cn("flex items-center gap-3 border-b px-4 py-3", embedded ? "bg-background text-foreground" : "bg-primary text-primary-foreground")}>
         <Button
           variant="ghost"
           type="button"
           onClick={() => setSidebar(true)}
-          className="grid size-10 place-items-center rounded-full bg-primary-foreground/10 lg:hidden"
+          className="grid size-12 place-items-center rounded-lg border md:hidden"
           aria-label="Lista de itens"
         >
           <ListChecks className="size-5" />
         </Button>
-        <StayoLogo variant="white" className="h-7 w-auto" />
+        {!embedded && <StayoLogo variant="white" className="h-7 w-auto" />}
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold leading-tight">{data.implementation.name}</p>
           <p className="text-xs opacity-75">
-            Vistoria de implantação · {answered}/{items.length} itens
+            {answered}/{items.length} itens
           </p>
         </div>
         <SaveBadge state={saving} />
@@ -187,21 +189,34 @@ export function SurveyExperience({
         {/* Barra lateral */}
         {sidebar && (
           <div
-            className="fixed inset-0 z-30 bg-foreground/40 lg:hidden"
+            className="fixed inset-0 z-30 bg-foreground/40 md:hidden"
             onClick={() => setSidebar(false)}
           />
         )}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] overflow-y-auto border-r bg-background lg:static lg:z-0 lg:w-72",
-            sidebar ? "block" : "hidden lg:block",
+            "fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] overflow-y-auto border-r bg-background md:static md:z-0 md:w-60 md:shrink-0 xl:w-72",
+            sidebar ? "block" : "hidden md:block",
           )}
         >
-          {rooms.map(([room, list]) => {
+          <div className="sticky top-0 z-10 space-y-2 border-b bg-background p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-primary">Ambiente</span>
+              <Button variant="ghost" className="size-11 p-0 md:hidden" aria-label="Fechar lista de itens" onClick={() => setSidebar(false)}><X /></Button>
+            </div>
+            <Select value={activeRoom} onValueChange={(room) => {
+              const first = rooms.find(([key]) => key === room)?.[1][0];
+              if (first) setIndex(first.idx);
+            }}>
+              <SelectTrigger aria-label="Selecionar ambiente" className="h-12 bg-background text-base font-medium"><SelectValue /></SelectTrigger>
+              <SelectContent>{rooms.map(([room]) => <SelectItem key={room} value={room} className="min-h-12">{roomLabel(room)}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {rooms.filter(([room]) => room === activeRoom).map(([room, list]) => {
             const done = list.filter((l) => l.item.answer).length;
             return (
               <div key={room} className="border-b">
-                <div className="sticky top-0 flex items-center justify-between bg-background/95 px-4 py-2.5 backdrop-blur">
+                <div className="flex items-center justify-between bg-background px-4 py-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {roomLabel(room)}
                   </span>
@@ -216,12 +231,12 @@ export function SurveyExperience({
                     type="button"
                     onClick={() => go(idx)}
                     className={cn(
-                      "flex w-full justify-start items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted",
+                      "flex h-auto min-h-14 w-full justify-start items-center gap-3 rounded-none border-b px-4 py-3 text-left text-sm transition-colors hover:bg-muted",
                       idx === index && "bg-primary/10 font-semibold text-primary",
                     )}
                   >
                     <StatusDot answer={it.answer} />
-                    <span className="truncate">{it.name}</span>
+                    <span className="min-w-0 whitespace-normal">{it.name}</span>
                     {photos.some((p) => p.itemId === it.id) && (
                       <Camera className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
                     )}
@@ -235,7 +250,7 @@ export function SurveyExperience({
         {/* Item em tela cheia */}
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
-            <div className="mx-auto grid max-w-5xl gap-6 p-4 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:p-6">
+            <div className="mx-auto grid max-w-5xl gap-6 p-4 xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:p-6">
               <section className="order-2 space-y-3 md:order-1">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-background shadow-sm md:aspect-square">
                   {itemPhotos.length ? (
@@ -275,7 +290,7 @@ export function SurveyExperience({
                     {roomLabel(item.room)} · {item.category}
                   </p>
                   <h1 className="mt-1 text-3xl font-semibold">{item.name}</h1>
-                  {item.tip && <p className="mt-2 text-sm text-muted-foreground">{item.tip}</p>}
+                  {item.tip && <details className="mt-2 text-sm text-muted-foreground"><summary className="cursor-pointer py-2">Dica</summary><p>{item.tip}</p></details>}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -361,15 +376,15 @@ export function SurveyExperience({
                         ))}
                       </div>
                     </Field>
-                    <BrandField
+                    <details className="border-t pt-2"><summary className="cursor-pointer py-3 text-sm font-semibold">Marca{item.brand ? ` · ${item.brand}` : ""}</summary><BrandField
                       value={item.brand}
                       brands={data.brands}
                       onChange={(brand) => update({ brand })}
-                    />
+                    /></details>
                   </div>
                 )}
 
-                <NotesField
+                <details className="border-t pt-2"><summary className="cursor-pointer py-3 text-sm font-semibold">Observações{item.notes ? " · Registradas" : ""}</summary><NotesField
                   token={token}
                   value={item.notes}
                   presets={data.notes}
@@ -379,7 +394,7 @@ export function SurveyExperience({
                       d && !d.notes.includes(t) ? { ...d, notes: [...d.notes, t] } : d,
                     )
                   }
-                />
+                /></details>
               </section>
             </div>
           </div>
