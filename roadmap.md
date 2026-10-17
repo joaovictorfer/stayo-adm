@@ -18,7 +18,7 @@
 - [ ] Correção 03A — autosave/reload reais, igualdade Admin/Portal e conflitos no banco: bloqueados por falta de fixture segura com permissões para proposals e UPDATE de implementation_projects.
 
 ## Aba Proprietário (auditoria)
-- [ ] Fase 1: card Jornada vertical na lateral + proteção contra tela de erro
+- [x] Fase 1: card Jornada vertical na lateral + proteção contra tela de erro
 - [ ] Fase 2: refino do dossiê cadastral
 - [ ] Fase 3: links e convites direto na aba Proprietário
 
