@@ -104,7 +104,13 @@ export function FieldRegistrationForm({ token }: { token: string }) {
         });
         current.current = next;
         setRecord(next);
-        const merged = { ...next.values, ...local.current, rooms: next.values.rooms };
+        const merged = {
+          ...next.values,
+          ...local.current,
+          rooms: pending.current.beds
+            ? (local.current?.rooms ?? next.values.rooms)
+            : next.values.rooms,
+        };
         local.current = merged;
         setValues(merged);
         setDirty(Object.keys(pending.current).length > 0);
@@ -124,7 +130,11 @@ export function FieldRegistrationForm({ token }: { token: string }) {
   function change(patch: FieldPatch) {
     if (!local.current) return;
     const { beds, ...fields } = patch;
-    let next = { ...local.current, ...fields };
+    let next: FieldValues = { ...local.current };
+    for (const key of Object.keys(fields) as Array<keyof typeof fields>) {
+      const value = fields[key];
+      if (value !== undefined) Object.assign(next, { [key]: value });
+    }
     if (beds)
       next = {
         ...next,
@@ -199,6 +209,13 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     }
     setStep(next);
     stepRef.current = next;
+    pending.current = { ...pending.current };
+    const r = current.current;
+    if (r) {
+      const saved = await save({ data: { token, revision: r.revision, step: next, patch: {} } });
+      current.current = saved;
+      setRecord(saved);
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   if (!record || !values)
@@ -215,7 +232,12 @@ export function FieldRegistrationForm({ token }: { token: string }) {
       </div>
     );
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div
+      className={cn(
+        "field-registration bg-background text-foreground",
+        step === 3 ? "flex h-dvh flex-col overflow-hidden" : "min-h-dvh",
+      )}
+    >
       <header className="border-b bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
           <StayoLogo variant="white" className="h-9 w-auto" />
@@ -269,7 +291,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
               Quartos e camas
             </Button>
           </div>
-          <SurveyExperience token={token} />
+          <SurveyExperience token={token} embedded />
         </>
       ) : (
         <>

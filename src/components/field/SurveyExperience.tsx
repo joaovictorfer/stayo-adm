@@ -24,12 +24,19 @@ import {
 import { deleteSurveyPhoto, getSurveyMedia, uploadSurveyPhoto } from "@/lib/survey.functions";
 import { surveyStickerText, watermarkPhoto } from "@/lib/survey-watermark";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type Photo = { id: string; itemId: string; url: string };
 const BRAND_SPECIAL = ["N/A", "Não identificada"];
 const roomLabel = (k: string) => inventoryRooms.find((r) => r.key === k)?.label ?? k;
 
-export function SurveyExperience({ token }: { token: string }) {
+export function SurveyExperience({
+  token,
+  embedded = false,
+}: {
+  token: string;
+  embedded?: boolean;
+}) {
   const [data, setData] = useState<SurveyData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<SurveyItem[]>([]);
@@ -39,6 +46,26 @@ export function SurveyExperience({ token }: { token: string }) {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [sidebar, setSidebar] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingItems = useRef<Record<string, SurveyItem>>({});
+  const chain = useRef(Promise.resolve());
+  const persist = (entry: SurveyItem) => {
+    chain.current = chain.current.then(async () => {
+      try {
+        await saveSurveyItem(token, entry);
+        if (pendingItems.current[entry.id] === entry) delete pendingItems.current[entry.id];
+        setSaving(Object.keys(pendingItems.current).length ? "saving" : "saved");
+      } catch {
+        setSaving("error");
+      }
+    });
+  };
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (Object.keys(pendingItems.current).length) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
 
   useEffect(() => {
     resolveSurvey(token)
@@ -77,20 +104,8 @@ export function SurveyExperience({ token }: { token: string }) {
         next[index] = merged;
         clearTimeout(timers.current[merged.id]);
         setSaving("saving");
-        timers.current[merged.id] = setTimeout(() => {
-          saveSurveyItem(token, merged)
-            .then(() => {
-              setSaving("saved");
-              if (merged.brand && !BRAND_SPECIAL.includes(merged.brand)) {
-                setData((d) =>
-                  d && !d.brands.some((b) => b.toLowerCase() === (merged.brand ?? "").toLowerCase())
-                    ? { ...d, brands: [...d.brands, merged.brand ?? ""].sort() }
-                    : d,
-                );
-              }
-            })
-            .catch(() => setSaving("error"));
-        }, 600);
+        pendingItems.current[merged.id] = merged;
+        timers.current[merged.id] = setTimeout(() => persist(merged), 600);
         return next;
       });
     },
@@ -126,34 +141,44 @@ export function SurveyExperience({ token }: { token: string }) {
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-muted/40 text-foreground">
+    <div
+      className={cn(
+        "field-registration flex flex-col bg-muted/40 text-foreground",
+        embedded ? "min-h-0 flex-1" : "h-dvh",
+      )}
+    >
       {/* Topo */}
       <header className="flex items-center gap-3 border-b bg-primary px-4 py-3 text-primary-foreground">
-        <button
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => setSidebar(true)}
           className="grid size-10 place-items-center rounded-full bg-primary-foreground/10 lg:hidden"
           aria-label="Lista de itens"
         >
           <ListChecks className="size-5" />
-        </button>
+        </Button>
         <StayoLogo variant="white" className="h-7 w-auto" />
         <div className="min-w-0 flex-1">
-          <p
-            className="truncate font-semibold leading-tight"
-            style={{ fontFamily: "Outfit, sans-serif" }}
-          >
-            {data.implementation.name}
-          </p>
+          <p className="truncate font-semibold leading-tight">{data.implementation.name}</p>
           <p className="text-xs opacity-75">
             Vistoria de implantação · {answered}/{items.length} itens
           </p>
         </div>
         <SaveBadge state={saving} />
+        {saving === "error" && (
+          <Button
+            variant="ghost"
+            className="text-primary-foreground"
+            onClick={() => Object.values(pendingItems.current).forEach(persist)}
+          >
+            Tentar novamente
+          </Button>
+        )}
       </header>
       <div className="h-1 bg-primary/20">
         <div
-          className="h-full bg-emerald-500 transition-all"
+          className="h-full bg-[var(--stayo-success)] transition-all"
           style={{ width: `${(answered / items.length) * 100}%` }}
         />
       </div>
@@ -185,7 +210,8 @@ export function SurveyExperience({ token }: { token: string }) {
                   </span>
                 </div>
                 {list.map(({ item: it, idx }) => (
-                  <button
+                  <Button
+                    variant="ghost"
                     key={it.id}
                     type="button"
                     onClick={() => go(idx)}
@@ -199,7 +225,7 @@ export function SurveyExperience({ token }: { token: string }) {
                     {photos.some((p) => p.itemId === it.id) && (
                       <Camera className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
             );
@@ -211,7 +237,7 @@ export function SurveyExperience({ token }: { token: string }) {
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto grid max-w-5xl gap-6 p-4 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:p-6">
               <section className="space-y-3">
-                <div className="relative aspect-square overflow-hidden rounded-2xl border bg-background shadow-sm">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-background shadow-sm md:aspect-square">
                   {itemPhotos.length ? (
                     <img
                       src={itemPhotos.at(-1)?.url}
@@ -248,12 +274,7 @@ export function SurveyExperience({ token }: { token: string }) {
                   <p className="text-xs font-bold uppercase tracking-wider text-primary">
                     {roomLabel(item.room)} · {item.category}
                   </p>
-                  <h1
-                    className="mt-1 text-3xl font-semibold"
-                    style={{ fontFamily: "Outfit, sans-serif" }}
-                  >
-                    {item.name}
-                  </h1>
+                  <h1 className="mt-1 text-3xl font-semibold">{item.name}</h1>
                   {item.tip && <p className="mt-2 text-sm text-muted-foreground">{item.tip}</p>}
                 </div>
 
@@ -327,7 +348,7 @@ export function SurveyExperience({ token }: { token: string }) {
                       </div>
                     </Field>
                     <Field label="Estado de uso">
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {surveyConditions.map((c) => (
                           <Chip
                             key={c}
@@ -364,25 +385,27 @@ export function SurveyExperience({ token }: { token: string }) {
           </div>
 
           <footer className="flex items-center gap-3 border-t bg-background p-3 md:px-6">
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => go(index - 1)}
               disabled={index === 0}
-              className="flex h-14 items-center gap-2 rounded-2xl border px-5 font-semibold disabled:opacity-40"
+              className="flex h-12 items-center gap-2 rounded-lg border px-3 sm:px-5 font-semibold disabled:opacity-40"
             >
               <ChevronLeft className="size-5" /> Anterior
-            </button>
+            </Button>
             <p className="flex-1 text-center text-sm text-muted-foreground">
               {index + 1} de {items.length}
             </p>
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => go(index + 1)}
               disabled={index === items.length - 1}
-              className="flex h-14 items-center gap-2 rounded-2xl bg-primary px-6 font-semibold text-primary-foreground shadow disabled:opacity-40"
+              className="flex h-12 items-center gap-2 rounded-lg bg-primary px-3 sm:px-6 font-semibold text-primary-foreground shadow disabled:opacity-40"
             >
               Próximo <ChevronRight className="size-5" />
-            </button>
+            </Button>
           </footer>
         </main>
       </div>
@@ -423,7 +446,8 @@ function StatusDot({ answer }: { answer: SurveyItem["answer"] }) {
     <span
       className={cn(
         "grid size-5 shrink-0 place-items-center rounded-full border-2",
-        answer === "tenho" && "border-emerald-500 bg-emerald-500 text-background",
+        answer === "tenho" &&
+          "border-[var(--stayo-success)] bg-[var(--stayo-success)] text-background",
         answer === "nao_tenho" && "border-destructive bg-destructive text-background",
         answer === "nao_aplica" && "border-muted-foreground bg-muted-foreground text-background",
         !answer && "border-border",
@@ -447,22 +471,23 @@ function AnswerButton({
   children: React.ReactNode;
 }) {
   const activeCls = {
-    yes: "border-emerald-500 bg-emerald-500 text-background",
+    yes: "border-[var(--stayo-success)] bg-[var(--stayo-success)] text-background",
     no: "border-destructive bg-destructive text-destructive-foreground",
     na: "border-muted-foreground bg-muted-foreground text-background",
   }[tone];
   return (
-    <button
+    <Button
+      variant="ghost"
       type="button"
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex h-24 flex-col items-center justify-center gap-1 rounded-2xl border-2 bg-background text-sm font-semibold shadow-sm transition-all active:scale-95 motion-reduce:transition-none",
-        active ? activeCls : "hover:border-primary/40",
+        "flex h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 bg-background text-sm font-semibold shadow-sm transition-all active:scale-95 motion-reduce:transition-none",
+        active ? `${activeCls} hover:opacity-90` : "hover:border-primary/40",
       )}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -485,14 +510,15 @@ function RoundBtn({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       type="button"
       onClick={onClick}
       aria-label={label}
       className="grid size-12 place-items-center rounded-full border bg-background active:scale-95"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -508,7 +534,8 @@ function Chip({
   big?: boolean;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       type="button"
       onClick={onClick}
       aria-pressed={active}
@@ -521,7 +548,7 @@ function Chip({
       )}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -546,13 +573,14 @@ function BrandField({
           <span className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
             {value}
           </span>
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => onChange(null)}
             className="text-sm text-muted-foreground underline"
           >
             Trocar
-          </button>
+          </Button>
         </div>
       )}
       {!value && (
@@ -642,13 +670,14 @@ function NotesField({
           maxLength={140}
           className="h-12 min-w-0 flex-1 rounded-xl border bg-background px-4"
         />
-        <button
+        <Button
+          variant="ghost"
           type="button"
           onClick={add}
           className="h-12 rounded-xl bg-primary px-5 font-semibold text-primary-foreground"
         >
           Adicionar
-        </button>
+        </Button>
       </div>
     </Field>
   );
@@ -691,13 +720,14 @@ function PhotoStrip({
   return (
     <div className="space-y-2">
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <button
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => input.current?.click()}
           className="flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-primary/40 bg-background text-xs font-semibold text-primary"
         >
           {busy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />} Foto
-        </button>
+        </Button>
         {photos.map((p) => (
           <div
             key={p.id}
@@ -706,7 +736,8 @@ function PhotoStrip({
             <a href={p.url} target="_blank" rel="noreferrer">
               <img src={p.url} alt="" className="size-full object-cover" />
             </a>
-            <button
+            <Button
+              variant="ghost"
               type="button"
               aria-label="Remover foto"
               onClick={() =>
@@ -715,7 +746,7 @@ function PhotoStrip({
               className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-background/90 text-destructive shadow"
             >
               <Trash2 className="size-3.5" />
-            </button>
+            </Button>
           </div>
         ))}
       </div>
