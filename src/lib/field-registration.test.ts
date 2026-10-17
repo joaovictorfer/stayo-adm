@@ -44,4 +44,13 @@ describe("cadastro e vistoria dedicados", () => {
       fieldPatchSchema.safeParse({ wifiNetwork: "Rede", wifiPassword: "campo opcional" }).success,
     ).toBe(true);
   });
+  it("zero camas desativa o quarto sem apagar suas opções", () => {
+    const rooms = registrationRooms([], 1, 0, 0);
+    const first = rooms.find((r) => r.kind === "quarto");
+    if (!first) throw new Error("quarto ausente");
+    const changed = applyRoomBeds(rooms, [{ roomId: first.id, options: { Queen: 0 } }]);
+    expect(changed.find((r) => r.id === first.id)?.items["camas"]?.on).toBe(false);
+    expect(changed.find((r) => r.id === first.id)?.items["camas"]?.opts).toEqual({ Queen: 0 });
+    expect(registrationRooms([], 0, 0, 0).some((r) => r.kind === "quarto")).toBe(false);
+  });
 });

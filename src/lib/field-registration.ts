@@ -58,6 +58,9 @@ export function registrationRooms(
   bathrooms: number,
   lavatories: number,
 ) {
+  const populatedBedrooms = rooms.filter((r) => r.kind === "quarto" && Object.values(r.items).some((item) => item.on));
+  if (populatedBedrooms.length > bedrooms)
+    throw new Error("Remova as camas e os itens dos quartos excedentes antes de reduzir a quantidade.");
   const base: RoomState[] = rooms.length
     ? rooms
     : ["cozinha", "sala", "geral"].map((kind, i) => ({

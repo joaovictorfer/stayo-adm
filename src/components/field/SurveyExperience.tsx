@@ -193,8 +193,8 @@ export function SurveyExperience({
         )}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] overflow-y-auto border-r bg-background transition-transform motion-reduce:transition-none lg:static lg:z-0 lg:w-72 lg:translate-x-0",
-            sidebar ? "translate-x-0" : "-translate-x-full",
+            "fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] overflow-y-auto border-r bg-background lg:static lg:z-0 lg:w-72",
+            sidebar ? "block" : "hidden lg:block",
           )}
         >
           {rooms.map(([room, list]) => {
