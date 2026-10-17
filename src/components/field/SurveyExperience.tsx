@@ -236,7 +236,7 @@ export function SurveyExperience({
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto grid max-w-5xl gap-6 p-4 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:p-6">
-              <section className="space-y-3">
+              <section className="order-2 space-y-3 md:order-1">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-background shadow-sm md:aspect-square">
                   {itemPhotos.length ? (
                     <img
@@ -269,7 +269,7 @@ export function SurveyExperience({
                 />
               </section>
 
-              <section className="space-y-6">
+              <section className="order-1 space-y-6 md:order-2">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-primary">
                     {roomLabel(item.room)} · {item.category}
