@@ -19,7 +19,7 @@
 
 ## Aba Proprietário (auditoria)
 - [x] Fase 1: card Jornada vertical na lateral + proteção contra tela de erro
-- [ ] Fase 2: refino do dossiê cadastral
+- [x] Fase 2: ficha cadastral enxuta, dados pessoais recolhidos e sensíveis protegidos; leitura, cópia, exibição/ocultação e abertura da edição conferidas na ficha real no computador e celular.
 - [ ] Fase 3: links e convites direto na aba Proprietário
 
 ## Mercado & Empório (novo)
