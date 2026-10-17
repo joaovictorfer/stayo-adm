@@ -442,6 +442,13 @@
       "when": 1791991632604,
       "tag": "0062_proposal_item_paid_status",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1792259014244,
+      "tag": "0063_dedicated_field_registration",
+      "breakpoints": true
     }
   ]
 }
