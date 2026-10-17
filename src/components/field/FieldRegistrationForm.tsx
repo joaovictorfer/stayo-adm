@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   BedDouble,
+  Bath,
   Building2,
   Check,
   ChevronLeft,
@@ -10,14 +11,15 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Minus,
-  Plus,
+  Phone,
+  Toilet,
   UserRound,
 } from "lucide-react";
 import { StayoLogo } from "@/components/brand/StayoLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SurveyExperience } from "./SurveyExperience";
+import { BedSelectionCard, QuantityPicker } from "./FieldTouchControls";
 import {
   resolveFieldRegistration,
   saveFieldRegistration,
@@ -44,6 +46,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
   const [record, setRecord] = useState<FieldRegistration | null>(null),
     [values, setValues] = useState<FieldValues | null>(null);
   const [step, setStep] = useState(0),
+    [selectedRoom, setSelectedRoom] = useState<string | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false),
@@ -161,7 +164,16 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     pending.current = {
       ...pending.current,
       ...patch,
-      ...(beds ? { beds: [...(pending.current.beds ?? []).filter((b) => !beds.some((edit) => edit.roomId === b.roomId)), ...beds] } : {}),
+      ...(beds
+        ? {
+            beds: [
+              ...(pending.current.beds ?? []).filter(
+                (b) => !beds.some((edit) => edit.roomId === b.roomId),
+              ),
+              ...beds,
+            ],
+          }
+        : {}),
     };
     setDirty(true);
     if (timer.current) clearTimeout(timer.current);
@@ -182,59 +194,61 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     if (!values || navigating.current) return;
     navigating.current = true;
     try {
-    if (
-      next > 1 &&
-      (!values.condominium.trim() ||
-        !values.unit.trim() ||
-        values.bedrooms === null ||
-        values.bathrooms === null ||
-        values.lavatories === null)
-    ) {
-      setError("Informe empreendimento, unidade e as quantidades de ambientes.");
-      return;
-    }
-    if (!(await flush())) return;
-    if (next === 2 && !current.current?.values.rooms.length) {
-      pending.current = {
-        bedrooms: values.bedrooms,
-        bathrooms: values.bathrooms,
-        lavatories: values.lavatories,
-      };
+      if (
+        next > 1 &&
+        (!values.condominium.trim() ||
+          !values.unit.trim() ||
+          values.bedrooms === null ||
+          values.bathrooms === null ||
+          values.lavatories === null)
+      ) {
+        setError("Informe empreendimento, unidade e as quantidades de ambientes.");
+        return;
+      }
       if (!(await flush())) return;
-    }
-    if (next === 3) {
-      setBusy(true);
-      try {
-        const r = current.current;
-        if (!r) return;
-        const saved = await prepare({ data: { token, revision: r.revision } });
-        current.current = saved;
-        setRecord(saved);
-        setInventoryReady(true);
-      } catch {
-        setError("Não foi possível preparar a vistoria. Tente novamente.");
-        return;
-      } finally {
-        setBusy(false);
+      if (next === 2 && !current.current?.values.rooms.length) {
+        pending.current = {
+          bedrooms: values.bedrooms,
+          bathrooms: values.bathrooms,
+          lavatories: values.lavatories,
+        };
+        if (!(await flush())) return;
       }
-    }
-    const r = current.current;
-    if (r && next !== 3) {
-      setBusy(true);
-      try {
-        const saved = await save({ data: { token, revision: r.revision, step: next, patch: {} } });
-        current.current = saved;
-        setRecord(saved);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Não foi possível avançar. Tente novamente.");
-        return;
-      } finally {
-        setBusy(false);
+      if (next === 3) {
+        setBusy(true);
+        try {
+          const r = current.current;
+          if (!r) return;
+          const saved = await prepare({ data: { token, revision: r.revision } });
+          current.current = saved;
+          setRecord(saved);
+          setInventoryReady(true);
+        } catch {
+          setError("Não foi possível preparar a vistoria. Tente novamente.");
+          return;
+        } finally {
+          setBusy(false);
+        }
       }
-    }
-    setStep(next);
-    stepRef.current = next;
-    window.scrollTo({ top: 0, behavior: "instant" });
+      const r = current.current;
+      if (r && next !== 3) {
+        setBusy(true);
+        try {
+          const saved = await save({
+            data: { token, revision: r.revision, step: next, patch: {} },
+          });
+          current.current = saved;
+          setRecord(saved);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "Não foi possível avançar. Tente novamente.");
+          return;
+        } finally {
+          setBusy(false);
+        }
+      }
+      setStep(next);
+      stepRef.current = next;
+      window.scrollTo({ top: 0, behavior: "instant" });
     } finally {
       navigating.current = false;
     }
@@ -272,7 +286,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
         </div>
       </header>
       <nav aria-label="Etapas do cadastro" className="border-b">
-        <div className="mx-auto grid max-w-5xl grid-cols-4 gap-1 px-3 py-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-4 gap-2 px-3 py-3">
           {steps.map((s, i) => (
             <Button
               key={s.title}
@@ -281,8 +295,10 @@ export function FieldRegistrationForm({ token }: { token: string }) {
               onClick={() => void go(i)}
               aria-current={step === i ? "step" : undefined}
               className={cn(
-                "h-auto min-h-16 flex-col gap-1 rounded-lg px-1 text-xs sm:flex-row sm:gap-2 sm:text-sm",
-                step === i ? "bg-primary/10 text-primary" : "text-muted-foreground",
+                "h-auto min-h-20 flex-col gap-2 rounded-lg border px-1 text-xs sm:text-sm",
+                step === i
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-border bg-card text-muted-foreground",
               )}
             >
               <span
@@ -315,7 +331,10 @@ export function FieldRegistrationForm({ token }: { token: string }) {
         </>
       ) : (
         <>
-          <main className="mx-auto max-w-3xl px-5 pb-32 pt-7 sm:pt-10">
+          <main
+            key={step}
+            className="field-stage-enter mx-auto w-full max-w-3xl px-4 pb-32 pt-6 sm:px-5 sm:pt-8"
+          >
             <div className="mb-7 flex items-center gap-3">
               <span className="grid size-12 place-items-center rounded-lg bg-primary/10 text-primary">
                 {step === 0 ? <UserRound /> : step === 1 ? <Building2 /> : <BedDouble />}
@@ -327,7 +346,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
             </div>
             {step === 0 && (
               <div className="space-y-6">
-                <Field label="Nome completo *">
+                <Field label="Nome completo *" icon={<UserRound className="size-5" />}>
                   <Input
                     className="h-14 text-base"
                     autoComplete="name"
@@ -340,7 +359,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                     }}
                   />
                 </Field>
-                <Field label="Telefone / WhatsApp *">
+                <Field label="WhatsApp *" icon={<Phone className="size-5" />}>
                   <Input
                     className="h-14 text-base"
                     type="tel"
@@ -360,7 +379,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
             )}
             {step === 1 && (
               <div className="space-y-7">
-                <Field label="Empreendimento *">
+                <Field label="Empreendimento *" icon={<Building2 className="size-5" />}>
                   <Input
                     className="h-14 text-base"
                     value={values.condominium}
@@ -384,17 +403,25 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                     />
                   </Field>
                 </div>
-                <section className="space-y-4 border-t pt-6">
-                  <h2 className="text-lg font-semibold text-primary">Ambientes</h2>
+                <section className="space-y-3">
                   {(["bedrooms", "bathrooms", "lavatories"] as const).map((key, i) => (
-                    <div
-                      key={key}
-                      className="flex flex-wrap items-center justify-between gap-3 border-b pb-4"
-                    >
-                      <span className="font-medium">
-                        {["Quartos", "Banheiros", "Lavabos"][i]} *
-                      </span>
-                      <Counter
+                    <div key={key} className="space-y-4 rounded-lg border bg-card p-4 sm:p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-3 font-semibold text-primary">
+                          {i === 0 ? (
+                            <BedDouble className="size-6" />
+                          ) : i === 1 ? (
+                            <Bath className="size-6" />
+                          ) : (
+                            <Toilet className="size-6" />
+                          )}
+                          {["Quartos", "Banheiros", "Lavabos"][i]}
+                        </span>
+                        <output className="font-display text-2xl font-semibold text-primary">
+                          {values[key] ?? "—"}
+                        </output>
+                      </div>
+                      <QuantityPicker
                         label={["Quartos", "Banheiros", "Lavabos"][i] ?? key}
                         value={values[key]}
                         onChange={(n) => change({ [key]: n })}
@@ -438,34 +465,68 @@ export function FieldRegistrationForm({ token }: { token: string }) {
               </div>
             )}
             {step === 2 && (
-              <div className="space-y-8">
+              <div className="space-y-5">
+                <div role="group" aria-label="Quarto" className="flex flex-wrap gap-2">
+                  {values.rooms
+                    .filter((r) => r.kind === "quarto")
+                    .map((room) => {
+                      const activeId = values.rooms.some(
+                        (r) => r.id === selectedRoom && r.kind === "quarto",
+                      )
+                        ? selectedRoom
+                        : values.rooms.find((r) => r.kind === "quarto")?.id;
+                      return (
+                        <Button
+                          key={room.id}
+                          variant="outline"
+                          aria-pressed={activeId === room.id}
+                          onClick={() => setSelectedRoom(room.id)}
+                          className={cn(
+                            "h-12 rounded-full px-5 shadow-none",
+                            activeId === room.id &&
+                              "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+                          )}
+                        >
+                          <BedDouble />
+                          {room.name}
+                        </Button>
+                      );
+                    })}
+                </div>
                 {values.rooms
-                  .filter((r) => r.kind === "quarto")
+                  .filter(
+                    (r) =>
+                      r.kind === "quarto" &&
+                      r.id ===
+                        (values.rooms.some(
+                          (room) => room.id === selectedRoom && room.kind === "quarto",
+                        )
+                          ? selectedRoom
+                          : values.rooms.find((room) => room.kind === "quarto")?.id),
+                  )
                   .map((room) => (
-                    <section key={room.id} className="border-b pb-7">
-                      <h2 className="mb-4 text-lg font-semibold text-primary">{room.name}</h2>
-                      <div className="space-y-3">
+                    <section key={room.id} aria-label={room.name} className="field-stage-enter">
+                      <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:gap-4">
                         {bedTypes.map((type) => (
-                          <div key={type} className="flex items-center justify-between gap-3">
-                            <span className="font-medium">{type}</span>
-                            <Counter
-                              label={`${room.name} · ${type}`}
-                              value={room.items["camas"]?.opts?.[type] ?? 0}
-                              onChange={(n) =>
-                                change({
-                                  beds: values.rooms
-                                    .filter((r) => r.kind === "quarto")
-                                    .map((r) => ({
-                                      roomId: r.id,
-                                      options: {
-                                        ...r.items["camas"]?.opts,
-                                        ...(r.id === room.id ? { [type]: n } : {}),
-                                      },
-                                    })),
-                                })
-                              }
-                            />
-                          </div>
+                          <BedSelectionCard
+                            key={type}
+                            type={type}
+                            room={room.name}
+                            value={room.items["camas"]?.opts?.[type] ?? 0}
+                            onChange={(n) =>
+                              change({
+                                beds: values.rooms
+                                  .filter((r) => r.kind === "quarto")
+                                  .map((r) => ({
+                                    roomId: r.id,
+                                    options: {
+                                      ...r.items["camas"]?.opts,
+                                      ...(r.id === room.id ? { [type]: n } : {}),
+                                    },
+                                  })),
+                              })
+                            }
+                          />
                         ))}
                       </div>
                     </section>
@@ -523,53 +584,22 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     </div>
   );
 }
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block space-y-2">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      {children}
-    </label>
-  );
-}
-function Counter({
+function Field({
   label,
-  value,
-  onChange,
+  children,
+  icon,
 }: {
   label: string;
-  value: number | null;
-  onChange: (n: number) => void;
+  children: ReactNode;
+  icon?: ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Button
-        variant="outline"
-        className="size-12"
-        aria-label={`Diminuir ${label}`}
-        disabled={value === null || value === 0}
-        onClick={() => onChange(Math.max(0, (value ?? 0) - 1))}
-      >
-        <Minus className="size-5" />
-      </Button>
-      <Input
-        aria-label={label}
-        className="h-12 w-14 px-1 text-center text-lg font-semibold"
-        inputMode="numeric"
-        placeholder="—"
-        value={value ?? ""}
-        onChange={(e) => {
-          if (/^\d{0,2}$/.test(e.target.value)) onChange(Math.min(20, Number(e.target.value)));
-        }}
-      />
-      <Button
-        variant="outline"
-        className="size-12"
-        aria-label={`Aumentar ${label}`}
-        disabled={value === 20}
-        onClick={() => onChange(Math.min(20, (value ?? 0) + 1))}
-      >
-        <Plus className="size-5" />
-      </Button>
-    </div>
+    <label className={cn("block space-y-2", icon && "rounded-lg border bg-card p-4")}>
+      <span className="flex items-center gap-2 text-sm font-medium text-primary">
+        {icon}
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
