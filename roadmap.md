@@ -20,7 +20,7 @@
 ## Aba Proprietário (auditoria)
 - [x] Fase 1: card Jornada vertical na lateral + proteção contra tela de erro
 - [x] Fase 2: ficha cadastral enxuta, dados pessoais recolhidos e sensíveis protegidos; leitura, cópia, exibição/ocultação e abertura da edição conferidas na ficha real no computador e celular.
-- [ ] Fase 3: links e convites direto na aba Proprietário
+- [x] Fase 3: links e convites direto na aba Proprietário; janelas separadas por capacidade, cópia do link ativo e mensagem, geração da apresentação e leitura pública conferidas, recuperação após recarregar e celular 390/360 sem sobreposição; dados sensíveis fora da janela de links.
 
 ## Mercado & Empório (novo)
 - [ ] Abas: Pedidos ativos, Reposição por imóvel, Catálogo & preços; consumo por reserva (aguardando escopo)
