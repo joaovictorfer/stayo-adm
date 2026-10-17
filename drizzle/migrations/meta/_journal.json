@@ -456,6 +456,13 @@
       "when": 1792259083602,
       "tag": "0064_field_registration_inventory",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1792259502639,
+      "tag": "0065_field_registration_consistency",
+      "breakpoints": true
     }
   ]
 }

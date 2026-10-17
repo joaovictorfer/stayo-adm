@@ -3582,12 +3582,25 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["admin_role"]
       }
+      field_registration_enter_inventory: {
+        Args: { p_revision: number; p_token: string }
+        Returns: Json
+      }
       field_registration_prepare_inventory: {
         Args: { p_token: string }
         Returns: undefined
       }
       field_registration_resolve: { Args: { p_token: string }; Returns: Json }
       field_registration_save: {
+        Args: {
+          p_patch: Json
+          p_revision: number
+          p_step: number
+          p_token: string
+        }
+        Returns: Json
+      }
+      field_registration_save_guarded: {
         Args: {
           p_patch: Json
           p_revision: number
