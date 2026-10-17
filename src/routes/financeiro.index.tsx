@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
 import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
+import { VfFinancePanel } from "@/components/admin/VfFinancePanel";
 
 import {
   EmptyRows,
@@ -38,6 +39,8 @@ export const Route = createFileRoute("/financeiro/")({
       { title: "Financeiro — Stayo Admin" },
       { name: "description", content: "Repasses e faturas de serviço da operação Stayo." },
       { property: "og:title", content: "Financeiro — Stayo Admin" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Repasses e faturas de serviço da operação Stayo.",
@@ -56,6 +59,7 @@ const tabLabels = {
   faturas: "Faturas de serviço",
   fechamentos: "Fechamentos",
   despesas: "Despesas",
+  vf: "VF - Financeiro",
 } as const;
 
 function FinanceSummary() {
@@ -127,6 +131,8 @@ function FinancePage() {
         <ServiceInvoicesTab />
       ) : tab === "fechamentos" ? (
         <SettlementsTab />
+      ) : tab === "vf" ? (
+        <VfFinancePanel />
       ) : (
         <ExpensesTab />
       )}

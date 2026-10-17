@@ -27,4 +27,5 @@
 
 ## VF - Financeiro
 - [x] Localizar VF - Financeiro e contrato existente: POST /api/public/stayo-expenses e GET /api/public/stayo-statements; autenticação servidor a servidor e despesas idempotentes.
-- [ ] Ativar conexão e implementar envio/consulta no Admin: bloqueado porque a consulta publicada em https://vf-hub.lovable.app/api/public/stayo-statements?month=2026-10 retorna 404; publicar os endpoints no VF - Financeiro e configurar acesso autorizado antes de conectar. Nenhuma despesa real enviada.
+- [x] Credencial registrada pelo formulário seguro; consulta mensal e adaptador de envio autenticados implementados, com esquema estrito e transmissão bloqueada por padrão. Três testes passaram.
+- [ ] Consulta real bloqueada: VF publicado respondeu 401 à credencial salva; alinhar STAYO_WEBHOOK_SECRET nos dois serviços. Nenhuma despesa real enviada; ativação depende de autorização explícita.
