@@ -158,7 +158,11 @@ export function FieldRegistrationForm({ token }: { token: string }) {
       };
     local.current = next;
     setValues(next);
-    pending.current = { ...pending.current, ...patch };
+    pending.current = {
+      ...pending.current,
+      ...patch,
+      ...(beds ? { beds: [...(pending.current.beds ?? []).filter((b) => !beds.some((edit) => edit.roomId === b.roomId)), ...beds] } : {}),
+    };
     setDirty(true);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -201,7 +205,11 @@ export function FieldRegistrationForm({ token }: { token: string }) {
     if (next === 3) {
       setBusy(true);
       try {
-        await prepare({ data: { token } });
+        const r = current.current;
+        if (!r) return;
+        const saved = await prepare({ data: { token, revision: r.revision } });
+        current.current = saved;
+        setRecord(saved);
         setInventoryReady(true);
       } catch {
         setError("Não foi possível preparar a vistoria. Tente novamente.");
@@ -211,7 +219,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
       }
     }
     const r = current.current;
-    if (r) {
+    if (r && next !== 3) {
       setBusy(true);
       try {
         const saved = await save({ data: { token, revision: r.revision, step: next, patch: {} } });

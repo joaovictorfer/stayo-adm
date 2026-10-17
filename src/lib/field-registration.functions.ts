@@ -81,7 +81,7 @@ export const saveFieldRegistration = createServerFn({ method: "POST" })
       beds?.some((b) => !current.values.rooms.some((r) => r.id === b.roomId && r.kind === "quarto"))
     )
       throw new Error("Quarto não encontrado. Recarregue o cadastro.");
-    const { data: result, error } = await supabaseAdmin.rpc("field_registration_save", {
+    const { data: result, error } = await supabaseAdmin.rpc("field_registration_save_guarded", {
       p_token: data.token,
       p_revision: data.revision,
       p_step: data.step,
@@ -100,15 +100,16 @@ export const saveFieldRegistration = createServerFn({ method: "POST" })
   });
 
 export const prepareFieldInventory = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ token: tokenSchema }).parse(d))
+  .inputValidator((d) => z.object({ token: tokenSchema, revision: z.number().int().min(0) }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.rpc("field_registration_prepare_inventory", {
+    const { data: result, error } = await supabaseAdmin.rpc("field_registration_enter_inventory", {
       p_token: data.token,
+      p_revision: data.revision,
     });
     if (error)
       throw new Error(
         "Não foi possível preparar o inventário. Confira os ambientes e tente novamente.",
       );
-    return { ok: true };
+    return result as unknown as FieldRegistration;
   });
