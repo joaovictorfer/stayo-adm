@@ -76,6 +76,14 @@ export function registrationRooms(
       }));
   return reconcileRooms(base, { bedrooms, bathrooms, lavatories });
 }
+export function applyRoomSuites(rooms: RoomState[], suites: NonNullable<FieldPatch["suites"]>) {
+  return rooms.map((room) => {
+    const edit = suites.find((s) => s.roomId === room.id);
+    if (!edit) return room;
+    if (room.kind !== "quarto") throw new Error("Suíte deve pertencer a um quarto.");
+    return toggleSuite(room, edit.suite);
+  });
+}
 export function applyRoomBeds(rooms: RoomState[], beds: NonNullable<FieldPatch["beds"]>) {
   return rooms.map((room) => {
     const edit = beds.find((b) => b.roomId === room.id);
