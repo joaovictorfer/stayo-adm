@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { hashToken } from "./token-hash";
 
 export interface SurveyItem {
+  roomKey?: string | null;
   id: string;
   room: string;
   category: string;
