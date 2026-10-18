@@ -477,6 +477,13 @@
       "when": 1792297239154,
       "tag": "0067_canonical_field_inventory_rooms",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1792297527473,
+      "tag": "0068_field_inventory_sql_scope",
+      "breakpoints": true
     }
   ]
 }
