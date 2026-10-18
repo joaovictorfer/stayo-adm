@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { normalizePhone } from "./owner-form-validation";
-import { reconcileRooms, type RoomState } from "./amenities";
+import { reconcileRooms, toggleSuite, type RoomState } from "./amenities";
 
 export const bedTypes = ["Solteiro", "Auxiliar", "Casal", "Queen", "King"] as const;
 export const bedOptionsSchema = z
@@ -24,6 +24,10 @@ export const fieldPatchSchema = z
     lavatories: z.number().int().min(0).max(20).nullable().optional(),
     beds: z
       .array(z.object({ roomId: z.string().min(1).max(80), options: bedOptionsSchema }))
+      .max(20)
+      .optional(),
+    suites: z
+      .array(z.object({ roomId: z.string().min(1).max(80), suite: z.boolean() }))
       .max(20)
       .optional(),
   })
@@ -71,6 +75,14 @@ export function registrationRooms(
         custom: [],
       }));
   return reconcileRooms(base, { bedrooms, bathrooms, lavatories });
+}
+export function applyRoomSuites(rooms: RoomState[], suites: NonNullable<FieldPatch["suites"]>) {
+  return rooms.map((room) => {
+    const edit = suites.find((s) => s.roomId === room.id);
+    if (!edit) return room;
+    if (room.kind !== "quarto") throw new Error("Suíte deve pertencer a um quarto.");
+    return toggleSuite(room, edit.suite);
+  });
 }
 export function applyRoomBeds(rooms: RoomState[], beds: NonNullable<FieldPatch["beds"]>) {
   return rooms.map((room) => {
