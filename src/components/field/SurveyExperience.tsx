@@ -158,7 +158,7 @@ export function SurveyExperience({
       {/* Topo */}
       <header
         className={cn(
-          "flex items-center gap-3 border-b px-4 py-3",
+          "flex items-center gap-2 border-b px-3 py-2",
           embedded ? "bg-background text-foreground" : "bg-primary text-primary-foreground",
         )}
       >
@@ -166,16 +166,18 @@ export function SurveyExperience({
           variant="ghost"
           type="button"
           onClick={() => setSidebar(true)}
-          className="grid size-12 place-items-center rounded-lg border md:hidden"
+          className="grid size-11 place-items-center rounded-lg border md:hidden"
           aria-label="Lista de itens"
         >
           <ListChecks className="size-5" />
         </Button>
-        {!embedded && <StayoLogo variant="white" className="h-7 w-auto" />}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold leading-tight">{data.implementation.name}</p>
-          <p className="text-xs opacity-75">
-            {answered}/{items.length} itens
+        {!embedded && <StayoLogo variant="white" className="h-6 w-auto" />}
+        <div className="flex min-w-0 flex-1 items-baseline gap-2">
+          <p className="truncate text-sm font-semibold leading-tight">
+            {data.implementation.name}
+          </p>
+          <p className="shrink-0 text-[11px] opacity-75">
+            {answered}/{items.length}
           </p>
         </div>
         <SaveBadge state={saving} />
@@ -284,9 +286,9 @@ export function SurveyExperience({
         {/* Item em tela cheia */}
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
-            <div className="mx-auto grid max-w-5xl gap-6 p-4 xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:p-6">
-              <section className="order-2 space-y-3 xl:order-1">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-background shadow-sm md:aspect-square">
+            <div className="mx-auto grid max-w-5xl gap-4 p-3 md:p-4 xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+              <section className="order-2 space-y-2 xl:order-1">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-background shadow-sm md:aspect-[16/10] xl:aspect-square">
                   {itemPhotos.length ? (
                     <img
                       src={itemPhotos.at(-1)?.url}
@@ -318,12 +320,12 @@ export function SurveyExperience({
                 />
               </section>
 
-              <section className="order-1 space-y-6 xl:order-2">
+              <section className="order-1 space-y-4 xl:order-2">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-primary">
                     {roomLabel(item.room)} · {item.category}
                   </p>
-                  <h1 className="mt-1 text-3xl font-semibold">{item.name}</h1>
+                  <h1 className="mt-0.5 text-2xl font-semibold">{item.name}</h1>
                   {item.tip && (
                     <details className="mt-2 text-sm text-muted-foreground">
                       <summary className="cursor-pointer py-2">Dica</summary>
@@ -332,7 +334,7 @@ export function SurveyExperience({
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <AnswerButton
                     active={item.answer === "tenho"}
                     tone="yes"
@@ -366,7 +368,7 @@ export function SurveyExperience({
                 </div>
 
                 {item.answer === "tenho" && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <Field label="Quantidade">
                       <div className="flex items-center gap-3">
                         <RoundBtn
@@ -448,13 +450,13 @@ export function SurveyExperience({
             </div>
           </div>
 
-          <footer className="flex items-center gap-3 border-t bg-background p-3 md:px-6">
+          <footer className="flex items-center gap-2 border-t bg-background p-2 md:px-4">
             <Button
               variant="ghost"
               type="button"
               onClick={() => go(index - 1)}
               disabled={index === 0}
-              className="flex h-12 items-center gap-2 rounded-lg border px-3 sm:px-5 font-semibold disabled:opacity-40"
+              className="flex h-11 items-center gap-2 rounded-lg border px-3 sm:px-5 font-semibold disabled:opacity-40"
             >
               <ChevronLeft className="size-5" /> Anterior
             </Button>
@@ -466,7 +468,7 @@ export function SurveyExperience({
               type="button"
               onClick={() => go(index + 1)}
               disabled={index === items.length - 1}
-              className="flex h-12 items-center gap-2 rounded-lg bg-primary px-3 sm:px-6 font-semibold text-primary-foreground shadow disabled:opacity-40"
+              className="flex h-11 items-center gap-2 rounded-lg bg-primary px-3 sm:px-6 font-semibold text-primary-foreground shadow disabled:opacity-40"
             >
               Próximo <ChevronRight className="size-5" />
             </Button>
@@ -546,7 +548,7 @@ function AnswerButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 bg-background text-sm font-semibold shadow-sm transition-all active:scale-95 motion-reduce:transition-none",
+        "flex h-20 flex-col items-center justify-center gap-1 rounded-lg border-2 bg-background text-sm font-semibold shadow-sm transition-all active:scale-95 motion-reduce:transition-none md:h-24",
         active ? `${activeCls} hover:opacity-90` : "hover:border-primary/40",
       )}
     >
