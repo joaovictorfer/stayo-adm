@@ -155,3 +155,45 @@ export function BedSelectionCard({
     </div>
   );
 }
+export function CompactCounter({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (value: number) => void;
+}) {
+  const count = value ?? 0;
+  return (
+    <div role="group" aria-label={label} className="flex items-center gap-1.5">
+      <Button
+        variant="outline"
+        className="size-11 rounded-full p-0 shadow-none"
+        aria-label={`Diminuir ${label}`}
+        disabled={count === 0}
+        onClick={() => onChange(Math.max(0, count - 1))}
+      >
+        <Minus />
+      </Button>
+      <output
+        aria-label={label}
+        className={cn(
+          "grid size-11 place-items-center rounded-full border font-display text-lg font-semibold",
+          value === null ? "border-border text-muted-foreground" : "border-primary/40 text-primary",
+        )}
+      >
+        {value ?? "–"}
+      </output>
+      <Button
+        variant="outline"
+        className="size-11 rounded-full p-0 shadow-none"
+        aria-label={`Aumentar ${label}`}
+        disabled={value === 20}
+        onClick={() => onChange((value ?? 0) + 1)}
+      >
+        <Plus />
+      </Button>
+    </div>
+  );
+}

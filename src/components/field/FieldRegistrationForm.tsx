@@ -19,7 +19,7 @@ import { StayoLogo } from "@/components/brand/StayoLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SurveyExperience } from "./SurveyExperience";
-import { BedSelectionCard, QuantityPicker } from "./FieldTouchControls";
+import { BedSelectionCard, CompactCounter } from "./FieldTouchControls";
 import {
   resolveFieldRegistration,
   saveFieldRegistration,
@@ -378,7 +378,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
               </div>
             )}
             {step === 1 && (
-              <div className="space-y-7">
+              <div className="space-y-5">
                 <Field label="Empreendimento *" icon={<Building2 className="size-5" />}>
                   <Input
                     className="h-14 text-base"
@@ -387,7 +387,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                     onChange={(e) => change({ condominium: e.target.value })}
                   />
                 </Field>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <Field label="Unidade *">
                     <Input
                       className="h-14 text-base"
@@ -403,25 +403,23 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                     />
                   </Field>
                 </div>
-                <section className="space-y-3">
+                <section className="space-y-2.5">
                   {(["bedrooms", "bathrooms", "lavatories"] as const).map((key, i) => (
-                    <div key={key} className="space-y-4 rounded-lg border bg-card p-4 sm:p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="flex items-center gap-3 font-semibold text-primary">
-                          {i === 0 ? (
-                            <BedDouble className="size-6" />
-                          ) : i === 1 ? (
-                            <Bath className="size-6" />
-                          ) : (
-                            <Toilet className="size-6" />
-                          )}
-                          {["Quartos", "Banheiros", "Lavabos"][i]}
-                        </span>
-                        <output className="font-display text-2xl font-semibold text-primary">
-                          {values[key] ?? "—"}
-                        </output>
-                      </div>
-                      <QuantityPicker
+                    <div
+                      key={key}
+                      className="flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3"
+                    >
+                      <span className="flex items-center gap-2.5 font-semibold text-primary">
+                        {i === 0 ? (
+                          <BedDouble className="size-5" />
+                        ) : i === 1 ? (
+                          <Bath className="size-5" />
+                        ) : (
+                          <Toilet className="size-5" />
+                        )}
+                        {["Quartos", "Banheiros", "Lavabos"][i]}
+                      </span>
+                      <CompactCounter
                         label={["Quartos", "Banheiros", "Lavabos"][i] ?? key}
                         value={values[key]}
                         onChange={(n) => change({ [key]: n })}
