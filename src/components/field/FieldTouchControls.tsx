@@ -180,9 +180,7 @@ export function CompactCounter({
         aria-label={label}
         className={cn(
           "grid size-11 place-items-center rounded-full border font-display text-lg font-semibold",
-          value === null
-            ? "border-border text-muted-foreground"
-            : "border-primary/40 text-primary",
+          value === null ? "border-border text-muted-foreground" : "border-primary/40 text-primary",
         )}
       >
         {value ?? "–"}
