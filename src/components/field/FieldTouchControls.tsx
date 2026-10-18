@@ -18,7 +18,7 @@ function BedVisual({ type }: { type: string }) {
       viewBox="0 0 160 90"
       role="img"
       aria-label={`Cama ${type}`}
-      className="h-14 w-24 shrink-0 text-primary"
+      className="h-12 w-20 shrink-0 text-primary"
     >
       {/* Cabeceira */}
       <rect x={x - 6} y="8" width="9" height="48" rx="4" className="fill-primary/25" />
@@ -97,7 +97,7 @@ export function BedSelectionCard({
       >
         <BedVisual type={type} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold">{type}</span>
+          <span className="block text-sm font-semibold">{type}</span>
           <span
             className={cn(
               "block text-xs",
