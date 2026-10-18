@@ -68,6 +68,7 @@ const iconCircle = { backgroundColor: "var(--ficha-icon-bg)", color: "var(--fich
 export type InventoryRoomSlot = ((tab: string, items: InventorySnapshotItem[], renderItem: (item: InventorySnapshotItem, extra?: ReactNode, installation?: boolean, subFields?: Record<string, ReactNode>) => ReactNode) => ReactNode) & {
   /** Banheiros sociais e lavabos como abas próprias (banheiroN / lavaboN). Suítes ficam dentro do quarto. */
   bathTabs?: Array<{ id: string; label: string }>;
+  roomKeys?: Record<string, string[]>;
 };
 
 const QUARTO_CATEGORY = /^Quarto (\d+)$/;
@@ -76,7 +77,7 @@ const roomTabsFor = (bedrooms: number, bathTabs?: Array<{ id: string; label: str
   { id: "cozinha", label: "Cozinha" },
   { id: "sala", label: "Sala" },
   ...Array.from({ length: Math.max(1, bedrooms) }, (_, i) => ({ id: `quarto${i + 1}`, label: `Quarto ${i + 1}` })),
-  ...(bathTabs?.length ? bathTabs : [{ id: "banheiro1", label: "Banheiro" }]),
+  ...(bathTabs ?? [{ id: "banheiro1", label: "Banheiro" }]),
   { id: "lavanderia", label: "Lavanderia" },
   { id: "outros", label: "Outros" },
 ];
@@ -428,7 +429,7 @@ export function InventoryWorkspace({
   });
 
   const items = useMemo(() => (q.data ?? []).filter((i) => i.enabled), [q.data]);
-  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => inRoom(i, r.id)) }));
+  const rooms = ROOMS.map((r) => ({ ...r, items: items.filter((i) => i.inventory_room_key && roomSlot?.roomKeys ? roomSlot.roomKeys[r.id]?.includes(i.inventory_room_key) === true : inRoom(i, r.id)) }));
   const roomItems = (rooms.find((r) => r.id === room)?.items ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order)

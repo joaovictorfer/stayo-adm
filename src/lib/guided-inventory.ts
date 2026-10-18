@@ -31,6 +31,7 @@ export const inventoryAnswerLabel: Record<InventoryAnswer, string> = {
 };
 
 export interface InventorySnapshotItem {
+  inventory_room_key?: string | null;
   id: string;
   implementation_id: string;
   catalog_item_id: string | null;

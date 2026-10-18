@@ -36,6 +36,7 @@ import {
 type Photo = { id: string; itemId: string; url: string };
 const BRAND_SPECIAL = ["N/A", "Não identificada"];
 const roomLabel = (k: string) => inventoryRooms.find((r) => r.key === k)?.label ?? k;
+const roomKey = (item: SurveyItem) => item.roomKey ?? (["quartos", "banheiros"].includes(item.room) ? item.category : item.room);
 
 export function SurveyExperience({
   token,
@@ -95,7 +96,7 @@ export function SurveyExperience({
   const rooms = useMemo(() => {
     const map = new Map<string, { item: SurveyItem; idx: number }[]>();
     items.forEach((it, idx) => {
-      const key = ["quartos", "banheiros"].includes(it.room) ? it.category : it.room;
+      const key = roomKey(it);
       map.set(key, [...(map.get(key) ?? []), { item: it, idx }]);
     });
     return [...map.entries()];
@@ -141,7 +142,11 @@ export function SurveyExperience({
     );
 
   const itemPhotos = photos.filter((p) => p.itemId === item.id);
-  const activeRoom = ["quartos", "banheiros"].includes(item.room) ? item.category : item.room;
+  const activeRoom = roomKey(item);
+  const groupLabel = (key: string) => {
+    const entry = rooms.find(([room]) => room === key)?.[1][0]?.item;
+    return entry?.roomKey ? entry.category : roomLabel(key);
+  };
   const reference = refs[item.name] ?? generatedInventoryImage(item.name);
   const go = (i: number) => {
     setIndex(Math.max(0, Math.min(items.length - 1, i)));
@@ -240,7 +245,7 @@ export function SurveyExperience({
               <SelectContent>
                 {rooms.map(([room]) => (
                   <SelectItem key={room} value={room} className="min-h-12">
-                    {roomLabel(room)}
+                    {groupLabel(room)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -254,7 +259,7 @@ export function SurveyExperience({
                 <div key={room} className="border-b">
                   <div className="flex items-center justify-between bg-background px-4 py-3">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {roomLabel(room)}
+                      {groupLabel(room)}
                     </span>
                     <span className="text-xs font-semibold text-muted-foreground">
                       {done}/{list.length}

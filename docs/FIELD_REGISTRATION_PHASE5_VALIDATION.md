@@ -22,3 +22,12 @@ Foto removida pelo link autorizado antes da exclusão. Link dedicado e observaç
 
 ## Limites
 Não foram exercitados conflitos simultâneos, expiração temporal do link ou transmissão financeira. A conferência do painel foi por recarregamento/navegação, não promessa de atualização em tempo real. Publicação não solicitada nem realizada.
+
+## Correção e nova validação — 18/10/2026
+- Preparação da vistoria passou a reconciliar os templates por identidade canônica, preservando IDs, respostas e vínculos de mídia. Templates excedentes só são desativados quando não têm respostas ou vínculos.
+- Cenário descartável: 2 quartos, 1 suíte, 2 banheiros totais. Seletor apresentou Cozinha, Sala, Quarto 02, Suíte 01, Banheiro 01 e Banheiro Suíte 01, sem duplicar o quarto da suíte ou criar segundo banheiro social.
+- Resposta Tem no chuveiro do banheiro privativo permaneceu após recarregar e preparar a vistoria novamente. O painel apresentou o chuveiro respondido dentro do Quarto 1 com suíte e apenas um banheiro social separado.
+- Aba Proprietário mostrou Suítes: 1, derivado da composição persistida. Quarto preservou a cama Queen.
+- 14 testes passaram em quatro arquivos; prévia sem erros de página no percurso final e compilação conferida sem erros.
+- As duas fichas descartáveis IMP-00012/IMP-00013 foram excluídas pelo painel; contatos descartáveis sem vínculos foram removidos. Nenhum imóvel real foi respondido nesta validação. Sem publicação.
+- Limite: registros antigos com respostas excedentes não são apagados nem mesclados automaticamente; sua preservação tem prioridade sobre ocultação indiscriminada.

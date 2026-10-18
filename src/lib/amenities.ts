@@ -242,6 +242,12 @@ export interface Composition {
   lavatories: number;
 }
 
+/** Persisted room composition is authoritative; absent composition retains legacy counts. */
+export function suiteCount(data: unknown, legacy: number | null = null): number | null {
+  if (!data || typeof data !== "object" || !("rooms" in data) || !Array.isArray(data.rooms)) return legacy;
+  return data.rooms.filter((r: unknown) => r && typeof r === "object" && "kind" in r && r.kind === "quarto" && "suite" in r && r.suite === true).length;
+}
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const mk = (kind: RoomKind, name: string): RoomState => ({ id: uid(), kind, name, items: {}, custom: [] });
 
