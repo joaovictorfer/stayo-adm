@@ -10,7 +10,7 @@ import {
 } from "../guided-inventory";
 
 const COLS =
-  "id, implementation_id, catalog_item_id, room, category, name, display_order, enabled, tip, inventory_answer, inventory_subanswers, inventory_quantity, inventory_brand, inventory_condition, inventory_internal_notes, base_catalog_item_id, inventory_source, inventory_review_status, inventory_updated_at";
+  "id, implementation_id, catalog_item_id, inventory_room_key, room, category, name, display_order, enabled, tip, inventory_answer, inventory_subanswers, inventory_quantity, inventory_brand, inventory_condition, inventory_internal_notes, base_catalog_item_id, inventory_source, inventory_review_status, inventory_updated_at";
 
 /** Fonte única: banco (RLS por papel administrativo). Nada em localStorage. */
 export async function listGuidedInventory(

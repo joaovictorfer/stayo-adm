@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "./supabase-client";
+import { suiteCount } from "../amenities";
 import type { ImplementationProject, ImplementationStatus } from "../../types/core";
 
 export interface PropertyDetails {
@@ -127,7 +128,9 @@ export async function getPropertyDetails(
   if (!data) return null;
   const project = await client().from("implementation_projects").select("bedrooms").eq("id", implementationId).single();
   if (project.error) throw project.error;
-  return { ...detailsFromRow(data as Record<string, unknown>), bedrooms: project.data.bedrooms };
+  const amenities = await client().from("implementation_amenities").select("data").eq("implementation_id", implementationId).maybeSingle();
+  if (amenities.error) throw amenities.error;
+  return { ...detailsFromRow(data as Record<string, unknown>), bedrooms: project.data.bedrooms, suites: suiteCount(amenities.data?.data, data.suites) };
 }
 
 export async function savePropertyDetails(

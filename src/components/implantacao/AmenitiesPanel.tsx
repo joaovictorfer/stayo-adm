@@ -96,6 +96,7 @@ export function AmenitiesPanel({
       .from("implementation_amenities")
       .upsert({ implementation_id: implementationId, data: latest.current as never });
     if (error) return setSave("error");
+    void qc.invalidateQueries({ queryKey: ["property-details", implementationId] });
     try {
       await syncAmenitiesToInventory(implementationId, buildSyncRows(latest.current));
       void qc.invalidateQueries({ queryKey: ["guided-inventory", implementationId] });
@@ -362,8 +363,11 @@ export function AmenitiesPanel({
           else rows.push(<ItemRow key={custom.id} def={{ key: custom.id, label: custom.name }} items={{ [custom.id]: custom }} setItem={(_key, patch) => updateRoom(room.id, (r) => ({ ...r, custom: r.custom.map((item) => item.id === custom.id ? { ...item, ...patch } : item) }))} unified />);
         }
         if (room.suite && room.bath) {
+          const bathItems = inventoryItems.filter((item) => item.inventory_room_key === `${room.id}:bath`);
           for (const def of ROOM_SECTIONS.banheiro.flatMap((section) => section.items)) {
-            rows.push(<ItemRow key={`${room.id}:bath:${def.key}`} def={{ ...def, label: `${def.label} · Banheiro da suíte` }} items={room.bath.items} setItem={(key, patch) => updateRoom(room.id, (r) => r.bath ? ({ ...r, bath: { ...r.bath, items: { ...r.bath.items, [key]: { ...r.bath.items[key], ...patch } } } }) : r)} unified />);
+            const match = matchingInventoryItem(bathItems, def.label);
+            if (match) { used.add(match.id); rows.push(renderItem({ ...match, name: `${match.name} · Banheiro da suíte` })); }
+            else rows.push(<ItemRow key={`${room.id}:bath:${def.key}`} def={{ ...def, label: `${def.label} · Banheiro da suíte` }} items={room.bath.items} setItem={(key, patch) => updateRoom(room.id, (r) => r.bath ? ({ ...r, bath: { ...r.bath, items: { ...r.bath.items, [key]: { ...r.bath.items[key], ...patch } } } }) : r)} unified />);
           }
         }
       }
@@ -391,9 +395,14 @@ export function AmenitiesPanel({
       </>;
     };
     slot.bathTabs = [
-      ...(banheiros.length ? banheiros : [{ name: "Banheiro" } as RoomState]).map((r, i) => ({ id: `banheiro${i + 1}`, label: /^Banheiro( social)?( \d+)?$/.test(r.name) ? `Banheiro ${String(i + 1).padStart(2, "0")}` : r.name })),
+      ...banheiros.map((r, i) => ({ id: `banheiro${i + 1}`, label: /^Banheiro( social)?( \d+)?$/.test(r.name) ? `Banheiro ${String(i + 1).padStart(2, "0")}` : r.name })),
       ...lavabos.map((r, i) => ({ id: `lavabo${i + 1}`, label: r.name })),
     ];
+    slot.roomKeys = Object.fromEntries([
+      ...quartos.map((r, i) => [`quarto${i + 1}`, [r.id, ...(r.suite ? [`${r.id}:bath`] : [])]]),
+      ...banheiros.map((r, i) => [`banheiro${i + 1}`, [r.id]]),
+      ...lavabos.map((r, i) => [`lavabo${i + 1}`, [r.id]]),
+    ]);
     return (
       <div className="flex flex-col gap-4">
         {comp && (
