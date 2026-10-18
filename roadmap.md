@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Fase 1 (visual cadastro/vistoria): contadores compactos `[-] [n] [+]` de ambientes na tela Imóvel e espaçamentos reduzidos; conferir no navegador.
+- [x] Fase 1 (visual cadastro/vistoria): contadores compactos `[-] [n] [+]` de ambientes na tela Imóvel e espaçamentos reduzidos; conferido no navegador com autosave persistido após recarregar.
 - [x] Refinar visual do cadastro e vistoria dedicado: etapas visuais, seleções rápidas de ambientes e cards de camas; autosave e recuperação de camas conferidos, ficha de teste removida.
 - [x] Colocar seletor de ambiente no topo da lista lateral da vistoria de implantação; troca de ambientes conferida no tablet e celular.
 - [x] Cadastro e vistoria dedicados: link seguro, criação de ficha com nome/telefone, imóvel, ambientes/camas e inventário; autosave, retomada e validação celular/tablet conferidos.
