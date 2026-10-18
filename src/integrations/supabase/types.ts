@@ -835,6 +835,7 @@ export type Database = {
           inventory_internal_notes: string | null
           inventory_quantity: number | null
           inventory_review_status: string
+          inventory_room_key: string | null
           inventory_source: string
           inventory_subanswers: Json | null
           inventory_updated_at: string | null
@@ -870,6 +871,7 @@ export type Database = {
           inventory_internal_notes?: string | null
           inventory_quantity?: number | null
           inventory_review_status?: string
+          inventory_room_key?: string | null
           inventory_source?: string
           inventory_subanswers?: Json | null
           inventory_updated_at?: string | null
@@ -905,6 +907,7 @@ export type Database = {
           inventory_internal_notes?: string | null
           inventory_quantity?: number | null
           inventory_review_status?: string
+          inventory_room_key?: string | null
           inventory_source?: string
           inventory_subanswers?: Json | null
           inventory_updated_at?: string | null

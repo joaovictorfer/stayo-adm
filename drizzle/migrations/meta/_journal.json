@@ -470,6 +470,13 @@
       "when": 1792259636858,
       "tag": "0066_field_bed_retirement",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792297239154,
+      "tag": "0067_canonical_field_inventory_rooms",
+      "breakpoints": true
     }
   ]
 }
