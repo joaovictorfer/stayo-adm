@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { hashToken } from "@/lib/api/token-hash";
 import {
   applyRoomBeds,
+  applyRoomSuites,
   fieldPatchSchema,
   registrationRooms,
   type FieldRegistration,
@@ -58,27 +59,32 @@ export const saveFieldRegistration = createServerFn({ method: "POST" })
     );
     if (denied || !resolved) throw new Error("Link inválido, expirado ou cadastro encerrado.");
     const current = resolved as unknown as FieldRegistration;
-    const { beds, ...patch } = data.patch;
+    const { beds, suites, ...patch } = data.patch;
     const roomsChanged =
       beds !== undefined ||
+      suites !== undefined ||
       patch.bedrooms !== undefined ||
       patch.bathrooms !== undefined ||
       patch.lavatories !== undefined;
     const roomPatch = roomsChanged
       ? {
           rooms: applyRoomBeds(
-            registrationRooms(
-              current.values.rooms,
-              patch.bedrooms ?? current.values.bedrooms ?? 0,
-              patch.bathrooms ?? current.values.bathrooms ?? 0,
-              patch.lavatories ?? current.values.lavatories ?? 0,
+            applyRoomSuites(
+              registrationRooms(
+                current.values.rooms,
+                patch.bedrooms ?? current.values.bedrooms ?? 0,
+                patch.bathrooms ?? current.values.bathrooms ?? 0,
+                patch.lavatories ?? current.values.lavatories ?? 0,
+              ),
+              suites ?? [],
             ),
             beds ?? [],
           ),
         }
       : {};
     if (
-      beds?.some((b) => !current.values.rooms.some((r) => r.id === b.roomId && r.kind === "quarto"))
+      beds?.some((b) => !current.values.rooms.some((r) => r.id === b.roomId && r.kind === "quarto")) ||
+      suites?.some((s) => !current.values.rooms.some((r) => r.id === s.roomId && r.kind === "quarto"))
     )
       throw new Error("Quarto não encontrado. Recarregue o cadastro.");
     const { data: result, error } = await supabaseAdmin.rpc("field_registration_save_guarded", {
