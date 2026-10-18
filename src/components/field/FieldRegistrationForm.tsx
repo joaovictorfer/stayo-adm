@@ -19,7 +19,7 @@ import { StayoLogo } from "@/components/brand/StayoLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SurveyExperience } from "./SurveyExperience";
-import { BedSelectionCard, CompactCounter, QuantityPicker } from "./FieldTouchControls";
+import { BedSelectionCard, CompactCounter } from "./FieldTouchControls";
 import {
   resolveFieldRegistration,
   saveFieldRegistration,
