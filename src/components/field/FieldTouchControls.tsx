@@ -126,7 +126,7 @@ export function BedSelectionCard({
           <Button
             variant="ghost"
             className="size-9 p-0"
-            aria-label={`Adicionar ${type} em ${room}`}
+            aria-label={`Aumentar ${type} em ${room}`}
             disabled={value === 20}
             onClick={add}
           >
