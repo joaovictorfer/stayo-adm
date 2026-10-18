@@ -566,7 +566,7 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                   )
                   .map((room) => (
                     <section key={room.id} aria-label={room.name} className="field-stage-enter">
-                      <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:gap-4">
+                      <div className="grid grid-cols-1 gap-2">
                         {bedTypes.map((type) => (
                           <BedSelectionCard
                             key={type}
