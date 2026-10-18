@@ -69,14 +69,11 @@ export const saveFieldRegistration = createServerFn({ method: "POST" })
     const roomPatch = roomsChanged
       ? {
           rooms: applyRoomBeds(
-            applyRoomSuites(
-              registrationRooms(
-                current.values.rooms,
-                patch.bedrooms ?? current.values.bedrooms ?? 0,
-                patch.bathrooms ?? current.values.bathrooms ?? 0,
-                patch.lavatories ?? current.values.lavatories ?? 0,
-              ),
-              suites ?? [],
+            registrationRooms(
+              applyRoomSuites(current.values.rooms, suites ?? []),
+              patch.bedrooms ?? current.values.bedrooms ?? 0,
+              patch.bathrooms ?? current.values.bathrooms ?? 0,
+              patch.lavatories ?? current.values.lavatories ?? 0,
             ),
             beds ?? [],
           ),
