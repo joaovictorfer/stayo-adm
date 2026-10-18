@@ -111,9 +111,10 @@ export function FieldRegistrationForm({ token }: { token: string }) {
         const merged = {
           ...next.values,
           ...local.current,
-          rooms: pending.current.beds
-            ? (local.current?.rooms ?? next.values.rooms)
-            : next.values.rooms,
+          rooms:
+            pending.current.beds || pending.current.suites
+              ? (local.current?.rooms ?? next.values.rooms)
+              : next.values.rooms,
         };
         local.current = merged;
         setValues(merged);
@@ -133,12 +134,20 @@ export function FieldRegistrationForm({ token }: { token: string }) {
   }
   function change(patch: FieldPatch) {
     if (!local.current) return;
-    const { beds, ...fields } = patch;
+    const { beds, suites, ...fields } = patch;
     let next: FieldValues = { ...local.current };
     for (const key of Object.keys(fields) as Array<keyof typeof fields>) {
       const value = fields[key];
       if (value !== undefined) Object.assign(next, { [key]: value });
     }
+    if (suites)
+      next = {
+        ...next,
+        rooms: next.rooms.map((r) => {
+          const edit = suites.find((s) => s.roomId === r.id);
+          return edit && r.kind === "quarto" ? toggleSuite(r, edit.suite) : r;
+        }),
+      };
     if (beds)
       next = {
         ...next,
