@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Fase 5 (cadastro/vistoria): validar ponta a ponta pelo link dedicado, retomada e sincronização de contato, imóvel, ambientes, camas e respostas no painel administrativo; remover dados de teste.
 - [x] Fase 1 (visual cadastro/vistoria): contadores compactos `[-] [n] [+]` de ambientes na tela Imóvel e espaçamentos reduzidos; conferido no navegador com autosave persistido após recarregar.
 - [x] Fase 2 (visual cadastro/vistoria): indicador de suíte por quarto na etapa Quartos e camas; suíte renomeia o quarto e seu banheiro conta no total do imóvel (banheiros sociais = total − suítes); conferido no navegador com persistência após recarregar e ficha de teste removida.
 - [x] Fase 3 (visual cadastro/vistoria): cards de cama compactos em linha única, ilustrações redesenhadas (vista lateral com cabeceira, travesseiros e rodinhas na auxiliar), toque no card soma +1 instantâneo, steppers −/+ mantidos e autosave ativo; conferido no navegador com persistência e ficha de teste removida.
