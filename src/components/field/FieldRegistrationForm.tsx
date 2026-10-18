@@ -446,6 +446,9 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                       />
                     </div>
                   ))}
+                  <p className="px-1 text-xs text-muted-foreground">
+                    Banheiros de suíte contam no total de banheiros do imóvel.
+                  </p>
                 </section>
                 <details className="border-b pb-4">
                   <summary className="cursor-pointer py-3 font-semibold text-primary">
@@ -511,6 +514,45 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                       );
                     })}
                 </div>
+                {(() => {
+                  const activeRoom = values.rooms.find(
+                    (r) =>
+                      r.kind === "quarto" &&
+                      r.id ===
+                        (values.rooms.some((x) => x.id === selectedRoom && x.kind === "quarto")
+                          ? selectedRoom
+                          : values.rooms.find((x) => x.kind === "quarto")?.id),
+                  );
+                  if (!activeRoom) return null;
+                  return (
+                    <Button
+                      variant="outline"
+                      aria-pressed={activeRoom.suite === true}
+                      onClick={() =>
+                        change({ suites: [{ roomId: activeRoom.id, suite: !activeRoom.suite }] })
+                      }
+                      className={cn(
+                        "h-14 w-full justify-between rounded-lg px-4 text-base shadow-none",
+                        activeRoom.suite && "border-primary bg-primary/5 text-primary",
+                      )}
+                    >
+                      <span className="flex items-center gap-2.5 font-semibold">
+                        <Bath className="size-5" />
+                        Banheiro privativo (suíte)
+                      </span>
+                      <span
+                        className={cn(
+                          "grid size-7 place-items-center rounded-full border",
+                          activeRoom.suite
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border text-transparent",
+                        )}
+                      >
+                        <Check className="size-4" />
+                      </span>
+                    </Button>
+                  );
+                })()}
                 {values.rooms
                   .filter(
                     (r) =>
