@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Corrigir ambientes duplicados e resumo de suítes; preservar respostas e validar novamente link dedicado → painel administrativo.
+- [x] Corrigir ambientes duplicados e resumo de suítes: identidade canônica por ambiente, banheiro privativo vinculado ao quarto e suíte derivada da composição; link e retomada conferidos, resposta do chuveiro preservada e lida no painel, resumo mostrou 1 suíte. 14 testes passaram; fichas e contatos de QA removidos.
 - [x] Fase 5 (cadastro/vistoria): fluxo real pelo link dedicado, retomada, fotos/comentários e leitura no painel conferidos; 193 testes passaram, ficha e foto de teste removidas. Validação com ressalvas: templates fragmentam ambientes da suíte e resumo do proprietário não informa suítes; relatório em docs/FIELD_REGISTRATION_PHASE5_VALIDATION.md, sem alteração funcional nesta etapa.
 - [x] Fase 1 (visual cadastro/vistoria): contadores compactos `[-] [n] [+]` de ambientes na tela Imóvel e espaçamentos reduzidos; conferido no navegador com autosave persistido após recarregar.
 - [x] Fase 2 (visual cadastro/vistoria): indicador de suíte por quarto na etapa Quartos e camas; suíte renomeia o quarto e seu banheiro conta no total do imóvel (banheiros sociais = total − suítes); conferido no navegador com persistência após recarregar e ficha de teste removida.
