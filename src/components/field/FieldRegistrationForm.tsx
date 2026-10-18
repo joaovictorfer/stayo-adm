@@ -16,6 +16,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { StayoLogo } from "@/components/brand/StayoLogo";
+import { toggleSuite } from "@/lib/amenities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SurveyExperience } from "./SurveyExperience";
@@ -180,6 +181,16 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                 (b) => !beds.some((edit) => edit.roomId === b.roomId),
               ),
               ...beds,
+            ],
+          }
+        : {}),
+      ...(suites
+        ? {
+            suites: [
+              ...(pending.current.suites ?? []).filter(
+                (s) => !suites.some((edit) => edit.roomId === s.roomId),
+              ),
+              ...suites,
             ],
           }
         : {}),
