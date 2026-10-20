@@ -107,6 +107,7 @@ import {
 import type { OwnerTaskStatus } from "../types/admin";
 import type { CommercialTerm } from "../types/admin";
 import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
+import { OwnerDashboard } from "../components/portal/OwnerDashboard";
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
@@ -1470,6 +1471,7 @@ export function OwnerHomeContent({
   previewImplementationId?: string;
 }) {
   const [activeTab, setActiveTab] = useState("visao-geral");
+  const [consolidated, setConsolidated] = useState(false);
   const [selectedImplementationId, setSelectedImplementationId] = useState(() =>
     previewImplementationId
       ? previewImplementationId
@@ -1505,8 +1507,8 @@ export function OwnerHomeContent({
     enabled: Boolean(corePropertyId),
   });
   const reservationsQ = useQuery({
-    ...reservationsListQuery(corePropertyId ?? undefined),
-    enabled: Boolean(corePropertyId),
+    ...reservationsListQuery(),
+    enabled: portalPhase === "operation",
   });
   const submissionQ = useQuery({
     ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
@@ -1591,6 +1593,14 @@ export function OwnerHomeContent({
   });
 
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
+  const allReservations = reservationsQ.data?.data ?? [];
+  const dashboardReservations = consolidated
+    ? allReservations
+    : allReservations.filter((r) => r.propertyId === corePropertyId);
+  const adminFeePercent =
+    commercialTermsQ.data?.find(
+      (term) => term.chargeType === "percentage" && /administra/i.test(term.label),
+    )?.value ?? null;
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
   const accessLabel = account
     ? `${ownerRoleLabels[account.role]}${
@@ -1641,6 +1651,20 @@ export function OwnerHomeContent({
           selectedId={implementation?.id ?? ""}
           onSelect={selectImplementation}
         />
+      )}
+      {ownerImplementations.length > 1 && portalPhase === "operation" && (
+        <div className="owner-dash-view-toggle" role="group" aria-label="Visão do painel">
+          <button
+            type="button"
+            aria-pressed={!consolidated}
+            onClick={() => setConsolidated(false)}
+          >
+            Por imóvel
+          </button>
+          <button type="button" aria-pressed={consolidated} onClick={() => setConsolidated(true)}>
+            Consolidado
+          </button>
+        </div>
       )}
       <PortalPhaseIndicator phase={portalPhase} />
       {portalPhase === "ready" && implementation && (
@@ -1693,6 +1717,21 @@ export function OwnerHomeContent({
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
+          <OwnerDashboard
+            phase={portalPhase}
+            permissions={permissions}
+            propertyName={propertyName(implementation)}
+            consolidated={consolidated}
+            propertyCount={ownerImplementations.length}
+            reservations={dashboardReservations}
+            reservationsPending={reservationsQ.isPending && portalPhase === "operation"}
+            reservationsError={reservationsQ.isError}
+            onRetryReservations={() => void reservationsQ.refetch()}
+            adminFeePercent={adminFeePercent}
+            pendingTasks={pending}
+            timeline={timelineQ.data ?? []}
+            goTo={setActiveTab}
+          />
           {portalPhase === "operation" && (
             <OperationalOverview
               reservationCount={
