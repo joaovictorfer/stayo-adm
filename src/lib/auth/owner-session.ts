@@ -16,6 +16,7 @@ import type { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "../api/supabase-client";
+import type { OwnerPortalRole } from "../owner-permissions";
 
 export interface OwnerPortalAccount {
   id: string;
@@ -32,11 +33,19 @@ export type OwnerAccountSetupResult =
 interface OwnerPortalAccountRow {
   id: string;
   owner_id: string;
+  role?: OwnerPortalRole | null;
+  share_percent?: number | null;
   created_at: string;
 }
 
 function accountFromRow(row: OwnerPortalAccountRow): OwnerPortalAccount {
-  return { id: row.id, ownerId: row.owner_id, createdAt: row.created_at };
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    role: row.role ?? "titular",
+    sharePercent: row.share_percent ?? null,
+    createdAt: row.created_at,
+  };
 }
 
 async function linkCurrentOwnerAccount(token: string): Promise<OwnerPortalAccount> {
