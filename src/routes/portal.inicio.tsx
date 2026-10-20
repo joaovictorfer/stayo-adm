@@ -86,7 +86,17 @@ import {
   type PropertyDetails,
   type PropertyDetailsInput,
 } from "../lib/api/owner-portal-data";
-import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
+import {
+  isSupabaseConfigured,
+  ownerSignOut,
+  useOwnerSession,
+  type OwnerPortalAccount,
+} from "../lib/auth/owner-session";
+import {
+  maskOwnerDocument,
+  ownerPortalPermissions,
+  ownerRoleLabels,
+} from "../lib/owner-permissions";
 import { statusLabels } from "../lib/implementation-status";
 import {
   getOwnerPortalModules,
@@ -1430,18 +1440,24 @@ function OwnerHomePage() {
 
   return (
     <Shell>
-      <OwnerHomeContent ownerId={auth.account.ownerId} onSignOut={() => signOut.mutate()} />
+      <OwnerHomeContent
+        ownerId={auth.account.ownerId}
+        account={auth.account}
+        onSignOut={() => signOut.mutate()}
+      />
     </Shell>
   );
 }
 
 export function OwnerHomeContent({
   ownerId,
+  account = null,
   onSignOut,
   preview = false,
   previewImplementationId,
 }: {
   ownerId: string;
+  account?: OwnerPortalAccount | null;
   onSignOut: () => void;
   preview?: boolean;
   previewImplementationId?: string;
@@ -1471,7 +1487,10 @@ export function OwnerHomeContent({
     ownerImplementations[0];
 
   const portalPhase = getOwnerPortalPhase(implementation);
-  const portalModules = getOwnerPortalModules(portalPhase);
+  const permissions = ownerPortalPermissions(account?.role ?? "titular");
+  const portalModules = getOwnerPortalModules(portalPhase).filter(
+    (module) => module !== "finance" || permissions.canViewFinance,
+  );
   const corePropertyId =
     portalPhase === "operation" ? (implementation?.corePropertyId ?? null) : null;
   const propertyQ = useQuery({
