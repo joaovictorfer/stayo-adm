@@ -1630,6 +1630,21 @@ a.admin-data-row:hover,
   text-transform: uppercase;
 }
 
+.portal-property-role {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--portal-gold-soft) 45%, transparent);
+  border-radius: 999px;
+  color: var(--portal-gold-soft);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .portal-property-switcher {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) minmax(16rem, 22rem);

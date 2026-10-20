@@ -909,11 +909,7 @@ function PortalHero({
             {statusLabels[status]}
           </div>
           <p className="portal-property-greeting">Olá, {firstName}.</p>
-          {accessLabel && (
-            <span className="portal-property-estimate" style={{ marginTop: 2 }}>
-              {accessLabel}
-            </span>
-          )}
+          {accessLabel && <span className="portal-property-role">{accessLabel}</span>}
           <h1 className="portal-property-title">{propertyName(implementation)}</h1>
           <p className="portal-property-moment">{stageMessages[status]}</p>
           {implementation?.completionDateEstimate && (
