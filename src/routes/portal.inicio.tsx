@@ -836,12 +836,14 @@ function PortalHero({
   onSignOut,
   preview = false,
   onPrimary,
+  accessLabel = null,
 }: {
   firstName: string;
   implementation: ImplementationProject | undefined;
   onSignOut: () => void;
   preview?: boolean;
   onPrimary?: () => void;
+  accessLabel?: string | null;
 }) {
   const status = implementation?.status ?? "prospect";
   // Só é "foto do imóvel" quando há imagem autorizada na implantação;
@@ -907,6 +909,11 @@ function PortalHero({
             {statusLabels[status]}
           </div>
           <p className="portal-property-greeting">Olá, {firstName}.</p>
+          {accessLabel && (
+            <span className="portal-property-estimate" style={{ marginTop: 2 }}>
+              {accessLabel}
+            </span>
+          )}
           <h1 className="portal-property-title">{propertyName(implementation)}</h1>
           <p className="portal-property-moment">{stageMessages[status]}</p>
           {implementation?.completionDateEstimate && (
@@ -1585,6 +1592,13 @@ export function OwnerHomeContent({
 
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
+  const accessLabel = account
+    ? `${ownerRoleLabels[account.role]}${
+        account.role === "coproprietario" && account.sharePercent != null
+          ? ` · ${account.sharePercent}% de participação`
+          : ""
+      }`
+    : null;
   const welcome = useOwnerWelcomeState();
 
   useEffect(() => {
