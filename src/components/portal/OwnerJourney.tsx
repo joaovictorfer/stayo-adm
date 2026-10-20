@@ -1707,6 +1707,12 @@ function OwnerStep({
     "document",
     "email",
     "phone",
+    "postalCode",
+    "street",
+    "number",
+    "district",
+    "city",
+    "state",
   ];
   const paymentFields: OwnerFormField[] = [
     "bankName",
