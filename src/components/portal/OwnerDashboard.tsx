@@ -267,7 +267,7 @@ function UpcomingMovements({
       key: `tl-${e.id}`,
       icon: CircleCheckBig,
       title: e.title,
-      detail: dayFmt.format(new Date(e.createdAt)),
+      detail: dayFmt.format(new Date(e.date)),
     })),
   ].slice(0, 4);
 
