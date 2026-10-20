@@ -6,7 +6,7 @@ import { Button } from "../../ui/button";
 import { ownerOnboardingSubmissionQuery } from "../../../lib/api/queries";
 import { getImplementationPlatforms, CHANNEL_LABELS } from "../../../lib/api/owner-platforms";
 import { getPropertyDetails } from "../../../lib/api/owner-portal-data";
-import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, maskPixKey } from "../../../lib/owner-form-validation";
+import { formatBrazilianDocument, formatBrazilianPhone, formatBrazilianPostalCode, maskDocument, maskPixKey } from "../../../lib/owner-form-validation";
 import type { ImplementationProject } from "../../../types/core";
 
 const roleLabel = { proprietario: "Proprietário principal", coproprietario: "Coproprietário", proponente: "Proponente" } as const;
