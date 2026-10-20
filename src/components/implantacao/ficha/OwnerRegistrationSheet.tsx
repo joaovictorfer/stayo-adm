@@ -84,6 +84,13 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
       </Section>
       <Section title="Pix" icon={<KeyRound />} lines={[{ label: sub?.pixKey ? `Chave · ${pixLabel[sub.pixType]}` : "Chave Pix", value: sensitive(sub?.pixKey), concealed: !revealed }]} />
     </div>
+    <Section title="Endereço" icon={<MapPin />} empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={sub ? [
+      { label: "CEP", value: sub.postalCode ? formatBrazilianPostalCode(sub.postalCode) : null },
+      { label: "Logradouro", value: [sub.street, sub.number].filter(Boolean).join(", ") || null },
+      { label: "Complemento", value: sub.complement },
+      { label: "Bairro", value: sub.district },
+      { label: "Cidade/UF", value: [sub.city, sub.state].filter(Boolean).join("/") || null },
+    ] : []} />
     <Section title="Proponentes" meta={people.length ? `${people.length} ${people.length === 1 ? "pessoa" : "pessoas"}` : undefined} icon={<Users />}>
       {!people.length ? <p className="text-sm text-[var(--stayo-ink-muted)]">{subQ.isPending ? "Carregando proponentes…" : subQ.isError ? "Cadastro indisponível." : "Nenhum proponente informado."}</p> : people.map((p, i) => <article key={i} className="min-w-0 border-b border-[var(--stayo-border)] py-3 first:pt-0 last:border-0 last:pb-0">
         <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{p.fullName || `Proponente ${i + 1}`}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{roleLabel[p.role]}</p></div></div>
