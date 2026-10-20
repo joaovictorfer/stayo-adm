@@ -2392,16 +2392,22 @@ export type Database = {
           created_at: string
           id: string
           owner_id: string
+          role: Database["public"]["Enums"]["owner_portal_role"]
+          share_percent: number | null
         }
         Insert: {
           created_at?: string
           id: string
           owner_id: string
+          role?: Database["public"]["Enums"]["owner_portal_role"]
+          share_percent?: number | null
         }
         Update: {
           created_at?: string
           id?: string
           owner_id?: string
+          role?: Database["public"]["Enums"]["owner_portal_role"]
+          share_percent?: number | null
         }
         Relationships: [
           {
@@ -3635,6 +3641,8 @@ export type Database = {
           created_at: string
           id: string
           owner_id: string
+          role: Database["public"]["Enums"]["owner_portal_role"]
+          share_percent: number | null
         }
         SetofOptions: {
           from: "*"
@@ -3939,6 +3947,7 @@ export type Database = {
         | "confirmed_by_owner"
         | "changed_by_owner"
         | "reviewed_by_stayo"
+      owner_portal_role: "titular" | "coproprietario" | "representante_legal"
       owner_task_status: "pending" | "done" | "dismissed"
       portal_block_kind: "hero" | "destaque" | "passo" | "faq" | "rodape"
       proposal_block_visibility: "interno" | "proposta" | "portal"
@@ -4137,6 +4146,7 @@ export const Constants = {
         "changed_by_owner",
         "reviewed_by_stayo",
       ],
+      owner_portal_role: ["titular", "coproprietario", "representante_legal"],
       owner_task_status: ["pending", "done", "dismissed"],
       portal_block_kind: ["hero", "destaque", "passo", "faq", "rodape"],
       proposal_block_visibility: ["interno", "proposta", "portal"],

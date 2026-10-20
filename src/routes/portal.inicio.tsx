@@ -86,7 +86,17 @@ import {
   type PropertyDetails,
   type PropertyDetailsInput,
 } from "../lib/api/owner-portal-data";
-import { isSupabaseConfigured, ownerSignOut, useOwnerSession } from "../lib/auth/owner-session";
+import {
+  isSupabaseConfigured,
+  ownerSignOut,
+  useOwnerSession,
+  type OwnerPortalAccount,
+} from "../lib/auth/owner-session";
+import {
+  maskOwnerDocument,
+  ownerPortalPermissions,
+  ownerRoleLabels,
+} from "../lib/owner-permissions";
 import { statusLabels } from "../lib/implementation-status";
 import {
   getOwnerPortalModules,
@@ -97,6 +107,7 @@ import {
 import type { OwnerTaskStatus } from "../types/admin";
 import type { CommercialTerm } from "../types/admin";
 import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
+import { OwnerDashboard } from "../components/portal/OwnerDashboard";
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
@@ -826,12 +837,14 @@ function PortalHero({
   onSignOut,
   preview = false,
   onPrimary,
+  accessLabel = null,
 }: {
   firstName: string;
   implementation: ImplementationProject | undefined;
   onSignOut: () => void;
   preview?: boolean;
   onPrimary?: () => void;
+  accessLabel?: string | null;
 }) {
   const status = implementation?.status ?? "prospect";
   // Só é "foto do imóvel" quando há imagem autorizada na implantação;
@@ -897,6 +910,7 @@ function PortalHero({
             {statusLabels[status]}
           </div>
           <p className="portal-property-greeting">Olá, {firstName}.</p>
+          {accessLabel && <span className="portal-property-role">{accessLabel}</span>}
           <h1 className="portal-property-title">{propertyName(implementation)}</h1>
           <p className="portal-property-moment">{stageMessages[status]}</p>
           {implementation?.completionDateEstimate && (
@@ -1038,10 +1052,12 @@ function PropertyDetailsPanel({
   implementation,
   details,
   loading,
+  readOnly = false,
 }: {
   implementation: ImplementationProject;
   details: PropertyDetails | null;
   loading: boolean;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
@@ -1100,13 +1116,15 @@ function PropertyDetailsPanel({
           <h2>{propertyName(implementation)}</h2>
           <p>Ficha compartilhada entre você e a equipe STAYO.</p>
         </div>
-        <Button
-          variant={editing ? "ghost" : "outline"}
-          className="min-h-11"
-          onClick={() => setEditing((value) => !value)}
-        >
-          {editing ? "Cancelar" : "Editar dados"}
-        </Button>
+        {!readOnly && (
+          <Button
+            variant={editing ? "ghost" : "outline"}
+            className="min-h-11"
+            onClick={() => setEditing((value) => !value)}
+          >
+            {editing ? "Cancelar" : "Editar dados"}
+          </Button>
+        )}
       </div>
       <p className="portal-property-flow-note">
         {editing
@@ -1430,23 +1448,30 @@ function OwnerHomePage() {
 
   return (
     <Shell>
-      <OwnerHomeContent ownerId={auth.account.ownerId} onSignOut={() => signOut.mutate()} />
+      <OwnerHomeContent
+        ownerId={auth.account.ownerId}
+        account={auth.account}
+        onSignOut={() => signOut.mutate()}
+      />
     </Shell>
   );
 }
 
 export function OwnerHomeContent({
   ownerId,
+  account = null,
   onSignOut,
   preview = false,
   previewImplementationId,
 }: {
   ownerId: string;
+  account?: OwnerPortalAccount | null;
   onSignOut: () => void;
   preview?: boolean;
   previewImplementationId?: string;
 }) {
   const [activeTab, setActiveTab] = useState("visao-geral");
+  const [consolidated, setConsolidated] = useState(false);
   const [selectedImplementationId, setSelectedImplementationId] = useState(() =>
     previewImplementationId
       ? previewImplementationId
@@ -1471,7 +1496,10 @@ export function OwnerHomeContent({
     ownerImplementations[0];
 
   const portalPhase = getOwnerPortalPhase(implementation);
-  const portalModules = getOwnerPortalModules(portalPhase);
+  const permissions = ownerPortalPermissions(account?.role ?? "titular");
+  const portalModules = getOwnerPortalModules(portalPhase).filter(
+    (module) => module !== "finance" || permissions.canViewFinance,
+  );
   const corePropertyId =
     portalPhase === "operation" ? (implementation?.corePropertyId ?? null) : null;
   const propertyQ = useQuery({
@@ -1479,8 +1507,8 @@ export function OwnerHomeContent({
     enabled: Boolean(corePropertyId),
   });
   const reservationsQ = useQuery({
-    ...reservationsListQuery(corePropertyId ?? undefined),
-    enabled: Boolean(corePropertyId),
+    ...reservationsListQuery(),
+    enabled: portalPhase === "operation",
   });
   const submissionQ = useQuery({
     ...ownerOnboardingSubmissionQuery(implementation?.id ?? ""),
@@ -1565,7 +1593,22 @@ export function OwnerHomeContent({
   });
 
   const pending = (tasksQ.data ?? []).filter((t) => t.status === "pending");
+  const allReservations = reservationsQ.data?.data ?? [];
+  const dashboardReservations = consolidated
+    ? allReservations
+    : allReservations.filter((r) => r.propertyId === corePropertyId);
+  const adminFeePercent =
+    commercialTermsQ.data?.find(
+      (term) => term.chargeType === "percentage" && /administra/i.test(term.label),
+    )?.value ?? null;
   const firstName = ownerQ.data?.name?.split(" ")[0] ?? "proprietário";
+  const accessLabel = account
+    ? `${ownerRoleLabels[account.role]}${
+        account.role === "coproprietario" && account.sharePercent != null
+          ? ` · ${account.sharePercent}% de participação`
+          : ""
+      }`
+    : null;
   const welcome = useOwnerWelcomeState();
 
   useEffect(() => {
@@ -1599,6 +1642,7 @@ export function OwnerHomeContent({
         onSignOut={onSignOut}
         preview={preview}
         onPrimary={() => setActiveTab("implantacao")}
+        accessLabel={preview ? null : accessLabel}
       />
 
       {ownerImplementations.length > 1 && (
@@ -1607,6 +1651,20 @@ export function OwnerHomeContent({
           selectedId={implementation?.id ?? ""}
           onSelect={selectImplementation}
         />
+      )}
+      {ownerImplementations.length > 1 && portalPhase === "operation" && (
+        <div className="owner-dash-view-toggle" role="group" aria-label="Visão do painel">
+          <button
+            type="button"
+            aria-pressed={!consolidated}
+            onClick={() => setConsolidated(false)}
+          >
+            Por imóvel
+          </button>
+          <button type="button" aria-pressed={consolidated} onClick={() => setConsolidated(true)}>
+            Consolidado
+          </button>
+        </div>
       )}
       <PortalPhaseIndicator phase={portalPhase} />
       {portalPhase === "ready" && implementation && (
@@ -1659,6 +1717,21 @@ export function OwnerHomeContent({
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
+          <OwnerDashboard
+            phase={portalPhase}
+            permissions={permissions}
+            propertyName={propertyName(implementation)}
+            consolidated={consolidated}
+            propertyCount={ownerImplementations.length}
+            reservations={dashboardReservations}
+            reservationsPending={reservationsQ.isPending && portalPhase === "operation"}
+            reservationsError={reservationsQ.isError}
+            onRetryReservations={() => void reservationsQ.refetch()}
+            adminFeePercent={adminFeePercent}
+            pendingTasks={pending}
+            timeline={timelineQ.data ?? []}
+            goTo={setActiveTab}
+          />
           {portalPhase === "operation" && (
             <OperationalOverview
               reservationCount={
@@ -1764,6 +1837,7 @@ export function OwnerHomeContent({
                 implementation={implementation}
                 details={propertyDetailsQ.data ?? null}
                 loading={propertyDetailsQ.isPending}
+                readOnly={!permissions.canEditPropertyData}
               />
             )}
           </TabsContent>
@@ -1820,7 +1894,11 @@ export function OwnerHomeContent({
               name={ownerQ.data?.name}
               email={ownerQ.data?.email}
               phone={ownerQ.data?.phone}
-              document={ownerQ.data?.document}
+              document={
+                permissions.showFullDocument
+                  ? ownerQ.data?.document
+                  : maskOwnerDocument(ownerQ.data?.document)
+              }
               pendingKinds={pending.map((task) => task.kind)}
               onReviewPending={() => setActiveTab("visao-geral")}
             />

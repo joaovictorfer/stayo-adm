@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
 
@@ -54,6 +54,7 @@ function OwnerLoginPage() {
         </label>
         {login.isError && <p className="rounded-xl border px-3 py-2.5 text-sm" style={{ borderColor: "color-mix(in srgb, var(--stayo-danger) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--stayo-danger) 7%, transparent)", color: "var(--stayo-danger)" }} role="alert">Não foi possível entrar. Confira o e-mail e a senha ou tente novamente em instantes.</p>}
         <Button type="submit" disabled={login.isPending} className="portal-action group mt-1 h-12 w-full rounded-xl bg-[var(--portal-navy)] text-[var(--portal-hero-foreground)] hover:bg-[var(--portal-navy-strong)]">{login.isPending ? "Abrindo seu portal..." : <>Acessar meu portal <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>}</Button>
+        <Link to="/portal/recuperar" className="text-center text-xs text-[var(--portal-muted)] underline">Esqueci minha senha</Link>
       </form>
     </Shell>
   );

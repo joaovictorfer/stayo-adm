@@ -66,6 +66,8 @@ import { Route as OperacaoVistoriasPrototipoRouteImport } from './routes/operaca
 import { Route as OperacaoVistoriasRevisaoRouteImport } from './routes/operacao.vistorias-revisao'
 import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
 import { Route as PortalLoginRouteImport } from './routes/portal.login'
+import { Route as PortalRecuperarRouteImport } from './routes/portal.recuperar'
+import { Route as PortalRedefinirSenhaRouteImport } from './routes/portal.redefinir-senha'
 import { Route as PrestadoresIndexRouteImport } from './routes/prestadores.index'
 import { Route as PrestadoresIdRouteImport } from './routes/prestadores.$id'
 import { Route as ProdutosIndexRouteImport } from './routes/produtos.index'
@@ -387,6 +389,16 @@ const PortalLoginRoute = PortalLoginRouteImport.update({
   path: '/portal/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalRecuperarRoute = PortalRecuperarRouteImport.update({
+  id: '/portal/recuperar',
+  path: '/portal/recuperar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRedefinirSenhaRoute = PortalRedefinirSenhaRouteImport.update({
+  id: '/portal/redefinir-senha',
+  path: '/portal/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrestadoresIndexRoute = PrestadoresIndexRouteImport.update({
   id: '/prestadores/',
   path: '/prestadores/',
@@ -544,6 +556,8 @@ export interface FileRoutesByFullPath {
   '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
+  '/portal/recuperar': typeof PortalRecuperarRoute
+  '/portal/redefinir-senha': typeof PortalRedefinirSenhaRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
@@ -624,6 +638,8 @@ export interface FileRoutesByTo {
   '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
+  '/portal/recuperar': typeof PortalRecuperarRoute
+  '/portal/redefinir-senha': typeof PortalRedefinirSenhaRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
@@ -705,6 +721,8 @@ export interface FileRoutesById {
   '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
+  '/portal/recuperar': typeof PortalRecuperarRoute
+  '/portal/redefinir-senha': typeof PortalRedefinirSenhaRoute
   '/prestadores/$id': typeof PrestadoresIdRoute
   '/produtos/$id': typeof ProdutosIdRoute
   '/proprietarios/$id': typeof ProprietariosIdRoute
@@ -787,6 +805,8 @@ export interface FileRouteTypes {
     | '/operacao/vistorias-revisao'
     | '/portal/inicio'
     | '/portal/login'
+    | '/portal/recuperar'
+    | '/portal/redefinir-senha'
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
@@ -867,6 +887,8 @@ export interface FileRouteTypes {
     | '/operacao/vistorias-revisao'
     | '/portal/inicio'
     | '/portal/login'
+    | '/portal/recuperar'
+    | '/portal/redefinir-senha'
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
@@ -947,6 +969,8 @@ export interface FileRouteTypes {
     | '/operacao/vistorias-revisao'
     | '/portal/inicio'
     | '/portal/login'
+    | '/portal/recuperar'
+    | '/portal/redefinir-senha'
     | '/prestadores/$id'
     | '/produtos/$id'
     | '/proprietarios/$id'
@@ -1028,6 +1052,8 @@ export interface RootRouteChildren {
   OperacaoVistoriasRevisaoRoute: typeof OperacaoVistoriasRevisaoRoute
   PortalInicioRoute: typeof PortalInicioRoute
   PortalLoginRoute: typeof PortalLoginRoute
+  PortalRecuperarRoute: typeof PortalRecuperarRoute
+  PortalRedefinirSenhaRoute: typeof PortalRedefinirSenhaRoute
   PrestadoresIdRoute: typeof PrestadoresIdRoute
   ProdutosIdRoute: typeof ProdutosIdRoute
   ProprietariosIdRoute: typeof ProprietariosIdRoute
@@ -1462,6 +1488,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/recuperar': {
+      id: '/portal/recuperar'
+      path: '/portal/recuperar'
+      fullPath: '/portal/recuperar'
+      preLoaderRoute: typeof PortalRecuperarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/redefinir-senha': {
+      id: '/portal/redefinir-senha'
+      path: '/portal/redefinir-senha'
+      fullPath: '/portal/redefinir-senha'
+      preLoaderRoute: typeof PortalRedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/prestadores/': {
       id: '/prestadores/'
       path: '/prestadores'
@@ -1660,6 +1700,8 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoVistoriasRevisaoRoute: OperacaoVistoriasRevisaoRoute,
   PortalInicioRoute: PortalInicioRoute,
   PortalLoginRoute: PortalLoginRoute,
+  PortalRecuperarRoute: PortalRecuperarRoute,
+  PortalRedefinirSenhaRoute: PortalRedefinirSenhaRoute,
   PrestadoresIdRoute: PrestadoresIdRoute,
   ProdutosIdRoute: ProdutosIdRoute,
   ProprietariosIdRoute: ProprietariosIdRoute,
