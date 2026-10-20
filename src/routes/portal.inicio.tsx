@@ -1055,10 +1055,12 @@ function PropertyDetailsPanel({
   implementation,
   details,
   loading,
+  readOnly = false,
 }: {
   implementation: ImplementationProject;
   details: PropertyDetails | null;
   loading: boolean;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
@@ -1117,13 +1119,15 @@ function PropertyDetailsPanel({
           <h2>{propertyName(implementation)}</h2>
           <p>Ficha compartilhada entre você e a equipe STAYO.</p>
         </div>
-        <Button
-          variant={editing ? "ghost" : "outline"}
-          className="min-h-11"
-          onClick={() => setEditing((value) => !value)}
-        >
-          {editing ? "Cancelar" : "Editar dados"}
-        </Button>
+        {!readOnly && (
+          <Button
+            variant={editing ? "ghost" : "outline"}
+            className="min-h-11"
+            onClick={() => setEditing((value) => !value)}
+          >
+            {editing ? "Cancelar" : "Editar dados"}
+          </Button>
+        )}
       </div>
       <p className="portal-property-flow-note">
         {editing
@@ -1632,6 +1636,7 @@ export function OwnerHomeContent({
         onSignOut={onSignOut}
         preview={preview}
         onPrimary={() => setActiveTab("implantacao")}
+        accessLabel={preview ? null : accessLabel}
       />
 
       {ownerImplementations.length > 1 && (
@@ -1797,6 +1802,7 @@ export function OwnerHomeContent({
                 implementation={implementation}
                 details={propertyDetailsQ.data ?? null}
                 loading={propertyDetailsQ.isPending}
+                readOnly={!permissions.canEditPropertyData}
               />
             )}
           </TabsContent>
@@ -1853,7 +1859,11 @@ export function OwnerHomeContent({
               name={ownerQ.data?.name}
               email={ownerQ.data?.email}
               phone={ownerQ.data?.phone}
-              document={ownerQ.data?.document}
+              document={
+                permissions.showFullDocument
+                  ? ownerQ.data?.document
+                  : maskOwnerDocument(ownerQ.data?.document)
+              }
               pendingKinds={pending.map((task) => task.kind)}
               onReviewPending={() => setActiveTab("visao-geral")}
             />
