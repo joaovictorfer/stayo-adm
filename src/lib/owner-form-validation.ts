@@ -127,19 +127,19 @@ export const ownerOnboardingFormSchema = z.object({
   document: documentSchema,
   email: emailSchema,
   phone: phoneSchema,
-  // Endereço do proprietário: preservado quando existir, mas não exigido no onboarding público.
+  // Endereço do proprietário: obrigatório no onboarding público (dado de contrato).
   postalCode: z
     .string()
-    .refine((value) => [0, 8].includes(normalizeDocument(value).length), "Digite um CEP válido."),
-  street: z.string().trim().max(160),
-  number: z.string().trim().max(20),
+    .refine((value) => normalizeDocument(value).length === 8, "Digite um CEP válido."),
+  street: z.string().trim().min(1, "Informe o endereço.").max(160),
+  number: z.string().trim().min(1, "Informe o número.").max(20),
   complement: z.string().trim().max(100).nullable(),
-  district: z.string().trim().max(100),
-  city: z.string().trim().max(100),
+  district: z.string().trim().min(1, "Informe o bairro.").max(100),
+  city: z.string().trim().min(1, "Informe a cidade.").max(100),
   state: z
     .string()
     .trim()
-    .refine((value) => value.length === 0 || value.length === 2, "Informe a UF.")
+    .refine((value) => value.length === 2, "Informe a UF.")
     .transform((value) => value.toUpperCase()),
   bankName: z.string().trim().min(2, "Informe o banco.").max(120),
   bankBranch: z.string().trim().min(1, "Informe a agência.").max(20),
