@@ -20,6 +20,8 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from "../api/supabase-
 export interface OwnerPortalAccount {
   id: string;
   ownerId: string;
+  role: OwnerPortalRole;
+  sharePercent: number | null;
   createdAt: string;
 }
 
