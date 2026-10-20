@@ -38,3 +38,6 @@
 - [x] Localizar VF - Financeiro e contrato existente: POST /api/public/stayo-expenses e GET /api/public/stayo-statements; autenticação servidor a servidor e despesas idempotentes.
 - [x] Credencial registrada pelo formulário seguro; consulta mensal e adaptador de envio autenticados implementados, com esquema estrito e transmissão bloqueada por padrão. Três testes passaram.
 - [ ] Consulta real bloqueada: VF publicado respondeu 401 à credencial salva; alinhar STAYO_WEBHOOK_SECRET nos dois serviços. Nenhuma despesa real enviada; ativação depende de autorização explícita.
+
+## Endereço do proprietário
+- [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
