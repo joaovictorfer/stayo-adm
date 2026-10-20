@@ -1074,11 +1074,21 @@ function ReviewStep({
     .join(", ");
   const rows = (items: Array<[string, string | number | null | undefined]>) =>
     items.filter(([, v]) => v !== null && v !== undefined && v !== "");
+  const ownerAddress = [
+    [form.street, form.number].filter(Boolean).join(", "),
+    form.complement,
+    form.district,
+    [form.city, form.state].filter(Boolean).join("/"),
+    form.postalCode,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const owner = rows([
     ["Nome", form.fullName],
     ["CPF/CNPJ", form.document],
     ["E-mail", form.email],
     ["Telefone", form.phone],
+    ["Endereço", ownerAddress || null],
     ["Outras pessoas", form.people.length > 1 ? form.people.length - 1 : null],
     ["Banco", form.bankName],
     ["Chave Pix", form.pixKey],
@@ -1847,6 +1857,62 @@ function OwnerStep({
             onChange={(value) => onUpdatePerson(0, { profession: value || null })}
             error={show(1) ? validateProfession(primary?.profession) : undefined}
           />
+
+          <p className="pd-group">Seu endereço</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="CEP"
+              inputMode="numeric"
+              placeholder="00000-000"
+              value={formatBrazilianPostalCode(form.postalCode)}
+              onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))}
+              onBlur={() => void findCep(form.postalCode, onSet, false)}
+              error={error(1, "postalCode")}
+              hint="Preenchemos o endereço automaticamente pelo CEP."
+            />
+            <Field
+              label="Endereço"
+              placeholder="Rua, avenida…"
+              value={form.street}
+              onChange={(value) => onSet("street", value)}
+              error={error(1, "street")}
+            />
+            <Field
+              label="Número"
+              inputMode="numeric"
+              value={form.number}
+              onChange={(value) => onSet("number", value)}
+              error={error(1, "number")}
+            />
+            <Field
+              label="Complemento (opcional)"
+              placeholder="Apto, bloco, casa…"
+              value={form.complement ?? ""}
+              onChange={(value) => onSet("complement", value || null)}
+            />
+            <Field
+              label="Bairro"
+              value={form.district}
+              onChange={(value) => onSet("district", value)}
+              error={error(1, "district")}
+            />
+            <div className="grid grid-cols-[1fr_auto] gap-3">
+              <Field
+                label="Cidade"
+                value={form.city}
+                onChange={(value) => onSet("city", value)}
+                error={error(1, "city")}
+              />
+              <Field
+                label="UF"
+                placeholder="RS"
+                className="w-20"
+                value={form.state}
+                onChange={(value) => onSet("state", value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase())}
+                error={error(1, "state")}
+              />
+            </div>
+          </div>
 
           <div className="pd-question">
             <p id="pd-co-owner">O imóvel terá mais de um proprietário ou proponente?</p>

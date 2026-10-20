@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Check, ChevronDown, Copy, Eye, EyeOff, Globe, KeyRound, Landmark, Pencil, UserRound, Users } from "lucide-react";
+import { Building2, Check, ChevronDown, Copy, Eye, EyeOff, Globe, KeyRound, Landmark, MapPin, Pencil, UserRound, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
