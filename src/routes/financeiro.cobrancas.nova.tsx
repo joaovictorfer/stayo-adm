@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { ChargesWorkspace } from "@/components/admin/ChargesWorkspace";
+export const Route = createFileRoute("/financeiro/cobrancas/nova")({head:()=>({meta:[{title:"Nova cobrança — STAYO Admin"},{name:"description",content:"Cadastrar destinatário, serviços e valores de uma cobrança STAYO."},{property:"og:title",content:"Nova cobrança — STAYO Admin"},{property:"og:description",content:"Cadastro de cobrança avulsa ou por imóvel."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ChargesWorkspace mode="new"/>});

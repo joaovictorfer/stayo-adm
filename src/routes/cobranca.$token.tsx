@@ -1,0 +1,9 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ChargeDocument } from "@/components/admin/ChargeDocument";
+import { StayoLogo } from "@/components/brand/StayoLogo";
+import { readPublicCharge } from "@/lib/api/core-client";
+export const Route = createFileRoute("/cobranca/$token")({head:()=>({meta:[{title:"Demonstrativo de serviços — STAYO Gramado"},{name:"description",content:"Consulta privada dos serviços e valores apresentados pela STAYO Gramado."},{property:"og:title",content:"Demonstrativo de serviços — STAYO Gramado"},{property:"og:description",content:"Demonstrativo de serviços STAYO."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"},{name:"robots",content:"noindex, nofollow, noarchive"},{name:"referrer",content:"no-referrer"}]}),component:Page});
+function Page(){const {token}=Route.useParams();const read=useServerFn(readPublicCharge);const q=useQuery({queryKey:["public-charge",token],queryFn:()=>read({data:{token}}),retry:false});return <main className="charge-workspace min-h-screen bg-background py-6 px-3"><div className="charge-preview-wrap">{q.isPending?<div className="charge-skeleton" aria-label="Carregando demonstrativo"><div/><div/><div/></div>:q.isError?<ChargeDocument persistent charge={empty} state="error" onReset={()=>q.refetch()}/>:!q.data?<div className="charge-unavailable"><StayoLogo className="w-28 mx-auto"/><h1 className="text-xl mt-6">Link indisponível</h1><p>Este link expirou, foi revogado ou não existe.</p></div>:<ChargeDocument persistent charge={q.data}/>}</div></main>;}
+const empty={id:"",code:"",title:"",recipient:"",email:"",property:null,presentedProperty:null,due:"",issued:"",competence:"",notes:"",internalNotes:"",items:[],status:"open" as const,history:[]};

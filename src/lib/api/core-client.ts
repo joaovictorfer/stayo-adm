@@ -44,6 +44,8 @@ import type {
 } from "../../types/core-admin";
 import { checklistTemplatesStore, newId, read, write } from "./local-store";
 import { nextImplementationCode } from "../implementation-status";
+// Separate Admin receivables facade: UI mutations still enter through this API boundary.
+export { listCharges, chargeOptions, saveCharge, actionCharge, readPublicCharge } from "../charges.functions";
 
 export interface Page<T> {
   data: T[];

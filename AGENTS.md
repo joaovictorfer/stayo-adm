@@ -39,4 +39,4 @@
 - Bedrooms is canonical in implementation_projects; invitation PATCH is conflict-aware. getPropertyDetails uses canonical bedrooms and derives suites from persisted amenities rooms, falling back only without room data.
 - VF Financeiro uses role-protected server functions and strict DTOs; credentials stay server-only. Expense transmission requires deployment opt-in and per-call confirmation to prevent unauthorized writes.
 - Dedicated registration uses hashed expiring capabilities, serialized revisioned saves and atomic inventory entry. Inventory templates reconcile inventory_room_key (room ID; private bath = ID + :bath) in place, preserving answers/IDs; SurveyExperience retains legacy capability grouping.
-- Charge prototypes use isolated routes, in-memory state and integer-cent totals; no financial API, persistence or payment links, preventing real receivables changes.
+- Charges: isolated local prototypes; real charges use core-client, role-checked RPCs, revision locks, immutable snapshots and hashed expiring read-only links; never alter VF finances.

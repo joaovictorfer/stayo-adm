@@ -11,7 +11,7 @@ export const documentStates: { value: DocumentState; label: string }[] = [
   { value: "normal", label: "Disponível" }, { value: "loading", label: "Carregando" }, { value: "processing", label: "Processando" }, { value: "paid", label: "Pago" }, { value: "declined", label: "Recusado" }, { value: "expired", label: "Pix expirado" }, { value: "cancelled", label: "Cancelado" }, { value: "revoked", label: "Link revogado" }, { value: "error", label: "Falha temporária" },
 ];
 const date = (value: string) => value ? value.split("-").reverse().join("/") : "—";
-export function ChargeDocument({ charge, state = "normal", onReset }: { charge: DemoCharge; state?: DocumentState; onReset?: () => void }) {
+export function ChargeDocument({ charge, state = "normal", onReset, persistent = false, coverUrl }: { charge: DemoCharge; state?: DocumentState; onReset?: () => void; persistent?: boolean; coverUrl?: string }) {
   const [method, setMethod] = useState<"pix" | "card">("pix");
   const [notice, setNotice] = useState(false);
   const totals = chargeTotals(charge.items);
@@ -21,7 +21,7 @@ export function ChargeDocument({ charge, state = "normal", onReset }: { charge: 
   if (resolved === "revoked" || resolved === "error") return <div className="charge-unavailable"><LockKeyhole size={32} /><h2>{resolved === "revoked" ? "Link indisponível" : "Não foi possível carregar a cobrança"}</h2><p>{resolved === "revoked" ? "Este link expirou ou foi revogado." : "Tente novamente em alguns instantes."}</p>{onReset && <Button variant="outline" onClick={onReset}><RotateCcw />Tentar novamente</Button>}</div>;
   return <article className="charge-document">
     <header className={`charge-cover ${charge.presentedProperty ? "has-photo" : ""}`}>
-      {charge.presentedProperty && <img src={apartment} width={1536} height={864} alt="Apartamento fictício de demonstração" className="charge-cover-photo" />}
+      {charge.presentedProperty && (!persistent || coverUrl) && <img src={persistent ? coverUrl : apartment} width={1536} height={864} alt={persistent ? "Imóvel" : "Apartamento fictício de demonstração"} className="charge-cover-photo" />}
       <div className="charge-cover-brand"><StayoLogo variant="white" className="w-24" /><span>DEMONSTRATIVO<br /><strong>{charge.code}</strong></span></div>
       <div className="charge-cover-title"><span className="charge-eyebrow">Serviços e reembolsos</span><h1>{charge.title || "Nova cobrança"}</h1><p>{charge.presentedProperty || "Cobrança avulsa"}</p></div>
     </header>
@@ -38,11 +38,11 @@ export function ChargeDocument({ charge, state = "normal", onReset }: { charge: 
           <div className="charge-payment-options"><Button variant="outline" aria-pressed={method === "pix"} className="charge-payment-option" onClick={() => { setMethod("pix"); setNotice(false); }}><QrCode /><span>Pix<strong>{value(totals.pix)}</strong><small>Sem acréscimo</small></span>{method === "pix" && <CheckCircle2 />}</Button><Button variant="outline" aria-pressed={method === "card"} className="charge-payment-option" onClick={() => { setMethod("card"); setNotice(false); }}><CreditCard /><span>Cartão de crédito<strong>{value(totals.card)}</strong><small>Acréscimo de 5%</small></span>{method === "card" && <CheckCircle2 />}</Button></div>
           <div className="charge-payment-total">{method === "card" && <p><span>Acréscimo de 5%</span><strong>{value(totals.surcharge)}</strong></p>}<p><span>Total no {method === "pix" ? "Pix" : "cartão"}</span><strong>{value(method === "pix" ? totals.pix : totals.card)}</strong></p></div>
           {resolved !== "normal" && <div className="charge-payment-status" role="status"><Receipt /><div><strong>{{ processing: "Pagamento em processamento", declined: "Pagamento não aprovado", expired: "Pix expirado" }[resolved as "processing" | "declined" | "expired"]}</strong><p>Estado demonstrativo. Nenhuma transação realizada.</p></div></div>}
-          <Button className="w-full" disabled={resolved === "processing"} onClick={() => setNotice(true)}>{method === "pix" ? <QrCode /> : <CreditCard />}Conferir pagamento · demonstração</Button>
-          {notice && <p className="charge-demo-notice" role="status">Pagar.me ainda não conectado. Esta prévia não gera cobrança, QR Code ou pagamento.</p>}
+          <Button className="w-full" disabled={persistent || resolved === "processing"} onClick={() => setNotice(true)}>{method === "pix" ? <QrCode /> : <CreditCard />}{persistent ? "Pagamento ainda indisponível" : "Conferir pagamento · demonstração"}</Button>
+          {(notice || persistent) && <p className="charge-demo-notice" role="status">{persistent ? "O demonstrativo está disponível para consulta. Pagamento aguardando ativação da Pagar.me." : "Pagar.me ainda não conectado. Esta prévia não gera cobrança, QR Code ou pagamento."}</p>}
         </>}
       </section>
-      <footer className="charge-document-footer"><LockKeyhole size={14} /><span>Prévia demonstrativa · sem validade fiscal ou link pagável</span></footer>
+      <footer className="charge-document-footer"><LockKeyhole size={14} /><span>{persistent ? "Demonstrativo de serviços · não é nota fiscal" : "Prévia demonstrativa · sem validade fiscal ou link pagável"}</span></footer>
     </div>
   </article>;
 }

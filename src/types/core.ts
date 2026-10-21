@@ -14,6 +14,16 @@
 
 export type EntityId = string;
 
+/** Separate STAYO receivables domain; all amounts are integer BRL cents. */
+export interface StayoCharge {
+  id: string; code: string; revision: number; title: string; recipient: string; email: string;
+  ownerId: string | null; implementationId: string | null; property: string | null; presentedProperty: string | null;
+  due: string; issued: string; competence: string; notes: string; internalNotes: string;
+  items: { id: string; description: string; quantity: number; unitCents: number }[];
+  status: "draft" | "open" | "cancelled"; paymentStatus: "pending";
+  history: string[]; linkExpiresAt: string | null; linkRevoked: boolean;
+}
+
 export type ImplementationStatus =
   | "prospect"
   | "proposta"
