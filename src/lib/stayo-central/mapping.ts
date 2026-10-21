@@ -1,0 +1,10 @@
+export interface LocalReference { localId:string; externalId:string|null; code:string|null; updatedAt:string|null }
+export interface MappingRow { localId:string|null; externalId:string|null; commercialCode:string|null; sourceUpdatedAt:string|null; lastConsultedAt:string|null; state:"matched_uuid"|"local_unlinked"|"external_unlinked"|"duplicate_external"|"external_not_returned"; divergences:string[] }
+/** Pure preview. Never writes local records or infers identity from personal data. */
+export function previewMapping(local:LocalReference[], external:{id:string}[], consultedAt:string|null):MappingRow[]{
+ const counts=new Map<string,number>();for(const row of local)if(row.externalId)counts.set(row.externalId,(counts.get(row.externalId)||0)+1);for(const row of external)if(external.filter(x=>x.id===row.id).length>1)counts.set(row.id,2);
+ const source=new Set(external.map(r=>r.id));const known=new Set(local.flatMap(r=>r.externalId?[r.externalId]:[]));
+ const rows:MappingRow[]=local.map(row=>({localId:row.localId,externalId:row.externalId,commercialCode:row.code,sourceUpdatedAt:null,lastConsultedAt:consultedAt,state:!row.externalId?"local_unlinked":(counts.get(row.externalId)||0)>1?"duplicate_external":source.has(row.externalId)?"matched_uuid":"external_not_returned",divergences:!row.externalId?["UUID externo não vinculado"]:(counts.get(row.externalId)||0)>1?["UUID externo ambíguo; conferir cadastros"]:source.has(row.externalId)?[]:["Não retornado nesta consulta; não significa exclusão"]}));
+ for(const row of external)if(!known.has(row.id))rows.push({localId:null,externalId:row.id,commercialCode:null,sourceUpdatedAt:null,lastConsultedAt:consultedAt,state:(counts.get(row.id)||0)>1?"duplicate_external":"external_unlinked",divergences:["Sem vínculo local; não criar automaticamente"]});return rows;
+}
+export function nextIncrementalSince(completedRoundStart:string|null,overlapMs=300000):string|undefined {if(!completedRoundStart)return undefined;const t=Date.parse(completedRoundStart);return Number.isFinite(t)?new Date(t-overlapMs).toISOString():undefined;}

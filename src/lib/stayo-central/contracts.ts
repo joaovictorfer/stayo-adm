@@ -1,0 +1,25 @@
+import { z } from "zod";
+export const CENTRAL_BASE_URL = "https://guia.stayogramado.com.br/api/v1";
+export const CENTRAL_APPLICATION = "stayo-admin";
+export const CENTRAL_SCOPE = "admin:read";
+// The handoff supplies only an envelope and a partial reservation example.
+// Never label these minimal projections as the provider's complete OpenAPI contract.
+export const metaSchema = z.object({ request_id: z.string().min(1).max(200), api_version: z.literal("v1") });
+export const pageSchema = z.object({ limit: z.number().int().min(1).max(100), count: z.number().int().min(0).max(100), has_more: z.boolean(), next_cursor: z.string().min(1).max(4096).nullable() }).refine(p => p.has_more ? p.next_cursor !== null : p.next_cursor === null, "Invalid pagination cursor");
+export const referenceSchema = z.object({ id: z.string().uuid() });
+export const reservationMinimumSchema = z.object({ id: z.string().uuid(), reservation_code: z.string().max(200).optional(), property_id: z.string().uuid().optional(), guest_name: z.string().max(300).nullable().optional(), checkin_date: z.string().date().optional(), checkout_date: z.string().date().optional(), nights: z.number().int().nonnegative().optional(), web_checkin_status: z.string().max(100).optional(), is_block: z.boolean().optional() }).transform(r => ({ ...r, guest_name: r.is_block ? null : r.guest_name }));
+export const listEnvelope = <T extends z.ZodTypeAny>(item: T) => z.object({ data: z.object({ items: z.array(item).max(100), page: pageSchema }), meta: metaSchema }).refine(e => e.data.page.count === e.data.items.length, "Invalid page count");
+export const healthSchema = z.object({ data: z.object({ status: z.literal("ok") }), meta: metaSchema });
+export const whoamiTransportSchema = z.object({ data: z.record(z.unknown()), meta: metaSchema });
+export const centralResourceSchema = z.enum(["properties", "owners", "reservations"]);
+export type CentralResource = z.infer<typeof centralResourceSchema>;
+export const filtersSchema = z.object({ limit: z.number().int().min(1).max(100).default(10), cursor: z.string().min(1).max(4096).optional(), updated_since: z.string().datetime({ offset: true }).optional(), property_id: z.string().uuid().optional(), owner_id: z.string().uuid().optional(), channel: z.string().min(1).max(100).optional(), status: z.string().min(1).max(100).optional(), checkin_from: z.string().date().optional(), checkin_to: z.string().date().optional(), include_blocks: z.boolean().optional() }).strict();
+export type CentralFilters = z.input<typeof filtersSchema>;
+export const querySchema = z.object({ resource: centralResourceSchema, filters: filtersSchema.default({ limit: 10 }) }).strict().refine(q => q.resource === "reservations" || ![q.filters.property_id,q.filters.owner_id,q.filters.channel,q.filters.status,q.filters.checkin_from,q.filters.checkin_to,q.filters.include_blocks].some(v => v !== undefined), "Reservation filters are only valid for reservations");
+export const detailSchema = z.object({ resource: centralResourceSchema, id: z.string().uuid(), checkin: z.boolean().default(false) }).strict().refine(d => !d.checkin || d.resource === "reservations", "Check-in belongs to reservations");
+export const errorKinds = ["not_configured", "invalid_origin", "unauthorized", "forbidden", "rate_limited", "unavailable", "timeout", "network", "invalid_response", "pagination", "contract_pending"] as const;
+export type CentralErrorKind = typeof errorKinds[number];
+export interface CentralFailure { ok: false; kind: CentralErrorKind; status: number | null; requestId: string | null; retryAfterMs: number | null }
+export interface CentralSuccess<T> { ok: true; data: T; requestId: string | null; status: number }
+export type CentralResult<T> = CentralSuccess<T> | CentralFailure;
+export const messages: Record<CentralErrorKind,string> = { not_configured:"Conexão não configurada. Credencial oficial pendente.", invalid_origin:"Origem da API fora da configuração oficial.", unauthorized:"Autenticação rejeitada. Verifique ativação, validade ou revogação da credencial.", forbidden:"Escopo insuficiente. Consulta não será repetida.", rate_limited:"Limite de consultas atingido. Aguarde antes de tentar novamente.", unavailable:"API indisponível. Últimos dados válidos preservados.", timeout:"A API não respondeu no prazo.", network:"Falha de comunicação com a API.", invalid_response:"Resposta incompatível com o contrato validado.", pagination:"Paginação inconsistente. Rodada não concluída.", contract_pending:"OpenAPI completo pendente. Consulta de cadastros bloqueada até validar o contrato." };

@@ -1,0 +1,4 @@
+- Central API transport is server-only and read-only; configuration is read inside protected handlers, never via VITE variables.
+- Full provider OpenAPI is required before enabling business queries; minimal handoff schemas are test projections, not homologated contracts.
+- Manual mapping is pure UUID comparison. No import, merge, local mutation, cron, event feed or ACK is enabled.
+- Persist only diagnostic metadata/checkpoints; never provider payloads, identities, personal fields or secrets in logs.
