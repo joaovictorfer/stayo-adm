@@ -498,6 +498,13 @@
       "when": 1792463884442,
       "tag": "0070_owner_portal_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1792610674333,
+      "tag": "0071_stayo_charges",
+      "breakpoints": true
     }
   ]
 }

@@ -3063,6 +3063,75 @@ export type Database = {
           },
         ]
       }
+      stayo_charges: {
+        Row: {
+          code: number
+          created_at: string
+          created_by: string
+          draft: Json
+          expires_at: string | null
+          history: Json
+          id: string
+          implementation_id: string | null
+          owner_id: string | null
+          revision: number
+          revoked_at: string | null
+          snapshot: Json | null
+          state: string
+          token_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          code?: never
+          created_at?: string
+          created_by: string
+          draft: Json
+          expires_at?: string | null
+          history?: Json
+          id: string
+          implementation_id?: string | null
+          owner_id?: string | null
+          revision?: number
+          revoked_at?: string | null
+          snapshot?: Json | null
+          state?: string
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: never
+          created_at?: string
+          created_by?: string
+          draft?: Json
+          expires_at?: string | null
+          history?: Json
+          id?: string
+          implementation_id?: string | null
+          owner_id?: string | null
+          revision?: number
+          revoked_at?: string | null
+          snapshot?: Json | null
+          state?: string
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stayo_charges_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stayo_charges_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_catalog: {
         Row: {
           created_at: string
@@ -3256,6 +3325,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_action_stayo_charge: {
+        Args: {
+          p_action: string
+          p_hash?: string
+          p_id: string
+          p_implementation_id?: string
+          p_revision: number
+        }
+        Returns: Json
+      }
       admin_apply_guide: {
         Args: { p_guide_type?: string; p_implementation_id: string }
         Returns: number
@@ -3510,6 +3589,7 @@ export type Database = {
         Args: { p_implementation_id: string }
         Returns: Json
       }
+      admin_list_stayo_charges: { Args: never; Returns: Json }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
       admin_quick_mark_guide_item: {
@@ -3575,6 +3655,7 @@ export type Database = {
         }
       }
       admin_save_proposal_draft: { Args: { p_data: Json }; Returns: Json }
+      admin_save_stayo_charge: { Args: { p_data: Json }; Returns: Json }
       admin_schedule_commercial_meeting: {
         Args: { p_data: Json }
         Returns: Json
@@ -3873,6 +3954,11 @@ export type Database = {
           total: number
           version: number
         }[]
+      }
+      public_stayo_charge: { Args: { p_hash: string }; Returns: Json }
+      stayo_charge_dto: {
+        Args: { c: Database["public"]["Tables"]["stayo_charges"]["Row"] }
+        Returns: Json
       }
       survey_add_note_preset: {
         Args: { p_text: string; p_token: string }
