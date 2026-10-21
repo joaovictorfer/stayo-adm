@@ -14,6 +14,7 @@ import { Route as BiRouteImport } from './routes/bi'
 import { Route as GuiasImplantacaoPrototipoRouteImport } from './routes/guias-implantacao-prototipo'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProprietarioPrototipoRouteImport } from './routes/proprietario-prototipo'
+import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
 import { Route as CondominiosIdRouteImport } from './routes/condominios.$id'
 import { Route as ConfiguracoesIndexRouteImport } from './routes/configuracoes.index'
@@ -32,6 +33,7 @@ import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
 import { Route as FinanceiroIdRouteImport } from './routes/financeiro.$id'
+import { Route as FinanceiroCobrancasRouteImport } from './routes/financeiro.cobrancas'
 import { Route as FinanceiroCobrancasPrototipoRouteImport } from './routes/financeiro.cobrancas-prototipo'
 import { Route as FinanceiroDespesasPrototipoRouteImport } from './routes/financeiro.despesas-prototipo'
 import { Route as FinanceiroFaturasPrototipoRouteImport } from './routes/financeiro.faturas-prototipo'
@@ -82,6 +84,9 @@ import { Route as ReservasIdRouteImport } from './routes/reservas.$id'
 import { Route as VistoriaImplantacaoTokenRouteImport } from './routes/vistoria-implantacao.$token'
 import { Route as VistoriasIndexRouteImport } from './routes/vistorias.index'
 import { Route as VistoriasIdRouteImport } from './routes/vistorias.$id'
+import { Route as FinanceiroCobrancasIndexRouteImport } from './routes/financeiro.cobrancas.index'
+import { Route as FinanceiroCobrancasIdRouteImport } from './routes/financeiro.cobrancas.$id'
+import { Route as FinanceiroCobrancasNovaRouteImport } from './routes/financeiro.cobrancas.nova'
 import { Route as PortalApresentacaoTokenRouteImport } from './routes/portal.apresentacao.$token'
 import { Route as PortalCadastroVistoriaTokenRouteImport } from './routes/portal.cadastro-vistoria.$token'
 import { Route as PortalCadastroTokenRouteImport } from './routes/portal.cadastro.$token'
@@ -116,6 +121,11 @@ const LoginRoute = LoginRouteImport.update({
 const ProprietarioPrototipoRoute = ProprietarioPrototipoRouteImport.update({
   id: '/proprietario-prototipo',
   path: '/proprietario-prototipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CobrancaTokenRoute = CobrancaTokenRouteImport.update({
+  id: '/cobranca/$token',
+  path: '/cobranca/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CondominiosIndexRoute = CondominiosIndexRouteImport.update({
@@ -209,6 +219,11 @@ const FinanceiroIndexRoute = FinanceiroIndexRouteImport.update({
 const FinanceiroIdRoute = FinanceiroIdRouteImport.update({
   id: '/financeiro/$id',
   path: '/financeiro/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroCobrancasRoute = FinanceiroCobrancasRouteImport.update({
+  id: '/financeiro/cobrancas',
+  path: '/financeiro/cobrancas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceiroCobrancasPrototipoRoute =
@@ -473,6 +488,22 @@ const VistoriasIdRoute = VistoriasIdRouteImport.update({
   path: '/vistorias/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceiroCobrancasIndexRoute =
+  FinanceiroCobrancasIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => FinanceiroCobrancasRoute,
+  } as any)
+const FinanceiroCobrancasIdRoute = FinanceiroCobrancasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => FinanceiroCobrancasRoute,
+} as any)
+const FinanceiroCobrancasNovaRoute = FinanceiroCobrancasNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => FinanceiroCobrancasRoute,
+} as any)
 const PortalApresentacaoTokenRoute = PortalApresentacaoTokenRouteImport.update({
   id: '/portal/apresentacao/$token',
   path: '/portal/apresentacao/$token',
@@ -527,6 +558,7 @@ export interface FileRoutesByFullPath {
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
+  '/cobranca/$token': typeof CobrancaTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/alertas': typeof ConfiguracoesAlertasRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
@@ -541,6 +573,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/cobrancas': typeof FinanceiroCobrancasRouteWithChildren
   '/financeiro/cobrancas-prototipo': typeof FinanceiroCobrancasPrototipoRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
@@ -595,6 +628,8 @@ export interface FileRoutesByFullPath {
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
   '/vistorias/': typeof VistoriasIndexRoute
+  '/financeiro/cobrancas/$id': typeof FinanceiroCobrancasIdRoute
+  '/financeiro/cobrancas/nova': typeof FinanceiroCobrancasNovaRoute
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
@@ -603,6 +638,7 @@ export interface FileRoutesByFullPath {
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
+  '/financeiro/cobrancas/': typeof FinanceiroCobrancasIndexRoute
   '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRoutesByTo {
@@ -611,6 +647,7 @@ export interface FileRoutesByTo {
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
+  '/cobranca/$token': typeof CobrancaTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/alertas': typeof ConfiguracoesAlertasRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
@@ -679,6 +716,8 @@ export interface FileRoutesByTo {
   '/proprietarios': typeof ProprietariosIndexRoute
   '/reservas': typeof ReservasIndexRoute
   '/vistorias': typeof VistoriasIndexRoute
+  '/financeiro/cobrancas/$id': typeof FinanceiroCobrancasIdRoute
+  '/financeiro/cobrancas/nova': typeof FinanceiroCobrancasNovaRoute
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
@@ -687,6 +726,7 @@ export interface FileRoutesByTo {
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
+  '/financeiro/cobrancas': typeof FinanceiroCobrancasIndexRoute
   '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRoutesById {
@@ -696,6 +736,7 @@ export interface FileRoutesById {
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
+  '/cobranca/$token': typeof CobrancaTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
   '/configuracoes/alertas': typeof ConfiguracoesAlertasRoute
   '/configuracoes/auditoria': typeof ConfiguracoesAuditoriaRoute
@@ -710,6 +751,7 @@ export interface FileRoutesById {
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/cobrancas': typeof FinanceiroCobrancasRouteWithChildren
   '/financeiro/cobrancas-prototipo': typeof FinanceiroCobrancasPrototipoRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
@@ -764,6 +806,8 @@ export interface FileRoutesById {
   '/proprietarios/': typeof ProprietariosIndexRoute
   '/reservas/': typeof ReservasIndexRoute
   '/vistorias/': typeof VistoriasIndexRoute
+  '/financeiro/cobrancas/$id': typeof FinanceiroCobrancasIdRoute
+  '/financeiro/cobrancas/nova': typeof FinanceiroCobrancasNovaRoute
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
@@ -772,6 +816,7 @@ export interface FileRoutesById {
   '/portal/previa/$id': typeof PortalPreviaIdRoute
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
+  '/financeiro/cobrancas/': typeof FinanceiroCobrancasIndexRoute
   '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRouteTypes {
@@ -782,6 +827,7 @@ export interface FileRouteTypes {
     | '/guias-implantacao-prototipo'
     | '/login'
     | '/proprietario-prototipo'
+    | '/cobranca/$token'
     | '/condominios/$id'
     | '/configuracoes/alertas'
     | '/configuracoes/auditoria'
@@ -796,6 +842,7 @@ export interface FileRouteTypes {
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/cobrancas'
     | '/financeiro/cobrancas-prototipo'
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
@@ -850,6 +897,8 @@ export interface FileRouteTypes {
     | '/proprietarios/'
     | '/reservas/'
     | '/vistorias/'
+    | '/financeiro/cobrancas/$id'
+    | '/financeiro/cobrancas/nova'
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
@@ -858,6 +907,7 @@ export interface FileRouteTypes {
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
+    | '/financeiro/cobrancas/'
     | '/api/public/owner-cover/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -866,6 +916,7 @@ export interface FileRouteTypes {
     | '/guias-implantacao-prototipo'
     | '/login'
     | '/proprietario-prototipo'
+    | '/cobranca/$token'
     | '/condominios/$id'
     | '/configuracoes/alertas'
     | '/configuracoes/auditoria'
@@ -934,6 +985,8 @@ export interface FileRouteTypes {
     | '/proprietarios'
     | '/reservas'
     | '/vistorias'
+    | '/financeiro/cobrancas/$id'
+    | '/financeiro/cobrancas/nova'
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
@@ -942,6 +995,7 @@ export interface FileRouteTypes {
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
+    | '/financeiro/cobrancas'
     | '/api/public/owner-cover/$token'
   id:
     | '__root__'
@@ -950,6 +1004,7 @@ export interface FileRouteTypes {
     | '/guias-implantacao-prototipo'
     | '/login'
     | '/proprietario-prototipo'
+    | '/cobranca/$token'
     | '/condominios/$id'
     | '/configuracoes/alertas'
     | '/configuracoes/auditoria'
@@ -964,6 +1019,7 @@ export interface FileRouteTypes {
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/cobrancas'
     | '/financeiro/cobrancas-prototipo'
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
@@ -1018,6 +1074,8 @@ export interface FileRouteTypes {
     | '/proprietarios/'
     | '/reservas/'
     | '/vistorias/'
+    | '/financeiro/cobrancas/$id'
+    | '/financeiro/cobrancas/nova'
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
@@ -1026,6 +1084,7 @@ export interface FileRouteTypes {
     | '/portal/previa/$id'
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
+    | '/financeiro/cobrancas/'
     | '/api/public/owner-cover/$token'
   fileRoutesById: FileRoutesById
 }
@@ -1035,6 +1094,7 @@ export interface RootRouteChildren {
   GuiasImplantacaoPrototipoRoute: typeof GuiasImplantacaoPrototipoRoute
   LoginRoute: typeof LoginRoute
   ProprietarioPrototipoRoute: typeof ProprietarioPrototipoRoute
+  CobrancaTokenRoute: typeof CobrancaTokenRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
   ConfiguracoesAlertasRoute: typeof ConfiguracoesAlertasRoute
   ConfiguracoesAuditoriaRoute: typeof ConfiguracoesAuditoriaRoute
@@ -1049,6 +1109,7 @@ export interface RootRouteChildren {
   ConfiguracoesVistoriasPrototipoRoute: typeof ConfiguracoesVistoriasPrototipoRoute
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
+  FinanceiroCobrancasRoute: typeof FinanceiroCobrancasRouteWithChildren
   FinanceiroCobrancasPrototipoRoute: typeof FinanceiroCobrancasPrototipoRoute
   FinanceiroDespesasPrototipoRoute: typeof FinanceiroDespesasPrototipoRoute
   FinanceiroFaturasPrototipoRoute: typeof FinanceiroFaturasPrototipoRoute
@@ -1149,6 +1210,13 @@ declare module '@tanstack/react-router' {
       path: '/proprietario-prototipo'
       fullPath: '/proprietario-prototipo'
       preLoaderRoute: typeof ProprietarioPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cobranca/$token': {
+      id: '/cobranca/$token'
+      path: '/cobranca/$token'
+      fullPath: '/cobranca/$token'
+      preLoaderRoute: typeof CobrancaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/condominios/': {
@@ -1275,6 +1343,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/$id'
       fullPath: '/financeiro/$id'
       preLoaderRoute: typeof FinanceiroIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/cobrancas': {
+      id: '/financeiro/cobrancas'
+      path: '/financeiro/cobrancas'
+      fullPath: '/financeiro/cobrancas'
+      preLoaderRoute: typeof FinanceiroCobrancasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro/cobrancas-prototipo': {
@@ -1627,6 +1702,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VistoriasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/financeiro/cobrancas/': {
+      id: '/financeiro/cobrancas/'
+      path: '/'
+      fullPath: '/financeiro/cobrancas/'
+      preLoaderRoute: typeof FinanceiroCobrancasIndexRouteImport
+      parentRoute: typeof FinanceiroCobrancasRoute
+    }
+    '/financeiro/cobrancas/$id': {
+      id: '/financeiro/cobrancas/$id'
+      path: '/$id'
+      fullPath: '/financeiro/cobrancas/$id'
+      preLoaderRoute: typeof FinanceiroCobrancasIdRouteImport
+      parentRoute: typeof FinanceiroCobrancasRoute
+    }
+    '/financeiro/cobrancas/nova': {
+      id: '/financeiro/cobrancas/nova'
+      path: '/nova'
+      fullPath: '/financeiro/cobrancas/nova'
+      preLoaderRoute: typeof FinanceiroCobrancasNovaRouteImport
+      parentRoute: typeof FinanceiroCobrancasRoute
+    }
     '/portal/apresentacao/$token': {
       id: '/portal/apresentacao/$token'
       path: '/portal/apresentacao/$token'
@@ -1693,12 +1789,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface FinanceiroCobrancasRouteChildren {
+  FinanceiroCobrancasIdRoute: typeof FinanceiroCobrancasIdRoute
+  FinanceiroCobrancasNovaRoute: typeof FinanceiroCobrancasNovaRoute
+  FinanceiroCobrancasIndexRoute: typeof FinanceiroCobrancasIndexRoute
+}
+
+const FinanceiroCobrancasRouteChildren: FinanceiroCobrancasRouteChildren = {
+  FinanceiroCobrancasIdRoute: FinanceiroCobrancasIdRoute,
+  FinanceiroCobrancasNovaRoute: FinanceiroCobrancasNovaRoute,
+  FinanceiroCobrancasIndexRoute: FinanceiroCobrancasIndexRoute,
+}
+
+const FinanceiroCobrancasRouteWithChildren =
+  FinanceiroCobrancasRoute._addFileChildren(FinanceiroCobrancasRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiRoute: BiRoute,
   GuiasImplantacaoPrototipoRoute: GuiasImplantacaoPrototipoRoute,
   LoginRoute: LoginRoute,
   ProprietarioPrototipoRoute: ProprietarioPrototipoRoute,
+  CobrancaTokenRoute: CobrancaTokenRoute,
   CondominiosIdRoute: CondominiosIdRoute,
   ConfiguracoesAlertasRoute: ConfiguracoesAlertasRoute,
   ConfiguracoesAuditoriaRoute: ConfiguracoesAuditoriaRoute,
@@ -1713,6 +1825,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesVistoriasPrototipoRoute: ConfiguracoesVistoriasPrototipoRoute,
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
+  FinanceiroCobrancasRoute: FinanceiroCobrancasRouteWithChildren,
   FinanceiroCobrancasPrototipoRoute: FinanceiroCobrancasPrototipoRoute,
   FinanceiroDespesasPrototipoRoute: FinanceiroDespesasPrototipoRoute,
   FinanceiroFaturasPrototipoRoute: FinanceiroFaturasPrototipoRoute,
