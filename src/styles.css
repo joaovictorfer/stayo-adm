@@ -4,6 +4,7 @@
 @import "./config/theme.css";
 @import "./config/implementation-premium.css";
 @import "./config/commercial-meeting.css";
+@import "./config/charges.css";
 
 @custom-variant dark (&:is(.dark *));
 
