@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Pedido 20:09 — verificar acesso à configuração Pagar.me e destacar seu acesso em Configurações; tela autenticada disponível, sem chave de teste enviada.
+- [x] Pedido 20:09 — acesso Pagar.me destacado em Configurações e navegação autenticada até o campo conferida; 3 testes passaram, build OK; sem chave de teste enviada.
 - [x] Configurações Pagar.me no app: formulário restrito, armazenamento cifrado, substituição/remoção e teste somente leitura; 3 testes e fluxo autenticado salvar/recarga/remoção com fixture descartável conferidos, produção rejeitada, build OK. Aguardando chave real de teste do usuário para validar Pagar.me; sem recebimentos reais.
 - [ ] Novo pedido 19:40 — Cobranças Fase 3: QR Pix dinâmico e checkout cartão +5% server-side, exclusivamente sandbox; executar após preparação 10B.2, bloqueado pela conexão Pagar.me não concluída, sem inventar credencial.
 - [x] Fase 10B.2 preparação segura: auditoria/matriz, transporte Central server-only, diagnóstico admin, correspondência UUID sem importação, checkpoints restritos e documentação; 46 testes passaram, build OK, navegador desktop/mobile pendente validado e cadastros preservados.
