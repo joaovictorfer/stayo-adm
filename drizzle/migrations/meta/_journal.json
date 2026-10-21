@@ -519,6 +519,13 @@
       "when": 1792611750277,
       "tag": "0073_central_api_diagnostics",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792612657867,
+      "tag": "0074_pagarme_settings_vault",
+      "breakpoints": true
     }
   ]
 }
