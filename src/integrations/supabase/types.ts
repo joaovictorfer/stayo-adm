@@ -3147,6 +3147,59 @@ export type Database = {
         }
         Relationships: []
       }
+      stayo_charge_payments: {
+        Row: {
+          amount_cents: number
+          charge_id: string
+          checkout_url: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          method: string
+          provider_order_id: string | null
+          qr_code: string | null
+          qr_code_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          charge_id: string
+          checkout_url?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          method: string
+          provider_order_id?: string | null
+          qr_code?: string | null
+          qr_code_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          charge_id?: string
+          checkout_url?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          method?: string
+          provider_order_id?: string | null
+          qr_code?: string | null
+          qr_code_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stayo_charge_payments_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "stayo_charges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stayo_charges: {
         Row: {
           code: number
@@ -3158,6 +3211,9 @@ export type Database = {
           id: string
           implementation_id: string | null
           owner_id: string | null
+          paid_amount_cents: number | null
+          paid_at: string | null
+          paid_method: string | null
           revision: number
           revoked_at: string | null
           snapshot: Json | null
@@ -3175,6 +3231,9 @@ export type Database = {
           id: string
           implementation_id?: string | null
           owner_id?: string | null
+          paid_amount_cents?: number | null
+          paid_at?: string | null
+          paid_method?: string | null
           revision?: number
           revoked_at?: string | null
           snapshot?: Json | null
@@ -3192,6 +3251,9 @@ export type Database = {
           id?: string
           implementation_id?: string | null
           owner_id?: string | null
+          paid_amount_cents?: number | null
+          paid_at?: string | null
+          paid_method?: string | null
           revision?: number
           revoked_at?: string | null
           snapshot?: Json | null
