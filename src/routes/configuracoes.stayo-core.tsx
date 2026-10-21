@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { CentralApiDiagnostics } from "@/components/admin/CentralApiDiagnostics";
+import { Button } from "@/components/ui/button";
 
 import { ErrorRows, Field, PageHeader, Panel } from "../components/data/ListStates";
 import { coreApi } from "../lib/api/queries";
@@ -62,7 +63,8 @@ function StayoCoreSettingsPage() {
         style={{ borderColor: "var(--stayo-border)" }}
       >
         {sections.map((s) => (
-          <button
+          <Button
+            variant="ghost"
             key={s.id}
             type="button"
             onClick={() => setSection(s.id)}
@@ -74,7 +76,7 @@ function StayoCoreSettingsPage() {
             }}
           >
             {s.label}
-          </button>
+          </Button>
         ))}
       </div>
 
