@@ -22,14 +22,15 @@
 - Condições e decisões vivem só em `implementation_contract_conditions`; snapshots preservam a versão aceita e reconciliam limpeza pós-obra sem duplicidade.
 - Instalações e prestadores do imóvel se registram por ambiente no inventário; a ficha não tem painel separado — `property_supplier_entries` é histórico imutável, lido só em `/implantacao/fornecedores`.
 - Inventário e pendências usam `implementation_supply_items`; falta deriva das quantidades.
-- Protótipos de Guias usam rota isolada e estado local, sem APIs.
+- Guide prototypes: local state, no APIs.
 - Guides share snapshots via admin_apply_guide; existing owner_inventory_* links submit for STAYO review.
 - Comodidades e itens do imóvel ficam em implementation_amenities (jsonb por implantação, autosave); empresas novas de móveis entram em supplier_catalog para reaproveitar.
 - Comodidades sincronizam o inventário guiado por `amenity_key` (upsert idempotente); desmarcar só desativa o item, nunca grava "Não tenho" nem cria pendência. Item agrupado mantém a `amenity_key` própria e só desliga se o grupo for "Não"; agrupar nunca apaga resposta nem espelho anterior.
 - Amenities match inventory rows through a presentation adapter; installation defaults, per-room overrides and characteristics live in the amenities JSON with field-level source metadata, so a room edit stays local.
 - Inventory uses shared Row/DetailLayout/DetailFields and read-only media (PDF first); additions reuse addInventoryItem; detail adapters preserve each source.
 - Shared tokens govern fonts/admin motion with reduced motion; one root auth provider deduplicates session/profile reads and clears request-local query caches on identity changes for account isolation.
-- Owner workspace reuses existing records; sensitive data requires explicit reveal. OwnerLinksHub reuses OwnerPortalPanel/OwnerInviteSection in scoped dialogs to preserve invitation capabilities.
+- Owner workspace reuses records and masks sensitive data. OwnerLinksHub preserves invitation capabilities in existing scoped panels.
+- Read nested AGENTS.md before edits; Central API rules: src/lib/stayo-central/AGENTS.md.
 
 - Implementation defaults to the workspace; explicit etapa opens registration, and resume fetches draft_step freshly to preserve continuity.
 - Contract registration reuses OwnerJourney and invitation-authorized contact reconciliation; commercial intake and read-only presentation keep distinct capabilities to preserve existing links and avoid duplicate contract records.
