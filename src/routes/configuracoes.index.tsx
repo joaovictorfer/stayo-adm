@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Bell, ClipboardList, DatabaseZap, HandCoins, Plug, Server, Smartphone, Users, Zap } from "lucide-react";
+import { Bell, ClipboardList, CreditCard, DatabaseZap, HandCoins, Plug, Server, Smartphone, Users, Zap } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -19,6 +19,8 @@ export const Route = createFileRoute("/configuracoes/")({
       { name: "description", content: "Seção Configurações do painel interno Stayo Admin." },
       { property: "og:title", content: "Configurações — Stayo Admin" },
       { property: "og:description", content: "Seção Configurações do painel interno Stayo Admin." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SettingsPage,
@@ -34,6 +36,7 @@ interface SettingsLink {
 }
 
 const links: SettingsLink[] = [
+  { icon: CreditCard, to: "/configuracoes/integracoes", title: "Pagar.me", description: "Chave de teste, conexão segura e configuração das cobranças." },
   { icon: Users, to: "/configuracoes/equipe", title: "Equipe", description: "Usuários, papéis e escopos (demonstração)." },
   { icon: Bell, to: "/configuracoes/alertas", title: "Alertas", description: "Regras de atenção para a equipe (demonstração)." },
   { icon: Zap, to: "/configuracoes/automacoes", title: "Automações", description: "Mensagens e rotinas do STAYO APP (demonstração)." },
@@ -49,7 +52,7 @@ const links: SettingsLink[] = [
     to: "/configuracoes/integracoes",
     title: "Integrações",
     description:
-      "Referência das integrações externas do STAYO.APP (Ayrton, Condfy, WhatsApp, Web Check-in).",
+      "Pagar.me e referência das integrações externas do STAYO.APP.",
   },
   {
     icon: ClipboardList,
@@ -92,7 +95,7 @@ function SettingsPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         {links.map((l) => (
           <DynamicLink
-            key={l.to}
+            key={l.title}
             to={l.to}
             className="admin-panel flex items-start gap-3 p-4 transition hover:-translate-y-0.5"
             style={{ ...surface, color: "var(--stayo-ink)" }}
