@@ -3063,6 +3063,66 @@ export type Database = {
           },
         ]
       }
+      stayo_central_checkpoints: {
+        Row: {
+          completed_round_started_at: string | null
+          filters: Json
+          last_full_scan_at: string | null
+          resource: string
+          revision: number
+        }
+        Insert: {
+          completed_round_started_at?: string | null
+          filters?: Json
+          last_full_scan_at?: string | null
+          resource: string
+          revision?: number
+        }
+        Update: {
+          completed_round_started_at?: string | null
+          filters?: Json
+          last_full_scan_at?: string | null
+          resource?: string
+          revision?: number
+        }
+        Relationships: []
+      }
+      stayo_central_diagnostics: {
+        Row: {
+          actor_id: string
+          http_status: number | null
+          id: string
+          queried_at: string
+          request_id: string | null
+          resource: string
+          result_kind: string
+          returned_count: number
+          succeeded: boolean
+        }
+        Insert: {
+          actor_id: string
+          http_status?: number | null
+          id?: string
+          queried_at?: string
+          request_id?: string | null
+          resource: string
+          result_kind: string
+          returned_count?: number
+          succeeded: boolean
+        }
+        Update: {
+          actor_id?: string
+          http_status?: number | null
+          id?: string
+          queried_at?: string
+          request_id?: string | null
+          resource?: string
+          result_kind?: string
+          returned_count?: number
+          succeeded?: boolean
+        }
+        Relationships: []
+      }
       stayo_charges: {
         Row: {
           code: number
