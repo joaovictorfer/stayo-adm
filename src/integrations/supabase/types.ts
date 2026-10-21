@@ -2652,6 +2652,30 @@ export type Database = {
           },
         ]
       }
+      pagarme_settings_vault: {
+        Row: {
+          encrypted_key: string
+          id: string
+          updated_at: string
+          updated_by: string
+          verified_at: string | null
+        }
+        Insert: {
+          encrypted_key: string
+          id?: string
+          updated_at?: string
+          updated_by: string
+          verified_at?: string | null
+        }
+        Update: {
+          encrypted_key?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       portal_content_blocks: {
         Row: {
           created_at: string

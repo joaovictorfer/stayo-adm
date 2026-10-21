@@ -3,6 +3,7 @@ import { MessageCircle, Building2, Smartphone, ClipboardCheck } from "lucide-rea
 import type { ComponentType } from "react";
 
 import { PageHeader } from "../components/data/ListStates";
+import { PagarmeSettings } from "@/components/admin/PagarmeSettings";
 
 export const Route = createFileRoute("/configuracoes/integracoes")({
   head: () => ({
@@ -10,13 +11,15 @@ export const Route = createFileRoute("/configuracoes/integracoes")({
       { title: "Integrações — Stayo Admin" },
       {
         name: "description",
-        content: "Referência das integrações externas do ecossistema Stayo.",
+        content: "Configuração segura da Pagar.me de testes e integrações do Stayo Admin.",
       },
       { property: "og:title", content: "Integrações — Stayo Admin" },
       {
         property: "og:description",
-        content: "Referência das integrações externas do ecossistema Stayo.",
+        content: "Configuração segura da Pagar.me de testes e integrações do Stayo Admin.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SettingsIntegrationsPage,
@@ -57,6 +60,7 @@ function SettingsIntegrationsPage() {
   return (
     <>
       <PageHeader title="Integrações" />
+      <PagarmeSettings />
       <div
         className="mb-4 rounded-[var(--radius-card)] border p-4 text-sm"
         style={{
@@ -65,7 +69,7 @@ function SettingsIntegrationsPage() {
           color: "var(--stayo-ink)",
         }}
       >
-        Estas integrações pertencem ao STAYO.APP — o Stayo Admin é um sistema apartado e nunca se
+        As integrações abaixo pertencem ao STAYO.APP — o Stayo Admin é um sistema apartado e nunca se
         conecta a elas diretamente. Esta tela é só uma referência de contexto; status ao vivo só
         chegará aqui quando o Stayo Core expuser esse dado.
       </div>

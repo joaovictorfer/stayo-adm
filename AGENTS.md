@@ -30,7 +30,7 @@
 - Inventory uses shared Row/DetailLayout/DetailFields and read-only media (PDF first); additions reuse addInventoryItem; detail adapters preserve each source.
 - Shared tokens govern fonts/admin motion with reduced motion; one root auth provider deduplicates session/profile reads and clears request-local query caches on identity changes for account isolation.
 - Owner workspace reuses records and masks sensitive data. OwnerLinksHub preserves invitation capabilities in existing scoped panels.
-- Read nested AGENTS.md before edits; Central API rules: src/lib/stayo-central/AGENTS.md.
+- Read nested AGENTS.md before edits, including Central API and Pagar.me settings rules.
 
 - Implementation defaults to the workspace; explicit etapa opens registration, and resume fetches draft_step freshly to preserve continuity.
 - Contract registration reuses OwnerJourney and invitation-authorized contact reconciliation; commercial intake and read-only presentation keep distinct capabilities to preserve existing links and avoid duplicate contract records.
