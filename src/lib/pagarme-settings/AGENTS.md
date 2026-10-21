@@ -1,2 +1,2 @@
-- App-managed Pagar.me sandbox credentials are AES-GCM encrypted using the generated server-only encryption key; only role-authorized server handlers may access the service-role vault, because no browser-readable credential storage is permitted.
+- App-managed Pagar.me credentials (test or production secret keys, owner-authorized) are AES-GCM encrypted using the generated server-only encryption key; only role-authorized server handlers may access the service-role vault, because no browser-readable credential storage is permitted.
 - Return only configured/verified state, never credentials, encrypted payloads or provider bodies; payments remain separate from configuration.
