@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Configurações Pagar.me no app: formulário restrito, armazenamento cifrado, substituição/remoção e teste somente leitura; sem recebimentos reais.
+- [x] Configurações Pagar.me no app: formulário restrito, armazenamento cifrado, substituição/remoção e teste somente leitura; 3 testes e fluxo autenticado salvar/recarga/remoção com fixture descartável conferidos, produção rejeitada, build OK. Aguardando chave real de teste do usuário para validar Pagar.me; sem recebimentos reais.
 - [ ] Novo pedido 19:40 — Cobranças Fase 3: QR Pix dinâmico e checkout cartão +5% server-side, exclusivamente sandbox; executar após preparação 10B.2, bloqueado pela conexão Pagar.me não concluída, sem inventar credencial.
 - [x] Fase 10B.2 preparação segura: auditoria/matriz, transporte Central server-only, diagnóstico admin, correspondência UUID sem importação, checkpoints restritos e documentação; 46 testes passaram, build OK, navegador desktop/mobile pendente validado e cadastros preservados.
 - [ ] Fase 10B.2 conclusão contratual/homologação: bloqueada pelo OpenAPI completo não fornecido (URLs 404) e token oficial não emitido/app inativa; completar schemas whoami/entidades/checkin e fixtures oficiais antes de desbloquear consultas manuais. Nenhuma sincronização automática ou escrita produtiva.
