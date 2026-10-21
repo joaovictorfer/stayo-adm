@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Pedido adicional: vincular Pagar.me antes de gerar cobrança/link; testar cadastro avulso e enviar link de visualização. Pagamento de teste depende da conexão e implementação real, sem autorização para transação live.
+- [ ] Pedido adicional: vincular Pagar.me antes de gerar cobrança/link pagável. Formulário seguro não concluído, nenhuma conexão criada; aguarda chave de teste via conexão segura. Cadastro avulso demonstrativo testado; prévia disponível em /portal/cobranca-prototipo, sem cobrança persistente ou transação live.
 - [x] Cobranças STAYO — Fase 1: central e formulário avulso/vinculado, vínculo posterior, detalhe/histórico e prévia por método com logo/capa fictícia; 14 testes e navegação autenticada desktop/mobile conferidos, nenhum pagamento ou dado real alterado.
 - [ ] Cobranças — persistência, publicação e Pagar.me de teste dependem da conexão segura; pagamentos reais só após validação e autorização, nota fiscal futura.
 - [ ] Fase 3 (calendário oficial read-only): grade mensal com navegação de período e troca de imóvel; estados visuais (disponível, reserva confirmada, bloqueio/manutenção, uso do proprietário) com legenda; estritamente read-only (sem bloqueios que afetem PMS/canais); loading ao trocar mês/imóvel, vazio e falha de sincronização com aviso amigável; responsivo.
