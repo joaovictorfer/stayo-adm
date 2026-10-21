@@ -46,7 +46,7 @@ Construir protótipo isolado da central, criação, detalhe e página do destina
 ### Fase 2 — Cadastro real, publicação e segurança
 Implementar armazenamento, permissões, rascunhos, histórico, vínculo posterior e link seguro revogável. Lista e indicadores usam dados reais. Publicação habilita consulta da cobrança, mas não pagamento antes da integração estar pronta.
 
-Reutilizar fontes de faturas e cobranças iniciais quando aplicável, com origem única e proteção contra duplicação. Não converter automaticamente faturas já pagas em novas cobranças.
+Criar domínio próprio de cobranças, sem reutilizar a tabela de cobranças iniciais (exclusiva do aceite de proposta) nem transformar fatura de serviço em pagamento. Quando houver uma origem existente, referenciá-la uma única vez, sem copiar o débito automaticamente. Não converter faturas já pagas em novas cobranças.
 
 **Validação:** criar rascunho avulso, salvar e recarregar, vincular imóvel, publicar, consultar por link, revogar e conferir histórico. Testar acesso negado entre contas e ausência de dados internos/sensíveis na página pública.
 
