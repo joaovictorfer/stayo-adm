@@ -32,7 +32,7 @@ export function createCentralHttp(options: HttpOptions) {
  }
  async function pages(resource:CentralResource, filters:CentralFilters={}, maxPages=100):Promise<CentralResult<{items:{id:string}[];pages:number;roundStartedAt:string}>> {
   const params=filtersSchema.parse(filters);const query=Object.fromEntries(Object.entries(params).map(([k,v])=>[k,String(v)]));let cursor=params.cursor;const seenCursors=new Set<string>();const seenIds=new Set<string>();const items:{id:string}[]=[];const started=new Date(now()).toISOString();
-  for(let n=1;n<=maxPages;n++){if(cursor){if(seenCursors.has(cursor))return failure("pagination");seenCursors.add(cursor);query.cursor=cursor;}else delete query.cursor;
+  for(let n=1;n<=maxPages;n++){if(cursor){if(seenCursors.has(cursor))return failure("pagination");seenCursors.add(cursor);query['cursor']=cursor;}else delete query['cursor'];
    const result=await get(`/admin/${resource}`,listEnvelope(referenceSchema),query);if(!result.ok)return result;
    for(const item of result.data.data.items){if(seenIds.has(item.id))return failure("pagination",200,result.requestId);seenIds.add(item.id);items.push(item);}
    const page=result.data.data.page;if(!page.has_more)return {ok:true,data:{items,pages:n,roundStartedAt:started},requestId:result.requestId,status:200};cursor=page.next_cursor ?? undefined;
