@@ -4,7 +4,7 @@ import { z } from "zod";
 import { hashToken } from "./api/token-hash";
 import { amountFor, buildOrder, payerSchema } from "./charge-payments";
 
-const tokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
+const tokenSchema = z.string().min(20).max(200).regex(/^[A-Za-z0-9_-]+$/);
 type Item = { id: string; description: string; quantity: number; unitCents: number };
 export type PaymentView = { method: "pix" | "card"; amountCents: number; status: string; qrCode: string | null; qrCodeUrl: string | null; checkoutUrl: string | null; expiresAt: string | null } | null;
 
@@ -17,7 +17,7 @@ async function loadContext(token: string) {
 async function pagarmeKey(db: Awaited<ReturnType<typeof loadContext>>["db"]) {
   const secret = process.env["STAYO_CREDENTIAL_ENCRYPTION_KEY"];
   const { data } = await db.from("pagarme_settings_vault").select("encrypted_key").eq("id", "sandbox").maybeSingle();
-  if (!secret || !data) throw new Error("Pagamento indisponível no momento.");
+  if (!secret || !data) { const env = process.env["PAGARME_SECRET_KEY"]; if (env?.startsWith("sk_")) return env; throw new Error("Pagamento indisponível no momento."); }
   const { decryptCredential } = await import("./pagarme-settings/vault.server");
   return decryptCredential(data.encrypted_key, secret);
 }
