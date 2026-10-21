@@ -15,7 +15,7 @@ export const pagarmeSettingsStatus = createServerFn({ method: 'POST' }).middlewa
 
 export const savePagarmeSettings = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input: { credential: string }) => {
-    if (!acceptsSandboxCredential(input?.credential)) throw new Error('Informe uma chave válida do ambiente de testes.');
+    if (!acceptsSandboxCredential(input?.credential)) throw new Error('Informe uma chave secreta válida da Pagar.me (sk_...).');
     return { credential: input.credential };
   }).handler(async ({ data, context }) => {
     setResponseHeader('Cache-Control', 'no-store');
@@ -55,7 +55,7 @@ export const testPagarmeSettings = createServerFn({ method: 'POST' }).middleware
   try {
     const { decryptCredential } = await import('./vault.server');
     const credential = await decryptCredential(stored.data.encrypted_key, encryptionKey);
-    if (!acceptsSandboxCredential(credential)) return { ok: false, message: 'Configuração de testes indisponível.' };
+    if (!acceptsSandboxCredential(credential)) return { ok: false, message: 'Configuração indisponível.' };
     const response = await fetch('https://api.pagar.me/core/v5/orders?size=1', {
       method: 'GET', headers: { Authorization: `Basic ${btoa(`${credential}:`)}`, Accept: 'application/json' },
       redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(15000),
@@ -63,7 +63,7 @@ export const testPagarmeSettings = createServerFn({ method: 'POST' }).middleware
     await response.body?.cancel();
     const verified = await supabaseAdmin.from('pagarme_settings_vault').update({ verified_at: response.ok ? new Date().toISOString() : null }).eq('id', 'sandbox').eq('encrypted_key', stored.data.encrypted_key);
     if (verified.error) return { ok: false, message: 'Não foi possível registrar o teste de conexão.' };
-    if (response.ok) return { ok: true, message: 'Conexão de teste confirmada. Nenhum pagamento foi criado.' };
+    if (response.ok) return { ok: true, message: 'Conexão confirmada. Nenhum pagamento foi criado.' };
     return { ok: false, message: response.status === 401 ? 'A Pagar.me recusou a autenticação. Substitua a chave de teste.' : response.status === 403 ? 'A Pagar.me recusou o acesso. Confira as permissões da conta.' : 'A Pagar.me está indisponível para esta consulta. Tente novamente.' };
   } catch { return { ok: false, message: 'Não foi possível confirmar a conexão. Tente novamente.' }; }
 });
