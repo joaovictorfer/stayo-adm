@@ -22,8 +22,8 @@ async function pagarmeKey(db: Awaited<ReturnType<typeof loadContext>>["db"]) {
   return decryptCredential(data.encrypted_key, secret);
 }
 async function pagarme(key: string, path: string, body?: unknown) {
-  const r = await fetch(`https://api.pagar.me/core/v5${path}`, { method: body ? "POST" : "GET", headers: { Authorization: `Basic ${btoa(`${key}:`)}`, Accept: "application/json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(20000) });
-  const json = await r.json().catch(() => null) as Record<string, any> | null;
+  const r = await fetch(`https://api.pagar.me/core/v5${path}`, { method: body ? "POST" : "GET", headers: { Authorization: `Basic ${btoa(`${key}:`)}`, Accept: "application/json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : null, redirect: "error", signal: AbortSignal.timeout(20000) });
+  const json = await r.json().catch(() => null) as any;
   if (!r.ok || !json) { console.error("pagarme", path.split("/")[1], r.status, JSON.stringify(json?.errors ?? json?.message ?? "").slice(0, 400)); throw new Error("A Pagar.me não aceitou o pedido. Confira os dados e tente novamente."); }
   return json;
 }
