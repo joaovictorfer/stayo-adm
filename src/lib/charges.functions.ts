@@ -14,6 +14,7 @@ export const listCharges = createServerFn({ method: "POST" }).middleware([requir
   return data as unknown as StayoCharge[];
 });
 export const chargeOptions = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  setResponseHeader("Cache-Control", "no-store");
   const { data: allowed } = await context.supabase.rpc("has_admin_role", { roles: ["super_admin", "admin", "finance"] });
   if (allowed !== true) throw new Error("Acesso financeiro restrito.");
   const [owners, properties] = await Promise.all([
@@ -24,11 +25,13 @@ export const chargeOptions = createServerFn({ method: "POST" }).middleware([requ
   return { owners: owners.data, properties: properties.data.map(p => ({ id: p.id, name: [p.nickname || p.condominium_name || p.code, p.unit].filter(Boolean).join(" · ") })) };
 });
 export const saveCharge = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(input => chargeDraftSchema.parse(input)).handler(async ({ data, context }) => {
+  setResponseHeader("Cache-Control", "no-store");
   const { data: row, error } = await context.supabase.rpc("admin_save_stayo_charge", { p_data: data });
   if (error) throw new Error(error.message);
   return row as unknown as StayoCharge;
 });
 export const actionCharge = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(input => chargeActionSchema.parse(input)).handler(async ({ data, context }) => {
+  setResponseHeader("Cache-Control", "no-store");
   const token = data.action === "publish" || data.action === "renew" ? Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("") : null;
   const { data: row, error } = await context.supabase.rpc("admin_action_stayo_charge", { p_id: data.id, p_revision: data.revision, p_action: data.action, ...(data.implementationId ? { p_implementation_id: data.implementationId } : {}), ...(token ? { p_hash: await hashToken(token) } : {}) });
   if (error) throw new Error(error.message);
