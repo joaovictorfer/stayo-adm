@@ -14,7 +14,7 @@ export const getVfStatements = createServerFn({ method: "POST" })
     try {
       const response = await fetch(`https://vf-hub.lovable.app${statementPath(data)}`, {
         headers: { Authorization: `Bearer ${secret}`, Accept: "application/json" },
-        signal: AbortSignal.timeout(15000), redirect: "error",
+        signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) return { ok: false as const, status: response.status, error: response.status === 401 ? "O VF - Financeiro não reconheceu a credencial compartilhada." : `Consulta indisponível no VF - Financeiro (${response.status}).` };
       const parsed = statementResponseSchema.safeParse(await response.json());
@@ -39,7 +39,7 @@ export const sendVfOperationalExpense = createServerFn({ method: "POST" })
     try {
       const response = await fetch("https://vf-hub.lovable.app/api/public/stayo-expenses", {
         method: "POST", headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
-        body: JSON.stringify(data.expense), signal: AbortSignal.timeout(15000), redirect: "error",
+        body: JSON.stringify(data.expense), signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) return { ok: false, status: response.status, error: `Envio recusado pelo VF - Financeiro (${response.status}).` };
       const result = z.object({ status: z.enum(["created", "updated", "duplicate", "error"]) }).parse(await response.json());
