@@ -30,7 +30,7 @@ export const saveCharge = createServerFn({ method: "POST" }).middleware([require
 });
 export const actionCharge = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(input => chargeActionSchema.parse(input)).handler(async ({ data, context }) => {
   const token = data.action === "publish" || data.action === "renew" ? Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("") : null;
-  const { data: row, error } = await context.supabase.rpc("admin_action_stayo_charge", { p_id: data.id, p_revision: data.revision, p_action: data.action, p_implementation_id: data.implementationId ?? undefined, p_hash: token ? await hashToken(token) : undefined });
+  const { data: row, error } = await context.supabase.rpc("admin_action_stayo_charge", { p_id: data.id, p_revision: data.revision, p_action: data.action, ...(data.implementationId ? { p_implementation_id: data.implementationId } : {}), ...(token ? { p_hash: await hashToken(token) } : {}) });
   if (error) throw new Error(error.message);
   return { charge: row as unknown as StayoCharge, token };
 });
