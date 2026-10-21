@@ -32,6 +32,7 @@ import { Route as ContratosIndexRouteImport } from './routes/contratos.index'
 import { Route as ContratosIdRouteImport } from './routes/contratos.$id'
 import { Route as FinanceiroIndexRouteImport } from './routes/financeiro.index'
 import { Route as FinanceiroIdRouteImport } from './routes/financeiro.$id'
+import { Route as FinanceiroCobrancasPrototipoRouteImport } from './routes/financeiro.cobrancas-prototipo'
 import { Route as FinanceiroDespesasPrototipoRouteImport } from './routes/financeiro.despesas-prototipo'
 import { Route as FinanceiroFaturasPrototipoRouteImport } from './routes/financeiro.faturas-prototipo'
 import { Route as FinanceiroFechamentosPrototipoRouteImport } from './routes/financeiro.fechamentos-prototipo'
@@ -64,6 +65,7 @@ import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.
 import { Route as OperacaoVistoriasLinksPrototipoRouteImport } from './routes/operacao.vistorias-links-prototipo'
 import { Route as OperacaoVistoriasPrototipoRouteImport } from './routes/operacao.vistorias-prototipo'
 import { Route as OperacaoVistoriasRevisaoRouteImport } from './routes/operacao.vistorias-revisao'
+import { Route as PortalCobrancaPrototipoRouteImport } from './routes/portal.cobranca-prototipo'
 import { Route as PortalInicioRouteImport } from './routes/portal.inicio'
 import { Route as PortalLoginRouteImport } from './routes/portal.login'
 import { Route as PortalRecuperarRouteImport } from './routes/portal.recuperar'
@@ -209,6 +211,12 @@ const FinanceiroIdRoute = FinanceiroIdRouteImport.update({
   path: '/financeiro/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceiroCobrancasPrototipoRoute =
+  FinanceiroCobrancasPrototipoRouteImport.update({
+    id: '/financeiro/cobrancas-prototipo',
+    path: '/financeiro/cobrancas-prototipo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const FinanceiroDespesasPrototipoRoute =
   FinanceiroDespesasPrototipoRouteImport.update({
     id: '/financeiro/despesas-prototipo',
@@ -379,6 +387,11 @@ const OperacaoVistoriasRevisaoRoute =
     path: '/operacao/vistorias-revisao',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PortalCobrancaPrototipoRoute = PortalCobrancaPrototipoRouteImport.update({
+  id: '/portal/cobranca-prototipo',
+  path: '/portal/cobranca-prototipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalInicioRoute = PortalInicioRouteImport.update({
   id: '/portal/inicio',
   path: '/portal/inicio',
@@ -528,6 +541,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/cobrancas-prototipo': typeof FinanceiroCobrancasPrototipoRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
@@ -554,6 +568,7 @@ export interface FileRoutesByFullPath {
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
   '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
+  '/portal/cobranca-prototipo': typeof PortalCobrancaPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/portal/recuperar': typeof PortalRecuperarRoute
@@ -610,6 +625,7 @@ export interface FileRoutesByTo {
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/cobrancas-prototipo': typeof FinanceiroCobrancasPrototipoRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
@@ -636,6 +652,7 @@ export interface FileRoutesByTo {
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
   '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
+  '/portal/cobranca-prototipo': typeof PortalCobrancaPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/portal/recuperar': typeof PortalRecuperarRoute
@@ -693,6 +710,7 @@ export interface FileRoutesById {
   '/configuracoes/vistorias-prototipo': typeof ConfiguracoesVistoriasPrototipoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/financeiro/$id': typeof FinanceiroIdRoute
+  '/financeiro/cobrancas-prototipo': typeof FinanceiroCobrancasPrototipoRoute
   '/financeiro/despesas-prototipo': typeof FinanceiroDespesasPrototipoRoute
   '/financeiro/faturas-prototipo': typeof FinanceiroFaturasPrototipoRoute
   '/financeiro/fechamentos-prototipo': typeof FinanceiroFechamentosPrototipoRoute
@@ -719,6 +737,7 @@ export interface FileRoutesById {
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
   '/operacao/vistorias-prototipo': typeof OperacaoVistoriasPrototipoRoute
   '/operacao/vistorias-revisao': typeof OperacaoVistoriasRevisaoRoute
+  '/portal/cobranca-prototipo': typeof PortalCobrancaPrototipoRoute
   '/portal/inicio': typeof PortalInicioRoute
   '/portal/login': typeof PortalLoginRoute
   '/portal/recuperar': typeof PortalRecuperarRoute
@@ -777,6 +796,7 @@ export interface FileRouteTypes {
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/cobrancas-prototipo'
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
     | '/financeiro/fechamentos-prototipo'
@@ -803,6 +823,7 @@ export interface FileRouteTypes {
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
     | '/operacao/vistorias-revisao'
+    | '/portal/cobranca-prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/portal/recuperar'
@@ -859,6 +880,7 @@ export interface FileRouteTypes {
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/cobrancas-prototipo'
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
     | '/financeiro/fechamentos-prototipo'
@@ -885,6 +907,7 @@ export interface FileRouteTypes {
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
     | '/operacao/vistorias-revisao'
+    | '/portal/cobranca-prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/portal/recuperar'
@@ -941,6 +964,7 @@ export interface FileRouteTypes {
     | '/configuracoes/vistorias-prototipo'
     | '/contratos/$id'
     | '/financeiro/$id'
+    | '/financeiro/cobrancas-prototipo'
     | '/financeiro/despesas-prototipo'
     | '/financeiro/faturas-prototipo'
     | '/financeiro/fechamentos-prototipo'
@@ -967,6 +991,7 @@ export interface FileRouteTypes {
     | '/operacao/vistorias-links-prototipo'
     | '/operacao/vistorias-prototipo'
     | '/operacao/vistorias-revisao'
+    | '/portal/cobranca-prototipo'
     | '/portal/inicio'
     | '/portal/login'
     | '/portal/recuperar'
@@ -1024,6 +1049,7 @@ export interface RootRouteChildren {
   ConfiguracoesVistoriasPrototipoRoute: typeof ConfiguracoesVistoriasPrototipoRoute
   ContratosIdRoute: typeof ContratosIdRoute
   FinanceiroIdRoute: typeof FinanceiroIdRoute
+  FinanceiroCobrancasPrototipoRoute: typeof FinanceiroCobrancasPrototipoRoute
   FinanceiroDespesasPrototipoRoute: typeof FinanceiroDespesasPrototipoRoute
   FinanceiroFaturasPrototipoRoute: typeof FinanceiroFaturasPrototipoRoute
   FinanceiroFechamentosPrototipoRoute: typeof FinanceiroFechamentosPrototipoRoute
@@ -1050,6 +1076,7 @@ export interface RootRouteChildren {
   OperacaoVistoriasLinksPrototipoRoute: typeof OperacaoVistoriasLinksPrototipoRoute
   OperacaoVistoriasPrototipoRoute: typeof OperacaoVistoriasPrototipoRoute
   OperacaoVistoriasRevisaoRoute: typeof OperacaoVistoriasRevisaoRoute
+  PortalCobrancaPrototipoRoute: typeof PortalCobrancaPrototipoRoute
   PortalInicioRoute: typeof PortalInicioRoute
   PortalLoginRoute: typeof PortalLoginRoute
   PortalRecuperarRoute: typeof PortalRecuperarRoute
@@ -1248,6 +1275,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/$id'
       fullPath: '/financeiro/$id'
       preLoaderRoute: typeof FinanceiroIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro/cobrancas-prototipo': {
+      id: '/financeiro/cobrancas-prototipo'
+      path: '/financeiro/cobrancas-prototipo'
+      fullPath: '/financeiro/cobrancas-prototipo'
+      preLoaderRoute: typeof FinanceiroCobrancasPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro/despesas-prototipo': {
@@ -1474,6 +1508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoVistoriasRevisaoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/cobranca-prototipo': {
+      id: '/portal/cobranca-prototipo'
+      path: '/portal/cobranca-prototipo'
+      fullPath: '/portal/cobranca-prototipo'
+      preLoaderRoute: typeof PortalCobrancaPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/inicio': {
       id: '/portal/inicio'
       path: '/portal/inicio'
@@ -1672,6 +1713,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesVistoriasPrototipoRoute: ConfiguracoesVistoriasPrototipoRoute,
   ContratosIdRoute: ContratosIdRoute,
   FinanceiroIdRoute: FinanceiroIdRoute,
+  FinanceiroCobrancasPrototipoRoute: FinanceiroCobrancasPrototipoRoute,
   FinanceiroDespesasPrototipoRoute: FinanceiroDespesasPrototipoRoute,
   FinanceiroFaturasPrototipoRoute: FinanceiroFaturasPrototipoRoute,
   FinanceiroFechamentosPrototipoRoute: FinanceiroFechamentosPrototipoRoute,
@@ -1698,6 +1740,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoVistoriasLinksPrototipoRoute: OperacaoVistoriasLinksPrototipoRoute,
   OperacaoVistoriasPrototipoRoute: OperacaoVistoriasPrototipoRoute,
   OperacaoVistoriasRevisaoRoute: OperacaoVistoriasRevisaoRoute,
+  PortalCobrancaPrototipoRoute: PortalCobrancaPrototipoRoute,
   PortalInicioRoute: PortalInicioRoute,
   PortalLoginRoute: PortalLoginRoute,
   PortalRecuperarRoute: PortalRecuperarRoute,

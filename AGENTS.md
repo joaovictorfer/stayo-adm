@@ -31,7 +31,7 @@
 - Shared tokens govern fonts/admin motion with reduced motion; one root auth provider deduplicates session/profile reads and clears request-local query caches on identity changes for account isolation.
 - Owner workspace reuses existing records; sensitive data requires explicit reveal. OwnerLinksHub reuses OwnerPortalPanel/OwnerInviteSection in scoped dialogs to preserve invitation capabilities.
 
-- The implementation route renders the administrative workspace by default; only an explicit etapa search parameter opens the guided registration, and resuming loads draft_step freshly to preserve the same workspace across proposal publication.
+- Implementation defaults to the workspace; explicit etapa opens registration, and resume fetches draft_step freshly to preserve continuity.
 - Contract registration reuses OwnerJourney and invitation-authorized contact reconciliation; commercial intake and read-only presentation keep distinct capabilities to preserve existing links and avoid duplicate contract records.
 - Owner channels live on implementation_projects (distribution_channels, airbnb_account_email) via owner_platforms_save; allowed_channels is the STAYO release policy (NULL = all, Airbnb always on, trigger prunes the owner answer); copy in src/lib/api/owner-platforms.ts.
 - Existing invitation inventory uses owner_inventory_*_by_token after proposal confirmation; submitted_by is the invitation id and STAYO reviews.
@@ -39,3 +39,4 @@
 - Bedrooms is canonical in implementation_projects; invitation PATCH is conflict-aware. getPropertyDetails uses canonical bedrooms and derives suites from persisted amenities rooms, falling back only without room data.
 - VF Financeiro uses role-protected server functions and strict DTOs; credentials stay server-only. Expense transmission requires deployment opt-in and per-call confirmation to prevent unauthorized writes.
 - Dedicated registration uses hashed expiring capabilities, serialized revisioned saves and atomic inventory entry. Inventory templates reconcile inventory_room_key (room ID; private bath = ID + :bath) in place, preserving answers/IDs; SurveyExperience retains legacy capability grouping.
+- Charge prototypes use isolated routes, in-memory state and integer-cent totals; no financial API, persistence or payment links, preventing real receivables changes.

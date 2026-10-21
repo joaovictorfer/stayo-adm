@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 const ACTIVE = [
   { to: "/financeiro/prototipo", label: "Visão geral" },
   { to: "/financeiro/receber-prototipo", label: "Contas a receber" },
+  { to: "/financeiro/cobrancas-prototipo", label: "Cobranças" },
   { to: "/financeiro/despesas-prototipo", label: "Despesas" },
   { to: "/financeiro/fechamentos-prototipo", label: "Fechamentos" },
   { to: "/financeiro/repasses-prototipo", label: "Repasses" },
