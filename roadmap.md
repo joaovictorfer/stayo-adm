@@ -1,4 +1,7 @@
 # Roadmap
+- [x] Corrigir exclusão com links de cadastro/vistoria; erro reproduzido na IMP-00013 e mesma ação validada após correção. Regressão real passou para links, confirmação incorreta, anon, ativa e vínculos Core; histórico financeiro protegido.
+- [x] Excluir pelo painel IMP-00013, IMP-00012, IMP-00011 e IMP-00006; remoção e ausência de links órfãos conferidas.
+- [ ] IMP-00007: aguardando autorização para desvincular apenas a ficha de teste do imóvel operacional antes de excluir; não remover imóvel ou dados operacionais.
 - [x] Pedido 20:09 — acesso Pagar.me destacado em Configurações e navegação autenticada até o campo conferida; 3 testes passaram, build OK; sem chave de teste enviada.
 - [x] Configurações Pagar.me no app: formulário restrito, armazenamento cifrado, substituição/remoção e teste somente leitura; 3 testes e fluxo autenticado salvar/recarga/remoção com fixture descartável conferidos, produção rejeitada, build OK. Aguardando chave real de teste do usuário para validar Pagar.me; sem recebimentos reais.
 - [ ] Novo pedido 19:40 — Cobranças Fase 3: QR Pix dinâmico e checkout cartão +5% server-side, exclusivamente sandbox; executar após preparação 10B.2, bloqueado pela conexão Pagar.me não concluída, sem inventar credencial.
