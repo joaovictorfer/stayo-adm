@@ -21,7 +21,7 @@ export const centralDiagnostics = createServerFn({method:"POST"}).middleware([re
  const mismatches=(projects.data||[]).filter(p=>{const owner=(owners.data||[]).find(o=>o.id===p.owner_id);return !!p.core_owner_id&&!!owner?.core_owner_id&&p.core_owner_id!==owner.core_owner_id;});
  const configured=!!process.env["STAYO_API_TOKEN"];
  const originValid=(process.env["STAYO_API_URL"]||CENTRAL_BASE_URL)===CENTRAL_BASE_URL;
- return {configured,originValid,baseUrl:CENTRAL_BASE_URL,status:!originValid?"invalid_origin":!configured?"not_configured":"authentication_pending",contractReady:false,automaticSync:false,eventsEnabled:false,lastAttempt:latest.data?.[0]??null,lastSuccess:successful.data?.[0]??null,checkpoints:checkpoint.data||[],mapping:{owners:ownerRows,properties:propertyRows,ownerReferenceConflicts:mismatches.map(p=>({localId:p.id,code:p.code})),counts:{localOwners:ownerRows.length,localProperties:propertyRows.length,linkedOwners:ownerRows.filter(r=>r.externalId).length,linkedProperties:propertyRows.filter(r=>r.externalId).length,ambiguous:ownerRows.filter(r=>r.state==="duplicate_external").length+propertyRows.filter(r=>r.state==="duplicate_external").length+mismatches.length}}};
+ return {configured,originValid,baseUrl:CENTRAL_BASE_URL,status:!originValid?"invalid_origin":!configured?"not_configured":"connection_disabled",contractReady:true,connectionEnabled:false,contractRevision:"c5e2b1e0",automaticSync:false,eventsEnabled:false,lastAttempt:latest.data?.[0]??null,lastSuccess:successful.data?.[0]??null,checkpoints:checkpoint.data||[],mapping:{owners:ownerRows,properties:propertyRows,ownerReferenceConflicts:mismatches.map(p=>({localId:p.id,code:p.code})),counts:{localOwners:ownerRows.length,localProperties:propertyRows.length,linkedOwners:ownerRows.filter(r=>r.externalId).length,linkedProperties:propertyRows.filter(r=>r.externalId).length,ambiguous:ownerRows.filter(r=>r.state==="duplicate_external").length+propertyRows.filter(r=>r.state==="duplicate_external").length+mismatches.length}}};
 });
 
 export const testCentralConnection = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
@@ -30,15 +30,7 @@ export const testCentralConnection = createServerFn({method:"POST"}).middleware(
  if(error||allowed!==true)throw new Error("Diagnóstico restrito aos administradores autorizados.");
  const token=process.env["STAYO_API_TOKEN"];
  if(!token)return {ok:false,kind:"not_configured" as CentralErrorKind,message:messages.not_configured,status:null,requestId:null};
- const {createCentralHttp}=await import("./http.server");
- const {whoamiTransportSchema}=await import("./contracts");
- const client=createCentralHttp({token,baseUrl:process.env["STAYO_API_URL"]||CENTRAL_BASE_URL});
- const result=await client.get("/system/whoami",whoamiTransportSchema);
- // HTTP 200 alone cannot prove the expected app/scope until official whoami schema is available.
- const kind:CentralErrorKind=result.ok?"contract_pending":result.kind;
- const {error:saveError}=await context.supabase.from("stayo_central_diagnostics").insert({resource:"connection",succeeded:false,result_kind:kind,http_status:result.status,request_id:result.requestId,returned_count:0,actor_id:context.userId});
- if(saveError)throw new Error("Consulta realizada, mas não foi possível registrar o diagnóstico.");
- return {ok:false,kind,message:messages[kind],status:result.status,requestId:result.requestId};
+ return {ok:false,kind:"connection_disabled" as CentralErrorKind,message:messages.connection_disabled,status:null,requestId:null};
 });
 
 export const previewCentralRecords = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator(input=>querySchema.parse(input)).handler(async({context,data})=>{
@@ -46,12 +38,13 @@ export const previewCentralRecords = createServerFn({method:"POST"}).middleware(
  const {data:allowed,error}=await context.supabase.rpc("has_admin_role",{roles:["super_admin","admin"]});
  if(error||allowed!==true)throw new Error("Consulta restrita aos administradores autorizados.");
  const configured=!!process.env["STAYO_API_TOKEN"];
- // Deliberately fail closed: no provider payload, import or checkpoint advance without complete OpenAPI.
- return {ok:false,resource:data.resource,kind:configured?"contract_pending":"not_configured",message:configured?messages.contract_pending:messages.not_configured,items:[],localChanges:0};
+ // Official contracts verified; productive authentication is not authorized.
+ return {ok:false,resource:data.resource,kind:configured?"connection_disabled":"not_configured",message:configured?messages.connection_disabled:messages.not_configured,localChanges:0};
 });
 export const previewCentralDetail = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator(input=>detailSchema.parse(input)).handler(async({context,data})=>{
  setResponseHeader("Cache-Control","no-store");
  const {data:allowed,error}=await context.supabase.rpc("has_admin_role",{roles:["super_admin","admin"]});
  if(error||allowed!==true)throw new Error("Consulta restrita aos administradores autorizados.");
- return {ok:false,resource:data.resource,checkin:data.checkin,kind:"contract_pending",message:messages.contract_pending,localChanges:0};
+ const configured=!!process.env["STAYO_API_TOKEN"];
+ return {ok:false,resource:data.resource,checkin:data.checkin,kind:configured?"connection_disabled":"not_configured",message:configured?messages.connection_disabled:messages.not_configured,localChanges:0};
 });

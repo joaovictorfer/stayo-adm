@@ -12,6 +12,7 @@ import {
 import { LinkedField } from "../components/patterns/LinkedField";
 import { operationTasksListQuery, reservationQuery } from "../lib/api/queries";
 import type { OperationTask, ReservationWebCheckinStatus } from "../types/core";
+import { CentralStatementPanel } from "@/components/admin/CentralStatementPanel";
 
 const surface = {
   backgroundColor: "var(--stayo-surface)",
@@ -37,6 +38,8 @@ export const Route = createFileRoute("/reservas/$id")({
       { name: "description", content: "Dados de uma reserva da operação Stayo." },
       { property: "og:title", content: "Detalhe da reserva — Stayo Admin" },
       { property: "og:description", content: "Dados de uma reserva da operação Stayo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReservationDetailPage,
@@ -64,6 +67,8 @@ function ReservationDetailPage() {
           Voltar para reservas
         </Link>
       </PageHeader>
+
+      <CentralStatementPanel key={id} reservationId={id}/>
 
       {query.isPending ? (
         <DetailSkeleton />
