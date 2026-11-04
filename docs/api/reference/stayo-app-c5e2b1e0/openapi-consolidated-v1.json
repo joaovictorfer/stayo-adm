@@ -1,0 +1,6540 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "STAYO API Central V1 — contrato consolidado",
+    "version": "1.0.0",
+    "description": "Fase 10A. Operações reais existentes, somente leitura comercial. ACK altera apenas checkpoint técnico. Consumidores, captura e entregas permanecem desativados; a presença no contrato não comprova implantação publicada ou homologação externa."
+  },
+  "servers": [
+    {
+      "url": "https://guia.stayogramado.com.br",
+      "description": "Origem comercial real; paridade das rotas novas ainda não publicada/homologada"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Preview local verificado"
+    }
+  ],
+  "paths": {
+    "/api/v1/finance/receivables": {
+      "get": {
+        "operationId": "finance_receivables",
+        "summary": "List receivables",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "x-required-scope": "finance:read",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "owner_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "payout_mode",
+            "in": "query",
+            "description": "Reservation-specific historical metadata/snapshot, not current rules",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stayo_transfer",
+                "direct_from_channel",
+                "unknown",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_basis",
+            "in": "query",
+            "description": "Only created supported for from/to; date of this record creation",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created",
+                "checkin",
+                "checkout",
+                "expected_receipt",
+                "recorded_receipt",
+                "channel_paid"
+              ],
+              "default": "checkin"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque financial timestamp and UUID cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "description": "Inclusive dependency watermark; full rescan required for deletions",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only result, null for unproven values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FinanceReceivable"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/FinancePage"
+                        },
+                        "synchronization": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/FinanceMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "finance:read required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source unavailable or scan cap exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/finance/receivables/{reservation_id}": {
+      "get": {
+        "operationId": "finance_receivables_reservation_id",
+        "summary": "Get reservation financial detail",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "x-required-scope": "finance:read",
+        "parameters": [
+          {
+            "name": "reservation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only result, null for unproven values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FinanceReceivable"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/FinanceMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "finance:read required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source unavailable or scan cap exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/finance/summary": {
+      "get": {
+        "operationId": "finance_summary",
+        "summary": "Financial summary",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "x-required-scope": "finance:read",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "owner_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "payout_mode",
+            "in": "query",
+            "description": "Reservation-specific historical metadata/snapshot, not current rules",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stayo_transfer",
+                "direct_from_channel",
+                "unknown",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_basis",
+            "in": "query",
+            "description": "Only created supported for from/to; date of this record creation",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created",
+                "checkin",
+                "checkout",
+                "expected_receipt",
+                "recorded_receipt",
+                "channel_paid"
+              ],
+              "default": "checkin"
+            }
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "description": "Aggregation axis",
+            "schema": {
+              "enum": [
+                "month",
+                "property",
+                "channel"
+              ],
+              "default": "month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only result, null for unproven values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FinanceSummary"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/FinanceMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "finance:read required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source unavailable or scan cap exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/finance/settlements": {
+      "get": {
+        "operationId": "finance_settlements",
+        "summary": "Registered owner settlements",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "x-required-scope": "finance:read",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "owner_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_basis",
+            "in": "query",
+            "description": "Only created supported for from/to; date of this record creation",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created",
+                "checkin",
+                "checkout",
+                "expected_receipt",
+                "recorded_receipt",
+                "channel_paid"
+              ],
+              "default": "checkin"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque financial timestamp and UUID cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "description": "Inclusive dependency watermark; full rescan required for deletions",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only result, null for unproven values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FinanceSettlement"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/FinancePage"
+                        },
+                        "synchronization": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/FinanceMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "finance:read required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source unavailable or scan cap exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/finance/payout-modes": {
+      "get": {
+        "operationId": "finance_payout_modes",
+        "summary": "Current payout configurations",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "x-required-scope": "finance:read",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "owner_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_basis",
+            "in": "query",
+            "description": "Only created supported for from/to; date of this record creation",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created",
+                "checkin",
+                "checkout",
+                "expected_receipt",
+                "recorded_receipt",
+                "channel_paid"
+              ],
+              "default": "checkin"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque financial timestamp and UUID cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "description": "Inclusive dependency watermark; full rescan required for deletions",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only result, null for unproven values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FinancePayoutMode"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/FinancePage"
+                        },
+                        "synchronization": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/FinanceMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "finance:read required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source unavailable or scan cap exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/finance/reconciliation/diffs": {
+      "get": {
+        "operationId": "finance_reconciliation_diffs",
+        "summary": "Detectable stored differences",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "x-required-scope": "finance:read",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "owner_id",
+            "in": "query",
+            "description": "Filter",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Exact stored value",
+            "schema": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "payout_mode",
+            "in": "query",
+            "description": "Reservation-specific historical metadata/snapshot, not current rules",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stayo_transfer",
+                "direct_from_channel",
+                "unknown",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Inclusive",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_basis",
+            "in": "query",
+            "description": "Only created supported for from/to; date of this record creation",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created",
+                "checkin",
+                "checkout",
+                "expected_receipt",
+                "recorded_receipt",
+                "channel_paid"
+              ],
+              "default": "checkin"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque financial timestamp and UUID cursor",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "description": "Inclusive dependency watermark; full rescan required for deletions",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only result, null for unproven values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FinanceReceivable"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/FinancePage"
+                        },
+                        "synchronization": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/FinanceMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "finance:read required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Source unavailable or scan cap exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceError"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/public/properties": {
+      "get": {
+        "operationId": "listPublicProperties",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 24
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            }
+          },
+          {
+            "name": "guests",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            }
+          },
+          {
+            "name": "min_bedrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            }
+          },
+          {
+            "name": "min_bathrooms",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            }
+          },
+          {
+            "name": "min_parking",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            }
+          },
+          {
+            "name": "amenities",
+            "in": "query",
+            "description": "CSV, 1–10 chaves",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "apartamento",
+                "casa"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CatalogPropertySummary"
+                          }
+                        },
+                        "page": {
+                          "type": "object",
+                          "properties": {
+                            "limit": {
+                              "type": "integer"
+                            },
+                            "next_cursor": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "has_more": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CatalogMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Não modificado"
+          },
+          "400": {
+            "$ref": "#/components/responses/CatalogError"
+          },
+          "429": {
+            "$ref": "#/components/responses/CatalogError"
+          },
+          "500": {
+            "$ref": "#/components/responses/CatalogError"
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "security": []
+      },
+      "options": {
+        "operationId": "optionsapiv1publicproperties",
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "CORS público"
+          }
+        }
+      }
+    },
+    "/api/v1/public/properties/{slug}": {
+      "get": {
+        "operationId": "getPublicProperty",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalhe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CatalogPropertyDetail"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CatalogMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Não modificado"
+          },
+          "404": {
+            "$ref": "#/components/responses/CatalogError"
+          },
+          "429": {
+            "$ref": "#/components/responses/CatalogError"
+          },
+          "500": {
+            "$ref": "#/components/responses/CatalogError"
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "security": []
+      },
+      "options": {
+        "operationId": "optionsapiv1publicpropertiesslug",
+        "security": [],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "CORS público"
+          }
+        }
+      }
+    },
+    "/api/v1/public/properties/{slug}/availability": {
+      "get": {
+        "operationId": "getPublicPropertyAvailability",
+        "description": "Inclusive query dates; occupancy [checkin,checkout). Max90 dates, from>=Brasília today, to<=today+365. Mapping or absence of reservations never proves available. Metadata alone never enables dates.",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 80,
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract-only; positive production result disabled until source homologation",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "property_id",
+                        "slug",
+                        "from",
+                        "to",
+                        "days",
+                        "is_available",
+                        "reliability",
+                        "generated_at",
+                        "reservation_created"
+                      ],
+                      "properties": {
+                        "property_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "from": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "to": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "days": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 90,
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "date",
+                              "state",
+                              "impediment",
+                              "min_stay",
+                              "arrival_allowed",
+                              "departure_allowed",
+                              "last_reliable_sync_at"
+                            ],
+                            "properties": {
+                              "date": {
+                                "type": "string",
+                                "format": "date"
+                              },
+                              "state": {
+                                "enum": [
+                                  "available",
+                                  "unavailable",
+                                  "unknown",
+                                  "stale"
+                                ]
+                              },
+                              "impediment": {
+                                "enum": [
+                                  "occupied_or_blocked",
+                                  "commercially_inactive",
+                                  "source_restriction",
+                                  null
+                                ]
+                              },
+                              "min_stay": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "arrival_allowed": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "departure_allowed": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "last_reliable_sync_at": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "is_available": {
+                          "type": "boolean"
+                        },
+                        "reliability": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "mapping_valid",
+                            "source",
+                            "last_success_at",
+                            "coverage_complete",
+                            "commercial_homologation"
+                          ],
+                          "properties": {
+                            "mapping_valid": {
+                              "type": "boolean"
+                            },
+                            "source": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "last_success_at": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "coverage_complete": {
+                              "type": "boolean"
+                            },
+                            "commercial_homologation": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "generated_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "reservation_created": {
+                          "const": false
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input/date/range",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or unpublished property",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Shared Phase07 public IP rate limit exceeded",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Local read or limiter failure",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "security": []
+      },
+      "options": {
+        "operationId": "optionsapiv1publicpropertiesslugavailability",
+        "security": [],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 80,
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "CORS público"
+          }
+        }
+      }
+    },
+    "/api/v1/public/quote": {
+      "post": {
+        "operationId": "calculatePublicAdvisoryQuote",
+        "description": "Read-only advisory POST. JSON <=2048 bytes. No query params. Checkin after Brasília today. Max89 nights, checkout used for departure restriction. Rates must be current effective BRL integer cents, fees homologated. Missing values do not become zero. Positive fixture contract is not commercially homologated.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "property_id",
+                  "checkin",
+                  "checkout",
+                  "guests_count"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Public F07 property UUID, not internal ID"
+                  },
+                  "checkin": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "checkout": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "guests_count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 30
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contract-only; positive production result disabled until source homologation",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "property_id",
+                        "checkin",
+                        "checkout",
+                        "nights",
+                        "guests_count",
+                        "nightly_rates",
+                        "nightly_subtotal_cents",
+                        "cleaning_fee_cents",
+                        "additional_fees",
+                        "discounts",
+                        "total_cents",
+                        "currency",
+                        "tariff_source",
+                        "tariffs_updated_at",
+                        "generated_at",
+                        "valid_until",
+                        "advisory_only",
+                        "reservation_created"
+                      ],
+                      "properties": {
+                        "property_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "checkin": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "checkout": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "nights": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 89
+                        },
+                        "guests_count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 30
+                        },
+                        "nightly_rates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "date",
+                              "amount_cents"
+                            ],
+                            "properties": {
+                              "date": {
+                                "type": "string",
+                                "format": "date"
+                              },
+                              "amount_cents": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            }
+                          }
+                        },
+                        "nightly_subtotal_cents": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "cleaning_fee_cents": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "additional_fees": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "code",
+                              "amount_cents"
+                            ],
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "amount_cents": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            }
+                          }
+                        },
+                        "discounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "code",
+                              "amount_cents"
+                            ],
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "amount_cents": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            }
+                          }
+                        },
+                        "total_cents": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "currency": {
+                          "const": "BRL"
+                        },
+                        "tariff_source": {
+                          "type": "string"
+                        },
+                        "tariffs_updated_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "generated_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "valid_until": {
+                          "type": "null"
+                        },
+                        "advisory_only": {
+                          "const": true
+                        },
+                        "reservation_created": {
+                          "const": false
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input/date/range",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or unpublished property",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Shared Phase07 public IP rate limit exceeded",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Local read or limiter failure",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "period_unavailable",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "capacity_exceeded or stay_restriction",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "capacity_unknown, calendar_incomplete, calendar_stale, tariff_not_homologated, tariff_missing, tariff_stale or fees_not_homologated",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "api_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "api_version": {
+                          "const": "v1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "security": []
+      },
+      "options": {
+        "operationId": "optionsapiv1publicquote",
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "CORS público"
+          }
+        }
+      }
+    },
+    "/api/v1/sync/events": {
+      "get": {
+        "operationId": "readOwnChangeFeed",
+        "summary": "Committed change notifications for the authenticated application",
+        "description": "Requires admin:read for stayo-admin, finance:read for vf-financeiro, or catalog:read for stayo-website. Application ID comes exclusively from the token. No historical bootstrap is provided. Reading never advances a checkpoint. ACK is POST /api/v1/sync/events/ack. Cache-Control: no-store.",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{1,16}$",
+              "default": "0"
+            },
+            "description": "Exclusive committed sequence checkpoint; maximum Number.MAX_SAFE_INTEGER."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Own event page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "events",
+                        "next_checkpoint"
+                      ],
+                      "properties": {
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/EventsFeedEvent"
+                          }
+                        },
+                        "next_checkpoint": {
+                          "type": "string"
+                        },
+                        "capture_state": {
+                          "const": "source_specific"
+                        },
+                        "bootstrap": {
+                          "const": "full_api_rescan_required"
+                        },
+                        "retention": {
+                          "const": "no_automatic_deletion"
+                        },
+                        "guarantees": {
+                          "type": "string"
+                        },
+                        "acknowledgement": {
+                          "const": "POST /api/v1/sync/events/ack"
+                        },
+                        "checkpoint_advanced": {
+                          "const": false
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/EventsMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or repeated parameter"
+          },
+          "401": {
+            "description": "Missing, expired, revoked or inactive service credential"
+          },
+          "403": {
+            "description": "Wrong application or missing effective scope"
+          },
+          "429": {
+            "description": "Rate limit"
+          },
+          "500": {
+            "description": "Fail-closed source error"
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed"
+      }
+    },
+    "/api/public/api-events-worker": {
+      "post": {
+        "operationId": "processEventWorker",
+        "summary": "Privileged internal worker, never consumer-facing",
+        "security": [
+          {
+            "workerBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disabled or processed summary"
+          },
+          "401": {
+            "description": "Worker secret missing or invalid"
+          },
+          "503": {
+            "description": "Processing unavailable"
+          }
+        },
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed"
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "status"
+                      ],
+                      "properties": {
+                        "status": {
+                          "const": "ok"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/system/whoami": {
+      "get": {
+        "operationId": "whoami",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "application",
+                        "scopes"
+                      ],
+                      "properties": {
+                        "application": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "admin:read",
+                              "finance:read",
+                              "catalog:read"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/properties": {
+      "get": {
+        "operationId": "listAdminProperties",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "items",
+                        "page"
+                      ],
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminProperty"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/AdminPage"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/properties/{id}": {
+      "get": {
+        "operationId": "getAdminProperties",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminProperty"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/owners": {
+      "get": {
+        "operationId": "listAdminOwners",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "items",
+                        "page"
+                      ],
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminOwner"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/AdminPage"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/owners/{id}": {
+      "get": {
+        "operationId": "getAdminOwners",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminOwner"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/reservations": {
+      "get": {
+        "operationId": "listAdminReservations",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "owner_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkin_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "checkin_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "include_blocks",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "items",
+                        "page"
+                      ],
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminReservation"
+                          }
+                        },
+                        "page": {
+                          "$ref": "#/components/schemas/AdminPage"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/reservations/{id}": {
+      "get": {
+        "operationId": "getAdminReservations",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminReservation"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": " Cache-Control: no-store."
+      }
+    },
+    "/api/v1/admin/reservations/{id}/checkin": {
+      "get": {
+        "operationId": "getAdminCheckin",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminCheckin"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": "Situação do Web Check-in (admin:read). Sem admin:sensitive o bloco titular nunca contém documento. Com admin:sensitive adicional retorna document_status e documento apenas do titular primário único (is_primary=true); ausência ou múltiplos titulares → titular_status missing/ambiguous e documento omitido. Selfies, URLs de fotos e documentos de acompanhantes nunca são retornados. Cache-Control: no-store.",
+        "x-optional-scope": "admin:sensitive"
+      }
+    },
+    "/api/v1/sync/events/ack": {
+      "post": {
+        "operationId": "ackOwnProcessedEventPage",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "acknowledged_checkpoint"
+                      ],
+                      "properties": {
+                        "acknowledged_checkpoint": {
+                          "type": "string",
+                          "pattern": "^[0-9]{1,16}$"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "application-specific",
+        "description": "Confirmar somente após persistir inbox/efeitos e cursor na transação do consumidor. IDs exatos da página ordenada; não aceita pular evento, aplicação externa nem max de entregas fora de ordem. Retry idempotente. Não ativa captura/entrega. Cache-Control: no-store.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "after",
+                  "event_ids"
+                ],
+                "properties": {
+                  "after": {
+                    "type": "string",
+                    "pattern": "^[0-9]{1,16}$",
+                    "description": "Limite Number.MAX_SAFE_INTEGER"
+                  },
+                  "event_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reservations/{id}/statement": {
+      "get": {
+        "operationId": "getAdminStatement",
+        "x-implementation": "implemented",
+        "x-external-homologation": "not_performed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resposta V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminStatement"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro V1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scope": "admin:read",
+        "description": "Demonstrativo administrativo (admin:read). Somente leitura. Sem recebível: finance.status=unavailable com valores nulos. Nunca expõe CPF/documento. Cache-Control: no-store."
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FinanceMoney": {
+        "type": "object",
+        "required": [
+          "cents",
+          "currency",
+          "origin",
+          "source",
+          "reliability"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "const": "BRL"
+          },
+          "origin": {
+            "enum": [
+              "real",
+              "manual",
+              "estimated",
+              "missing",
+              "indeterminate"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "reliability": {
+            "enum": [
+              "confirmed",
+              "pending_reconciliation",
+              "unavailable"
+            ]
+          }
+        }
+      },
+      "FinancePage": {
+        "type": "object",
+        "required": [
+          "limit",
+          "count",
+          "has_more",
+          "next_cursor"
+        ],
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "FinanceMeta": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "api_version"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "api_version": {
+            "const": "v1"
+          }
+        }
+      },
+      "FinanceError": {
+        "type": "object",
+        "required": [
+          "error",
+          "meta"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "enum": [
+                  "unauthorized",
+                  "forbidden",
+                  "invalid_request",
+                  "not_found",
+                  "rate_limited",
+                  "internal_error"
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/FinanceMeta"
+          }
+        }
+      },
+      "FinanceReceivable": {
+        "type": "object",
+        "required": [
+          "id",
+          "reservation_id",
+          "values",
+          "manual_lock",
+          "currency",
+          "updated_at",
+          "payout_mode"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reservation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receivable_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pms_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reservation_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "financial_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reservation_updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_receipt_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recorded_receipt_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel_paid_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payout_mode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payout_mode_origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payout_mode_validation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "review_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "const": "BRL"
+          },
+          "manual_lock": {
+            "type": "boolean"
+          },
+          "values": {
+            "type": "object",
+            "required": [
+              "gross",
+              "daily_amount",
+              "discounts",
+              "cleaning",
+              "channel_commission",
+              "channel_base_fee",
+              "channel_tax",
+              "channel_additional_fee",
+              "stayo_commission_base",
+              "stayo_commission",
+              "stayo_allocation_including_cleaning",
+              "owner_economic_value",
+              "received_recorded",
+              "real_channel_paid",
+              "real_gross",
+              "real_channel_fee",
+              "real_cleaning",
+              "host_payout",
+              "cohost_payout",
+              "stayo_bank_inflow",
+              "realized_stayo_revenue",
+              "pending_receipt",
+              "refunds",
+              "iss",
+              "other_taxes"
+            ],
+            "properties": {
+              "gross": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "daily_amount": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "discounts": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "cleaning": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "channel_commission": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "channel_base_fee": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "channel_tax": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "channel_additional_fee": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "stayo_commission_base": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "stayo_commission": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "stayo_allocation_including_cleaning": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "owner_economic_value": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "received_recorded": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "real_channel_paid": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "real_gross": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "real_channel_fee": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "real_cleaning": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "host_payout": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "cohost_payout": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "stayo_bank_inflow": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "realized_stayo_revenue": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "pending_receipt": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "refunds": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "iss": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              },
+              "other_taxes": {
+                "$ref": "#/components/schemas/FinanceMoney"
+              }
+            }
+          },
+          "property": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "city": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "owners": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "owner_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "status": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "ownership_percent": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stay": {
+            "type": "object",
+            "properties": {
+              "checkin_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "checkout_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nights": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "guests": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "web_checkin_status": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "differences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field",
+                "official_cents",
+                "compared_cents",
+                "delta_cents",
+                "basis"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "official_cents": {
+                  "type": "integer"
+                },
+                "compared_cents": {
+                  "type": "integer"
+                },
+                "delta_cents": {
+                  "type": "integer"
+                },
+                "basis": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rates": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "cleaning": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "fee_treatment": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "calculation_memory": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "manual_metadata": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "operational_costs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "settlements": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "payment_observations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "FinanceSettlement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "property_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period_start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period_end": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payout_state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_payout_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payment_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paid_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "invalidated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "net": {
+            "$ref": "#/components/schemas/FinanceMoney"
+          },
+          "paid": {
+            "$ref": "#/components/schemas/FinanceMoney"
+          },
+          "outstanding": {
+            "$ref": "#/components/schemas/FinanceMoney"
+          },
+          "gross": {
+            "$ref": "#/components/schemas/FinanceMoney"
+          },
+          "stayo_commission": {
+            "$ref": "#/components/schemas/FinanceMoney"
+          },
+          "costs": {
+            "$ref": "#/components/schemas/FinanceMoney"
+          },
+          "reservation_items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "FinancePayoutMode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "property_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "settings": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "payout_percent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ownership_percent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "receives_payout": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FinanceSummary": {
+        "type": "object",
+        "properties": {
+          "date_basis": {
+            "type": "string"
+          },
+          "group_by": {
+            "enum": [
+              "month",
+              "property",
+              "channel"
+            ]
+          },
+          "count": {
+            "type": "integer"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CatalogMeta": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "api_version": {
+            "const": "v1"
+          }
+        }
+      },
+      "CatalogPhoto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "is_cover": {
+            "type": "boolean"
+          },
+          "alt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "height": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "CatalogPropertySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publication_status": {
+            "enum": [
+              "published",
+              "temporarily_unavailable"
+            ]
+          },
+          "headline": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "neighborhood": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "region": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "capacity": {
+            "type": "object",
+            "properties": {
+              "max_guests": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "bedrooms": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "suites": {
+                "type": "null"
+              },
+              "bathrooms": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "parking_spaces": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          },
+          "property_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "apartamento",
+              "casa",
+              null
+            ]
+          },
+          "cover_photo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "alt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "width": {
+                    "type": "null"
+                  },
+                  "height": {
+                    "type": "null"
+                  }
+                }
+              }
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CatalogPropertyDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CatalogPropertySummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "area_m2": {
+                "type": "null"
+              },
+              "amenities": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "highlights": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "house_rules": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "check_in_time": {
+                "type": "null"
+              },
+              "check_out_time": {
+                "type": "null"
+              },
+              "photos": {
+                "type": "array",
+                "maxItems": 60,
+                "items": {
+                  "$ref": "#/components/schemas/CatalogPhoto"
+                }
+              },
+              "published_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "booking"
+            ],
+            "properties": {
+              "booking": {
+                "$ref": "#/components/schemas/BookingDestination"
+              }
+            }
+          }
+        ]
+      },
+      "EventsMeta": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "api_version"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "api_version": {
+            "const": "v1"
+          }
+        }
+      },
+      "EventsEventType": {
+        "type": "string",
+        "enum": [
+          "reservation.created",
+          "reservation.updated",
+          "reservation.cancelled",
+          "finance.receivable.created",
+          "finance.receivable.updated",
+          "finance.settlement.updated",
+          "reservation.checkin.completed",
+          "reservation.checkin.updated",
+          "property.created",
+          "property.updated",
+          "property.status.updated",
+          "property.availability.updated"
+        ]
+      },
+      "EventsFeedEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "sequence",
+          "event_type",
+          "event_version",
+          "resource_type",
+          "resource_id",
+          "resource_version",
+          "resource_updated_at",
+          "occurred_at",
+          "property_id",
+          "correlation_id",
+          "operation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/EventsEventType"
+          },
+          "event_version": {
+            "const": "1"
+          },
+          "resource_type": {
+            "type": "string",
+            "enum": [
+              "reservation",
+              "receivable",
+              "settlement",
+              "property"
+            ]
+          },
+          "resource_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resource_version": {
+            "type": "integer"
+          },
+          "property_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "correlation_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "resource_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "operation": {
+            "enum": [
+              "INSERT",
+              "UPDATE",
+              "DELETE"
+            ]
+          }
+        }
+      },
+      "EventsNotification": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "event_type",
+          "event_version",
+          "occurred_at",
+          "resource",
+          "property_id",
+          "resource_updated_at",
+          "resource_version",
+          "sequence",
+          "application",
+          "idempotency_key",
+          "correlation_id",
+          "operation"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/EventsEventType"
+          },
+          "event_version": {
+            "const": "1"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resource": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "reservation",
+                  "receivable",
+                  "settlement",
+                  "property"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "property_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "resource_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resource_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "sequence": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "application": {
+            "enum": [
+              "stayo-admin",
+              "vf-financeiro",
+              "stayo-website"
+            ]
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "correlation_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "operation": {
+            "enum": [
+              "INSERT",
+              "UPDATE",
+              "DELETE"
+            ]
+          }
+        }
+      },
+      "BookingDestination": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provider",
+          "status",
+          "url",
+          "usable",
+          "url_validation",
+          "external_availability_verified",
+          "listing_active_verified",
+          "last_validated_at",
+          "cta_label"
+        ],
+        "properties": {
+          "provider": {
+            "enum": [
+              "airbnb",
+              null
+            ]
+          },
+          "status": {
+            "enum": [
+              "configured",
+              "missing_url",
+              "pending_review",
+              "deactivated"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "usable": {
+            "type": "boolean"
+          },
+          "url_validation": {
+            "enum": [
+              "syntax",
+              null
+            ]
+          },
+          "external_availability_verified": {
+            "const": false
+          },
+          "listing_active_verified": {
+            "const": false
+          },
+          "last_validated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "cta_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "api_version"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "api_version": {
+            "const": "v1"
+          }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "required": [
+          "error",
+          "meta"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "enum": [
+                  "unauthorized",
+                  "forbidden",
+                  "invalid_request",
+                  "not_found",
+                  "rate_limited",
+                  "internal_error"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "issue": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        }
+      },
+      "AdminProperty": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "code",
+          "property_code",
+          "name",
+          "city",
+          "state",
+          "neighborhood",
+          "status",
+          "created_at",
+          "updated_at",
+          "max_guests",
+          "bedrooms",
+          "bathrooms",
+          "parking_spaces",
+          "address",
+          "external_listing_ids",
+          "owners"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "property_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "neighborhood": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_guests": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "bedrooms": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "bathrooms": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "parking_spaces": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "address": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "street",
+              "number",
+              "complement",
+              "zip_code"
+            ],
+            "properties": {
+              "street": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "number": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "complement": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "zip_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "external_listing_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "owner_id",
+                "owner_name",
+                "role",
+                "status",
+                "ownership_percent",
+                "is_primary_contact"
+              ],
+              "properties": {
+                "owner_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "owner_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "role": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ownership_percent": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "is_primary_contact": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "AdminOwner": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "full_name",
+          "legal_name",
+          "trade_name",
+          "person_type",
+          "document_type",
+          "document_masked",
+          "email",
+          "phone",
+          "whatsapp",
+          "registration_status",
+          "created_at",
+          "updated_at",
+          "is_active",
+          "default_stayo_percent",
+          "properties",
+          "contracts"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "full_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legal_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trade_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "person_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "document_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "document_masked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "whatsapp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registration_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "default_stayo_percent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "property_id",
+                "property_name",
+                "role",
+                "status",
+                "payout_method",
+                "start_date",
+                "end_date",
+                "ownership_percent",
+                "payout_percent",
+                "receives_payout"
+              ],
+              "properties": {
+                "property_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "property_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "role": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "payout_method": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "start_date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "end_date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ownership_percent": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "payout_percent": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "receives_payout": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "property_id",
+                "title",
+                "status",
+                "start_date",
+                "end_date"
+              ],
+              "properties": {
+                "id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "property_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "start_date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "end_date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "AdminReservation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "reservation_code",
+          "channel",
+          "source_channel",
+          "external_reservation_id",
+          "external_reservation_code",
+          "property_id",
+          "checkin_date",
+          "checkout_date",
+          "guest_name",
+          "status",
+          "web_checkin_status",
+          "block_reason",
+          "block_purpose",
+          "cancelled_at",
+          "cancel_reason_code",
+          "created_at",
+          "updated_at",
+          "nights",
+          "adults",
+          "children",
+          "infants",
+          "is_block"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reservation_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_reservation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "external_reservation_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "property_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checkin_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checkout_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "guest_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "web_checkin_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "block_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "block_purpose": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelled_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancel_reason_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nights": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "adults": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "children": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "infants": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "is_block": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminCheckin": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reservation_id",
+          "web_checkin_status",
+          "submitted_at",
+          "reviewed_at",
+          "occupancy_confirmation_status",
+          "guests_registered",
+          "guests_pending",
+          "guests",
+          "titular"
+        ],
+        "properties": {
+          "reservation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "web_checkin_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submitted_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reviewed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occupancy_confirmation_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "guests_registered": {
+            "type": "integer"
+          },
+          "guests_pending": {
+            "type": "integer"
+          },
+          "guests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "name",
+                "document_type",
+                "selfie_status",
+                "review_status",
+                "invite_status",
+                "sort_index",
+                "is_primary"
+              ],
+              "properties": {
+                "id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "document_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "selfie_status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "review_status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "invite_status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sort_index": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "is_primary": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "titular": {
+            "$ref": "#/components/schemas/AdminCheckinTitular"
+          }
+        }
+      },
+      "AdminPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "limit",
+          "count",
+          "next_cursor",
+          "has_more"
+        ],
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminCheckinTitular": {
+        "type": "object",
+        "required": [
+          "titular_status",
+          "guest_id",
+          "document_status",
+          "document",
+          "document_visibility"
+        ],
+        "properties": {
+          "titular_status": {
+            "enum": [
+              "resolved",
+              "missing",
+              "ambiguous"
+            ]
+          },
+          "guest_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "document_status": {
+            "enum": [
+              "missing",
+              "valid_cpf",
+              "non_cpf_document",
+              "invalid_cpf",
+              null
+            ]
+          },
+          "document": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Só com admin:sensitive e titular resolvido. CPF formatado 000.000.000-00."
+          },
+          "document_visibility": {
+            "enum": [
+              "restricted",
+              "sensitive_scope",
+              "omitted_unresolved_titular"
+            ]
+          }
+        }
+      },
+      "AdminStatementMoney": {
+        "type": "object",
+        "required": [
+          "cents",
+          "currency",
+          "origin",
+          "reliability"
+        ],
+        "properties": {
+          "cents": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "currency": {
+            "const": "BRL"
+          },
+          "origin": {
+            "enum": [
+              "real",
+              "manual",
+              "estimated",
+              "missing",
+              "indeterminate"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "reliability": {
+            "enum": [
+              "confirmed",
+              "pending_reconciliation",
+              "unavailable"
+            ]
+          }
+        }
+      },
+      "AdminStatement": {
+        "type": "object",
+        "required": [
+          "reservation",
+          "property",
+          "owners",
+          "owners_basis",
+          "titular_guest",
+          "finance",
+          "updated_at"
+        ],
+        "properties": {
+          "reservation": {
+            "type": "object"
+          },
+          "property": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "owner_id": {
+                  "type": "string"
+                },
+                "owner_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ownership_percent": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "role": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "owners_basis": {
+            "const": "current_property_registration",
+            "description": "Cadastro vigente do imóvel; não é divisão transacional histórica comprovada."
+          },
+          "titular_guest": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": [
+                  "resolved",
+                  "missing",
+                  "ambiguous"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "description": "Nunca contém CPF/documento."
+          },
+          "finance": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": [
+                  "available",
+                  "unavailable"
+                ]
+              },
+              "receivable_status": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "gross": {
+                "$ref": "#/components/schemas/AdminStatementMoney"
+              },
+              "platform_fee": {
+                "$ref": "#/components/schemas/AdminStatementMoney"
+              },
+              "cleaning": {
+                "$ref": "#/components/schemas/AdminStatementMoney"
+              },
+              "stayo_admin": {
+                "$ref": "#/components/schemas/AdminStatementMoney"
+              },
+              "stayo_total": {
+                "$ref": "#/components/schemas/AdminStatementMoney"
+              },
+              "owner_economic_value": {
+                "$ref": "#/components/schemas/AdminStatementMoney"
+              },
+              "owner_economic_value_note": {
+                "type": "string"
+              }
+            },
+            "description": "unavailable → todos os cents null (nunca 0 fabricado). owner_economic_value é parcela econômica, não repasse pago."
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Máximo entre reserva, recebível e imóvel."
+          }
+        }
+      }
+    },
+    "responses": {
+      "CatalogError": {
+        "description": "Erro padrão V1",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "invalid_request",
+                        "not_found",
+                        "rate_limited",
+                        "internal_error"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "issue": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "meta": {
+                  "$ref": "#/components/schemas/CatalogMeta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "serviceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token STAYO server-to-server. Escopos efetivos = token ∩ aplicação. Nunca usar sessão do usuário ou segredo no navegador. Escopos: admin:read, admin:sensitive (só amplia /admin/reservations/{id}/checkin, exige admin:read cumulativo), finance:read, catalog:read. Token é exclusivamente servidor-servidor e não substitui o controle de acesso por proprietário no STAYO Admin."
+      },
+      "FinanceserviceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "stk token; finance:read"
+      },
+      "EventsserviceBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "EventsworkerBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Distinct server-only worker secret, not consumer credential"
+      }
+    }
+  },
+  "webhooks": {
+    "stayoChangeNotification": {
+      "post": {
+        "summary": "At-least-once minimal change notification; no banking evidence",
+        "parameters": [
+          {
+            "name": "X-Stayo-Timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10}$"
+            }
+          },
+          {
+            "name": "X-Stayo-Signature",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 hex of timestamp + dot + raw UTF-8 body; tolerance ±300s",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          {
+            "name": "X-Stayo-Key-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventsNotification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Durably accepted or previously processed"
+          },
+          "429": {
+            "description": "Retry with Retry-After"
+          },
+          "503": {
+            "description": "Temporary retry"
+          }
+        }
+      }
+    }
+  },
+  "x-not-implemented": [
+    "Escrita administrativa REST",
+    "Telefone/e-mail/CPF do hóspede para consumidor externo",
+    "Checkout/reserva direta/hold/pagamento",
+    "Tarifas e disponibilidade comercial homologadas"
+  ]
+}
