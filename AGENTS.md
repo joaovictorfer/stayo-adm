@@ -42,3 +42,4 @@
 - Dedicated registration uses hashed expiring capabilities, serialized revisioned saves and atomic inventory entry. Inventory templates reconcile inventory_room_key (room ID; private bath = ID + :bath) in place, preserving answers/IDs; SurveyExperience retains legacy capability grouping.
 - Implementation deletion stays in the guarded admin RPC: remove project-owned field capabilities transactionally, but reject Core-linked, active or charge-linked projects to preserve operational and financial history.
 - Charges: isolated local prototypes; real charges use core-client, role-checked RPCs, revision locks, immutable snapshots and hashed expiring read-only links; never alter VF finances.
+- Central API preparation uses revisioned provider projections and a read-only adapter; production is fail-closed until explicit homologation, and guest CPF has no public or portal RPC.

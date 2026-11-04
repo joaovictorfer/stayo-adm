@@ -2,8 +2,8 @@ import { z } from "zod";
 export const CENTRAL_BASE_URL = "https://guia.stayogramado.com.br/api/v1";
 export const CENTRAL_APPLICATION = "stayo-admin";
 export const CENTRAL_SCOPE = "admin:read";
-// The handoff supplies only an envelope and a partial reservation example.
-// Never label these minimal projections as the provider's complete OpenAPI contract.
+// Envelope verified against official App c5e2b1e0 OpenAPI Meta/Page.
+// reservationMinimumSchema remains a legacy test projection, not a business schema.
 export const metaSchema = z.object({ request_id: z.string().min(1).max(200), api_version: z.literal("v1") });
 export const pageSchema = z.object({ limit: z.number().int().min(1).max(100), count: z.number().int().min(0).max(100), has_more: z.boolean(), next_cursor: z.string().min(1).max(4096).nullable() }).refine(p => p.has_more ? p.next_cursor !== null : p.next_cursor === null, "Invalid pagination cursor");
 export const referenceSchema = z.object({ id: z.string().uuid() });

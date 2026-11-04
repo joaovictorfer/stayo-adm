@@ -3,7 +3,7 @@ import { createCentralConsumer } from "./consumer.server";
 import { authorizeCentralReservation, restrictedTitular } from "./access";
 import { presentStatement, statementSchema, financialFields } from "./statement";
 import { adminReservationSchema, adminCheckinSchema } from "./provider-contracts";
-import { mapLocalReferences } from "./mapping";
+import { previewMapping } from "./mapping";
 import { accessFixture, checkinFixture, statementFixture, reservationFixture, rid, pid, meta } from "./fixtures.test-support";
 
 function setup() {
@@ -14,7 +14,7 @@ function setup() {
     const data = url.endsWith("/statement") ? statement : url.endsWith("/checkin") ? checkin : reservationFixture();
     return new Response(JSON.stringify({ data, meta }));
   });
-  const consumer = createCentralConsumer({ token: "isolated-synthetic-token", isolatedFixture: true, fetcher: fetcher as typeof fetch, logger, loadAccess: async () => structuredClone(access), wait: async () => {}, timeoutMs: 20 });
+  const consumer = createCentralConsumer({ token: "isolated-synthetic-token", isolatedFixture: true, fetcher: fetcher as typeof fetch, log: logger, loadAccess: async () => structuredClone(access), wait: async () => {}, timeoutMs: 20 });
   return { consumer, fetcher, logger, changeAccess: (a: typeof access) => { access = a; }, changeStatement: (s: typeof statement) => { statement = s; }, changeCheckin: (c: typeof checkin) => { checkin = c; } };
 }
 describe("Phase 2A isolated consumer", () => {
@@ -30,7 +30,7 @@ describe("Phase 2A isolated consumer", () => {
   });
   it("UUID matching never merges by name and preserves local data", () => {
     const local = [{ id: "a", coreId: pid, name: "Same", notes: "preserve" }, { id: "b", coreId: null, name: "Same", notes: "other" }];
-    const before = structuredClone(local); expect(mapLocalReferences(local).map(r => r.state)).toEqual(["pending_remote", "unlinked"]); expect(local).toEqual(before);
+    const before = structuredClone(local); expect(previewMapping(local.map(r => ({ localId:r.id, externalId:r.coreId, code:r.name, updatedAt:null })), [{ id:pid }], null).map(r => r.state)).toEqual(["matched_uuid", "local_unlinked"]); expect(local).toEqual(before);
   });
   it("requires actual reservation-to-property UUID even on direct ID access", async () => {
     const s = setup(); expect((await s.consumer.statement(rid)).ok).toBe(true);

@@ -4,7 +4,7 @@ import type { LocalAccessSnapshot } from "./access";
 export const rid = "11111111-1111-4111-8111-111111111111";
 export const pid = "22222222-2222-4222-8222-222222222222";
 export const oid = "33333333-3333-4333-8333-333333333333";
-export const meta = { request_id: "synthetic-request", generated_at: "2026-10-21T12:00:00Z", api_version: "1.0.0", has_more: false, next_cursor: null };
+export const meta = { request_id: "synthetic-request", api_version: "v1" };
 export function reservationFixture(): CentralReservation {
   return { id: rid, property_id: pid, reservation_code: "SYNTHETIC", channel: "direct", source_channel: null, external_reservation_id: null, external_reservation_code: null, checkin_date: "2020-01-01", checkout_date: "2020-01-03", guest_name: "Titular sintético", status: "confirmed", web_checkin_status: null, block_reason: null, block_purpose: null, cancelled_at: null, cancel_reason_code: null, created_at: null, updated_at: "2020-01-01T00:00:00Z", nights: 2, adults: 1, children: 0, infants: 0, is_block: false };
 }
