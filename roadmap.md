@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Fase 2A: obter contratos reais do STAYO App e revisão, preparar cliente/adaptadores e demonstrativo com autorização restrita de CPF; testes isolados e relatório. Sem credenciais, migrations, conexão produtiva, importação, sincronização ou publicação.
 - [x] Corrigir exclusão com links de cadastro/vistoria; erro reproduzido na IMP-00013 e mesma ação validada após correção. Regressão real passou para links, confirmação incorreta, anon, ativa e vínculos Core; histórico financeiro protegido.
 - [x] Excluir pelo painel IMP-00013, IMP-00012, IMP-00011 e IMP-00006; remoção e ausência de links órfãos conferidas.
 - [ ] IMP-00007: aguardando autorização para desvincular apenas a ficha de teste do imóvel operacional antes de excluir; não remover imóvel ou dados operacionais.
