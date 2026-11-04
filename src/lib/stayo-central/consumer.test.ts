@@ -101,6 +101,18 @@ describe("Phase 2A isolated consumer", () => {
   it("synthetic fixtures parse actual OpenAPI projections", () => {
     expect(adminReservationSchema.safeParse(reservationFixture()).success).toBe(true); expect(adminCheckinSchema.safeParse(checkinFixture()).success).toBe(true);
   });
+  it("multiple primary guests never expose a document", () => {
+    const c = checkinFixture(); const guest = c.guests[0]; if (!guest) throw Error("fixture"); c.guests.push({ ...guest, id:"other-primary" });
+    expect(restrictedTitular(c,true,["admin:read","admin:sensitive"])).toEqual({ status:"ambiguous",document:null });
+  });
+  it("revalidates finance authorization after fetching statement", async () => {
+    let reads = 0; const a = accessFixture();
+    const c=createCentralConsumer({ token:"synthetic",isolatedFixture:true,loadAccess:async()=>({...a,adminAllowed:++reads===1}),fetcher:(async(url:string)=>new Response(JSON.stringify({data:url.endsWith("/statement")?statementFixture():reservationFixture(),meta}))) as typeof fetch });
+    expect(await c.statement(rid)).toMatchObject({ok:false,kind:"forbidden"});
+  });
+  it("list resource filters do not become implicit authorization", async () => {
+    const s=setup(); expect(await s.consumer.list("owners",{property_id:pid})).toMatchObject({ok:false,kind:"invalid_response"});expect(s.fetcher).not.toHaveBeenCalled();
+  });
   it("logs never contain provider payload, credentials or documents", async () => {
     const s = setup(); await s.consumer.titular(rid, ["admin:read", "admin:sensitive"]);
     const logs = JSON.stringify(s.logger.mock.calls); expect(logs.includes("isolated-synthetic-token")).toBe(false); expect(logs.includes(checkinFixture().titular.document ?? "fixture-impossible")).toBe(false); expect(logs.includes("Titular sintético")).toBe(false);

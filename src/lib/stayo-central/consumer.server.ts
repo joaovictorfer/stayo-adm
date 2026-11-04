@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createCentralHttp, type HttpOptions } from "./http.server";
-import { listEnvelope, type CentralResource, type CentralFilters, type CentralFailure } from "./contracts";
+import { listEnvelope, querySchema, type CentralResource, type CentralFilters, type CentralFailure } from "./contracts";
 import { adminReservationSchema, adminPropertySchema, adminOwnerSchema, adminCheckinSchema, providerEnvelope } from "./provider-contracts";
 import { statementEnvelope } from "./statement";
 import { authorizeCentralReservation, restrictedTitular, type LocalAccessSnapshot } from "./access";
@@ -16,8 +16,10 @@ export function createCentralConsumer(options: ConsumerOptions) {
   const schemas = { properties: adminPropertySchema, owners: adminOwnerSchema, reservations: adminReservationSchema };
   async function list(resource: CentralResource, filters: CentralFilters = {}) {
     const off = disabled(); if (off) return off;
+    const validated = querySchema.safeParse({ resource, filters });
+    if (!validated.success) return failure("invalid_response");
     const access = await options.loadAccess(); if (!access.userId || !access.adminAllowed) return failure("forbidden");
-    const query = Object.fromEntries(Object.entries(filters).filter(([,v]) => v !== undefined).map(([k,v]) => [k,String(v)]));
+    const query = Object.fromEntries(Object.entries(validated.data.filters).filter(([,v]) => v !== undefined).map(([k,v]) => [k,String(v)]));
     return http.get(`/admin/${resource}`, listEnvelope(schemas[resource] as z.ZodTypeAny), query);
   }
   async function reservation(id: string, sensitive = false) {
