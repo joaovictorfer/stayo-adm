@@ -85,7 +85,7 @@ describe("Phase 2A isolated consumer", () => {
   });
   it("revalidates local authorization after document fetch", async () => {
     let n = 0; const a = accessFixture();
-    const c = createCentralConsumer({ token: "synthetic", isolatedFixture: true, loadAccess: async () => ({ ...a, sensitiveAllowed: ++n === 1 }), fetcher: (async (url: string) => new Response(JSON.stringify({ data: url.endsWith("/checkin") ? checkinFixture() : reservationFixture(), meta }))) as typeof fetch });
+    const c = createCentralConsumer({ token: "synthetic", isolatedFixture: true, loadAccess: async () => ({ ...a, sensitiveAllowed: ++n < 4 }), fetcher: (async (url: string) => new Response(JSON.stringify({ data: url.endsWith("/checkin") ? checkinFixture() : url.endsWith("/statement") ? statementFixture() : reservationFixture(), meta }))) as typeof fetch });
     expect(await c.titular(rid, ["admin:read", "admin:sensitive"])).toMatchObject({ ok: false, kind: "forbidden" });
   });
   it("document update without reservation update is reread with no cache", async () => {
