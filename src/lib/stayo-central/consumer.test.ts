@@ -92,7 +92,7 @@ describe("Phase 2A isolated consumer", () => {
     const s = setup(); const scopes = ["admin:read", "admin:sensitive"];
     const first = await s.consumer.titular(rid, scopes); expect(first.ok && "status" in first.data && first.data.status).toBe("valid_cpf");
     const c = checkinFixture(); c.titular.document_status = "missing"; c.titular.document = null; s.changeCheckin(c);
-    const next = await s.consumer.titular(rid, scopes); expect(next.ok && "status" in next.data && next.data.status).toBe("missing"); expect(s.fetcher).toHaveBeenCalledTimes(4);
+    const next = await s.consumer.titular(rid, scopes); expect(next.ok && "status" in next.data && next.data.status).toBe("missing"); expect(s.fetcher).toHaveBeenCalledTimes(8);
   });
   it("rereads financial correction for old reservation independently of reservation timestamp", async () => {
     const s = setup(); await s.consumer.statement(rid); const updated = statementFixture(); updated.finance.owner_economic_value.cents = 90001; s.changeStatement(updated);

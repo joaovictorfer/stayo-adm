@@ -45,6 +45,9 @@ export function createCentralConsumer(options: ConsumerOptions) {
   async function titular(id: string, scopes: string[]) {
     const allowed = await reservation(id, true); if (!allowed.ok) return allowed;
     if (!scopes.includes("admin:read") || !scopes.includes("admin:sensitive")) return failure("forbidden");
+    // Reservation has no owner UUID. Confirm current provider owner membership
+    // through the verified statement before requesting any sensitive document.
+    const ownership = await statement(id); if (!ownership.ok) return ownership;
     const result = await http.get(`/admin/reservations/${id}/checkin`, providerEnvelope(adminCheckinSchema)); if (!result.ok) return result;
     if (result.data.data.reservation_id !== id) return failure("invalid_response");
     const current = authorizeCentralReservation(await options.loadAccess(), allowed.data.data, true);
