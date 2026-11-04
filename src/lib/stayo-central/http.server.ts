@@ -7,18 +7,18 @@ export function createCentralHttp(options: HttpOptions) {
  async function get<T>(path:string, schema:z.ZodType<T>, query:Record<string,string>={}):Promise<CentralResult<T>> {
   if(!options.token)return failure("not_configured");
   if((options.baseUrl ?? CENTRAL_BASE_URL)!==CENTRAL_BASE_URL)return failure("invalid_origin");
-  if(!/^\/(health|system\/whoami|admin\/(properties|owners|reservations)(\/[0-9a-f-]{36}(\/checkin)?)?)$/.test(path))return failure("invalid_origin");
+  if(!/^\/(health|system\/whoami|admin\/(properties|owners|reservations)(\/[0-9a-f-]{36})?|admin\/reservations\/[0-9a-f-]{36}\/(checkin|statement))$/.test(path))return failure("invalid_origin");
   const url=new URL(`${CENTRAL_BASE_URL}${path}`);Object.entries(query).forEach(([k,v])=>url.searchParams.set(k,v));
   const operationStarted=now();
   for(let attempt=1;attempt<=3;attempt++) {
    if(now()-operationStarted>=50000)return failure("timeout");
    const attemptStarted=now();const timeoutMs=Math.min(options.timeoutMs??15000,50000-(now()-operationStarted));
    let response:Response;
-   try {response=await fetcher(url.toString(),{method:"GET",headers:{Authorization:`Bearer ${options.token}`,Accept:"application/json"},redirect:"error",cache:"no-store",signal:AbortSignal.timeout(timeoutMs)});}
+   try {response=await fetcher(url.toString(),{method:"GET",headers:{Authorization:`Bearer ${options.token}`,Accept:"application/json"},redirect:"manual",cache:"no-store",signal:AbortSignal.timeout(timeoutMs)});}
    catch(e) {const kind=e instanceof Error&&(e.name==="TimeoutError"||e.name==="AbortError")?"timeout":"network";options.log?.({endpoint:path.replace(/[0-9a-f-]{36}/g,":id"),status:null,attempt,requestId:null,kind});if(attempt===3)return failure(kind);await wait(500*2**(attempt-1)+Math.floor(random()*250));continue;}
    const ridRaw=response.headers.get("X-Request-Id");const rid=ridRaw && /^[a-zA-Z0-9_-]{1,200}$/.test(ridRaw)?ridRaw:null;
    if(!response.ok){
-    const status=response.status;const kind=status===401?"unauthorized":status===403?"forbidden":status===429?"rate_limited":status>=500?"unavailable":"invalid_response";
+    const status=response.status;const kind=status===401?"unauthorized":status===403?"forbidden":status===404?"not_found":status===429?"rate_limited":status>=500?"unavailable":"invalid_response";
     const ra=response.headers.get("Retry-After");const parsedDelay=ra===null?null:/^\d+$/.test(ra)?Number(ra)*1000:Date.parse(ra)-now();const delay=parsedDelay!==null&&Number.isFinite(parsedDelay)?Math.max(0,parsedDelay):null;
     void response.body?.cancel().catch(()=>{});options.log?.({endpoint:path.replace(/[0-9a-f-]{36}/g,":id"),status,attempt,requestId:rid,kind});
     if(attempt<3&&(status>=500||status===429)) {const backoff=500*2**(attempt-1)+Math.floor(random()*250);const pause=Math.max(backoff,delay??0);if(pause>15000||now()-operationStarted+pause>=50000)return failure(kind,status,rid,pause);await wait(pause);continue;}
