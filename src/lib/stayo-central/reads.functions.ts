@@ -15,7 +15,7 @@ export const readCentralStatement = createServerFn({ method: "POST" })
     if (role.error || role.data !== true) return { ok: false as const, kind: "forbidden" as const, message: messages.forbidden };
     const { createCentralConsumer } = await import("./consumer.server");
     const consumer = createCentralConsumer({
-      token: process.env["STAYO_API_TOKEN"], baseUrl: process.env["STAYO_API_URL"] || CENTRAL_BASE_URL,
+      token: process.env["STAYO_API_TOKEN"] || "", baseUrl: process.env["STAYO_API_URL"] || CENTRAL_BASE_URL,
       loadAccess: async () => {
         const [projects, owners, freshRole] = await Promise.all([
           context.supabase.from("implementation_projects").select("id,owner_id,core_property_id,core_owner_id,status"),
