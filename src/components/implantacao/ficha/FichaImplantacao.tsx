@@ -506,11 +506,23 @@ export function InventoryWorkspace({
           const a = i.inventory_answer;
           return (
             <InventoryRow key={i.id} name={i.name} image={ex?.url} onOpen={openDetail}
+              onTap={installation ? undefined : () => bump(i, 1)}
               group={inventorySubItemsFor(i.name).length > 0}
-              meta={inventorySubItemsFor(i.name).length ? `Grupo · ${inventorySubItemsFor(i.name).length} itens` : <>{meta}{a === "nao_aplica" ? " · N/A" : ""}{review ? " · Revisar" : ""}</>}
+              meta={inventorySubItemsFor(i.name).length ? `Grupo · ${inventorySubItemsFor(i.name).length} itens` : <>{installation ? meta : a === "tenho" ? `Tem ${Math.max(1, i.inventory_quantity ?? 1)}` : a === "nao_tenho" ? "Não tem" : "Toque para contar"}{a === "nao_aplica" ? " · N/A" : ""}{review ? " · Revisar" : ""}</>}
               actions={<>
-                <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
-                <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: installation ? "tenho" : a === "tenho" ? null : "tenho" }); if (installation) openDetail(); }} />
+                {installation ? <>
+                  <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
+                  <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: "tenho" }); openDetail(); }} />
+                </> : a === "tenho" ? (
+                  <div className="flex items-center gap-1 rounded-full border-2 p-0.5" style={{ borderColor: "var(--stayo-navy)" }}>
+                    <button type="button" aria-label={`Diminuir ${i.name}`} onClick={() => bump(i, -1)} className="grid size-10 place-items-center rounded-full active:scale-90 transition-transform" style={navy}><Minus className="size-4" /></button>
+                    <span className="min-w-6 text-center text-base font-semibold tabular-nums" style={navy} aria-live="polite">{Math.max(1, i.inventory_quantity ?? 1)}</span>
+                    <button type="button" aria-label={`Aumentar ${i.name}`} onClick={() => bump(i, 1)} className="grid size-10 place-items-center rounded-full active:scale-90 transition-transform" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}><Plus className="size-4" /></button>
+                  </div>
+                ) : <>
+                  <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
+                  <button type="button" aria-label={`Tem ${i.name}`} onClick={() => bump(i, 1)} className="grid size-11 shrink-0 place-items-center rounded-full border-2 active:scale-90 transition-transform" style={{ borderColor: "var(--stayo-navy)", ...navy }}><Plus className="size-5" /></button>
+                </>}
                 <DropdownMenu>
                   <DropdownMenuTrigger className="hidden h-11 w-9 shrink-0 place-items-center rounded-lg sm:grid" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
                     <MoreHorizontal className="size-4" />
