@@ -76,6 +76,103 @@ function Card({ icon: Icon, title, children, tone }: { icon: LucideIcon; title: 
   );
 }
 
+/**
+ * Três números independentes — nunca somados: inventário conferido,
+ * envios do proprietário aguardando revisão e bloqueios reais de prontidão.
+ */
+export function ReadinessCountersCard({
+  loading,
+  error,
+  onRetry,
+  answered,
+  total,
+  submissionsPending,
+  blockers,
+  onInventory,
+  onSubmissions,
+}: {
+  loading: boolean;
+  error: boolean;
+  onRetry: () => void;
+  answered: number;
+  total: number;
+  submissionsPending: number;
+  blockers: number;
+  onInventory: () => void;
+  onSubmissions: () => void;
+}) {
+  if (loading)
+    return (
+      <section className="rounded-xl border bg-white p-5" style={surface} role="status" aria-label="Carregando inventário">
+        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+        <div className="mt-3 h-10 w-32 animate-pulse rounded bg-muted" />
+        <div className="mt-4 h-2 w-full animate-pulse rounded bg-muted" />
+        <div className="mt-5 h-12 w-full animate-pulse rounded bg-muted" />
+      </section>
+    );
+  if (error)
+    return (
+      <section className="rounded-xl border bg-white p-5" style={surface} role="alert">
+        <p className="font-medium" style={{ color: "var(--stayo-navy)" }}>Não foi possível carregar o inventário.</p>
+        <Button variant="outline" className="mt-3" onClick={onRetry}>Tentar de novo</Button>
+      </section>
+    );
+  const allDone = total > 0 && answered >= total;
+  const pct = total ? Math.round((answered / total) * 100) : 0;
+  return (
+    <section className="rounded-xl border bg-white" style={surface}>
+      <div className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={muted}>Inventário</p>
+          {total === 0 ? (
+            <p className="mt-2 text-lg font-medium" style={{ color: "var(--stayo-navy)" }}>Inventário ainda não carregado</p>
+          ) : (
+            <p className="mt-1 flex items-baseline gap-2" style={{ color: "var(--stayo-navy)" }}>
+              <span className="text-5xl font-semibold tabular-nums" style={{ fontFamily: "Outfit, var(--stayo-font-ui), sans-serif" }}>{answered}</span>
+              <span className="text-2xl tabular-nums" style={muted}>/ {total}</span>
+              <span className="text-sm" style={muted}>itens conferidos</span>
+            </p>
+          )}
+          {total > 0 && (
+            <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }} aria-hidden>
+              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "var(--stayo-navy)" }} />
+            </div>
+          )}
+          {allDone && (
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--stayo-success, #1f7a4d)" }}>
+              <Check className="size-4" /> Tudo o que se aplica foi conferido
+            </p>
+          )}
+        </div>
+        {!allDone && (
+          <Button onClick={onInventory} className="h-12">
+            {total === 0 ? "Abrir inventário" : "Continuar conferência"} <ChevronRight className="size-4" />
+          </Button>
+        )}
+      </div>
+      <ul className="border-t" style={{ borderColor: "var(--stayo-border)" }}>
+        <li>
+          <button type="button" onClick={onSubmissions} className="flex min-h-14 w-full items-center gap-3 px-5 py-3 text-left">
+            <AlertCircle className="size-5 shrink-0" style={{ color: submissionsPending ? "var(--stayo-warning, #c27a12)" : "var(--stayo-ink-muted)" }} />
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium" style={{ color: "var(--stayo-navy)" }}>Envios do proprietário</span>
+              <span className="block text-sm" style={muted}>{submissionsPending ? `${submissionsPending} aguardando revisão` : "Nada para revisar"}</span>
+            </span>
+            <ChevronRight className="size-4" style={muted} />
+          </button>
+        </li>
+        <li className="flex min-h-14 items-center gap-3 border-t px-5 py-3" style={{ borderColor: "var(--stayo-border)" }}>
+          <ListChecks className="size-5 shrink-0" style={{ color: blockers ? "var(--stayo-danger, #b42318)" : "var(--stayo-ink-muted)" }} />
+          <span className="min-w-0 flex-1">
+            <span className="block font-medium" style={{ color: "var(--stayo-navy)" }}>Bloqueios de prontidão</span>
+            <span className="block text-sm" style={muted}>{blockers ? `${blockers} ${blockers === 1 ? "bloqueio" : "bloqueios"} impedem a entrega` : "Nenhum"}</span>
+          </span>
+        </li>
+      </ul>
+    </section>
+  );
+}
+
 function ToneDot({ tone }: { tone: Tone }) {
   if (tone === "ok")
     return (
