@@ -38,6 +38,8 @@ import {
   Megaphone,
   MoreHorizontal,
   Trash2,
+  MapPin,
+  Building2,
 } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
@@ -484,7 +486,7 @@ function ImplementationDetailPage() {
         />
       ) : (
         <div className="flex flex-col gap-4">
-          <header className="relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 overflow-hidden rounded-2xl border bg-white p-3 shadow-sm sm:flex sm:items-center sm:gap-5 sm:p-4" style={{ borderColor: "var(--stayo-border)" }} aria-label="Resumo da implantação">
+          <header className="relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 overflow-hidden rounded-2xl border p-3 shadow-sm sm:flex sm:items-center sm:gap-5 sm:p-4" style={{ borderColor: "var(--stayo-border)", background: "linear-gradient(110deg, var(--card, #fff) 45%, color-mix(in oklab, var(--stayo-navy) 8%, var(--card, #fff)))" }} aria-label="Resumo da implantação">
             <div className="hidden aspect-[4/3] w-40 shrink-0 overflow-hidden rounded-xl sm:block lg:w-56" style={{ backgroundColor: "var(--stayo-bg)" }}>
               {adminCover ? (
                 <img src={adminCover} alt={propertyName} className="size-full object-cover" />
@@ -505,17 +507,44 @@ function ImplementationDetailPage() {
               <p className="truncate text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
                 {implementation.ownerName || "Proprietário não informado"} · {journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
               </p>
-              {(() => {
-                const done = items.length - pendingItems.length;
-                const pct = items.length ? Math.round((done / items.length) * 100) : 0;
-                return items.length ? (
-                  <div className="mt-3 flex max-w-xs items-center gap-2">
-                    <Progress value={pct} className="h-1.5" />
-                    <span className="shrink-0 text-xs font-semibold" style={{ color: "var(--stayo-navy)" }}>{pct}%</span>
-                  </div>
-                ) : null;
-              })()}
+              {(implementation.city || implementation.condominiumName) && (
+                <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
+                  {implementation.city && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm" style={{ color: "var(--stayo-ink)" }}>
+                      <MapPin className="size-3.5" style={{ color: "var(--stayo-navy)" }} aria-hidden="true" /> {implementation.city}
+                    </span>
+                  )}
+                  {implementation.condominiumName && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm" style={{ color: "var(--stayo-ink)" }}>
+                      <Building2 className="size-3.5" style={{ color: "var(--stayo-navy)" }} aria-hidden="true" /> Condomínio {implementation.condominiumName}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
+            {(() => {
+              const idx = Math.max(0, FICHA_SECTIONS.findIndex((s) => s.id === section));
+              const done = items.length - pendingItems.length;
+              const pct = items.length ? Math.round((done / items.length) * 100) : 0;
+              const r = 34;
+              const c = 2 * Math.PI * r;
+              return (
+                <div className="hidden shrink-0 items-center gap-3 lg:flex">
+                  <div className="relative size-20">
+                    <svg viewBox="0 0 80 80" className="size-20 -rotate-90" aria-hidden="true">
+                      <circle cx="40" cy="40" r={r} fill="none" strokeWidth="7" style={{ stroke: "var(--stayo-border)" }} />
+                      <circle cx="40" cy="40" r={r} fill="none" strokeWidth="7" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} style={{ stroke: "var(--stayo-success, var(--stayo-navy))" }} />
+                    </svg>
+                    <span className="absolute inset-0 grid place-items-center text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "var(--stayo-font-display)" }}>{pct}%</span>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-semibold" style={{ color: "var(--stayo-navy)" }}>Implantação</p>
+                    <p style={{ color: "var(--stayo-ink-muted)" }}>Etapa {idx + 1} de {FICHA_SECTIONS.length}</p>
+                    <p style={{ color: "var(--stayo-ink-muted)" }}>{FICHA_SECTIONS[idx]?.label}</p>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex shrink-0 items-center gap-2 sm:self-start">
               <Button
                 size="sm"
