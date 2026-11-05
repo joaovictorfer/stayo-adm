@@ -1,3 +1,4 @@
+import { ImplementationHistory } from "../components/implantacao/ficha/ImplementationHistory";
 import { inventorySubmissionsQuery } from "@/lib/api/owner-inventory";
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
 import { journeyLabel, proposalStage, contractStageLabel, currentContractStage } from "../lib/journey-states";
@@ -677,13 +678,11 @@ function ImplementationDetailPage() {
               ) : (
                 <div className="flex flex-col gap-4">
                   <ImplementationTimeline implementationId={implementation.id} />
-                  <section
-                    className="rounded-[var(--radius-card)] border bg-white p-5"
-                    style={{ borderColor: "var(--stayo-border)" }}
-                  >
-                    <h2 className="mb-3 text-lg font-semibold">Histórico</h2>
-                    <Timeline entries={history} />
-                  </section>
+                  <ImplementationHistory
+                    implementationId={implementation.id}
+                    proposalIds={(proposalsQuery.data ?? []).map((p) => p.id)}
+                    base={history}
+                  />
                   <Collapsible
                     title="Avançado"
                     summary="Identificadores técnicos e integração com o Core"
