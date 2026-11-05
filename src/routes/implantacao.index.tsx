@@ -4,10 +4,14 @@ import {
   AlertTriangle,
   CalendarClock,
   ChevronRight,
+  Columns3,
   Copy,
   ExternalLink,
+  Building2,
   CheckCircle2,
-  FileText,
+  Clock,
+  MapPin,
+  UserRound,
   LayoutGrid,
   List,
   Megaphone,
@@ -25,6 +29,7 @@ import {
   AdminFilterBar,
   AdminStatusBadge,
 } from "@/components/admin/AdminPrimitives";
+import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { DeleteImplementationButton } from "@/components/implantacao/DeleteImplementationButton";
 import { FieldLinkDialog } from "@/components/field/FieldLinkDialog";
 import { NewOpportunityDrawer } from "../components/implantacao/NewOpportunityDrawer";
@@ -141,7 +146,7 @@ function ImplementationsPage() {
   const data = query.data?.data ?? [];
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
-  const [view, setView] = useState<"lista" | "funil">("lista");
+  const [view, setView] = useState<"cards" | "lista" | "funil">("cards");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const commercialByImplementation = useMemo(
@@ -216,6 +221,19 @@ function ImplementationsPage() {
           <Button
             type="button"
             variant="ghost"
+            aria-label="Cartões"
+            onClick={() => setView("cards")}
+            className={`h-7 gap-1.5 px-2.5 text-xs ${
+              view === "cards"
+                ? "bg-[var(--admin-primary)] text-[var(--primary-foreground)] hover:bg-[var(--admin-primary-hover)] hover:text-[var(--primary-foreground)]"
+                : "text-[var(--admin-muted)]"
+            }`}
+          >
+            <LayoutGrid className="size-3.5" /> Cartões
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
             onClick={() => setView("lista")}
             className={`h-7 gap-1.5 px-2.5 text-xs ${
               view === "lista"
@@ -235,7 +253,7 @@ function ImplementationsPage() {
                 : "text-[var(--admin-muted)]"
             }`}
           >
-            <LayoutGrid className="size-3.5" /> Funil
+            <Columns3 className="size-3.5" /> Funil
           </Button>
         </div>
       </AdminFilterBar>
@@ -260,6 +278,8 @@ function ImplementationsPage() {
             }
           />
         </Panel>
+      ) : view === "cards" ? (
+        <OpportunityCards rows={rows} />
       ) : view === "lista" ? (
         <OpportunityList
           rows={rows}
@@ -281,11 +301,10 @@ function ImplementationsPage() {
   );
 }
 
-const STAGE_GROUPS: { label: string; statuses: ImplementationProject["status"][]; color: string; Icon: typeof FileText }[] = [
-  { label: "Comercial", statuses: ["prospect", "proposta", "aguardando_aprovacao"], color: "var(--admin-muted)", Icon: FileText },
-  { label: "Aprovadas", statuses: ["aprovado", "planejamento"], color: "var(--admin-primary)", Icon: CheckCircle2 },
-  { label: "Em implantação", statuses: ["em_implantacao", "validacao", "pronto_para_operacao"], color: "var(--warning, oklch(0.75 0.15 70))", Icon: Settings2 },
-  { label: "Anúncio ativo", statuses: ["ativo"], color: "var(--success, oklch(0.62 0.15 150))", Icon: Megaphone },
+const KPIS: { label: string; statuses: ImplementationProject["status"][]; tone: string; Icon: typeof Settings2 }[] = [
+  { label: "Em andamento", statuses: ["prospect", "proposta", "aguardando_aprovacao", "aprovado", "planejamento", "em_implantacao", "validacao", "pronto_para_operacao"], tone: "var(--admin-primary)", Icon: Settings2 },
+  { label: "Aguardando proprietário", statuses: ["proposta", "aguardando_aprovacao"], tone: "var(--stayo-sand, oklch(0.62 0.08 75))", Icon: Clock },
+  { label: "Anúncios ativos", statuses: ["ativo"], tone: "var(--success, oklch(0.6 0.12 155))", Icon: Megaphone },
 ];
 
 function journeyProgress(status: ImplementationProject["status"]) {
@@ -294,37 +313,140 @@ function journeyProgress(status: ImplementationProject["status"]) {
 }
 
 function StageSummary({ data }: { data: ImplementationProject[] }) {
-  const total = data.length || 1;
   return (
-    <section
-      className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border lg:grid-cols-4"
-      style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-border)" }}
-    >
-      {STAGE_GROUPS.map(({ label, statuses, color, Icon }) => {
-        const count = data.filter((d) => statuses.includes(d.status)).length;
-        const pct = Math.round((count / total) * 100);
+    <section className="mb-4 grid gap-3 sm:grid-cols-3">
+      {KPIS.map(({ label, statuses, tone, Icon }) => (
+        <div
+          key={label}
+          className="flex items-center gap-4 rounded-[var(--radius-card)] border p-4"
+          style={surface}
+        >
+          <span
+            className="grid size-12 shrink-0 place-items-center rounded-full"
+            style={{ color: tone, backgroundColor: `color-mix(in oklab, ${tone} 15%, transparent)` }}
+          >
+            <Icon className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
+            <p className="text-3xl font-semibold leading-tight" style={{ color: "var(--stayo-ink)" }}>
+              {data.filter((d) => statuses.includes(d.status)).length}
+            </p>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function ProgressRing({ value }: { value: number }) {
+  const r = 22, c = 2 * Math.PI * r;
+  return (
+    <div className="relative grid size-14 shrink-0 place-items-center" aria-label={`${value}% concluído`}>
+      <svg viewBox="0 0 52 52" className="absolute inset-0 -rotate-90">
+        <circle cx="26" cy="26" r={r} fill="none" strokeWidth="4" style={{ stroke: "var(--admin-surface-subtle)" }} />
+        <circle cx="26" cy="26" r={r} fill="none" strokeWidth="4" strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)}
+          style={{ stroke: "var(--admin-primary)", transition: "stroke-dashoffset 600ms ease" }} />
+      </svg>
+      <span className="text-xs font-semibold" style={{ color: "var(--stayo-ink)" }}>{value}%</span>
+    </div>
+  );
+}
+
+function OpportunityCards({ rows }: { rows: ImplementationProject[] }) {
+  const labelFor = useJourneyLabels();
+  const ids = rows.map((r) => r.id);
+  const covers = useQuery({
+    queryKey: ["implementations", "covers", ids],
+    queryFn: () => listImplementationCoverUrls(ids),
+    staleTime: 30 * 60_000,
+  });
+  return (
+    <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {rows.map((item, index) => {
+        const label = labelFor(item);
+        const cover = covers.data?.[item.id];
+        const next = journeyNextAction(label) ?? "Ver ficha";
+        const place = [item.condominiumName, item.unit].filter(Boolean).join(" · ");
         return (
-          <div key={label} className="flex items-center gap-3 p-4" style={{ backgroundColor: "var(--stayo-surface)" }}>
-            <span
-              className="grid size-11 shrink-0 place-items-center rounded-full"
-              style={{ color, backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)` }}
-            >
-              <Icon className="size-5" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
-              <p className="text-2xl font-semibold leading-tight" style={{ color: "var(--stayo-ink)", fontFamily: "var(--font-heading, inherit)" }}>{count}</p>
-              <div className="mt-1.5 flex items-center gap-2">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ backgroundColor: "var(--admin-surface-subtle)" }}>
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+          <li
+            key={item.id}
+            className="group flex animate-fade-in flex-col overflow-hidden rounded-[var(--radius-card)] border transition-shadow duration-200 hover:shadow-lg"
+            style={{ ...surface, animationDelay: `${Math.min(index, 8) * 40}ms`, animationFillMode: "both" }}
+          >
+            <Link to="/implantacao/$id" params={{ id: item.id }} search={{ secao: "visao" }} className="relative block aspect-[16/9] overflow-hidden" style={{ backgroundColor: "var(--admin-primary)" }}>
+              {cover ? (
+                <img src={cover} alt={opportunityTitle(item)} loading="lazy" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+              ) : (
+                <div className="grid size-full place-items-center" style={{ color: "color-mix(in oklab, var(--primary-foreground) 55%, transparent)" }}>
+                  <Building2 className="size-10" aria-hidden="true" />
                 </div>
-                <span className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{pct}%</span>
+              )}
+              <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm" style={{ backgroundColor: "var(--stayo-surface)", color: "var(--stayo-ink)" }}>
+                <CheckCircle2 className="size-3.5" aria-hidden="true" /> {label}
+              </span>
+              {place && (
+                <span className="absolute right-3 top-3 inline-flex max-w-[55%] items-center gap-1 truncate rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "color-mix(in oklab, var(--admin-primary) 80%, transparent)", color: "var(--primary-foreground)" }}>
+                  <MapPin className="size-3.5 shrink-0" aria-hidden="true" /> <span className="truncate">{place}</span>
+                </span>
+              )}
+            </Link>
+            <div className="flex flex-1 flex-col gap-4 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <Link to="/implantacao/$id" params={{ id: item.id }} search={{ secao: "visao" }} className="block truncate text-base font-semibold hover:underline" style={{ color: "var(--stayo-ink)" }}>
+                    {opportunityTitle(item)}
+                  </Link>
+                  <p className="mt-0.5 text-xs" style={{ color: "var(--stayo-ink-muted)" }}>{item.code}</p>
+                  <div className="mt-3 flex items-center gap-2 text-sm">
+                    <UserRound className="size-4 shrink-0" style={{ color: "var(--stayo-ink-muted)" }} aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="truncate" style={{ color: "var(--stayo-ink)" }}>{item.ownerName || "Contato a completar"}</p>
+                      <p className="truncate text-xs" style={{ color: "var(--stayo-ink-muted)" }}>
+                        {item.ownerPhone ? formatBrazilianPhone(item.ownerPhone) : "Proprietário"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <ProgressRing value={journeyProgress(item.status)} />
+              </div>
+              <div className="mt-auto flex items-center gap-2">
+                <CardPrimaryAction item={item} isDraft={label === "Rascunho"} label={next} />
+                <ImplementationRowActions item={item} />
               </div>
             </div>
-          </div>
+          </li>
         );
       })}
-    </section>
+    </ul>
+  );
+}
+
+function CardPrimaryAction({ item, isDraft, label }: { item: ImplementationProject; isDraft: boolean; label: string }) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  async function go() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (isDraft) {
+        const form = await loadOpportunityForm(item.id);
+        await navigate({ to: "/implantacao/$id", params: { id: item.id }, search: { etapa: toJourneyStep(form.draftStep) ?? "contato" } });
+      } else {
+        await navigate({ to: "/implantacao/$id", params: { id: item.id }, search: { secao: "visao" } });
+      }
+    } catch {
+      toast.error("Não foi possível abrir a ficha. Tente novamente.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <AdminActionButton type="button" className="h-10 flex-1 justify-center" disabled={busy} onClick={() => void go()}>
+      {isDraft ? <Pencil className="size-4" /> : <CalendarClock className="size-4" />}
+      {busy ? "Abrindo…" : label}
+    </AdminActionButton>
   );
 }
 
