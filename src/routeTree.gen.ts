@@ -87,6 +87,7 @@ import { Route as VistoriasIdRouteImport } from './routes/vistorias.$id'
 import { Route as FinanceiroCobrancasIndexRouteImport } from './routes/financeiro.cobrancas.index'
 import { Route as FinanceiroCobrancasIdRouteImport } from './routes/financeiro.cobrancas.$id'
 import { Route as FinanceiroCobrancasNovaRouteImport } from './routes/financeiro.cobrancas.nova'
+import { Route as ImplantacaoIdCompletaRouteImport } from './routes/implantacao.$id_.completa'
 import { Route as PortalApresentacaoTokenRouteImport } from './routes/portal.apresentacao.$token'
 import { Route as PortalCadastroVistoriaTokenRouteImport } from './routes/portal.cadastro-vistoria.$token'
 import { Route as PortalCadastroTokenRouteImport } from './routes/portal.cadastro.$token'
@@ -504,6 +505,11 @@ const FinanceiroCobrancasNovaRoute = FinanceiroCobrancasNovaRouteImport.update({
   path: '/nova',
   getParentRoute: () => FinanceiroCobrancasRoute,
 } as any)
+const ImplantacaoIdCompletaRoute = ImplantacaoIdCompletaRouteImport.update({
+  id: '/implantacao/$id_/completa',
+  path: '/implantacao/$id/completa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalApresentacaoTokenRoute = PortalApresentacaoTokenRouteImport.update({
   id: '/portal/apresentacao/$token',
   path: '/portal/apresentacao/$token',
@@ -630,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/vistorias/': typeof VistoriasIndexRoute
   '/financeiro/cobrancas/$id': typeof FinanceiroCobrancasIdRoute
   '/financeiro/cobrancas/nova': typeof FinanceiroCobrancasNovaRoute
+  '/implantacao/$id/completa': typeof ImplantacaoIdCompletaRoute
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
@@ -718,6 +725,7 @@ export interface FileRoutesByTo {
   '/vistorias': typeof VistoriasIndexRoute
   '/financeiro/cobrancas/$id': typeof FinanceiroCobrancasIdRoute
   '/financeiro/cobrancas/nova': typeof FinanceiroCobrancasNovaRoute
+  '/implantacao/$id/completa': typeof ImplantacaoIdCompletaRoute
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
@@ -808,6 +816,7 @@ export interface FileRoutesById {
   '/vistorias/': typeof VistoriasIndexRoute
   '/financeiro/cobrancas/$id': typeof FinanceiroCobrancasIdRoute
   '/financeiro/cobrancas/nova': typeof FinanceiroCobrancasNovaRoute
+  '/implantacao/$id_/completa': typeof ImplantacaoIdCompletaRoute
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
@@ -899,6 +908,7 @@ export interface FileRouteTypes {
     | '/vistorias/'
     | '/financeiro/cobrancas/$id'
     | '/financeiro/cobrancas/nova'
+    | '/implantacao/$id/completa'
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
@@ -987,6 +997,7 @@ export interface FileRouteTypes {
     | '/vistorias'
     | '/financeiro/cobrancas/$id'
     | '/financeiro/cobrancas/nova'
+    | '/implantacao/$id/completa'
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
@@ -1076,6 +1087,7 @@ export interface FileRouteTypes {
     | '/vistorias/'
     | '/financeiro/cobrancas/$id'
     | '/financeiro/cobrancas/nova'
+    | '/implantacao/$id_/completa'
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
@@ -1164,6 +1176,7 @@ export interface RootRouteChildren {
   ProprietariosIndexRoute: typeof ProprietariosIndexRoute
   ReservasIndexRoute: typeof ReservasIndexRoute
   VistoriasIndexRoute: typeof VistoriasIndexRoute
+  ImplantacaoIdCompletaRoute: typeof ImplantacaoIdCompletaRoute
   PortalApresentacaoTokenRoute: typeof PortalApresentacaoTokenRoute
   PortalCadastroVistoriaTokenRoute: typeof PortalCadastroVistoriaTokenRoute
   PortalCadastroTokenRoute: typeof PortalCadastroTokenRoute
@@ -1723,6 +1736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroCobrancasNovaRouteImport
       parentRoute: typeof FinanceiroCobrancasRoute
     }
+    '/implantacao/$id_/completa': {
+      id: '/implantacao/$id_/completa'
+      path: '/implantacao/$id/completa'
+      fullPath: '/implantacao/$id/completa'
+      preLoaderRoute: typeof ImplantacaoIdCompletaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/apresentacao/$token': {
       id: '/portal/apresentacao/$token'
       path: '/portal/apresentacao/$token'
@@ -1880,6 +1900,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProprietariosIndexRoute: ProprietariosIndexRoute,
   ReservasIndexRoute: ReservasIndexRoute,
   VistoriasIndexRoute: VistoriasIndexRoute,
+  ImplantacaoIdCompletaRoute: ImplantacaoIdCompletaRoute,
   PortalApresentacaoTokenRoute: PortalApresentacaoTokenRoute,
   PortalCadastroVistoriaTokenRoute: PortalCadastroVistoriaTokenRoute,
   PortalCadastroTokenRoute: PortalCadastroTokenRoute,
