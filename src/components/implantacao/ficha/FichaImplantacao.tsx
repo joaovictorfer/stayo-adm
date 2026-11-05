@@ -596,7 +596,7 @@ export function InventoryWorkspace({
 
   return (
     <section className="rounded-xl border bg-white" style={border}>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-4 pt-4 sm:px-5">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-5">
         <div className="min-w-0">
           <h3 className="text-xl font-semibold" style={display}>Inventário do imóvel</h3>
           <p className="text-sm" style={muted}>
