@@ -118,11 +118,6 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
       </div>
       <aside className="min-w-0 space-y-3" aria-label="Relacionamento do proprietário">
         {portal}
-        <section className={panel}>
-          <SectionTitle icon={<AlertCircle />}>Pendências</SectionTitle>
-          {pending.length ? pending.map(entry => <Button key={entry.id} variant="ghost" className={`${row} h-auto rounded-none px-0 text-left text-sm font-normal whitespace-normal`} onClick={() => onGo(entry.section)}><span className="min-w-0 flex-1"><span className="block">{entry.title}</span><span className="block text-xs text-[var(--stayo-ink-muted)]">{entry.detail}</span></span><span className="shrink-0 rounded-full bg-[var(--ficha-pending-bg)] px-2 py-1 text-[10px] text-[var(--ficha-pending-fg)]">{entry.chip}</span><ChevronRight /></Button>) : <p className="text-sm text-[var(--stayo-ink-muted)]">Nenhuma pendência identificada.</p>}
-          <Button variant="link" size="sm" className="px-0" onClick={() => onGo("visao")}>Ver resumo <ChevronRight /></Button>
-        </section>
       </aside>
     </div>
     <Dialog open={editing} onOpenChange={setEditing}>
