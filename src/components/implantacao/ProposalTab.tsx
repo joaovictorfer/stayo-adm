@@ -543,10 +543,7 @@ export function ProposalTab({ implementationId, only }: { implementationId: Enti
               <Save className="mr-2 h-4 w-4" />
               {saveDraft.isPending ? "Salvando…" : "Salvar rascunho"}
             </Button>
-            <Button disabled={!canSave} onClick={() => setConfirmPublish(true)}>
-              <Send className="mr-2 h-4 w-4" />
-              {publish.isPending ? "Publicando…" : "Publicar nova versão"}
-            </Button>
+            <span className="self-center text-xs text-muted-foreground">Publica em “Salvar condições”, na aba Comercial.</span>
           </div>
         </div>
         {publishHint && <p className="mt-3 text-xs text-[var(--stayo-warning)]">{publishHint}</p>}

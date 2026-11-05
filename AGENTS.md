@@ -43,3 +43,5 @@
 - Implementation deletion stays in the guarded admin RPC: remove project-owned field capabilities transactionally, but reject Core-linked, active or charge-linked projects to preserve operational and financial history.
 - Charges: isolated local prototypes; real charges use core-client, role-checked RPCs, revision locks, immutable snapshots and hashed expiring read-only links; never alter VF finances.
 - Central API preparation uses revisioned provider projections and a read-only adapter; production is fail-closed until explicit homologation, and guest CPF has no public or portal RPC.
+
+- Commercial conditions publish only via `admin_publish_conditions` (working row autosaves internally; owner sees snapshots only); `standard_copy` on contract conditions marks per-property exceptions, and value-vs-text change rules mirror `src/lib/commercial-standard.ts` — keeps the accepted version immutable.

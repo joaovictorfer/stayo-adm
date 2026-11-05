@@ -88,8 +88,8 @@ function ProposalGate({
       </p>
       {hasDraftChanges && (
         <p className="mt-1 text-xs" style={{ color: "var(--stayo-warning)" }}>
-          Há alterações em rascunho que ainda não aparecem no link. Publique uma nova versão para
-          mostrá-las.
+          Há alterações que ainda não aparecem no link. Use “Salvar condições” na aba Comercial para
+          publicá-las.
         </p>
       )}
       <Button variant="link" size="sm" className="mt-1 px-0" onClick={goToConditions}>

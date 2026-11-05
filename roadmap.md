@@ -2,8 +2,8 @@
 - [x] Ficha F1: abas na nova ordem (Proprietários em 3º) e Resumo com 3 contadores separados (inventário, envios, bloqueios) e estados carregando/erro/tudo conferido.
 - [ ] Ficha F2: aba Imóvel com origem por campo; Proprietários com divergências lado a lado.
 - [x] Ficha F3: aba Implantação resumida (sem resposta, faltas, compras) + "Abrir implantação completa ↗"; página /implantacao/$id/completa com Utensílios, Fornecedores e equipamentos, Enxoval e 6 filtros; abas Itens faltantes/Checklist removidas; números atualizam ao voltar à guia. Conferido em 1280/390.
-- [ ] Ficha F4: padrão comercial (20%, 180 dias, limpeza R$250 hóspede, limpeza de implantação), exceções por imóvel, "Salvar condições". Falta definir quem paga a limpeza de implantação.
-- [ ] Ficha F5: versão automática no Portal, aceite por versão, links antigos expiram naturalmente, texto de cláusula sem reconfirmação.
+- [x] Ficha F4: padrão STAYO copiado na ficha, exceções com "voltar ao padrão", "Salvar condições" com antes/depois. Quem paga a limpeza de implantação segue em aberto.
+- [x] Ficha F5: salvar condições publica versão no mesmo link; valor após aceite exige reconfirmação, só texto herda aceite; aceite antigo recusado ("condições atualizadas"); links expiram naturalmente.
 - [ ] Ficha F6: histórico consolidado.
 - [ ] Ficha F7: vínculo STAYO APP (obrigatório antes de Ativo) — bloqueado pela homologação da API.
 - [x] Fase 2A: contratos oficiais c5e2b1e0 copiados, consumidor/demonstrativo e CPF server-only fail-closed preparados; 68 testes passaram, build OK, relatório docs/api/PHASE-2A-CONSUMER-REPORT.md. Sem credenciais, migrations, conexão produtiva, importação, sincronização ou publicação.
