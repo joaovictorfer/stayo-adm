@@ -554,10 +554,17 @@ export function OwnerJourney({
         description: "Agora vamos ao seu cadastro.",
       });
     },
-    onError: (error) =>
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "";
+      if (message.includes("condições atualizadas")) {
+        toast.error("Condições atualizadas", { description: "A STAYO publicou uma nova versão. Confira e confirme novamente." });
+        void queryClient.invalidateQueries({ queryKey: ["owner-journey", "proposal", token] });
+        return;
+      }
       toast.error("Não foi possível registrar a confirmação", {
-        description: error instanceof Error ? error.message : "Tente novamente em instantes.",
-      }),
+        description: message || "Tente novamente em instantes.",
+      });
+    },
   });
 
   const finish = useMutation({
