@@ -607,6 +607,7 @@ export type Database = {
           owner_use_notice_days: number | null
           paid_items: Json
           payout_rule: string | null
+          standard_copy: Json | null
           turnover_cleaning_fee: number | null
           turnover_cleaning_payer: string | null
           turnover_cleaning_team: string | null
@@ -642,6 +643,7 @@ export type Database = {
           owner_use_notice_days?: number | null
           paid_items?: Json
           payout_rule?: string | null
+          standard_copy?: Json | null
           turnover_cleaning_fee?: number | null
           turnover_cleaning_payer?: string | null
           turnover_cleaning_team?: string | null
@@ -677,6 +679,7 @@ export type Database = {
           owner_use_notice_days?: number | null
           paid_items?: Json
           payout_rule?: string | null
+          standard_copy?: Json | null
           turnover_cleaning_fee?: number | null
           turnover_cleaning_payer?: string | null
           turnover_cleaning_team?: string | null
@@ -3737,6 +3740,7 @@ export type Database = {
       }
       admin_list_stayo_charges: { Args: never; Returns: Json }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
+      admin_publish_conditions: { Args: { p_data: Json }; Returns: Json }
       admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
       admin_quick_mark_guide_item: {
         Args: { p_have: boolean; p_item_id: string }
@@ -3812,6 +3816,10 @@ export type Database = {
       }
       admin_update_commercial_meeting_status: {
         Args: { p_data: Json }
+        Returns: Json
+      }
+      commercial_value_fingerprint: {
+        Args: { p_snapshot: Json }
         Returns: Json
       }
       current_admin_role: {
