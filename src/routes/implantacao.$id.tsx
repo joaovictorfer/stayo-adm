@@ -445,24 +445,6 @@ function ImplementationDetailPage() {
 
   return (
     <div className="implementation-workspace">
-      {!wizardStep && (
-        <header className="implementation-mobile-heading">
-          <Link
-            to="/implantacao"
-            className="implementation-back-button"
-            aria-label="Voltar para implantações"
-          >
-            <ArrowLeft aria-hidden="true" />
-          </Link>
-          <div>
-            <span>Implantação</span>
-            <strong>{implementation?.code ?? "Carregando"}</strong>
-          </div>
-          <Link to="/implantacao" className="implementation-back-link">
-              Ver todas
-            </Link>
-        </header>
-      )}
 
       {query.isPending ? (
         <DetailSkeleton />
@@ -487,19 +469,26 @@ function ImplementationDetailPage() {
       ) : (
         <div className="flex flex-col gap-4">
           <header className="relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 overflow-hidden rounded-2xl border p-3 shadow-sm sm:flex sm:items-center sm:gap-5 sm:p-4" style={{ borderColor: "var(--stayo-border)", background: "linear-gradient(110deg, var(--card, #fff) 45%, color-mix(in oklab, var(--stayo-navy) 8%, var(--card, #fff)))" }} aria-label="Resumo da implantação">
-            <div className="hidden aspect-[4/3] w-40 shrink-0 overflow-hidden rounded-xl sm:block lg:w-56" style={{ backgroundColor: "var(--stayo-bg)" }}>
+            <div className="hidden size-24 shrink-0 overflow-hidden rounded-xl sm:block lg:size-28" style={{ backgroundColor: "color-mix(in oklab, var(--stayo-navy) 8%, var(--card, #fff))" }}>
               {adminCover ? (
                 <img src={adminCover} alt={propertyName} className="size-full object-cover" />
               ) : (
-                <div className="grid size-full place-items-center text-xs" style={{ color: "var(--stayo-ink-muted)" }}>Sem foto de capa</div>
+                <div className="grid size-full place-items-center" title="Sem foto de capa">
+                  <Building2 className="size-9 opacity-60" style={{ color: "var(--stayo-navy)" }} aria-hidden="true" />
+                </div>
               )}
             </div>
             <div className="min-w-0 sm:flex-1">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--stayo-ink-muted)" }}>
-                Implantação <span style={{ color: "var(--stayo-navy)" }}>{implementation.code}</span>
-              </p>
+              <div className="mb-1.5 flex items-center gap-2 text-xs">
+                <Link to="/implantacao" aria-label="Voltar para implantações" className="inline-flex size-7 items-center justify-center rounded-lg border bg-white/80 transition-colors hover:bg-white" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-navy)" }}>
+                  <ArrowLeft className="size-4" aria-hidden="true" />
+                </Link>
+                <Link to="/implantacao" className="font-medium hover:underline" style={{ color: "var(--stayo-ink-muted)" }}>Implantações</Link>
+                <span style={{ color: "var(--stayo-ink-muted)" }}>/</span>
+                <span className="rounded-md px-1.5 py-0.5 font-semibold tracking-wide" style={{ color: "var(--stayo-navy)", backgroundColor: "color-mix(in oklab, var(--stayo-navy) 10%, transparent)" }}>{implementation.code}</span>
+              </div>
               <h1
-                className="truncate text-xl font-semibold sm:text-3xl"
+                className="truncate text-xl font-semibold leading-tight sm:text-2xl"
                 style={{ fontFamily: "var(--stayo-font-display)", color: "var(--stayo-ink)" }}
               >
                 {propertyName}
@@ -508,7 +497,7 @@ function ImplementationDetailPage() {
                 {implementation.ownerName || "Proprietário não informado"} · {journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
               </p>
               {(implementation.city || implementation.condominiumName) && (
-                <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
+                <div className="mt-2 hidden flex-wrap gap-2 sm:flex">
                   {implementation.city && (
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm" style={{ color: "var(--stayo-ink)" }}>
                       <MapPin className="size-3.5" style={{ color: "var(--stayo-navy)" }} aria-hidden="true" /> {implementation.city}
@@ -526,21 +515,20 @@ function ImplementationDetailPage() {
               const idx = Math.max(0, FICHA_SECTIONS.findIndex((s) => s.id === section));
               const done = items.length - pendingItems.length;
               const pct = items.length ? Math.round((done / items.length) * 100) : 0;
-              const r = 34;
+              const r = 26;
               const c = 2 * Math.PI * r;
               return (
-                <div className="hidden shrink-0 items-center gap-3 lg:flex">
-                  <div className="relative size-20">
-                    <svg viewBox="0 0 80 80" className="size-20 -rotate-90" aria-hidden="true">
-                      <circle cx="40" cy="40" r={r} fill="none" strokeWidth="7" style={{ stroke: "var(--stayo-border)" }} />
-                      <circle cx="40" cy="40" r={r} fill="none" strokeWidth="7" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} style={{ stroke: "var(--stayo-success, var(--stayo-navy))" }} />
+                <div className="hidden shrink-0 items-center gap-3 border-l pl-5 lg:flex" style={{ borderColor: "var(--stayo-border)" }}>
+                  <div className="relative size-16">
+                    <svg viewBox="0 0 64 64" className="size-16 -rotate-90" aria-hidden="true">
+                      <circle cx="32" cy="32" r={r} fill="none" strokeWidth="6" style={{ stroke: "var(--stayo-border)" }} />
+                      <circle cx="32" cy="32" r={r} fill="none" strokeWidth="6" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} style={{ stroke: "var(--stayo-success, var(--stayo-navy))" }} />
                     </svg>
-                    <span className="absolute inset-0 grid place-items-center text-lg font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "var(--stayo-font-display)" }}>{pct}%</span>
+                    <span className="absolute inset-0 grid place-items-center text-sm font-semibold" style={{ color: "var(--stayo-navy)", fontFamily: "var(--stayo-font-display)" }}>{pct}%</span>
                   </div>
                   <div className="text-sm">
-                    <p className="font-semibold" style={{ color: "var(--stayo-navy)" }}>Implantação</p>
-                    <p style={{ color: "var(--stayo-ink-muted)" }}>Etapa {idx + 1} de {FICHA_SECTIONS.length}</p>
-                    <p style={{ color: "var(--stayo-ink-muted)" }}>{FICHA_SECTIONS[idx]?.label}</p>
+                    <p className="font-semibold" style={{ color: "var(--stayo-navy)" }}>Itens concluídos</p>
+                    <p style={{ color: "var(--stayo-ink-muted)" }}>{items.length ? `${done} de ${items.length}` : "Nenhum item ainda"}</p>
                   </div>
                 </div>
               );
