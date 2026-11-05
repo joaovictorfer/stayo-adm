@@ -67,7 +67,7 @@ export function ImplementationTimeline({ implementationId }: { implementationId:
     supabase
       .from(TABLE)
       .insert(DEFAULT_TIMELINE_STEPS.map((title, i) => ({ implementation_id: implementationId, title, position: i })))
-      .then(refresh);
+      .then(refresh, refresh);
   }, [q.data]);
 
   async function persistOrder(list: Step[]) {
