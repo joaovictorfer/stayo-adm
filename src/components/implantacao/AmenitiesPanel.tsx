@@ -666,7 +666,7 @@ const INSTALL_TYPES: Record<InstallKey, string[]> = {
 };
 
 function InstallationFields({ installKey, state, supplier, catalog, onType, onSupplier, onNewCompany }: { installKey: InstallKey; state: ItemState; supplier: string; catalog: string[]; onType: (value: string) => void; onSupplier: (value: string) => void; onNewCompany: (value: string) => Promise<void> }) {
-  const type = state.characteristics?.installType ?? "";
+  const type = state.characteristics?.['installType'] ?? "";
   return <div className="space-y-4">
     <div className="space-y-1.5"><p className="text-sm text-muted-foreground">Tipo</p><div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo">
       {INSTALL_TYPES[installKey].map((option) => <Button key={option} type="button" className="h-11 px-3 text-xs" variant={type === option ? "default" : "outline"} role="radio" aria-checked={type === option} onClick={() => onType(type === option ? "" : option)}>{option}</Button>)}
