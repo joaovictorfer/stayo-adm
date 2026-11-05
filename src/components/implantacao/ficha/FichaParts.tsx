@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Globe, History, LayoutDashboard, UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { FICHA_SECTIONS, type FichaSection } from "../../../lib/ficha-next-action";
@@ -6,7 +6,17 @@ import { FICHA_SECTIONS, type FichaSection } from "../../../lib/ficha-next-actio
 const surface = { backgroundColor: "var(--stayo-surface)", borderColor: "var(--stayo-border)" };
 const muted = { color: "var(--stayo-ink-muted)" };
 
-/** Abas horizontais da ficha (rolagem lateral no celular). */
+const SECTION_ICONS: Record<FichaSection, typeof LayoutDashboard> = {
+  visao: LayoutDashboard,
+  proposta: FileText,
+  proprietario: UserRound,
+  imovel: Building2,
+  implantacao: ClipboardCheck,
+  portal: Globe,
+  historico: History,
+};
+
+/** Navegação da ficha em cartões com ícone, no mesmo padrão visual do cadastro e vistoria (tablet). */
 export function FichaNav({
   current,
   onChange,
@@ -17,7 +27,7 @@ export function FichaNav({
   badges?: Partial<Record<FichaSection, string>>;
 }) {
   const idx = FICHA_SECTIONS.findIndex((s) => s.id === current);
-  // Rola só a barra de abas (horizontal); nunca a página, para não pular ao salvar.
+  const Icon = SECTION_ICONS[current];
   function centerTabHorizontally(el: HTMLButtonElement | null) {
     const nav = el?.closest("nav");
     if (!el || !nav) return;
@@ -25,14 +35,12 @@ export function FichaNav({
     if (Math.abs(nav.scrollLeft - target) > 4) nav.scrollLeft = target;
   }
   return (
-    <div className="relative">
-      <nav
-        aria-label="Seções da ficha"
-        className="-mx-4 overflow-x-auto scroll-smooth px-4 pb-px [scrollbar-width:none] sm:mx-0 sm:px-0"
-      >
-        <ul className="flex min-w-max gap-1 pr-10 sm:gap-4 sm:pr-0">
+    <div className="flex flex-col gap-5">
+      <nav aria-label="Seções da ficha" className="-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:overflow-visible lg:px-0">
+        <ul className="grid min-w-max auto-cols-[minmax(108px,1fr)] grid-flow-col gap-2 lg:min-w-0 lg:grid-cols-7 lg:grid-flow-row">
           {FICHA_SECTIONS.map((s) => {
             const active = s.id === current;
+            const I = SECTION_ICONS[s.id];
             return (
               <li key={s.id}>
                 <button
@@ -40,30 +48,36 @@ export function FichaNav({
                   aria-current={active ? "page" : undefined}
                   ref={active ? centerTabHorizontally : undefined}
                   onClick={() => onChange(s.id)}
-                  className="relative flex min-h-11 items-center gap-1.5 whitespace-nowrap px-2 text-sm transition"
-                  style={{ color: active ? "var(--stayo-ink)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
+                  className="relative flex h-full min-h-[88px] w-full flex-col items-center justify-center gap-2 rounded-xl border bg-white px-2 py-3 text-sm transition hover:border-[var(--stayo-navy)]"
+                  style={{ borderColor: active ? "var(--stayo-navy)" : "var(--stayo-border)", color: active ? "var(--stayo-navy)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
                 >
-                  {s.label}
+                  <span
+                    className="grid size-9 place-items-center rounded-full"
+                    style={active ? { backgroundColor: "var(--stayo-navy)", color: "var(--stayo-surface)" } : { backgroundColor: "var(--stayo-bg)" }}
+                  >
+                    <I className="size-[18px]" aria-hidden />
+                  </span>
+                  <span className="whitespace-nowrap">{s.label}</span>
                   {badges[s.id] && (
-                    <span className="rounded-full px-1.5 text-[11px]" style={{ backgroundColor: "var(--stayo-bg)" }}>
+                    <span className="absolute right-2 top-2 rounded-full px-1.5 text-[11px] font-semibold" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-navy)" }}>
                       {badges[s.id]}
                     </span>
                   )}
-                  {active && <span aria-hidden className="absolute inset-x-1.5 -bottom-px h-[2px] rounded-full opacity-70" style={{ backgroundColor: "var(--stayo-forest)" }} />}
                 </button>
               </li>
             );
           })}
         </ul>
       </nav>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 -right-4 flex w-14 items-center justify-end pr-3 sm:hidden"
-        style={{ background: "linear-gradient(to right, transparent, var(--stayo-bg) 60%)" }}
-      >
-        <ChevronRight className="size-4" style={{ color: "var(--stayo-ink-muted)" }} />
+      <div className="flex items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-xl" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-navy)" }}>
+          <Icon className="size-6" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs" style={muted}>Etapa {idx + 1} de {FICHA_SECTIONS.length}</p>
+          <p className="truncate font-[Outfit] text-2xl font-semibold" style={{ color: "var(--stayo-navy)" }}>{FICHA_SECTIONS[idx]?.label}</p>
+        </div>
       </div>
-      <p className="sr-only">Seção {idx + 1} de {FICHA_SECTIONS.length}</p>
     </div>
   );
 }
