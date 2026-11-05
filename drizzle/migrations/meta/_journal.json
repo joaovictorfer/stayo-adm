@@ -554,6 +554,13 @@
       "when": 1793907112832,
       "tag": "0078_commercial_conditions_publish",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1793907162279,
+      "tag": "0079_journey_accept_stale_message",
+      "breakpoints": true
     }
   ]
 }
