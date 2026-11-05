@@ -225,32 +225,6 @@ export function FichaImplantacao({
         </div>
 
         <aside className="order-1 flex flex-col gap-4 lg:order-2">
-          <section className="rounded-xl border bg-white px-3 py-2 sm:px-5 sm:py-3" style={border}>
-            <div className="hidden items-center gap-3 border-b pb-3 pt-1 sm:flex" style={border}>
-              <span className="grid size-9 place-items-center rounded-full" style={iconCircle}>
-                <FileCheck2 className="size-4" />
-              </span>
-              <h3 className="text-lg font-semibold" style={display}>Resumo da implantação</h3>
-            </div>
-            {[
-              { label: "Inventário", value: inv.data ? `${answered} respondidos` : "—", go: "inventario" as ImplTab },
-              { label: "Faltantes", value: inv.data ? `${missing} ${missing === 1 ? "item" : "itens"}` : "—", go: "faltantes" as ImplTab },
-              { label: "Checklist", value: checklistPending ? `${checklistPending} pendências` : "Sem pendências", go: "checklist" as ImplTab },
-              { label: "Enxoval", value: <GuideSummary implementationId={implementationId} guideType="enxoval" />, go: "enxoval" as ImplTab },
-            ].map((r, idx, arr) => (
-              <button
-                key={r.label}
-                type="button"
-                onClick={() => setTab(r.go)}
-                className={`grid min-h-11 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-left text-sm ${idx < arr.length - 1 ? "border-b" : ""}`}
-                style={border}
-              >
-                <span className="font-medium" style={navy}>{r.label}</span>
-                <span className="truncate text-xs sm:text-sm" style={muted}>{r.value}</span>
-                <ChevronRight className="size-4" style={navy} />
-              </button>
-            ))}
-          </section>
 
           <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
             <div className="flex items-start gap-3">
