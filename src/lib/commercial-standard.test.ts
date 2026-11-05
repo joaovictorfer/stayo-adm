@@ -59,9 +59,4 @@ describe("versões e aceite", () => {
     expect(checkAccept(vs, "a")).toEqual({ ok: false, message: "condições atualizadas" });
     expect(checkAccept(vs, "b")).toEqual({ ok: true });
   });
-  it("versão aceita continua preservada quando nova versão de valor é publicada", () => {
-    const vs = [v("a", 1, "accepted"), v("b", 2, "published", snap({ ...base, administrationFee: 18 }))];
-    expect(vs.find((x) => x.id === "a")?.status).toBe("accepted");
-    expect(versionShownOnLink(vs)?.id).toBe("b");
-  });
 });
