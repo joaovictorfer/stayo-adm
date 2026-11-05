@@ -48,3 +48,20 @@ export const previewCentralDetail = createServerFn({method:"POST"}).middleware([
  const configured=!!process.env["STAYO_API_TOKEN"];
  return {ok:false,resource:data.resource,checkin:data.checkin,kind:configured?"connection_disabled":"not_configured",message:configured?messages.connection_disabled:messages.not_configured,localChanges:0};
 });
+// Fase 4B: anonymous preview-only probe, separate from testCentralConnection; never reads STAYO_API_TOKEN.
+export const anonymousCentralProbeEligibility = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ setResponseHeader("Cache-Control","no-store");
+ const {data:allowed}=await context.supabase.rpc("has_admin_role",{roles:["super_admin","admin"]});
+ const {getRequest}=await import("@tanstack/react-start/server");
+ const {environmentFor}=await import("./anonymous-probe");
+ return {eligible:allowed===true&&environmentFor(getRequest()?.url)==="preview"};
+});
+export const anonymousCentralProbe = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).handler(async({context})=>{
+ setResponseHeader("Cache-Control","no-store");
+ const {data:allowed,error}=await context.supabase.rpc("has_admin_role",{roles:["super_admin","admin"]});
+ const {getRequest}=await import("@tanstack/react-start/server");
+ const {runAnonymousProbe}=await import("./anonymous-probe");
+ const r=await runAnonymousProbe({isAdmin:!error&&allowed===true,requestUrl:getRequest()?.url,fetcher:(u,i)=>fetch(u,i)});
+ if("refused" in r)throw new Error(r.refused==="forbidden"?"Diagnóstico restrito aos administradores autorizados.":"Ambiente não autorizado: nenhuma chamada externa foi feita.");
+ return r;
+});
