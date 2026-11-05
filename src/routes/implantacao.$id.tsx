@@ -512,7 +512,6 @@ function ImplementationDetailPage() {
               )}
             </div>
             {(() => {
-              const idx = Math.max(0, FICHA_SECTIONS.findIndex((s) => s.id === section));
               const done = items.length - pendingItems.length;
               const pct = items.length ? Math.round((done / items.length) * 100) : 0;
               const r = 26;
