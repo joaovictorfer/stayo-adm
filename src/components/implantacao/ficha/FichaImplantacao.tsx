@@ -14,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { FieldLinkDialog } from "@/components/field/FieldLinkDialog";
+import { FieldLinkDialog, FieldTabletButton } from "@/components/field/FieldLinkDialog";
+import { ChevronDown, Minus } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import {
   replicateBathroomItems,
   removeInventoryItem,
   setInventoryAnswer,
+  setInventoryCount,
   setInventorySubanswer,
   updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
@@ -392,6 +394,31 @@ export function InventoryWorkspace({
     },
     onSuccess: () => setFailed(null),
   });
+
+  // Toques rápidos são serializados para não gravar fora de ordem.
+  const count = useMutation({
+    scope: { id: `inventory-count-${implementationId}` },
+    mutationFn: (v: { item: InventorySnapshotItem; qty: number }) => setInventoryCount(v.item, implementationId, v.qty),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: query.queryKey });
+      qc.setQueryData<InventorySnapshotItem[]>(query.queryKey, (old) =>
+        (old ?? []).map((i) =>
+          i.id === v.item.id
+            ? { ...i, inventory_answer: v.qty > 0 ? "tenho" : "nao_tenho", inventory_quantity: v.qty > 0 ? v.qty : null, inventory_source: "equipe", inventory_updated_at: new Date().toISOString() }
+            : i,
+        ),
+      );
+    },
+    onError: (_e, v) => {
+      toast.error(`Não salvou “${v.item.name}”. Tente de novo.`);
+      void refresh();
+    },
+  });
+  const currentQty = (id: string) => {
+    const it = qc.getQueryData<InventorySnapshotItem[]>(query.queryKey)?.find((x) => x.id === id);
+    return it?.inventory_answer === "tenho" ? Math.max(1, it.inventory_quantity ?? 1) : 0;
+  };
+  const bump = (i: InventorySnapshotItem, delta: number) => count.mutate({ item: i, qty: Math.max(0, currentQty(i.id) + delta) });
 
   const subanswer = useMutation({
     mutationFn: (v: { item: InventorySnapshotItem; subKey: string; answer: "tenho" | "nao_tenho" | null }) =>
