@@ -393,16 +393,6 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
           </>
         )}
       </Card>
-      <Card icon={<UserRound className="size-4" />} title="Proprietário">
-        <div className="flex items-center gap-3 py-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-semibold" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>{initials(implementation.ownerName ?? "")}</span>
-          <div className="min-w-0">
-            <p className="truncate font-semibold" style={display}>{implementation.ownerName || "Não informado"}</p>
-            <p className="text-sm" style={muted}>Proprietário(a)</p>
-          </div>
-        </div>
-        <ActionRow icon={<ExternalLink className="size-4" />} label="Ver proprietário" onClick={onGoOwner} />
-      </Card>
       <PlatformsCard implementationId={implementation.id} />
       <section className="rounded-xl border bg-white p-4 sm:px-5" style={border}>
         <div className="flex items-center gap-3 pb-3">

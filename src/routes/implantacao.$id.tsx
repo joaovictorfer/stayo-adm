@@ -570,6 +570,8 @@ function ImplementationDetailPage() {
                           onSubmissions={() => goSection("implantacao")}
                         />
                         <JourneyCard status={implementation.status} />
+                        <Collapsible title="Ver mais" summary="Visão da ficha, reuniões e etapa administrativa">
+                        <div className="flex flex-col gap-3">
                         <SheetOverviewCard rows={rows} onGo={goSection} />
                         <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">
                           <MeetingSummary implementationId={implementation.id} />
@@ -580,6 +582,8 @@ function ImplementationDetailPage() {
                             onChange={(status) => changeStatus.mutate(status)}
                             pending={changeStatus.isPending}
                           />
+                        </Collapsible>
+                        </div>
                         </Collapsible>
 
                       </div>
@@ -931,7 +935,6 @@ function OwnerTab({
   if (part === "portal")
     return (
       <div className="space-y-4">
-        <OwnerJourneyStatus implementationId={implementation.id} versions={versions} />
         <JourneyHeading n={1} title="Proposta" hint="Link só de leitura para o proprietário ver a proposta." />
         <OwnerInviteSection
           implementationId={implementation.id}
