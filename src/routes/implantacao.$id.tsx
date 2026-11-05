@@ -665,7 +665,7 @@ function ImplementationDetailPage() {
                 </div>
               ) : section === "implantacao" ? (
                 <div className="flex flex-col gap-4">
-                  <FichaImplantacao implementationId={implementation.id} mode="summary" />
+                  <FichaImplantacao implementationId={implementation.id} mode="full" wrapInventory={(inventory, group) => <AmenitiesPanel group={group} implementationId={implementation.id} bedrooms={implementation.bedrooms ?? null} render={inventory} />} />
                   <Collapsible title="Ver mais" summary="Vistorias registradas">
                     <InspectionsPanel implementationId={implementation.id} />
                   </Collapsible>
