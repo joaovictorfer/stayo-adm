@@ -37,29 +37,24 @@ export function FichaNav({
   return (
     <div className="flex flex-col gap-5">
       <nav aria-label="Seções da ficha" className="-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:overflow-visible lg:px-0">
-        <ul className="grid min-w-max auto-cols-[minmax(108px,1fr)] grid-flow-col gap-2 lg:min-w-0 lg:grid-cols-7 lg:grid-flow-row">
+        <ul className="flex min-w-max gap-1 rounded-xl border bg-white p-1 lg:min-w-0" style={{ borderColor: "var(--stayo-border)" }}>
           {FICHA_SECTIONS.map((s) => {
             const active = s.id === current;
             const I = SECTION_ICONS[s.id];
             return (
-              <li key={s.id}>
+              <li key={s.id} className="lg:flex-1">
                 <button
                   type="button"
                   aria-current={active ? "page" : undefined}
                   ref={active ? centerTabHorizontally : undefined}
                   onClick={() => onChange(s.id)}
-                  className="relative flex h-full min-h-[88px] w-full flex-col items-center justify-center gap-2 rounded-xl border bg-white px-2 py-3 text-sm transition hover:border-[var(--stayo-navy)]"
-                  style={{ borderColor: active ? "var(--stayo-navy)" : "var(--stayo-border)", color: active ? "var(--stayo-navy)" : "var(--stayo-ink-muted)", fontWeight: active ? 600 : 500 }}
+                  className="relative flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-3 text-sm transition hover:bg-[var(--stayo-bg)]"
+                  style={active ? { backgroundColor: "var(--stayo-navy)", color: "var(--stayo-surface)", fontWeight: 600 } : { color: "var(--stayo-ink-muted)", fontWeight: 500 }}
                 >
-                  <span
-                    className="grid size-9 place-items-center rounded-full"
-                    style={active ? { backgroundColor: "var(--stayo-navy)", color: "var(--stayo-surface)" } : { backgroundColor: "var(--stayo-bg)" }}
-                  >
-                    <I className="size-[18px]" aria-hidden />
-                  </span>
+                  <I className="size-4 shrink-0" aria-hidden />
                   <span className="whitespace-nowrap">{s.label}</span>
                   {badges[s.id] && (
-                    <span className="absolute right-2 top-2 rounded-full px-1.5 text-[11px] font-semibold" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-navy)" }}>
+                    <span className="rounded-full px-1.5 text-[11px] font-semibold" style={{ backgroundColor: "var(--stayo-bg)", color: "var(--stayo-navy)" }}>
                       {badges[s.id]}
                     </span>
                   )}
