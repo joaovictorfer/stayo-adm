@@ -1,3 +1,4 @@
+import { AppPropertyLinkCard } from "../components/implantacao/ficha/AppPropertyLinkCard";
 import { ImplementationHistory } from "../components/implantacao/ficha/ImplementationHistory";
 import { inventorySubmissionsQuery } from "@/lib/api/owner-inventory";
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
@@ -591,7 +592,14 @@ function ImplementationDetailPage() {
                         <Collapsible title="Alterar etapa da implantação" summary="Etapas administrativas">
                           <StatusStepper
                             status={implementation.status}
-                            onChange={(status) => changeStatus.mutate(status)}
+                            onChange={(status) => {
+                              if (status === "ativo" && !implementation.corePropertyId) {
+                                window.alert("Vincule o imóvel do STAYO APP na aba Imóvel antes de marcar como Ativo.");
+                                goSection("imovel");
+                                return;
+                              }
+                              changeStatus.mutate(status);
+                            }}
                             pending={changeStatus.isPending}
                           />
                         </Collapsible>
@@ -651,7 +659,10 @@ function ImplementationDetailPage() {
                   />
                 )
               ) : section === "imovel" ? (
-                <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("portal")} />
+                <div className="flex flex-col gap-4">
+                  <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("portal")} />
+                  <AppPropertyLinkCard implementation={implementation} />
+                </div>
               ) : section === "implantacao" ? (
                 <div className="flex flex-col gap-4">
                   <FichaImplantacao implementationId={implementation.id} mode="summary" />

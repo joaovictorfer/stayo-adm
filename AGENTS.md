@@ -46,3 +46,4 @@
 
 - Commercial conditions publish only via `admin_publish_conditions` (working row autosaves internally; owner sees snapshots only); `standard_copy` on contract conditions marks per-property exceptions, and value-vs-text change rules mirror `src/lib/commercial-standard.ts` — keeps the accepted version immutable.
 - Field divergences (owner official vs submitted, property registration vs room collection) are computed in `src/lib/field-sources.ts` and never auto-applied; team decisions persist in `implementation_field_confirmations` as `div:<key>` with a value snapshot so a new value reopens the divergence.
+- STAYO APP property link: `property-link.functions.ts` re-reads the property from the Central API before writing `core_property_id` (unique partial index); a DB trigger blocks `ativo` without it, so the rule holds outside the UI.
