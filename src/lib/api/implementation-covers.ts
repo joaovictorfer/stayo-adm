@@ -266,3 +266,35 @@ export async function setCondominiumCoverExternal(condominiumId: string, allowed
     .eq("id", condominiumId);
   if (error) throw error;
 }
+
+/** Capas da lista: foto da ficha ou, na falta, a do empreendimento. Mapa id → URL assinada. */
+export async function listImplementationCoverUrls(ids: string[]): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const client = requireClient();
+  const { data: rows, error } = await client
+    .from("implementation_projects")
+    .select("id, cover_image, condominium_id")
+    .in("id", ids);
+  if (error) throw error;
+  const condoIds = [...new Set((rows ?? []).map((r) => r.condominium_id).filter(Boolean))] as string[];
+  const condos = condoIds.length
+    ? ((await client.from("admin_condominiums").select("id, cover_image").in("id", condoIds)).data ?? [])
+    : [];
+  const condoPath = new Map(condos.map((c) => [c.id, c.cover_image as string | null]));
+  const wanted: [string, string][] = [];
+  for (const r of rows ?? []) {
+    const own = r.cover_image?.startsWith(`implementations/${r.id}/`) ? r.cover_image : null;
+    const cp = r.condominium_id ? condoPath.get(r.condominium_id) : null;
+    const condo = cp?.startsWith(`condominiums/${r.condominium_id}/`) ? cp : null;
+    const path = own ?? condo;
+    if (path) wanted.push([r.id, path]);
+  }
+  if (!wanted.length) return {};
+  const { data } = await client.storage.from(BUCKET).createSignedUrls(wanted.map(([, p]) => p), 3600);
+  const out: Record<string, string> = {};
+  wanted.forEach(([id], i) => {
+    const url = data?.[i]?.signedUrl;
+    if (url) out[id] = url;
+  });
+  return out;
+}
