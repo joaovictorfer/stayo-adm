@@ -121,13 +121,15 @@ export function AmenitiesPanel({
     timer.current = setTimeout(() => void persist(), 700);
   };
 
+  const catalogRef = useRef<string[]>([]);
   const updateRoom = (id: string, fn: (r: RoomState) => RoomState) =>
     update((d) => ({ rooms: d.rooms.map((r) => (r.id === id ? fn(r) : r)) }));
 
-  const addCompany = async (name: string) => {
+  const addCompany = async (name: string, specialty: string = "moveis") => {
     const clean = name.trim();
     if (!clean) return;
-    await supabase.from("supplier_catalog").insert({ name: clean, specialties: ["moveis"], status: "suggested" });
+    if (catalogRef.current.some((n) => n.toLowerCase() === clean.toLowerCase())) return;
+    await supabase.from("supplier_catalog").insert({ name: clean, specialties: [specialty], status: "suggested" });
     void qc.invalidateQueries({ queryKey: ["amenities", implementationId] });
   };
 
@@ -186,6 +188,7 @@ export function AmenitiesPanel({
     );
 
   const catalog = q.data?.catalog ?? [];
+  catalogRef.current = catalog;
 
   const card = (room: RoomState, forceOpen = false) => (
     <RoomCard
@@ -328,8 +331,8 @@ export function AmenitiesPanel({
           const fields = (
             <div key={`${room.id}:${def.key}`} className="space-y-4">
               {rs.length > 1 && <p className="text-sm font-medium text-foreground">{room.name}</p>}
-              {install && <InstallationFields room={room} installKey={install.key} label={install.label} catalog={catalog} onChange={(field, value) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, field, value) }))} onNewCompany={addCompany} />}
-              {(install || match) && <CharacteristicFields name={def.label} state={room.items[def.key] ?? {}} onChange={(patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [def.key]: { ...r.items[def.key], ...patch } } }))} />}
+              {install && <InstallationFields installKey={install.key} state={room.items[def.key] ?? {}} supplier={installValue(room, install.key, "installer")} catalog={catalog} onType={(value) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [def.key]: { ...r.items[def.key], characteristics: { ...r.items[def.key]?.characteristics, installType: value } } } }))} onSupplier={(value) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, "installer", value) }))} onNewCompany={(name) => addCompany(name, install.key)} />}
+              {!install && match && <CharacteristicFields name={def.label} state={room.items[def.key] ?? {}} onChange={(patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [def.key]: { ...r.items[def.key], ...patch } } }))} />}
               {!match && !install && <ItemRow def={def} items={room.items} setItem={(key, patch) => updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }))} fieldsOnly />}
             </div>
           );
@@ -343,7 +346,11 @@ export function AmenitiesPanel({
             const row = <ItemRow key={`${room.id}:${def.key}`} def={def} items={isGroup ? groupItems : displayedItems} setItem={(key, patch) => {
               if (install && patch.on !== undefined) update((d) => ({ rooms: setInstallationAnswer(d.rooms, room.id, install.key, patch.on === true) }));
               else updateRoom(room.id, (r) => ({ ...r, items: { ...r.items, [key]: { ...r.items[key], ...patch } } }));
-            }} unified subNodes={isGroup ? groupSubs : undefined} extraFields={install ? fields : undefined} installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
+            }} unified subNodes={isGroup ? groupSubs : undefined} extraFields={install ? fields : undefined}
+              brandSlot={install ? <Input className="h-11 text-sm" value={installValue(room, install.key, "brand")} maxLength={80} placeholder="Ex.: LG" aria-label={`${install.label} — marca`} onChange={(e) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, "brand", e.target.value) }))} /> : undefined}
+              hideQuantity={!!install && install.key !== "moveis"}
+              onDuplicate={install ? (name) => updateRoom(room.id, (r) => ({ ...r, custom: [...r.custom, { id: uid(), name, on: true, brand: installValue(room, install.key, "brand"), supplier: installValue(room, install.key, "installer"), characteristics: r.items[def.key]?.characteristics }] })) : undefined}
+              installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
             if (install) supplierRows.push(row);
             else rows.push(row);
           }
@@ -365,7 +372,13 @@ export function AmenitiesPanel({
         for (const custom of room.custom) {
           const match = matchingInventoryItem(inventoryItems.filter((item) => !used.has(item.id) && item.category !== "Comodidades"), custom.name);
           if (match) { used.add(match.id); rows.push(renderItem(match)); }
-          else rows.push(<ItemRow key={custom.id} def={{ key: custom.id, label: custom.name }} items={{ [custom.id]: custom }} setItem={(_key, patch) => updateRoom(room.id, (r) => ({ ...r, custom: r.custom.map((item) => item.id === custom.id ? { ...item, ...patch } : item) }))} unified />);
+          else {
+            const setCustom = (patch: Partial<typeof custom>) => updateRoom(room.id, (r) => ({ ...r, custom: r.custom.map((item) => item.id === custom.id ? { ...item, ...patch } : item) }));
+            rows.push(<ItemRow key={custom.id} def={{ key: custom.id, label: custom.name }} items={{ [custom.id]: custom }} setItem={(_key, patch) => setCustom(patch)} unified
+              onRename={(name) => setCustom({ name })}
+              onDuplicate={(name) => updateRoom(room.id, (r) => ({ ...r, custom: [...r.custom, { ...custom, id: uid(), name }] }))}
+              extraFields={<SupplierPicker label="Fornecedor" value={custom.supplier ?? ""} catalog={catalog} onChange={(supplier) => setCustom({ supplier })} onNewCompany={(name) => addCompany(name, "outros")} />} />);
+          }
         }
         if (room.suite && room.bath) {
           const bathItems = inventoryItems.filter((item) => item.inventory_room_key === `${room.id}:bath`);
@@ -646,11 +659,45 @@ function RoomCard({
   );
 }
 
-function InstallationFields({ room, installKey, label, catalog, onChange, onNewCompany }: { room: RoomState; installKey: InstallKey; label: string; catalog: string[]; onChange: (field: InstallField, value: string) => void; onNewCompany: (value: string) => Promise<void> }) {
-  return <div className="space-y-3">
-    <label className="block space-y-1 text-sm"><span className="text-muted-foreground">Marca · {label}</span><Input value={installValue(room, installKey, "brand")} aria-label={`${label} — marca`} onChange={(e) => onChange("brand", e.target.value)} /></label>
-    <label className="block space-y-1 text-sm"><span className="text-muted-foreground">Instalador / fornecedor</span><Input list={`integrated-suppliers-${room.id}`} value={installValue(room, installKey, "installer")} aria-label={`${label} — instalador`} onChange={(e) => onChange("installer", e.target.value)} onBlur={(e) => { const value = e.target.value.trim(); if (installKey === "moveis" && value && !catalog.includes(value)) void onNewCompany(value); }} /></label>
-    <datalist id={`integrated-suppliers-${room.id}`}>{catalog.map((name) => <option key={name} value={name} />)}</datalist>
+const INSTALL_TYPES: Record<InstallKey, string[]> = {
+  ar: ["Split", "Janela", "Portátil", "Piso-teto"],
+  aquecimento: ["A gás", "Elétrico", "Lareira", "Piso aquecido"],
+  moveis: ["Planejados", "Soltos", "Misto"],
+};
+
+function InstallationFields({ installKey, state, supplier, catalog, onType, onSupplier, onNewCompany }: { installKey: InstallKey; state: ItemState; supplier: string; catalog: string[]; onType: (value: string) => void; onSupplier: (value: string) => void; onNewCompany: (value: string) => Promise<void> }) {
+  const type = state.characteristics?.installType ?? "";
+  return <div className="space-y-4">
+    <div className="space-y-1.5"><p className="text-sm text-muted-foreground">Tipo</p><div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo">
+      {INSTALL_TYPES[installKey].map((option) => <Button key={option} type="button" className="h-11 px-3 text-xs" variant={type === option ? "default" : "outline"} role="radio" aria-checked={type === option} onClick={() => onType(type === option ? "" : option)}>{option}</Button>)}
+    </div></div>
+    <SupplierPicker label="Fornecedor" value={supplier} catalog={catalog} onChange={onSupplier} onNewCompany={onNewCompany} />
+  </div>;
+}
+
+function SupplierPicker({ label, value, catalog, onChange, onNewCompany }: { label: string; value: string; catalog: string[]; onChange: (value: string) => void; onNewCompany: (value: string) => Promise<void> }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const term = query.trim().toLowerCase();
+  const matches = catalog.filter((name) => !term || name.toLowerCase().includes(term)).slice(0, 6);
+  const exact = catalog.some((name) => name.toLowerCase() === term);
+  const pick = (name: string) => { onChange(name); setQuery(""); setOpen(false); };
+  return <div className="space-y-1.5 text-sm">
+    <p className="text-muted-foreground">{label}</p>
+    {value && !open ? <div className="flex min-h-11 items-center justify-between gap-2 rounded-md border border-input px-3">
+      <span className="truncate font-medium text-foreground">{value}</span>
+      <span className="flex shrink-0 gap-1">
+        <Button type="button" variant="ghost" className="h-9 px-2 text-xs" onClick={() => setOpen(true)}>Trocar</Button>
+        <Button type="button" variant="ghost" className="h-9 w-9 p-0" aria-label="Remover fornecedor" onClick={() => onChange("")}><X className="size-4" /></Button>
+      </span>
+    </div> : <div className="space-y-1">
+      <Input className="h-11 text-sm" value={query} placeholder="Buscar fornecedor" aria-label={`${label} — buscar`} onFocus={() => setOpen(true)} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} />
+      {open && <ul className="max-h-56 overflow-auto rounded-md border border-border bg-background" role="listbox" aria-label="Fornecedores cadastrados">
+        {matches.map((name) => <li key={name}><button type="button" role="option" aria-selected={name === value} className="flex min-h-11 w-full items-center px-3 text-left hover:bg-muted" onClick={() => pick(name)}>{name}</button></li>)}
+        {term && !exact && <li><button type="button" className="flex min-h-11 w-full items-center gap-2 px-3 text-left font-medium text-primary hover:bg-muted" onClick={() => { const name = query.trim(); void onNewCompany(name); pick(name); }}><Plus className="size-4" /> Novo fornecedor “{query.trim()}”</button></li>}
+        {!term && !matches.length && <li className="px-3 py-3 text-muted-foreground">Digite o nome para cadastrar</li>}
+      </ul>}
+    </div>}
   </div>;
 }
 
@@ -678,7 +725,15 @@ function ItemRow({
   hideBrand,
   installationSummary,
   subNodes,
+  brandSlot,
+  hideQuantity,
+  onDuplicate,
+  onRename,
 }: {
+  brandSlot?: ReactNode;
+  hideQuantity?: boolean;
+  onDuplicate?: (name: string) => void;
+  onRename?: (name: string) => void;
   installationSummary?: string;
   hideBrand?: boolean;
   unified?: boolean;
@@ -702,10 +757,10 @@ function ItemRow({
         <AnswerBtn kind="no" on={st.on === false} onClick={() => setItem(def.key, { on: false })} />
         <AnswerBtn kind="yes" on={st.on === true} onClick={() => { setItem(def.key, { on: true }); if (extraFields) setDetails(true); }} />
         <DropdownMenu>
-          <DropdownMenuTrigger asChild><Button variant="ghost" className="hidden h-11 w-9 shrink-0 rounded-lg p-0 sm:inline-flex" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild><Button variant="ghost" className="inline-flex h-11 w-9 shrink-0 rounded-lg p-0 sm:inline-flex" aria-label={`Mais ações para ${def.label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => setDetails(true)}>Detalhes</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setDetails(true)}>{extraFields ? "Marca e instalador" : "Marca e observação"}</DropdownMenuItem>
+            {onDuplicate && <DropdownMenuItem onSelect={() => { const name = window.prompt("Nome do novo item (só neste imóvel)", `${def.label} 2`)?.trim(); if (name) onDuplicate(name); }}>Duplicar e renomear</DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>
       </>}
@@ -716,7 +771,7 @@ function ItemRow({
         </ul>
       )}
       <InventoryDetailLayout open={details} onOpenChange={setDetails} name={def.label} media={media}>
-        <InventoryDetailFields values={{ name: def.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: (st.characteristics?.['inventory_condition'] as InventoryCondition) || null, notes: st.notes ?? "" }} nameReadOnly onChange={(patch) => setItem(def.key, {
+        <InventoryDetailFields values={{ name: def.label, quantity: st.qty == null ? "" : String(st.qty), brand: st.brand ?? "", condition: (st.characteristics?.['inventory_condition'] as InventoryCondition) || null, notes: st.notes ?? "" }} nameReadOnly={!onRename} hideQuantity={hideQuantity} brandSlot={brandSlot} onChange={(patch) => patch.name !== undefined && onRename ? (patch.name.trim() && onRename(patch.name)) : setItem(def.key, {
           ...(patch.quantity !== undefined ? { qty: patch.quantity === "" ? null : Number(patch.quantity) } : {}),
           ...(patch.brand !== undefined ? { brand: patch.brand } : {}),
           ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
