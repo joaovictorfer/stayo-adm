@@ -1,7 +1,7 @@
 # Roadmap
 - [x] Ficha F1: abas na nova ordem (Proprietários em 3º) e Resumo com 3 contadores separados (inventário, envios, bloqueios) e estados carregando/erro/tudo conferido.
 - [ ] Ficha F2: aba Imóvel com origem por campo; Proprietários com divergências lado a lado.
-- [ ] Ficha F3: página "Implantação completa" em nova guia, filtros, remover abas Itens faltantes/Checklist.
+- [x] Ficha F3: aba Implantação resumida (sem resposta, faltas, compras) + "Abrir implantação completa ↗"; página /implantacao/$id/completa com Utensílios, Fornecedores e equipamentos, Enxoval e 6 filtros; abas Itens faltantes/Checklist removidas; números atualizam ao voltar à guia. Conferido em 1280/390.
 - [ ] Ficha F4: padrão comercial (20%, 180 dias, limpeza R$250 hóspede, limpeza de implantação), exceções por imóvel, "Salvar condições". Falta definir quem paga a limpeza de implantação.
 - [ ] Ficha F5: versão automática no Portal, aceite por versão, links antigos expiram naturalmente, texto de cláusula sem reconfirmação.
 - [ ] Ficha F6: histórico consolidado.

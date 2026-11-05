@@ -213,6 +213,17 @@ function ImplementationDetailPage() {
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const inventoryQ = useQuery(guidedInventoryQuery(id));
   const submissionsQ = useQuery(inventorySubmissionsQuery(id));
+  const qcVis = useQueryClient();
+  useEffect(() => {
+    // Ao voltar da implantação completa (outra guia), atualiza os números do Resumo.
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      for (const key of [guidedInventoryQuery(id).queryKey, inventorySubmissionsQuery(id).queryKey, ["supply_items", id], implementationItemsQuery(id).queryKey])
+        void qcVis.invalidateQueries({ queryKey: key as readonly unknown[] });
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [id, qcVis]);
   const implementation = query.data;
   const draftQuery = useQuery({
     queryKey: ["opportunity-draft-state", id],
@@ -641,26 +652,12 @@ function ImplementationDetailPage() {
               ) : section === "imovel" ? (
                 <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("portal")} />
               ) : section === "implantacao" ? (
-                <FichaImplantacao
-                  implementationId={implementation.id}
-                  checklistPending={pendingItems.length}
-                  onOpenPortal={() => goSection("portal")}
-                  wrapInventory={(inventory) => (
-                    <AmenitiesPanel implementationId={implementation.id} bedrooms={implementation.bedrooms} render={inventory} />
-                  )}
-                  checklist={
-                    <Checklist
-                      implementationId={implementation.id}
-                      items={itemsQuery.data ?? []}
-                      loading={itemsQuery.isPending}
-                      error={itemsQuery.isError}
-                      onRetry={() => void itemsQuery.refetch()}
-                    />
-                  }
-                  more={
+                <div className="flex flex-col gap-4">
+                  <FichaImplantacao implementationId={implementation.id} mode="summary" />
+                  <Collapsible title="Ver mais" summary="Vistorias registradas">
                     <InspectionsPanel implementationId={implementation.id} />
-                  }
-                />
+                  </Collapsible>
+                </div>
               ) : section === "proprietario" ? (
                 <SectionBoundary label="a ficha do proprietário">
                 <FichaProprietario
