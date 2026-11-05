@@ -589,6 +589,7 @@ export function InventoryWorkspace({
           </p>
         </div>
         <div className="flex items-center gap-2">
+        <FieldTabletButton implementationId={implementationId} />
         <FieldLinkDialog implementationId={implementationId} />
         <button
           type="button"
@@ -609,30 +610,6 @@ export function InventoryWorkspace({
         </div>
       )}
 
-      <div className="mt-3 flex gap-1 overflow-x-auto border-b px-4 sm:px-5" style={border} role="tablist" aria-label="Ambientes">
-        {rooms.map((r) => {
-          const on = r.id === room;
-          return (
-            <button
-              key={r.id}
-              role="tab"
-              aria-selected={on}
-              onClick={() => {
-                setRoom(r.id);
-                setDetail(null);
-              }}
-              className="-mb-px flex shrink-0 items-center gap-2 border-b-[3px] px-3 py-2.5 text-sm"
-              style={{ ...navy, borderColor: on ? "var(--ficha-icon-fg)" : "transparent", fontWeight: on ? 600 : 400 }}
-            >
-              {r.label}
-              <span className="rounded-full px-2 text-xs" style={on ? iconCircle : { backgroundColor: "var(--ficha-subtle)", ...navy }}>
-                {r.items.length}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
       {needsSync && (
         <div className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm sm:mx-5" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>
           <span>
@@ -651,28 +628,54 @@ export function InventoryWorkspace({
         </p>
       )}
 
-      <ul className="px-2 sm:px-3">
-        {roomItems.length === 0 && !roomSlot && (
-          <li className="px-2 py-6 text-center text-sm" style={muted}>
-            {onlyOpen ? "Nada pendente neste ambiente." : "Nenhum item neste ambiente ainda."}
-            {(q.data?.length ?? 0) === 0 && (
+      <div className="mt-3 space-y-2 px-3 pb-3 sm:px-4" aria-label="Ambientes">
+        {rooms.map((r) => {
+          const on = r.id === room;
+          const done = r.items.filter((i) => i.inventory_answer).length;
+          const pct = r.items.length ? Math.round((done / r.items.length) * 100) : 0;
+          return (
+            <div key={r.id} className="overflow-hidden rounded-xl border" style={{ ...border, backgroundColor: on ? "var(--ficha-subtle)" : undefined }}>
               <button
                 type="button"
-                className="mt-2 block w-full font-medium underline"
-                disabled={applySnapshot.isPending}
-                onClick={() => applySnapshot.mutate()}
+                aria-expanded={on}
+                onClick={() => { setRoom(on ? "" : r.id); setDetail(null); }}
+                className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors active:scale-[0.995]"
+                style={navy}
               >
-                {applySnapshot.isPending ? "Carregando…" : "Carregar itens do guia"}
+                <ChevronDown className={cn("size-5 shrink-0 transition-transform duration-200", on ? "rotate-0" : "-rotate-90")} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold">{r.label}</span>
+                  <span className="mt-1 block h-1.5 w-full max-w-48 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
+                    <span className="block h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "var(--stayo-navy)" }} />
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full px-2.5 py-0.5 text-sm tabular-nums" style={on ? iconCircle : { backgroundColor: "var(--ficha-subtle)", ...navy }}>
+                  {done}/{r.items.length}
+                </span>
               </button>
-            )}
-          </li>
-        )}
-        {roomSlot ? roomSlot(room, roomItems, renderItem) : roomItems.map((i) => renderItem(i))}
-      </ul>
-
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <span className="min-w-0 text-sm text-muted-foreground">{room === "outros" ? "Itens avulsos do proprietário" : ROOMS.find((r) => r.id === room)?.label}</span>
-        <Button variant="outline" onClick={() => { setNewName(""); add.reset(); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
+              {on && (
+                <div className="border-t bg-white animate-in fade-in slide-in-from-top-1 duration-200" style={border}>
+                  <ul className="px-2 sm:px-3">
+                    {roomItems.length === 0 && !roomSlot && (
+                      <li className="px-2 py-6 text-center text-sm" style={muted}>
+                        {onlyOpen ? "Nada pendente neste ambiente." : "Nenhum item neste ambiente ainda."}
+                        {(q.data?.length ?? 0) === 0 && (
+                          <button type="button" className="mt-2 block w-full font-medium underline" disabled={applySnapshot.isPending} onClick={() => applySnapshot.mutate()}>
+                            {applySnapshot.isPending ? "Carregando…" : "Carregar itens do guia"}
+                          </button>
+                        )}
+                      </li>
+                    )}
+                    {roomSlot ? roomSlot(room, roomItems, renderItem) : roomItems.map((i) => renderItem(i))}
+                  </ul>
+                  <div className="flex items-center justify-end gap-3 border-t border-border px-4 py-3">
+                    <Button variant="outline" onClick={() => { setNewName(""); add.reset(); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       <Dialog open={adding} onOpenChange={setAdding}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
