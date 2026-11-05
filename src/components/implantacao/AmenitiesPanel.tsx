@@ -349,7 +349,7 @@ export function AmenitiesPanel({
             }} unified subNodes={isGroup ? groupSubs : undefined} extraFields={install ? fields : undefined}
               brandSlot={install ? <Input className="h-11 text-sm" value={installValue(room, install.key, "brand")} maxLength={80} placeholder="Ex.: LG" aria-label={`${install.label} — marca`} onChange={(e) => update((d) => ({ rooms: setInstall(d.rooms, room.id, install.key, "brand", e.target.value) }))} /> : undefined}
               hideQuantity={!!install && install.key !== "moveis"}
-              onDuplicate={install ? (name) => updateRoom(room.id, (r) => ({ ...r, custom: [...r.custom, { id: uid(), name, on: true, brand: installValue(room, install.key, "brand"), supplier: installValue(room, install.key, "installer"), characteristics: r.items[def.key]?.characteristics }] })) : undefined}
+              onDuplicate={install ? (name) => updateRoom(room.id, (r) => ({ ...r, custom: [...r.custom, { id: uid(), name, on: true, brand: installValue(room, install.key, "brand"), supplier: installValue(room, install.key, "installer"), characteristics: r.items[def.key]?.characteristics ?? {} }] })) : undefined}
               installationSummary={install ? [installValue(room, install.key, "brand"), installValue(room, install.key, "installer")].filter(Boolean).join(" · ") : ""} />;
             if (install) supplierRows.push(row);
             else rows.push(row);
@@ -730,10 +730,10 @@ function ItemRow({
   onDuplicate,
   onRename,
 }: {
-  brandSlot?: ReactNode;
-  hideQuantity?: boolean;
-  onDuplicate?: (name: string) => void;
-  onRename?: (name: string) => void;
+  brandSlot?: ReactNode | undefined;
+  hideQuantity?: boolean | undefined;
+  onDuplicate?: ((name: string) => void) | undefined;
+  onRename?: ((name: string) => void) | undefined;
   installationSummary?: string;
   hideBrand?: boolean;
   unified?: boolean;

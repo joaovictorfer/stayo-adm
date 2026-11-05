@@ -18,8 +18,8 @@ export function InventoryDetailFields({ values, onChange, nameReadOnly = false, 
   nameReadOnly?: boolean;
   extra?: ReactNode;
   actions?: ReactNode;
-  hideQuantity?: boolean;
-  brandSlot?: ReactNode;
+  hideQuantity?: boolean | undefined;
+  brandSlot?: ReactNode | undefined;
 }) {
   return <div className="space-y-4" data-testid="inventory-detail-fields">
     <label className="block space-y-1.5 text-sm text-muted-foreground">Nome<Input className="h-11 text-sm" value={values.name} readOnly={nameReadOnly} maxLength={120} onChange={(e) => onChange({ name: e.target.value })} /></label>
