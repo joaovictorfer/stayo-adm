@@ -96,35 +96,21 @@ export const ROOM_SECTIONS: Record<RoomKind, SectionDef[]> = {
     {
       title: "Utensílios",
       items: [
-        "Abridor de vinho",
         {
-          key: "panelas", label: "Panelas", subAnswers: true,
+          // Um único grupo: cada subitem mantém a própria chave, então respostas antigas continuam valendo.
+          key: "utensilios_cozinha", label: "Utensílios", subAnswers: true,
           sub: [
+            { key: "abridor_de_vinho", label: "Abridor de vinho" },
             { key: "panelas", label: "Panelas" },
             { key: "frigideira", label: "Frigideira" },
-          ],
-        },
-        {
-          key: "formas", label: "Formas", subAnswers: true,
-          sub: [
             { key: "forma_de_pizza", label: "Forma de pizza" },
             { key: "formas_diversas", label: "Formas diversas" },
             { key: "forma_de_bolo", label: "Forma de bolo" },
-          ],
-        },
-        {
-          key: "copos", label: "Copos", subAnswers: true,
-          sub: [
             { key: "copos_de_vidro", label: "Copos" },
             { key: "tacas_de_vinho", label: "Taça de vinho" },
             { key: "tacas_de_espumante", label: "Taça de espumante" },
             { key: "xicaras_de_cafe_com_pires", label: "Xícara" },
             { key: "pires", label: "Píres" },
-          ],
-        },
-        {
-          key: "talheres", label: "Talheres", subAnswers: true,
-          sub: [
             { key: "talheres", label: "Talheres" },
             { key: "talheres_infantis", label: "Talheres infantis" },
             { key: "facas_de_corte", label: "Facas de corte" },
