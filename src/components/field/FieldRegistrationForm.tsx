@@ -34,6 +34,9 @@ import {
   type FieldValues,
 } from "@/lib/field-registration";
 import { cn } from "@/lib/utils";
+
+/** Empreendimentos já atendidos pela STAYO; o campo continua aceitando um nome novo. */
+const KNOWN_CONDOMINIUMS = ["Vêneto", "Ravena", "Delle Alpi", "Le Monde", "Mondeville", "Zagonel", "Winkel Haus"];
 const steps = [
   { title: "Proprietário", icon: UserRound },
   { title: "Imóvel", icon: Building2 },
