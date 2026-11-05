@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SourceBadge, DivergenceBox } from "./SourceBadge";
 import { divergenceSnapshot, resolveField, type NormalizeKind, type ResolvedField } from "../../../lib/field-sources";
 import { fieldDecisionsQuery, saveFieldDecision } from "../../../lib/api/field-decisions";
-import { Building2, Check, ChevronDown, Copy, Eye, EyeOff, Globe, KeyRound, Landmark, MapPin, Pencil, UserRound, Users } from "lucide-react";
+import { AlertCircle, Building2, Check, ChevronDown, Copy, Eye, EyeOff, KeyRound, Landmark, Mail, MapPin, Pencil, UserRound, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
@@ -40,14 +40,39 @@ function Fields({ lines }: { lines: Line[] }) {
   return <dl className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-1 sm:grid-cols-2">{lines.map(line => <Field key={line.label} {...line} />)}</dl>;
 }
 
-function Section({ title, meta, icon, lines, children, empty }: { title: string; meta?: ReactNode; icon: ReactNode; lines?: Line[]; children?: ReactNode; empty?: string }) {
-  return <section aria-label={title} className="min-w-0 border-t border-[var(--stayo-border)] py-4">
-    <header className="mb-3 flex min-w-0 items-center gap-2.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)] [&_svg]:size-4">{icon}</span>
-      <div className="min-w-0"><h3 className="font-[Outfit] text-base font-semibold text-[var(--stayo-navy)]">{title}</h3>{meta && <p className="text-xs text-[var(--stayo-ink-muted)]">{meta}</p>}</div>
-    </header>
-    {children}
-    {lines && (empty && !lines.some(line => line.value) ? <p className="text-sm text-[var(--stayo-ink-muted)]">{empty}</p> : <Fields lines={lines} />)}
+function statusOf(lines: Line[] | undefined, empty?: string): { tone: "missing" | "partial" | "ok"; text: string } | null {
+  if (!lines) return null;
+  const filled = lines.filter(l => l.value).length;
+  if (!lines.length || !filled) return empty?.startsWith("Carregando") ? null : { tone: "missing", text: "Falta" };
+  if (filled < lines.length) return { tone: "partial", text: `${filled} de ${lines.length}` };
+  return { tone: "ok", text: "Completo" };
+}
+
+type Chip = { tone: "missing" | "partial" | "ok" | "neutral"; text: string };
+
+export function StatusChip({ tone, text }: Chip) {
+  const style = tone === "missing" ? "bg-[var(--ficha-pending-bg)] text-[var(--ficha-pending-fg)]" : tone === "ok" ? "bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)]" : "bg-[var(--ficha-subtle)] text-[var(--stayo-ink-muted)]";
+  return <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${style}`}>{tone === "missing" && <AlertCircle className="size-3.5" aria-hidden="true" />}{text}</span>;
+}
+
+/** Collapsible section card: icon, title and status on the right; opens to show its fields. */
+export function Section({ title, meta, icon, lines, children, empty, status, defaultOpen = false, action }: { title: string; meta?: ReactNode; icon: ReactNode; lines?: Line[]; children?: ReactNode; empty?: string; status?: Chip | null; defaultOpen?: boolean; action?: ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const chip = status === undefined ? statusOf(lines, empty) : status;
+  return <section aria-label={title} className="min-w-0 overflow-hidden rounded-xl border border-[var(--stayo-border)] bg-[var(--stayo-surface)]">
+    <div className="flex min-w-0 items-center gap-1 pr-2">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(v => !v)} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--ficha-subtle)]">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--ficha-icon-bg)] text-[var(--ficha-icon-fg)] [&_svg]:size-4">{icon}</span>
+        <span className="min-w-0 flex-1"><span className="block truncate font-[Outfit] text-base font-semibold text-[var(--stayo-navy)]">{title}</span>{meta && <span className="block truncate text-xs text-[var(--stayo-ink-muted)]">{meta}</span>}</span>
+        {chip && <StatusChip {...chip} />}
+        <ChevronDown className={`size-4 shrink-0 text-[var(--stayo-ink-muted)] transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+      {action}
+    </div>
+    {open && <div className="border-t border-[var(--stayo-border)] px-4 py-3">
+      {children}
+      {lines && (empty && !lines.some(line => line.value) ? <p className="text-sm text-[var(--stayo-ink-muted)]">{empty}</p> : <Fields lines={lines} />)}
+    </div>}
   </section>;
 }
 
@@ -80,31 +105,22 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join("");
   const channels = platforms?.distribution_channels ?? [];
   const status = subQ.isPending ? "Carregando cadastro…" : subQ.isError ? "Cadastro indisponível" : !sub ? "Aguardando cadastro" : sub.submittedAt ? `Recebido em ${new Date(sub.submittedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : "Em preenchimento";
+  const personStatus = subQ.isPending ? null : (() => {
+    const p0 = people[0];
+    const vals = [p0?.fullName || official?.name, p0?.document || official?.document, p0?.phone || official?.phone, p0?.email || official?.email, p0?.maritalStatus, p0?.profession];
+    const n = vals.filter(Boolean).length;
+    return n === vals.length ? { tone: "ok" as const, text: "Completo" } : { tone: n ? "partial" as const : "missing" as const, text: n ? `${n} de ${vals.length} dados` : "Falta" };
+  })();
   const property = [implementation.condominiumName, implementation.unit && `Unidade ${implementation.unit}`].filter(Boolean).join(" · ");
 
-  return <div className="min-w-0 text-[var(--stayo-navy)]">
-    <header className="flex items-start gap-3 pb-3">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--stayo-navy)] font-[Outfit] text-sm font-semibold text-[var(--stayo-surface)]">{initials || "?"}</span>
-      <div className="min-w-0 flex-1"><h2 className="break-words font-[Outfit] text-lg font-semibold leading-snug">{name}</h2><p className="mt-0.5 text-xs text-[var(--stayo-ink-muted)]">{status}</p></div>
-      {onEditOwner && <Button variant="outline" size="icon" title="Editar dados do proprietário" aria-label="Editar dados do proprietário" onClick={onEditOwner}><Pencil /></Button>}
-    </header>
-    <div className="mb-3 flex justify-end"><Button variant="ghost" size="sm" aria-pressed={revealed} onClick={() => setRevealed(value => !value)} className="text-[var(--stayo-ink-muted)]">{revealed ? <EyeOff /> : <Eye />}{revealed ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"}</Button></div>
-    {subQ.isError && <p role="alert" className="mb-3 text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void subQ.refetch()}>Tentar novamente</Button></p>}
-    <div className="grid gap-x-5 sm:grid-cols-2">
-      <Section title="Conta Airbnb" icon={<Globe />} lines={[{ label: "E-mail do cadastro", value: platformQ.isPending ? "Carregando…" : platformQ.isError ? null : platforms?.airbnb_account_email, concealed: platformQ.isPending }]}>
-        {platformQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar as plataformas. <Button variant="link" size="sm" onClick={() => void platformQ.refetch()}>Tentar novamente</Button></p>}
-        {channels.length > 0 && <p className="mb-2 break-words text-xs text-[var(--stayo-ink-muted)]">{channels.map(c => CHANNEL_LABELS[c]).join(" · ")}</p>}
-      </Section>
-      <Section title="Pix" icon={<KeyRound />} lines={[{ label: sub?.pixKey ? `Chave · ${pixLabel[sub.pixType]}` : "Chave Pix", value: sensitive(sub?.pixKey), concealed: !revealed }]} />
+  return <div className="min-w-0 space-y-2.5 text-[var(--stayo-navy)]">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-[var(--stayo-ink-muted)]">{status}</p>
+      <Button variant="ghost" size="sm" aria-pressed={revealed} onClick={() => setRevealed(value => !value)} className="text-[var(--stayo-ink-muted)]">{revealed ? <EyeOff /> : <Eye />}{revealed ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"}</Button>
     </div>
-    <Section title="Endereço" icon={<MapPin />} empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={sub ? [
-      { label: "CEP", value: sub.postalCode ? formatBrazilianPostalCode(sub.postalCode) : null },
-      { label: "Logradouro", value: [sub.street, sub.number].filter(Boolean).join(", ") || null },
-      { label: "Complemento", value: sub.complement },
-      { label: "Bairro", value: sub.district },
-      { label: "Cidade/UF", value: [sub.city, sub.state].filter(Boolean).join("/") || null },
-    ] : []} />
-    <Section title="Pessoas do contrato" meta={people.length ? `${people.length} ${people.length === 1 ? "pessoa" : "pessoas"} · titular primeiro` : undefined} icon={<Users />}>
+    {subQ.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void subQ.refetch()}>Tentar novamente</Button></p>}
+    <Section title={`${name} · Titular`} defaultOpen meta={people.length > 1 ? `${people.length} pessoas no contrato · titular primeiro` : "Pessoa do contrato"} icon={<Users />} status={personStatus}
+      action={onEditOwner && <Button variant="ghost" size="icon" title="Editar dados do proprietário" aria-label="Editar dados do proprietário" onClick={onEditOwner}><Pencil /></Button>}>
       {(() => {
         const list = people.length ? people : official?.name ? [{ fullName: "", document: "", email: "", phone: "", role: "proprietario" as const, maritalStatus: null, profession: null }] : [];
         if (!list.length) return <p className="text-sm text-[var(--stayo-ink-muted)]">{subQ.isPending ? "Carregando…" : subQ.isError ? "Cadastro indisponível." : "Nenhuma pessoa informada."}</p>;
@@ -148,7 +164,19 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
         });
       })()}
     </Section>
-    <Section icon={<Building2 />} title="Imóvel" meta={[property, "editado só na aba Imóvel"].filter(Boolean).join(" · ")}>
+    <Section title="Recebimento (Chave Pix)" icon={<KeyRound />} lines={[{ label: sub?.pixKey ? `Chave · ${pixLabel[sub.pixType]}` : "Chave Pix", value: sensitive(sub?.pixKey), concealed: !revealed }]} />
+    <Section title="E-mail do Airbnb para vincular" icon={<Mail />} lines={[{ label: "E-mail", value: platformQ.isPending ? "Carregando…" : platformQ.isError ? null : platforms?.airbnb_account_email, concealed: platformQ.isPending }]}>
+      {platformQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar as plataformas. <Button variant="link" size="sm" onClick={() => void platformQ.refetch()}>Tentar novamente</Button></p>}
+      {channels.length > 0 && <p className="mb-2 break-words text-xs text-[var(--stayo-ink-muted)]">Canais: {channels.map(c => CHANNEL_LABELS[c]).join(" · ")}</p>}
+    </Section>
+    <Section title="Endereço" icon={<MapPin />} empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={sub ? [
+      { label: "CEP", value: sub.postalCode ? formatBrazilianPostalCode(sub.postalCode) : null },
+      { label: "Logradouro", value: [sub.street, sub.number].filter(Boolean).join(", ") || null },
+      { label: "Complemento", value: sub.complement },
+      { label: "Bairro", value: sub.district },
+      { label: "Cidade/UF", value: [sub.city, sub.state].filter(Boolean).join("/") || null },
+    ] : []} />
+    <Section icon={<Building2 />} status={{ tone: "neutral", text: "Somente leitura" }} title="Imóvel" meta={[property, "editado só na aba Imóvel"].filter(Boolean).join(" · ")}>
       {detailsQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar os detalhes do imóvel. <Button variant="link" size="sm" onClick={() => void detailsQ.refetch()}>Tentar novamente</Button></p>}
       <Fields lines={[
         { label: "Condomínio", value: implementation.condominiumName }, { label: "Unidade", value: implementation.unit },

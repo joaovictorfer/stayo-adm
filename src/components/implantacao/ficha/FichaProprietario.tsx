@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 import { Collapsible } from "./FichaParts";
-import { OwnerRegistrationSheet } from "./OwnerRegistrationSheet";
+import { OwnerRegistrationSheet, Section } from "./OwnerRegistrationSheet";
 import { adminApi, implementationsListQuery, ownerNoteQuery, ownerOnboardingSubmissionQuery, ownerQuery, propertiesListQuery } from "../../../lib/api/queries";
 import { ownerNotesStore } from "../../../lib/api/local-store";
 import { formatBrazilianDocument, formatBrazilianPhone, maskDocument, normalizeDocument, ownerAdminEditSchema } from "../../../lib/owner-form-validation";
@@ -94,7 +94,7 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
   return <div className="space-y-4 text-[var(--stayo-navy)]">
     {ownerQueryResult.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void ownerQueryResult.refetch()}>Tentar novamente</Button></p>}
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
-      <div className="min-w-0 space-y-3">
+      <div className="min-w-0 space-y-2.5">
         <OwnerRegistrationSheet implementation={implementation} onEditOwner={owner ? openEdit : undefined} official={owner} note={note.data?.content}
           onAcceptSubmitted={owner ? async (key, value) => {
             const next = { name: owner.name ?? "", phone: owner.phone ?? "", email: owner.email ?? "", document: owner.document ?? "", [key]: value };
@@ -103,21 +103,18 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
             await adminApi.owners.update(owner.id, parsed.data);
             await Promise.all([queryClient.invalidateQueries({ queryKey: ["owners"] }), queryClient.invalidateQueries({ queryKey: ["implementations"] })]);
           } : undefined} />
-        <section className={panel} aria-label="Outros vínculos">
-
-          <SectionTitle>Outros vínculos</SectionTitle>
+        <Section title="Outros vínculos" icon={<Home />} status={{ tone: "neutral", text: String((implementation.ownerId ? 1 : 0) + otherImplementations.length) }}>
           {links.isError || properties.isError ? <p className="text-sm text-destructive">Não foi possível carregar os vínculos.</p> : <>
             <div className="flex flex-wrap items-center gap-2 text-sm"><Home className="size-4" /><span className="flex-1">Imóveis vinculados</span><span className="text-[var(--stayo-ink-muted)]">{links.isPending && owner ? "Carregando…" : (n => `${n} ${n === 1 ? "vínculo" : "vínculos"}`)((implementation.ownerId ? 1 : 0) + otherImplementations.length + ownerProperties.filter(property => ![implementation, ...otherImplementations].some(item => item.corePropertyId === property.id)).length)}</span>
             {implementation.ownerId && <Button asChild variant="link" size="sm" className="px-0"><Link to="/proprietarios/$id" params={{ id: implementation.ownerId }}>Ver vínculos <ChevronRight /></Link></Button>}</div>
             {otherImplementations.map(item => <Link key={item.id} to="/implantacao/$id" params={{ id: item.id }} className={`${row} text-sm`}><span className="min-w-0 flex-1 break-words">{item.nickname || [item.condominiumName, item.unit].filter(Boolean).join(" · ") || item.code}</span><span className="text-xs text-[var(--stayo-ink-muted)]">{statusLabels[item.status]}</span><ChevronRight className="size-4 shrink-0" /></Link>)}
             {ownerProperties.filter(property => ![implementation, ...otherImplementations].some(item => item.corePropertyId === property.id)).map(property => <Link key={property.id} to="/imoveis/$id" params={{ id: property.id }} className={`${row} text-sm`}><span className="min-w-0 flex-1 break-words">{property.name}</span><ChevronRight className="size-4 shrink-0" /></Link>)}
           </>}
-        </section>
-        <section className={panel} aria-label="Observações internas">
-          <div className="flex flex-wrap items-center justify-between gap-2"><SectionTitle icon={<FileText />}>Observações internas</SectionTitle><Button variant="outline" size="sm" disabled={!implementation.ownerId || note.isPending || note.isError} onClick={() => { setNoteDraft(note.data?.content ?? ""); saveNote.reset(); setEditingNote(true); }}>{note.data?.content ? <Pencil /> : <Plus />}{note.data?.content ? "Editar observação" : "Adicionar observação"}</Button></div>
+        </Section>
+        <Section title="Observações internas" meta="Visível somente para a equipe STAYO" icon={<FileText />} status={{ tone: "neutral", text: note.data?.content ? "1" : "0" }}>
           <p className="whitespace-pre-wrap break-words text-sm text-[var(--stayo-ink-muted)]">{note.isError ? "Não foi possível carregar as observações." : note.data?.content || "Nenhuma observação interna."}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-[var(--stayo-ink-muted)]"><LockKeyhole className="size-3" />Visível somente para a equipe STAYO.</p>
-        </section>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><p className="flex items-center gap-1 text-xs text-[var(--stayo-ink-muted)]"><LockKeyhole className="size-3" />Não aparece no Portal.</p><Button variant="outline" size="sm" disabled={!implementation.ownerId || note.isPending || note.isError} onClick={() => { setNoteDraft(note.data?.content ?? ""); saveNote.reset(); setEditingNote(true); }}>{note.data?.content ? <Pencil /> : <Plus />}{note.data?.content ? "Editar observação" : "Adicionar observação"}</Button></div>
+        </Section>
       </div>
       <aside className="min-w-0 space-y-3" aria-label="Relacionamento do proprietário">
         {portal}
