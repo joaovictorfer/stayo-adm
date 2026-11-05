@@ -6,8 +6,12 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
+  CheckCircle2,
+  FileText,
   LayoutGrid,
   List,
+  Megaphone,
+  Settings2,
   Loader2,
   MoreHorizontal,
   Plus,
@@ -194,18 +198,7 @@ function ImplementationsPage() {
         </AdminActionButton>
       </PageHeader>
 
-      <section
-        className="mb-4 hidden rounded-[var(--radius-card)] border px-4 py-3 sm:block sm:px-5"
-        style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-surface)" }}
-      >
-        <p className="text-sm font-medium" style={{ color: "var(--stayo-ink)" }}>
-          Comece o relacionamento antes de ter todos os dados do imóvel.
-        </p>
-        <p className="mt-1 text-xs leading-5" style={{ color: "var(--stayo-ink-muted)" }}>
-          Nome, telefone e um título provisório bastam. A mesma ficha evolui depois para proposta,
-          implantação e conversão operacional.
-        </p>
-      </section>
+      {query.isSuccess && data.length > 0 && <StageSummary data={data} />}
 
       <AdminFilterBar className="mb-4">
         <SearchInput
@@ -285,6 +278,53 @@ function ImplementationsPage() {
         />
       )}
     </>
+  );
+}
+
+const STAGE_GROUPS: { label: string; statuses: ImplementationProject["status"][]; color: string; Icon: typeof FileText }[] = [
+  { label: "Comercial", statuses: ["prospect", "proposta", "aguardando_aprovacao"], color: "var(--admin-muted)", Icon: FileText },
+  { label: "Aprovadas", statuses: ["aprovado", "planejamento"], color: "var(--admin-primary)", Icon: CheckCircle2 },
+  { label: "Em implantação", statuses: ["em_implantacao", "validacao", "pronto_para_operacao"], color: "var(--warning, oklch(0.75 0.15 70))", Icon: Settings2 },
+  { label: "Anúncio ativo", statuses: ["ativo"], color: "var(--success, oklch(0.62 0.15 150))", Icon: Megaphone },
+];
+
+function journeyProgress(status: ImplementationProject["status"]) {
+  const i = mainStatusFlow.indexOf(status);
+  return i < 0 ? 0 : Math.round(((i + 1) / mainStatusFlow.length) * 100);
+}
+
+function StageSummary({ data }: { data: ImplementationProject[] }) {
+  const total = data.length || 1;
+  return (
+    <section
+      className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border lg:grid-cols-4"
+      style={{ borderColor: "var(--stayo-border)", backgroundColor: "var(--stayo-border)" }}
+    >
+      {STAGE_GROUPS.map(({ label, statuses, color, Icon }) => {
+        const count = data.filter((d) => statuses.includes(d.status)).length;
+        const pct = Math.round((count / total) * 100);
+        return (
+          <div key={label} className="flex items-center gap-3 p-4" style={{ backgroundColor: "var(--stayo-surface)" }}>
+            <span
+              className="grid size-11 shrink-0 place-items-center rounded-full"
+              style={{ color, backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)` }}
+            >
+              <Icon className="size-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
+              <p className="text-2xl font-semibold leading-tight" style={{ color: "var(--stayo-ink)", fontFamily: "var(--font-heading, inherit)" }}>{count}</p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ backgroundColor: "var(--admin-surface-subtle)" }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+                </div>
+                <span className="text-[11px]" style={{ color: "var(--stayo-ink-muted)" }}>{pct}%</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 
