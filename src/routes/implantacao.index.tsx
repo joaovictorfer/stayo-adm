@@ -409,7 +409,7 @@ function OpportunityCards({ rows }: { rows: ImplementationProject[] }) {
                     </div>
                   </div>
                 </div>
-                <ProgressRing value={journeyProgress(item.status)} />
+                <ProgressRing value={({ Rascunho: 10, "Proposta publicada": 30, "Proposta aceita": 45 } as Record<string, number>)[label] ?? journeyProgress(item.status)} />
               </div>
               <div className="mt-auto flex items-center gap-2">
                 <CardPrimaryAction item={item} isDraft={label === "Rascunho"} label={next} />
