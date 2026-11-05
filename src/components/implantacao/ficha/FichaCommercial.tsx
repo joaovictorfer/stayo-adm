@@ -31,6 +31,8 @@ import { ClauseEditDialog, type ClauseKey } from "./ClauseEditDialog";
 import { ImplementationDecisionsPanel } from "../ImplementationDecisionsPanel";
 import { ProposalTab } from "../ProposalTab";
 import type { CommercialProposalSnapshot } from "../../../types/commercial-proposal";
+import { STANDARD_KEYS, STANDARD_LABELS, conditionsComplete, formatStandardValue, initialStandardPatch, resetToStandardPatch, standardExceptions, type StandardKey } from "../../../lib/commercial-standard";
+import { INITIAL_CLEANING_CHOICES } from "../../../lib/contract-conditions";
 
 const muted = { color: "var(--stayo-ink-muted)" };
 const navy = { color: "var(--stayo-navy)" };
@@ -38,7 +40,7 @@ const border = { borderColor: "var(--stayo-border)" };
 const display = { fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "-0.01em", color: "var(--stayo-navy)" };
 const TBD = "A definir";
 
-type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; clause?: ClauseKey; open?: Pop };
+type Row = { label: string; value: string | null | undefined; detail?: string | null | undefined; quick?: QuickKey; paid?: boolean | undefined; clause?: ClauseKey; open?: Pop; exception?: StandardKey[] | undefined };
 type Pop = "decisions" | "services" | "terms";
 const POP_TITLE: Record<Pop, [string, string]> = {
   decisions: ["Decisões da implantação", "Limpeza inicial, enxoval e escopo da assessoria. Salva sozinho."],
@@ -60,10 +62,16 @@ function Block({ icon, title, children }: { icon: ReactNode; title: string; chil
   );
 }
 
-function ValueLine({ row, onEdit }: { row: Row; onEdit: () => void }) {
+function ValueLine({ row, onEdit, onReset }: { row: Row; onEdit: () => void; onReset?: ((k: StandardKey) => void) | undefined }) {
   const value = row.value ?? TBD;
   return (
     <li className="border-b last:border-b-0" style={border}>
+      {row.exception && row.exception.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 px-2 pt-2 text-[11px]">
+          <span className="rounded-full px-2 py-0.5 font-medium" style={{ backgroundColor: "var(--ficha-pending-bg)", color: "var(--ficha-pending-fg)" }}>Exceção deste imóvel</span>
+          <button type="button" className="min-h-8 underline underline-offset-2" style={navy} onClick={() => row.exception?.forEach((k) => onReset?.(k))}>voltar ao padrão</button>
+        </div>
+      )}
       <button
         type="button"
         onClick={onEdit}
@@ -120,6 +128,7 @@ function QuickEditDialog({
   const [num, setNum] = useState<number>(0);
   const [text, setText] = useState("");
   const [paid, setPaid] = useState(false);
+  const [choice, setChoice] = useState<string>("");
   const [paidAt, setPaidAt] = useState("");
   const [lastField, setLastField] = useState<QuickKey | null>(null);
   if (field !== lastField) {
@@ -129,6 +138,7 @@ function QuickEditDialog({
       setNum(raw == null ? 0 : Number(raw));
       setText(raw == null ? "" : String(raw).replace(".", ","));
       setPaid(Boolean(paidMap[field]?.paid));
+      setChoice(String((field === "turnover_cleaning_fee" ? row?.turnover_cleaning_payer : field === "initial_cleaning_fee" ? row?.initial_cleaning_option : "") ?? ""));
       setPaidAt(paidMap[field]?.paid_at ?? "");
     }
   }
@@ -147,6 +157,8 @@ function QuickEditDialog({
       }
       patch[field] = cfg.kind === "months" && n != null ? Math.round(n) : n;
     }
+    if (field === "turnover_cleaning_fee" && choice) patch["turnover_cleaning_payer"] = choice;
+    if (field === "initial_cleaning_fee" && choice) patch["initial_cleaning_option"] = choice;
     if (cfg.payable) patch["paid_items"] = { ...paidMap, [field]: { paid, paid_at: paid ? paidAt || null : null } };
     setStatus("saving");
     const { supabase } = await import("@/integrations/supabase/client");
@@ -167,7 +179,7 @@ function QuickEditDialog({
     const t = setTimeout(() => { dirty.current = false; void save(); }, 600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [num, text, paid, paidAt]);
+  }, [num, text, paid, paidAt, choice]);
   const close = () => {
     if (dirty.current) { dirty.current = false; void save(); }
     setStatus("idle");
@@ -178,9 +190,19 @@ function QuickEditDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{cfg?.title}</DialogTitle>
-          <DialogDescription>Salva automaticamente e já passa a valer.</DialogDescription>
+          <DialogDescription>Fica salvo na ficha. O proprietário só vê depois de “Salvar condições”.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          {field === "turnover_cleaning_fee" && (
+            <div className="flex flex-col gap-1.5"><Label>Quem paga</Label><div className="grid grid-cols-2 gap-2">
+              {([["guest", "Hóspede"], ["owner", "Proprietário"]] as const).map(([v, l]) => <Button key={v} type="button" className="h-11" variant={choice === v ? "default" : "outline"} onClick={() => touch(setChoice)(v)}>{l}</Button>)}
+            </div></div>
+          )}
+          {field === "initial_cleaning_fee" && (
+            <div className="flex flex-col gap-1.5"><Label>Tipo de preparação</Label><div className="grid gap-2">
+              {INITIAL_CLEANING_CHOICES.filter((o) => o.value !== "tbd" && o.value !== "other").map((o) => <Button key={o.value} type="button" className="h-11 justify-start" variant={choice === o.value ? "default" : "outline"} onClick={() => touch(setChoice)(o.value)}>{o.label}</Button>)}
+            </div></div>
+          )}
           {cfg?.kind === "money" && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="qe-value">Valor</Label>
@@ -248,6 +270,33 @@ export function FichaCommercial({
   const [clause, setClause] = useState<ClauseKey | null>(null);
   const [quick, setQuick] = useState<QuickKey | null>(null);
   const [pop, setPop] = useState<Pop | null>(null);
+  const [confirmSave, setConfirmSave] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const writeConditions = async (patch: Record<string, unknown>) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from("implementation_contract_conditions").upsert({ implementation_id: implementationId, ...patch } as any, { onConflict: "implementation_id" });
+    if (error) throw error;
+    await qc.invalidateQueries({ queryKey: ["implementation-contract-conditions", implementationId] });
+  };
+  const publishConditions = async () => {
+    setPublishing(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("admin_publish_conditions", { p_data: { implementationId, commandId: crypto.randomUUID() } });
+      if (error) throw error;
+      const res = data as { version: number; requiresConfirmation: boolean };
+      toast.success(`Versão ${res.version} publicada no link do proprietário`, { description: res.requiresConfirmation ? "O proprietário precisa confirmar estas condições." : "Só texto mudou: o aceite anterior continua valendo." });
+      setConfirmSave(false);
+      await qc.invalidateQueries();
+    } catch (e) {
+      const msg = (e as Error).message ?? "";
+      toast.error(msg.includes("nenhuma alteração") ? "Nada mudou desde a última versão." : msg.includes("incompletas") ? "Complete os valores antes de salvar." : "Não foi possível salvar as condições.");
+    } finally {
+      setPublishing(false);
+    }
+  };
   const q = useQuery({
     queryKey: ["implementation-contract-conditions", implementationId, "commercial-view"],
     queryFn: async () => {
@@ -257,6 +306,15 @@ export function FichaCommercial({
     },
   });
 
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (q.isLoading || q.isError || seeded.current) return;
+    const patch = initialStandardPatch(q.data as Record<string, unknown> | null);
+    if (!patch) return;
+    seeded.current = true;
+    void writeConditions(patch).catch(() => { seeded.current = false; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q.isLoading, q.data]);
   // Proposta publicada/aceita: mostra exatamente o snapshot (o mesmo do link e do PDF).
   const snap = proposal?.snapshot ?? null;
   const snapRow = snap ? snapshotConditionsToRow(snap.contractConditions ?? {}) : null;
@@ -279,14 +337,15 @@ export function FichaCommercial({
   const assignment = c?.assignment_mode as AssignmentMode | null | undefined;
   const linen = LINEN_CHOICES.find((o) => o.value === c?.linen_mode)?.label ?? null;
 
+  const exc = standardExceptions(q.data as Record<string, unknown> | null);
   const paidMap = ((q.data as { paid_items?: PaidMap } | null)?.paid_items ?? {}) as PaidMap;
   const initialFee = c?.initial_cleaning_fee != null && Number(c.initial_cleaning_fee) > 0 ? formatBRL(Number(c.initial_cleaning_fee)) : null;
   const snapItems = (snap?.items ?? []) as Array<{ description: string; total: number }>;
   const values: Row[] = [
-    { label: "Taxa de administração", value: formatPercent(c?.administration_fee), quick: "administration_fee" },
-    { label: "Taxa de limpeza", value: cleaningFee, quick: "turnover_cleaning_fee", paid: paidMap["turnover_cleaning_fee"]?.paid },
-    { label: "Preparação inicial", value: [initial, initialFee].filter(Boolean).join(" · ") || null, quick: "initial_cleaning_fee", paid: paidMap["initial_cleaning_fee"]?.paid },
-    { label: "Vigência", value: c?.duration_months ? `${c.duration_months} meses` : null, quick: "duration_months" },
+    { label: "Taxa de administração", value: formatPercent(c?.administration_fee), quick: "administration_fee", exception: exc.filter((k) => k === "administration_fee") },
+    { label: "Vigência", value: c?.duration_months ? `${Number(c.duration_months) * 30} dias` : null, quick: "duration_months", exception: exc.filter((k) => k === "duration_months") },
+    { label: "Limpeza das hospedagens", value: cleaningFee, detail: payer ? (payer === "guest" ? "Paga pelo hóspede" : "Paga pelo proprietário") : null, quick: "turnover_cleaning_fee", paid: paidMap["turnover_cleaning_fee"]?.paid, exception: exc.filter((k) => k === "turnover_cleaning_fee" || k === "turnover_cleaning_payer") },
+    { label: "Preparação inicial", value: [initial, initialFee].filter(Boolean).join(" · ") || null, quick: "initial_cleaning_fee", paid: paidMap["initial_cleaning_fee"]?.paid, exception: exc.filter((k) => k === "initial_cleaning_option") },
     { label: "Valor de implantação", value: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, quick: "implementation", paid: paidMap["implementation"]?.paid },
     {
       label: "Itens da implantação",
@@ -298,17 +357,15 @@ export function FichaCommercial({
   const clauses: Row[] = [
     { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null, clause: "owner_use" },
     { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule, clause: "payout" },
-    { label: "Limpeza das hospedagens", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, detail: payer ? TURNOVER_PAYER_LABELS[payer] : null, clause: "turnover" },
+    { label: "Equipe de limpeza", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, clause: "turnover" },
     { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não", clause: "exclusivity" },
     { label: "Cessão a terceiros", value: assignment ? ASSIGNMENT_LABELS[assignment] : null, detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null, clause: "assignment" },
     { label: "Aviso prévio", value: c?.notice_period_days ? days(c.notice_period_days) : null, clause: "notice" },
     { label: "Manutenção sem autorização", value: c?.maintenance_limit != null ? `até ${formatBRL(Number(c.maintenance_limit))}` : null, clause: "maintenance" },
   ];
   const services: Row[] = [
-    { label: "Limpeza de implantação", value: !initialOpt || initialOpt === "tbd" ? null : initialOpt === "owner_delivers" ? "Não" : "Sim", detail: c?.initial_cleaning_notes, open: "decisions" },
     { label: "Enxoval", value: linen, detail: c?.linen_notes, open: "decisions" },
     { label: "Escopo da assessoria", value: c?.advisory_mode === "implementation_only" ? "Apenas implantação" : c?.advisory_mode === "full" ? "Assessoria completa" : null, open: "decisions" },
-    { label: "Limpeza comercial", value: cleaningFee ? `Sim · ${cleaningFee}` : null, quick: "turnover_cleaning_fee" },
     { label: "Objeto e responsabilidades", value: snap?.partnershipObject ? "Definido" : null, detail: snap?.partnershipObject, open: "terms" },
   ];
 
@@ -332,10 +389,13 @@ export function FichaCommercial({
             <p className="text-sm" style={muted}>Carregando condições…</p>
           ) : (
             <>
-              <p className="text-xs" style={muted}>Alterações salvam sozinhas e já passam a valer.</p>
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
-                {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.open ? setPop(r.open) : r.quick && setQuick(r.quick))} />)}
+                {values.map((r) => <ValueLine key={r.label} row={r} onReset={(k) => void writeConditions(resetToStandardPatch(q.data as Record<string, unknown>, k))} onEdit={() => (r.open ? setPop(r.open) : r.quick && setQuick(r.quick))} />)}
               </Block>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button className="h-11" disabled={!conditionsComplete(q.data as Record<string, unknown> | null)} onClick={() => setConfirmSave(true)}>Salvar condições</Button>
+                <span className="text-xs" style={muted}>{conditionsComplete(q.data as Record<string, unknown> | null) ? "O proprietário só vê o que for salvo aqui." : "Complete os valores para salvar."}</span>
+              </div>
               <details className="group rounded-xl border bg-white" style={border}>
                 <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium" style={display}>Ver mais <span className="text-xs font-normal" style={muted}>Contrato, preparação e serviços</span><ChevronDown className="size-4 transition-transform group-open:rotate-180" /></summary>
                 <div className="flex flex-col gap-4 p-3 pt-0">
@@ -360,6 +420,32 @@ export function FichaCommercial({
             </DialogHeader>
             {pop === "decisions" && <ImplementationDecisionsPanel implementationId={implementationId} />}
             {(pop === "services" || pop === "terms") && <ProposalTab implementationId={implementationId} only={pop} />}
+          </DialogContent>
+        </Dialog>
+        <Dialog open={confirmSave} onOpenChange={(o) => !publishing && setConfirmSave(o)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Salvar condições</DialogTitle>
+              <DialogDescription>Confira o que muda antes de publicar.</DialogDescription>
+            </DialogHeader>
+            <div className="overflow-hidden rounded-lg border text-sm" style={border}>
+              <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b px-3 py-2 text-xs font-medium" style={{ ...border, ...muted, backgroundColor: "var(--ficha-subtle)" }}><span>Item</span><span>Antes</span><span>Depois</span></div>
+              {STANDARD_KEYS.map((k) => {
+                const before = snapRow ? formatStandardValue(k, snapRow[k]) : "—";
+                const after = formatStandardValue(k, (q.data as Record<string, unknown> | null)?.[k]);
+                const changed = before !== after;
+                return <div key={k} className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b px-3 py-2 last:border-b-0" style={border}>
+                  <span style={muted}>{STANDARD_LABELS[k]}</span><span style={muted}>{before}</span><span className={changed ? "font-semibold" : ""} style={navy}>{after}</span>
+                </div>;
+              })}
+            </div>
+            <p className="rounded-lg px-3 py-2 text-sm" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>
+              {snap ? "O proprietário passará a ver esta nova versão no mesmo link. Se algum valor mudou depois do aceite, ele precisará confirmar de novo; mudança só de texto mantém o aceite." : "O proprietário passará a ver estas condições no link de apresentação e poderá confirmá-las."}
+            </p>
+            <DialogFooter>
+              <Button variant="outline" disabled={publishing} onClick={() => setConfirmSave(false)}>Voltar</Button>
+              <Button disabled={publishing} onClick={() => void publishConditions()}>{publishing ? "Publicando…" : "Salvar e publicar"}</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
         <ClauseEditDialog implementationId={implementationId} clause={clause} row={q.data as Record<string, unknown> | null} onClose={() => setClause(null)} />
