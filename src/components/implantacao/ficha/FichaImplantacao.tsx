@@ -547,13 +547,19 @@ export function InventoryWorkspace({
                       {a === "nao_aplica" ? "Remover N/A" : "Não se aplica (N/A)"}
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => openDetail()}>Observação</DropdownMenuItem>
-                    {installation && <DropdownMenuItem onSelect={() => openDetail()}>Marca e instalador</DropdownMenuItem>}
                     {safeUrl(ex?.purchase_url) && (
                       <DropdownMenuItem asChild>
                         <a href={safeUrl(ex?.purchase_url)!} target="_blank" rel="noopener noreferrer">Onde comprar</a>
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem onSelect={() => openDetail()}>Detalhes</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={async () => {
+                      const name = window.prompt("Nome do novo item (só neste imóvel)", `${i.name} 2`)?.trim();
+                      if (!name) return;
+                      const copy = await duplicateInventoryItem(i, i.display_order + 1);
+                      await updateInventoryDetails(copy.id, implementationId, { name, inventory_quantity: copy.inventory_quantity ?? null, inventory_brand: copy.inventory_brand ?? "", inventory_condition: copy.inventory_condition ?? null, inventory_internal_notes: copy.inventory_internal_notes ?? "" });
+                      await refresh();
+                    }}>Duplicar e renomear</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>}
