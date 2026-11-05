@@ -405,7 +405,27 @@ export function FieldRegistrationForm({ token }: { token: string }) {
                     value={values.condominium}
                     disabled={record.condominiumLocked}
                     onChange={(e) => change({ condominium: e.target.value })}
+                    placeholder="Escolha abaixo ou digite um novo"
                   />
+                  {!record.condominiumLocked && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {KNOWN_CONDOMINIUMS.map((name) => {
+                        const active = values.condominium.trim().toLowerCase() === name.toLowerCase();
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => change({ condominium: name })}
+                            className="min-h-11 rounded-full border px-4 text-sm font-medium transition-colors"
+                            style={active ? { background: "var(--stayo-navy)", color: "white", borderColor: "var(--stayo-navy)" } : { borderColor: "var(--stayo-border)", color: "var(--stayo-navy)" }}
+                          >
+                            {name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Unidade *">
