@@ -1,3 +1,4 @@
+import { inventorySubmissionsQuery } from "@/lib/api/owner-inventory";
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
 import { journeyLabel, proposalStage, contractStageLabel, currentContractStage } from "../lib/journey-states";
 import { usePropertyPendencies } from "../components/implantacao/ficha/property-pendencies";
@@ -92,6 +93,7 @@ import {
 import {
   JourneyCard,
   NextStepCard,
+  ReadinessCountersCard,
   LastActivityCard,
   ResponsibleCard,
   SheetOverviewCard,
@@ -210,6 +212,7 @@ function ImplementationDetailPage() {
   const query = useQuery(implementationQuery(id));
   const itemsQuery = useQuery(implementationItemsQuery(id));
   const inventoryQ = useQuery(guidedInventoryQuery(id));
+  const submissionsQ = useQuery(inventorySubmissionsQuery(id));
   const implementation = query.data;
   const draftQuery = useQuery({
     queryKey: ["opportunity-draft-state", id],
@@ -555,6 +558,17 @@ function ImplementationDetailPage() {
                           <p className="text-base" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
                         </div>
                         <NextStepCard action={action} onGo={goSection} />
+                        <ReadinessCountersCard
+                          loading={inventoryQ.isPending}
+                          error={inventoryQ.isError}
+                          onRetry={() => void inventoryQ.refetch()}
+                          answered={inventoryAnswered}
+                          total={inventoryTotal}
+                          submissionsPending={(submissionsQ.data ?? []).filter((x) => x.status === "enviado").length}
+                          blockers={readiness.pendingBlockers}
+                          onInventory={() => goSection("implantacao")}
+                          onSubmissions={() => goSection("implantacao")}
+                        />
                         <JourneyCard status={implementation.status} />
                         <SheetOverviewCard rows={rows} onGo={goSection} />
                         <Collapsible title="Reuniões" summary="Agenda comercial desta oportunidade">

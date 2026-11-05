@@ -3,9 +3,9 @@ import type { CommercialProposalStatus } from "../types/commercial-proposal";
 export const FICHA_SECTIONS = [
   { id: "visao", label: "Resumo" },
   { id: "proposta", label: "Comercial" },
+  { id: "proprietario", label: "Proprietários" },
   { id: "imovel", label: "Imóvel" },
   { id: "implantacao", label: "Implantação" },
-  { id: "proprietario", label: "Proprietário" },
   { id: "portal", label: "Portal" },
   { id: "historico", label: "Histórico" },
 ] as const;
