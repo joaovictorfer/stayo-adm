@@ -64,7 +64,10 @@ export function AmenitiesPanel({
   bedrooms,
   bathrooms,
   render,
+  group,
 }: {
+  /** Implantação completa: só utensílios (sem fornecedores) ou só fornecedores e equipamentos. */
+  group?: "utensilios" | "fornecedores" | undefined;
   implementationId: string;
   bedrooms: number | null | undefined;
   bathrooms?: number | null;
@@ -248,6 +251,7 @@ export function AmenitiesPanel({
       }
       const used = new Set<string>();
       const rows: ReactNode[] = [];
+      const supplierAll: ReactNode[] = [];
       const bedroom = tab.startsWith("quarto") ? rs[0] : undefined;
       if (bedroom) {
         const totalBaths = comp?.bathrooms ?? 0;
@@ -344,7 +348,8 @@ export function AmenitiesPanel({
             else rows.push(row);
           }
         }
-        if (supplierRows.length) {
+        if (supplierRows.length && group === "fornecedores") supplierAll.push(...supplierRows);
+        else if (supplierRows.length && group !== "utensilios") {
           rows.push(
             <li key={`${room.id}:suppliers`} className="list-none border-b border-border py-2">
               <details className="group">
@@ -386,6 +391,8 @@ export function AmenitiesPanel({
         }
         return renderItem(item, undefined, false, subFields);
       }));
+      if (group === "fornecedores")
+        return supplierAll.length ? <>{supplierAll}</> : <li className="list-none px-2 py-6 text-center text-sm text-muted-foreground">Nenhum fornecedor ou equipamento neste ambiente.</li>;
       return <>
         {rows}
         <li className="flex flex-wrap items-center justify-between gap-2 px-2 py-3">

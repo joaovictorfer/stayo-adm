@@ -38,7 +38,7 @@ function FullImplementationPage() {
       <FichaImplantacao
         implementationId={id}
         mode="full"
-        wrapInventory={(inventory) => <AmenitiesPanel implementationId={id} bedrooms={impl?.bedrooms ?? null} render={inventory} />}
+        wrapInventory={(inventory, group) => <AmenitiesPanel group={group} implementationId={id} bedrooms={impl?.bedrooms ?? null} render={inventory} />}
       />
     </div>
   );

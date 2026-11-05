@@ -153,7 +153,7 @@ export function FichaImplantacao({
   onOpenPortal,
 }: {
   /** Envolve o inventário: recebe o render do inventário e entrega o conteúdo extra por aba. */
-  wrapInventory?: (inventory: (slot?: InventoryRoomSlot) => ReactNode) => ReactNode;
+  wrapInventory?: (inventory: (slot?: InventoryRoomSlot) => ReactNode, group?: "utensilios" | "fornecedores") => ReactNode;
   implementationId: string;
   mode?: "summary" | "full";
   onOpenPortal?: () => void;
@@ -290,7 +290,7 @@ export function FichaImplantacao({
               filter={invFilter}
             />
           );
-          return wrapInventory ? wrapInventory(render) : render();
+          return wrapInventory ? wrapInventory(render, tab) : render();
         })()
       )}
     </div>
@@ -604,7 +604,7 @@ export function InventoryWorkspace({
           </p>
         </div>
         <div className="flex items-center gap-2">
-        <FieldTabletButton implementationId={implementationId} />
+        {!group && <FieldTabletButton implementationId={implementationId} />}
         <FieldLinkDialog implementationId={implementationId} />
         <button
           type="button"
