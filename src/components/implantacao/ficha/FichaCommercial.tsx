@@ -332,32 +332,21 @@ export function FichaCommercial({
             <p className="text-sm" style={muted}>Carregando condições…</p>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[
-                  { l: "Administração", v: formatPercent(c?.administration_fee) },
-                  { l: "Limpeza", v: cleaningFee },
-                  { l: "Vigência", v: c?.duration_months ? `${c.duration_months} meses` : null },
-                  { l: "Implantação", v: implTotal != null && implTotal > 0 ? formatBRL(Number(implTotal)) : null, paid: paidMap["implementation"]?.paid },
-                ].map((k) => (
-                  <div key={k.l} className="rounded-xl border bg-white px-3 py-2.5" style={border}>
-                    <p className="text-[11px] font-medium uppercase tracking-wide" style={muted}>{k.l}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 truncate text-lg font-semibold tabular-nums" style={k.v ? display : { ...display, color: "var(--ficha-pending-fg)" }}>
-                      {k.v ?? TBD}
-                      {k.paid && <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ backgroundColor: "var(--stayo-forest-soft)", color: "var(--stayo-forest)" }}>Pago</span>}
-                    </p>
-                  </div>
-                ))}
-              </div>
               <p className="text-xs" style={muted}>Alterações salvam sozinhas e já passam a valer.</p>
               <Block icon={<Banknote className="size-4" />} title="Valores e vigência">
                 {values.map((r) => <ValueLine key={r.label} row={r} onEdit={() => (r.open ? setPop(r.open) : r.quick && setQuick(r.quick))} />)}
               </Block>
+              <details className="group rounded-xl border bg-white" style={border}>
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium" style={display}>Ver mais <span className="text-xs font-normal" style={muted}>Contrato, preparação e serviços</span><ChevronDown className="size-4 transition-transform group-open:rotate-180" /></summary>
+                <div className="flex flex-col gap-4 p-3 pt-0">
               <Block icon={<FileText className="size-4" />} title="Condições do contrato">
                 {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.clause && setClause(r.clause)} />)}
               </Block>
               <Block icon={<Settings2 className="size-4" />} title="Preparação e serviços">
                 {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { if (r.open) setPop(r.open); else if (r.quick) setQuick(r.quick); }} />)}
               </Block>
+                </div>
+              </details>
             </>
           )}
           {extras}
