@@ -54,6 +54,7 @@ interface Row {
 }
 
 type FilterType = "todos" | "bloqueadores" | "comprar" | "resolvidos";
+export type SupplyPresetFilter = "comprar" | "sem_responsavel" | "instalacao";
 
 const statusLabels: Record<SupplyStatus, string> = {
   pendente: "Pendente",
@@ -141,7 +142,7 @@ const emptyDraft = {
 const control =
   "h-9 w-full rounded-md border border-input bg-white px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-export function MissingItemsTab({ implementationId }: { implementationId: string }) {
+export function MissingItemsTab({ implementationId, preset }: { implementationId: string; preset?: SupplyPresetFilter | undefined }) {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FilterType>("todos");
   const [draft, setDraft] = useState(emptyDraft);
@@ -174,7 +175,13 @@ export function MissingItemsTab({ implementationId }: { implementationId: string
     resolvidos: rows.length - openRows.length,
   };
   const visible = rows.filter((r) =>
-    filter === "resolvidos"
+    preset === "comprar"
+      ? !r.resolved && r.items.some((i) => !isClosed(i) && i.status === "pendente")
+      : preset === "sem_responsavel"
+        ? !r.resolved && r.items.some((i) => !isClosed(i) && !i.responsible)
+        : preset === "instalacao"
+          ? !r.resolved && r.items.some((i) => i.status === "comprado" || i.status === "entregue")
+          : filter === "resolvidos"
       ? r.resolved
       : filter === "bloqueadores"
         ? !r.resolved && r.blocks
