@@ -382,7 +382,7 @@ export function MissingItemsTab({ implementationId, preset }: { implementationId
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtros">
+      <div className={preset ? "hidden" : "flex flex-wrap gap-2"} role="group" aria-label="Filtros">
         {(
           [
             ["todos", "Todos"],
