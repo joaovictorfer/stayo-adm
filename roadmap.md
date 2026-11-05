@@ -1,6 +1,6 @@
 # Roadmap
 - [x] Ficha F1: abas na nova ordem (Proprietários em 3º) e Resumo com 3 contadores separados (inventário, envios, bloqueios) e estados carregando/erro/tudo conferido.
-- [ ] Ficha F2: aba Imóvel com origem por campo; Proprietários com divergências lado a lado.
+- [x] Ficha F2: Proprietários com bloco por pessoa, selos Oficial/Enviado/Nota interna, "Falta" e divergências com decisão manual; Imóvel com composição e estacionamento editados só ali e cadastro x coleta ("Conferir na vistoria").
 - [x] Ficha F3: aba Implantação resumida (sem resposta, faltas, compras) + "Abrir implantação completa ↗"; página /implantacao/$id/completa com Utensílios, Fornecedores e equipamentos, Enxoval e 6 filtros; abas Itens faltantes/Checklist removidas; números atualizam ao voltar à guia. Conferido em 1280/390.
 - [x] Ficha F4: padrão STAYO copiado na ficha, exceções com "voltar ao padrão", "Salvar condições" com antes/depois. Quem paga a limpeza de implantação segue em aberto.
 - [x] Ficha F5: salvar condições publica versão no mesmo link; valor após aceite exige reconfirmação, só texto herda aceite; aceite antigo recusado ("condições atualizadas"); links expiram naturalmente.
