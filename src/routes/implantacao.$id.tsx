@@ -114,7 +114,7 @@ import { listActiveReleases } from "../lib/api/portal-visibility";
 import { OpportunityJourney } from "../components/implantacao/OpportunityJourney";
 import { toJourneyStep, type JourneyStep } from "../lib/opportunity-journey";
 import { LinkedField } from "../components/patterns/LinkedField";
-import { Timeline, type TimelineEntry } from "../components/patterns/Timeline";
+import type { TimelineEntry } from "../components/patterns/Timeline";
 import {
   adminApi,
   commercialTermsQuery,

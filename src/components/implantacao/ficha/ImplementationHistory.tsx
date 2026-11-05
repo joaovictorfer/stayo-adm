@@ -19,7 +19,7 @@ export function ImplementationHistory({ implementationId, proposalIds, base }: {
           .or(`entity_id.in.(${ids}),metadata->>implementationId.eq.${implementationId}`).order("created_at", { ascending: false }).limit(300),
         supabase.from("implementation_timeline_steps").select("id,title,done_at").eq("implementation_id", implementationId).not("done_at", "is", null),
         supabase.from("implementation_timeline_updates").select("id,title,description,event_date,created_at,created_by").eq("implementation_id", implementationId),
-        supabase.from("implementation_field_confirmations").select("id,field_key,note,updated_at,updated_by").eq("implementation_id", implementationId).like("field_key", "div:%"),
+        supabase.from("implementation_field_confirmations").select("id,field_key,state,updated_at,updated_by").eq("implementation_id", implementationId).like("field_key", "div:%"),
       ]);
       const actorIds = new Set<string>();
       (audit.data ?? []).forEach((r) => r.actor_id && actorIds.add(r.actor_id));
@@ -32,7 +32,7 @@ export function ImplementationHistory({ implementationId, proposalIds, base }: {
         (audit.data ?? []).map((r) => auditToEntry(r as AuditRow, names)),
         (steps.data ?? []).map((s) => ({ id: `step-${s.id}`, label: `Etapa concluída: ${s.title}`, timestamp: s.done_at as string })),
         (updates.data ?? []).map((u) => ({ id: `upd-${u.id}`, label: u.title, detail: u.description, timestamp: (u.event_date ?? u.created_at) as string, actor: who(u.created_by) })),
-        (decisions.data ?? []).map((d) => ({ id: `dec-${d.id}`, label: d.note === "conferir_local" ? "Divergência marcada para conferir" : "Divergência revisada: mantido o oficial", detail: d.field_key.slice(4), timestamp: d.updated_at, actor: who(d.updated_by) })),
+        (decisions.data ?? []).map((d) => ({ id: `dec-${d.id}`, label: /local|vistoria|conferir/i.test(d.state ?? "") ? "Divergência marcada para conferir no local" : /enviad|submitted|coleta|accept/i.test(d.state ?? "") ? "Dado do proprietário revisado: aceito o enviado" : "Dado do proprietário revisado: mantido o oficial", detail: d.field_key.slice(4), timestamp: d.updated_at, actor: who(d.updated_by) })),
       );
     },
   });
