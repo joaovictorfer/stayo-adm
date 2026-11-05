@@ -129,7 +129,7 @@ export async function setInventoryCount(
   qty: number,
 ) {
   const n = Math.max(0, Math.floor(qty));
-  const next = { ...item, inventory_quantity: n > 0 ? n : item.inventory_quantity };
+  const next = { ...item, inventory_quantity: n > 0 ? n : (item.inventory_quantity ?? null) };
   const { data, error } = await supabase
     .from("implementation_guide_items")
     .update({ inventory_quantity: n > 0 ? n : null })
