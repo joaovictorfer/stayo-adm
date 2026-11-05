@@ -97,7 +97,7 @@ export function AppPropertyLinkCard({ implementation }: { implementation: Implem
                   </div>
                 ))}
               </div>
-              {picked.linkedToCode ? <p className="mt-3 text-sm text-[var(--stayo-danger,#b42318)]">{MSG.linked_elsewhere}</p> : (
+              {picked.linkedToCode ? <p className="mt-3 text-sm text-[var(--stayo-danger,#b42318)]">{MSG["linked_elsewhere"]}</p> : (
                 <>
                   {diffs > 0 && (
                     <label className="mt-3 flex items-start gap-2 text-sm"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1" /> Os dados são diferentes, mas confirmo que é o mesmo imóvel.</label>
