@@ -32,7 +32,7 @@ function FullImplementationPage() {
         </Link>
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--stayo-ink-muted)" }}>{impl?.code ?? "Implantação"}</p>
-          <p className="truncate text-lg font-semibold" style={{ color: "var(--stayo-navy)" }}>{impl?.propertyName ?? (q.isError ? "Não foi possível carregar a ficha" : "Carregando…")}</p>
+          <p className="truncate text-lg font-semibold" style={{ color: "var(--stayo-navy)" }}>{(impl ? impl.nickname || [impl.condominiumName, impl.unit].filter(Boolean).join(" ") || impl.code : null) ?? (q.isError ? "Não foi possível carregar a ficha" : "Carregando…")}</p>
         </div>
       </div>
       <FichaImplantacao
