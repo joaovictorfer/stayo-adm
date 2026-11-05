@@ -1,4 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { SourceBadge, DivergenceBox } from "./SourceBadge";
+import { divergenceSnapshot, resolveField, type NormalizeKind, type ResolvedField } from "../../../lib/field-sources";
+import { fieldDecisionsQuery, saveFieldDecision } from "../../../lib/api/field-decisions";
 import { Building2, Check, ChevronDown, Copy, Eye, EyeOff, Globe, KeyRound, Landmark, MapPin, Pencil, UserRound, Users } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -49,7 +52,17 @@ function Section({ title, meta, icon, lines, children, empty }: { title: string;
 }
 
 /** One presentation of existing registration records; no parallel owner store. */
-export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implementation: ImplementationProject; onEditOwner?: (() => void) | undefined }) {
+export type OfficialKey = "name" | "phone" | "email" | "document";
+export type OfficialOwner = { name?: string | null; phone?: string | null; email?: string | null; document?: string | null } | null | undefined;
+
+export function OwnerRegistrationSheet({ implementation, onEditOwner, official, note, onAcceptSubmitted }: {
+  implementation: ImplementationProject; onEditOwner?: (() => void) | undefined;
+  official?: OfficialOwner; note?: string | null | undefined;
+  onAcceptSubmitted?: ((key: OfficialKey, value: string) => Promise<void>) | undefined;
+}) {
+  const qc = useQueryClient();
+  const decisionsQ = useQuery(fieldDecisionsQuery(implementation.id));
+  const [busy, setBusy] = useState(false);
   const subQ = useQuery(ownerOnboardingSubmissionQuery(implementation.id));
   const platformQ = useQuery({ queryKey: ["implementation-platforms", implementation.id], queryFn: () => getImplementationPlatforms(implementation.id) });
   const detailsQ = useQuery({ queryKey: ["property-details", implementation.id], queryFn: () => getPropertyDetails(implementation.id) });
@@ -91,15 +104,51 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner }: { implem
       { label: "Bairro", value: sub.district },
       { label: "Cidade/UF", value: [sub.city, sub.state].filter(Boolean).join("/") || null },
     ] : []} />
-    <Section title="Proponentes" meta={people.length ? `${people.length} ${people.length === 1 ? "pessoa" : "pessoas"}` : undefined} icon={<Users />}>
-      {!people.length ? <p className="text-sm text-[var(--stayo-ink-muted)]">{subQ.isPending ? "Carregando proponentes…" : subQ.isError ? "Cadastro indisponível." : "Nenhum proponente informado."}</p> : people.map((p, i) => <article key={i} className="min-w-0 border-b border-[var(--stayo-border)] py-3 first:pt-0 last:border-0 last:pb-0">
-        <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{p.fullName || `Proponente ${i + 1}`}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{roleLabel[p.role]}</p></div></div>
-        <Fields lines={[{ label: "WhatsApp", value: phone(p.phone) }, { label: "E-mail", value: p.email }]} />
-        <Button variant="ghost" size="sm" aria-expanded={expanded.includes(i)} aria-controls={`person-details-${i}`} className="mt-1 px-0 text-[var(--stayo-ink-muted)]" onClick={() => setExpanded(current => current.includes(i) ? current.filter(n => n !== i) : [...current, i])}>Dados pessoais<ChevronDown className={expanded.includes(i) ? "rotate-180" : ""} /></Button>
-        {expanded.includes(i) && <div id={`person-details-${i}`} className="mt-2"><Fields lines={[{ label: "CPF/CNPJ", value: doc(p.document), concealed: !revealed }, { label: "Estado civil", value: p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null }, { label: "Profissão", value: p.profession }]} /></div>}
-      </article>)}
+    <Section title="Pessoas do contrato" meta={people.length ? `${people.length} ${people.length === 1 ? "pessoa" : "pessoas"} · titular primeiro` : undefined} icon={<Users />}>
+      {(() => {
+        const list = people.length ? people : official?.name ? [{ fullName: "", document: "", email: "", phone: "", role: "proprietario" as const, maritalStatus: null, profession: null }] : [];
+        if (!list.length) return <p className="text-sm text-[var(--stayo-ink-muted)]">{subQ.isPending ? "Carregando…" : subQ.isError ? "Cadastro indisponível." : "Nenhuma pessoa informada."}</p>;
+        const decisions = decisionsQ.data ?? {};
+        const decide = async (key: string, decision: "usar_oficial" | "conferir_local", f: ResolvedField) => {
+          if (!f.divergence) return;
+          setBusy(true);
+          try { await saveFieldDecision(implementation.id, key, decision, divergenceSnapshot(f.divergence.official, f.divergence.submitted)); await qc.invalidateQueries({ queryKey: ["field-decisions", implementation.id] }); toast.success(decision === "usar_oficial" ? "Mantido o valor oficial" : "Marcado para conferir no local"); }
+          catch { toast.error("Não foi possível registrar a decisão."); } finally { setBusy(false); }
+        };
+        return list.map((p, i) => {
+          const titular = i === 0;
+          const show = (k: OfficialKey, v: string) => k === "document" ? doc(v) ?? v : k === "phone" ? phone(v) ?? v : v;
+          const fields: Array<{ key: string; label: string; f: ResolvedField; officialKey?: OfficialKey; concealed?: boolean }> = [];
+          const add = (label: string, key: string, off: string | null | undefined, sub: string | null | undefined, kind: NormalizeKind, officialKey?: OfficialKey) =>
+            fields.push({ key: `p${i}:${key}`, label, f: resolveField(off, sub, kind, decisions[`p${i}:${key}`]), ...(officialKey ? { officialKey } : {}), ...(key === "document" ? { concealed: !revealed } : {}) });
+          add("Nome", "name", titular ? official?.name : null, p.fullName, "text", titular ? "name" : undefined);
+          add("CPF/CNPJ", "document", titular ? official?.document : null, p.document, "digits", titular ? "document" : undefined);
+          add("WhatsApp", "phone", titular ? official?.phone : null, p.phone, "digits", titular ? "phone" : undefined);
+          add("E-mail", "email", titular ? official?.email : null, p.email, "email", titular ? "email" : undefined);
+          add("Estado civil", "marital", null, p.maritalStatus ? maritalLabel[p.maritalStatus] ?? p.maritalStatus : null, "text");
+          add("Profissão", "profession", null, p.profession, "text");
+          const missing = fields.filter((x) => x.f.missing).map((x) => x.label);
+          const display = fields.find((x) => x.key.endsWith(":name"))?.f.value || `Pessoa ${i + 1}`;
+          return <article key={i} className="min-w-0 border-b border-[var(--stayo-border)] py-3 first:pt-0 last:border-0 last:pb-0" data-testid="contract-person">
+            <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{display}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{titular ? "Titular" : roleLabel[p.role]}</p></div></div>
+            <dl className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-2 sm:grid-cols-2">
+              {fields.filter((x) => !x.f.missing).map((x) => x.f.divergence && x.officialKey ? <DivergenceBox key={x.key} label={x.label} busy={busy}
+                  official={x.concealed ? show(x.officialKey, x.f.divergence.official) : show(x.officialKey, x.f.divergence.official)} submitted={show(x.officialKey, x.f.divergence.submitted)} checking={x.f.divergence.checking}
+                  onOfficial={() => void decide(x.key, "usar_oficial", x.f)} onCheck={() => void decide(x.key, "conferir_local", x.f)}
+                  onSubmitted={async () => { if (!onAcceptSubmitted) return; setBusy(true); try { await onAcceptSubmitted(x.officialKey!, x.f.divergence!.submitted); toast.success("Valor enviado aceito como oficial"); } catch (e) { toast.error((e as Error).message || "Não foi possível aceitar."); } finally { setBusy(false); } }} />
+                : <div key={x.key} className="min-w-0"><dt className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--stayo-ink-muted)]">{x.label}{x.f.badge && <SourceBadge kind={x.f.badge} />}</dt>
+                  <dd className="mt-0.5 break-words text-sm font-medium text-[var(--stayo-navy)]">{x.officialKey ? show(x.officialKey, x.f.value!) : x.key.endsWith(":document") ? doc(x.f.value) : x.f.value}</dd></div>)}
+              {titular && note && <div className="col-span-full min-w-0"><dt className="flex items-center gap-1.5 text-xs text-[var(--stayo-ink-muted)]">Observação<SourceBadge kind="nota" /></dt><dd className="mt-0.5 whitespace-pre-wrap break-words text-sm text-[var(--stayo-navy)]">{note}</dd></div>}
+            </dl>
+            {missing.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-[var(--ficha-subtle)] px-3 py-2 text-xs">
+              <span className="text-[var(--stayo-ink-muted)]">Falta:</span><span className="font-medium">{missing.join(", ")}</span>
+              <Button variant="link" size="sm" className="h-auto px-0" onClick={() => void copy(`Olá! Para concluir o contrato, falta informar ${titular ? "" : `de ${display} `}: ${missing.join(", ")}.`, "Pedido copiado")}>Copiar pedido</Button>
+            </div>}
+          </article>;
+        });
+      })()}
     </Section>
-    <Section icon={<Building2 />} title="Imóvel" meta={property || undefined}>
+    <Section icon={<Building2 />} title="Imóvel" meta={[property, "editado só na aba Imóvel"].filter(Boolean).join(" · ")}>
       {detailsQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar os detalhes do imóvel. <Button variant="link" size="sm" onClick={() => void detailsQ.refetch()}>Tentar novamente</Button></p>}
       <Fields lines={[
         { label: "Condomínio", value: implementation.condominiumName }, { label: "Unidade", value: implementation.unit },

@@ -95,7 +95,14 @@ export function FichaProprietario({ implementation, portal, review, pending, pro
     {ownerQueryResult.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void ownerQueryResult.refetch()}>Tentar novamente</Button></p>}
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
       <div className="min-w-0 space-y-3">
-        <OwnerRegistrationSheet implementation={implementation} onEditOwner={owner ? openEdit : undefined} />
+        <OwnerRegistrationSheet implementation={implementation} onEditOwner={owner ? openEdit : undefined} official={owner} note={note.data?.content}
+          onAcceptSubmitted={owner ? async (key, value) => {
+            const next = { name: owner.name ?? "", phone: owner.phone ?? "", email: owner.email ?? "", document: owner.document ?? "", [key]: value };
+            const parsed = ownerAdminEditSchema.safeParse(next);
+            if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Valor enviado inválido.");
+            await adminApi.owners.update(owner.id, parsed.data);
+            await Promise.all([queryClient.invalidateQueries({ queryKey: ["owners"] }), queryClient.invalidateQueries({ queryKey: ["implementations"] })]);
+          } : undefined} />
         <section className={panel} aria-label="Outros vínculos">
 
           <SectionTitle>Outros vínculos</SectionTitle>
