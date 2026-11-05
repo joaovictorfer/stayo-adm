@@ -35,7 +35,7 @@ import { InventoryDetailLayout } from "../guide/InventoryDetailLayout";
 import { InventoryItemDetails } from "../guide/InventoryItemDetails";
 import { InventorySubmissionsReview } from "../guide/InventorySubmissionsReview";
 import { GuidePanel, GuideSummary } from "../guide/GuidePanel";
-import { MissingItemsTab } from "../MissingItemsTab";
+import { MissingItemsTab, type SupplyPresetFilter } from "../MissingItemsTab";
 import {
   addInventoryItem,
   duplicateInventoryItem,
@@ -121,143 +121,178 @@ function when(iso?: string | null) {
 }
 const safeUrl = (u?: string | null) => (u && /^https:\/\//i.test(u) ? u : null);
 
-export type ImplTab = "inventario" | "enxoval" | "faltantes" | "checklist";
+export type ImplTab = "utensilios" | "fornecedores" | "enxoval";
+export type InventoryFilter = "sem_resposta" | "falta" | "revisar";
+type FullFilter = InventoryFilter | SupplyPresetFilter | null;
+
+const FILTERS: Array<{ id: Exclude<FullFilter, null>; label: string }> = [
+  { id: "sem_resposta", label: "Sem resposta" },
+  { id: "falta", label: "Falta confirmada" },
+  { id: "comprar", label: "Compra pendente" },
+  { id: "sem_responsavel", label: "Sem responsável" },
+  { id: "instalacao", label: "Instalação em andamento" },
+  { id: "revisar", label: "Envios para revisar" },
+];
+
+/** Conta compras abertas pela mesma lista de suprimentos (inclui registros antigos). */
+function useSupplyCounts(implementationId: string) {
+  return useQuery({
+    queryKey: ["supply_items", implementationId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("implementation_supply_items").select("*").eq("implementation_id", implementationId);
+      if (error) throw error;
+      return (data ?? []) as Array<{ status: string; responsible: string | null }>;
+    },
+  });
+}
 
 export function FichaImplantacao({
   implementationId,
-  checklist,
-  checklistPending,
-  more,
+  mode = "summary",
   wrapInventory,
   onOpenPortal,
 }: {
   /** Envolve o inventário: recebe o render do inventário e entrega o conteúdo extra por aba. */
   wrapInventory?: (inventory: (slot?: InventoryRoomSlot) => ReactNode) => ReactNode;
   implementationId: string;
-  checklist: ReactNode;
-  checklistPending: number;
-  more: ReactNode;
-  onOpenPortal: () => void;
+  mode?: "summary" | "full";
+  onOpenPortal?: () => void;
 }) {
-  const [tab, setTab] = useState<ImplTab>("inventario");
+  const [tab, setTab] = useState<ImplTab>("utensilios");
+  const [filter, setFilter] = useState<FullFilter>(null);
   const [adding, setAdding] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const inv = useQuery(guidedInventoryQuery(implementationId));
   const subs = useQuery(inventorySubmissionsQuery(implementationId));
+  const supplies = useSupplyCounts(implementationId);
   const items = (inv.data ?? []).filter((i) => i.enabled);
-  const answered = items.filter((i) => i.inventory_answer).length;
+  const unanswered = items.filter((i) => !i.inventory_answer).length;
   const missing = items.filter((i) => i.inventory_answer === "nao_tenho").length;
+  const purchases = (supplies.data ?? []).filter((x) => x.status === "pendente").length;
   const pendingReview = (subs.data ?? []).filter((s) => s.status === "enviado");
+  const pendingIds = new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x));
+
+  if (mode === "summary") {
+    const loading = inv.isPending || supplies.isPending;
+    const stats = [
+      { label: "Sem resposta", value: unanswered },
+      { label: "Faltas confirmadas", value: missing },
+      { label: "Compras pendentes", value: purchases },
+    ];
+    return (
+      <section className="rounded-xl border bg-white p-4 sm:p-5" style={border} aria-label="Resumo da implantação">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold sm:text-2xl" style={display}>Implantação</h2>
+            <p className="text-sm" style={muted}>Utensílios, fornecedores e enxoval.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <FieldTabletButton implementationId={implementationId} />
+            <Button asChild variant="outline">
+              <a href={`/implantacao/${implementationId}/completa`} target="_blank" rel="noopener">Abrir implantação completa <ExternalLink className="size-4" /></a>
+            </Button>
+          </div>
+        </div>
+        {inv.isError || supplies.isError ? (
+          <p className="mt-4 text-sm" role="alert" style={navy}>
+            Não foi possível carregar os números.{" "}
+            <button className="underline" onClick={() => { void inv.refetch(); void supplies.refetch(); }}>Tentar de novo</button>
+          </p>
+        ) : (
+          <dl className="mt-4 grid grid-cols-3 gap-2">
+            {stats.map((st) => (
+              <div key={st.label} className="rounded-lg px-3 py-2.5" style={{ backgroundColor: "var(--ficha-subtle)" }}>
+                <dt className="text-xs" style={muted}>{st.label}</dt>
+                <dd className="text-2xl font-semibold tabular-nums" style={display}>{loading ? <span className="inline-block h-7 w-8 animate-pulse rounded bg-muted" /> : st.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {pendingReview.length > 0 && (
+          <p className="mt-3 flex items-center gap-2 text-sm" style={navy}>
+            <AlertCircle className="size-4" style={{ color: "var(--ficha-pending-fg)" }} />
+            {pendingReview.length} {pendingReview.length === 1 ? "envio do proprietário aguarda" : "envios do proprietário aguardam"} revisão na implantação completa
+          </p>
+        )}
+        {onOpenPortal && null}
+      </section>
+    );
+  }
 
   const tabs: Array<{ id: ImplTab; label: string }> = [
-    { id: "inventario", label: "Inventário" },
+    { id: "utensilios", label: "Utensílios" },
+    { id: "fornecedores", label: "Fornecedores e equipamentos" },
     { id: "enxoval", label: "Enxoval" },
-    { id: "faltantes", label: "Itens faltantes" },
-    { id: "checklist", label: "Checklist" },
   ];
+  const supplyFilter = filter === "comprar" || filter === "sem_responsavel" || filter === "instalacao" ? filter : null;
+  const invFilter = filter === "sem_resposta" || filter === "falta" || filter === "revisar" ? filter : undefined;
+  const countFor = (f: Exclude<FullFilter, null>) =>
+    f === "sem_resposta" ? unanswered : f === "falta" ? missing : f === "comprar" ? purchases
+    : f === "sem_responsavel" ? (supplies.data ?? []).filter((x) => x.status === "pendente" && !x.responsible).length
+    : f === "instalacao" ? (supplies.data ?? []).filter((x) => x.status === "comprado" || x.status === "entregue").length
+    : pendingReview.length;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold sm:text-[1.75rem]" style={display}>Implantação</h2>
-          <p className="hidden text-sm sm:block sm:text-base" style={muted}>Conferência e preparação do imóvel para operação.</p>
+          <h2 className="text-xl font-semibold sm:text-[1.75rem]" style={display}>Implantação completa</h2>
+          <p className="text-sm" style={muted}>{items.length - unanswered} de {items.length} conferidos · {missing} faltando</p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setTab("inventario");
-            setAdding(true);
-          }}
-          className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium sm:px-5"
-          style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}
-        >
-          <Plus className="size-4" /> <span className="hidden sm:inline">Adicionar item</span>
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <FieldTabletButton implementationId={implementationId} />
+          <Button variant="outline" onClick={() => { setTab("utensilios"); setFilter(null); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
+        </div>
       </div>
 
-      <nav className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:gap-x-1 sm:border-b sm:px-0 sm:pb-0" style={border} role="tablist" aria-label="Áreas da implantação">
+      <nav className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:gap-x-1 sm:border-b sm:px-0 sm:pb-0" style={border} role="tablist" aria-label="Grupos da implantação">
         {tabs.map((t) => {
           const on = tab === t.id;
           return (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={on}
-              onClick={() => setTab(t.id)}
+            <button key={t.id} role="tab" aria-selected={on} onClick={() => { setTab(t.id); if (t.id === "enxoval") setFilter(null); }}
               className={`min-h-10 shrink-0 whitespace-nowrap rounded-full border px-4 text-[var(--stayo-navy)] text-sm sm:-mb-px sm:min-h-11 sm:rounded-none sm:border-0 sm:border-b-[3px] ${on ? "max-sm:bg-[var(--stayo-navy)] max-sm:text-[var(--admin-surface,#fff)]" : "max-sm:bg-white"}`}
-              style={{ borderColor: on ? "var(--ficha-icon-fg)" : "var(--stayo-border)", fontWeight: on ? 600 : 400 }}
-            >
+              style={{ borderColor: on ? "var(--ficha-icon-fg)" : "var(--stayo-border)", fontWeight: on ? 600 : 400 }}>
               {t.label}
             </button>
           );
         })}
       </nav>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="order-2 min-w-0 lg:order-1">
-          {tab === "inventario" ? (
-            (() => {
-              const inv = (slot?: InventoryRoomSlot) => (
-                <InventoryWorkspace
-                  implementationId={implementationId}
-                  adding={adding}
-                  setAdding={setAdding}
-                  reviewing={reviewing}
-                  pendingReviewIds={new Set(pendingReview.map((s) => s.item_id).filter((x): x is string => !!x))}
-                  roomSlot={slot}
-                />
-              );
-              return wrapInventory ? wrapInventory(inv) : inv();
-            })()
-          ) : tab === "faltantes" ? (
-            <Surface>
-              <MissingSlot implementationId={implementationId} />
-            </Surface>
-          ) : tab === "enxoval" ? (
-            <Surface>
-              <EnxovalSlot implementationId={implementationId} />
-            </Surface>
-          ) : (
-            <Surface>{checklist}</Surface>
-          )}
-          <div className="mt-4">{more}</div>
+      {tab !== "enxoval" && (
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Filtros">
+          {FILTERS.map((f) => {
+            const on = filter === f.id;
+            return (
+              <button key={f.id} type="button" aria-pressed={on} onClick={() => setFilter(on ? null : f.id)}
+                className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors"
+                style={on ? { backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)", borderColor: "var(--stayo-navy)" } : { ...border, ...navy, backgroundColor: "white" }}>
+                {f.label} <span className="tabular-nums opacity-70">{countFor(f.id)}</span>
+              </button>
+            );
+          })}
         </div>
+      )}
 
-        <aside className="order-1 flex flex-col gap-4 lg:order-2">
-
-          <section className="rounded-xl border bg-white px-4 py-3 sm:px-5" style={border}>
-            <div className="flex items-start gap-3">
-              <ExternalLink className="mt-1 size-5 shrink-0" style={navy} />
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold" style={display}>Portal do proprietário</h3>
-                <p className="text-sm" style={muted}>Acesso e liberações</p>
-              </div>
-              <button type="button" onClick={onOpenPortal} className="flex items-center gap-1 text-sm underline underline-offset-2" style={{ color: "var(--stayo-navy)" }}>
-                Abrir Portal <ExternalLink className="size-3.5" />
-              </button>
-            </div>
-            {pendingReview.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("inventario");
-                  setReviewing((v) => !v);
-                }}
-                className="mt-3 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm"
-                style={{ backgroundColor: "var(--ficha-pending-bg)" }}
-              >
-                <AlertCircle className="size-5 shrink-0" style={{ color: "var(--ficha-pending-fg)" }} />
-                <span className="flex-1" style={navy}>
-                  {pendingReview.length} {pendingReview.length === 1 ? "alteração aguarda" : "alterações aguardam"} revisão
-                </span>
-                <span className="underline underline-offset-2" style={navy}>{reviewing ? "Fechar" : "Revisar"}</span>
-                <ChevronRight className="size-4" style={navy} />
-              </button>
-            )}
-          </section>
-        </aside>
-      </div>
+      {tab === "enxoval" ? (
+        <Surface><EnxovalSlot implementationId={implementationId} /></Surface>
+      ) : supplyFilter ? (
+        <Surface><MissingItemsTab implementationId={implementationId} preset={supplyFilter} /></Surface>
+      ) : (
+        (() => {
+          const render = (slot?: InventoryRoomSlot) => (
+            <InventoryWorkspace
+              implementationId={implementationId}
+              adding={adding}
+              setAdding={setAdding}
+              reviewing={filter === "revisar"}
+              pendingReviewIds={pendingIds}
+              roomSlot={slot}
+              group={tab}
+              filter={invFilter}
+            />
+          );
+          return wrapInventory ? wrapInventory(render) : render();
+        })()
+      )}
     </div>
   );
 }
@@ -270,9 +305,6 @@ function Surface({ children }: { children: ReactNode }) {
   );
 }
 
-function MissingSlot({ implementationId }: { implementationId: string }) {
-  return <MissingItemsTab implementationId={implementationId} />;
-}
 function EnxovalSlot({ implementationId }: { implementationId: string }) {
   return <GuidePanel implementationId={implementationId} guideType="enxoval" />;
 }
@@ -284,7 +316,11 @@ export function InventoryWorkspace({
   reviewing,
   pendingReviewIds,
   roomSlot,
+  group,
+  filter,
 }: {
+  group?: "utensilios" | "fornecedores" | undefined;
+  filter?: InventoryFilter | undefined;
   implementationId: string;
   adding: boolean;
   setAdding: (v: boolean) => void;
@@ -470,6 +506,11 @@ export function InventoryWorkspace({
   const needsSync = (q.data?.length ?? 0) > 0 && (newFromGuide > 0 || emptyBedrooms > 0);
 
   const renderItem = (i: InventorySnapshotItem, extra?: ReactNode, installation = false, subFields?: Record<string, ReactNode>) => {
+          if (group === "utensilios" && installation) return null;
+          if (group === "fornecedores" && !installation) return null;
+          if (filter === "sem_resposta" && i.inventory_answer) return null;
+          if (filter === "falta" && i.inventory_answer !== "nao_tenho") return null;
+          if (filter === "revisar" && !pendingReviewIds.has(i.id)) return null;
           detailExtras.current.set(i.id, extra ?? null);
           for (const [key, fields] of Object.entries(subFields ?? {})) detailExtras.current.set(`${i.id}:${key}`, fields);
           const openDetail = () => { setDetail(i.id); };
