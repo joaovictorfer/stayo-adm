@@ -1,4 +1,11 @@
 # Roadmap
+- [x] Ficha F1: abas na nova ordem (Proprietários em 3º) e Resumo com 3 contadores separados (inventário, envios, bloqueios) e estados carregando/erro/tudo conferido.
+- [ ] Ficha F2: aba Imóvel com origem por campo; Proprietários com divergências lado a lado.
+- [ ] Ficha F3: página "Implantação completa" em nova guia, filtros, remover abas Itens faltantes/Checklist.
+- [ ] Ficha F4: padrão comercial (20%, 180 dias, limpeza R$250 hóspede, limpeza de implantação), exceções por imóvel, "Salvar condições". Falta definir quem paga a limpeza de implantação.
+- [ ] Ficha F5: versão automática no Portal, aceite por versão, links antigos expiram naturalmente, texto de cláusula sem reconfirmação.
+- [ ] Ficha F6: histórico consolidado.
+- [ ] Ficha F7: vínculo STAYO APP (obrigatório antes de Ativo) — bloqueado pela homologação da API.
 - [x] Fase 2A: contratos oficiais c5e2b1e0 copiados, consumidor/demonstrativo e CPF server-only fail-closed preparados; 68 testes passaram, build OK, relatório docs/api/PHASE-2A-CONSUMER-REPORT.md. Sem credenciais, migrations, conexão produtiva, importação, sincronização ou publicação.
 - [ ] Fase 2A homologação futura: aguarda autorização específica, credencial temporária, finalidade local de CPF e sessão para validar interface autenticada; não emitir token nem conectar nesta fase.
 - [x] Corrigir exclusão com links de cadastro/vistoria; erro reproduzido na IMP-00013 e mesma ação validada após correção. Regressão real passou para links, confirmação incorreta, anon, ativa e vínculos Core; histórico financeiro protegido.
