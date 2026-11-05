@@ -147,13 +147,14 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
           const display = fields.find((x) => x.key.endsWith(":name"))?.f.value || `Pessoa ${i + 1}`;
           return <article key={i} className="min-w-0 border-b border-[var(--stayo-border)] py-3 first:pt-0 last:border-0 last:pb-0" data-testid="contract-person">
             <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{display}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{titular ? "Titular" : roleLabel[p.role]}</p></div></div>
-            <dl className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-2 sm:grid-cols-2">
-              {fields.filter((x) => !x.f.missing).map((x) => x.f.divergence && x.officialKey ? <DivergenceBox key={x.key} label={x.label} busy={busy}
+            <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+              {fields.map((x) => x.f.missing ? <div key={x.key} className="min-w-0"><dt className="text-xs text-[var(--stayo-ink-muted)]">{x.label}</dt>
+                  <dd className="mt-1 flex items-center gap-2"><span className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg border border-[var(--stayo-border)] bg-[var(--ficha-subtle)] px-3 text-sm text-[var(--stayo-ink-muted)]">Não informado</span><StatusChip tone="missing" text="Falta" /></dd></div> : x.f.divergence && x.officialKey ? <DivergenceBox key={x.key} label={x.label} busy={busy}
                   official={x.concealed ? show(x.officialKey, x.f.divergence.official) : show(x.officialKey, x.f.divergence.official)} submitted={show(x.officialKey, x.f.divergence.submitted)} checking={x.f.divergence.checking}
                   onOfficial={() => void decide(x.key, "usar_oficial", x.f)} onCheck={() => void decide(x.key, "conferir_local", x.f)}
                   onSubmitted={async () => { if (!onAcceptSubmitted) return; setBusy(true); try { await onAcceptSubmitted(x.officialKey!, x.f.divergence!.submitted); toast.success("Valor enviado aceito como oficial"); } catch (e) { toast.error((e as Error).message || "Não foi possível aceitar."); } finally { setBusy(false); } }} />
                 : <div key={x.key} className="min-w-0"><dt className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--stayo-ink-muted)]">{x.label}{x.f.badge && <SourceBadge kind={x.f.badge} />}</dt>
-                  <dd className="mt-0.5 break-words text-sm font-medium text-[var(--stayo-navy)]">{x.officialKey ? show(x.officialKey, x.f.value!) : x.key.endsWith(":document") ? doc(x.f.value) : x.f.value}</dd></div>)}
+                  <dd className="mt-1 flex min-h-10 items-center break-words rounded-lg border border-[var(--stayo-border)] bg-[var(--ficha-subtle)] px-3 text-sm font-medium text-[var(--stayo-navy)]">{x.officialKey ? show(x.officialKey, x.f.value!) : x.key.endsWith(":document") ? doc(x.f.value) : x.f.value}</dd></div>)}
               {titular && note && <div className="col-span-full min-w-0"><dt className="flex items-center gap-1.5 text-xs text-[var(--stayo-ink-muted)]">Observação<SourceBadge kind="nota" /></dt><dd className="mt-0.5 whitespace-pre-wrap break-words text-sm text-[var(--stayo-navy)]">{note}</dd></div>}
             </dl>
             {missing.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-[var(--ficha-subtle)] px-3 py-2 text-xs">
@@ -176,15 +177,6 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
       { label: "Bairro", value: sub.district },
       { label: "Cidade/UF", value: [sub.city, sub.state].filter(Boolean).join("/") || null },
     ] : []} />
-    <Section icon={<Building2 />} status={{ tone: "neutral", text: "Somente leitura" }} title="Imóvel" meta={[property, "editado só na aba Imóvel"].filter(Boolean).join(" · ")}>
-      {detailsQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar os detalhes do imóvel. <Button variant="link" size="sm" onClick={() => void detailsQ.refetch()}>Tentar novamente</Button></p>}
-      <Fields lines={[
-        { label: "Condomínio", value: implementation.condominiumName }, { label: "Unidade", value: implementation.unit },
-        { label: "Quartos", value: num(implementation.bedrooms ?? details?.bedrooms) }, { label: "Suítes", value: num(details?.suites) },
-        { label: "Banheiros", value: num(details?.bathrooms) }, { label: "Lavabos", value: num(details?.lavatories) },
-        { label: "Estacionamento", value: [details?.parkingBox && `Box ${details.parkingBox}`, details?.parkingSpots != null && `${details.parkingSpots} ${details.parkingSpots === 1 ? "vaga" : "vagas"}`].filter(Boolean).join(" · ") || null, wide: true },
-      ]} />
-    </Section>
     <Section icon={<Landmark />} title="Dados bancários" meta="Recebimento dos repasses" empty={subQ.isPending ? "Carregando dados bancários…" : subQ.isError ? "Cadastro indisponível." : "Dados bancários não informados."} lines={sub ? [
       { label: "Banco", value: sub.bankName }, { label: "Tipo de conta", value: sub.accountNumber ? accountLabel[sub.accountType] : null },
       { label: "Agência", value: sensitive(sub.bankBranch), concealed: !revealed }, { label: "Conta", value: sensitive(sub.accountNumber), concealed: !revealed },
