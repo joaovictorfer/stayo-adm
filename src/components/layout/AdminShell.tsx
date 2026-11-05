@@ -199,7 +199,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <div className="stayo-admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text)] lg:flex">
       <aside className="hidden w-64 shrink-0 bg-[var(--admin-sidebar)] text-[var(--admin-sidebar-text)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <Brand />
-        <div className="flex-1 overflow-y-auto">
+        <div className="admin-sidebar-scroll flex-1 overflow-y-auto">
           <SidebarNav pathname={pathname} />
         </div>
         <SidebarAccount />
@@ -225,7 +225,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <X size={18} />
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="admin-sidebar-scroll flex-1 overflow-y-auto">
               <SidebarNav pathname={pathname} onNavigate={() => setDrawer(false)} />
             </div>
             <SidebarAccount />
