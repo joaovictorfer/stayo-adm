@@ -119,6 +119,29 @@ export async function setInventoryAnswer(
   if (!data?.length) throw new Error("sem permissão para gravar");
 }
 
+/**
+ * Contagem rápida pelo toque: quantidade > 0 marca "tenho" com a quantidade;
+ * zerar marca "não tenho". Reconcilia a lista de compras pelo mesmo vínculo.
+ */
+export async function setInventoryCount(
+  item: InventorySnapshotItem,
+  implementationId: string,
+  qty: number,
+) {
+  const n = Math.max(0, Math.floor(qty));
+  const next = { ...item, inventory_quantity: n > 0 ? n : (item.inventory_quantity ?? null) };
+  const { data, error } = await supabase
+    .from("implementation_guide_items")
+    .update({ inventory_quantity: n > 0 ? n : null })
+    .eq("id", item.id)
+    .eq("implementation_id", implementationId)
+    .eq("guide_type", INVENTORY_GUIDE_TYPE)
+    .select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("sem permissão para gravar");
+  await setInventoryAnswer(next, implementationId, n > 0 ? "tenho" : "nao_tenho");
+}
+
 /** Grava só a resposta de um subitem (ex.: prato do jogo de jantar). Sem pendência nem segunda lista. */
 export async function setInventorySubanswer(
   item: InventorySnapshotItem,

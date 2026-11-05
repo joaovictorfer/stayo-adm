@@ -14,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { FieldLinkDialog } from "@/components/field/FieldLinkDialog";
+import { FieldLinkDialog, FieldTabletButton } from "@/components/field/FieldLinkDialog";
+import { ChevronDown, Minus } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import {
   replicateBathroomItems,
   removeInventoryItem,
   setInventoryAnswer,
+  setInventoryCount,
   setInventorySubanswer,
   updateInventoryDetails,
 } from "../../../lib/api/guided-inventory";
@@ -393,6 +395,31 @@ export function InventoryWorkspace({
     onSuccess: () => setFailed(null),
   });
 
+  // Toques rápidos são serializados para não gravar fora de ordem.
+  const count = useMutation({
+    scope: { id: `inventory-count-${implementationId}` },
+    mutationFn: (v: { item: InventorySnapshotItem; qty: number }) => setInventoryCount(v.item, implementationId, v.qty),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: query.queryKey });
+      qc.setQueryData<InventorySnapshotItem[]>(query.queryKey, (old) =>
+        (old ?? []).map((i) =>
+          i.id === v.item.id
+            ? { ...i, inventory_answer: v.qty > 0 ? "tenho" : "nao_tenho", inventory_quantity: v.qty > 0 ? v.qty : null, inventory_source: "equipe", inventory_updated_at: new Date().toISOString() }
+            : i,
+        ),
+      );
+    },
+    onError: (_e, v) => {
+      toast.error(`Não salvou “${v.item.name}”. Tente de novo.`);
+      void refresh();
+    },
+  });
+  const currentQty = (id: string) => {
+    const it = qc.getQueryData<InventorySnapshotItem[]>(query.queryKey)?.find((x) => x.id === id);
+    return it?.inventory_answer === "tenho" ? Math.max(1, it.inventory_quantity ?? 1) : 0;
+  };
+  const bump = (i: InventorySnapshotItem, delta: number) => count.mutate({ item: i, qty: Math.max(0, currentQty(i.id) + delta) });
+
   const subanswer = useMutation({
     mutationFn: (v: { item: InventorySnapshotItem; subKey: string; answer: "tenho" | "nao_tenho" | null }) =>
       setInventorySubanswer(v.item, implementationId, v.subKey, v.answer),
@@ -479,11 +506,23 @@ export function InventoryWorkspace({
           const a = i.inventory_answer;
           return (
             <InventoryRow key={i.id} name={i.name} image={ex?.url} onOpen={openDetail}
+              onTap={installation ? undefined : () => bump(i, 1)}
               group={inventorySubItemsFor(i.name).length > 0}
-              meta={inventorySubItemsFor(i.name).length ? `Grupo · ${inventorySubItemsFor(i.name).length} itens` : <>{meta}{a === "nao_aplica" ? " · N/A" : ""}{review ? " · Revisar" : ""}</>}
+              meta={inventorySubItemsFor(i.name).length ? `Grupo · ${inventorySubItemsFor(i.name).length} itens` : <>{installation ? meta : a === "tenho" ? `Tem ${Math.max(1, i.inventory_quantity ?? 1)}` : a === "nao_tenho" ? "Não tem" : "Toque para contar"}{a === "nao_aplica" ? " · N/A" : ""}{review ? " · Revisar" : ""}</>}
               actions={<>
-                <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
-                <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: installation ? "tenho" : a === "tenho" ? null : "tenho" }); if (installation) openDetail(); }} />
+                {installation ? <>
+                  <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
+                  <AnswerBtn kind="yes" on={a === "tenho"} onClick={() => { answer.mutate({ item: i, answer: "tenho" }); openDetail(); }} />
+                </> : a === "tenho" ? (
+                  <div className="flex items-center gap-1 rounded-full border-2 p-0.5" style={{ borderColor: "var(--stayo-navy)" }}>
+                    <button type="button" aria-label={`Diminuir ${i.name}`} onClick={() => bump(i, -1)} className="grid size-10 place-items-center rounded-full active:scale-90 transition-transform" style={navy}><Minus className="size-4" /></button>
+                    <span className="min-w-6 text-center text-base font-semibold tabular-nums" style={navy} aria-live="polite">{Math.max(1, i.inventory_quantity ?? 1)}</span>
+                    <button type="button" aria-label={`Aumentar ${i.name}`} onClick={() => bump(i, 1)} className="grid size-10 place-items-center rounded-full active:scale-90 transition-transform" style={{ backgroundColor: "var(--stayo-navy)", color: "var(--admin-surface, #fff)" }}><Plus className="size-4" /></button>
+                  </div>
+                ) : <>
+                  <AnswerBtn kind="no" on={a === "nao_tenho"} onClick={() => answer.mutate({ item: i, answer: a === "nao_tenho" ? null : "nao_tenho" })} />
+                  <button type="button" aria-label={`Tem ${i.name}`} onClick={() => bump(i, 1)} className="grid size-11 shrink-0 place-items-center rounded-full border-2 active:scale-90 transition-transform" style={{ borderColor: "var(--stayo-navy)", ...navy }}><Plus className="size-5" /></button>
+                </>}
                 <DropdownMenu>
                   <DropdownMenuTrigger className="hidden h-11 w-9 shrink-0 place-items-center rounded-lg sm:grid" style={{ ...border, ...navy }} aria-label={`Mais ações para ${i.name}`}>
                     <MoreHorizontal className="size-4" />
@@ -550,6 +589,7 @@ export function InventoryWorkspace({
           </p>
         </div>
         <div className="flex items-center gap-2">
+        <FieldTabletButton implementationId={implementationId} />
         <FieldLinkDialog implementationId={implementationId} />
         <button
           type="button"
@@ -570,30 +610,6 @@ export function InventoryWorkspace({
         </div>
       )}
 
-      <div className="mt-3 flex gap-1 overflow-x-auto border-b px-4 sm:px-5" style={border} role="tablist" aria-label="Ambientes">
-        {rooms.map((r) => {
-          const on = r.id === room;
-          return (
-            <button
-              key={r.id}
-              role="tab"
-              aria-selected={on}
-              onClick={() => {
-                setRoom(r.id);
-                setDetail(null);
-              }}
-              className="-mb-px flex shrink-0 items-center gap-2 border-b-[3px] px-3 py-2.5 text-sm"
-              style={{ ...navy, borderColor: on ? "var(--ficha-icon-fg)" : "transparent", fontWeight: on ? 600 : 400 }}
-            >
-              {r.label}
-              <span className="rounded-full px-2 text-xs" style={on ? iconCircle : { backgroundColor: "var(--ficha-subtle)", ...navy }}>
-                {r.items.length}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
       {needsSync && (
         <div className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm sm:mx-5" style={{ backgroundColor: "var(--ficha-subtle)", ...navy }}>
           <span>
@@ -612,28 +628,54 @@ export function InventoryWorkspace({
         </p>
       )}
 
-      <ul className="px-2 sm:px-3">
-        {roomItems.length === 0 && !roomSlot && (
-          <li className="px-2 py-6 text-center text-sm" style={muted}>
-            {onlyOpen ? "Nada pendente neste ambiente." : "Nenhum item neste ambiente ainda."}
-            {(q.data?.length ?? 0) === 0 && (
+      <div className="mt-3 space-y-2 px-3 pb-3 sm:px-4" aria-label="Ambientes">
+        {rooms.map((r) => {
+          const on = r.id === room;
+          const done = r.items.filter((i) => i.inventory_answer).length;
+          const pct = r.items.length ? Math.round((done / r.items.length) * 100) : 0;
+          return (
+            <div key={r.id} className="overflow-hidden rounded-xl border" style={{ ...border, backgroundColor: on ? "var(--ficha-subtle)" : undefined }}>
               <button
                 type="button"
-                className="mt-2 block w-full font-medium underline"
-                disabled={applySnapshot.isPending}
-                onClick={() => applySnapshot.mutate()}
+                aria-expanded={on}
+                onClick={() => { setRoom(on ? "" : r.id); setDetail(null); }}
+                className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors active:scale-[0.995]"
+                style={navy}
               >
-                {applySnapshot.isPending ? "Carregando…" : "Carregar itens do guia"}
+                <ChevronDown className={cn("size-5 shrink-0 transition-transform duration-200", on ? "rotate-0" : "-rotate-90")} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold">{r.label}</span>
+                  <span className="mt-1 block h-1.5 w-full max-w-48 overflow-hidden rounded-full" style={{ backgroundColor: "var(--stayo-border)" }}>
+                    <span className="block h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "var(--stayo-navy)" }} />
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full px-2.5 py-0.5 text-sm tabular-nums" style={on ? iconCircle : { backgroundColor: "var(--ficha-subtle)", ...navy }}>
+                  {done}/{r.items.length}
+                </span>
               </button>
-            )}
-          </li>
-        )}
-        {roomSlot ? roomSlot(room, roomItems, renderItem) : roomItems.map((i) => renderItem(i))}
-      </ul>
-
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <span className="min-w-0 text-sm text-muted-foreground">{room === "outros" ? "Itens avulsos do proprietário" : ROOMS.find((r) => r.id === room)?.label}</span>
-        <Button variant="outline" onClick={() => { setNewName(""); add.reset(); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
+              {on && (
+                <div className="border-t bg-white animate-in fade-in slide-in-from-top-1 duration-200" style={border}>
+                  <ul className="px-2 sm:px-3">
+                    {roomItems.length === 0 && !roomSlot && (
+                      <li className="px-2 py-6 text-center text-sm" style={muted}>
+                        {onlyOpen ? "Nada pendente neste ambiente." : "Nenhum item neste ambiente ainda."}
+                        {(q.data?.length ?? 0) === 0 && (
+                          <button type="button" className="mt-2 block w-full font-medium underline" disabled={applySnapshot.isPending} onClick={() => applySnapshot.mutate()}>
+                            {applySnapshot.isPending ? "Carregando…" : "Carregar itens do guia"}
+                          </button>
+                        )}
+                      </li>
+                    )}
+                    {roomSlot ? roomSlot(room, roomItems, renderItem) : roomItems.map((i) => renderItem(i))}
+                  </ul>
+                  <div className="flex items-center justify-end gap-3 border-t border-border px-4 py-3">
+                    <Button variant="outline" onClick={() => { setNewName(""); add.reset(); setAdding(true); }}><Plus className="size-4" /> Adicionar item</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       <Dialog open={adding} onOpenChange={setAdding}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">

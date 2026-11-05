@@ -5,6 +5,36 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createFieldLink } from "@/lib/field-registration.functions";
+/** Um toque: gera o link dedicado e abre a tela de tablet em nova guia. */
+export function FieldTabletButton({ implementationId }: { implementationId: string }) {
+  const create = useServerFn(createFieldLink);
+  const [busy, setBusy] = useState(false);
+  const open = async () => {
+    // Abre a guia já no clique para o navegador não bloquear a janela.
+    const tab = window.open("about:blank", "_blank");
+    setBusy(true);
+    try {
+      const result = await create({ data: { implementationId } });
+      const url = `${window.location.origin}/portal/cadastro-vistoria/${result.token}`;
+      if (tab) {
+        tab.opener = null;
+        tab.location.href = url;
+      } else window.location.assign(url);
+    } catch (e) {
+      tab?.close();
+      toast.error(e instanceof Error ? e.message : "Não foi possível abrir a tela de tablet");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button onClick={() => void open()} disabled={busy}>
+      {busy ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
+      Abrir no tablet
+    </Button>
+  );
+}
+
 export function FieldLinkDialog({ implementationId }: { implementationId?: string }) {
   const create = useServerFn(createFieldLink);
   const [open, setOpen] = useState(false);
