@@ -561,6 +561,13 @@
       "when": 1793907162279,
       "tag": "0079_journey_accept_stale_message",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1793907339884,
+      "tag": "0080_conditions_publish_requires_confirmation",
+      "breakpoints": true
     }
   ]
 }
