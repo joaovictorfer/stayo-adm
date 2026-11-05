@@ -8,6 +8,10 @@ import { Button } from "../../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
 import { usePropertyPendencies } from "./property-pendencies";
 import { Collapsible } from "./FichaParts";
+import { DivergenceBox } from "./SourceBadge";
+import { compositionDivergences, countsFromRooms, divergenceSnapshot, resolveField, type CompositionRoom } from "../../../lib/field-sources";
+import { fieldDecisionsQuery, saveFieldDecision } from "../../../lib/api/field-decisions";
+import { supabase as sb } from "@/integrations/supabase/client";
 import { adminCondominiumQuery, adminCondominiumsListQuery, coreApi } from "../../../lib/api/queries";
 import {
   savePropertyDetails,
@@ -265,6 +269,15 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const [capacity, setCapacity] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [parking, setParking] = useState("");
+  const [lavatories, setLavatories] = useState("");
+  const [parkingBox, setParkingBox] = useState("");
+  const roomsQ = useQuery({ queryKey: ["amenities-rooms", implementation.id], queryFn: async () => {
+    const { data, error } = await sb.from("implementation_amenities").select("data").eq("implementation_id", implementation.id).maybeSingle();
+    if (error) throw error;
+    return ((data?.data as { rooms?: CompositionRoom[] } | null)?.rooms ?? []) as CompositionRoom[];
+  } });
+  const decisionsQ = useQuery(fieldDecisionsQuery(implementation.id));
+  const [decBusy, setDecBusy] = useState(false);
   const [accessType, setAccessType] = useState<PropertyDetailsInput["accessType"]>(null);
   const [accessNotes, setAccessNotes] = useState("");
   const [accessCode, setAccessCode] = useState("");
@@ -290,6 +303,8 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
     setCapacity(num(implementation.capacity));
     setBathrooms(num(d?.bathrooms));
     setParking(num(d?.parkingSpots));
+    setLavatories(num(d?.lavatories));
+    setParkingBox(d?.parkingBox ?? "");
     setAccessType(d?.accessType ?? null);
     setAccessNotes(d?.accessNotes ?? "");
     setAccessCode(d?.accessCode ?? "");
@@ -322,6 +337,8 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         suites: d?.suites ?? null,
         bathrooms: toNum(bathrooms),
         parkingSpots: toNum(parking),
+        lavatories: toNum(lavatories),
+        parkingBox: parkingBox.trim() || null,
         accessType,
         accessNotes: accessNotes || null,
         accessCode: accessCode || null,
@@ -469,12 +486,52 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                 </div>
               </Card>
 
-              <Card icon={<Home className="size-4" />} title="Características">
+              <Card icon={<Home className="size-4" />} title="Composição">
                 <ul>
                   <Line row={{ label: "Quartos", value: num(implementation.bedrooms) }} onEdit={() => startEdit("carac")} />
+                  <Line row={{ label: "Suítes", value: num(d?.suites), detail: "Calculado pelos quartos marcados como suíte" }} />
                   <Line row={{ label: "Banheiros", value: num(d?.bathrooms) }} onEdit={() => startEdit("carac")} />
+                  <Line row={{ label: "Lavabos", value: num(d?.lavatories) }} onEdit={() => startEdit("carac")} />
                   <Line row={{ label: "Capacidade", value: implementation.capacity != null ? `${implementation.capacity} hóspedes` : null }} onEdit={() => startEdit("carac")} />
+                </ul>
+                {(() => {
+                  const divs = compositionDivergences({ bedrooms: implementation.bedrooms ?? null, bathrooms: d?.bathrooms ?? null, lavatories: d?.lavatories ?? null }, countsFromRooms(roomsQ.data));
+                  const decisions = decisionsQ.data ?? {};
+                  const visible = divs.map((x) => ({ x, f: resolveField(String(x.registered), String(x.collected), "digits", decisions[`imovel:${x.key}`]) })).filter((v) => v.f.divergence);
+                  if (!visible.length) return null;
+                  const decide = async (key: string, decision: "usar_oficial" | "conferir_local", snap: string) => {
+                    setDecBusy(true);
+                    try { await saveFieldDecision(implementation.id, `imovel:${key}`, decision, snap); await qc.invalidateQueries({ queryKey: ["field-decisions", implementation.id] }); }
+                    catch { toast.error("Não foi possível registrar."); } finally { setDecBusy(false); }
+                  };
+                  return <div className="mb-3 grid gap-2">{visible.map(({ x, f }) => <DivergenceBox key={x.key} label={x.label} officialLabel="Cadastro" submittedLabel="Coleta" checkLabel="Conferir na vistoria" busy={decBusy}
+                    official={x.registered} submitted={x.collected} checking={f.divergence!.checking}
+                    onOfficial={() => void decide(x.key, "usar_oficial", divergenceSnapshot(String(x.registered), String(x.collected)))}
+                    onCheck={() => void decide(x.key, "conferir_local", divergenceSnapshot(String(x.registered), String(x.collected)))}
+                    onSubmitted={async () => {
+                      setDecBusy(true);
+                      try {
+                        if (x.key === "bedrooms") await updateImplementation.mutateAsync({ bedrooms: x.collected });
+                        else {
+                          await savePropertyDetails(implementation.id, {
+                            postalCode: d?.postalCode ?? null, street: d?.street ?? null, number: d?.number ?? null, complement: d?.complement ?? null, district: d?.district ?? null, city: d?.city ?? null, state: d?.state ?? null,
+                            propertyType: d?.propertyType ?? null, bedrooms: implementation.bedrooms ?? null, suites: d?.suites ?? null,
+                            bathrooms: x.key === "bathrooms" ? x.collected : d?.bathrooms ?? null, lavatories: x.key === "lavatories" ? x.collected : d?.lavatories ?? null,
+                            parkingSpots: d?.parkingSpots ?? null, accessType: d?.accessType ?? null, accessNotes: d?.accessNotes ?? null, accessCode: d?.accessCode ?? null,
+                            wifiNetwork: d?.wifiNetwork ?? null, wifiPassword: d?.wifiPassword ?? null, notes: d?.notes ?? null,
+                          });
+                        }
+                        await qc.invalidateQueries({ queryKey: ["implementation-property-details", implementation.id] });
+                        toast.success(`${x.label}: valor da coleta aceito`);
+                      } catch { toast.error("Não foi possível salvar."); } finally { setDecBusy(false); }
+                    }} />)}</div>;
+                })()}
+              </Card>
+
+              <Card icon={<Home className="size-4" />} title="Estacionamento">
+                <ul>
                   <Line row={{ label: "Vagas", value: num(d?.parkingSpots) }} onEdit={() => startEdit("carac")} />
+                  <Line row={{ label: "Box", value: d?.parkingBox }} onEdit={() => startEdit("carac")} />
                 </ul>
               </Card>
 
@@ -567,7 +624,9 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                 <Stepper label="Quartos" value={bedrooms} onChange={setBedrooms} />
                 <Stepper label="Banheiros" value={bathrooms} onChange={setBathrooms} />
                 <Stepper label="Hóspedes" value={capacity} onChange={setCapacity} />
+                <Stepper label="Lavabos" value={lavatories} onChange={setLavatories} />
                 <Stepper label="Vagas" value={parking} onChange={setParking} />
+                <label className="text-xs font-medium" style={muted}>Box<input value={parkingBox} onChange={(e) => setParkingBox(e.target.value)} placeholder="Ex.: 12" className={input} style={border} /></label>
               </div>
                 </div>
               )}
