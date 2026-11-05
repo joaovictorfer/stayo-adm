@@ -575,6 +575,13 @@
       "when": 1793907458854,
       "tag": "0081_field_confirmations_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1793907791739,
+      "tag": "0082_migration",
+      "breakpoints": true
     }
   ]
 }
