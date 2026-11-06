@@ -1,3 +1,4 @@
+import { DEFAULT_PAYOUT_MODE, PAYOUT_MODE_LABELS, type PayoutMode } from "../../../lib/contract-conditions";
 import { UserRound, House, ListChecks } from "lucide-react";
 import type { PendingEntry } from "./FichaSummary";
 import type { FichaSection } from "../../../lib/ficha-next-action";
@@ -356,7 +357,7 @@ export function FichaCommercial({
   ];
   const clauses: Row[] = [
     { label: "Uso do imóvel pelo proprietário", value: ownerUse, detail: ownerUseDetail || null, clause: "owner_use" },
-    { label: "Repasse", value: c?.payout_rule ? c.payout_rule.split(/[.;]/)[0] : null, detail: c?.payout_rule, clause: "payout" },
+    { label: "Repasse", value: PAYOUT_MODE_LABELS[((c as { payout_mode?: PayoutMode } | null)?.payout_mode ?? DEFAULT_PAYOUT_MODE)], detail: c?.payout_rule, clause: "payout" },
     { label: "Equipe de limpeza", value: c?.turnover_cleaning_team || c?.cleaning_responsibility || null, clause: "turnover" },
     { label: "Exclusividade", value: c?.exclusivity == null ? null : c.exclusivity ? "Sim" : "Não", clause: "exclusivity" },
     { label: "Cessão a terceiros", value: assignment ? ASSIGNMENT_LABELS[assignment] : null, detail: [c?.assignment_who, c?.assignment_procedure].filter(Boolean).join(" ") || null, clause: "assignment" },
