@@ -815,6 +815,7 @@ export function OwnerJourney({
             <div className="pj-hero-shade" aria-hidden="true" />
             <StayoLogo variant="white" className="pj-hero-logo h-10 w-auto" />
             <div className="pj-hero-content">
+              {firstName && <p className="pj-hero-greeting">Olá, {firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()}!</p>}
               <p className="pj-hero-eyebrow">Proposta de gestão</p>
               <p className="pj-hero-title">{propertyTitle}</p>
               <p className="pj-hero-place"><MapPin aria-hidden="true" />{[impl?.city || "Gramado", "RS"].join(", ")}</p>
