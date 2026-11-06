@@ -365,9 +365,13 @@ export function OwnerJourney({
     stageRef.current = current;
     setMaxStage(reached);
     maxStageRef.current = reached;
-    setAcceptName(journeyQ.data?.confirmation?.confirmedName ?? reconciled.people[0]?.fullName ?? owner?.name ?? "");
     {
-      const doc = (reconciled.people[0]?.document ?? reconciled.document ?? "").replace(/\D/g, "");
+      // A confirmação é sempre da titular da ficha; nunca usar outro proponente.
+      const titular = journeyQ.data?.confirmation?.confirmedName || owner?.name || reconciled.people[0]?.fullName || "";
+      setAcceptName(titular);
+      const first = (v?: string | null) => (v ?? "").trim().split(/\s+/)[0]?.toLocaleLowerCase("pt-BR") ?? "";
+      const samePerson = !owner?.name || first(reconciled.people[0]?.fullName) === first(titular);
+      const doc = samePerson ? (reconciled.people[0]?.document ?? "").replace(/\D/g, "") : "";
       setAcceptCpf(doc.length === 11 ? formatBrazilianDocument(doc) : "");
     }
     setAgreed(false);
