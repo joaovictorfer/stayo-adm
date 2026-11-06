@@ -48,6 +48,8 @@ import { reconcileRegistrationContact } from "../../lib/owner-registration-conta
 import institutionalCover from "../../assets/owner-portal-property-fallback.jpg";
 import { useOwnerCoverByToken } from "../../hooks/use-owner-cover";
 import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { BarChart3 as BentoAdmin, CalendarDays as BentoCalendar, SprayCan as BentoCleaning, Settings as BentoImpl, House as BentoHome, Users as BentoUsers, CheckCircle2 as BentoCheck } from "lucide-react";
 import { ACCOUNT_TYPES, BRAZILIAN_BANKS, PIX_KEY_TYPES } from "../../config/payment-data";
 import { ownerJourneyApi, type OwnerJourneyProposal } from "../../lib/api/owner-journey";
 import {
@@ -1287,20 +1289,6 @@ function ProposalStep({
           <h2 className="pj-open-title">Sua proposta STAYO</h2>
         </div>
         <p className="pj-open-lead">Os principais pontos do acordo, em resumo.</p>
-        <dl className="pj-open-facts">
-          <div className="pj-open-fact">
-            <dt>Administração</dt>
-            <dd>{facts.admin ?? "A definir"}</dd>
-          </div>
-          <div className="pj-open-fact">
-            <dt>Prazo</dt>
-            <dd>{facts.duration ?? "A definir"}</dd>
-          </div>
-          <div className="pj-open-fact">
-            <dt>Limpeza</dt>
-            <dd>{facts.cleaning ? `${facts.cleaning} por uso` : "A definir"}</dd>
-          </div>
-        </dl>
       </div>
 
       <ProposalSnapshotSummary snapshot={shown} implementationPaid={implPaid} />
@@ -1548,70 +1536,77 @@ function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { sna
     if (key === "owner_use") return ownerUseSummary(snapshot.contractConditions ?? {}) ?? "A definir";
     return "Conforme condições da proposta";
   };
-  const toggleBlock = (key: string, open: boolean) => {
-    setOpenBlock(open ? key : null);
-  };
+  const block = (k: string) => blocks.find((b) => b.key === k);
+  const tiles = [
+    { key: "management", icon: BentoAdmin, tone: "navy", big: true, label: "Administração", value: facts.admin ?? "A definir", hint: "Taxa da STAYO sobre as reservas", title: "Gestão comercial", lead: block("management")?.lead ?? "", block: block("management") },
+    { key: "duration", icon: BentoCalendar, tone: "sand", label: "Prazo", value: facts.duration ?? "A definir", hint: "Vigência do contrato", title: "Gestão comercial", lead: block("management")?.lead ?? "", block: block("management") },
+    { key: "cleaning", icon: BentoCleaning, tone: "white", label: "Limpeza", value: facts.cleaning ?? "A definir", hint: "por utilização", title: "Limpeza e operação", lead: block("cleaning")?.lead ?? "", block: block("cleaning") },
+    { key: "implementation", icon: BentoImpl, tone: "navy", wide: true, label: "Implantação", value: fixed.length ? money.format(fixedTotal) : "A definir", hint: `${fixed.length + optional.length + pending.length} ${fixed.length + optional.length + pending.length === 1 ? "serviço" : "serviços"} para deixar o imóvel pronto`, title: "Preparação do imóvel", lead: "Serviços para deixar o imóvel pronto.", block: undefined },
+    ...(block("owner_use") ? [{ key: "owner_use", icon: BentoHome, tone: "sand", label: "Uso do imóvel", value: ownerUseSummary(snapshot.contractConditions ?? {}) ?? "A definir", hint: "Quando você pode usar", title: block("owner_use")!.title, lead: block("owner_use")!.lead, block: block("owner_use") }] : []),
+    ...(block("assignment") ? [{ key: "assignment", icon: BentoUsers, tone: "white", label: "Cessão a familiares", value: "Ver regras", hint: "Familiares e convidados", title: block("assignment")!.title, lead: block("assignment")!.lead, block: block("assignment") }] : []),
+  ];
+  const openTile = tiles.find((t) => t.key === openBlock) ?? null;
   return (
     <div className="pj-blocks">
-      {blocks.length > 0 && (
-        <section aria-labelledby="pj-cond-title">
-          <h2 id="pj-cond-title" className="pj-section-title">Condições do acordo</h2>
-          <p className="pj-section-lead">Toque em cada tema para ver os detalhes.</p>
-          <div className="pj-accordion">
-            {blocks.map((b) => (
-              <details
-                key={b.key}
-                className="pj-acc"
-                open={openBlock === b.key}
-              >
-                <summary onClick={(event) => { event.preventDefault(); toggleBlock(b.key, openBlock !== b.key); }}>
-                  <span className="pj-acc-text">
-                    <span className="pj-acc-title">{b.title}</span>
-                    <span className="pj-acc-tag">{blockSummary(b.key)}</span>
-                  </span>
-                  <ChevronDown className="pj-chevron" aria-hidden="true" />
-                </summary>
+      <section aria-labelledby="pj-cond-title">
+        <h2 id="pj-cond-title" className="pj-section-title">Condições do acordo</h2>
+        <p className="pj-section-lead">Toque em cada bloco para ver o que significa.</p>
+        <div className="pj-bento">
+          {tiles.map((t) => (
+            <button key={t.key} type="button" className={`pj-bento-tile is-${t.tone}${t.wide ? " is-wide" : ""}${t.big ? " is-big" : ""}`} onClick={() => setOpenBlock(t.key)} aria-haspopup="dialog">
+              <t.icon className="pj-bento-icon" aria-hidden="true" />
+              <span className="pj-bento-label">{t.label}</span>
+              <strong className="pj-bento-value">{t.value}</strong>
+              {t.hint && <span className="pj-bento-hint">{t.hint}</span>}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {responsibilities.length > 0 && (
+        <section aria-labelledby="pj-incl-title" className="pj-includes">
+          <h2 id="pj-incl-title" className="pj-section-title">O que esta proposta inclui</h2>
+          <ul>{responsibilities.map((r, i) => <li key={i}><BentoCheck aria-hidden="true" />{r}</li>)}</ul>
+        </section>
+      )}
+
+      <Dialog open={openTile != null} onOpenChange={(o) => !o && setOpenBlock(null)}>
+        <DialogContent className="pj-bento-dialog max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl">
+          {openTile && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{openTile.title}</DialogTitle>
+                <DialogDescription>{openTile.lead}</DialogDescription>
+              </DialogHeader>
+              {openTile.key === "implementation" ? (
+                <div className="pj-blocks">
+                  <ul className="pj-items">
+                    {fixed.map((item, i) => <ItemRow key={`f${i}`} item={item} badge="fixed" />)}
+                    {pending.map((item, i) => <ItemRow key={`p${i}`} item={item} badge={resolvePricing(item)} />)}
+                    {optional.map((item, i) => <ItemRow key={`o${i}`} item={item} badge="optional" />)}
+                  </ul>
+                  <div className="pj-total">
+                    <span>{allPaid ? "Implantação · paga" : "Valor definido da implantação"}</span>
+                    <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}{allPaid ? " ✓" : ""}</strong>
+                  </div>
+                  {pending.length + optional.length > 0 && <p className="pj-section-lead">Valores pendentes serão combinados antes de qualquer cobrança.</p>}
+                </div>
+              ) : (
                 <dl className="pj-acc-body">
-                  {b.items.map((it, i) => (
+                  {(openTile.block?.items ?? []).map((it, i) => (
                     <div key={`${it.label}${i}`} className="pj-fact">
                       <dt>{it.label}</dt>
                       <dd className="pj-fact-value" data-tbd={it.tbd ? "true" : undefined}>{it.value}</dd>
                       {it.help && <dd className="pj-fact-help">{it.help}</dd>}
                     </div>
                   ))}
-                  {b.note && <p className="pj-rule"><ShieldCheck aria-hidden="true" /> {b.note}</p>}
+                  {openTile.block?.note && <p className="pj-rule"><ShieldCheck aria-hidden="true" /> {openTile.block.note}</p>}
                 </dl>
-              </details>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {fixed.length + optional.length + pending.length > 0 && (
-        <section aria-labelledby="pj-prep-title">
-          <h2 id="pj-prep-title" className="pj-section-title">Preparação do imóvel</h2>
-          <p className="pj-section-lead">Serviços para deixar o imóvel pronto. Toque num serviço para ver o que inclui.</p>
-          <ul className="pj-items">
-            {fixed.map((item, i) => <ItemRow key={`f${i}`} item={item} badge="fixed" />)}
-            {pending.map((item, i) => <ItemRow key={`p${i}`} item={item} badge={resolvePricing(item)} />)}
-            {optional.map((item, i) => <ItemRow key={`o${i}`} item={item} badge="optional" />)}
-          </ul>
-          <div className="pj-totals">
-            <div className="pj-total">
-              <span>{allPaid ? "Implantação · paga" : "Valor definido da implantação"}</span>
-              <strong>{fixed.length ? money.format(fixedTotal) : "A definir"}{allPaid ? " ✓" : ""}</strong>
-            </div>
-            {pending.length + optional.length > 0 && (
-              <div className="pj-total is-soft">
-                <strong>
-                  {pending.length + optional.length} {pending.length + optional.length === 1 ? "item pendente de definição" : "itens pendentes de definição"}
-                </strong>
-                <small>Valores pendentes serão combinados antes de qualquer cobrança.</small>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {(snapshot.partnershipObject || responsibilities.length > 0 || content.length > 0 || signatories.length > 0) && (
         <details className="pj-acc">
