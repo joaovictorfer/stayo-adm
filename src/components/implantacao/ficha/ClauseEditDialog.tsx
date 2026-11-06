@@ -14,6 +14,7 @@ import {
   DEFAULT_ASSIGNMENT_PROCEDURE,
   DEFAULT_ASSIGNMENT_WHO,
   DEFAULT_PAYOUT_RULE,
+  PAYOUT_MODE_LABELS,
   DEFAULT_TURNOVER_TEAM,
   OWNER_USE_LIMIT_LABELS,
   TURNOVER_PAYER_LABELS,
@@ -45,7 +46,10 @@ export const CLAUSES: Record<ClauseKey, { title: string; fields: Field[] }> = {
   },
   payout: {
     title: "Repasse",
-    fields: [{ key: "payout_rule", label: "Regra de repasse", type: "textarea", defaultText: DEFAULT_PAYOUT_RULE }],
+    fields: [
+      { key: "payout_mode", label: "Forma de repasse", type: "choice", options: opts(PAYOUT_MODE_LABELS) },
+      { key: "payout_rule", label: "Detalhes (opcional)", type: "textarea", defaultText: DEFAULT_PAYOUT_RULE },
+    ],
   },
   turnover: {
     title: "Limpeza das hospedagens",

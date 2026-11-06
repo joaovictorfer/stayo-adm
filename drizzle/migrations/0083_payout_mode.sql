@@ -1,0 +1,3 @@
+ALTER TABLE public.implementation_contract_conditions ADD COLUMN IF NOT EXISTS payout_mode text NOT NULL DEFAULT 'day10_report';
+ALTER TABLE public.implementation_contract_conditions ADD CONSTRAINT implementation_contract_conditions_payout_mode_chk CHECK (payout_mode IN ('day10_report','platform_auto'));
+UPDATE public.implementation_contract_conditions SET payout_rule = 'Repasse até o dia 10 de cada mês, acompanhado de relatório.' WHERE payout_rule IS NULL OR btrim(payout_rule) = '';

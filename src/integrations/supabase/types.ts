@@ -606,6 +606,7 @@ export type Database = {
           owner_use_notes: string | null
           owner_use_notice_days: number | null
           paid_items: Json
+          payout_mode: string
           payout_rule: string | null
           standard_copy: Json | null
           turnover_cleaning_fee: number | null
@@ -642,6 +643,7 @@ export type Database = {
           owner_use_notes?: string | null
           owner_use_notice_days?: number | null
           paid_items?: Json
+          payout_mode?: string
           payout_rule?: string | null
           standard_copy?: Json | null
           turnover_cleaning_fee?: number | null
@@ -678,6 +680,7 @@ export type Database = {
           owner_use_notes?: string | null
           owner_use_notice_days?: number | null
           paid_items?: Json
+          payout_mode?: string
           payout_rule?: string | null
           standard_copy?: Json | null
           turnover_cleaning_fee?: number | null
