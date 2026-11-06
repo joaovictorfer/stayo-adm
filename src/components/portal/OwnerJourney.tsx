@@ -365,9 +365,13 @@ export function OwnerJourney({
     stageRef.current = current;
     setMaxStage(reached);
     maxStageRef.current = reached;
-    setAcceptName(journeyQ.data?.confirmation?.confirmedName ?? reconciled.people[0]?.fullName ?? owner?.name ?? "");
     {
-      const doc = (reconciled.people[0]?.document ?? reconciled.document ?? "").replace(/\D/g, "");
+      // A confirmação é sempre da titular da ficha; nunca usar outro proponente.
+      const titular = journeyQ.data?.confirmation?.confirmedName || owner?.name || reconciled.people[0]?.fullName || "";
+      setAcceptName(titular);
+      const first = (v?: string | null) => (v ?? "").trim().split(/\s+/)[0]?.toLocaleLowerCase("pt-BR") ?? "";
+      const samePerson = !owner?.name || first(reconciled.people[0]?.fullName) === first(titular);
+      const doc = samePerson ? (reconciled.people[0]?.document ?? "").replace(/\D/g, "") : "";
       setAcceptCpf(doc.length === 11 ? formatBrazilianDocument(doc) : "");
     }
     setAgreed(false);
@@ -558,10 +562,24 @@ export function OwnerJourney({
     },
     onSuccess: (journey) => {
       commandId.current = crypto.randomUUID();
-      updatePerson(0, {
-        fullName: acceptName.trim().replace(/\s+/g, " "),
-        document: formatBrazilianDocument(acceptCpf),
-      });
+      {
+        const name = acceptName.trim().replace(/\s+/g, " ");
+        const document = formatBrazilianDocument(acceptCpf);
+        const first = (v?: string | null) => (v ?? "").trim().split(/\s+/)[0]?.toLocaleLowerCase("pt-BR") ?? "";
+        setForm((current) => {
+          const list = current.people.length > 0 ? current.people : emptyForm.people;
+          const head = list[0];
+          const isTitular = !head?.fullName?.trim() || first(head.fullName) === first(name);
+          // Se a primeira posição é de outro proponente, a titular entra na frente sem apagar ninguém.
+          const people = isTitular
+            ? list.map((p, i) => (i === 0 ? { ...p, fullName: name, document } : p))
+            : [
+                { role: "proprietario" as const, personType: "pf" as const, fullName: name, document, email: "", phone: "" },
+                ...list.map((p) => ({ ...p, role: p.role === "proprietario" ? ("coproprietario" as const) : p.role })),
+              ];
+          return { ...current, people, fullName: name, document, personType: "pf" };
+        });
+      }
       queryClient.setQueryData(["owner-journey", "proposal", token], journey);
       setMaxStage((value) => (value < 2 ? 2 : value));
       setStage(2);
