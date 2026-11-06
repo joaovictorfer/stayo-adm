@@ -1301,14 +1301,6 @@ function ProposalStep({
             <dd>{facts.cleaning ? `${facts.cleaning} por uso` : "A definir"}</dd>
           </div>
         </dl>
-        <div className="pj-open-note">
-          <span className="pj-open-note-icon" aria-hidden="true"><FileText className="size-4" /></span>
-          <p>
-            <strong>Implantação</strong>
-            <span>{facts.implementation ?? "Valor definido após avaliação."}{implPaid ? " · Pago" : ""}</span>
-            <span>{implPaid ? "Pagamento já recebido pela STAYO." : "Combinaremos tudo antes de qualquer cobrança."}</span>
-          </p>
-        </div>
       </div>
 
       <ProposalSnapshotSummary snapshot={shown} implementationPaid={implPaid} />
