@@ -5904,3 +5904,4 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
 .pj-field--icon { position: relative; display: block; }
 .pj-field--icon > svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--portal-muted); pointer-events: none; }
 .pj-field--icon input { padding-left: 42px !important; }
+.pj-hero-greeting { margin: 0 0 4px; font-family: var(--font-display, inherit); font-size: 17px; font-weight: 500; color: var(--stayo-surface, #fff); }
