@@ -12,6 +12,7 @@ import { getPropertyDetails } from "../../../lib/api/owner-portal-data";
 import { formatBrazilianDocument, formatBrazilianPhone, formatBrazilianPostalCode, maskDocument, maskPixKey } from "../../../lib/owner-form-validation";
 import type { ImplementationProject } from "../../../types/core";
 import { AirbnbEmailEditor, PixEditor } from "./OwnerQuickEditors";
+import { AddContractPerson, ContractPersonForm } from "./ContractPersonEditor";
 
 const roleLabel = { proprietario: "Proprietário principal", coproprietario: "Coproprietário", proponente: "Proponente" } as const;
 const accountLabel = { checking: "Conta corrente", savings: "Poupança", payment: "Conta pagamento" } as const;
@@ -97,6 +98,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
   const details = detailsQ.data;
   const [revealed, setRevealed] = useState(false);
   const [expanded, setExpanded] = useState<number[]>([]);
+  const [editing, setEditing] = useState<number | null>(null);
   const num = (n: number | null | undefined) => n == null ? null : String(n);
   const doc = (d: string | null | undefined) => d ? revealed ? formatBrazilianDocument(d) : maskDocument(d) : null;
   const sensitive = (v: string | null | undefined) => v ? revealed ? v : maskPixKey(v) : null;
@@ -147,7 +149,8 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
           const missing = fields.filter((x) => x.f.missing).map((x) => x.label);
           const display = fields.find((x) => x.key.endsWith(":name"))?.f.value || `Pessoa ${i + 1}`;
           return <article key={i} className="min-w-0 border-b border-[var(--stayo-border)] py-3 first:pt-0 last:border-0 last:pb-0" data-testid="contract-person">
-            <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{display}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{titular ? "Titular" : roleLabel[p.role]}</p></div></div>
+            <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{display}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{titular ? "Titular" : roleLabel[p.role]}</p></div>{editing !== i && <Button variant="outline" size="sm" onClick={() => setEditing(i)}><Pencil />Editar</Button>}</div>
+            {editing === i ? <ContractPersonForm implementationId={implementation.id} position={i} onDone={() => setEditing(null)} initial={{ role: p.role, fullName: p.fullName || (titular ? official?.name : "") || "", document: p.document || (titular ? official?.document : "") || "", phone: p.phone || (titular ? official?.phone : "") || "", email: p.email || (titular ? official?.email : "") || "", maritalStatus: p.maritalStatus ?? null, profession: p.profession ?? null }} /> : <>
             <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
               {fields.map((x) => x.f.missing ? <div key={x.key} className="min-w-0"><dt className="text-xs text-[var(--stayo-ink-muted)]">{x.label}</dt>
                   <dd className="mt-1 flex items-center gap-2"><span className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg border border-[var(--stayo-border)] bg-[var(--ficha-subtle)] px-3 text-sm text-[var(--stayo-ink-muted)]">Não informado</span><StatusChip tone="missing" text="Falta" /></dd></div> : x.f.divergence && x.officialKey ? <DivergenceBox key={x.key} label={x.label} busy={busy}
@@ -162,8 +165,9 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
               <span className="text-[var(--stayo-ink-muted)]">Falta:</span><span className="font-medium">{missing.join(", ")}</span>
               <Button variant="link" size="sm" className="h-auto px-0" onClick={() => void copy(`Olá! Para concluir o contrato, falta informar ${titular ? "" : `de ${display} `}: ${missing.join(", ")}.`, "Pedido copiado")}>Copiar pedido</Button>
             </div>}
+            </>}
           </article>;
-        });
+        }).concat(!subQ.isPending && !subQ.isError ? [<div key="add" className="pt-3"><AddContractPerson implementationId={implementation.id} position={list.length} /></div>] : []);
       })()}
     </Section>
     <Section title="Recebimento (Chave Pix)" icon={<KeyRound />} status={sub?.pixKey ? { tone: "ok", text: pixLabel[sub.pixType] } : subQ.isPending ? null : { tone: "missing", text: "Falta" }}>
