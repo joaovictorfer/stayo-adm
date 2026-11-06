@@ -572,10 +572,10 @@ export function OwnerJourney({
           const isTitular = !head?.fullName?.trim() || first(head.fullName) === first(name);
           // Se a primeira posição é de outro proponente, a titular entra na frente sem apagar ninguém.
           const people = isTitular
-            ? list.map((p, i) => (i === 0 ? { ...p, role: "titular" as const, fullName: name, document } : p))
+            ? list.map((p, i) => (i === 0 ? { ...p, fullName: name, document } : p))
             : [
-                { role: "titular" as const, personType: "pf" as const, fullName: name, document, email: "", phone: "" },
-                ...list.map((p) => ({ ...p, role: p.role === "titular" ? ("coproprietario" as const) : p.role })),
+                { role: "proprietario" as const, personType: "pf" as const, fullName: name, document, email: "", phone: "" },
+                ...list.map((p) => ({ ...p, role: p.role === "proprietario" ? ("coproprietario" as const) : p.role })),
               ];
           return { ...current, people, fullName: name, document, personType: "pf" };
         });
