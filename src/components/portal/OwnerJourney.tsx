@@ -814,14 +814,10 @@ export function OwnerJourney({
             <div className="pj-hero-shade" aria-hidden="true" />
             <StayoLogo variant="white" className="pj-hero-logo h-10 w-auto" />
             <div className="pj-hero-content">
+              <p className="pj-hero-eyebrow">Proposta de gestão</p>
               <p className="pj-hero-title">{propertyTitle}</p>
+              <p className="pj-hero-place"><MapPin aria-hidden="true" />{[impl?.city || "Gramado", "RS"].join(", ")}</p>
             </div>
-          </div>
-          <p className="pj-top-progress">Etapa 1 de 6 · <strong>Proposta</strong></p>
-          <div className="pj-top-segments" aria-hidden="true">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <span key={i} className={`pj-top-segment${i === 0 ? " is-current" : ""}`} />
-            ))}
           </div>
         </header>
       ) : collecting ? (
@@ -1284,13 +1280,6 @@ function ProposalStep({
         </div>
       )}
 
-      <div className="pj-open">
-        <div className="pj-open-title-row">
-          <h2 className="pj-open-title">Sua proposta STAYO</h2>
-        </div>
-        <p className="pj-open-lead">Os principais pontos do acordo, em resumo.</p>
-      </div>
-
       <ProposalSnapshotSummary snapshot={shown} implementationPaid={implPaid} />
 
       {confirmed ? (
@@ -1309,18 +1298,16 @@ function ProposalStep({
         </div>
       ) : (
         <div id="confirmar-proposta" className="pj-confirm">
-          <p className="pj-confirm-eyebrow">Último passo</p>
-          <h2 className="pj-confirm-title">Confirmar a proposta</h2>
-          <p className="pj-fineprint">
-            Este aceite confirma as condições comerciais acima. O contrato será formalizado em etapa própria.
-          </p>
-          <label className="pj-field">
-            <span>Nome completo</span>
+          <h2 className="pj-confirm-title">Vamos começar?</h2>
+          <p className="pj-fineprint">Informe seu nome para confirmar a proposta. O contrato é formalizado em etapa própria.</p>
+          <label className="pj-field pj-field--icon">
+            <span className="sr-only">Nome completo</span>
+            <UserRound aria-hidden="true" />
             <input
               value={acceptName}
               onChange={(e) => onAcceptName(e.target.value)}
               autoComplete="name"
-              placeholder="Como está no seu documento"
+              placeholder="Seu nome completo"
             />
           </label>
           <label className={`pj-agree${agreed ? " is-checked" : ""}`}>
@@ -1538,26 +1525,26 @@ function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { sna
   };
   const block = (k: string) => blocks.find((b) => b.key === k);
   const tiles = [
-    { key: "management", icon: BentoAdmin, tone: "navy", big: true, label: "Administração", value: facts.admin ?? "A definir", hint: "Taxa da STAYO sobre as reservas", title: "Gestão comercial", lead: block("management")?.lead ?? "", block: block("management") },
+    { key: "management", icon: BentoAdmin, tone: "navy", big: true, label: "Administração", value: facts.admin ?? "A definir", hint: "Cuidamos de tudo para você, com transparência e resultados. Toque nos blocos para saber mais.", title: "Gestão comercial", lead: block("management")?.lead ?? "", block: block("management") },
     { key: "duration", icon: BentoCalendar, tone: "sand", label: "Prazo", value: facts.duration ?? "A definir", hint: "Vigência do contrato", title: "Gestão comercial", lead: block("management")?.lead ?? "", block: block("management") },
     { key: "cleaning", icon: BentoCleaning, tone: "white", label: "Limpeza", value: facts.cleaning ?? "A definir", hint: "por utilização", title: "Limpeza e operação", lead: block("cleaning")?.lead ?? "", block: block("cleaning") },
     { key: "implementation", icon: BentoImpl, tone: "navy", wide: true, label: "Implantação", value: fixed.length ? money.format(fixedTotal) : "A definir", hint: `${fixed.length + optional.length + pending.length} ${fixed.length + optional.length + pending.length === 1 ? "serviço" : "serviços"} para deixar o imóvel pronto`, title: "Preparação do imóvel", lead: "Serviços para deixar o imóvel pronto.", block: undefined },
-    ...(block("owner_use") ? [{ key: "owner_use", icon: BentoHome, tone: "sand", label: "Uso do imóvel", value: ownerUseSummary(snapshot.contractConditions ?? {}) ?? "A definir", hint: "Quando você pode usar", title: block("owner_use")!.title, lead: block("owner_use")!.lead, block: block("owner_use") }] : []),
-    ...(block("assignment") ? [{ key: "assignment", icon: BentoUsers, tone: "white", label: "Cessão a familiares", value: "Ver regras", hint: "Familiares e convidados", title: block("assignment")!.title, lead: block("assignment")!.lead, block: block("assignment") }] : []),
+    ...(block("owner_use") ? [{ key: "owner_use", icon: BentoHome, tone: "sand", row: true, label: "Uso do imóvel", value: ownerUseSummary(snapshot.contractConditions ?? {}) ?? "A definir", hint: "Quando você pode usar", title: block("owner_use")!.title, lead: block("owner_use")!.lead, block: block("owner_use") }] : []),
+    ...(block("assignment") ? [{ key: "assignment", icon: BentoUsers, tone: "white", row: true, label: "Cessão a familiares", value: "Ver regras", hint: "Seus familiares também podem se hospedar", title: block("assignment")!.title, lead: block("assignment")!.lead, block: block("assignment") }] : []),
   ];
   const openTile = tiles.find((t) => t.key === openBlock) ?? null;
   return (
     <div className="pj-blocks">
       <section aria-labelledby="pj-cond-title">
-        <h2 id="pj-cond-title" className="pj-section-title">Condições do acordo</h2>
-        <p className="pj-section-lead">Toque em cada bloco para ver o que significa.</p>
+        <h2 id="pj-cond-title" className="sr-only">Condições do acordo</h2>
         <div className="pj-bento">
           {tiles.map((t) => (
-            <button key={t.key} type="button" className={`pj-bento-tile is-${t.tone}${t.wide ? " is-wide" : ""}${t.big ? " is-big" : ""}`} onClick={() => setOpenBlock(t.key)} aria-haspopup="dialog">
+            <button key={t.key} type="button" className={`pj-bento-tile is-${t.tone}${t.wide ? " is-wide" : ""}${t.big ? " is-big" : ""}${"row" in t && t.row ? " is-row" : ""}`} onClick={() => setOpenBlock(t.key)} aria-haspopup="dialog">
               <t.icon className="pj-bento-icon" aria-hidden="true" />
-              <span className="pj-bento-label">{t.label}</span>
-              <strong className="pj-bento-value">{t.value}</strong>
-              {t.hint && <span className="pj-bento-hint">{t.hint}</span>}
+              <span className="pj-bento-text">
+                {t.big ? <><strong className="pj-bento-value">{t.value}</strong><span className="pj-bento-label">{t.label.toLowerCase()}</span></> : <><span className="pj-bento-label">{t.label}</span><strong className="pj-bento-value">{t.value}</strong></>}
+                {t.hint && <span className="pj-bento-hint">{t.hint}</span>}
+              </span>
             </button>
           ))}
         </div>
