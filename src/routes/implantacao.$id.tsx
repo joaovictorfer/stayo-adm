@@ -674,13 +674,7 @@ function ImplementationDetailPage() {
                     onHistory={() => setProposalEditing(true)}
                     extras={
                       <>
-                        <Collapsible title="Termos comerciais" summary="Cobranças e percentuais">
-                          <CommercialTermsPanel implementationId={implementation.id} />
-                        </Collapsible>
-                        <Collapsible title="Cobranças iniciais" summary="Geradas após o aceite">
-                          <InitialChargesPanel implementationId={implementation.id} />
-                        </Collapsible>
-                        <Collapsible title="Contrato" summary="Partes, andamento e documentos">
+                        <Collapsible title="Contrato" summary="Cláusulas, partes, andamento e documentos">
                           <FichaContrato
                             implementationId={implementation.id}
                             implementationCode={implementation.code}
@@ -690,6 +684,9 @@ function ImplementationDetailPage() {
                             onEditProposal={() => setProposalEditing(true)}
                             onHistory={() => goSection("historico")}
                           />
+                        </Collapsible>
+                        <Collapsible title="Cobranças iniciais" summary="Geradas após o aceite">
+                          <InitialChargesPanel implementationId={implementation.id} />
                         </Collapsible>
                       </>
                     }

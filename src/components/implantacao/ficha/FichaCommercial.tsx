@@ -397,12 +397,9 @@ export function FichaCommercial({
                 <span className="text-xs" style={muted}>{conditionsComplete(q.data as Record<string, unknown> | null) ? "O proprietário só vê o que for salvo aqui." : "Complete os valores para salvar."}</span>
               </div>
               <details className="group rounded-xl border bg-white" style={border}>
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium" style={display}>Ver mais <span className="text-xs font-normal" style={muted}>Contrato, preparação e serviços</span><ChevronDown className="size-4 transition-transform group-open:rotate-180" /></summary>
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium" style={display}>Preparação e serviços <span className="text-xs font-normal" style={muted}>Enxoval, assessoria e itens</span><ChevronDown className="size-4 transition-transform group-open:rotate-180" /></summary>
                 <div className="flex flex-col gap-4 p-3 pt-0">
-              <Block icon={<FileText className="size-4" />} title="Condições do contrato">
-                {clauses.map((r) => <ValueLine key={r.label} row={r} onEdit={() => r.clause && setClause(r.clause)} />)}
-              </Block>
-              <Block icon={<Settings2 className="size-4" />} title="Preparação e serviços">
+              <Block icon={<Settings2 className="size-4" />} title="Detalhes">
                 {services.map((r) => <ValueLine key={r.label} row={r} onEdit={() => { if (r.open) setPop(r.open); else if (r.quick) setQuick(r.quick); }} />)}
               </Block>
                 </div>
