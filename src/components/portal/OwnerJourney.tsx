@@ -1608,7 +1608,7 @@ function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { sna
         </DialogContent>
       </Dialog>
 
-      {(snapshot.partnershipObject || responsibilities.length > 0 || content.length > 0 || signatories.length > 0) && (
+      {(snapshot.partnershipObject || content.length > 0 || signatories.length > 0) && (
         <details className="pj-acc">
           <summary>
             <span className="pj-acc-text">
@@ -1619,9 +1619,6 @@ function ProposalSnapshotSummary({ snapshot, implementationPaid = false }: { sna
           </summary>
           <div className="pj-more-body pj-acc-body">
             {snapshot.partnershipObject && (<div><h3>Objeto da parceria</h3><p>{snapshot.partnershipObject}</p></div>)}
-            {responsibilities.length > 0 && (
-              <div><h3>Responsabilidades</h3><ul>{responsibilities.map((r, i) => <li key={i}>{r}</li>)}</ul></div>
-            )}
             {content.map((block, i) => (<div key={i}><h3>{block.title}</h3><p>{block.body}</p></div>))}
             {signatories.length > 0 && (
               <div><h3>Quem assina o contrato</h3><ul>{signatories.map((s, i) => <li key={i}>{s.label}</li>)}</ul></div>
