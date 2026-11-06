@@ -126,8 +126,11 @@ export function OwnerPortalPanel({
   ownerId,
   ownerName,
   compact = false,
+  hideSubmission = false,
 }: {
   compact?: boolean;
+  /** Oculta o quadro de respostas (ex.: no Resumo; as respostas ficam em Proprietários). */
+  hideSubmission?: boolean;
   implementationId: EntityId;
   ownerId: EntityId | null;
   ownerName: string | null;
@@ -460,7 +463,7 @@ export function OwnerPortalPanel({
         </Link>
       </div>
 
-      {!compact && submission && (
+      {!compact && !hideSubmission && submission && (
         <details
           open
           className="mt-3 rounded-[var(--radius-control)] border p-3"

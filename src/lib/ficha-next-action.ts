@@ -52,9 +52,9 @@ export function nextAction(s: FichaState): NextAction {
   if (s.proposalStatus === "draft")
     return { title: "Publicar proposta", detail: "O rascunho ainda não foi enviado ao proprietário.", section: "proposta", cta: "Resolver agora" };
   if (s.proposalStatus === "published")
-    return { title: "Aguardar aceite da proposta", detail: "Acompanhe o acesso do proprietário ao link.", section: "portal", cta: "Abrir aba Portal" };
+    return { title: "Aguardar aceite da proposta", detail: "Envie o link de acesso logo abaixo e acompanhe.", section: "proposta", cta: "Ver condições" };
   if (!s.intakeSubmitted)
-    return { title: "Acompanhar cadastro do proprietário", detail: "Proposta aceita; o cadastro ainda não foi enviado.", section: "portal", cta: "Gerenciar cadastro" };
+    return { title: "Acompanhar cadastro do proprietário", detail: "Proposta aceita; o cadastro ainda não foi enviado.", section: "proprietario", cta: "Ver proprietário" };
   if (s.pendingBlockers > 0)
     return {
       title: `Resolver ${s.pendingBlockers} bloqueador${s.pendingBlockers > 1 ? "es" : ""}`,

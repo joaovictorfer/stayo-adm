@@ -600,13 +600,10 @@ function ImplementationDetailPage() {
                   return (
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
                       <div className="flex min-w-0 flex-col gap-4">
-                        <div className="hidden lg:block">
-                          <h2 className="text-3xl font-semibold" style={{ fontFamily: "Outfit, var(--stayo-font-ui), sans-serif", letterSpacing: "0", color: "var(--stayo-navy)" }}>Resumo</h2>
-                          <p className="text-base" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
-                        </div>
                         <NextStepCard action={action} onGo={goSection} />
+                        <JourneyCard status={implementation.status} />
                         <div id="portal-owner-panel">
-                          <OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} ownerName={implementation.ownerName ?? null} />
+                          <OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} ownerName={implementation.ownerName ?? null} hideSubmission />
                         </div>
                         <ReadinessCountersCard
                           loading={inventoryQ.isPending}
@@ -619,7 +616,6 @@ function ImplementationDetailPage() {
                           onInventory={() => goSection("implantacao")}
                           onSubmissions={() => goSection("implantacao")}
                         />
-                        <JourneyCard status={implementation.status} />
                         <Collapsible title="Ver mais" summary="Visão da ficha, reuniões e etapa administrativa">
                         <div className="flex flex-col gap-3">
                         <SheetOverviewCard rows={rows} onGo={goSection} />

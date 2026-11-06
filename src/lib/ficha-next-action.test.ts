@@ -17,8 +17,8 @@ describe("próxima ação da ficha", () => {
     expect(nextAction({ ...base, hasOwnerPhone: false }).section).toBe("proprietario");
     expect(nextAction({ ...base, proposalStatus: null }).title).toBe("Montar a proposta");
     expect(nextAction({ ...base, proposalStatus: "draft" }).title).toBe("Publicar proposta");
-    expect(nextAction({ ...base, proposalStatus: "published" }).section).toBe("portal");
-    expect(nextAction({ ...base, intakeSubmitted: false }).section).toBe("portal");
+    expect(nextAction({ ...base, proposalStatus: "published" }).section).toBe("proposta");
+    expect(nextAction({ ...base, intakeSubmitted: false }).section).toBe("proprietario");
     expect(nextAction({ ...base, pendingBlockers: 2 }).title).toContain("2 bloqueadores");
     expect(nextAction({ ...base, missingPropertyFields: 3 }).section).toBe("imovel");
     expect(nextAction(base).title).toBe("Tudo em dia");
@@ -31,7 +31,7 @@ describe("próxima ação da ficha", () => {
     expect(toFichaSection("x")).toBeUndefined();
   });
   it("publicação direciona ao convite sem afirmar que o Portal está liberado", () => {
-    expect(nextAction({ ...base, proposalStatus: "published" }).cta).toBe("Abrir aba Portal");
-    expect(nextAction({ ...base, intakeSubmitted: false }).cta).toBe("Gerenciar cadastro");
+    expect(nextAction({ ...base, proposalStatus: "published" }).cta).toBe("Ver condições");
+    expect(nextAction({ ...base, intakeSubmitted: false }).cta).toBe("Ver proprietário");
   });
 });
