@@ -5839,3 +5839,12 @@ details[open] > summary .pj-chevron { transform: rotate(180deg); }
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Proposta do proprietário — refinamento visual */
+.pj-open { gap: 0.9rem; }
+.pj-open-title { font-weight: 600; letter-spacing: -0.01em; }
+.pj-open-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; border: 0; padding: 0; margin: 0.25rem 0 0; }
+.pj-open-fact { border: 0 !important; border-radius: 14px; padding: 0.85rem 1rem !important; background: color-mix(in srgb, var(--portal-navy) 5%, var(--portal-surface)); }
+.pj-open-fact dt { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--portal-muted); }
+.pj-open-fact dd { margin-top: 0.3rem; font-family: var(--stayo-font-display, inherit); font-size: 1.15rem; font-weight: 600; color: var(--portal-navy); }
+@media (max-width: 520px) { .pj-open-facts { grid-template-columns: 1fr; } .pj-open-fact { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; } .pj-open-fact dd { margin-top: 0; text-align: right; } }
