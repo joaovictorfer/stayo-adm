@@ -562,10 +562,24 @@ export function OwnerJourney({
     },
     onSuccess: (journey) => {
       commandId.current = crypto.randomUUID();
-      updatePerson(0, {
-        fullName: acceptName.trim().replace(/\s+/g, " "),
-        document: formatBrazilianDocument(acceptCpf),
-      });
+      {
+        const name = acceptName.trim().replace(/\s+/g, " ");
+        const document = formatBrazilianDocument(acceptCpf);
+        const first = (v?: string | null) => (v ?? "").trim().split(/\s+/)[0]?.toLocaleLowerCase("pt-BR") ?? "";
+        setForm((current) => {
+          const list = current.people.length > 0 ? current.people : emptyForm.people;
+          const head = list[0];
+          const isTitular = !head?.fullName?.trim() || first(head.fullName) === first(name);
+          // Se a primeira posição é de outro proponente, a titular entra na frente sem apagar ninguém.
+          const people = isTitular
+            ? list.map((p, i) => (i === 0 ? { ...p, role: "titular" as const, fullName: name, document } : p))
+            : [
+                { role: "titular" as const, personType: "pf" as const, fullName: name, document, email: "", phone: "" },
+                ...list.map((p) => ({ ...p, role: p.role === "titular" ? ("coproprietario" as const) : p.role })),
+              ];
+          return { ...current, people, fullName: name, document, personType: "pf" };
+        });
+      }
       queryClient.setQueryData(["owner-journey", "proposal", token], journey);
       setMaxStage((value) => (value < 2 ? 2 : value));
       setStage(2);
