@@ -122,11 +122,9 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
       <Button variant="ghost" size="sm" aria-pressed={revealed} onClick={() => setRevealed(value => !value)} className="text-[var(--stayo-ink-muted)]">{revealed ? <EyeOff /> : <Eye />}{revealed ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"}</Button>
     </div>
     {subQ.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void subQ.refetch()}>Tentar novamente</Button></p>}
-    <Section title={`${name} · Titular`} defaultOpen meta={people.length > 1 ? `${people.length} pessoas no contrato · titular primeiro` : "Pessoa do contrato"} icon={<Users />} status={personStatus}
-      action={onEditOwner && <Button variant="ghost" size="icon" title="Editar dados do proprietário" aria-label="Editar dados do proprietário" onClick={onEditOwner}><Pencil /></Button>}>
       {(() => {
         const list = people.length ? people : official?.name ? [{ fullName: "", document: "", email: "", phone: "", role: "proprietario" as const, maritalStatus: null, profession: null }] : [];
-        if (!list.length) return <p className="text-sm text-[var(--stayo-ink-muted)]">{subQ.isPending ? "Carregando…" : subQ.isError ? "Cadastro indisponível." : "Nenhuma pessoa informada."}</p>;
+        if (!list.length) return <Section title="Pessoa do contrato" defaultOpen icon={<Users />} status={personStatus}><p className="text-sm text-[var(--stayo-ink-muted)]">{subQ.isPending ? "Carregando…" : subQ.isError ? "Cadastro indisponível." : "Nenhuma pessoa informada."}</p><div className="pt-3"><AddContractPerson implementationId={implementation.id} position={0} /></div></Section>;
         const decisions = decisionsQ.data ?? {};
         const decide = async (key: string, decision: "usar_oficial" | "conferir_local", f: ResolvedField) => {
           if (!f.divergence) return;
@@ -148,8 +146,11 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
           add("Profissão", "profession", null, p.profession, "text");
           const missing = fields.filter((x) => x.f.missing).map((x) => x.label);
           const display = fields.find((x) => x.key.endsWith(":name"))?.f.value || `Pessoa ${i + 1}`;
-          return <article key={i} className="min-w-0 border-b border-[var(--stayo-border)] py-3 first:pt-0 last:border-0 last:pb-0" data-testid="contract-person">
-            <div className="mb-2 flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-[var(--stayo-ink-muted)]" /><div className="min-w-0 flex-1"><h4 className="break-words text-sm font-semibold">{display}</h4><p className="text-xs text-[var(--stayo-ink-muted)]">{titular ? "Titular" : roleLabel[p.role]}</p></div>{editing !== i && <Button variant="outline" size="sm" onClick={() => setEditing(i)}><Pencil />Editar</Button>}</div>
+          const filled = fields.length - missing.length;
+          return <Section key={i} title={`${display} · ${titular ? "Titular" : roleLabel[p.role]}`} defaultOpen={titular} meta={titular ? "Pessoa principal do contrato" : `Proponente ${i + 1}`} icon={<UserRound />}
+            status={{ tone: filled === fields.length ? "ok" : filled ? "partial" : "missing", text: filled === fields.length ? "Completo" : `${filled} de ${fields.length} dados` }}
+            action={editing !== i && <Button variant="ghost" size="icon" title="Editar pessoa" aria-label={`Editar ${display}`} onClick={() => setEditing(i)}><Pencil /></Button>}>
+          <article className="min-w-0" data-testid="contract-person">
             {editing === i ? <ContractPersonForm implementationId={implementation.id} position={i} onDone={() => setEditing(null)} initial={{ role: p.role, fullName: p.fullName || (titular ? official?.name : "") || "", document: p.document || (titular ? official?.document : "") || "", phone: p.phone || (titular ? official?.phone : "") || "", email: p.email || (titular ? official?.email : "") || "", maritalStatus: p.maritalStatus ?? null, profession: p.profession ?? null }} /> : <>
             <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
               {fields.map((x) => x.f.missing ? <div key={x.key} className="min-w-0"><dt className="text-xs text-[var(--stayo-ink-muted)]">{x.label}</dt>
@@ -166,10 +167,9 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
               <Button variant="link" size="sm" className="h-auto px-0" onClick={() => void copy(`Olá! Para concluir o contrato, falta informar ${titular ? "" : `de ${display} `}: ${missing.join(", ")}.`, "Pedido copiado")}>Copiar pedido</Button>
             </div>}
             </>}
-          </article>;
-        }).concat(!subQ.isPending && !subQ.isError ? [<div key="add" className="pt-3"><AddContractPerson implementationId={implementation.id} position={list.length} /></div>] : []);
+          </article></Section>;
+        }).concat(!subQ.isPending && !subQ.isError ? [<div key="add"><AddContractPerson implementationId={implementation.id} position={list.length} /></div>] : []);
       })()}
-    </Section>
     <Section title="Recebimento (Chave Pix)" icon={<KeyRound />} status={sub?.pixKey ? { tone: "ok", text: pixLabel[sub.pixType] } : subQ.isPending ? null : { tone: "missing", text: "Falta" }}>
       {sub?.pixKey && <p className="mb-2 text-xs text-[var(--stayo-ink-muted)]">Atual: <span className="font-medium text-[var(--stayo-navy)]">{sensitive(sub.pixKey)}</span></p>}
       <PixEditor implementationId={implementation.id} initialType={sub?.pixKey ? sub.pixType : undefined} initialKey={revealed ? sub?.pixKey : null} />
