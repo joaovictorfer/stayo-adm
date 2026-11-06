@@ -270,6 +270,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const [bathrooms, setBathrooms] = useState("");
   const [parking, setParking] = useState("");
   const [lavatories, setLavatories] = useState("");
+  const [suites, setSuites] = useState("");
   const [parkingBox, setParkingBox] = useState("");
   const roomsQ = useQuery({ queryKey: ["amenities-rooms", implementation.id], queryFn: async () => {
     const { data, error } = await sb.from("implementation_amenities").select("data").eq("implementation_id", implementation.id).maybeSingle();
@@ -304,6 +305,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
     setBathrooms(num(d?.bathrooms));
     setParking(num(d?.parkingSpots));
     setLavatories(num(d?.lavatories));
+    setSuites(num(d?.suites));
     setParkingBox(d?.parkingBox ?? "");
     setAccessType(d?.accessType ?? null);
     setAccessNotes(d?.accessNotes ?? "");
@@ -334,7 +336,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         state: d?.state ?? null,
         propertyType: d?.propertyType ?? implementation.propertyType,
         bedrooms: toNum(bedrooms),
-        suites: d?.suites ?? null,
+        suites: toNum(suites),
         bathrooms: toNum(bathrooms),
         parkingSpots: toNum(parking),
         lavatories: toNum(lavatories),
@@ -489,7 +491,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
               <Card icon={<Home className="size-4" />} title="Composição">
                 <ul>
                   <Line row={{ label: "Quartos", value: num(implementation.bedrooms) }} onEdit={() => startEdit("carac")} />
-                  <Line row={{ label: "Suítes", value: num(d?.suites), detail: "Calculado pelos quartos marcados como suíte" }} />
+                  <Line row={{ label: "Suítes", value: num(d?.suites) }} onEdit={() => startEdit("carac")} />
                   <Line row={{ label: "Banheiros", value: num(d?.bathrooms) }} onEdit={() => startEdit("carac")} />
                   <Line row={{ label: "Lavabos", value: num(d?.lavatories) }} onEdit={() => startEdit("carac")} />
                   <Line row={{ label: "Capacidade", value: implementation.capacity != null ? `${implementation.capacity} hóspedes` : null }} onEdit={() => startEdit("carac")} />
@@ -624,6 +626,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                 <Stepper label="Quartos" value={bedrooms} onChange={setBedrooms} />
                 <Stepper label="Banheiros" value={bathrooms} onChange={setBathrooms} />
                 <Stepper label="Hóspedes" value={capacity} onChange={setCapacity} />
+                <Stepper label="Suítes" value={suites} onChange={setSuites} />
                 <Stepper label="Lavabos" value={lavatories} onChange={setLavatories} />
                 <Stepper label="Vagas" value={parking} onChange={setParking} />
                 <label className="text-xs font-medium" style={muted}>Box<input value={parkingBox} onChange={(e) => setParkingBox(e.target.value)} placeholder="Ex.: 12" className={input} style={border} /></label>
