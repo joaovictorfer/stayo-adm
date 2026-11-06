@@ -983,9 +983,7 @@ function OwnerTab({
         <Collapsible title="Link de leitura da proposta" summary="Para o proprietário só ver a proposta, sem aceitar">
           <OwnerInviteSection implementationId={implementation.id} ownerName={ownerData?.name ?? implementation.ownerName ?? null} />
         </Collapsible>
-        <Collapsible title="Linha do tempo pública" summary="Atualizações visíveis no portal">
-          <PortalTimelinePanel implementationId={implementation.id} />
-        </Collapsible>
+        <PortalTimelinePanel implementationId={implementation.id} />
         <Collapsible title="Visibilidade no portal" summary="O que o proprietário pode ver">
           <OwnerVisibilityPanel
             implementationId={implementation.id}
