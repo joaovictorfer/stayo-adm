@@ -679,7 +679,8 @@ export function OwnerJourney({
     finish.mutate();
   };
 
-  const firstName = (form.fullName || ownerQ.data?.name || "").trim().split(/\s+/)[0] ?? "";
+  // Mesma pessoa do campo de confirmação: o titular da ficha, nunca outro proponente.
+  const firstName = (journeyQ.data?.confirmation?.confirmedName || ownerQ.data?.name || form.fullName || "").trim().split(/\s+/)[0] ?? "";
   const impl = implementationQ.data;
   const ownerFullName = (ownerQ.data?.name || form.fullName || "").trim();
   const propertyTitle =
