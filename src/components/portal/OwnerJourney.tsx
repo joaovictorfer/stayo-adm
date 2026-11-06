@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Trash2,
   UserRound,
+  MapPin,
   ArrowRight,
   ChevronDown,
   Loader2,
