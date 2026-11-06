@@ -605,6 +605,9 @@ function ImplementationDetailPage() {
                           <p className="text-base" style={{ color: "var(--stayo-ink-muted)" }}>Acompanhe o que está pronto e o que precisa de atenção.</p>
                         </div>
                         <NextStepCard action={action} onGo={goSection} />
+                        <div id="portal-owner-panel">
+                          <OwnerPortalPanel implementationId={implementation.id} ownerId={implementation.ownerId} ownerName={implementation.ownerName ?? null} />
+                        </div>
                         <ReadinessCountersCard
                           loading={inventoryQ.isPending}
                           error={inventoryQ.isError}
@@ -976,23 +979,10 @@ function OwnerTab({
   if (part === "portal")
     return (
       <div className="space-y-4">
-        <JourneyHeading n={1} title="Proposta" hint="Link só de leitura para o proprietário ver a proposta." />
-        <OwnerInviteSection
-          implementationId={implementation.id}
-          ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-        />
-        <JourneyHeading n={2} title="Cadastro e Portal" hint="Link para confirmar a proposta, preencher o cadastro e criar a conta." />
-        <div id="portal-owner-panel">
-          <OwnerPortalPanel
-            implementationId={implementation.id}
-            ownerId={implementation.ownerId}
-            ownerName={ownerData?.name ?? implementation.ownerName ?? null}
-          />
-        </div>
-        <Collapsible title="Coleta comercial (link separado)" summary="Dados iniciais enviados antes do contrato · revisão">
-          <OwnerIntakeReview implementationId={implementation.id} ownerName={ownerData?.name ?? implementation.ownerName ?? null} />
+        <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>O link de acesso do proprietário (cadastro e conta) fica no Resumo. Aqui você ajusta só o que ele vê.</p>
+        <Collapsible title="Link de leitura da proposta" summary="Para o proprietário só ver a proposta, sem aceitar">
+          <OwnerInviteSection implementationId={implementation.id} ownerName={ownerData?.name ?? implementation.ownerName ?? null} />
         </Collapsible>
-        <JourneyHeading n={3} title="Conteúdo do Portal" hint="O que o proprietário vê depois de entrar." />
         <PortalTimelinePanel implementationId={implementation.id} />
         <Collapsible title="Visibilidade no portal" summary="O que o proprietário pode ver">
           <OwnerVisibilityPanel
