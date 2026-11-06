@@ -30,6 +30,7 @@ import {
   Wrench,
   Minus,
   FileText,
+  IdCard,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
