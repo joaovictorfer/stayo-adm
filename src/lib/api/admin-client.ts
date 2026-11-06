@@ -1669,7 +1669,7 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
               .maybeSingle(),
             client()
               .from("owner_onboarding_people")
-              .select("role,person_type,full_name,document,email,phone,marital_status,profession")
+              .select("position,role,person_type,full_name,document,email,phone,marital_status,profession")
               .eq("implementation_id", implementationId)
               .order("position", { ascending: true }),
           ]);
@@ -1703,7 +1703,16 @@ export function createSupabaseAdminApiClient(): AdminApiClient {
             pixType: b["pix_type"],
             pixKey: b["pix_key"],
             isPrimary: b["is_primary"],
-            people: (people ?? []).map((person) => ({
+            // Cada pessoa mantém seu lugar (posição 0 = titular); lacunas viram vagas vazias
+            // para que um proponente nunca seja exibido como titular.
+            people: (() => {
+              const rows = people ?? [];
+              const max = rows.reduce((m, r) => Math.max(m, r.position ?? 0), -1);
+              return Array.from({ length: max + 1 }, (_, i) => {
+                const r = rows.find((x) => x.position === i);
+                return r ?? { position: i, role: i === 0 ? "proprietario" : "coproprietario", person_type: "pf", full_name: "", document: "", email: "", phone: "", marital_status: null, profession: null };
+              });
+            })().map((person) => ({
               role: person.role,
               personType: person.person_type,
               fullName: person.full_name,
