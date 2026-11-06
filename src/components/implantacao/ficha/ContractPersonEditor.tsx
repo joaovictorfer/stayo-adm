@@ -36,6 +36,8 @@ async function savePerson(implementationId: string, position: number, p: Editabl
   if (error) throw error;
 }
 
+function L({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block min-w-0"><span className="mb-1 block text-xs text-[var(--stayo-ink-muted)]">{label}</span>{children}</label>; }
+
 export function ContractPersonForm({ implementationId, position, initial, onDone }: { implementationId: string; position: number; initial: EditablePerson; onDone: () => void }) {
   const qc = useQueryClient();
   const [p, setP] = useState<EditablePerson>({ ...initial, document: initial.document ? formatBrazilianDocument(initial.document) : "", phone: initial.phone ? formatBrazilianPhone(initial.phone.replace(/^55(?=\d{10,11}$)/, "")) : "" });
@@ -47,13 +49,12 @@ export function ContractPersonForm({ implementationId, position, initial, onDone
     try { await savePerson(implementationId, position, p); await qc.invalidateQueries({ queryKey: ["owner-onboarding", "submission", implementationId] }); toast.success("Dados salvos"); onDone(); }
     catch (e) { toast.error((e as Error).message || "Não foi possível salvar."); } finally { setBusy(false); }
   };
-  const L = ({ label, children }: { label: string; children: React.ReactNode }) => <label className="block min-w-0"><span className="mb-1 block text-xs text-[var(--stayo-ink-muted)]">{label}</span>{children}</label>;
   return <div className="space-y-3">
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <L label="Nome"><input className={input} value={p.fullName ?? ""} onChange={e => set("fullName")(e.target.value)} placeholder="Pode ser só o primeiro nome" /></L>
       <L label="CPF/CNPJ"><input className={input} inputMode="numeric" value={p.document ?? ""} onChange={e => set("document")(formatBrazilianDocument(e.target.value))} /></L>
       <L label="WhatsApp"><input className={input} inputMode="tel" value={p.phone ?? ""} onChange={e => set("phone")(formatBrazilianPhone(e.target.value))} /></L>
-      <L label="E-mail"><EmailSuggestInput value={p.email ?? ""} onChange={set("email")} className={input} /></L>
+      <L label="E-mail"><EmailSuggestInput value={p.email ?? ""} onChange={set("email")} /></L>
       <L label="Estado civil"><select className={input} value={p.maritalStatus ?? ""} onChange={e => set("maritalStatus")(e.target.value)}><option value="">Não informado</option>{MARITAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></L>
       <L label="Profissão"><input className={input} value={p.profession ?? ""} onChange={e => set("profession")(e.target.value)} /></L>
     </div>
