@@ -30,6 +30,7 @@ import {
   Wrench,
   Minus,
   FileText,
+  IdCard,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -73,6 +74,8 @@ import {
   MARITAL_STATUS_OPTIONS,
   type OwnerFormField,
 } from "../../lib/owner-form-validation";
+import { isFullName } from "../../lib/full-name";
+import { isValidCpf as isValidCpfDigits } from "../../lib/owner-form-validation";
 import {
   commercialCleaningFee,
   ownerUseSummary,
@@ -204,6 +207,7 @@ export function OwnerJourney({
   const sending = useRef(false);
   const [showPropertyErrors, setShowPropertyErrors] = useState(false);
   const [acceptName, setAcceptName] = useState("");
+  const [acceptCpf, setAcceptCpf] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordAgain, setPasswordAgain] = useState("");
@@ -361,7 +365,11 @@ export function OwnerJourney({
     stageRef.current = current;
     setMaxStage(reached);
     maxStageRef.current = reached;
-    setAcceptName(journeyQ.data?.confirmation?.confirmedName ?? owner?.name ?? "");
+    setAcceptName(journeyQ.data?.confirmation?.confirmedName ?? reconciled.people[0]?.fullName ?? owner?.name ?? "");
+    {
+      const doc = (reconciled.people[0]?.document ?? reconciled.document ?? "").replace(/\D/g, "");
+      setAcceptCpf(doc.length === 11 ? formatBrazilianDocument(doc) : "");
+    }
     setAgreed(false);
     hydrated.current = true;
   }, [
@@ -550,6 +558,10 @@ export function OwnerJourney({
     },
     onSuccess: (journey) => {
       commandId.current = crypto.randomUUID();
+      updatePerson(0, {
+        fullName: acceptName.trim().replace(/\s+/g, " "),
+        document: formatBrazilianDocument(acceptCpf),
+      });
       queryClient.setQueryData(["owner-journey", "proposal", token], journey);
       setMaxStage((value) => (value < 2 ? 2 : value));
       setStage(2);
@@ -919,6 +931,8 @@ export function OwnerJourney({
                 loading={journeyQ.isPending}
                 failed={journeyQ.isError}
                 acceptName={acceptName}
+                acceptCpf={acceptCpf}
+                onAcceptCpf={(v) => setAcceptCpf(formatBrazilianDocument(v.replace(/\D/g, "").slice(0, 11)))}
                 agreed={agreed}
                 accepting={acceptProposal.isPending}
                 onAcceptName={setAcceptName}
@@ -1215,6 +1229,8 @@ function ProposalStep({
   loading,
   failed,
   acceptName,
+  acceptCpf,
+  onAcceptCpf,
   agreed,
   accepting,
   onAcceptName,
@@ -1226,6 +1242,8 @@ function ProposalStep({
   loading: boolean;
   failed: boolean;
   acceptName: string;
+  acceptCpf: string;
+  onAcceptCpf: (value: string) => void;
   agreed: boolean;
   accepting: boolean;
   onAcceptName: (value: string) => void;
@@ -1259,6 +1277,7 @@ function ProposalStep({
       />
     );
 
+  const acceptReady = isFullName(acceptName) && isValidCpfDigits(acceptCpf);
   const needs = Boolean(journey?.needsConfirmation);
   // Após confirmar, mostra exatamente o texto confirmado.
   const shown = !needs && confirmation ? confirmation.snapshot : current.snapshot;
@@ -1302,7 +1321,7 @@ function ProposalStep({
       ) : (
         <div id="confirmar-proposta" className="pj-confirm">
           <h2 className="pj-confirm-title">Vamos começar?</h2>
-          <p className="pj-fineprint">Informe seu nome para confirmar a proposta. O contrato é formalizado em etapa própria.</p>
+          <p className="pj-fineprint">Informe seu nome completo e CPF para confirmar a proposta. O contrato é formalizado em etapa própria.</p>
           <label className="pj-field pj-field--icon">
             <span className="sr-only">Nome completo</span>
             <UserRound aria-hidden="true" />
@@ -1313,6 +1332,20 @@ function ProposalStep({
               placeholder="Seu nome completo"
             />
           </label>
+          <label className="pj-field pj-field--icon">
+            <span className="sr-only">CPF</span>
+            <IdCard aria-hidden="true" />
+            <input
+              value={acceptCpf}
+              onChange={(e) => onAcceptCpf(e.target.value)}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="Seu CPF"
+            />
+          </label>
+          {acceptCpf.replace(/\D/g, "").length === 11 && !isValidCpfDigits(acceptCpf) && (
+            <p className="pj-hint" role="alert">CPF inválido. Confira os números.</p>
+          )}
           <label className={`pj-agree${agreed ? " is-checked" : ""}`}>
             <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} />
             <span>Li e confirmo as condições desta proposta.</span>
@@ -1320,7 +1353,7 @@ function ProposalStep({
           <Button
             type="button"
             className="portal-cta h-12 w-full whitespace-nowrap px-3 text-center text-sm"
-            disabled={accepting || !agreed || acceptName.trim().length < 3}
+            disabled={accepting || !agreed || !acceptReady}
             aria-busy={accepting}
             onClick={onAccept}
           >
@@ -1330,8 +1363,8 @@ function ProposalStep({
               <>Confirmar e iniciar cadastro <ChevronRight className="size-4" /></>
             )}
           </Button>
-          {(!agreed || acceptName.trim().length < 3) && !accepting && (
-            <p className="pj-hint">Informe seu nome completo e marque a confirmação para continuar.</p>
+          {(!agreed || !acceptReady) && !accepting && (
+            <p className="pj-hint">Informe nome completo, CPF válido e marque a confirmação para continuar.</p>
           )}
           <div className="pj-open-support-row">
             <a className="pj-open-support" href={STAYO_SUPPORT_URL}>Falar com a STAYO</a>
