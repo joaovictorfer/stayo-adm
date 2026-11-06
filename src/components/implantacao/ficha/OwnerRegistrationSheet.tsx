@@ -11,6 +11,7 @@ import { getImplementationPlatforms, CHANNEL_LABELS } from "../../../lib/api/own
 import { getPropertyDetails } from "../../../lib/api/owner-portal-data";
 import { formatBrazilianDocument, formatBrazilianPhone, formatBrazilianPostalCode, maskDocument, maskPixKey } from "../../../lib/owner-form-validation";
 import type { ImplementationProject } from "../../../types/core";
+import { AirbnbEmailEditor, PixEditor } from "./OwnerQuickEditors";
 
 const roleLabel = { proprietario: "Proprietário principal", coproprietario: "Coproprietário", proponente: "Proponente" } as const;
 const accountLabel = { checking: "Conta corrente", savings: "Poupança", payment: "Conta pagamento" } as const;
@@ -165,8 +166,12 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
         });
       })()}
     </Section>
-    <Section title="Recebimento (Chave Pix)" icon={<KeyRound />} lines={[{ label: sub?.pixKey ? `Chave · ${pixLabel[sub.pixType]}` : "Chave Pix", value: sensitive(sub?.pixKey), concealed: !revealed }]} />
-    <Section title="E-mail do Airbnb para vincular" icon={<Mail />} lines={[{ label: "E-mail", value: platformQ.isPending ? "Carregando…" : platformQ.isError ? null : platforms?.airbnb_account_email, concealed: platformQ.isPending }]}>
+    <Section title="Recebimento (Chave Pix)" icon={<KeyRound />} status={sub?.pixKey ? { tone: "ok", text: pixLabel[sub.pixType] } : subQ.isPending ? null : { tone: "missing", text: "Falta" }}>
+      {sub?.pixKey && <p className="mb-2 text-xs text-[var(--stayo-ink-muted)]">Atual: <span className="font-medium text-[var(--stayo-navy)]">{sensitive(sub.pixKey)}</span></p>}
+      <PixEditor implementationId={implementation.id} initialType={sub?.pixKey ? sub.pixType : undefined} initialKey={revealed ? sub?.pixKey : null} />
+    </Section>
+    <Section title="E-mail do Airbnb para vincular" icon={<Mail />} status={platforms?.airbnb_account_email ? { tone: "ok", text: "Informado" } : platformQ.isPending ? null : { tone: "missing", text: "Falta" }}>
+      <AirbnbEmailEditor implementationId={implementation.id} initial={platforms?.airbnb_account_email} />
       {platformQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar as plataformas. <Button variant="link" size="sm" onClick={() => void platformQ.refetch()}>Tentar novamente</Button></p>}
       {channels.length > 0 && <p className="mb-2 break-words text-xs text-[var(--stayo-ink-muted)]">Canais: {channels.map(c => CHANNEL_LABELS[c]).join(" · ")}</p>}
     </Section>
