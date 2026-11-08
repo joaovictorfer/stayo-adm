@@ -122,10 +122,14 @@ function Page() {
         </dl>
         {!s.complete && <p role="alert" className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
           <b>Saldo provisório:</b> {s.incompleteCount} reserva(s) da seção 2 estão sem valor no Guia STAYO. Elas não foram contadas como R$ 0,00 reais — complete os valores antes de repassar ou gerar o relatório.</p>}
-        <div className={`mt-3 rounded-lg p-4 ${s.status === "a_compensar" ? "bg-destructive/10" : "bg-primary/10"}`}>
-          <p className="text-sm">{!s.complete && "Provisório · "}{s.status === "a_repassar" ? "Falta repassar ao proprietário (até o dia 10)" : s.status === "a_compensar" ? "Saldo a compensar pelo proprietário" : "Saldo zerado"}</p>
+        {s.complete ? <div className={`mt-3 rounded-lg p-4 ${s.status === "a_compensar" ? "bg-destructive/10" : "bg-primary/10"}`}>
+          <p className="text-sm">{s.status === "a_repassar" ? "Falta repassar ao proprietário (até o dia 10)" : s.status === "a_compensar" ? "Saldo a compensar pelo proprietário" : "Saldo zerado"}</p>
           <p className="text-2xl font-semibold">{brl(Math.abs(s.balance))}</p>
-        </div>
+        </div> : <div className="mt-3 rounded-lg bg-muted p-4">
+          <p className="text-sm">Saldo do mês</p>
+          <p className="text-2xl font-semibold">Não calculado</p>
+          <p className="text-xs text-muted-foreground">Aparece quando todas as reservas tiverem valor.</p>
+        </div>}
         {data.data.tr.length > 0 && <ul className="mt-3 divide-y text-sm">{data.data.tr.map((t) => <li key={t.id} className="flex items-center gap-3 py-2"><span className="flex-1">Repasse em {br(t.paid_on)} · {t.method.toUpperCase()}</span><b>{brl(t.amount_cents)}</b><Del onClick={() => remove("payout_transfers", t.id)} /></li>)}</ul>}
         <TransferForm impl={impl} month={month} suggested={Math.max(0, s.balance)} onSaved={refresh} />
       </Section>
