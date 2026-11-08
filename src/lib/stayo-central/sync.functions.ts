@@ -71,7 +71,7 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
       };
       if (has) Object.assign(base, { gross_cents: cents(fin.gross), cleaning_cents: cents(fin.cleaning), platform_fee_cents: cents(fin.platform_fee) });
       if (known.has(r.id)) {
-        const { error: e } = await context.supabase.from("payout_reservations").update(base).eq("central_reservation_id", r.id);
+        const { error: e } = await context.supabase.from("payout_reservations").update(base as any).eq("central_reservation_id", r.id);
         if (!e) updated++;
       } else {
         base["payout_flow"] = auto && base["channel"] === "airbnb" ? "platform_auto" : "stayo";

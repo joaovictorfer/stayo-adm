@@ -23,10 +23,10 @@ describe("Phase 2A isolated consumer", () => {
     const c = createCentralConsumer({ fetcher, loadAccess });
     expect(await c.statement(rid)).toMatchObject({ ok: false, kind: "not_configured" }); expect(fetcher).not.toHaveBeenCalled(); expect(loadAccess).not.toHaveBeenCalled();
   });
-  it("even configured production remains disabled", async () => {
-    const fetcher = vi.fn(); const loadAccess = vi.fn();
+  it("configured production still refuses CPF without sensitive permission", async () => {
+    const fetcher = vi.fn(); const loadAccess = vi.fn(async () => ({ userId: "u", adminAllowed: true, sensitiveAllowed: false, projects: [], owners: [] }));
     const c = createCentralConsumer({ token: "isolated-synthetic-token", fetcher, loadAccess });
-    expect(await c.titular(rid, ["admin:read", "admin:sensitive"])).toMatchObject({ ok: false, kind: "connection_disabled" }); expect(fetcher).not.toHaveBeenCalled();
+    expect(await c.titular(rid, ["admin:read", "admin:sensitive"])).toMatchObject({ ok: false, kind: "forbidden" }); expect(fetcher).not.toHaveBeenCalled();
   });
   it("UUID matching never merges by name and preserves local data", () => {
     const local = [{ id: "a", coreId: pid, name: "Same", notes: "preserve" }, { id: "b", coreId: null, name: "Same", notes: "other" }];
