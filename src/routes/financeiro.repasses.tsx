@@ -97,6 +97,7 @@ function Page() {
     : !data.data || !s ? <p className="text-sm text-muted-foreground">Carregando…</p> : <>
       <Section title="1 · Airbnb — repasse automático" subtitle="A plataforma paga o proprietário direto. Saldo STAYO desta parte: R$ 0,00.">
         <ResTable rows={auto} direct onDelete={(id) => remove("payout_reservations", id)} />
+        {s.autoIncompleteCount > 0 && <p className="text-sm text-muted-foreground">{s.autoIncompleteCount} reserva(s) sem valor no Guia — fora do total abaixo.</p>}
         <p className="text-sm">Total das reservas: <b>{brl(s.autoGross)}</b> · Pago direto ao proprietário: <b>{brl(s.autoOwnerDirect)}</b></p>
         <ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} />
       </Section>
@@ -119,8 +120,10 @@ function Page() {
           <Line l="(−) Despesas do mês" v={-s.expenseTotal} />
           <Line l="(−) Já repassado neste mês" v={-s.transferred} />
         </dl>
+        {!s.complete && <p role="alert" className="mt-3 rounded-lg bg-warning/15 p-3 text-sm">
+          <b>Saldo provisório:</b> {s.incompleteCount} reserva(s) da seção 2 estão sem valor no Guia STAYO. Elas não foram contadas como R$ 0,00 reais — complete os valores antes de repassar ou gerar o relatório.</p>}
         <div className={`mt-3 rounded-lg p-4 ${s.status === "a_compensar" ? "bg-destructive/10" : "bg-primary/10"}`}>
-          <p className="text-sm">{s.status === "a_repassar" ? "Falta repassar ao proprietário (até o dia 10)" : s.status === "a_compensar" ? "Saldo a compensar pelo proprietário" : "Saldo zerado"}</p>
+          <p className="text-sm">{!s.complete && "Provisório · "}{s.status === "a_repassar" ? "Falta repassar ao proprietário (até o dia 10)" : s.status === "a_compensar" ? "Saldo a compensar pelo proprietário" : "Saldo zerado"}</p>
           <p className="text-2xl font-semibold">{brl(Math.abs(s.balance))}</p>
         </div>
         {data.data.tr.length > 0 && <ul className="mt-3 divide-y text-sm">{data.data.tr.map((t) => <li key={t.id} className="flex items-center gap-3 py-2"><span className="flex-1">Repasse em {br(t.paid_on)} · {t.method.toUpperCase()}</span><b>{brl(t.amount_cents)}</b><Del onClick={() => remove("payout_transfers", t.id)} /></li>)}</ul>}
@@ -137,11 +140,15 @@ const Line = ({ l, v, strong }: { l: string; v: number; strong?: boolean }) => <
 const Del = ({ onClick }: { onClick: () => void }) => <button type="button" aria-label="Excluir" onClick={onClick} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>;
 const maskCpf = (c?: string | null) => c ? `***.${c.replace(/\D/g, "").slice(3, 6)}.***-**` : "—";
 
-type Res = { id: string; channel: string; reservation_code: string | null; guest_name: string; guest_cpf: string | null; checkin_date: string; checkout_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number };
+type Res = { id: string; channel: string; reservation_code: string | null; guest_name: string; guest_cpf: string | null; checkin_date: string; checkout_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number; missing_amounts?: string[] | null };
+/** Valor que o Guia não informou: nunca exibido como R$ 0,00. */
+const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amounts?.includes(k)
+  ? <span className="rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning-foreground" title="O Guia STAYO ainda não informou este valor">Sem valor no Guia</span>
+  : <>{brl(v)}</>;
 function ResTable({ rows, direct, onDelete }: { rows: Res[]; direct?: boolean; onDelete: (id: string) => void }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
   return <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th className="py-1">Origem</th><th>Hóspede titular</th><th>CPF</th><th>Período</th><th className="text-right">Valor</th>{direct ? <th className="text-right">Pago direto</th> : <><th className="text-right">Limpeza</th><th className="text-right">Taxa canal</th></>}<th /></tr></thead>
-    <tbody>{rows.map((r) => <tr key={r.id} className="border-t"><td className="py-2">{CHANNELS[r.channel as keyof typeof CHANNELS]}{r.reservation_code && <span className="block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td>{r.guest_name}</td><td title="CPF completo no PDF do relatório">{maskCpf(r.guest_cpf)}</td><td>{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right">{brl(r.gross_cents)}</td>{direct ? <td className="text-right">{brl(r.owner_direct_cents)}</td> : <><td className="text-right">{brl(r.cleaning_cents)}</td><td className="text-right">{brl(r.platform_fee_cents)}</td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>)}</tbody></table></div>;
+    <tbody>{rows.map((r) => <tr key={r.id} className="border-t"><td className="py-2">{CHANNELS[r.channel as keyof typeof CHANNELS]}{r.reservation_code && <span className="block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td>{r.guest_name}</td><td title="CPF completo no PDF do relatório">{maskCpf(r.guest_cpf)}</td><td>{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right"><Amount r={r} k="gross" v={r.gross_cents} /></td>{direct ? <td className="text-right">{brl(r.owner_direct_cents)}</td> : <><td className="text-right"><Amount r={r} k="cleaning" v={r.cleaning_cents} /></td><td className="text-right"><Amount r={r} k="platform_fee" v={r.platform_fee_cents} /></td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>)}</tbody></table></div>;
 }
 
 function useSaver(onSaved: () => void) {
