@@ -121,7 +121,7 @@ function FinancePage() {
 
   return (
     <>
-      <AdminPageHeader eyebrow="Gestão" title="Financeiro" description="Repasses, faturas, fechamentos e despesas em leitura." actions={<Link to="/financeiro/cobrancas" className="admin-inline-link">Cobranças</Link>} />
+      <AdminPageHeader eyebrow="Gestão" title="Financeiro" description="Repasses, faturas, fechamentos e despesas em leitura." actions={<><Link to="/financeiro/repasses" className="admin-inline-link">Relatório de repasse</Link><Link to="/financeiro/cobrancas" className="admin-inline-link">Cobranças</Link></>} />
       <div className="mt-5"><FinanceSummary /></div>
       <div className="mb-4"><ModuleTabs value={tab} onChange={setTab} options={(Object.keys(tabLabels) as (keyof typeof tabLabels)[]).map((t) => ({ value: t, label: tabLabels[t] }))} /></div>
 
