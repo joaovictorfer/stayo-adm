@@ -2696,6 +2696,7 @@ export type Database = {
           guest_name: string
           id: string
           implementation_id: string
+          missing_amounts: string[]
           notes: string | null
           owner_direct_cents: number
           payout_flow: string
@@ -2716,6 +2717,7 @@ export type Database = {
           guest_name: string
           id?: string
           implementation_id: string
+          missing_amounts?: string[]
           notes?: string | null
           owner_direct_cents?: number
           payout_flow?: string
@@ -2736,6 +2738,7 @@ export type Database = {
           guest_name?: string
           id?: string
           implementation_id?: string
+          missing_amounts?: string[]
           notes?: string | null
           owner_direct_cents?: number
           payout_flow?: string

@@ -1,0 +1,2 @@
+ALTER TABLE public.payout_reservations ADD COLUMN IF NOT EXISTS missing_amounts text[] NOT NULL DEFAULT '{}';
+COMMENT ON COLUMN public.payout_reservations.missing_amounts IS 'Campos de valor que o Guia STAYO não informou (gross, cleaning, platform_fee). O valor 0 nesses campos não é real.';
