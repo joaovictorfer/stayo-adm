@@ -45,10 +45,11 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
     setResponseHeader("Cache-Control", "private, no-store");
     const http = await gate(context);
     const { data: proj, error } = await context.supabase.from("implementation_projects")
-      .select("id, core_property_id, payout_mode:implementation_contract_conditions(payout_mode)").eq("id", data.implementationId).maybeSingle();
+      .select("id, core_property_id").eq("id", data.implementationId).maybeSingle();
     if (error || !proj) throw new Error("Ficha não encontrada.");
-    if (!proj.core_property_id) return { ok: false as const, reason: "not_linked" as const, imported: 0, updated: 0 };
-    const auto = JSON.stringify(proj.payout_mode ?? "").includes("platform_auto");
+    if (!proj.core_property_id) return { ok: false as const, reason: "not_linked" as const, imported: 0, updated: 0, found: 0 };
+    const { data: cond } = await context.supabase.from("implementation_contract_conditions").select("payout_mode").eq("implementation_id", proj.id).limit(1).maybeSingle();
+    const auto = (cond as any)?.payout_mode === "platform_auto";
 
     const all = await listAll(http, "reservations", { property_id: proj.core_property_id });
     const rows = all.filter((r) => r.property_id === proj.core_property_id && !r.is_block && r.status !== "cancelled" && String(r.checkin_date).startsWith(data.month));
