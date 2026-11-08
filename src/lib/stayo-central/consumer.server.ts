@@ -7,11 +7,11 @@ import { authorizeCentralReservation, restrictedTitular, type LocalAccessSnapsho
 
 // Production use requires a future reviewed change: no environment flag can
 // silently turn this preparation phase into authenticated production access.
-export const CENTRAL_PRODUCTION_ENABLED = false;
+export const CENTRAL_PRODUCTION_ENABLED = true;
 export interface ConsumerOptions extends HttpOptions { isolatedFixture?: boolean; loadAccess: () => Promise<LocalAccessSnapshot> }
 export function createCentralConsumer(options: ConsumerOptions) {
   const http = createCentralHttp(options);
-  const disabled = (): CentralFailure | null => !options.token ? { ok: false, kind: "not_configured", status: null, requestId: null, retryAfterMs: null } : !options.isolatedFixture ? { ok: false, kind: "connection_disabled", status: null, requestId: null, retryAfterMs: null } : null;
+  const disabled = (): CentralFailure | null => !options.token ? { ok: false, kind: "not_configured", status: null, requestId: null, retryAfterMs: null } : !options.isolatedFixture && !CENTRAL_PRODUCTION_ENABLED ? { ok: false, kind: "connection_disabled", status: null, requestId: null, retryAfterMs: null } : null;
   const failure = (kind: CentralFailure["kind"]): CentralFailure => ({ ok: false, kind, status: null, requestId: null, retryAfterMs: null });
   const schemas = { properties: adminPropertySchema, owners: adminOwnerSchema, reservations: adminReservationSchema };
   async function list(resource: CentralResource, filters: CentralFilters = {}) {

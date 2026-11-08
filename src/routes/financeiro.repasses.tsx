@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, RefreshCw } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +57,22 @@ function Page() {
     const { error } = await db().from(table).delete().eq("id", id);
     if (error) toast.error("Não foi possível excluir."); else refresh();
   };
+  const syncFn = useServerFn(syncCentralReservations);
+  const ownersFn = useServerFn(importCentralOwners);
+  const [syncing, setSyncing] = useState(false);
+  const runSync = async () => {
+    setSyncing(true);
+    try {
+      const r = await syncFn({ data: { implementationId: impl, month } });
+      if (!r.ok) toast.error("Esta ficha ainda não está vinculada a um imóvel do Guia STAYO (aba Imóvel).");
+      else { toast.success(`${r.found} reserva(s) no mês · ${r.imported} nova(s), ${r.updated} atualizada(s).`); refresh(); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Falha ao consultar o Guia."); } finally { setSyncing(false); }
+  };
+  const runOwners = async () => {
+    setSyncing(true);
+    try { const r = await ownersFn(); toast.success(`${r.linkedProperties} imóvel(is) vinculado(s) · ${r.created} proprietário(s) criado(s), ${r.linked} ficha(s) ligada(s).`); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Falha ao consultar o Guia."); } finally { setSyncing(false); }
+  };
   const auto = data.data?.res.filter((r) => r.payout_flow === "platform_auto") ?? [];
   const stayo = data.data?.res.filter((r) => r.payout_flow === "stayo") ?? [];
 
@@ -68,6 +86,10 @@ function Page() {
         </select></label>
       <label className="grid gap-1 text-sm">Mês de referência
         <Input type="month" className="h-11" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
+      <div className="flex items-end gap-2">
+        <Button className="h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Puxar reservas do Guia</Button>
+        <Button variant="outline" className="h-11" disabled={syncing} onClick={runOwners}>Importar proprietários vinculados</Button>
+      </div>
     </div>
 
     {!impl ? <p className="text-sm text-muted-foreground">Escolha um imóvel para ver o relatório.</p>

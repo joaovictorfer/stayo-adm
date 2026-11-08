@@ -1,0 +1,2 @@
+ALTER TABLE public.payout_reservations ADD COLUMN IF NOT EXISTS central_reservation_id uuid;
+ALTER TABLE public.payout_reservations ADD CONSTRAINT payout_reservations_central_uq UNIQUE (central_reservation_id);
