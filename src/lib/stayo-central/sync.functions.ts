@@ -37,7 +37,7 @@ const channelOf = (c: string) => {
   const v = (c || "").toLowerCase();
   return v.includes("airbnb") ? "airbnb" : v.includes("booking") ? "booking" : v.includes("decolar") ? "decolar" : v.includes("diret") ? "direta" : "outro";
 };
-const cents = (m: any) => (typeof m?.cents === "number" && m.cents >= 0 ? m.cents : 0);
+const cents = (m: any): number | null => (typeof m?.cents === "number" && m.cents >= 0 ? m.cents : null);
 
 export const syncCentralReservations = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ implementationId: z.string().uuid(), month: z.string().regex(/^\d{4}-\d{2}$/) }).parse(i))
@@ -69,7 +69,13 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
         guest_name: (st.ok && st.data.data?.titular_guest?.name) || r.guest_name || "Hóspede",
         checkin_date: r.checkin_date, checkout_date: r.checkout_date,
       };
-      if (has) Object.assign(base, { gross_cents: cents(fin.gross), cleaning_cents: cents(fin.cleaning), platform_fee_cents: cents(fin.platform_fee) });
+      // Valor ausente no Guia nunca vira zero real: grava 0 técnico e marca em missing_amounts.
+      const missing: string[] = [];
+      const pick = (key: string, m: any) => { const v = has ? cents(m) : null; if (v === null) missing.push(key); return v ?? 0; };
+      Object.assign(base, {
+        gross_cents: pick("gross", fin?.gross), cleaning_cents: pick("cleaning", fin?.cleaning),
+        platform_fee_cents: pick("platform_fee", fin?.platform_fee), missing_amounts: missing,
+      });
       if (known.has(r.id)) {
         const { error: e } = await context.supabase.from("payout_reservations").update(base as any).eq("central_reservation_id", r.id);
         if (!e) updated++;

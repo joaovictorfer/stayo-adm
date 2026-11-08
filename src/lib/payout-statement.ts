@@ -5,7 +5,7 @@
  * - Despesas do mês cobradas do proprietário e repasses já feitos são descontados.
  */
 export type PayoutFlow = "platform_auto" | "stayo";
-export interface StatementReservation { payout_flow: PayoutFlow; checkin_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number }
+export interface StatementReservation { payout_flow: PayoutFlow; checkin_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number; missing_amounts?: string[] | null }
 export interface StatementExpense { occurred_on: string; amount_cents: number; charged_to_owner: boolean }
 export interface StatementTransfer { competence: string; amount_cents: number }
 
@@ -39,7 +39,11 @@ export function computeStatement(
   const expenseTotal = sum(expenses.filter((e) => e.charged_to_owner && competenceOf(e.occurred_on) === competence), (e) => e.amount_cents);
   const transferred = sum(transfers.filter((t) => t.competence === competence), (t) => t.amount_cents);
   const balance = ownerShare - expenseTotal - transferred;
+  /** Reservas STAYO com valor ausente no Guia: o saldo é provisório, não definitivo. */
+  const incompleteCount = stayo.filter((r) => (r.missing_amounts?.length ?? 0) > 0).length;
+  const autoIncompleteCount = auto.filter((r) => r.missing_amounts?.includes("gross")).length;
   return {
+    incompleteCount, autoIncompleteCount, complete: incompleteCount === 0,
     autoCount: auto.length, autoGross, autoOwnerDirect,
     stayoCount: stayo.length, stayoGross, platformFees, cleaning, adminFee, ownerShare,
     expenseTotal, transferred, balance,
