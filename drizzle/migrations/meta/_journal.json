@@ -589,6 +589,13 @@
       "when": 1793989012145,
       "tag": "0083_payout_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1794159562218,
+      "tag": "0084_payout_statements",
+      "breakpoints": true
     }
   ]
 }

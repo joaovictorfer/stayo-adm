@@ -2682,6 +2682,118 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_reservations: {
+        Row: {
+          channel: string
+          checkin_date: string
+          checkout_date: string
+          cleaning_cents: number
+          created_at: string
+          created_by: string | null
+          gross_cents: number
+          guest_cpf: string | null
+          guest_name: string
+          id: string
+          implementation_id: string
+          notes: string | null
+          owner_direct_cents: number
+          payout_flow: string
+          platform_fee_cents: number
+          reservation_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          checkin_date: string
+          checkout_date: string
+          cleaning_cents?: number
+          created_at?: string
+          created_by?: string | null
+          gross_cents?: number
+          guest_cpf?: string | null
+          guest_name: string
+          id?: string
+          implementation_id: string
+          notes?: string | null
+          owner_direct_cents?: number
+          payout_flow?: string
+          platform_fee_cents?: number
+          reservation_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          checkin_date?: string
+          checkout_date?: string
+          cleaning_cents?: number
+          created_at?: string
+          created_by?: string | null
+          gross_cents?: number
+          guest_cpf?: string | null
+          guest_name?: string
+          id?: string
+          implementation_id?: string
+          notes?: string | null
+          owner_direct_cents?: number
+          payout_flow?: string
+          platform_fee_cents?: number
+          reservation_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_reservations_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payout_transfers: {
+        Row: {
+          amount_cents: number
+          competence: string
+          created_at: string
+          created_by: string | null
+          id: string
+          implementation_id: string
+          method: string
+          notes: string | null
+          paid_on: string
+        }
+        Insert: {
+          amount_cents: number
+          competence: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id: string
+          method?: string
+          notes?: string | null
+          paid_on: string
+        }
+        Update: {
+          amount_cents?: number
+          competence?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id?: string
+          method?: string
+          notes?: string | null
+          paid_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_transfers_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_content_blocks: {
         Row: {
           created_at: string
@@ -2758,6 +2870,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "portal_visibility_releases_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_expenses: {
+        Row: {
+          amount_cents: number
+          category: string
+          charged_to_owner: boolean
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          implementation_id: string
+          occurred_on: string
+        }
+        Insert: {
+          amount_cents: number
+          category?: string
+          charged_to_owner?: boolean
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          implementation_id: string
+          occurred_on: string
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          charged_to_owner?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          implementation_id?: string
+          occurred_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_expenses_implementation_id_fkey"
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
