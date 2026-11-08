@@ -2684,6 +2684,7 @@ export type Database = {
       }
       payout_reservations: {
         Row: {
+          central_reservation_id: string | null
           channel: string
           checkin_date: string
           checkout_date: string
@@ -2703,6 +2704,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          central_reservation_id?: string | null
           channel: string
           checkin_date: string
           checkout_date: string
@@ -2722,6 +2724,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          central_reservation_id?: string | null
           channel?: string
           checkin_date?: string
           checkout_date?: string
