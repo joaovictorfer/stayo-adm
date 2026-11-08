@@ -33,4 +33,13 @@ describe("balancete de repasse", () => {
     expect(previousCompetence(new Date("2026-11-08T12:00:00Z"))).toBe("2026-10");
     expect(previousCompetence(new Date("2026-01-03T12:00:00Z"))).toBe("2025-12");
   });
+  it("valor ausente no Guia deixa o saldo provisório, não zerado de verdade", () => {
+    const s = computeStatement("2026-10", 20, [r({ checkin_date: "2026-10-10", gross_cents: 0, missing_amounts: ["gross", "cleaning", "platform_fee"] })], [], []);
+    expect(s.incompleteCount).toBe(1);
+    expect(s.complete).toBe(false);
+  });
+  it("reservas com todos os valores mantêm o saldo completo", () => {
+    const s = computeStatement("2026-10", 20, [r({ checkin_date: "2026-10-10", gross_cents: 10000 })], [], []);
+    expect(s.complete).toBe(true);
+  });
 });

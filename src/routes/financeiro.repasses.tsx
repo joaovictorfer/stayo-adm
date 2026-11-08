@@ -120,7 +120,7 @@ function Page() {
           <Line l="(−) Despesas do mês" v={-s.expenseTotal} />
           <Line l="(−) Já repassado neste mês" v={-s.transferred} />
         </dl>
-        {!s.complete && <p role="alert" className="mt-3 rounded-lg bg-warning/15 p-3 text-sm">
+        {!s.complete && <p role="alert" className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
           <b>Saldo provisório:</b> {s.incompleteCount} reserva(s) da seção 2 estão sem valor no Guia STAYO. Elas não foram contadas como R$ 0,00 reais — complete os valores antes de repassar ou gerar o relatório.</p>}
         <div className={`mt-3 rounded-lg p-4 ${s.status === "a_compensar" ? "bg-destructive/10" : "bg-primary/10"}`}>
           <p className="text-sm">{!s.complete && "Provisório · "}{s.status === "a_repassar" ? "Falta repassar ao proprietário (até o dia 10)" : s.status === "a_compensar" ? "Saldo a compensar pelo proprietário" : "Saldo zerado"}</p>
@@ -143,7 +143,7 @@ const maskCpf = (c?: string | null) => c ? `***.${c.replace(/\D/g, "").slice(3, 
 type Res = { id: string; channel: string; reservation_code: string | null; guest_name: string; guest_cpf: string | null; checkin_date: string; checkout_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number; missing_amounts?: string[] | null };
 /** Valor que o Guia não informou: nunca exibido como R$ 0,00. */
 const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amounts?.includes(k)
-  ? <span className="rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning-foreground" title="O Guia STAYO ainda não informou este valor">Sem valor no Guia</span>
+  ? <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive" title="O Guia STAYO ainda não informou este valor">Sem valor no Guia</span>
   : <>{brl(v)}</>;
 function ResTable({ rows, direct, onDelete }: { rows: Res[]; direct?: boolean; onDelete: (id: string) => void }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
