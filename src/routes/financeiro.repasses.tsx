@@ -134,7 +134,7 @@ function ReservationForm({ impl, flow, month, onSaved }: { impl: string; flow: P
   const set = (k: keyof typeof blank) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   if (!open) return <Button variant="outline" onClick={() => setOpen(true)}><Plus size={16} />Adicionar reserva</Button>;
   const submit = (e: FormEvent) => { e.preventDefault();
-    if (f.guest.trim().split(/\s+/).length < 2) return toast.error("Informe o nome completo do hóspede titular.");
+    if (f.guest.trim().split(/\s+/).length < 2) { toast.error("Informe o nome completo do hóspede titular."); return; }
     if (competenceOf(f.ci) !== month) toast.message("O check-in é de outro mês; a reserva aparecerá naquele mês.");
     run(() => db().from("payout_reservations").insert({ implementation_id: impl, payout_flow: flow, channel: f.channel, reservation_code: f.code || null, guest_name: f.guest.trim(), guest_cpf: f.cpf.replace(/\D/g, "") || null, checkin_date: f.ci, checkout_date: f.co, gross_cents: toCents(f.gross), cleaning_cents: toCents(f.cleaning), platform_fee_cents: toCents(f.fee), owner_direct_cents: toCents(f.direct) }), () => { setF(blank); setOpen(false); }); };
   return <form onSubmit={submit} className="grid gap-3 rounded-lg border p-3 sm:grid-cols-3">
@@ -157,7 +157,7 @@ function ExpenseForm({ impl, month, onSaved }: { impl: string; month: string; on
   const blank = { date: competenceOf(today) === month ? today : `${month}-01`, cat: "manutencao", desc: "", value: "", owner: true };
   const [open, setOpen] = useState(false); const [f, setF] = useState(blank); const { busy, run } = useSaver(onSaved);
   if (!open) return <Button variant="outline" onClick={() => setOpen(true)}><Plus size={16} />Lançar despesa</Button>;
-  return <form className="grid gap-3 rounded-lg border p-3 sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); const v = toCents(f.value); if (v <= 0) return toast.error("Informe o valor."); run(() => db().from("property_expenses").insert({ implementation_id: impl, occurred_on: f.date, category: f.cat, description: f.desc.trim(), amount_cents: v, charged_to_owner: f.owner }), () => { setF(blank); setOpen(false); }); }}>
+  return <form className="grid gap-3 rounded-lg border p-3 sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); const v = toCents(f.value); if (v <= 0) { toast.error("Informe o valor."); return; } run(() => db().from("property_expenses").insert({ implementation_id: impl, occurred_on: f.date, category: f.cat, description: f.desc.trim(), amount_cents: v, charged_to_owner: f.owner }), () => { setF(blank); setOpen(false); }); }}>
     <F label="Data"><Input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></F>
     <F label="Tipo"><select className="h-10 rounded-md border bg-background px-2" value={f.cat} onChange={(e) => setF({ ...f, cat: e.target.value })}>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></F>
     <F label="Descrição"><Input required value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} /></F>
@@ -170,7 +170,7 @@ function ExpenseForm({ impl, month, onSaved }: { impl: string; month: string; on
 function TransferForm({ impl, month, suggested, onSaved }: { impl: string; month: string; suggested: number; onSaved: () => void }) {
   const [open, setOpen] = useState(false); const [value, setValue] = useState(""); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const { busy, run } = useSaver(onSaved);
   if (!open) return <Button className="mt-3" variant="outline" onClick={() => { setValue((suggested / 100).toFixed(2).replace(".", ",")); setOpen(true); }}><Plus size={16} />Registrar repasse feito</Button>;
-  return <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); const v = toCents(value); if (v <= 0) return toast.error("Informe o valor."); run(() => db().from("payout_transfers").insert({ implementation_id: impl, competence: month, paid_on: date, amount_cents: v }), () => setOpen(false)); }}>
+  return <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); const v = toCents(value); if (v <= 0) { toast.error("Informe o valor."); return; } run(() => db().from("payout_transfers").insert({ implementation_id: impl, competence: month, paid_on: date, amount_cents: v }), () => setOpen(false)); }}>
     <F label="Data do repasse"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></F>
     <F label="Valor (R$)"><Input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} /></F>
     <Button disabled={busy}>Salvar</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
