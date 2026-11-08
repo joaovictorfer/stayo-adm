@@ -65,3 +65,8 @@
 
 ## Endereço do proprietário
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
+
+## Relatório de repasse
+- [x] Arquitetura: reservas (Airbnb automático × recebidas pela STAYO), despesas lançadas no dia, repasses feitos e balancete por mês (/financeiro/repasses); 6 testes.
+- [ ] PDF do relatório para o proprietário (próxima etapa).
+- [ ] Puxar proprietários e reservas do Guia STAYO: bloqueado até a homologação da conexão com o Guia.
