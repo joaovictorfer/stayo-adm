@@ -67,7 +67,7 @@
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
-- [ ] Revisar o PDF frente à referência e ao modelo Cobalto; ajustar hierarquia, indicadores e paginação, preservando cálculos e CPF completo; validar todas as páginas renderizadas.
+- [x] Revisar o PDF frente à referência e ao modelo Cobalto: quatro indicadores, títulos sublinhados, canais com contraste, totais destacados e blocos medidos por fonte; três páginas reais do C203 e seis páginas fictícias com nomes/despesas extensos conferidas sem cortes; 15 testes passaram, saldo R$ 1.760,00 e CPF completo preservados. Nome do proprietário do C203 ainda não cadastrado.
 - [x] Aplicar modelo Contraste Cobalto aprovado: reservas reais do Ravena em outubro conferidas em 1280/838/390, sem transbordamento ou erros; 8 testes passaram. Cálculos preservados e PDF fora desta etapa.
 - [x] Corrigir importação do CPF do titular nas reservas novas e existentes; preservar CPF salvo quando indisponível; 42 testes passaram e CPF do Yan no C203 conferido após importação e recarga.
 - [x] Arquitetura: reservas (Airbnb automático × recebidas pela STAYO), despesas lançadas no dia, repasses feitos e balancete por mês (/financeiro/repasses); 6 testes.
