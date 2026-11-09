@@ -48,3 +48,4 @@
 - Field divergences (owner official vs submitted, property registration vs room collection) are computed in `src/lib/field-sources.ts` and never auto-applied; team decisions persist in `implementation_field_confirmations` as `div:<key>` with a value snapshot so a new value reopens the divergence.
 - STAYO APP property link: `property-link.functions.ts` re-reads the property from the Central API before writing `core_property_id` (unique partial index); a DB trigger blocks `ativo` without it, so the rule holds outside the UI.
 - Payout statements: reservations, expenses and transfers are admin-only rows; balances are always derived by src/lib/payout-statement.ts (competence = check-in month), never stored, so corrections never desync.
+- On-demand payout imports copy valid resolved titular CPF for inserts and updates only; absent or invalid provider documents never erase saved CPF, keeping report identities complete without widening portal access.
