@@ -163,7 +163,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     for (const r of selected) {
       const nameLines = wrap(r.guest_name, 11, heading, CW - 28).length;
       const headingLines = wrap(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, 10, heading, CW - 28).length;
-      const height = 116 + nameLines * 15 + (headingLines - 1) * 14;
+      const height = 126 + nameLines * 15 + (headingLines - 1) * 14;
       space(height + 14);
       rect(M, y, CW, height, colors.soft);
       rect(M, y, 4, height, r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt);
