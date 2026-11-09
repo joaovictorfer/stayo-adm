@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -76,43 +76,53 @@ function Page() {
   const auto = data.data?.res.filter((r) => r.payout_flow === "platform_auto") ?? [];
   const stayo = data.data?.res.filter((r) => r.payout_flow === "stayo") ?? [];
 
-  return <div className="space-y-5">
-    <AdminPageHeader eyebrow="Financeiro" title="Relatório de repasse" description="Reservas do mês, despesas e quanto falta repassar ao proprietário." actions={<Link to="/financeiro" className="admin-inline-link">Financeiro</Link>} />
-    <div className="admin-panel flex flex-wrap gap-3 p-4">
+  const selectedProperty = props.data?.find((p) => p.id === impl);
+  const propertyTitle = selectedProperty ? [selectedProperty.condominium_name, selectedProperty.unit].filter(Boolean).join(" ") || selectedProperty.nickname || selectedProperty.code : "";
+  const monthTitle = new Date(`${month}-01T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
+
+  return <div className="payout-workspace space-y-7">
+    <AdminPageHeader title="Relatório de repasse" description={propertyTitle ? `${propertyTitle} · ${monthTitle}` : "Reservas, despesas e repasses por imóvel"} actions={<Link to="/financeiro" className="admin-inline-link">Financeiro</Link>} />
+    <div className="payout-filters flex flex-wrap items-end gap-3">
       <label className="grid gap-1 text-sm">Imóvel
-        <select className="h-11 min-w-64 rounded-md border bg-background px-3" value={impl} onChange={(e) => setImpl(e.target.value)}>
+        <select className="h-11 w-full min-w-0 rounded-md border bg-background px-3 sm:w-72" value={impl} onChange={(e) => setImpl(e.target.value)}>
           <option value="">Selecione…</option>
           {props.data?.map((p) => <option key={p.id} value={p.id}>{p.code} · {[p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || "Sem nome"}</option>)}
         </select></label>
       <label className="grid gap-1 text-sm">Mês de referência
         <Input type="month" className="h-11" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
-      <div className="flex items-end gap-2">
-        <Button className="h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Puxar reservas do Guia</Button>
+      <div className="flex flex-wrap items-end gap-2 sm:ml-auto">
         <Button variant="outline" className="h-11" disabled={syncing} onClick={runOwners}>Importar proprietários vinculados</Button>
+        <Button className="payout-primary h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Atualizar reservas</Button>
       </div>
     </div>
 
     {!impl ? <p className="text-sm text-muted-foreground">Escolha um imóvel para ver o relatório.</p>
     : data.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar. Verifique se você tem acesso ao financeiro.</p>
     : !data.data || !s ? <p className="text-sm text-muted-foreground">Carregando…</p> : <>
-      <Section title="1 · Airbnb — repasse automático" subtitle="A plataforma paga o proprietário direto. Saldo STAYO desta parte: R$ 0,00.">
-        <ResTable rows={auto} direct onDelete={(id) => remove("payout_reservations", id)} />
-        {s.autoIncompleteCount > 0 && <p className="text-sm text-muted-foreground">{s.autoIncompleteCount} reserva(s) sem valor no Guia — fora do total abaixo.</p>}
-        <p className="text-sm">Total das reservas: <b>{brl(s.autoGross)}</b> · Pago direto ao proprietário: <b>{brl(s.autoOwnerDirect)}</b></p>
-        <ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} />
-      </Section>
-      <Section title="2 · Reservas recebidas pela STAYO" subtitle="Booking, Decolar, reservas diretas e outras.">
+      <div className="payout-metrics grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric tone="navy" icon={<CalendarDays />} label="Reservas do mês" value={String(data.data.res.length)} />
+        <Metric tone="received" icon={<CreditCard />} label="Recebido pela STAYO" value={s.incompleteCount ? "Saldo provisório" : brl(s.stayoGross)} />
+        <Metric tone="neutral" icon={<Coins />} label="Pago pela plataforma" value={brl(s.autoOwnerDirect)} />
+        <Metric tone={s.complete && s.status === "a_compensar" ? "danger" : "balance"} icon={<Wallet />} label={!s.complete ? "Saldo do mês" : s.status === "a_compensar" ? "Saldo a compensar" : s.status === "zerado" ? "Saldo zerado" : "Saldo a repassar"} value={s.complete ? brl(Math.abs(s.balance)) : "Não calculado"} />
+      </div>
+      <Section title="Reservas recebidas pela STAYO" count={stayo.length}>
         <ResTable rows={stayo} onDelete={(id) => remove("payout_reservations", id)} />
         <ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} />
       </Section>
-      <Section title="3 · Despesas do mês" subtitle="Lance as despesas assim que acontecerem; elas entram no mês da data informada.">
+      <Section title="Repasse direto pela plataforma" count={auto.length} subtitle="Pagamento direto ao proprietário; não compõe o saldo STAYO.">
+        <ResTable rows={auto} direct onDelete={(id) => remove("payout_reservations", id)} />
+        {s.autoIncompleteCount > 0 && <p className="text-sm text-muted-foreground">{s.autoIncompleteCount} reserva(s) sem valor no Guia — fora do total abaixo.</p>}
+        {auto.length > 0 && <p className="text-sm">Total das reservas: <b>{brl(s.autoGross)}</b> · Pago direto ao proprietário: <b>{brl(s.autoOwnerDirect)}</b></p>}
+        <ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} />
+      </Section>
+      <Section title="Despesas do mês">
         {data.data.exp.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma despesa neste mês.</p> :
           <ul className="divide-y text-sm">{data.data.exp.map((e) => <li key={e.id} className="flex items-center gap-3 py-2"><span className="w-20">{br(e.occurred_on)}</span><span className="flex-1">{CATEGORIES[e.category as keyof typeof CATEGORIES]} · {e.description}{!e.charged_to_owner && " (por conta da STAYO)"}</span><b>{brl(e.amount_cents)}</b><Del onClick={() => remove("property_expenses", e.id)} /></li>)}</ul>}
         <ExpenseForm impl={impl} month={month} onSaved={refresh} />
       </Section>
-      <Section title="4 · Balancete" subtitle={`Administração de ${data.data.fee}% sobre a diária, conforme o contrato.`}>
+      <Section title="Balancete" subtitle={`Administração de ${data.data.fee}% sobre a diária, conforme o contrato.`}>
         <dl className="grid gap-1 text-sm">
-          <Line l="Recebido pela STAYO (reservas da seção 2)" v={s.stayoGross} />
+          <Line l="Recebido pela STAYO" v={s.stayoGross} />
           <Line l="(−) Taxas das plataformas" v={-s.platformFees} />
           <Line l="(−) Limpezas" v={-s.cleaning} />
           <Line l={`(−) Administração STAYO (${data.data.fee}%)`} v={-s.adminFee} />
@@ -121,8 +131,8 @@ function Page() {
           <Line l="(−) Já repassado neste mês" v={-s.transferred} />
         </dl>
         {!s.complete && <p role="alert" className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
-          <b>Saldo provisório:</b> {s.incompleteCount} reserva(s) da seção 2 estão sem valor no Guia STAYO. Elas não foram contadas como R$ 0,00 reais — complete os valores antes de repassar ou gerar o relatório.</p>}
-        {s.complete ? <div className={`mt-3 rounded-lg p-4 ${s.status === "a_compensar" ? "bg-destructive/10" : "bg-primary/10"}`}>
+          <b>Saldo provisório:</b> {s.incompleteCount} reserva(s) recebidas pela STAYO estão sem valor no Guia STAYO. Elas não foram contadas como R$ 0,00 reais — complete os valores antes de repassar ou gerar o relatório.</p>}
+        {s.complete ? <div className={`mt-3 rounded-md p-4 ${s.status === "a_compensar" ? "bg-destructive/10" : "payout-balance-total"}`}>
           <p className="text-sm">{s.status === "a_repassar" ? "Falta repassar ao proprietário (até o dia 10)" : s.status === "a_compensar" ? "Saldo a compensar pelo proprietário" : "Saldo zerado"}</p>
           <p className="text-2xl font-semibold">{brl(Math.abs(s.balance))}</p>
         </div> : <div className="mt-3 rounded-lg bg-muted p-4">
@@ -137,11 +147,14 @@ function Page() {
   </div>;
 }
 
-function Section({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
-  return <section className="admin-panel space-y-3 p-4"><div><h2 className="text-lg font-semibold">{title}</h2><p className="text-sm text-muted-foreground">{subtitle}</p></div>{children}</section>;
+function Metric({ tone, icon, label, value }: { tone: string; icon: ReactNode; label: string; value: string }) {
+  return <div className={`payout-metric is-${tone}`}><span className="payout-metric-icon" aria-hidden="true">{icon}</span><div className="min-w-0"><p>{label}</p><strong>{value}</strong></div></div>;
 }
-const Line = ({ l, v, strong }: { l: string; v: number; strong?: boolean }) => <div className={`flex justify-between ${strong ? "border-t pt-1 font-semibold" : ""}`}><dt>{l}</dt><dd className="tabular-nums">{brl(v)}</dd></div>;
-const Del = ({ onClick }: { onClick: () => void }) => <button type="button" aria-label="Excluir" onClick={onClick} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>;
+function Section({ title, subtitle, count, children }: { title: string; subtitle?: string; count?: number; children: ReactNode }) {
+  return <section className="payout-section space-y-4"><div className="flex flex-wrap items-baseline justify-between gap-2"><div><h2 className="text-xl font-semibold">{title}</h2>{subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}</div>{count !== undefined && <span className="text-sm text-muted-foreground">{count} {count === 1 ? "reserva" : "reservas"}</span>}</div>{children}</section>;
+}
+const Line = ({ l, v, strong }: { l: string; v: number; strong?: boolean }) => <div className={`flex justify-between gap-4 py-2 ${strong ? "border-t font-semibold" : ""}`}><dt>{l}</dt><dd className="shrink-0 tabular-nums">{brl(v)}</dd></div>;
+const Del = ({ onClick }: { onClick: () => void }) => <Button variant="ghost" size="icon" type="button" aria-label="Excluir" title="Excluir lançamento" onClick={onClick} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></Button>;
 const maskCpf = (c?: string | null) => c ? `***.${c.replace(/\D/g, "").slice(3, 6)}.***-**` : "—";
 
 type Res = { id: string; channel: string; reservation_code: string | null; guest_name: string; guest_cpf: string | null; checkin_date: string; checkout_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number; missing_amounts?: string[] | null };
@@ -151,8 +164,8 @@ const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amou
   : <>{brl(v)}</>;
 function ResTable({ rows, direct, onDelete }: { rows: Res[]; direct?: boolean; onDelete: (id: string) => void }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
-  return <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th className="py-1">Origem</th><th>Hóspede titular</th><th>CPF</th><th>Período</th><th className="text-right">Valor</th>{direct ? <th className="text-right">Pago direto</th> : <><th className="text-right">Limpeza</th><th className="text-right">Taxa canal</th></>}<th /></tr></thead>
-    <tbody>{rows.map((r) => <tr key={r.id} className="border-t"><td className="py-2">{CHANNELS[r.channel as keyof typeof CHANNELS]}{r.reservation_code && <span className="block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td>{r.guest_name}</td><td title="CPF completo no PDF do relatório">{maskCpf(r.guest_cpf)}</td><td>{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right"><Amount r={r} k="gross" v={r.gross_cents} /></td>{direct ? <td className="text-right">{brl(r.owner_direct_cents)}</td> : <><td className="text-right"><Amount r={r} k="cleaning" v={r.cleaning_cents} /></td><td className="text-right"><Amount r={r} k="platform_fee" v={r.platform_fee_cents} /></td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right">Valor</th>{direct ? <th className="text-right">Pago direto</th> : <><th className="text-right">Limpeza</th><th className="text-right">Taxa canal</th></>}<th><span className="sr-only">Ações</span></th></tr></thead>
+    <tbody>{rows.map((r) => { const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe; return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k="gross" v={r.gross_cents} /></td>{direct ? <td className="text-right whitespace-nowrap">{brl(r.owner_direct_cents)}</td> : <><td className="text-right whitespace-nowrap"><Amount r={r} k="cleaning" v={r.cleaning_cents} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k="platform_fee" v={r.platform_fee_cents} /></td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>; })}</tbody></table></div>;
 }
 
 function useSaver(onSaved: () => void) {
