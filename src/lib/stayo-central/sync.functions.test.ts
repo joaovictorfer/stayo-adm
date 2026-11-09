@@ -23,7 +23,7 @@ const reservationId = "33333333-3333-4333-8333-333333333333";
 const syntheticCpf = "529.982.247-25";
 
 async function sync(titular: Record<string, unknown>, existing = true, statementOk = true) {
-  const writes = { update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })), insert: vi.fn(async () => ({ error: null })) };
+  const writes = { update: vi.fn((_row: Record<string, unknown>) => ({ eq: vi.fn(async () => ({ error: null })) })), insert: vi.fn(async (_row: Record<string, unknown>) => ({ error: null })) };
   const supabase = {
     rpc: vi.fn(async () => ({ data: true, error: null })),
     from: (table: string) => {

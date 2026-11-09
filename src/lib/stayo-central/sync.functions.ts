@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isValidCpf } from "@/lib/owner-form-validation";
+import { isValidCpf } from "../owner-form-validation";
 
 /**
  * Leitura do Guia STAYO → Admin. Reservas entram no relatório de repasse
