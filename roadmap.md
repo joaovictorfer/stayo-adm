@@ -70,5 +70,5 @@
 - [x] Aplicar modelo Contraste Cobalto aprovado: reservas reais do Ravena em outubro conferidas em 1280/838/390, sem transbordamento ou erros; 8 testes passaram. Cálculos preservados e PDF fora desta etapa.
 - [x] Corrigir importação do CPF do titular nas reservas novas e existentes; preservar CPF salvo quando indisponível; 42 testes passaram e CPF do Yan no C203 conferido após importação e recarga.
 - [x] Arquitetura: reservas (Airbnb automático × recebidas pela STAYO), despesas lançadas no dia, repasses feitos e balancete por mês (/financeiro/repasses); 6 testes.
-- [ ] PDF do relatório para o proprietário (próxima etapa); CPF do hóspede titular completo e visível, sem máscara no PDF.
+- [ ] PDF mensal baseado na referência enviada: resumo, reservas por fluxo, CPF completo, despesas, repasses e balancete; download administrativo e revisão visual de todas as páginas.
 - [ ] Puxar proprietários e reservas do Guia STAYO: bloqueado até a homologação da conexão com o Guia.
