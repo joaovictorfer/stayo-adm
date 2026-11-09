@@ -26,6 +26,18 @@
   --payout-gold: oklch(0.82 0.12 80);
   --payout-gold-soft: oklch(0.3 0.04 80);
 }
+.payout-pdf-palette {
+  --pdf-navy: #0b3150;
+  --pdf-cobalt: oklch(0.48 0.19 259);
+  --pdf-coral: oklch(0.57 0.2 25);
+  --pdf-gold: #b8924a;
+  --pdf-paper: #ffffff;
+  --pdf-ink: #24323e;
+  --pdf-muted: #637482;
+  --pdf-border: #dce3e9;
+  --pdf-soft: #f0f5f9;
+  --pdf-onSolid: #ffffff;
+}
 .payout-workspace { background: var(--background); padding: 24px; border-radius: 0; min-width: 0; }
 .payout-workspace .admin-page-header h1 { display: inline-block; border-bottom: 3px solid var(--payout-cobalt); padding-bottom: 5px; }
 .payout-workspace .payout-primary { background: var(--payout-cobalt); color: var(--payout-on-solid); }
