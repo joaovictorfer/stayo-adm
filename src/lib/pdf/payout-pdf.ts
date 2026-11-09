@@ -54,7 +54,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const W = 595.28, H = 841.89, M = 44, CW = W - M * 2;
   let page: PDFPage = doc.addPage([W, H]);
   let y = 0;
-  const text = (value: string, x: number, top: number, size = 10, font: PDFFont = body, color = colors.ink, maxWidth = CW) => {
+  const wrap = (value: string, size: number, font: PDFFont, maxWidth: number) => {
     // Wrap instead of shrinking financial text or clipping long names.
     const words = value.split(/\s+/); const lines: string[] = []; let line = "";
     for (const word of words) {
@@ -71,6 +71,10 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       } else line = word;
     }
     if (line) lines.push(line);
+    return lines;
+  };
+  const text = (value: string, x: number, top: number, size = 10, font: PDFFont = body, color = colors.ink, maxWidth = CW) => {
+    const lines = wrap(value, size, font, maxWidth);
     lines.forEach((l, i) => page.drawText(l, { x, y: H - top - size - i * (size + 4), size, font, color }));
     return lines.length * (size + 4);
   };
@@ -87,59 +91,85 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   };
   const newPage = () => { page = doc.addPage([W, H]); header(false); };
   const space = (height: number) => { if (y + height > H - 65) newPage(); };
-  const section = (title: string) => { space(52); y += text(title, M, y, 16, heading) + 10; };
+  const section = (title: string) => {
+    space(wrap(title, 16, heading, CW).length * 20 + 44);
+    y += text(title, M, y, 16, heading, colors.navy) + 8;
+    rect(M, y, 34, 2, colors.cobalt);
+    page.drawLine({ start: { x: M + 42, y: H - y - 1 }, end: { x: W - M, y: H - y - 1 }, thickness: 0.5, color: colors.border });
+    y += 14;
+  };
   const line = (label: string, value: string, strong = false) => {
-    space(34);
-    const height = text(label, M + 12, y + 7, 10, strong ? heading : body, colors.ink, CW - 160);
-    right(value, y + 7, 11, strong ? heading : body);
-    y += Math.max(30, height + 14);
+    const font = strong ? heading : body;
+    const amountWidth = font.widthOfTextAtSize(value, 11);
+    const labelWidth = CW - amountWidth - 42;
+    const height = Math.max(32, wrap(label, 10, font, labelWidth).length * 14 + 16);
+    space(height);
+    if (strong) rect(M, y, CW, height, colors.soft);
+    text(label, M + 12, y + 8, 10, font, strong ? colors.navy : colors.ink, labelWidth);
+    text(value, W - M - 12 - amountWidth, y + 8, 11, font, strong ? colors.navy : colors.ink);
+    page.drawLine({ start: { x: M, y: H - y - height }, end: { x: W - M, y: H - y - height }, thickness: 0.5, color: colors.border });
+    y += height;
   };
   header(true);
-  rect(0, 86, W, 142, colors.navy);
-  rect(M, 108, 3, 94, colors.gold);
   const titleWidth = cover ? 290 : CW - 20;
+  const titleHeight = wrap(input.property, 23, heading, titleWidth).length * 27;
+  const bannerHeight = Math.max(126, titleHeight + 74);
+  rect(0, 86, W, bannerHeight, colors.navy);
+  rect(M, 108, 3, bannerHeight - 42, colors.cobalt);
   text("RELATÓRIO MENSAL", M + 15, 105, 9, heading, colors.gold, titleWidth);
   text(input.property, M + 15, 125, 23, heading, colors.onSolid, titleWidth);
-  text(monthLabel, M + 15, 186, 12, body, colors.onSolid, titleWidth);
+  text(monthLabel, M + 15, 137 + titleHeight, 12, body, colors.onSolid, titleWidth);
   if (cover) { const d = cover.scaleToFit(155, 105); page.drawImage(cover, { x: W - M - d.width, y: H - 208, width: d.width, height: d.height }); }
-  y = 249;
+  y = 86 + bannerHeight + 20;
   y += text(`Proprietário: ${input.ownerName || "Não informado"}`, M, y, 11, heading) + 5;
   y += text(`Competência por check-in · ${rows.length} ${rows.length === 1 ? "reserva" : "reservas"}`, M, y, 10, body, colors.muted) + 20;
   const statusLabel = s.status === "a_compensar" ? "SALDO A COMPENSAR PELO PROPRIETÁRIO" : s.status === "zerado" ? "SALDO DO MÊS ZERADO" : "VALOR LÍQUIDO A REPASSAR AO PROPRIETÁRIO";
+  const gap = 8, col = (CW - gap * 3) / 4;
+  const metrics: [string, string, typeof colors.navy, typeof colors.ink][] = [
+    ["RESERVAS DO MÊS", String(rows.length), colors.navy, colors.onSolid],
+    ["RECEBIDO PELA STAYO", money(s.stayoGross), colors.soft, colors.navy],
+    ["PAGO PELA PLATAFORMA", money(s.autoOwnerDirect), colors.paper, colors.navy],
+    [s.status === "a_compensar" ? "SALDO A COMPENSAR" : s.status === "zerado" ? "SALDO ZERADO" : "SALDO A REPASSAR", money(Math.abs(s.balance)), colors.cobalt, colors.onSolid],
+  ];
+  space(92);
+  metrics.forEach(([label, value, fill, ink], i) => {
+    const x = M + i * (col + gap);
+    page.drawRectangle({ x, y: H - y - 76, width: col, height: 76, color: fill, borderColor: i === 2 ? colors.border : fill, borderWidth: 0.5 });
+    text(label, x + 10, y + 10, 8, heading, ink, col - 20);
+    text(value, x + 10, y + 44, 13, heading, ink, col - 20);
+  });
+  y += 94;
+  space(122);
   rect(M, y, CW, 100, colors.cobalt); rect(M, y, 5, 100, colors.gold);
   text(statusLabel, M + 17, y + 15, 10, heading, colors.onSolid);
   text(money(Math.abs(s.balance)), M + 17, y + 35, 29, heading, colors.onSolid);
   text(s.status === "a_repassar" ? "Repasse STAYO até o dia 10 do mês seguinte" : s.status === "zerado" ? "Nenhum valor pendente pela STAYO" : "Compensação conforme os lançamentos do mês", M + 17, y + 77, 9, body, colors.onSolid);
   y += 122;
-  const gap = 12, col = (CW - gap * 2) / 3;
-  [["RECEBIDO PELA STAYO", money(s.stayoGross)], ["DIRETO AO PROPRIETÁRIO", money(s.autoOwnerDirect)], ["JÁ REPASSADO PELA STAYO", money(s.transferred)]].forEach(([label, value], i) => {
-    const x = M + i * (col + gap); rect(x, y, col, 74, colors.soft);
-    text(label ?? "", x + 10, y + 10, 8, heading, colors.muted, col - 20);
-    text(value ?? "", x + 10, y + 42, 15, heading, colors.navy, col - 20);
-  });
-  y += 99;
   section("Resumo do fechamento");
   line("Parte do proprietário nas reservas STAYO", money(s.ownerShare));
   line("(–) Despesas do proprietário", money(s.expenseTotal));
   line("(–) Repasses já realizados", money(s.transferred));
   line(s.status === "a_compensar" ? "Saldo a compensar" : "Saldo a repassar", money(Math.abs(s.balance)), true);
   y += 12;
+  space(42);
   text("Reservas com repasse direto pela plataforma são informativas e não integram o saldo de repasse da STAYO.", M, y, 9, body, colors.muted);
 
   newPage();
   const group = (title: string, flow: "stayo" | "platform_auto") => {
-    section(title);
     const selected = rows.filter(r => r.payout_flow === flow);
+    if (selected.length) space(230);
+    section(title);
     if (!selected.length) { y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 18; return; }
     for (const r of selected) {
-      const nameLines = Math.ceil(body.widthOfTextAtSize(r.guest_name, 11) / (CW - 24)) + 1;
-      const height = 131 + nameLines * 15;
+      const nameLines = wrap(r.guest_name, 11, heading, CW - 28).length;
+      const headingLines = wrap(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, 10, heading, CW - 28).length;
+      const height = 116 + nameLines * 15 + (headingLines - 1) * 14;
       space(height + 14);
       rect(M, y, CW, height, colors.soft);
       rect(M, y, 4, height, r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt);
       const top = y;
-      text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 14, top + 12, 10, heading);
-      let cursor = top + 34;
+      text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 14, top + 12, 10, heading, r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt, CW - 28);
+      let cursor = top + 20 + headingLines * 14;
       cursor += text(r.guest_name, M + 14, cursor, 11, heading, colors.ink, CW - 28);
       cursor += text(`CPF ${payoutPdfCpf(r.guest_cpf)}`, M + 14, cursor + 3, 10) + 7;
       cursor += text(`Check-in ${date(r.checkin_date)}  ·  Check-out ${date(r.checkout_date)}`, M + 14, cursor, 10) + 10;
