@@ -14,6 +14,6 @@ describe("PDF mensal de repasse", () => {
   });
   it("cortesia de valor zero permite documento", () => { expect(payoutPdfReadiness({ ...input, reservations: [{ ...reservation, reservation_code: "RSV-00201", gross_cents: 0, cleaning_cents: 0 }] })).toBe(true); });
   it("RSV-00461 mantém bruto 2500, limpeza 300 e saldo 1760", () => { expect(computeStatement(input.competence, 20, [reservation], [], []).balance).toBe(176000); });
-  it("canal Airbnb no Ravena não torna o fluxo automático", () => { expect(computeStatement(input.competence, 20, [{ ...reservation, channel: "airbnb" }], [], []).balance).toBe(176000); });
+  it("canal Airbnb no Ravena não torna o fluxo automático", () => { const airbnb: PayoutPdfReservation = { ...reservation, channel: "airbnb" }; expect(computeStatement(input.competence, 20, [airbnb], [], []).balance).toBe(176000); });
   it("reservas automáticas têm saldo STAYO zero", () => { expect(computeStatement(input.competence, 20, [{ ...reservation, payout_flow: "platform_auto", owner_direct_cents: 176000 }], [], []).balance).toBe(0); });
 });

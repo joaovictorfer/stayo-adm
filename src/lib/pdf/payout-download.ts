@@ -40,7 +40,7 @@ export async function downloadPayoutPdf(input: Omit<PayoutPdfInput, "palette" | 
       }
     } catch { /* An unavailable real cover is omitted, never replaced by another property's photo. */ }
   }
-  const pdf = await generatePayoutPdf({ ...input, palette: printPalette(), assets: { logo, bodyFont: body, headingFont: heading, cover } });
+  const pdf = await generatePayoutPdf({ ...input, palette: printPalette(), assets: { logo, bodyFont: body, headingFont: heading, ...(cover ? { cover } : {}) } });
   const url = URL.createObjectURL(new Blob([new Uint8Array(pdf)], { type: "application/pdf" }));
   const anchor = document.createElement("a"); anchor.href = url;
   anchor.download = `STAYO-Repasse-${input.property.replace(/[^\p{L}\p{N}]+/gu, "-")}-${input.competence}.pdf`;
