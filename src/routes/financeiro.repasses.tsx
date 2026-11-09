@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
 import { computeStatement, competenceOf, previousCompetence, type PayoutFlow } from "@/lib/payout-statement";
+import { payoutPdfReadiness, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
+import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 
 export const Route = createFileRoute("/financeiro/repasses")({
   head: () => ({ meta: [
@@ -28,14 +30,14 @@ const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency"
 const toCents = (v: string) => Math.round(Number(v.replace(/\./g, "").replace(",", ".") || 0) * 100);
 const br = (d: string) => d.split("-").reverse().join("/");
 const db = () => { const c = getSupabaseBrowserClient(); if (!c) throw new Error("Indisponível"); return c; };
-const monthRange = (m: string) => { const [y, mo] = m.split("-").map(Number); const end = new Date(Date.UTC(y!, mo!, 0)).toISOString().slice(0, 10); return [`${m}-01`, end] as const; };
+const monthRange = (m: string) => { const [y = 2026, mo = 1] = m.split("-").map(Number); const end = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10); return [`${m}-01`, end] as const; };
 
 function Page() {
   const qc = useQueryClient();
   const [impl, setImpl] = useState("");
   const [month, setMonth] = useState(previousCompetence());
   const props = useQuery({ queryKey: ["payout", "props"], queryFn: async () => {
-    const { data, error } = await db().from("implementation_projects").select("id, code, nickname, condominium_name, unit").order("code");
+    const { data, error } = await db().from("implementation_projects").select("id, code, nickname, condominium_name, unit, owner_id").order("code");
     if (error) throw error; return data;
   } });
   const [from, to] = monthRange(month);
@@ -47,8 +49,8 @@ function Page() {
       c.from("payout_transfers").select("*").eq("implementation_id", impl).eq("competence", month).order("paid_on"),
       c.from("implementation_contract_conditions").select("administration_fee").eq("implementation_id", impl).maybeSingle(),
     ]);
-    for (const r of [res, exp, tr]) if (r.error) throw r.error;
-    return { res: res.data!, exp: exp.data!, tr: tr.data!, fee: Number(cond.data?.administration_fee ?? 20) };
+    for (const r of [res, exp, tr, cond]) if (r.error) throw r.error;
+    return { res: res.data ?? [], exp: exp.data ?? [], tr: tr.data ?? [], fee: Number(cond.data?.administration_fee ?? 20) };
   } });
   const refresh = () => qc.invalidateQueries({ queryKey: ["payout", impl, month] });
   const s = useMemo(() => data.data ? computeStatement(month, data.data.fee, data.data.res as never, data.data.exp, data.data.tr) : null, [data.data, month]);
@@ -79,6 +81,22 @@ function Page() {
   const selectedProperty = props.data?.find((p) => p.id === impl);
   const propertyTitle = selectedProperty ? [selectedProperty.condominium_name, selectedProperty.unit].filter(Boolean).join(" ") || selectedProperty.nickname || selectedProperty.code : "";
   const monthTitle = new Date(`${month}-01T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
+  const [generating, setGenerating] = useState(false);
+  const pdfReady = !!data.data && payoutPdfReadiness({ competence: month, reservations: data.data.res as PayoutPdfReservation[] });
+  const runPdf = async () => {
+    if (!selectedProperty || !data.data || !pdfReady) return;
+    setGenerating(true);
+    try {
+      const snapshot = data.data;
+      const owner = selectedProperty.owner_id ? await db().from("owner_records").select("name").eq("id", selectedProperty.owner_id).maybeSingle() : null;
+      if (owner?.error) throw owner.error;
+      const covers = await listImplementationCoverUrls([selectedProperty.id]).catch(() => ({} as Record<string, string>));
+      const { downloadPayoutPdf } = await import("@/lib/pdf/payout-download");
+      await downloadPayoutPdf({ property: propertyTitle, propertyCode: selectedProperty.code, ownerName: owner?.data?.name, competence: month, adminFeePercent: snapshot.fee, reservations: snapshot.res as PayoutPdfReservation[], expenses: snapshot.exp, transfers: snapshot.tr }, covers[selectedProperty.id]);
+      toast.success("PDF gerado com o CPF completo dos hóspedes.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível gerar o PDF."); }
+    finally { setGenerating(false); }
+  };
 
   return <div className="payout-workspace space-y-7">
     <AdminPageHeader title="Relatório de repasse" description={propertyTitle ? `${propertyTitle} · ${monthTitle}` : "Reservas, despesas e repasses por imóvel"} actions={<Link to="/financeiro" className="admin-inline-link">Financeiro</Link>} />
@@ -93,6 +111,7 @@ function Page() {
       <div className="flex flex-wrap items-end gap-2 sm:ml-auto">
         <Button variant="outline" className="h-11" disabled={syncing} onClick={runOwners}>Importar proprietários vinculados</Button>
         <Button className="payout-primary h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Atualizar reservas</Button>
+        <Button variant="outline" className="h-11" disabled={!impl || !pdfReady || data.isFetching || generating || syncing} onClick={runPdf} title={!pdfReady && impl ? "Complete os valores ausentes antes de gerar o PDF" : "Baixar relatório mensal com CPF completo"}><FileDown />{generating ? "Gerando PDF…" : "Gerar PDF"}</Button>
       </div>
     </div>
 
