@@ -158,6 +158,11 @@ export const navigation: NavItem[] = [
     path: "/financeiro",
     icon: "currency-dollar",
     roles: ["super_admin", "finance"],
+    children: [
+      { id: "financial-overview", label: "Visão geral", path: "/financeiro", icon: "list", roles: ["super_admin", "finance"] },
+      { id: "financial-charges", label: "Cobranças", path: "/financeiro/cobrancas", icon: "file-invoice", roles: ["super_admin", "finance"] },
+      { id: "financial-payout-report", label: "Relatório de repasse", path: "/financeiro/repasses", icon: "file-text", roles: ["super_admin", "finance"] },
+    ],
   },
   { id: "bi", label: "BI", path: "/bi", icon: "chart-bar", roles: ["super_admin", "admin"] },
   {
