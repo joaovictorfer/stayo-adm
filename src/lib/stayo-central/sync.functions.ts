@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isValidCpf } from "@/lib/owner-form-validation";
 
 /**
  * Leitura do Guia STAYO → Admin. Reservas entram no relatório de repasse
@@ -69,6 +70,12 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
         guest_name: (st.ok && st.data.data?.titular_guest?.name) || r.guest_name || "Hóspede",
         checkin_date: r.checkin_date, checkout_date: r.checkout_date,
       };
+      // Only the provider's resolved titular supplies the document. An omitted,
+      // restricted or invalid CPF must not erase a previously saved document.
+      const titular = st.ok ? st.data.data?.titular_guest : null;
+      if (titular?.status === "resolved" && typeof titular.cpf === "string" && isValidCpf(titular.cpf)) {
+        base["guest_cpf"] = titular.cpf.replace(/\D/g, "");
+      }
       // Valor ausente no Guia nunca vira zero real: grava 0 técnico e marca em missing_amounts.
       const missing: string[] = [];
       const pick = (key: string, m: any) => { const v = has ? cents(m) : null; if (v === null) missing.push(key); return v ?? 0; };
