@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -12,6 +12,7 @@ import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
 import { computeStatement, competenceOf, previousCompetence, type PayoutFlow } from "@/lib/payout-statement";
 import { payoutPdfReadiness, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
 import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
+import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 
 export const Route = createFileRoute("/financeiro/repasses")({
   head: () => ({ meta: [
@@ -40,6 +41,8 @@ function Page() {
     const { data, error } = await db().from("implementation_projects").select("id, code, nickname, condominium_name, unit, owner_id").order("code");
     if (error) throw error; return data;
   } });
+  const propertyIds = props.data?.map(p => p.id) ?? [];
+  const covers = useQuery({ queryKey: ["payout", "covers", propertyIds], enabled: propertyIds.length > 0, queryFn: () => listImplementationCoverUrls(propertyIds), staleTime: 30 * 60 * 1000 });
   const [from, to] = monthRange(month);
   const data = useQuery({ enabled: !!impl, queryKey: ["payout", impl, month], queryFn: async () => {
     const c = db();
@@ -100,22 +103,30 @@ function Page() {
 
   return <div className="payout-workspace space-y-7">
     <AdminPageHeader title="Relatório de repasse" description={propertyTitle ? `${propertyTitle} · ${monthTitle}` : "Reservas, despesas e repasses por imóvel"} actions={<Link to="/financeiro" className="admin-inline-link">Financeiro</Link>} />
-    <div className="payout-filters flex flex-wrap items-end gap-3">
-      <label className="grid gap-1 text-sm">Imóvel
-        <select className="h-11 w-full min-w-0 rounded-md border bg-background px-3 sm:w-72" value={impl} onChange={(e) => setImpl(e.target.value)}>
-          <option value="">Selecione…</option>
-          {props.data?.map((p) => <option key={p.id} value={p.id}>{p.code} · {[p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || "Sem nome"}</option>)}
-        </select></label>
-      <label className="grid gap-1 text-sm">Mês de referência
-        <Input type="month" className="h-11" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
-      <div className="flex flex-wrap items-end gap-2 sm:ml-auto">
-        <Button variant="outline" className="h-11" disabled={syncing} onClick={runOwners}>Importar proprietários vinculados</Button>
+    <div className="payout-filters">
+      <PayoutPropertyPicker properties={props.data ?? []} covers={covers.data ?? {}} value={impl} onChange={setImpl} loading={props.isPending} error={props.isError} />
+      <label className="payout-month-field grid gap-2 text-xs font-semibold text-muted-foreground">Mês de referência
+        <Input type="month" aria-label="Mês de referência" className="h-14 text-foreground" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
+      <div className="payout-filter-actions">
+        <Button variant="outline" size="icon" className="h-11 w-11" disabled={syncing} onClick={runOwners} title="Importar proprietários vinculados" aria-label="Importar proprietários vinculados"><Users /></Button>
         <Button className="payout-primary h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Atualizar reservas</Button>
         <Button variant="outline" className="h-11" disabled={!impl || !pdfReady || data.isFetching || generating || syncing} onClick={runPdf} title={!pdfReady && impl ? "Complete os valores ausentes antes de gerar o PDF" : "Baixar relatório mensal com CPF completo"}><FileDown />{generating ? "Gerando PDF…" : "Gerar PDF"}</Button>
       </div>
     </div>
 
-    {!impl ? <p className="text-sm text-muted-foreground">Escolha um imóvel para ver o relatório.</p>
+    {selectedProperty && <div className="payout-selected-property">
+      <PayoutPropertyPhoto url={covers.data?.[impl]} name={propertyTitle} large />
+      <div className="min-w-0 flex-1"><p className="text-xs font-medium text-muted-foreground">{selectedProperty.code}</p><h2 className="mt-1 text-xl font-semibold">{propertyTitle}</h2><p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground"><CalendarDays size={14} />{monthTitle}</p></div>
+      <Link to="/implantacao/$id" params={{ id: impl }} className="admin-inline-link shrink-0" aria-label={`Abrir ficha de ${propertyTitle}`}>Ficha do imóvel <ArrowUpRight size={15} /></Link>
+    </div>}
+
+    {!impl ? <section className="payout-property-browser">
+      <div className="mb-5 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Imóveis</h2><span className="text-xs text-muted-foreground">{props.data?.length ?? 0} cadastrados</span></div>
+      {props.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar os imóveis.</p> : props.isPending ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{[1, 2, 3, 4, 5, 6].map(n => <div key={n} className="h-24 animate-pulse rounded-md bg-muted" />)}</div> : <div className="payout-property-grid">{props.data?.map(p => <Button key={p.id} variant="outline" className="payout-property-tile" onClick={() => setImpl(p.id)}>
+        <PayoutPropertyPhoto url={covers.data?.[p.id]} name={payoutPropertyName(p)} large />
+        <span className="min-w-0 flex-1 text-left"><span className="block text-xs text-muted-foreground">{p.code}</span><span className="mt-1 block whitespace-normal font-semibold">{payoutPropertyName(p)}</span></span><ArrowUpRight className="shrink-0 text-muted-foreground" />
+      </Button>)}</div>}
+    </section>
     : data.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar. Verifique se você tem acesso ao financeiro.</p>
     : !data.data || !s ? <p className="text-sm text-muted-foreground">Carregando…</p> : <>
       <div className="payout-metrics grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
