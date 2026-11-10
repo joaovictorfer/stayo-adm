@@ -1,4 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { PostalCodeInput } from "@/components/ui/postal-code-input";
+import { useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { AdminCondominium, AdminCondominiumInput } from "@/types/admin";
@@ -73,6 +75,8 @@ export function CondominiumForm({
   onChange: (next: CondominiumFormValues) => void;
   nameError?: string | null;
 }) {
+  const latest = useRef(values);
+  latest.current = values;
   const set = <K extends keyof CondominiumFormValues>(k: K, v: CondominiumFormValues[K]) =>
     onChange({ ...values, [k]: v });
 
@@ -89,11 +93,13 @@ export function CondominiumForm({
         {nameError && <p className="text-xs text-destructive">{nameError}</p>}
       </Field>
       <Field className="sm:col-span-2" label="CEP">
-        <Input
-          inputMode="numeric"
+        <PostalCodeInput
           value={values.postalCode}
-          onChange={(e) => set("postalCode", maskCep(e.target.value))}
-          placeholder="00000-000"
+          onChange={(value) => set("postalCode", value)}
+          onAddress={({ street, district, city, state }) => onChange({ ...latest.current,
+            ...(street ? { address: street } : {}), ...(district ? { neighborhood: district } : {}),
+            ...(city ? { city } : {}), ...(state ? { state } : {}),
+          })}
         />
       </Field>
       <Field className="sm:col-span-4" label="Endereço">

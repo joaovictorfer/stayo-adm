@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { StayoLogo } from "../components/brand/StayoLogo";
+import { PostalCodeInput } from "../components/ui/postal-code-input";
 import { OwnerCoverBanner } from "../components/portal/OwnerCoverBanner";
 import {
   propertyTypeLabel,
@@ -358,12 +359,15 @@ function Wizard({
                 />
               </Field>
               <Field label="CEP" optional>
-                <input
+                <PostalCodeInput
                   className="stayo-commercial-input"
-                  inputMode="numeric"
                   value={data.postalCode ?? ""}
-                  onChange={(e) => set("postalCode", maskCep(e.target.value))}
+                  onChange={(value) => set("postalCode", value)}
                   onBlur={blur("postalCode")}
+                  onAddress={({ district, city }) => {
+                    if (district) set("district", district);
+                    if (city) set("city", city);
+                  }}
                 />
               </Field>
             </div>

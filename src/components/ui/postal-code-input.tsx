@@ -26,7 +26,7 @@ export function PostalCodeInput({ value, onChange, onAddress, onBlur, disabled, 
     request.current?.abort();
     if (timer.current) clearTimeout(timer.current);
   };
-  useEffect(() => { cancel(); setStatus("idle"); setMessage(""); }, [value, disabled]);
+  useEffect(() => { request.current?.abort(); setStatus("idle"); setMessage(""); }, [value, disabled]);
   useEffect(() => () => cancel(), []);
 
   async function search(cep: string) {

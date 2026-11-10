@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "../ui/button";
+import { PostalCodeInput } from "../ui/postal-code-input";
 import { Checkbox } from "../ui/checkbox";
 import {
   CondominiumForm,
@@ -1516,12 +1517,16 @@ function PropertyQuestions({
                 value={v.city}
                 onChange={(x) => set("city", x)}
               />
-              <TextField
-                label="CEP"
-                inputMode="numeric"
+              <div className="min-w-0 space-y-1.5">
+                <span className="text-sm">CEP</span>
+                <PostalCodeInput
                 value={v.postal_code}
                 onChange={(x) => set("postal_code", x)}
-              />
+                onAddress={({ street, city }) => {
+                  if (street) set("address", street);
+                  if (city) set("city", city);
+                }} />
+              </div>
             </div>
           </div>
         ) : (
