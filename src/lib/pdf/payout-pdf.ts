@@ -30,6 +30,12 @@ export function payoutPdfAmount(r: PayoutPdfReservation, key: string, cents: num
 export function payoutPdfReadiness(input: Pick<PayoutPdfInput, "reservations" | "competence">) {
   return input.reservations.filter(r => competenceOf(r.checkin_date) === input.competence).every(r => (r.missing_amounts?.length ?? 0) === 0);
 }
+/** Divisão contratual por reserva: base = diárias líquidas (bruto − limpeza − taxa do canal). */
+export function payoutPdfSplit(r: PayoutPdfReservation, adminFeePercent: number) {
+  const base = Math.max(0, r.gross_cents - r.cleaning_cents - r.platform_fee_cents);
+  const stayo = Math.round((base * adminFeePercent) / 100);
+  return { base, stayo, owner: base - stayo };
+}
 
 /** Browser-safe renderer: no database, public link, upload or financial writes. */
 export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Array> {
@@ -155,36 +161,61 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   text("Reservas com repasse direto pela plataforma são informativas e não integram o saldo de repasse da STAYO.", M, y, 9, body, colors.muted);
 
   newPage();
-  const group = (title: string, flow: "stayo" | "platform_auto") => {
+  const pct = input.adminFeePercent;
+  const rightAt = (value: string, edge: number, top: number, size: number, font: PDFFont, color: ReturnType<typeof rgb>) =>
+    text(value, edge - font.widthOfTextAtSize(value, size), top, size, font, color);
+  /** Tabela executiva compacta: valor total e divisão contratual por reserva, sem detalhar limpeza. */
+  const table = (title: string, flow: "stayo" | "platform_auto") => {
     const selected = rows.filter(r => r.payout_flow === flow);
-    if (selected.length) space(230);
+    if (selected.length) space(150);
     section(title);
     if (!selected.length) { y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 18; return; }
-    for (const r of selected) {
-      const nameLines = wrap(r.guest_name, 11, heading, CW - 28).length;
-      const headingLines = wrap(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, 10, heading, CW - 28).length;
-      const height = 126 + nameLines * 15 + (headingLines - 1) * 14;
-      space(height + 14);
-      rect(M, y, CW, height, colors.soft);
-      rect(M, y, 4, height, r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt);
-      const top = y;
-      text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 14, top + 12, 10, heading, r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt, CW - 28);
-      let cursor = top + 20 + headingLines * 14;
-      cursor += text(r.guest_name, M + 14, cursor, 11, heading, colors.ink, CW - 28);
-      cursor += text(`CPF ${payoutPdfCpf(r.guest_cpf)}`, M + 14, cursor + 3, 10) + 7;
-      cursor += text(`Check-in ${date(r.checkin_date)}  ·  Check-out ${date(r.checkout_date)}`, M + 14, cursor, 10) + 10;
-      const metrics = flow === "stayo" ? [["Valor bruto", money(r.gross_cents)], ["Limpeza", money(r.cleaning_cents)], ["Taxa do canal", money(r.platform_fee_cents)]] : [["Valor bruto", money(r.gross_cents)], ["Pago direto ao dono", payoutPdfAmount(r, "owner_direct", r.owner_direct_cents)]];
-      metrics.forEach(([l, v], i) => {
-        const width = (CW - 28) / metrics.length, x = M + 14 + width * i;
-        text(l ?? "", x, cursor, 9, body, colors.muted, width - 10);
-        text(v ?? "", x, cursor + 16, 12, heading, colors.navy, width - 10);
-      });
-      y = top + height + 14;
-    }
-    y += 8;
+    const stayoFlow = flow === "stayo";
+    const firstEdge = M + 270, midEdge = M + 375, lastEdge = W - M - 12;
+    const columns = stayoFlow
+      ? [{ label: "VALOR TOTAL", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `PROPRIETÁRIO · ${100 - pct}%`, edge: lastEdge }]
+      : [{ label: "VALOR TOTAL", edge: firstEdge }, { label: "PAGO DIRETO AO PROPRIETÁRIO", edge: lastEdge }];
+    const labelW = firstEdge - 105 - M - 14;
+    space(20);
+    text("RESERVA / HÓSPEDE", M + 12, y, 8, heading, colors.muted);
+    columns.forEach((c) => rightAt(c.label, c.edge, y, 8, heading, colors.muted));
+    y += 16;
+    let sumFirst = 0, sumMid = 0, sumLast = 0;
+    selected.forEach((r, i) => {
+      const nameLines = wrap(r.guest_name, 11, heading, labelW).length;
+      const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date)}–${date(r.checkout_date)}`;
+      const cpfLines = wrap(cpfText, 9, body, labelW).length;
+      const height = 42 + nameLines * 14 + (cpfLines - 1) * 12;
+      space(height);
+      if (i % 2 === 0) rect(M, y, CW, height, colors.soft);
+      const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
+      text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 12, y + 9, 9, heading, channelColor, labelW);
+      text(r.guest_name, M + 12, y + 24, 11, heading, colors.ink, labelW);
+      text(cpfText, M + 12, y + 26 + nameLines * 14, 9, body, colors.muted, labelW);
+      const split = payoutPdfSplit(r, pct);
+      const cells = stayoFlow
+        ? [{ v: money(split.base), edge: firstEdge, last: false }, { v: money(split.stayo), edge: midEdge, last: false }, { v: money(split.owner), edge: lastEdge, last: true }]
+        : [{ v: money(r.gross_cents), edge: firstEdge, last: false }, { v: payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), edge: lastEdge, last: true }];
+      cells.forEach((c) => rightAt(c.v, c.edge, y + 21, 11.5, heading, c.last ? colors.cobalt : colors.ink));
+      if (stayoFlow) { sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner; }
+      else { sumFirst += r.gross_cents; sumLast += r.owner_direct_cents; }
+      y += height;
+    });
+    space(52);
+    rect(M, y, CW, 50, colors.navy);
+    text("TOTAL DO MÊS", M + 12, y + 9, 9, heading, colors.onSolid);
+    text(`${selected.length} ${selected.length === 1 ? "reserva" : "reservas"}`, M + 12, y + 27, 10, body, colors.onSolid);
+    const totals = stayoFlow
+      ? [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: `STAYO · ${pct}%`, v: sumMid, edge: midEdge }, { l: `Proprietário · ${100 - pct}%`, v: sumLast, edge: lastEdge }]
+      : [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: "Pago direto", v: sumLast, edge: lastEdge }];
+    totals.forEach((t) => {
+      rightAt(t.l, t.edge, y + 8, 8, body, colors.onSolid);
+      rightAt(money(t.v), t.edge, y + 24, 12, heading, colors.onSolid);
+    });
+    y += 66;
   };
-  group("Reservas recebidas pela STAYO", "stayo");
-  group("Repasse direto pela plataforma", "platform_auto");
+  table("Reservas recebidas pela STAYO", "stayo");
+  table("Repasse direto pela plataforma", "platform_auto");
 
   newPage();
   section("Composição financeira do mês");
