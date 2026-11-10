@@ -4,6 +4,17 @@ import { payoutPdfCpf, payoutPdfAmount, payoutPdfReadiness, payoutPdfSplit, payo
 const reservation: PayoutPdfReservation = { payout_flow: "stayo", reservation_code: "RSV-00461", channel: "direta", guest_name: "Hóspede de teste", guest_cpf: "12345678909", checkin_date: "2026-10-30", checkout_date: "2026-11-02", gross_cents: 250000, cleaning_cents: 30000, platform_fee_cents: 0, owner_direct_cents: 0 };
 const input: PayoutPdfInput = { property: "Imóvel de teste", propertyCode: "TEST", competence: "2026-10", adminFeePercent: 20, reservations: [reservation], expenses: [], transfers: [], palette: { navy: [0,0,0.2], cobalt: [0,0,0.6], coral: [0.7,0,0], gold: [0.5,0.4,0], paper: [1,1,1], ink: [0,0,0], muted: [0.4,0.4,0.4], border: [0.8,0.8,0.8], soft: [0.95,0.95,0.95], onSolid: [1,1,1] } };
 describe("PDF mensal de repasse", () => {
+  it("preserva o repasse de 1760 no balancete após pagamento e mantém saldo operacional zero", () => {
+    const result = payoutPdfBalance({ ...input, transfers: [{ competence: "2026-10", amount_cents: 176000, paid_on: "2026-11-10", method: "pix" }] });
+    expect(result.closingAmount).toBe(176000);
+    expect(result.statement.transferred).toBe(176000);
+    expect(result.statement.balance).toBe(0);
+  });
+  it("pagamento parcial não reduz o valor apurado do balancete", () => {
+    const result = payoutPdfBalance({ ...input, transfers: [{ competence: "2026-10", amount_cents: 50000, paid_on: "2026-11-10", method: "pix" }] });
+    expect(result.closingAmount).toBe(176000);
+    expect(result.statement.balance).toBe(126000);
+  });
   it("preserva os 11 dígitos do CPF, sem máscara", () => { expect(payoutPdfCpf("12345678909")).toBe("123.456.789-09"); });
   it("ausência de CPF não inventa um documento", () => { expect(payoutPdfCpf(null)).toBe("Não informado"); });
   it("valor ausente não é zero e bloqueia fechamento", async () => {

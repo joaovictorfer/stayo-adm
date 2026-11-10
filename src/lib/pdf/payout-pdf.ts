@@ -52,6 +52,7 @@ export function payoutPdfBalance(input: Pick<PayoutPdfInput, "competence" | "adm
     totalReservations: rows.reduce((sum, r) => sum + payoutPdfSplit(r, input.adminFeePercent).base, 0),
     airbnbReceived: received(direct.filter(r => r.channel === "airbnb")),
     totalReceived: directReceived === null ? null : directReceived + statement.transferred,
+    closingAmount: statement.ownerShare - statement.expenseTotal,
     // Automatic flows are settled outside STAYO; use documented receipts, not an estimated contractual entitlement.
     totalOwner: directReceived === null ? null : statement.ownerShare + directReceived,
     otherDirectReceived: received(direct.filter(r => r.channel !== "airbnb")),
@@ -233,7 +234,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const ownerHeight = wrap(ownerLabel, 9, heading, CW).length * 13;
   // Keep the entire closing statement together, including long identities and extra channels.
   const balanceTitleHeight = wrap("Balancete do mês", 16, heading, CW).length * 20 + 22;
-  space(balanceTitleHeight + ownerHeight + 338 + (balance.hasOtherDirect ? 32 : 0) + (s.transferred ? 32 : 0));
+  space(balanceTitleHeight + ownerHeight + 338 + (balance.hasOtherDirect ? 32 : 0) + (s.transferred ? 96 : 0));
   section("Balancete do mês");
   y += text(ownerLabel, M, y, 9, heading, colors.navy) + 6;
   rounded(M, y, CW, 48, colors.soft, 6);
@@ -249,8 +250,8 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   airbnbIcon(M + 12, y + 12, 14);
   text("Airbnb · pago direto ao Prop.", M + 34, y + 12, 9, body, colors.muted, summaryWidth - 46);
   text(balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived), M + 12, y + 34, 18, heading, colors.navy, summaryWidth - 24);
-  text(s.status === "a_compensar" ? "Saldo a compensar" : "Saldo a repassar ao proprietário", saldoX + 12, y + 12, 9, heading, colors.onSolid, summaryWidth - 24);
-  text(money(Math.abs(s.balance)), saldoX + 12, y + 34, 18, heading, colors.onSolid, summaryWidth - 24);
+  text(balance.closingAmount < 0 ? "Saldo a compensar" : "Saldo a repassar ao proprietário", saldoX + 12, y + 12, 9, heading, colors.onSolid, summaryWidth - 24);
+  text(money(Math.abs(balance.closingAmount)), saldoX + 12, y + 34, 18, heading, colors.onSolid, summaryWidth - 24);
   y += 87;
 
   text("COMPOSIÇÃO DO REPASSE", M, y, 9, heading, colors.navy);
@@ -259,12 +260,16 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   line("(−) Já repassado via Airbnb", balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived));
   if (balance.hasOtherDirect) line("(−) Já repassado por outras plataformas", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
   line("(−) Despesas extraordinárias do proprietário", money(s.expenseTotal));
-  if (s.transferred) line("(−) Já repassado pela STAYO", money(s.transferred));
   rounded(M + 3, y + 10, CW - 6, 54, colors.cobalt, 6, true);
-  text(s.status === "a_repassar" ? "= VALOR A SER REPASSADO" : statusLabel, M + 15, y + 21, 10, heading, colors.onSolid, CW - 190);
-  if (s.status === "a_repassar") text("Saldo a receber da STAYO", M + 15, y + 39, 8, body, colors.onSolid, CW - 190);
-  rightAt(money(Math.abs(s.balance)), W - M - 15, y + 24, 20, heading, colors.onSolid);
+  text(balance.closingAmount < 0 ? "= VALOR A COMPENSAR" : "= VALOR DO REPASSE DO MÊS", M + 15, y + 21, 10, heading, colors.onSolid, CW - 190);
+  text("Valor apurado no balancete", M + 15, y + 39, 8, body, colors.onSolid, CW - 190);
+  rightAt(money(Math.abs(balance.closingAmount)), W - M - 15, y + 24, 20, heading, colors.onSolid);
   y += 72;
+  if (s.transferred > 0) {
+    const paymentLabel = s.balance === 0 ? `Pago ${money(s.transferred)} conforme acordado.` : `Pagamento realizado: ${money(s.transferred)}.`;
+    y += text(paymentLabel, M + 12, y, 11, heading, colors.success ?? colors.cobalt, CW - 24) + 3;
+    y += text(`Saldo pendente: ${money(Math.max(0, s.balance))}. Confira o comprovante de pagamento em anexo.`, M + 12, y, 9, body, colors.muted, CW - 24) + 6;
+  }
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     page = p;
