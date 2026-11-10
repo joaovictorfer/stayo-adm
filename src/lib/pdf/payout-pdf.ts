@@ -173,7 +173,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       const nameLines = wrap(r.guest_name, 11, heading, labelW).length;
       const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date).slice(0, 5)}–${date(r.checkout_date).slice(0, 5)}`;
       const codeText = `${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`;
-      const codeHeight = wrap(codeText, 8, heading, labelW).length * 12;
+      const codeHeight = wrap(codeText, 8, heading, labelW - (r.channel === "airbnb" ? 16 : 0)).length * 12;
       const cpfLines = wrap(cpfText, 9, body, labelW).length;
       const height = Math.max(directFlow ? 88 : 56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
       space(height + (i === selected.length - 1 ? 48 : 7));
@@ -229,7 +229,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const ownerHeight = wrap(ownerLabel, 9, heading, CW).length * 13;
   // Keep the entire closing statement together, including long identities and extra channels.
   const balanceTitleHeight = wrap("Balancete do mês", 16, heading, CW).length * 20 + 22;
-  space(balanceTitleHeight + ownerHeight + 334 + (balance.hasOtherDirect ? 32 : 0));
+  space(balanceTitleHeight + ownerHeight + 380 + (balance.hasOtherDirect ? 32 : 0));
   section("Balancete do mês");
   y += text(ownerLabel, M, y, 9, heading, colors.navy) + 6;
   rounded(M, y, CW, 48, colors.soft, 6);
