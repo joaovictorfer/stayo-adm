@@ -30,6 +30,12 @@ export function payoutPdfAmount(r: PayoutPdfReservation, key: string, cents: num
 export function payoutPdfReadiness(input: Pick<PayoutPdfInput, "reservations" | "competence">) {
   return input.reservations.filter(r => competenceOf(r.checkin_date) === input.competence).every(r => (r.missing_amounts?.length ?? 0) === 0);
 }
+/** Divisão contratual por reserva: base = diárias líquidas (bruto − limpeza − taxa do canal). */
+export function payoutPdfSplit(r: PayoutPdfReservation, adminFeePercent: number) {
+  const base = Math.max(0, r.gross_cents - r.cleaning_cents - r.platform_fee_cents);
+  const stayo = Math.round((base * adminFeePercent) / 100);
+  return { base, stayo, owner: base - stayo };
+}
 
 /** Browser-safe renderer: no database, public link, upload or financial writes. */
 export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Array> {

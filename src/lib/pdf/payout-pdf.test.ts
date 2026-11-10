@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeStatement } from "../payout-statement";
-import { payoutPdfCpf, payoutPdfAmount, payoutPdfReadiness, generatePayoutPdf, type PayoutPdfInput, type PayoutPdfReservation } from "./payout-pdf";
+import { payoutPdfCpf, payoutPdfAmount, payoutPdfReadiness, payoutPdfSplit, generatePayoutPdf, type PayoutPdfInput, type PayoutPdfReservation } from "./payout-pdf";
 const reservation: PayoutPdfReservation = { payout_flow: "stayo", reservation_code: "RSV-00461", channel: "direta", guest_name: "Hóspede de teste", guest_cpf: "12345678909", checkin_date: "2026-10-30", checkout_date: "2026-11-02", gross_cents: 250000, cleaning_cents: 30000, platform_fee_cents: 0, owner_direct_cents: 0 };
 const input: PayoutPdfInput = { property: "Imóvel de teste", propertyCode: "TEST", competence: "2026-10", adminFeePercent: 20, reservations: [reservation], expenses: [], transfers: [], palette: { navy: [0,0,0.2], cobalt: [0,0,0.6], coral: [0.7,0,0], gold: [0.5,0.4,0], paper: [1,1,1], ink: [0,0,0], muted: [0.4,0.4,0.4], border: [0.8,0.8,0.8], soft: [0.95,0.95,0.95], onSolid: [1,1,1] } };
 describe("PDF mensal de repasse", () => {
