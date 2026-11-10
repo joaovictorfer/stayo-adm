@@ -50,6 +50,7 @@ import { reconcileRegistrationContact } from "../../lib/owner-registration-conta
 import institutionalCover from "../../assets/owner-portal-property-fallback.jpg";
 import { useOwnerCoverByToken } from "../../hooks/use-owner-cover";
 import { Button } from "../ui/button";
+import { PostalCodeInput } from "../ui/postal-code-input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { BarChart3 as BentoAdmin, CalendarDays as BentoCalendar, SprayCan as BentoCleaning, Settings as BentoImpl, House as BentoHome, Users as BentoUsers, CheckCircle2 as BentoCheck } from "lucide-react";
 import { ACCOUNT_TYPES, BRAZILIAN_BANKS, PIX_KEY_TYPES } from "../../config/payment-data";
@@ -1892,16 +1893,17 @@ function OwnerStep({
 
           <p className="pd-group">Seu endereço</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="CEP"
-              inputMode="numeric"
-              placeholder="00000-000"
-              value={formatBrazilianPostalCode(form.postalCode)}
-              onChange={(value) => onSet("postalCode", formatBrazilianPostalCode(value))}
-              onBlur={() => void findCep(form.postalCode, onSet, false)}
-              error={error(1, "postalCode")}
-              hint="Preenchemos o endereço automaticamente pelo CEP."
-            />
+            <div className="min-w-0 space-y-1.5">
+              <span className="text-sm">CEP</span>
+              <PostalCodeInput value={form.postalCode} onChange={value => onSet("postalCode", value)}
+                error={error(1, "postalCode")}
+                onAddress={({ street, district, city, state }) => {
+                  if (street) onSet("street", street);
+                  if (district) onSet("district", district);
+                  if (city) onSet("city", city);
+                  if (state) onSet("state", state);
+                }} />
+            </div>
             <Field
               label="Endereço"
               placeholder="Rua, avenida…"
@@ -2571,45 +2573,6 @@ function Blocked({
 }
 
 const getPropertyErrors = propertyRegistrationErrors;
-
-async function findCep(
-  value: string,
-  set: <K extends keyof OwnerOnboardingSubmissionInput>(
-    key: K,
-    value: OwnerOnboardingSubmissionInput[K],
-  ) => void,
-  property: boolean,
-) {
-  const postalCode = value.replace(/\D/g, "");
-  if (postalCode.length !== 8) return;
-  try {
-    const response = await fetch(`https://viacep.com.br/ws/${postalCode}/json/`);
-    const data = (await response.json()) as {
-      erro?: boolean;
-      logradouro?: string;
-      bairro?: string;
-      localidade?: string;
-      uf?: string;
-    };
-    if (data.erro) return;
-    if (property) {
-      set("propertyStreet", data.logradouro ?? "");
-      set("propertyDistrict", data.bairro ?? "");
-      set("propertyCity", data.localidade ?? "");
-      set("propertyState", data.uf ?? "");
-    } else {
-      set("street", data.logradouro ?? "");
-      set("district", data.bairro ?? "");
-      set("city", data.localidade ?? "");
-      set("state", data.uf ?? "");
-    }
-    toast.success("Endereço encontrado");
-  } catch {
-    toast.info("Preencha o endereço manualmente", {
-      description: "A busca do CEP está indisponível no momento.",
-    });
-  }
-}
 
 function ownerErrorMessage(error: unknown) {
   const raw =

@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { saveOwnerAddress, type OwnerAddress } from "../../../lib/api/core-client";
-import { formatBrazilianPostalCode } from "../../../lib/owner-form-validation";
+import { PostalCodeInput } from "../../ui/postal-code-input";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 
@@ -37,13 +37,14 @@ export function OwnerAddressEditor({ implementationId, initial, onDone }: {
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {fields.map(field => <label key={field.key} className={`block min-w-0 ${field.key === "street" ? "sm:col-span-2" : ""}`}>
         <span className="mb-1 block text-xs text-[var(--stayo-ink-muted)]">{field.label}</span>
-        <Input value={address[field.key]} disabled={saving} autoComplete={field.autoComplete}
-          inputMode={field.key === "postalCode" ? "numeric" : "text"}
-          maxLength={field.key === "postalCode" ? 9 : field.key === "state" ? 2 : undefined}
+        {field.key === "postalCode" ? <PostalCodeInput value={address.postalCode} disabled={saving}
+          onChange={postalCode => setAddress(current => ({ ...current, postalCode }))}
+          onAddress={patch => setAddress(current => ({ ...current, ...patch }))} /> : <Input value={address[field.key]} disabled={saving} autoComplete={field.autoComplete}
+          maxLength={field.key === "state" ? 2 : undefined}
           onChange={event => {
-            const value = field.key === "postalCode" ? formatBrazilianPostalCode(event.target.value.replace(/\D/g, "").slice(0, 8)) : field.key === "state" ? event.target.value.replace(/[^a-z]/gi, "").toUpperCase() : event.target.value;
+            const value = field.key === "state" ? event.target.value.replace(/[^a-z]/gi, "").toUpperCase() : event.target.value;
             setAddress(current => ({ ...current, [field.key]: value }));
-          }} />
+          }} />}
       </label>)}
     </div>
     <div className="flex gap-2">

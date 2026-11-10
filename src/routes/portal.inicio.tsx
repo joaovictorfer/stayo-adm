@@ -47,6 +47,7 @@ import portalPropertyFallback from "../assets/owner-portal-property-fallback.jpg
 import { useOwnerCoverForImplementation } from "../hooks/use-owner-cover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
+import { PostalCodeInput } from "../components/ui/postal-code-input";
 import {
   OwnerWelcomeOverlay,
   PortalEmptyState,
@@ -1134,7 +1135,12 @@ function PropertyDetailsPanel({
       {editing ? (
         <div className="portal-property-form">
           <div className="portal-property-form-grid">
-            {field("postalCode", "CEP")}
+            <div className="portal-property-field">
+              <span>CEP</span>
+              <PostalCodeInput value={draft.postalCode ?? ""} disabled={save.isPending}
+                onChange={postalCode => setDraft(current => ({ ...current, postalCode }))}
+                onAddress={patch => setDraft(current => ({ ...current, ...patch }))} />
+            </div>
             {field("street", "Endereço")}
             {field("number", "Número")}
             {field("complement", "Complemento")}
