@@ -46,11 +46,14 @@ export function payoutPdfBalance(input: Pick<PayoutPdfInput, "competence" | "adm
   const direct = rows.filter(r => r.payout_flow === "platform_auto");
   const received = (reservations: PayoutPdfReservation[]) => reservations.some(r => r.missing_amounts?.includes("owner_direct"))
     ? null : reservations.reduce((sum, r) => sum + r.owner_direct_cents, 0);
+  const directReceived = received(direct);
   return {
     reservationCount: rows.length,
     totalReservations: rows.reduce((sum, r) => sum + payoutPdfSplit(r, input.adminFeePercent).base, 0),
     airbnbReceived: received(direct.filter(r => r.channel === "airbnb")),
-    totalReceived: received(direct) === null ? null : (received(direct) ?? 0) + statement.transferred,
+    totalReceived: directReceived === null ? null : directReceived + statement.transferred,
+    // Automatic flows are settled outside STAYO; use documented receipts, not an estimated contractual entitlement.
+    totalOwner: directReceived === null ? null : statement.ownerShare + directReceived,
     otherDirectReceived: received(direct.filter(r => r.channel !== "airbnb")),
     hasOtherDirect: direct.some(r => r.channel !== "airbnb"),
     statement,
@@ -229,37 +232,36 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const ownerHeight = wrap(ownerLabel, 9, heading, CW).length * 13;
   // Keep the entire closing statement together, including long identities and extra channels.
   const balanceTitleHeight = wrap("Balancete do mês", 16, heading, CW).length * 20 + 22;
-  space(balanceTitleHeight + ownerHeight + 380 + (balance.hasOtherDirect ? 32 : 0));
+  space(balanceTitleHeight + ownerHeight + 338 + (balance.hasOtherDirect ? 32 : 0) + (s.transferred ? 32 : 0));
   section("Balancete do mês");
   y += text(ownerLabel, M, y, 9, heading, colors.navy) + 6;
   rounded(M, y, CW, 48, colors.soft, 6);
-  text("Total em reservas do mês", M + 12, y + 8, 10, heading, colors.navy);
+  text("Total do proprietário no mês", M + 12, y + 8, 10, heading, colors.navy);
   text(`${balance.reservationCount} ${balance.reservationCount === 1 ? "reserva" : "reservas"} · ${monthLabel}`, M + 12, y + 26, 8, body, colors.muted);
-  rightAt(money(balance.totalReservations), W - M - 12, y + 13, 17, heading, colors.navy);
+  rightAt(balance.totalOwner === null ? "Não informado" : money(balance.totalOwner), W - M - 12, y + 13, 17, heading, colors.navy);
   y += 64;
 
-  text("JÁ RECEBIDO PELO PROPRIETÁRIO", M, y, 9, heading, colors.navy);
-  y += 24;
-  airbnbIcon(M, y, 14);
-  text("Airbnb · pago direto", M + 22, y, 9, body, colors.muted, CW / 2 - 34);
-  text(balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived), M + 22, y + 17, 16, heading, colors.navy, CW / 2 - 34);
-  const receiptX = M + CW / 2 + 15;
-  page.drawLine({ start: { x: receiptX - 15, y: H - y }, end: { x: receiptX - 15, y: H - y - 39 }, thickness: 0.5, color: colors.border });
-  text("STAYO · repasses realizados", receiptX, y, 9, body, colors.muted, CW / 2 - 15);
-  text(money(s.transferred), receiptX, y + 17, 16, heading, colors.navy, CW / 2 - 15);
-  y += 48;
-  if (balance.hasOtherDirect) line("Outras plataformas · pago direto", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
-  line("Total recebido", balance.totalReceived === null ? "Não informado" : money(balance.totalReceived), true);
-  y += 18;
+  const summaryWidth = (CW - 12) / 2;
+  const saldoX = M + summaryWidth + 12;
+  rounded(M, y, summaryWidth, 67, colors.soft, 6);
+  rounded(saldoX, y, summaryWidth, 67, colors.cobalt, 6, true);
+  airbnbIcon(M + 12, y + 12, 14);
+  text("Airbnb · pago direto ao Prop.", M + 34, y + 12, 9, body, colors.muted, summaryWidth - 46);
+  text(balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived), M + 12, y + 34, 18, heading, colors.navy, summaryWidth - 24);
+  text(s.status === "a_compensar" ? "Saldo a compensar" : "Saldo a repassar ao proprietário", saldoX + 12, y + 12, 9, heading, colors.onSolid, summaryWidth - 24);
+  text(money(Math.abs(s.balance)), saldoX + 12, y + 34, 18, heading, colors.onSolid, summaryWidth - 24);
+  y += 87;
 
-  text("ACERTO COM A STAYO", M, y, 9, heading, colors.navy);
+  text("COMPOSIÇÃO DO REPASSE", M, y, 9, heading, colors.navy);
   y += 19;
-  line("(+) Valor do proprietário nas reservas STAYO", money(s.ownerShare));
-  line("(−) Despesas do proprietário", money(s.expenseTotal));
-  line("(−) Repasses STAYO já recebidos", money(s.transferred));
+  line("(+) Total do proprietário nas reservas do mês", balance.totalOwner === null ? "Não informado" : money(balance.totalOwner), true);
+  line("(−) Já repassado via Airbnb", balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived));
+  if (balance.hasOtherDirect) line("(−) Já repassado por outras plataformas", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
+  line("(−) Despesas extraordinárias do proprietário", money(s.expenseTotal));
+  if (s.transferred) line("(−) Já repassado pela STAYO", money(s.transferred));
   rounded(M + 3, y + 10, CW - 6, 54, colors.cobalt, 6, true);
-  text(s.status === "a_repassar" ? "A RECEBER DA STAYO" : statusLabel, M + 15, y + 21, 10, heading, colors.onSolid, CW - 190);
-  if (s.status === "a_repassar") text("Repasse ao proprietário", M + 15, y + 39, 8, body, colors.onSolid, CW - 190);
+  text(s.status === "a_repassar" ? "= VALOR A SER REPASSADO" : statusLabel, M + 15, y + 21, 10, heading, colors.onSolid, CW - 190);
+  if (s.status === "a_repassar") text("Saldo a receber da STAYO", M + 15, y + 39, 8, body, colors.onSolid, CW - 190);
   rightAt(money(Math.abs(s.balance)), W - M - 15, y + 24, 20, heading, colors.onSolid);
   y += 72;
   const pages = doc.getPages();
