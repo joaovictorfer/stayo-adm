@@ -14,6 +14,11 @@
 
 export type EntityId = string;
 
+export interface PayoutPaymentRequest {
+  id: string; implementation_id: string; competence: string; amount_cents: number; expires_at: string;
+  snapshot: { recipient: { name: string; city: string; pixType: "email" | "cpf" | "cnpj" | "phone" | "random"; pixKey: string } };
+}
+
 /** Separate STAYO receivables domain; all amounts are integer BRL cents. */
 export interface StayoCharge {
   id: string; code: string; revision: number; title: string; recipient: string; email: string;
