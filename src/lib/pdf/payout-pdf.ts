@@ -18,6 +18,8 @@ const money = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currenc
 const date = (s: string) => s.slice(0, 10).split("-").reverse().join("/");
 const channels: Record<string, string> = { airbnb: "Airbnb", booking: "Booking", decolar: "Decolar", direta: "Reserva direta", outro: "Outro" };
 const categories: Record<string, string> = { manutencao: "Manutenção", lavanderia: "Lavanderia", compras: "Compras / enxoval", limpeza: "Limpeza", taxas: "Taxas", outro: "Outro" };
+// Airbnb mark from Simple Icons (CC0), kept vector-sharp in the local PDF.
+const airbnbPath = "M12.001 18.275c-1.353-1.697-2.148-3.184-2.413-4.457-.263-1.027-.16-1.848.291-2.465.477-.71 1.188-1.056 2.121-1.056s1.643.345 2.12 1.063c.446.61.558 1.432.286 2.465-.291 1.298-1.085 2.785-2.412 4.458zm9.601 1.14c-.185 1.246-1.034 2.28-2.2 2.783-2.253.98-4.483-.583-6.392-2.704 3.157-3.951 3.74-7.028 2.385-9.018-.795-1.14-1.933-1.695-3.394-1.695-2.944 0-4.563 2.49-3.927 5.382.37 1.565 1.352 3.343 2.917 5.332-.98 1.085-1.91 1.856-2.732 2.333-.636.344-1.245.558-1.828.609-2.679.399-4.778-2.2-3.825-4.88.132-.345.395-.98.845-1.961l.025-.053c1.464-3.178 3.242-6.79 5.285-10.795l.053-.132.58-1.116c.45-.822.635-1.19 1.351-1.643.346-.21.77-.315 1.246-.315.954 0 1.698.558 2.016 1.007.158.239.345.557.582.953l.558 1.089.08.159c2.041 4.004 3.821 7.608 5.279 10.794l.026.025.533 1.22.318.764c.243.613.294 1.222.213 1.858zm1.22-2.39c-.186-.583-.505-1.271-.9-2.094v-.03c-1.889-4.006-3.642-7.608-5.307-10.844l-.111-.163C15.317 1.461 14.468 0 12.001 0c-2.44 0-3.476 1.695-4.535 3.898l-.081.16c-1.669 3.236-3.421 6.843-5.303 10.847v.053l-.559 1.22c-.21.504-.317.768-.345.847C-.172 20.74 2.611 24 5.98 24c.027 0 .132 0 .265-.027h.372c1.75-.213 3.554-1.325 5.384-3.317 1.829 1.989 3.635 3.104 5.382 3.317h.372c.133.027.239.027.265.027 3.37.003 6.152-3.261 4.802-6.975z";
 
 /** Full CPF is only used in the locally downloaded administrative document. */
 export function payoutPdfCpf(value: string | null) {
@@ -102,6 +104,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   };
   const right = (value: string, top: number, size = 10, font = body, color = colors.ink) => text(value, W - M - font.widthOfTextAtSize(value, size), top, size, font, color);
   const rect = (x: number, top: number, width: number, height: number, color: ReturnType<typeof rgb>) => page.drawRectangle({ x, y: H - top - height, width, height, color });
+  const airbnbIcon = (x: number, top: number, size = 13) => page.drawSvgPath(airbnbPath, { x, y: H - top, scale: size / 24, color: colors.coral });
   const rounded = (x: number, top: number, width: number, height: number, color: ReturnType<typeof rgb>, radius = 5, elevated = false) => {
     const r = Math.min(radius, width / 2, height / 2), k = r * 0.55228475;
     const path = `M ${r} 0 L ${width - r} 0 C ${width - r + k} 0 ${width} ${r - k} ${width} ${r} L ${width} ${height - r} C ${width} ${height - r + k} ${width - r + k} ${height} ${width - r} ${height} L ${r} ${height} C ${r - k} ${height} 0 ${height - r + k} 0 ${height - r} L 0 ${r} C 0 ${r - k} ${r - k} 0 ${r} 0 Z`;
@@ -170,14 +173,15 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       const nameLines = wrap(r.guest_name, 11, heading, labelW).length;
       const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date).slice(0, 5)}–${date(r.checkout_date).slice(0, 5)}`;
       const codeText = `${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`;
-      const codeHeight = wrap(codeText, 8, heading, labelW).length * 12;
+      const codeHeight = wrap(codeText, 8, heading, labelW - (r.channel === "airbnb" ? 16 : 0)).length * 12;
       const cpfLines = wrap(cpfText, 9, body, labelW).length;
       const height = Math.max(directFlow ? 88 : 56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
       space(height + (i === selected.length - 1 ? 48 : 7));
       rounded(M, y, CW, height, colors.soft, 5);
       const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
       rounded(M + 2, y + 9, 2.5, height - 18, channelColor, 1.25);
-      text(codeText, M + 10, y + 8, 8, heading, channelColor, labelW);
+      if (r.channel === "airbnb") airbnbIcon(M + 10, y + 7, 11);
+      text(codeText, M + (r.channel === "airbnb" ? 26 : 10), y + 8, 8, heading, channelColor, labelW - (r.channel === "airbnb" ? 16 : 0));
       text(r.guest_name, M + 10, y + 8 + codeHeight, 11, heading, colors.navy, labelW);
       text(cpfText, M + 10, y + 8 + codeHeight + nameLines * 15, 9, body, colors.muted, labelW);
       columns.forEach(c => text(c.label, c.edge - 72, y + 13, 7.5, body, colors.muted));
@@ -225,20 +229,39 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const ownerHeight = wrap(ownerLabel, 9, heading, CW).length * 13;
   // Keep the entire closing statement together, including long identities and extra channels.
   const balanceTitleHeight = wrap("Balancete do mês", 16, heading, CW).length * 20 + 22;
-  space(balanceTitleHeight + ownerHeight + 10 + 7 * 32 + 58 + (balance.hasOtherDirect ? 32 : 0));
+  space(balanceTitleHeight + ownerHeight + 380 + (balance.hasOtherDirect ? 32 : 0));
   section("Balancete do mês");
   y += text(ownerLabel, M, y, 9, heading, colors.navy) + 6;
-  line(`Total em reservas do mês · ${balance.reservationCount} ${balance.reservationCount === 1 ? "reserva" : "reservas"}`, money(balance.totalReservations), true);
-  line("Já recebido pelo proprietário via Airbnb", balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived));
-  if (balance.hasOtherDirect) line("Já recebido por outras plataformas", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
-  line("Repasses já realizados pela STAYO", money(s.transferred));
-  line("Total já repassado ao proprietário", balance.totalReceived === null ? "Não informado" : money(balance.totalReceived), true);
-  line("Parte do proprietário nas reservas STAYO", money(s.ownerShare));
-  line("Despesas do proprietário no mês", money(s.expenseTotal));
-  rounded(M + 3, y + 8, CW - 6, 42, colors.cobalt, 6, true);
-  text(statusLabel, M + 12, y + 22, 9, heading, colors.onSolid, CW - 170);
-  rightAt(money(Math.abs(s.balance)), W - M - 12, y + 18, 17, heading, colors.onSolid);
-  y += 58;
+  rounded(M, y, CW, 48, colors.soft, 6);
+  text("Total em reservas do mês", M + 12, y + 8, 10, heading, colors.navy);
+  text(`${balance.reservationCount} ${balance.reservationCount === 1 ? "reserva" : "reservas"} · ${monthLabel}`, M + 12, y + 26, 8, body, colors.muted);
+  rightAt(money(balance.totalReservations), W - M - 12, y + 13, 17, heading, colors.navy);
+  y += 64;
+
+  text("JÁ RECEBIDO PELO PROPRIETÁRIO", M, y, 9, heading, colors.navy);
+  y += 24;
+  airbnbIcon(M, y, 14);
+  text("Airbnb · pago direto", M + 22, y, 9, body, colors.muted, CW / 2 - 34);
+  text(balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived), M + 22, y + 17, 16, heading, colors.navy, CW / 2 - 34);
+  const receiptX = M + CW / 2 + 15;
+  page.drawLine({ start: { x: receiptX - 15, y: H - y }, end: { x: receiptX - 15, y: H - y - 39 }, thickness: 0.5, color: colors.border });
+  text("STAYO · repasses realizados", receiptX, y, 9, body, colors.muted, CW / 2 - 15);
+  text(money(s.transferred), receiptX, y + 17, 16, heading, colors.navy, CW / 2 - 15);
+  y += 48;
+  if (balance.hasOtherDirect) line("Outras plataformas · pago direto", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
+  line("Total recebido", balance.totalReceived === null ? "Não informado" : money(balance.totalReceived), true);
+  y += 18;
+
+  text("ACERTO COM A STAYO", M, y, 9, heading, colors.navy);
+  y += 19;
+  line("(+) Valor do proprietário nas reservas STAYO", money(s.ownerShare));
+  line("(−) Despesas do proprietário", money(s.expenseTotal));
+  line("(−) Repasses STAYO já recebidos", money(s.transferred));
+  rounded(M + 3, y + 10, CW - 6, 54, colors.cobalt, 6, true);
+  text(s.status === "a_repassar" ? "A RECEBER DA STAYO" : statusLabel, M + 15, y + 21, 10, heading, colors.onSolid, CW - 190);
+  if (s.status === "a_repassar") text("Repasse ao proprietário", M + 15, y + 39, 8, body, colors.onSolid, CW - 190);
+  rightAt(money(Math.abs(s.balance)), W - M - 15, y + 24, 20, heading, colors.onSolid);
+  y += 72;
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     page = p;
