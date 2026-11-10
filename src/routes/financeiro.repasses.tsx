@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
 import { computeStatement, competenceOf, previousCompetence, type PayoutFlow } from "@/lib/payout-statement";
-import { payoutPdfReadiness, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
+import { payoutPdfReadiness, payoutPdfSplit, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
 import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
@@ -142,7 +142,7 @@ function Page() {
         <Metric tone={s.complete && s.status === "a_compensar" ? "danger" : "balance"} icon={<Wallet />} label={!s.complete ? "Saldo do mês" : s.status === "a_compensar" ? "Saldo a compensar" : s.status === "zerado" ? "Saldo zerado" : "Saldo a repassar"} value={s.complete ? brl(Math.abs(s.balance)) : "Não calculado"} />
       </div>
       <Section title="Reservas recebidas pela STAYO" count={stayo.length}>
-        <ResTable rows={stayo} onDelete={(id) => remove("payout_reservations", id)} />
+        <ResTable rows={stayo} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
         <ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} />
       </Section>
       <Section title="Repasse direto pela plataforma" count={auto.length} subtitle="Pagamento direto ao proprietário; não compõe o saldo STAYO.">
@@ -192,15 +192,15 @@ const Line = ({ l, v, strong }: { l: string; v: number; strong?: boolean }) => <
 const Del = ({ onClick }: { onClick: () => void }) => <Button variant="ghost" size="icon" type="button" aria-label="Excluir" title="Excluir lançamento" onClick={onClick} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></Button>;
 const maskCpf = (c?: string | null) => c ? `***.${c.replace(/\D/g, "").slice(3, 6)}.***-**` : "—";
 
-type Res = { id: string; channel: string; reservation_code: string | null; guest_name: string; guest_cpf: string | null; checkin_date: string; checkout_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number; missing_amounts?: string[] | null };
+type Res = PayoutPdfReservation & { id: string };
 /** Valor que o Guia não informou: nunca exibido como R$ 0,00. */
 const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amounts?.includes(k)
   ? <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive" title="O Guia STAYO ainda não informou este valor">Não informado</span>
   : <>{brl(v)}</>;
-function ResTable({ rows, direct, onDelete }: { rows: Res[]; direct?: boolean; onDelete: (id: string) => void }) {
+function ResTable({ rows, direct, feePercent = 20, onDelete }: { rows: Res[]; direct?: boolean; feePercent?: number; onDelete: (id: string) => void }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
-  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right">Valor</th>{direct ? <th className="text-right">Pago direto</th> : <th className="text-right">Taxa canal</th>}<th><span className="sr-only">Ações</span></th></tr></thead>
-    <tbody>{rows.map((r) => { const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe; return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k="gross" v={r.gross_cents} /></td>{direct ? <td className="text-right whitespace-nowrap"><Amount r={r} k="owner_direct" v={r.owner_direct_cents} /></td> : <td className="text-right whitespace-nowrap"><Amount r={r} k="platform_fee" v={r.platform_fee_cents} /></td>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>; })}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right whitespace-nowrap">Valor total</th>{direct ? <th className="text-right">Pago direto</th> : <><th className="text-right whitespace-nowrap">STAYO · {feePercent}%</th><th className="text-right whitespace-nowrap">Proprietário · {100 - feePercent}%</th></>}<th><span className="sr-only">Ações</span></th></tr></thead>
+    <tbody>{rows.map((r) => { const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe; const split = payoutPdfSplit(r, feePercent); const splitKey = r.missing_amounts?.find(k => ["gross", "cleaning", "platform_fee"].includes(k)) ?? "gross"; return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={direct ? "gross" : splitKey} v={direct ? r.gross_cents : split.base} /></td>{direct ? <td className="text-right whitespace-nowrap"><Amount r={r} k="owner_direct" v={r.owner_direct_cents} /></td> : <><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.owner} /></td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>; })}</tbody></table></div>;
 }
 
 function useSaver(onSaved: () => void) {
