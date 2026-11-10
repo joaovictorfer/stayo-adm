@@ -30,7 +30,7 @@ describe("PDF mensal de repasse", () => {
     const auto: PayoutPdfReservation = { ...reservation, payout_flow: "platform_auto", channel: "airbnb", gross_cents: 461526, owner_direct_cents: 281975 };
     const result = payoutPdfBalance({ ...input, reservations: [reservation, auto], transfers: [{ competence: "2026-10", amount_cents: 20000, paid_on: "2026-10-10", method: "pix" }], expenses: [{ occurred_on: "2026-10-10", amount_cents: 10000, charged_to_owner: true, description: "Manutenção", category: "manutencao" }] });
     expect(result.reservationCount).toBe(2);
-    expect(result.totalReservations).toBe(681526);
+    expect(result.totalReservations).toBe(651526);
     expect(result.airbnbReceived).toBe(281975);
     expect(result.totalReceived).toBe(301975);
     expect(result.statement.transferred).toBe(20000);
@@ -39,6 +39,15 @@ describe("PDF mensal de repasse", () => {
   it("Airbnb recebido pela STAYO não é pagamento direto ao proprietário", () => {
     const result = payoutPdfBalance({ ...input, reservations: [{ ...reservation, channel: "airbnb", owner_direct_cents: 176000 }] });
     expect(result.airbnbReceived).toBe(0);
+    expect(result.statement.balance).toBe(176000);
+  });
+  it("Airbnb usa a mesma divisão 20/80 e mantém o recebimento comprovado separado", () => {
+    const auto: PayoutPdfReservation = { ...reservation, payout_flow: "platform_auto", channel: "airbnb", gross_cents: 461526, cleaning_cents: 30000, platform_fee_cents: 54000, owner_direct_cents: 281976 };
+    expect(payoutPdfSplit(auto, 20)).toEqual({ base: 377526, stayo: 75505, owner: 302021 });
+    const result = payoutPdfBalance({ ...input, reservations: [reservation, auto] });
+    expect(result.totalReservations).toBe(597526);
+    expect(result.airbnbReceived).toBe(281976);
+    expect(result.totalReceived).toBe(281976);
     expect(result.statement.balance).toBe(176000);
   });
   it("recebimento direto ausente não vira zero nem divisão estimada", () => {
