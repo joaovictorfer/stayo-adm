@@ -192,8 +192,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
           page.drawLine({ start: { x: markerX - 2, y: H - markerTop - 4 }, end: { x: markerX - 0.5, y: H - markerTop - 5.5 }, thickness: 0.8, color: colors.onSolid });
           page.drawLine({ start: { x: markerX - 0.5, y: H - markerTop - 5.5 }, end: { x: markerX + 2.5, y: H - markerTop - 2.5 }, thickness: 0.8, color: colors.onSolid });
         }
-        text(confirmed ? "Pago direto ao proprietário" : "Recebimento direto", markerX + 10, markerTop, 7.5, body, colors.muted, 175);
-        rightAt(payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), lastEdge, markerTop, 8, heading, colors.cobalt);
+        text(confirmed ? "Pago direto ao Prop." : "Recebimento direto", markerX + 10, markerTop, 7.5, body, colors.muted, 175);
       }
       sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner;
       y += height + 7;
