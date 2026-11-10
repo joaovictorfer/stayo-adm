@@ -31,9 +31,15 @@ export const finalizePayoutPayment = createServerFn({ method: "POST" }).middlewa
   const mime = receiptMime(bytes);
   try { await validateReceiptDocument(bytes, mime); } catch { throw new Error("Comprovante corrompido ou protegido. Envie PDF, JPG ou PNG legível."); }
   const path = `${request.implementation_id}/${request.id}/receipt`;
-  const bucket = context.supabase.storage.from("payout-receipts");
+  // Privileged storage writes are confined to validated financial evidence; reads remain user-scoped.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const bucket = supabaseAdmin.storage.from("payout-receipts");
   const { error: uploadError } = await bucket.upload(path, bytes, { contentType: mime, upsert: false });
-  if (uploadError) throw new Error("Comprovante não salvo. Se já enviou, atualize o histórico antes de tentar novamente.");
+  if (uploadError) {
+    const { data: latest } = await context.supabase.from("payout_payment_requests").select("transfer_id").eq("id",request.id).single();
+    if (latest?.transfer_id) return { transferId: latest.transfer_id };
+    throw new Error("Comprovante não salvo. Aguarde e atualize o histórico antes de tentar novamente.");
+  }
   const { data: transferId, error: saveError } = await context.supabase.rpc("admin_finalize_payout", { p_request_id: request.id, p_amount: data.amount, p_paid_on: data.paidOn, p_path: path, p_name: data.file.name.slice(0,200), p_mime: mime, p_size: bytes.length });
   if (saveError) { await bucket.remove([path]); throw new Error(saveError.message); }
   return { transferId };
