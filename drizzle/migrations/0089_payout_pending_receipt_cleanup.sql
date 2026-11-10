@@ -1,0 +1,1 @@
+ALTER POLICY payout_receipts_remove_pending ON storage.objects USING(bucket_id='payout-receipts' AND public.has_admin_role('super_admin','admin','finance') AND EXISTS(SELECT 1 FROM public.payout_payment_requests r WHERE r.transfer_id IS NULL AND r.created_by=auth.uid() AND name=r.implementation_id::text||'/'||r.id::text||'/receipt'));

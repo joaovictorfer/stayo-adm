@@ -15,6 +15,8 @@ import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
 import { payoutChannelGroups } from "@/lib/payout-channel-groups";
+import { PayoutPaymentPanel } from "@/components/admin/PayoutPaymentPanel";
+import { listPayoutReceipts } from "@/lib/api/core-client";
 
 export const Route = createFileRoute("/financeiro/repasses")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
@@ -71,6 +73,7 @@ function Page() {
   };
   const syncFn = useServerFn(syncCentralReservations);
   const ownersFn = useServerFn(importCentralOwners);
+  const receiptsFn = useServerFn(listPayoutReceipts);
   const [syncing, setSyncing] = useState(false);
   const runSync = async () => {
     setSyncing(true);
@@ -103,7 +106,8 @@ function Page() {
       if (owner?.error) throw owner.error;
       const covers = await listImplementationCoverUrls([selectedProperty.id]).catch(() => ({} as Record<string, string>));
       const { downloadPayoutPdf } = await import("@/lib/pdf/payout-download");
-      await downloadPayoutPdf({ property: propertyTitle, propertyCode: selectedProperty.code, ownerName: owner?.data?.name, competence: month, adminFeePercent: snapshot.fee, reservations: snapshot.res as PayoutPdfReservation[], expenses: snapshot.exp, transfers: snapshot.tr }, covers[selectedProperty.id]);
+      const receipts = await receiptsFn({ data: { implementationId: impl, competence: month } });
+      await downloadPayoutPdf({ property: propertyTitle, propertyCode: selectedProperty.code, ownerName: owner?.data?.name, competence: month, adminFeePercent: snapshot.fee, reservations: snapshot.res as PayoutPdfReservation[], expenses: snapshot.exp, transfers: snapshot.tr }, covers[selectedProperty.id], receipts);
       toast.success("PDF gerado com o CPF completo dos hóspedes.");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível gerar o PDF."); }
     finally { setGenerating(false); }
@@ -176,7 +180,7 @@ function Page() {
           <p className="text-xs text-muted-foreground">Aparece quando todas as reservas tiverem valor.</p>
         </div>}
         {data.data.tr.length > 0 && <ul className="mt-3 divide-y text-sm">{data.data.tr.map((t) => <li key={t.id} className="flex items-center gap-3 py-2"><span className="flex-1">Repasse em {br(t.paid_on)} · {t.method.toUpperCase()}</span><b>{brl(t.amount_cents)}</b><Del onClick={() => remove("payout_transfers", t.id)} /></li>)}</ul>}
-        <TransferForm impl={impl} month={month} suggested={Math.max(0, s.balance)} onSaved={refresh} />
+        <PayoutPaymentPanel implementationId={impl} competence={month} balance={s.balance} complete={s.complete} onSaved={refresh} />
       </Section>
     </>}
   </div>;
@@ -263,12 +267,3 @@ function ExpenseForm({ impl, month, onSaved }: { impl: string; month: string; on
   </form>;
 }
 
-function TransferForm({ impl, month, suggested, onSaved }: { impl: string; month: string; suggested: number; onSaved: () => void }) {
-  const [open, setOpen] = useState(false); const [value, setValue] = useState(""); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const { busy, run } = useSaver(onSaved);
-  if (!open) return <Button className="mt-3" variant="outline" onClick={() => { setValue((suggested / 100).toFixed(2).replace(".", ",")); setOpen(true); }}><Plus size={16} />Registrar repasse feito</Button>;
-  return <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); const v = toCents(value); if (v <= 0) { toast.error("Informe o valor."); return; } run(() => db().from("payout_transfers").insert({ implementation_id: impl, competence: month, paid_on: date, amount_cents: v }), () => setOpen(false)); }}>
-    <F label="Data do repasse"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></F>
-    <F label="Valor (R$)"><Input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} /></F>
-    <Button disabled={busy}>Salvar</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-  </form>;
-}
