@@ -88,7 +88,7 @@
   .payout-filters > label, .payout-filters > div { width: 100%; flex-basis: 100%; }
   .payout-property-grid { grid-template-columns: minmax(0, 1fr); }
   .payout-selected-property { flex-wrap: wrap; gap: 12px; }
-  .payout-selected-property > a { margin-left: auto; }
+  .payout-selected-property > a { flex-basis: 100%; justify-content: flex-end; }
   .payout-filters button { white-space: normal; height: auto; min-height: 44px; }
   .payout-metric { min-height: 96px; }
 }

@@ -7,7 +7,7 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 export type PayoutProperty = { id: string; code: string; nickname: string | null; condominium_name: string | null; unit: string | null };
 export const payoutPropertyName = (p: PayoutProperty) => [p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || p.code;
 
-export function PayoutPropertyPhoto({ url, name, large = false }: { url?: string; name: string; large?: boolean }) {
+export function PayoutPropertyPhoto({ url, name, large = false }: { url?: string | undefined; name: string; large?: boolean }) {
   const [failedUrl, setFailedUrl] = useState<string>();
   return <span className={`payout-property-photo${large ? " is-large" : ""}`}>
     {url && failedUrl !== url ? <img src={url} alt={name} loading="lazy" onError={() => setFailedUrl(url)} /> : <Building2 aria-hidden="true" />}
