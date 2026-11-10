@@ -102,6 +102,12 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   };
   const right = (value: string, top: number, size = 10, font = body, color = colors.ink) => text(value, W - M - font.widthOfTextAtSize(value, size), top, size, font, color);
   const rect = (x: number, top: number, width: number, height: number, color: ReturnType<typeof rgb>) => page.drawRectangle({ x, y: H - top - height, width, height, color });
+  const rounded = (x: number, top: number, width: number, height: number, color: ReturnType<typeof rgb>, radius = 5, elevated = false) => {
+    const r = Math.min(radius, width / 2, height / 2), k = r * 0.55228475;
+    const path = `M ${r} 0 L ${width - r} 0 C ${width - r + k} 0 ${width} ${r - k} ${width} ${r} L ${width} ${height - r} C ${width} ${height - r + k} ${width - r + k} ${height} ${width - r} ${height} L ${r} ${height} C ${r - k} ${height} 0 ${height - r + k} 0 ${height - r} L 0 ${r} C 0 ${r - k} ${r - k} 0 ${r} 0 Z`;
+    if (elevated) page.drawSvgPath(path, { x, y: H - top - 3, color: colors.navy, opacity: 0.09 });
+    page.drawSvgPath(path, { x, y: H - top, color });
+  };
   const header = (first: boolean) => {
     // Title is the document's identity; property and month already appear below.
     const headerHeight = 58;
@@ -136,10 +142,10 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     const labelWidth = CW - amountWidth - 42;
     const height = Math.max(32, wrap(label, 10, font, labelWidth).length * 14 + 16);
     space(height);
-    if (strong) rect(M, y, CW, height, colors.soft);
+    if (strong) rounded(M, y, CW, height, colors.soft, 4);
     text(label, M + 12, y + 8, 10, font, strong ? colors.navy : colors.ink, labelWidth);
     text(value, W - M - 12 - amountWidth, y + 8, 11, font, strong ? colors.navy : colors.ink);
-    page.drawLine({ start: { x: M, y: H - y - height }, end: { x: W - M, y: H - y - height }, thickness: 0.5, color: colors.border });
+    if (!strong) page.drawLine({ start: { x: M + 12, y: H - y - height }, end: { x: W - M - 12, y: H - y - height }, thickness: 0.5, color: colors.border });
     y += height;
   };
   header(true);
@@ -170,9 +176,9 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       const cpfLines = wrap(cpfText, 9, body, labelW).length;
       const height = Math.max(56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
       space(height + (i === selected.length - 1 ? 48 : 7));
-      rect(M, y, CW, height, colors.soft);
+      rounded(M, y, CW, height, colors.soft, 5);
       const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
-      rect(M, y, 2.5, height, channelColor);
+      rounded(M + 2, y + 9, 2.5, height - 18, channelColor, 1.25);
       text(codeText, M + 10, y + 8, 8, heading, channelColor, labelW);
       text(r.guest_name, M + 10, y + 8 + codeHeight, 11, heading, colors.navy, labelW);
       text(cpfText, M + 10, y + 8 + codeHeight + nameLines * 15, 9, body, colors.muted, labelW);
@@ -187,7 +193,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       y += height + 7;
     });
     space(52);
-    rect(M, y, CW, 38, colors.navy);
+    rounded(M + 3, y, CW - 6, 38, colors.navy, 5, true);
     text("TOTAL DO MÊS", M + 12, y + 9, 9, heading, colors.onSolid);
     text(`${selected.length} ${selected.length === 1 ? "reserva" : "reservas"}`, M + 12, y + 22, 8, body, colors.onSolid);
     const totals = stayoFlow
@@ -227,7 +233,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   line("Total já repassado ao proprietário", balance.totalReceived === null ? "Não informado" : money(balance.totalReceived), true);
   line("Parte do proprietário nas reservas STAYO", money(s.ownerShare));
   line("Despesas do proprietário no mês", money(s.expenseTotal));
-  rect(M, y + 8, CW, 42, colors.cobalt);
+  rounded(M + 3, y + 8, CW - 6, 42, colors.cobalt, 6, true);
   text(statusLabel, M + 12, y + 22, 9, heading, colors.onSolid, CW - 170);
   rightAt(money(Math.abs(s.balance)), W - M - 12, y + 18, 17, heading, colors.onSolid);
   y += 58;
