@@ -1,3 +1,4 @@
+import { PayoutAdjustmentsHistory } from "../components/implantacao/ficha/PayoutAdjustmentsHistory";
 import { AppPropertyLinkCard } from "../components/implantacao/ficha/AppPropertyLinkCard";
 import { ImplementationHistory } from "../components/implantacao/ficha/ImplementationHistory";
 import { inventorySubmissionsQuery } from "@/lib/api/owner-inventory";
@@ -692,6 +693,7 @@ function ImplementationDetailPage() {
                 <div className="flex flex-col gap-4">
                   <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("portal")} />
                   <AppPropertyLinkCard implementation={implementation} />
+                  <PayoutAdjustmentsHistory implementationId={implementation.id} />
                 </div>
               ) : section === "implantacao" ? (
                 <div className="flex flex-col gap-4">

@@ -46,6 +46,7 @@ import { checklistTemplatesStore, newId, read, write } from "./local-store";
 import { nextImplementationCode } from "../implementation-status";
 // Separate Admin receivables facade: UI mutations still enter through this API boundary.
 export { listCharges, chargeOptions, saveCharge, actionCharge, readPublicCharge } from "../charges.functions";
+export { adjustPayoutAmounts, listPayoutAdjustments, PAYOUT_FIELD_LABEL, type PayoutAmountField, type PayoutAdjustment } from "./payout-adjustments";
 export { preparePayoutPayment, finalizePayoutPayment, listPayoutReceipts } from "../payout-payment.functions";
 
 export interface Page<T> {
