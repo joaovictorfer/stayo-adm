@@ -267,12 +267,3 @@ function ExpenseForm({ impl, month, onSaved }: { impl: string; month: string; on
   </form>;
 }
 
-function TransferForm({ impl, month, suggested, onSaved }: { impl: string; month: string; suggested: number; onSaved: () => void }) {
-  const [open, setOpen] = useState(false); const [value, setValue] = useState(""); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const { busy, run } = useSaver(onSaved);
-  if (!open) return <Button className="mt-3" variant="outline" onClick={() => { setValue((suggested / 100).toFixed(2).replace(".", ",")); setOpen(true); }}><Plus size={16} />Registrar repasse feito</Button>;
-  return <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); const v = toCents(value); if (v <= 0) { toast.error("Informe o valor."); return; } run(() => db().from("payout_transfers").insert({ implementation_id: impl, competence: month, paid_on: date, amount_cents: v }), () => setOpen(false)); }}>
-    <F label="Data do repasse"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></F>
-    <F label="Valor (R$)"><Input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} /></F>
-    <Button disabled={busy}>Salvar</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-  </form>;
-}
