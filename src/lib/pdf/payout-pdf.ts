@@ -37,6 +37,23 @@ export function payoutPdfSplit(r: PayoutPdfReservation, adminFeePercent: number)
   return { base, stayo, owner: base - stayo };
 }
 
+/** Presentation totals reuse the selected statement; receipts are never inferred from a contractual split. */
+export function payoutPdfBalance(input: Pick<PayoutPdfInput, "competence" | "adminFeePercent" | "reservations" | "expenses" | "transfers">) {
+  const rows = input.reservations.filter(r => competenceOf(r.checkin_date) === input.competence);
+  const statement = computeStatement(input.competence, input.adminFeePercent, rows, input.expenses, input.transfers);
+  const direct = rows.filter(r => r.payout_flow === "platform_auto");
+  const received = (reservations: PayoutPdfReservation[]) => reservations.some(r => r.missing_amounts?.includes("owner_direct"))
+    ? null : reservations.reduce((sum, r) => sum + r.owner_direct_cents, 0);
+  return {
+    reservationCount: rows.length,
+    totalReservations: rows.reduce((sum, r) => sum + (r.payout_flow === "stayo" ? payoutPdfSplit(r, input.adminFeePercent).base : r.gross_cents), 0),
+    airbnbReceived: received(direct.filter(r => r.channel === "airbnb")),
+    otherDirectReceived: received(direct.filter(r => r.channel !== "airbnb")),
+    hasOtherDirect: direct.some(r => r.channel !== "airbnb"),
+    statement,
+  };
+}
+
 /** Browser-safe renderer: no database, public link, upload or financial writes. */
 export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Array> {
   if (!payoutPdfReadiness(input)) throw new Error("Complete os valores ausentes antes de gerar o PDF.");
@@ -53,7 +70,8 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const rows = input.reservations.filter(r => competenceOf(r.checkin_date) === input.competence);
   const expenses = input.expenses.filter(e => competenceOf(e.occurred_on) === input.competence);
   const transfers = input.transfers.filter(t => t.competence === input.competence);
-  const s = computeStatement(input.competence, input.adminFeePercent, rows, expenses, transfers);
+  const balance = payoutPdfBalance(input);
+  const s = balance.statement;
   const W = 595.28, H = 841.89, M = 27, CW = W - M * 2;
   let page: PDFPage = doc.addPage([W, H]);
   let y = 0;
@@ -124,7 +142,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     y += height;
   };
   header(true);
-  const statusLabel = s.status === "a_compensar" ? "SALDO A COMPENSAR PELO PROPRIETÁRIO" : s.status === "zerado" ? "SALDO DO MÊS ZERADO" : "VALOR LÍQUIDO A REPASSAR AO PROPRIETÁRIO";
+  const statusLabel = s.status === "a_compensar" ? "SALDO A COMPENSAR PELO PROPRIETÁRIO" : s.status === "zerado" ? "SALDO DO MÊS ZERADO" : "A RECEBER DA STAYO";
   const pct = input.adminFeePercent;
   const rightAt = (value: string, edge: number, top: number, size: number, font: PDFFont, color: ReturnType<typeof rgb>) =>
     text(value, edge - font.widthOfTextAtSize(value, size), top, size, font, color);
@@ -176,7 +194,8 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       : [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: "Pago direto", v: sumLast, edge: lastEdge }];
     totals.forEach((t) => {
       rightAt(t.l, t.edge, y + 8, 8, body, colors.onSolid);
-      rightAt(money(t.v), t.edge, y + 20, 12, heading, colors.onSolid);
+      const missingDirect = !stayoFlow && t.edge === lastEdge && selected.some(r => r.missing_amounts?.includes("owner_direct"));
+      rightAt(missingDirect ? "Não informado" : money(t.v), t.edge, y + 20, 12, heading, colors.onSolid);
     });
     y += 54;
   };
@@ -192,13 +211,22 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   }
   if (transfers.length) { y += 15; section("Repasses realizados pela STAYO"); }
   for (const t of transfers) line(`${date(t.paid_on)} · ${t.method.toUpperCase()}`, money(t.amount_cents));
-  y += 18;
-  space(100);
-  page.drawLine({ start: { x: M, y: H - y }, end: { x: W - M, y: H - y }, thickness: 0.5, color: colors.border });
-  text(`Proprietário: ${input.ownerName || "Não informado"}`, M, y + 10, 9, heading, colors.navy);
-  text(statusLabel, M, y + 30, 8, heading, colors.navy);
-  right(money(Math.abs(s.balance)), y + 27, 16, heading, colors.cobalt);
-  text(`Despesas: ${money(s.expenseTotal)} · Repasses realizados: ${money(s.transferred)}`, M, y + 54, 8, body, colors.muted);
+  y += 6;
+  const ownerLabel = `Proprietário: ${input.ownerName || "Não informado"}`;
+  const ownerHeight = wrap(ownerLabel, 9, heading, CW).length * 13;
+  // Keep the entire closing statement together, including long identities and extra channels.
+  space(190 + ownerHeight + (balance.hasOtherDirect ? 32 : 0));
+  section("Balancete do mês");
+  y += text(ownerLabel, M, y, 9, heading, colors.navy) + 6;
+  line(`Total em reservas do mês · ${balance.reservationCount} ${balance.reservationCount === 1 ? "reserva" : "reservas"}`, money(balance.totalReservations), true);
+  line("Já recebido pelo proprietário via Airbnb", balance.airbnbReceived === null ? "Não informado" : money(balance.airbnbReceived));
+  if (balance.hasOtherDirect) line("Já recebido por outras plataformas", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
+  line("Repasses já realizados pela STAYO", money(s.transferred));
+  line("Despesas do proprietário no mês", money(s.expenseTotal));
+  rect(M, y + 8, CW, 42, colors.cobalt);
+  text(statusLabel, M + 12, y + 22, 9, heading, colors.onSolid, CW - 170);
+  rightAt(money(Math.abs(s.balance)), W - M - 12, y + 18, 17, heading, colors.onSolid);
+  y += 58;
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     page = p;
