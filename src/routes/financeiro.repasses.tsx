@@ -149,7 +149,7 @@ function Page() {
         <Metric tone={s.complete && s.status === "a_compensar" ? "danger" : "balance"} icon={<Wallet />} label={!s.complete ? "Saldo do mês" : s.status === "a_compensar" ? "Saldo a compensar" : s.status === "zerado" ? "Saldo zerado" : "Saldo a repassar"} value={s.complete ? brl(Math.abs(s.balance)) : "Não calculado"} />
       </div>
       <Section title="Reservas do mês" count={data.data.res.length}>
-        <ResTable rows={data.data.res as Res[]} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
+        <ResTable rows={data.data.res as Res[]} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} onSaved={() => { refresh(); qc.invalidateQueries({ queryKey: ["payout-adjustments", impl] }); }} />
         <div className="payout-reservation-actions"><ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} /><ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} /></div>
       </Section>
       <Section title="Despesas do mês">
