@@ -631,6 +631,13 @@
       "when": 1794320364175,
       "tag": "0089_payout_pending_receipt_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1794322092615,
+      "tag": "0090_payout_manual_amounts",
+      "breakpoints": true
     }
   ]
 }
