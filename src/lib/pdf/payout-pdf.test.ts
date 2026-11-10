@@ -21,7 +21,7 @@ describe("PDF mensal de repasse", () => {
   it("arredondamento da parte STAYO nunca reduz a do proprietário além do centavo", () => { const s = payoutPdfSplit({ ...reservation, gross_cents: 9999, cleaning_cents: 0 }, 20); expect(s.stayo).toBe(2000); expect(s.owner).toBe(7999); });
   it("balancete soma os totais das reservas e separa recebimento Airbnb do saldo STAYO", () => {
     const auto: PayoutPdfReservation = { ...reservation, payout_flow: "platform_auto", channel: "airbnb", gross_cents: 461526, owner_direct_cents: 281975 };
-    const result = payoutPdfBalance({ ...input, reservations: [reservation, auto], transfers: [{ competence: "2026-10", amount_cents: 20000 }], expenses: [{ occurred_on: "2026-10-10", amount_cents: 10000, charged_to_owner: true }] });
+    const result = payoutPdfBalance({ ...input, reservations: [reservation, auto], transfers: [{ competence: "2026-10", amount_cents: 20000, paid_on: "2026-10-10", method: "pix" }], expenses: [{ occurred_on: "2026-10-10", amount_cents: 10000, charged_to_owner: true, description: "Manutenção", category: "manutencao" }] });
     expect(result.reservationCount).toBe(2);
     expect(result.totalReservations).toBe(681526);
     expect(result.airbnbReceived).toBe(281975);
@@ -38,7 +38,7 @@ describe("PDF mensal de repasse", () => {
     expect(result.statement.balance).toBe(0);
   });
   it("balancete ignora reservas e repasses de outra competência", () => {
-    const result = payoutPdfBalance({ ...input, reservations: [reservation, { ...reservation, checkin_date: "2026-11-01" }], transfers: [{ competence: "2026-11", amount_cents: 176000 }] });
+    const result = payoutPdfBalance({ ...input, reservations: [reservation, { ...reservation, checkin_date: "2026-11-01" }], transfers: [{ competence: "2026-11", amount_cents: 176000, paid_on: "2026-11-10", method: "pix" }] });
     expect(result.reservationCount).toBe(1);
     expect(result.totalReservations).toBe(220000);
     expect(result.statement.balance).toBe(176000);
