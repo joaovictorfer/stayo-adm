@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight, CircleCheck, CircleDashed } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, Globe, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight, CircleCheck, CircleDashed } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -86,7 +86,6 @@ function Page() {
     catch (e) { toast.error(e instanceof Error ? e.message : "Falha ao consultar o Guia."); } finally { setSyncing(false); }
   };
   const auto = data.data?.res.filter((r) => r.payout_flow === "platform_auto") ?? [];
-  const stayo = data.data?.res.filter((r) => r.payout_flow === "stayo") ?? [];
 
   const closing = data.data ? payoutPdfBalance({ competence: month, adminFeePercent: data.data.fee, reservations: data.data.res as PayoutPdfReservation[], expenses: data.data.exp, transfers: data.data.tr }) : null;
 
@@ -205,7 +204,6 @@ function ResTable({ rows, feePercent = 20, onDelete }: { rows: Res[]; feePercent
       <tr className="payout-group-heading"><th colSpan={7} scope="rowgroup"><span className="payout-group-heading-content"><span className="inline-flex items-center gap-2">{group.channel === "airbnb" ? <AirbnbMark /> : group.channel === "direta" ? <BedDouble size={18} /> : <Globe size={18} />}{group.channel === "direta" ? "Reservas diretas" : CHANNELS[group.channel as keyof typeof CHANNELS] ?? "Outro"}</span><span className="payout-group-count">{group.reservations.length} {group.reservations.length === 1 ? "reserva" : "reservas"}</span></span></th></tr>
       {group.reservations.length === 0 && <tr><td colSpan={7} className="text-muted-foreground">Nenhuma reserva neste canal no mês.</td></tr>}
       {group.reservations.map((r) => {
-      const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe;
       const split = payoutPdfSplit(r, feePercent);
       const splitKey = r.missing_amounts?.find(k => ["gross", "cleaning", "platform_fee"].includes(k)) ?? "gross";
       const confirmed = !r.missing_amounts?.includes("owner_direct") && r.owner_direct_cents > 0;
