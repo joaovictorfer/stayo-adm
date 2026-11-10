@@ -107,12 +107,12 @@ function Page() {
     finally { setGenerating(false); }
   };
 
-  return <div className="payout-workspace space-y-7">
+  return <div className="payout-workspace">
     <AdminPageHeader title="Relatório de repasse" description={propertyTitle ? `${propertyTitle} · ${monthTitle}` : "Reservas, despesas e repasses por imóvel"} actions={<Link to="/financeiro" className="admin-inline-link">Financeiro</Link>} />
     <div className={`payout-filters${!impl ? " is-browsing" : ""}`}>
       {impl ? <PayoutPropertyPicker properties={props.data ?? []} covers={covers.data ?? {}} value={impl} onChange={setImpl} loading={props.isPending} error={props.isError} /> : <div className="payout-catalog-search"><Search aria-hidden="true" /><Input aria-label="Pesquisar imóveis" placeholder="Buscar imóvel, unidade ou código" value={q} onChange={e => setSearch(e.target.value)} />{q && <Button variant="ghost" size="icon" aria-label="Limpar pesquisa" onClick={() => setSearch("")}><X /></Button>}</div>}
       <label className="payout-month-field grid gap-2 text-xs font-semibold text-muted-foreground">Mês de referência
-        <Input type="month" aria-label="Mês de referência" className="h-14 text-foreground" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
+        <Input type="month" aria-label="Mês de referência" className="h-11 text-foreground" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
       {impl && <div className="payout-filter-actions">
         <Button variant="outline" size="icon" className="h-11 w-11" disabled={syncing} onClick={runOwners} title="Importar proprietários vinculados" aria-label="Importar proprietários vinculados"><Users /></Button>
         <Button className="payout-primary h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Atualizar reservas</Button>
