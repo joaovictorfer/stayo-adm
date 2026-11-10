@@ -41,7 +41,7 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
     setBusy(true);
     try {
       const a = Object.fromEntries(fields.map(f => [f, parsed[f]!]));
-      const c = Object.fromEntries(fields.map(f => [f, confirmParsed[f]!]));
+      const c = a;
       const r = await adjustPayoutAmounts(row.id, a, c, reason.trim());
       toast.success(r.changed ? "Valores salvos e registrados na ficha do imóvel." : "Nenhum valor foi alterado.");
       setOpen(false); reset(); onSaved();
@@ -56,7 +56,7 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Lançar valores · {row.reservation_code || "Reserva"}</DialogTitle>
-          <DialogDescription>{row.guest_name}. {step === 1 ? "Passo 1 de 2: informe os valores e o motivo." : "Passo 2 de 2: digite os valores de novo para confirmar."}</DialogDescription>
+          <DialogDescription>{row.guest_name}. Informe os valores e o motivo da alteração.</DialogDescription>
         </DialogHeader>
         {step === 1 ? <div className="space-y-3">
           {fields.map(f => <label key={f} className="block text-sm"><span className="mb-1 flex justify-between font-medium">{PAYOUT_FIELD_LABEL[f]}{missing.has(f) && <span className="text-xs text-destructive">Não informado</span>}</span>
@@ -67,7 +67,7 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
             <div><span className="block text-muted-foreground">Proprietário · {100 - feePercent}%</span><strong className="text-sm tabular-nums">{brl(net === null || stayoPart === null ? null : net - stayoPart)}</strong></div>
             <p className="col-span-3 text-muted-foreground">A taxa de limpeza e a taxa do canal ficam só aqui; a tela e o relatório mostram apenas o valor líquido dividido.</p>
           </div>
-          <label className="block text-sm"><span className="mb-1 block font-medium">Motivo / origem da informação</span>
+          <label className="block text-sm"><span className="mb-1 block font-medium">Motivo da alteração</span>
             <Input maxLength={500} placeholder="Ex.: conforme extrato do Airbnb de 16/10" value={reason} onChange={e => setReason(e.target.value)} /></label>
         </div> : <div className="space-y-3">
           {fields.map(f => <label key={f} className="block text-sm"><span className="mb-1 block font-medium">Confirme: {PAYOUT_FIELD_LABEL[f]}</span>
@@ -77,8 +77,7 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
         </div>}
         <DialogFooter className="gap-2">
           {step === 2 && <Button variant="outline" type="button" disabled={busy} onClick={() => setStep(1)}>Voltar</Button>}
-          {step === 1 ? <Button type="button" disabled={!step1Ok} onClick={() => setStep(2)}>Continuar</Button>
-            : <Button type="button" disabled={!step2Ok || busy} onClick={save}>{busy ? "Salvando…" : "Confirmar e salvar"}</Button>}
+          <Button type="button" disabled={!step1Ok || busy} onClick={save}>{busy ? "Salvando…" : "Salvar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
