@@ -15,6 +15,7 @@ import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
 import { payoutChannelGroups } from "@/lib/payout-channel-groups";
+import { PayoutAmountEditor } from "@/components/admin/PayoutAmountEditor";
 import { PayoutPaymentPanel } from "@/components/admin/PayoutPaymentPanel";
 import { listPayoutReceipts } from "@/lib/api/core-client";
 
@@ -148,7 +149,7 @@ function Page() {
         <Metric tone={s.complete && s.status === "a_compensar" ? "danger" : "balance"} icon={<Wallet />} label={!s.complete ? "Saldo do mês" : s.status === "a_compensar" ? "Saldo a compensar" : s.status === "zerado" ? "Saldo zerado" : "Saldo a repassar"} value={s.complete ? brl(Math.abs(s.balance)) : "Não calculado"} />
       </div>
       <Section title="Reservas do mês" count={data.data.res.length}>
-        <ResTable rows={data.data.res as Res[]} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
+        <ResTable rows={data.data.res as Res[]} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} onSaved={() => { refresh(); qc.invalidateQueries({ queryKey: ["payout-adjustments", impl] }); }} />
         <div className="payout-reservation-actions"><ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} /><ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} /></div>
       </Section>
       <Section title="Despesas do mês">
@@ -201,7 +202,7 @@ type Res = PayoutPdfReservation & { id: string };
 const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amounts?.includes(k)
   ? <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive" title="O Guia STAYO ainda não informou este valor">Não informado</span>
   : <>{brl(v)}</>;
-function ResTable({ rows, feePercent = 20, onDelete }: { rows: Res[]; feePercent?: number; onDelete: (id: string) => void }) {
+function ResTable({ rows, feePercent = 20, onDelete, onSaved }: { rows: Res[]; feePercent?: number; onDelete: (id: string) => void; onSaved: () => void }) {
   const groups = payoutChannelGroups(rows, feePercent);
   return <div className="payout-grouped-scroll" tabIndex={0} role="region" aria-label="Reservas agrupadas por canal"><table className="payout-table payout-grouped-table w-full text-sm"><caption className="sr-only">Reservas do mês agrupadas por canal, com subtotais de Valor total, STAYO e Proprietário.</caption><thead className="text-left text-muted-foreground"><tr><th scope="col">Reserva</th><th scope="col">Hóspede titular / CPF</th><th scope="col">Período</th><th scope="col" className="text-right whitespace-nowrap">Valor total</th><th scope="col" className="text-right whitespace-nowrap">STAYO · {feePercent}%</th><th scope="col" className="text-right whitespace-nowrap">Proprietário · {100 - feePercent}%</th><th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
     {groups.map(group => <tbody key={group.channel} data-channel={group.channel}>
@@ -212,7 +213,7 @@ function ResTable({ rows, feePercent = 20, onDelete }: { rows: Res[]; feePercent
       const splitKey = r.missing_amounts?.find(k => ["gross", "cleaning", "platform_fee"].includes(k)) ?? "gross";
       const confirmed = !r.missing_amounts?.includes("owner_direct") && r.owner_direct_cents > 0;
       const direct = r.payout_flow === "platform_auto";
-      return <tr key={r.id}><td><span className="font-semibold">{r.reservation_code || "Sem código"}</span><span className="mt-1 block text-xs text-muted-foreground">{direct ? "Pagamento pela plataforma" : "Repasse pela STAYO"}</span></td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.base} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><span className="inline-flex items-center justify-end gap-1.5"><Amount r={r} k={splitKey} v={split.owner} />{direct && <span title={confirmed ? "Pagamento direto ao proprietário confirmado" : "Recebimento direto não confirmado"}>{confirmed ? <CircleCheck size={16} className="payout-receipt-confirmed" aria-label="Pagamento direto confirmado" /> : <CircleDashed size={16} className="text-muted-foreground" aria-label="Recebimento direto não confirmado" />}</span>}</span></td><td><Del onClick={() => onDelete(r.id)} /></td></tr>;
+      return <tr key={r.id}><td><span className="font-semibold">{r.reservation_code || "Sem código"}</span><span className="mt-1 block text-xs text-muted-foreground">{direct ? "Pagamento pela plataforma" : "Repasse pela STAYO"}</span></td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.base} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><span className="inline-flex items-center justify-end gap-1.5"><Amount r={r} k={splitKey} v={split.owner} />{direct && <span title={confirmed ? "Pagamento direto ao proprietário confirmado" : "Recebimento direto não confirmado"}>{confirmed ? <CircleCheck size={16} className="payout-receipt-confirmed" aria-label="Pagamento direto confirmado" /> : <CircleDashed size={16} className="text-muted-foreground" aria-label="Recebimento direto não confirmado" />}</span>}</span></td><td><span className="payout-reservation-actions inline-flex">{((r.missing_amounts?.length ?? 0) > 0 || ((r as any).manual_amounts?.length ?? 0) > 0) && <PayoutAmountEditor row={r as any} onSaved={onSaved} />}<Del onClick={() => onDelete(r.id)} /></span></td></tr>;
     })}
     <tr className="payout-group-subtotal"><th scope="row" colSpan={3}>Subtotal · {group.channel === "direta" ? "Diretas" : CHANNELS[group.channel as keyof typeof CHANNELS] ?? "Outro"}</th>{(["base", "stayo", "owner"] as const).map(key => <td key={key} className="text-right whitespace-nowrap">{group.complete ? brl(group.totals[key]) : "Não informado"}</td>)}<td /></tr>
     </tbody>)}</table></div>;

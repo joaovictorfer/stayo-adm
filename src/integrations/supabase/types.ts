@@ -2748,6 +2748,69 @@ export type Database = {
           },
         ]
       }
+      payout_reservation_adjustments: {
+        Row: {
+          competence: string
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          field: string
+          id: string
+          implementation_id: string
+          new_cents: number
+          previous_cents: number | null
+          previous_missing: boolean
+          reason: string
+          reservation_code: string | null
+          reservation_id: string
+        }
+        Insert: {
+          competence: string
+          created_at?: string
+          created_by: string
+          created_by_name?: string | null
+          field: string
+          id?: string
+          implementation_id: string
+          new_cents: number
+          previous_cents?: number | null
+          previous_missing: boolean
+          reason: string
+          reservation_code?: string | null
+          reservation_id: string
+        }
+        Update: {
+          competence?: string
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          field?: string
+          id?: string
+          implementation_id?: string
+          new_cents?: number
+          previous_cents?: number | null
+          previous_missing?: boolean
+          reason?: string
+          reservation_code?: string | null
+          reservation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_reservation_adjustments_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_reservation_adjustments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "payout_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payout_reservations: {
         Row: {
           central_reservation_id: string | null
@@ -2762,6 +2825,7 @@ export type Database = {
           guest_name: string
           id: string
           implementation_id: string
+          manual_amounts: string[]
           missing_amounts: string[]
           notes: string | null
           owner_direct_cents: number
@@ -2783,6 +2847,7 @@ export type Database = {
           guest_name: string
           id?: string
           implementation_id: string
+          manual_amounts?: string[]
           missing_amounts?: string[]
           notes?: string | null
           owner_direct_cents?: number
@@ -2804,6 +2869,7 @@ export type Database = {
           guest_name?: string
           id?: string
           implementation_id?: string
+          manual_amounts?: string[]
           missing_amounts?: string[]
           notes?: string | null
           owner_direct_cents?: number
@@ -3712,6 +3778,15 @@ export type Database = {
           p_id: string
           p_implementation_id?: string
           p_revision: number
+        }
+        Returns: Json
+      }
+      admin_adjust_payout_amounts: {
+        Args: {
+          _amounts: Json
+          _confirm_amounts: Json
+          _reason: string
+          _reservation_id: string
         }
         Returns: Json
       }

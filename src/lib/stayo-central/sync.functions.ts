@@ -55,7 +55,7 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
     const all = await listAll(http, "reservations", { property_id: proj.core_property_id });
     const rows = all.filter((r) => r.property_id === proj.core_property_id && !r.is_block && r.status !== "cancelled" && String(r.checkin_date).startsWith(data.month));
 
-    const { data: existing } = await context.supabase.from("payout_reservations").select("central_reservation_id,payout_flow")
+    const { data: existing } = await context.supabase.from("payout_reservations").select("central_reservation_id,payout_flow,manual_amounts")
       .in("central_reservation_id", rows.length ? rows.map((r) => r.id) : ["00000000-0000-0000-0000-000000000000"]);
     const known = new Set((existing ?? []).map((e: any) => e.central_reservation_id));
 
@@ -78,6 +78,8 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
       }
       // Valor ausente no Guia nunca vira zero real: grava 0 técnico e marca em missing_amounts.
       const missing: string[] = [];
+      // Valores lançados manualmente pela equipe (com histórico na ficha) nunca são sobrescritos pela sincronização.
+      const manual: string[] = (existing?.find((e: any) => e.central_reservation_id === r.id) as any)?.manual_amounts ?? [];
       const pick = (key: string, m: any) => { const v = has ? cents(m) : null; if (v === null) missing.push(key); return v ?? 0; };
       const flow = existing?.find((e: any) => e.central_reservation_id === r.id)?.payout_flow ?? (auto && base["channel"] === "airbnb" ? "platform_auto" : "stayo");
       if (flow === "platform_auto") {
@@ -89,6 +91,7 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
         gross_cents: pick("gross", fin?.gross), cleaning_cents: pick("cleaning", fin?.cleaning),
         platform_fee_cents: pick("platform_fee", fin?.platform_fee), missing_amounts: missing,
       });
+      for (const k of manual) { delete base[`${k}_cents`]; const i = missing.indexOf(k); if (i >= 0) missing.splice(i, 1); }
       if (known.has(r.id)) {
         const { error: e } = await context.supabase.from("payout_reservations").update(base as any).eq("central_reservation_id", r.id);
         if (!e) updated++;
