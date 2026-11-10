@@ -67,6 +67,7 @@
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
+- [x] PDF preserva o valor apurado do fechamento após pagamento; quitação e saldo pendente aparecem separados, comprovante continua anexado e saldo operacional impede novo Pix.
 - [x] Refinar janela Pix: bordas suaves, QR elevado, saldo destacado e seletor de comprovante com estado anexado; abertura real C203, seleção de arquivo e confirmação conferidas sem finalizar pagamento; 12 testes passaram. Nova abertura bloqueada pelo saldo real zerado.
 - [x] Fechamento Pix: QR com saldo exato e leitura independente, comprovante privado e confirmação explícita; fluxo autenticado descartável salvo/relido, saldo zerado, duplicidade/anon bloqueados e PDF com duas páginas de comprovante conferido. Testes QA removidos; nenhum Pix real realizado.
 - [x] Aplicar opção 2 à tela: tabela única agrupada por canal, faixas dourada/coral e subtotais separados; C203 real conferido, 30 testes passaram e celular sem transbordamento; fluxos, CPF mascarado e PDF preservados.
