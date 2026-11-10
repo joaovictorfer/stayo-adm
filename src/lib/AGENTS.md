@@ -1,0 +1,2 @@
+- Payout payment writes enter through core-client and authenticated server functions; validated private receipts are uploaded server-side, and an idempotent role-checked RPC rechecks the snapshot before recording a transfer so generating Pix never implies payment.
+- Preserve receipt-linked transfers and their recipient/statement snapshots; append original receipt PDF pages or fitted images locally after the monthly report so financial evidence never enters public or owner attachment capabilities.
