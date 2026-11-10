@@ -17,7 +17,8 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
   const missing = new Set(row.missing_amounts ?? []);
   // Só os campos que vieram sem valor (ou já lançados manualmente) são editáveis aqui.
   const editable = new Set([...(row.missing_amounts ?? []), ...(row.manual_amounts ?? [])]);
-  const fields = (["gross", "cleaning", "platform_fee", ...(row.payout_flow === "platform_auto" ? ["owner_direct"] : [])] as PayoutAmountField[]).filter(f => editable.has(f));
+  // Total, limpeza e taxa do canal sempre aparecem para compor o líquido; recebimento direto só quando pendente/manual.
+  const fields = (["gross", "cleaning", "platform_fee", ...(row.payout_flow === "platform_auto" ? ["owner_direct"] : [])] as PayoutAmountField[]).filter(f => f !== "owner_direct" || editable.has(f));
   const initial = () => Object.fromEntries(fields.map(f => [f, missing.has(f) ? (f === "platform_fee" && row.payout_flow !== "platform_auto" ? "0,00" : "") : ((row as any)[`${f}_cents`] / 100).toFixed(2).replace(".", ",")])) as Record<PayoutAmountField, string>;
   const [vals, setVals] = useState(initial);
   const [confirm, setConfirm] = useState<Record<PayoutAmountField, string>>({} as any);
