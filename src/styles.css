@@ -35,7 +35,7 @@
   --pdf-ink: #24323e;
   --pdf-muted: #637482;
   --pdf-border: #dce3e9;
-  --pdf-soft: #f0f5f9;
+  --pdf-soft: #edf3fc;
   --pdf-onSolid: #ffffff;
 }
 .payout-workspace { background: var(--background); padding: 24px; border-radius: 0; min-width: 0; }
