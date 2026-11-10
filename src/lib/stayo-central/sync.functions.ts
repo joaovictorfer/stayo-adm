@@ -55,7 +55,7 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
     const all = await listAll(http, "reservations", { property_id: proj.core_property_id });
     const rows = all.filter((r) => r.property_id === proj.core_property_id && !r.is_block && r.status !== "cancelled" && String(r.checkin_date).startsWith(data.month));
 
-    const { data: existing } = await context.supabase.from("payout_reservations").select("central_reservation_id")
+    const { data: existing } = await context.supabase.from("payout_reservations").select("central_reservation_id,payout_flow")
       .in("central_reservation_id", rows.length ? rows.map((r) => r.id) : ["00000000-0000-0000-0000-000000000000"]);
     const known = new Set((existing ?? []).map((e: any) => e.central_reservation_id));
 
@@ -79,6 +79,12 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
       // Valor ausente no Guia nunca vira zero real: grava 0 técnico e marca em missing_amounts.
       const missing: string[] = [];
       const pick = (key: string, m: any) => { const v = has ? cents(m) : null; if (v === null) missing.push(key); return v ?? 0; };
+      const flow = existing?.find((e: any) => e.central_reservation_id === r.id)?.payout_flow ?? (auto && base["channel"] === "airbnb" ? "platform_auto" : "stayo");
+      if (flow === "platform_auto") {
+        // Only the individual recipient amount is a direct payment; aggregate net and economic share are not receipts.
+        const owner = fin?.payout?.owner_payout;
+        base["owner_direct_cents"] = pick("owner_direct", owner?.origin !== "estimated" && owner?.reliability === "confirmed" ? owner : null);
+      }
       Object.assign(base, {
         gross_cents: pick("gross", fin?.gross), cleaning_cents: pick("cleaning", fin?.cleaning),
         platform_fee_cents: pick("platform_fee", fin?.platform_fee), missing_amounts: missing,

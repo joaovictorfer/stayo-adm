@@ -138,7 +138,7 @@ function Page() {
       <div className="payout-metrics grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric tone="navy" icon={<CalendarDays />} label="Reservas do mês" value={String(data.data.res.length)} />
         <Metric tone="received" icon={<CreditCard />} label="Recebido pela STAYO" value={s.incompleteCount ? "Saldo provisório" : brl(s.stayoGross)} />
-        <Metric tone="neutral" icon={<Coins />} label="Pago pela plataforma" value={brl(s.autoOwnerDirect)} />
+        <Metric tone="neutral" icon={<Coins />} label="Pago pela plataforma" value={auto.some(r => r.missing_amounts?.includes("owner_direct")) ? "Não informado" : brl(s.autoOwnerDirect)} />
         <Metric tone={s.complete && s.status === "a_compensar" ? "danger" : "balance"} icon={<Wallet />} label={!s.complete ? "Saldo do mês" : s.status === "a_compensar" ? "Saldo a compensar" : s.status === "zerado" ? "Saldo zerado" : "Saldo a repassar"} value={s.complete ? brl(Math.abs(s.balance)) : "Não calculado"} />
       </div>
       <Section title="Reservas recebidas pela STAYO" count={stayo.length}>
@@ -148,7 +148,7 @@ function Page() {
       <Section title="Repasse direto pela plataforma" count={auto.length} subtitle="Pagamento direto ao proprietário; não compõe o saldo STAYO.">
         <ResTable rows={auto} direct onDelete={(id) => remove("payout_reservations", id)} />
         {s.autoIncompleteCount > 0 && <p className="text-sm text-muted-foreground">{s.autoIncompleteCount} reserva(s) sem valor no Guia — fora do total abaixo.</p>}
-        {auto.length > 0 && <p className="text-sm">Total das reservas: <b>{brl(s.autoGross)}</b> · Pago direto ao proprietário: <b>{brl(s.autoOwnerDirect)}</b></p>}
+        {auto.length > 0 && <p className="text-sm">Total das reservas: <b>{brl(s.autoGross)}</b> · Pago direto ao proprietário: <b>{auto.some(r => r.missing_amounts?.includes("owner_direct")) ? "Não informado" : brl(s.autoOwnerDirect)}</b></p>}
         <ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} />
       </Section>
       <Section title="Despesas do mês">
@@ -195,12 +195,12 @@ const maskCpf = (c?: string | null) => c ? `***.${c.replace(/\D/g, "").slice(3, 
 type Res = { id: string; channel: string; reservation_code: string | null; guest_name: string; guest_cpf: string | null; checkin_date: string; checkout_date: string; gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number; missing_amounts?: string[] | null };
 /** Valor que o Guia não informou: nunca exibido como R$ 0,00. */
 const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amounts?.includes(k)
-  ? <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive" title="O Guia STAYO ainda não informou este valor">Sem valor no Guia</span>
+  ? <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive" title="O Guia STAYO ainda não informou este valor">Não informado</span>
   : <>{brl(v)}</>;
 function ResTable({ rows, direct, onDelete }: { rows: Res[]; direct?: boolean; onDelete: (id: string) => void }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
-  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right">Valor</th>{direct ? <th className="text-right">Pago direto</th> : <><th className="text-right">Limpeza</th><th className="text-right">Taxa canal</th></>}<th><span className="sr-only">Ações</span></th></tr></thead>
-    <tbody>{rows.map((r) => { const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe; return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k="gross" v={r.gross_cents} /></td>{direct ? <td className="text-right whitespace-nowrap">{brl(r.owner_direct_cents)}</td> : <><td className="text-right whitespace-nowrap"><Amount r={r} k="cleaning" v={r.cleaning_cents} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k="platform_fee" v={r.platform_fee_cents} /></td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>; })}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right">Valor</th>{direct ? <th className="text-right">Pago direto</th> : <th className="text-right">Taxa canal</th>}<th><span className="sr-only">Ações</span></th></tr></thead>
+    <tbody>{rows.map((r) => { const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe; return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k="gross" v={r.gross_cents} /></td>{direct ? <td className="text-right whitespace-nowrap"><Amount r={r} k="owner_direct" v={r.owner_direct_cents} /></td> : <td className="text-right whitespace-nowrap"><Amount r={r} k="platform_fee" v={r.platform_fee_cents} /></td>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>; })}</tbody></table></div>;
 }
 
 function useSaver(onSaved: () => void) {
@@ -227,7 +227,7 @@ function ReservationForm({ impl, flow, month, onSaved }: { impl: string; flow: P
     <F label="Check-out"><Input type="date" required value={f.co} min={f.ci} onChange={set("co")} /></F>
     <F label="Valor total da reserva (R$)"><Input inputMode="decimal" required value={f.gross} onChange={set("gross")} /></F>
     {flow === "platform_auto" ? <F label="Pago direto ao proprietário (R$)"><Input inputMode="decimal" value={f.direct} onChange={set("direct")} /></F> : <>
-      <F label="Limpeza (R$)"><Input inputMode="decimal" value={f.cleaning} onChange={set("cleaning")} /></F>
+      
       <F label="Taxa do canal (R$)"><Input inputMode="decimal" value={f.fee} onChange={set("fee")} /></F></>}
     <div className="flex items-end gap-2 sm:col-span-3"><Button disabled={busy}>Salvar reserva</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button></div>
   </form>;
