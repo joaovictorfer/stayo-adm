@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { MoneyInput, MoneyCentsInput, parseMoneyText, formatMoneyText } from "@/components/ui/money-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/money";
@@ -52,21 +53,19 @@ function parseMoney(text: string): number | null {
 }
 
 function MoneyField({ value, onChange, label }: { value: number | null; onChange: (v: number | null) => void; label: string }) {
-  const [text, setText] = useState(value == null ? "" : value.toFixed(2).replace(".", ","));
+  const [text, setText] = useState(value == null ? "" : formatMoneyText(Math.round(value * 100)));
   useEffect(() => {
-    setText(value == null ? "" : value.toFixed(2).replace(".", ","));
+    setText(value == null ? "" : formatMoneyText(Math.round(value * 100)));
   }, [value]);
   return (
     <label className="block text-xs font-medium">
       {label}
       <div className="mt-1 flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">R$</span>
-        <Input
-          inputMode="decimal"
+        <MoneyInput
           placeholder="Valor a definir"
           aria-label={label}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onValueChange={setText}
           onBlur={() => onChange(parseMoney(text))}
           className="max-w-[160px]"
         />

@@ -3,10 +3,11 @@ import { Pencil, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput, MoneyCentsInput, parseMoneyText, formatMoneyText } from "@/components/ui/money-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { adjustPayoutAmounts, PAYOUT_FIELD_LABEL, type PayoutAmountField } from "@/lib/api/core-client";
 
-const toCents = (v: string) => { const t = v.replace(/\s|R\$/g, "").replace(/\./g, "").replace(",", "."); if (!/^\d+(\.\d{1,2})?$/.test(t)) return null; return Math.round(Number(t) * 100); };
+const toCents = parseMoneyText;
 
 type Row = { id: string; reservation_code?: string | null; guest_name: string; payout_flow: string; missing_amounts?: string[] | null; manual_amounts?: string[] | null;
   gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number };
@@ -19,7 +20,7 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
   const editable = new Set([...(row.missing_amounts ?? []), ...(row.manual_amounts ?? [])]);
   // Total, limpeza e taxa do canal sempre aparecem para compor o líquido; recebimento direto só quando pendente/manual.
   const fields = (["gross", "cleaning", "platform_fee", ...(row.payout_flow === "platform_auto" ? ["owner_direct"] : [])] as PayoutAmountField[]).filter(f => f !== "owner_direct" || editable.has(f));
-  const initial = () => Object.fromEntries(fields.map(f => [f, missing.has(f) ? (f === "platform_fee" && row.payout_flow !== "platform_auto" ? "0,00" : "") : ((row as any)[`${f}_cents`] / 100).toFixed(2).replace(".", ",")])) as Record<PayoutAmountField, string>;
+  const initial = () => Object.fromEntries(fields.map(f => [f, missing.has(f) ? (f === "platform_fee" && row.payout_flow !== "platform_auto" ? "0,00" : "") : formatMoneyText((row as any)[`${f}_cents`])])) as Record<PayoutAmountField, string>;
   const [vals, setVals] = useState(initial);
   const [confirm, setConfirm] = useState<Record<PayoutAmountField, string>>({} as any);
   const [reason, setReason] = useState("");
@@ -60,7 +61,7 @@ export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row
         </DialogHeader>
         {step === 1 ? <div className="space-y-3">
           {fields.map(f => <label key={f} className="block text-sm"><span className="mb-1 flex justify-between font-medium">{PAYOUT_FIELD_LABEL[f]}{missing.has(f) && <span className="text-xs text-destructive">Não informado</span>}</span>
-            <Input inputMode="decimal" placeholder="0,00" value={vals[f] ?? ""} onChange={e => setVals(v => ({ ...v, [f]: e.target.value }))} aria-invalid={vals[f] !== "" && parsed[f] === null} /></label>)}
+            <MoneyInput value={vals[f] ?? ""} onValueChange={t => setVals(v => ({ ...v, [f]: t }))} aria-invalid={vals[f] !== "" && parsed[f] === null} /></label>)}
           <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-3 text-xs" aria-live="polite">
             <div><span className="block text-muted-foreground">Valor líquido</span><strong className="text-sm tabular-nums">{brl(net)}</strong></div>
             <div><span className="block text-muted-foreground">STAYO · {feePercent}%</span><strong className="text-sm tabular-nums">{brl(stayoPart)}</strong></div>
