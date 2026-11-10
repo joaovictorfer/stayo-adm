@@ -19,6 +19,8 @@
   --payout-coral: oklch(0.57 0.2 25);
   --payout-gold: oklch(0.55 0.1 80);
   --payout-gold-soft: oklch(0.94 0.055 80);
+  --payout-coral-soft: oklch(0.96 0.025 25);
+  --payout-success: oklch(0.53 0.15 150);
   --payout-tile-shadow: 0 6px 20px color-mix(in oklab, var(--payout-navy) 9%, transparent);
 }
 .dark {
@@ -26,6 +28,8 @@
   --payout-sky-icon: oklch(0.36 0.07 245);
   --payout-gold: oklch(0.82 0.12 80);
   --payout-gold-soft: oklch(0.3 0.04 80);
+  --payout-coral-soft: oklch(0.29 0.045 25);
+  --payout-success: oklch(0.74 0.15 150);
 }
 .payout-pdf-palette {
   --pdf-navy: #0b3150;
@@ -112,6 +116,21 @@
 .payout-channel { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 6px; background: var(--payout-sky); color: var(--foreground); }
 .payout-channel.is-airbnb { background: var(--payout-coral); color: var(--payout-on-solid); }
 .payout-channel.is-direta { background: var(--payout-gold-soft); color: var(--payout-gold); }
+.payout-grouped-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+.payout-grouped-table { border-collapse: collapse; }
+.payout-grouped-table thead th { background: var(--muted); padding: 14px 12px; }
+.payout-grouped-table td { padding: 16px 12px; }
+.payout-grouped-table .payout-group-heading th { padding: 13px 16px; background: var(--payout-sky); color: var(--foreground); text-align: left; }
+.payout-grouped-table tbody[data-channel="direta"] .payout-group-heading th { background: var(--payout-gold-soft); color: var(--payout-gold); border-left: 4px solid var(--payout-gold); }
+.payout-grouped-table tbody[data-channel="airbnb"] .payout-group-heading th { background: var(--payout-coral-soft); color: var(--payout-coral); border-left: 4px solid var(--payout-coral); }
+.payout-group-heading-content { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.payout-group-count { font-size: 12px; font-weight: 500; white-space: nowrap; }
+.payout-grouped-table .payout-group-subtotal th, .payout-grouped-table .payout-group-subtotal td { padding: 14px 12px; background: var(--payout-sky); font-weight: 700; border-bottom: 2px solid var(--border); font-variant-numeric: tabular-nums; }
+.payout-grouped-table .payout-group-subtotal th { text-align: left; font-size: 12px; }
+.payout-grouped-table .payout-group-subtotal td:nth-last-child(2) { color: var(--payout-cobalt); }
+.payout-receipt-confirmed { color: var(--payout-success); }
+.payout-reservation-actions { display: flex; flex-wrap: wrap; align-items: start; gap: 10px; }
+.payout-reservation-actions > form { flex-basis: 100%; }
 @media (max-width: 640px) {
   .payout-workspace { padding: 16px 12px; }
   .payout-filters { grid-template-columns: minmax(0, 1fr); }
