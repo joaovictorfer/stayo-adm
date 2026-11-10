@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight, CircleCheck, CircleDashed } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
 import { computeStatement, competenceOf, previousCompetence, type PayoutFlow } from "@/lib/payout-statement";
-import { payoutPdfReadiness, payoutPdfSplit, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
+import { payoutPdfReadiness, payoutPdfSplit, payoutPdfBalance, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
 import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
@@ -87,6 +87,8 @@ function Page() {
   const auto = data.data?.res.filter((r) => r.payout_flow === "platform_auto") ?? [];
   const stayo = data.data?.res.filter((r) => r.payout_flow === "stayo") ?? [];
 
+  const closing = data.data ? payoutPdfBalance({ competence: month, adminFeePercent: data.data.fee, reservations: data.data.res as PayoutPdfReservation[], expenses: data.data.exp, transfers: data.data.tr }) : null;
+
   const selectedProperty = props.data?.find((p) => p.id === impl);
   const propertyTitle = selectedProperty ? [selectedProperty.condominium_name, selectedProperty.unit].filter(Boolean).join(" ") || selectedProperty.nickname || selectedProperty.code : "";
   const monthTitle = new Date(`${month}-01T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -146,9 +148,9 @@ function Page() {
         <ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} />
       </Section>
       <Section title="Repasse direto pela plataforma" count={auto.length} subtitle="Pagamento direto ao proprietário; não compõe o saldo STAYO.">
-        <ResTable rows={auto} direct onDelete={(id) => remove("payout_reservations", id)} />
+        <ResTable rows={auto} direct feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
         {s.autoIncompleteCount > 0 && <p className="text-sm text-muted-foreground">{s.autoIncompleteCount} reserva(s) sem valor no Guia — fora do total abaixo.</p>}
-        {auto.length > 0 && <p className="text-sm">Total das reservas: <b>{brl(s.autoGross)}</b> · Pago direto ao proprietário: <b>{auto.some(r => r.missing_amounts?.includes("owner_direct")) ? "Não informado" : brl(s.autoOwnerDirect)}</b></p>}
+        {auto.length > 0 && <p className="text-sm">Total das reservas: <b>{brl(auto.reduce((sum, r) => sum + payoutPdfSplit(r, data.data.fee).base, 0))}</b> · Pago direto ao proprietário: <b>{auto.some(r => r.missing_amounts?.includes("owner_direct")) ? "Não informado" : brl(s.autoOwnerDirect)}</b></p>}
         <ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} />
       </Section>
       <Section title="Despesas do mês">
@@ -158,8 +160,12 @@ function Page() {
       </Section>
       <Section title="Balancete" subtitle={`Administração de ${data.data.fee}% sobre a diária, conforme o contrato.`}>
         <dl className="grid gap-1 text-sm">
-          <Line l="Valor total" v={s.stayoGross - s.cleaning} />
-          <Line l="(−) Taxas das plataformas" v={-s.platformFees} />
+          <Line l="Total em reservas do mês" v={closing?.totalReservations ?? 0} strong />
+          <div className="flex justify-between gap-4 py-2"><dt className="flex items-center gap-2"><CircleCheck size={16} className="text-primary shrink-0" />Já recebido pelo proprietário via Airbnb</dt><dd className="shrink-0 tabular-nums">{closing?.airbnbReceived == null ? "Não informado" : brl(closing.airbnbReceived)}</dd></div>
+          {closing?.hasOtherDirect && <div className="flex justify-between gap-4 py-2"><dt>Já recebido por outras plataformas</dt><dd className="shrink-0 tabular-nums">{closing.otherDirectReceived == null ? "Não informado" : brl(closing.otherDirectReceived)}</dd></div>}
+          <Line l="Repasses já realizados pela STAYO" v={s.transferred} />
+          <div className="flex justify-between gap-4 border-t py-2 font-semibold"><dt>Total já repassado ao proprietário</dt><dd className="shrink-0 tabular-nums">{closing?.totalReceived == null ? "Não informado" : brl(closing.totalReceived)}</dd></div>
+          <Line l="Valor total das reservas STAYO" v={s.stayoGross - s.cleaning - s.platformFees} />
           <Line l={`(−) Administração STAYO (${data.data.fee}%)`} v={-s.adminFee} />
           <Line l="= Parte do proprietário" v={s.ownerShare} strong />
           <Line l="(−) Despesas do mês" v={-s.expenseTotal} />
@@ -199,8 +205,15 @@ const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amou
   : <>{brl(v)}</>;
 function ResTable({ rows, direct, feePercent = 20, onDelete }: { rows: Res[]; direct?: boolean; feePercent?: number; onDelete: (id: string) => void }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
-  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right whitespace-nowrap">Valor total</th>{direct ? <th className="text-right">Pago direto</th> : <><th className="text-right whitespace-nowrap">STAYO · {feePercent}%</th><th className="text-right whitespace-nowrap">Proprietário · {100 - feePercent}%</th></>}<th><span className="sr-only">Ações</span></th></tr></thead>
-    <tbody>{rows.map((r) => { const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe; const split = payoutPdfSplit(r, feePercent); const splitKey = r.missing_amounts?.find(k => ["gross", "cleaning", "platform_fee"].includes(k)) ?? "gross"; return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={direct ? "gross" : splitKey} v={direct ? r.gross_cents : split.base} /></td>{direct ? <td className="text-right whitespace-nowrap"><Amount r={r} k="owner_direct" v={r.owner_direct_cents} /></td> : <><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.owner} /></td></>}<td><Del onClick={() => onDelete(r.id)} /></td></tr>; })}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right whitespace-nowrap">Valor total</th><th className="text-right whitespace-nowrap">STAYO · {feePercent}%</th><th className="text-right whitespace-nowrap">Proprietário · {100 - feePercent}%</th><th><span className="sr-only">Ações</span></th></tr></thead>
+    <tbody>{rows.map((r) => {
+      const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe;
+      const split = payoutPdfSplit(r, feePercent);
+      const splitKey = r.missing_amounts?.find(k => ["gross", "cleaning", "platform_fee"].includes(k)) ?? "gross";
+      const confirmed = !r.missing_amounts?.includes("owner_direct") && r.owner_direct_cents > 0;
+      const ReceiptIcon = confirmed ? CircleCheck : CircleDashed;
+      return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.base} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.owner} />{direct && <span className="mt-2 flex items-start justify-end gap-1.5 text-xs font-normal text-muted-foreground" title="Recebimento informado pela plataforma, separado da divisão contratual"><ReceiptIcon size={15} className="shrink-0 text-primary" /><span>{confirmed ? "Pago direto ao proprietário" : "Recebimento direto"}<span className="mt-0.5 block"><Amount r={r} k="owner_direct" v={r.owner_direct_cents} /></span></span></span>}</td><td><Del onClick={() => onDelete(r.id)} /></td></tr>;
+    })}</tbody></table></div>;
 }
 
 function useSaver(onSaved: () => void) {

@@ -46,7 +46,7 @@ export function payoutPdfBalance(input: Pick<PayoutPdfInput, "competence" | "adm
     ? null : reservations.reduce((sum, r) => sum + r.owner_direct_cents, 0);
   return {
     reservationCount: rows.length,
-    totalReservations: rows.reduce((sum, r) => sum + (r.payout_flow === "stayo" ? payoutPdfSplit(r, input.adminFeePercent).base : r.gross_cents), 0),
+    totalReservations: rows.reduce((sum, r) => sum + payoutPdfSplit(r, input.adminFeePercent).base, 0),
     airbnbReceived: received(direct.filter(r => r.channel === "airbnb")),
     totalReceived: received(direct) === null ? null : (received(direct) ?? 0) + statement.transferred,
     otherDirectReceived: received(direct.filter(r => r.channel !== "airbnb")),
@@ -161,11 +161,9 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     const titleHeight = text(title, M, y, 11, heading, colors.navy, CW * 0.55);
     right(`CONTRATO · STAYO ${pct}% / PROPRIETÁRIO ${100 - pct}%`, y + 2, 7, body, colors.muted);
     y += titleHeight + 12;
-    const stayoFlow = flow === "stayo";
+    const directFlow = flow === "platform_auto";
     const firstEdge = M + 288, midEdge = M + 397, lastEdge = W - M - 10;
-    const columns = stayoFlow
-      ? [{ label: "Valor total", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `Proprietário · ${100 - pct}%`, edge: lastEdge }]
-      : [{ label: "Valor total", edge: firstEdge }, { label: "Pago direto ao proprietário", edge: lastEdge }];
+    const columns = [{ label: "Valor total", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `Proprietário · ${100 - pct}%`, edge: lastEdge }];
     const labelW = 190;
     let sumFirst = 0, sumMid = 0, sumLast = 0;
     selected.forEach((r, i) => {
@@ -174,7 +172,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       const codeText = `${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`;
       const codeHeight = wrap(codeText, 8, heading, labelW).length * 12;
       const cpfLines = wrap(cpfText, 9, body, labelW).length;
-      const height = Math.max(56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
+      const height = Math.max(directFlow ? 88 : 56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
       space(height + (i === selected.length - 1 ? 48 : 7));
       rounded(M, y, CW, height, colors.soft, 5);
       const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
@@ -182,27 +180,32 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       text(codeText, M + 10, y + 8, 8, heading, channelColor, labelW);
       text(r.guest_name, M + 10, y + 8 + codeHeight, 11, heading, colors.navy, labelW);
       text(cpfText, M + 10, y + 8 + codeHeight + nameLines * 15, 9, body, colors.muted, labelW);
-      columns.forEach(c => text(c.label, c.edge - (c.edge === lastEdge && !stayoFlow ? 160 : 72), y + 13, 7.5, body, colors.muted));
+      columns.forEach(c => text(c.label, c.edge - 72, y + 13, 7.5, body, colors.muted));
       const split = payoutPdfSplit(r, pct);
-      const cells = stayoFlow
-        ? [{ v: money(split.base), edge: firstEdge, last: false }, { v: money(split.stayo), edge: midEdge, last: false }, { v: money(split.owner), edge: lastEdge, last: true }]
-        : [{ v: money(r.gross_cents), edge: firstEdge, last: false }, { v: payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), edge: lastEdge, last: true }];
-      cells.forEach((c) => text(c.v, c.edge - (c.edge === lastEdge && !stayoFlow ? 160 : 72), y + 28, 11.5, heading, c.last ? colors.cobalt : colors.navy));
-      if (stayoFlow) { sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner; }
-      else { sumFirst += r.gross_cents; sumLast += r.owner_direct_cents; }
+      const cells = [{ v: money(split.base), edge: firstEdge, last: false }, { v: money(split.stayo), edge: midEdge, last: false }, { v: money(split.owner), edge: lastEdge, last: true }];
+      cells.forEach(c => text(c.v, c.edge - 72, y + 28, 11.5, heading, c.last ? colors.cobalt : colors.navy));
+      if (directFlow) {
+        const confirmed = !r.missing_amounts?.includes("owner_direct") && r.owner_direct_cents > 0;
+        const markerX = M + 225, markerTop = y + height - 18;
+        page.drawCircle({ x: markerX, y: H - markerTop - 4, size: 4.5, borderWidth: 0.8, borderColor: colors.cobalt, ...(confirmed ? { color: colors.cobalt } : {}) });
+        if (confirmed) {
+          page.drawLine({ start: { x: markerX - 2, y: H - markerTop - 4 }, end: { x: markerX - 0.5, y: H - markerTop - 5.5 }, thickness: 0.8, color: colors.onSolid });
+          page.drawLine({ start: { x: markerX - 0.5, y: H - markerTop - 5.5 }, end: { x: markerX + 2.5, y: H - markerTop - 2.5 }, thickness: 0.8, color: colors.onSolid });
+        }
+        text(confirmed ? "Pago direto ao proprietário" : "Recebimento direto", markerX + 10, markerTop, 7.5, body, colors.muted, 175);
+        rightAt(payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), lastEdge, markerTop, 8, heading, colors.cobalt);
+      }
+      sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner;
       y += height + 7;
     });
     space(52);
     rounded(M + 3, y, CW - 6, 38, colors.navy, 5, true);
     text("TOTAL DO MÊS", M + 12, y + 9, 9, heading, colors.onSolid);
     text(`${selected.length} ${selected.length === 1 ? "reserva" : "reservas"}`, M + 12, y + 22, 8, body, colors.onSolid);
-    const totals = stayoFlow
-      ? [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: `STAYO · ${pct}%`, v: sumMid, edge: midEdge }, { l: `Proprietário · ${100 - pct}%`, v: sumLast, edge: lastEdge }]
-      : [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: "Pago direto", v: sumLast, edge: lastEdge }];
-    totals.forEach((t) => {
+    const totals = [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: `STAYO · ${pct}%`, v: sumMid, edge: midEdge }, { l: `Proprietário · ${100 - pct}%`, v: sumLast, edge: lastEdge }];
+    totals.forEach(t => {
       rightAt(t.l, t.edge, y + 8, 8, body, colors.onSolid);
-      const missingDirect = !stayoFlow && t.edge === lastEdge && selected.some(r => r.missing_amounts?.includes("owner_direct"));
-      rightAt(missingDirect ? "Não informado" : money(t.v), t.edge, y + 20, 12, heading, colors.onSolid);
+      rightAt(money(t.v), t.edge, y + 20, 12, heading, colors.onSolid);
     });
     y += 54;
   };
