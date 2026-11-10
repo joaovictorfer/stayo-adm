@@ -11,20 +11,25 @@ const toCents = (v: string) => { const t = v.replace(/\s|R\$/g, "").replace(/\./
 type Row = { id: string; reservation_code?: string | null; guest_name: string; payout_flow: string; missing_amounts?: string[] | null; manual_amounts?: string[] | null;
   gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number };
 
-export function PayoutAmountEditor({ row, onSaved }: { row: Row; onSaved: () => void }) {
+export function PayoutAmountEditor({ row, onSaved, feePercent = 20 }: { row: Row; onSaved: () => void; feePercent?: number }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const missing = new Set(row.missing_amounts ?? []);
   // Só os campos que vieram sem valor (ou já lançados manualmente) são editáveis aqui.
   const editable = new Set([...(row.missing_amounts ?? []), ...(row.manual_amounts ?? [])]);
   const fields = (["gross", "cleaning", "platform_fee", ...(row.payout_flow === "platform_auto" ? ["owner_direct"] : [])] as PayoutAmountField[]).filter(f => editable.has(f));
-  const initial = () => Object.fromEntries(fields.map(f => [f, missing.has(f) ? "" : ((row as any)[`${f}_cents`] / 100).toFixed(2).replace(".", ",")])) as Record<PayoutAmountField, string>;
+  const initial = () => Object.fromEntries(fields.map(f => [f, missing.has(f) ? (f === "platform_fee" && row.payout_flow !== "platform_auto" ? "0,00" : "") : ((row as any)[`${f}_cents`] / 100).toFixed(2).replace(".", ",")])) as Record<PayoutAmountField, string>;
   const [vals, setVals] = useState(initial);
   const [confirm, setConfirm] = useState<Record<PayoutAmountField, string>>({} as any);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   const parsed = Object.fromEntries(fields.map(f => [f, toCents(vals[f] ?? "")])) as Record<PayoutAmountField, number | null>;
+  const cur = (f: PayoutAmountField) => fields.includes(f) ? parsed[f] : ((row as any)[`${f}_cents`] as number);
+  const pg = cur("gross"), pc = cur("cleaning"), pf = cur("platform_fee");
+  const net = pg === null || pc === null || pf === null ? null : Math.max(0, pg - pc - pf);
+  const stayoPart = net === null ? null : Math.round((net * feePercent) / 100);
+  const brl = (c: number | null) => c === null ? "—" : (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const step1Ok = fields.every(f => parsed[f] !== null) && reason.trim().length >= 5;
   const confirmParsed = Object.fromEntries(fields.map(f => [f, toCents(confirm[f] ?? "")])) as Record<PayoutAmountField, number | null>;
   const mismatch = fields.filter(f => (confirm[f] ?? "") !== "" && confirmParsed[f] !== parsed[f]);
@@ -55,6 +60,12 @@ export function PayoutAmountEditor({ row, onSaved }: { row: Row; onSaved: () => 
         {step === 1 ? <div className="space-y-3">
           {fields.map(f => <label key={f} className="block text-sm"><span className="mb-1 flex justify-between font-medium">{PAYOUT_FIELD_LABEL[f]}{missing.has(f) && <span className="text-xs text-destructive">Não informado</span>}</span>
             <Input inputMode="decimal" placeholder="0,00" value={vals[f] ?? ""} onChange={e => setVals(v => ({ ...v, [f]: e.target.value }))} aria-invalid={vals[f] !== "" && parsed[f] === null} /></label>)}
+          <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-3 text-xs" aria-live="polite">
+            <div><span className="block text-muted-foreground">Valor líquido</span><strong className="text-sm tabular-nums">{brl(net)}</strong></div>
+            <div><span className="block text-muted-foreground">STAYO · {feePercent}%</span><strong className="text-sm tabular-nums">{brl(stayoPart)}</strong></div>
+            <div><span className="block text-muted-foreground">Proprietário · {100 - feePercent}%</span><strong className="text-sm tabular-nums">{brl(net === null || stayoPart === null ? null : net - stayoPart)}</strong></div>
+            <p className="col-span-3 text-muted-foreground">A taxa de limpeza e a taxa do canal ficam só aqui; a tela e o relatório mostram apenas o valor líquido dividido.</p>
+          </div>
           <label className="block text-sm"><span className="mb-1 block font-medium">Motivo / origem da informação</span>
             <Input maxLength={500} placeholder="Ex.: conforme extrato do Airbnb de 16/10" value={reason} onChange={e => setReason(e.target.value)} /></label>
         </div> : <div className="space-y-3">
