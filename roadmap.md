@@ -67,7 +67,7 @@
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
-- [ ] Refinar catálogo com fotos maiores e busca direta; excluir fichas em implantação ou sem vínculo STAYO APP da seleção, preservando cálculos e PDFs.
+- [x] Refinar catálogo com fotos maiores e busca direta; seleção restrita aos cinco imóveis ativos vinculados ao STAYO APP. Busca C203, duas reservas reais, cinco opções no seletor e telas 838/390 conferidas; 22 testes passaram, cálculos e PDF preservados.
 - [x] Refinar seleção de imóvel com busca por nome/unidade/código, fotos privadas na lista e identificação visual da ficha; C203 e Ravena reais conferidos em desktop e celular sem transbordamento, 18 testes passando; cálculos e PDF preservados.
 - [x] Foto enviada definida como capa privada do Ravena B406 (IMP-00022), compactada de 747 KB para 209 KB (1600×1200); ficha após recarga e foto no PDF de novembro conferidas. Outubro permanece com bloqueio financeiro existente; nenhuma reserva alterada.
 - [x] Aplicar a referência Faixas compactas da imagem 200 ao PDF: faixas azul-claro, filete por canal, colunas alinhadas e Proprietário; download real do C203 conferido em uma página, CPF completo, saldo preservado e 18 testes passando. Revisão corrigiu alinhamento dos rótulos e tom das faixas; dados ilustrativos não copiados.
