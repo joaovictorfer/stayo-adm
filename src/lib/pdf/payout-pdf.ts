@@ -45,11 +45,6 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const body = await doc.embedFont(input.assets?.bodyFont ?? StandardFonts.Helvetica, { subset: true });
   const heading = await doc.embedFont(input.assets?.headingFont ?? StandardFonts.HelveticaBold, { subset: true });
   const logo = input.assets ? await doc.embedPng(input.assets.logo) : undefined;
-  let cover;
-  if (input.assets?.cover) {
-    const bytes = input.assets.cover;
-    cover = bytes[0] === 0x89 ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
-  }
   const colors = Object.fromEntries(Object.entries(input.palette).map(([k, v]) => [k, rgb(...v)])) as Record<keyof PayoutPdfPalette, ReturnType<typeof rgb>>;
   const issued = input.issuedAt ?? new Date();
   const monthLabel = new Date(`${input.competence}-01T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -57,7 +52,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const expenses = input.expenses.filter(e => competenceOf(e.occurred_on) === input.competence);
   const transfers = input.transfers.filter(t => t.competence === input.competence);
   const s = computeStatement(input.competence, input.adminFeePercent, rows, expenses, transfers);
-  const W = 595.28, H = 841.89, M = 44, CW = W - M * 2;
+  const W = 595.28, H = 841.89, M = 27, CW = W - M * 2;
   let page: PDFPage = doc.addPage([W, H]);
   let y = 0;
   const wrap = (value: string, size: number, font: PDFFont, maxWidth: number) => {
@@ -87,13 +82,18 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const right = (value: string, top: number, size = 10, font = body, color = colors.ink) => text(value, W - M - font.widthOfTextAtSize(value, size), top, size, font, color);
   const rect = (x: number, top: number, width: number, height: number, color: ReturnType<typeof rgb>) => page.drawRectangle({ x, y: H - top - height, width, height, color });
   const header = (first: boolean) => {
-    rect(0, 0, W, 68, colors.navy);
-    if (logo) { const d = logo.scaleToFit(72, 40); page.drawImage(logo, { x: M, y: H - 54, width: d.width, height: d.height }); }
-    right("Demonstrativo de repasse ao proprietário", 19, 9, body, colors.onSolid);
-    right(`${input.propertyCode} · ${input.competence}`, 37, 10, heading, colors.onSolid);
-    rect(0, 68, W, 2, colors.gold);
-    y = 92;
-    if (!first) { y += text(input.property, M, y, 14, heading) + 4; y += text(monthLabel, M, y, 10, body, colors.muted) + 18; }
+    const context = `${input.property} · ${monthLabel}`;
+    const headerHeight = Math.max(50, 24 + wrap(context, 12, heading, CW - 100).length * 16);
+    rect(0, 0, W, headerHeight, colors.navy);
+    if (logo) { const d = logo.scaleToFit(48, 34); page.drawImage(logo, { x: M, y: H - headerHeight / 2 - d.height / 2, width: d.width, height: d.height }); }
+    text("RELATÓRIO DE REPASSE", M + 88, 11, 7.5, body, colors.onSolid, CW - 100);
+    text(context, M + 88, 23, 12, heading, colors.onSolid, CW - 100);
+    y = headerHeight + 14;
+    if (first) {
+      text("Relatório de repasse", M, y, 15, heading, colors.navy);
+      rect(M, y + 21, 30, 2, colors.cobalt);
+      y += 34;
+    }
   };
   const newPage = () => { page = doc.addPage([W, H]); header(false); };
   const space = (height: number) => { if (y + height > H - 65) newPage(); };
@@ -117,132 +117,83 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     y += height;
   };
   header(true);
-  const titleWidth = cover ? 290 : CW - 20;
-  const titleHeight = wrap(input.property, 23, heading, titleWidth).length * 27;
-  const bannerHeight = Math.max(126, titleHeight + 74);
-  rect(0, 86, W, bannerHeight, colors.navy);
-  rect(M, 108, 3, bannerHeight - 42, colors.cobalt);
-  text("RELATÓRIO MENSAL", M + 15, 105, 9, heading, colors.gold, titleWidth);
-  text(input.property, M + 15, 125, 23, heading, colors.onSolid, titleWidth);
-  text(monthLabel, M + 15, 137 + titleHeight, 12, body, colors.onSolid, titleWidth);
-  if (cover) { const d = cover.scaleToFit(155, 105); page.drawImage(cover, { x: W - M - d.width, y: H - 208, width: d.width, height: d.height }); }
-  y = 86 + bannerHeight + 20;
-  y += text(`Proprietário: ${input.ownerName || "Não informado"}`, M, y, 11, heading) + 5;
-  y += text(`Competência por check-in · ${rows.length} ${rows.length === 1 ? "reserva" : "reservas"}`, M, y, 10, body, colors.muted) + 20;
   const statusLabel = s.status === "a_compensar" ? "SALDO A COMPENSAR PELO PROPRIETÁRIO" : s.status === "zerado" ? "SALDO DO MÊS ZERADO" : "VALOR LÍQUIDO A REPASSAR AO PROPRIETÁRIO";
-  const gap = 8, col = (CW - gap * 3) / 4;
-  const metrics: [string, string, typeof colors.navy, typeof colors.ink][] = [
-    ["RESERVAS DO MÊS", String(rows.length), colors.navy, colors.onSolid],
-    ["RECEBIDO PELA STAYO", money(s.stayoGross), colors.soft, colors.navy],
-    ["PAGO PELA PLATAFORMA", money(s.autoOwnerDirect), colors.paper, colors.navy],
-    [s.status === "a_compensar" ? "SALDO A COMPENSAR" : s.status === "zerado" ? "SALDO ZERADO" : "SALDO A REPASSAR", money(Math.abs(s.balance)), colors.cobalt, colors.onSolid],
-  ];
-  space(92);
-  metrics.forEach(([label, value, fill, ink], i) => {
-    const x = M + i * (col + gap);
-    page.drawRectangle({ x, y: H - y - 76, width: col, height: 76, color: fill, borderColor: i === 2 ? colors.border : fill, borderWidth: 0.5 });
-    text(label, x + 10, y + 10, 8, heading, ink, col - 20);
-    text(value, x + 10, y + 44, 13, heading, ink, col - 20);
-  });
-  y += 94;
-  space(122);
-  rect(M, y, CW, 100, colors.cobalt); rect(M, y, 5, 100, colors.gold);
-  text(statusLabel, M + 17, y + 15, 10, heading, colors.onSolid);
-  text(money(Math.abs(s.balance)), M + 17, y + 35, 29, heading, colors.onSolid);
-  text(s.status === "a_repassar" ? "Repasse STAYO até o dia 10 do mês seguinte" : s.status === "zerado" ? "Nenhum valor pendente pela STAYO" : "Compensação conforme os lançamentos do mês", M + 17, y + 77, 9, body, colors.onSolid);
-  y += 122;
-  section("Resumo do fechamento");
-  line("Parte do proprietário nas reservas STAYO", money(s.ownerShare));
-  line("(–) Despesas do proprietário", money(s.expenseTotal));
-  line("(–) Repasses já realizados", money(s.transferred));
-  line(s.status === "a_compensar" ? "Saldo a compensar" : "Saldo a repassar", money(Math.abs(s.balance)), true);
-  y += 12;
-  space(42);
-  text("Reservas com repasse direto pela plataforma são informativas e não integram o saldo de repasse da STAYO.", M, y, 9, body, colors.muted);
-
-  newPage();
   const pct = input.adminFeePercent;
   const rightAt = (value: string, edge: number, top: number, size: number, font: PDFFont, color: ReturnType<typeof rgb>) =>
     text(value, edge - font.widthOfTextAtSize(value, size), top, size, font, color);
-  /** Tabela executiva compacta: valor total e divisão contratual por reserva, sem detalhar limpeza. */
+  /** Compact bands share the same measured layout for both payout capabilities. */
   const table = (title: string, flow: "stayo" | "platform_auto") => {
     const selected = rows.filter(r => r.payout_flow === flow);
-    if (selected.length) space(150);
-    section(title);
+    if (!selected.length) return;
+    space(110);
+    const titleHeight = text(title, M, y, 11, heading, colors.navy, CW * 0.55);
+    y += titleHeight + 4;
+    right(`CONTRATO · STAYO ${pct}% / PROPRIETÁRIO ${100 - pct}%`, y, 7.5, body, colors.muted);
+    y += 22;
     if (!selected.length) { y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 18; return; }
     const stayoFlow = flow === "stayo";
-    const firstEdge = M + 270, midEdge = M + 375, lastEdge = W - M - 12;
+    const firstEdge = M + 288, midEdge = M + 397, lastEdge = W - M - 10;
     const columns = stayoFlow
       ? [{ label: "VALOR TOTAL", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `PROPRIETÁRIO · ${100 - pct}%`, edge: lastEdge }]
       : [{ label: "VALOR TOTAL", edge: firstEdge }, { label: "PAGO DIRETO AO PROPRIETÁRIO", edge: lastEdge }];
-    const labelW = firstEdge - 105 - M - 14;
-    space(20);
-    text("RESERVA / HÓSPEDE", M + 12, y, 8, heading, colors.muted);
-    columns.forEach((c) => rightAt(c.label, c.edge, y, 8, heading, colors.muted));
-    y += 16;
+    const labelW = 190;
     let sumFirst = 0, sumMid = 0, sumLast = 0;
     selected.forEach((r, i) => {
       const nameLines = wrap(r.guest_name, 11, heading, labelW).length;
-      const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date)}–${date(r.checkout_date)}`;
+      const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date).slice(0, 5)}–${date(r.checkout_date).slice(0, 5)}`;
+      const codeText = `${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`;
+      const codeHeight = wrap(codeText, 8, heading, labelW).length * 12;
       const cpfLines = wrap(cpfText, 9, body, labelW).length;
-      const height = 42 + nameLines * 14 + (cpfLines - 1) * 12;
-      space(height);
-      if (i % 2 === 0) rect(M, y, CW, height, colors.soft);
+      const height = Math.max(56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
+      space(height + (i === selected.length - 1 ? 48 : 7));
+      rect(M, y, CW, height, colors.soft);
       const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
-      text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 12, y + 9, 9, heading, channelColor, labelW);
-      text(r.guest_name, M + 12, y + 24, 11, heading, colors.ink, labelW);
-      text(cpfText, M + 12, y + 26 + nameLines * 14, 9, body, colors.muted, labelW);
+      rect(M, y, 2.5, height, channelColor);
+      text(codeText, M + 10, y + 8, 8, heading, channelColor, labelW);
+      text(r.guest_name, M + 10, y + 8 + codeHeight, 11, heading, colors.navy, labelW);
+      text(cpfText, M + 10, y + 8 + codeHeight + nameLines * 15, 9, body, colors.muted, labelW);
+      columns.forEach(c => rightAt(c.label.replace("VALOR TOTAL", "Valor total").replace("PROPRIETÁRIO", "Proprietário"), c.edge, y + 13, 7.5, body, colors.muted));
       const split = payoutPdfSplit(r, pct);
       const cells = stayoFlow
         ? [{ v: money(split.base), edge: firstEdge, last: false }, { v: money(split.stayo), edge: midEdge, last: false }, { v: money(split.owner), edge: lastEdge, last: true }]
         : [{ v: money(r.gross_cents), edge: firstEdge, last: false }, { v: payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), edge: lastEdge, last: true }];
-      cells.forEach((c) => rightAt(c.v, c.edge, y + 21, 11.5, heading, c.last ? colors.cobalt : colors.ink));
+      cells.forEach((c) => rightAt(c.v, c.edge, y + 28, 11.5, heading, c.last ? colors.cobalt : colors.navy));
       if (stayoFlow) { sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner; }
       else { sumFirst += r.gross_cents; sumLast += r.owner_direct_cents; }
-      y += height;
+      y += height + 7;
     });
     space(52);
-    rect(M, y, CW, 50, colors.navy);
+    rect(M, y, CW, 38, colors.navy);
     text("TOTAL DO MÊS", M + 12, y + 9, 9, heading, colors.onSolid);
-    text(`${selected.length} ${selected.length === 1 ? "reserva" : "reservas"}`, M + 12, y + 27, 10, body, colors.onSolid);
+    text(`${selected.length} ${selected.length === 1 ? "reserva" : "reservas"}`, M + 12, y + 22, 8, body, colors.onSolid);
     const totals = stayoFlow
       ? [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: `STAYO · ${pct}%`, v: sumMid, edge: midEdge }, { l: `Proprietário · ${100 - pct}%`, v: sumLast, edge: lastEdge }]
       : [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: "Pago direto", v: sumLast, edge: lastEdge }];
     totals.forEach((t) => {
       rightAt(t.l, t.edge, y + 8, 8, body, colors.onSolid);
-      rightAt(money(t.v), t.edge, y + 24, 12, heading, colors.onSolid);
+      rightAt(money(t.v), t.edge, y + 20, 12, heading, colors.onSolid);
     });
-    y += 66;
+    y += 54;
   };
   table("Reservas recebidas pela STAYO", "stayo");
   table("Repasse direto pela plataforma", "platform_auto");
 
-  newPage();
-  section("Composição financeira do mês");
-  line("Total recebido pela STAYO", money(s.stayoGross), true);
-  line("(–) Taxas dos canais", money(s.platformFees));
-  line("(–) Taxas de limpeza", money(s.cleaning));
-  line("Base de administração (diárias líquidas)", money(Math.max(0, s.stayoGross - s.platformFees - s.cleaning)));
-  line(`(–) Administração STAYO (${input.adminFeePercent}%)`, money(s.adminFee));
-  line("Parte do proprietário", money(s.ownerShare), true);
-  y += 20;
-  section("Despesas do mês");
-  if (!expenses.length) y += text("Nenhuma despesa lançada neste mês.", M, y, 10, body, colors.muted) + 16;
+  if (!rows.length) y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 16;
+  if (expenses.length) section("Despesas do mês");
   for (const e of expenses) {
     const label = `${date(e.occurred_on)} · ${categories[e.category] || "Outro"} · ${e.description}${e.charged_to_owner ? "" : " (por conta da STAYO)"}`;
     space(Math.ceil(body.widthOfTextAtSize(label, 10) / (CW - 160)) * 14 + 30);
     line(label, money(e.amount_cents));
   }
-  y += 15;
-  section("Repasses realizados pela STAYO");
-  if (!transfers.length) y += text("Nenhum repasse registrado nesta competência.", M, y, 10, body, colors.muted) + 16;
+  if (transfers.length) { y += 15; section("Repasses realizados pela STAYO"); }
   for (const t of transfers) line(`${date(t.paid_on)} · ${t.method.toUpperCase()}`, money(t.amount_cents));
   y += 18;
-  space(110);
-  rect(M, y, CW, 100, colors.cobalt); rect(M, y, 5, 100, colors.gold);
-  text(statusLabel, M + 17, y + 15, 10, heading, colors.onSolid);
-  text(money(Math.abs(s.balance)), M + 17, y + 37, 28, heading, colors.onSolid);
-  text(`Despesas descontadas: ${money(s.expenseTotal)} · Repasses realizados: ${money(s.transferred)}`, M + 17, y + 77, 9, body, colors.onSolid);
+  space(100);
+  page.drawLine({ start: { x: M, y: H - y }, end: { x: W - M, y: H - y }, thickness: 0.5, color: colors.border });
+  text(`Proprietário: ${input.ownerName || "Não informado"}`, M, y + 10, 9, heading, colors.navy);
+  text(statusLabel, M, y + 30, 8, heading, colors.navy);
+  right(money(Math.abs(s.balance)), y + 27, 16, heading, colors.cobalt);
+  text(`Despesas: ${money(s.expenseTotal)} · Repasses realizados: ${money(s.transferred)}`, M, y + 54, 8, body, colors.muted);
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     page = p;
