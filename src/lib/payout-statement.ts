@@ -33,8 +33,8 @@ export function computeStatement(
   const stayoGross = sum(stayo, (r) => r.gross_cents);
   const platformFees = sum(stayo, (r) => r.platform_fee_cents);
   const cleaning = sum(stayo, (r) => r.cleaning_cents);
-  const lodging = Math.max(0, stayoGross - cleaning - platformFees);
-  const adminFee = Math.round((lodging * adminFeePercent) / 100);
+  /** Administração calculada por reserva (diárias líquidas × %) para o relatório fechar coluna a coluna. */
+  const adminFee = sum(stayo, (r) => Math.round((Math.max(0, r.gross_cents - r.cleaning_cents - r.platform_fee_cents) * adminFeePercent) / 100));
   const ownerShare = stayoGross - platformFees - cleaning - adminFee;
   const expenseTotal = sum(expenses.filter((e) => e.charged_to_owner && competenceOf(e.occurred_on) === competence), (e) => e.amount_cents);
   const transferred = sum(transfers.filter((t) => t.competence === competence), (t) => t.amount_cents);
