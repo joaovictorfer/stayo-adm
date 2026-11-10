@@ -131,6 +131,10 @@
 .payout-receipt-confirmed { color: var(--payout-success); }
 .payout-reservation-actions { display: flex; flex-wrap: wrap; align-items: start; gap: 10px; }
 .payout-reservation-actions > form { flex-basis: 100%; }
+.payout-payment-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.payout-pix-summary { display: grid; grid-template-columns: 200px minmax(0,1fr); align-items: center; gap: 20px; }
+.payout-pix-summary img { display: block; width: 200px; height: 200px; }
+@media(max-width:640px) { .payout-pix-summary { grid-template-columns: minmax(0,1fr); justify-items: center; gap: 12px; } .payout-pix-summary > div:last-child { width:100%; } }
 @media (max-width: 640px) {
   .payout-workspace { padding: 16px 12px; }
   .payout-filters { grid-template-columns: minmax(0, 1fr); }

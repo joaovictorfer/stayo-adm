@@ -15,6 +15,8 @@ import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
 import { payoutChannelGroups } from "@/lib/payout-channel-groups";
+import { PayoutPaymentPanel } from "@/components/admin/PayoutPaymentPanel";
+import { listPayoutReceipts } from "@/lib/api/core-client";
 
 export const Route = createFileRoute("/financeiro/repasses")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
@@ -71,6 +73,7 @@ function Page() {
   };
   const syncFn = useServerFn(syncCentralReservations);
   const ownersFn = useServerFn(importCentralOwners);
+  const receiptsFn = useServerFn(listPayoutReceipts);
   const [syncing, setSyncing] = useState(false);
   const runSync = async () => {
     setSyncing(true);
@@ -103,7 +106,8 @@ function Page() {
       if (owner?.error) throw owner.error;
       const covers = await listImplementationCoverUrls([selectedProperty.id]).catch(() => ({} as Record<string, string>));
       const { downloadPayoutPdf } = await import("@/lib/pdf/payout-download");
-      await downloadPayoutPdf({ property: propertyTitle, propertyCode: selectedProperty.code, ownerName: owner?.data?.name, competence: month, adminFeePercent: snapshot.fee, reservations: snapshot.res as PayoutPdfReservation[], expenses: snapshot.exp, transfers: snapshot.tr }, covers[selectedProperty.id]);
+      const receipts = await receiptsFn({ data: { implementationId: impl, competence: month } });
+      await downloadPayoutPdf({ property: propertyTitle, propertyCode: selectedProperty.code, ownerName: owner?.data?.name, competence: month, adminFeePercent: snapshot.fee, reservations: snapshot.res as PayoutPdfReservation[], expenses: snapshot.exp, transfers: snapshot.tr }, covers[selectedProperty.id], receipts);
       toast.success("PDF gerado com o CPF completo dos hóspedes.");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível gerar o PDF."); }
     finally { setGenerating(false); }
@@ -176,7 +180,7 @@ function Page() {
           <p className="text-xs text-muted-foreground">Aparece quando todas as reservas tiverem valor.</p>
         </div>}
         {data.data.tr.length > 0 && <ul className="mt-3 divide-y text-sm">{data.data.tr.map((t) => <li key={t.id} className="flex items-center gap-3 py-2"><span className="flex-1">Repasse em {br(t.paid_on)} · {t.method.toUpperCase()}</span><b>{brl(t.amount_cents)}</b><Del onClick={() => remove("payout_transfers", t.id)} /></li>)}</ul>}
-        <TransferForm impl={impl} month={month} suggested={Math.max(0, s.balance)} onSaved={refresh} />
+        <PayoutPaymentPanel implementationId={impl} competence={month} balance={s.balance} complete={s.complete} onSaved={refresh} />
       </Section>
     </>}
   </div>;
