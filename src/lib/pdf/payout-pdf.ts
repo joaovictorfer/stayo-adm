@@ -127,15 +127,13 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     if (!selected.length) return;
     space(110);
     const titleHeight = text(title, M, y, 11, heading, colors.navy, CW * 0.55);
-    y += titleHeight + 4;
-    right(`CONTRATO · STAYO ${pct}% / PROPRIETÁRIO ${100 - pct}%`, y, 7.5, body, colors.muted);
-    y += 22;
-    if (!selected.length) { y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 18; return; }
+    right(`CONTRATO · STAYO ${pct}% / PROPRIETÁRIO ${100 - pct}%`, y + 2, 7, body, colors.muted);
+    y += titleHeight + 12;
     const stayoFlow = flow === "stayo";
     const firstEdge = M + 288, midEdge = M + 397, lastEdge = W - M - 10;
     const columns = stayoFlow
-      ? [{ label: "VALOR TOTAL", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `PROPRIETÁRIO · ${100 - pct}%`, edge: lastEdge }]
-      : [{ label: "VALOR TOTAL", edge: firstEdge }, { label: "PAGO DIRETO AO PROPRIETÁRIO", edge: lastEdge }];
+      ? [{ label: "Valor total", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `Proprietário · ${100 - pct}%`, edge: lastEdge }]
+      : [{ label: "Valor total", edge: firstEdge }, { label: "Pago direto ao proprietário", edge: lastEdge }];
     const labelW = 190;
     let sumFirst = 0, sumMid = 0, sumLast = 0;
     selected.forEach((r, i) => {
@@ -152,12 +150,12 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       text(codeText, M + 10, y + 8, 8, heading, channelColor, labelW);
       text(r.guest_name, M + 10, y + 8 + codeHeight, 11, heading, colors.navy, labelW);
       text(cpfText, M + 10, y + 8 + codeHeight + nameLines * 15, 9, body, colors.muted, labelW);
-      columns.forEach(c => rightAt(c.label.replace("VALOR TOTAL", "Valor total").replace("PROPRIETÁRIO", "Proprietário"), c.edge, y + 13, 7.5, body, colors.muted));
+      columns.forEach(c => text(c.label, c.edge - (c.edge === lastEdge && !stayoFlow ? 160 : 72), y + 13, 7.5, body, colors.muted));
       const split = payoutPdfSplit(r, pct);
       const cells = stayoFlow
         ? [{ v: money(split.base), edge: firstEdge, last: false }, { v: money(split.stayo), edge: midEdge, last: false }, { v: money(split.owner), edge: lastEdge, last: true }]
         : [{ v: money(r.gross_cents), edge: firstEdge, last: false }, { v: payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), edge: lastEdge, last: true }];
-      cells.forEach((c) => rightAt(c.v, c.edge, y + 28, 11.5, heading, c.last ? colors.cobalt : colors.navy));
+      cells.forEach((c) => text(c.v, c.edge - (c.edge === lastEdge && !stayoFlow ? 160 : 72), y + 28, 11.5, heading, c.last ? colors.cobalt : colors.navy));
       if (stayoFlow) { sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner; }
       else { sumFirst += r.gross_cents; sumLast += r.owner_direct_cents; }
       y += height + 7;
