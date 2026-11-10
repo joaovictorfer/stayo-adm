@@ -16,7 +16,7 @@ import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
 
 export const Route = createFileRoute("/financeiro/repasses")({
-  validateSearch: (search: Record<string, unknown>) => ({ q: typeof search.q === "string" ? search.q : "" }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
   head: () => ({ meta: [
     { title: "Relatório de repasse — STAYO Admin" },
     { name: "description", content: "Reservas, despesas e balancete mensal de repasse por imóvel." },
@@ -37,7 +37,8 @@ const monthRange = (m: string) => { const [y = 2026, mo = 1] = m.split("-").map(
 
 function Page() {
   const qc = useQueryClient();
-  const { q } = Route.useSearch();
+  const { q: searchText } = Route.useSearch();
+  const q = searchText ?? "";
   const navigate = Route.useNavigate();
   const setSearch = (q: string) => navigate({ search: { q }, replace: true });
   const [impl, setImpl] = useState("");
