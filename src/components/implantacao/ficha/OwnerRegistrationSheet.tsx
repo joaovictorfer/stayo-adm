@@ -14,6 +14,7 @@ import type { ImplementationProject } from "../../../types/core";
 import { AirbnbEmailEditor, PixEditor } from "./OwnerQuickEditors";
 import { AddContractPerson, ContractPersonForm } from "./ContractPersonEditor";
 import { OwnerAddressEditor } from "./OwnerAddressEditor";
+import { ContractCopyDialog } from "./ContractCopyDialog";
 
 const roleLabel = { proprietario: "Proprietário principal", coproprietario: "Coproprietário", proponente: "Proponente" } as const;
 const accountLabel = { checking: "Conta corrente", savings: "Poupança", payment: "Conta pagamento" } as const;
@@ -121,6 +122,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
   return <div className="min-w-0 space-y-2.5 text-[var(--stayo-navy)]">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="text-xs text-[var(--stayo-ink-muted)]">{status}</p>
+      <ContractCopyDialog implementation={implementation} submission={sub} official={official} details={details} loading={subQ.isPending || subQ.isError || detailsQ.isPending || detailsQ.isError} />
       <Button variant="ghost" size="sm" aria-pressed={revealed} onClick={() => setRevealed(value => !value)} className="text-[var(--stayo-ink-muted)]">{revealed ? <EyeOff /> : <Eye />}{revealed ? "Ocultar dados sensíveis" : "Mostrar dados sensíveis"}</Button>
     </div>
     {subQ.isError && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o cadastro. <Button variant="link" size="sm" onClick={() => void subQ.refetch()}>Tentar novamente</Button></p>}
