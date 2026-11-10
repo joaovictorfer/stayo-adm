@@ -225,7 +225,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   if (balance.hasOtherDirect) line("Já recebido por outras plataformas", balance.otherDirectReceived === null ? "Não informado" : money(balance.otherDirectReceived));
   line("Repasses já realizados pela STAYO", money(s.transferred));
   line("Total já repassado ao proprietário", balance.totalReceived === null ? "Não informado" : money(balance.totalReceived), true);
-  line("Parte do proprietário nas reservas STAYO", money(s.stayoNet));
+  line("Parte do proprietário nas reservas STAYO", money(s.ownerShare));
   line("Despesas do proprietário no mês", money(s.expenseTotal));
   rect(M, y + 8, CW, 42, colors.cobalt);
   text(statusLabel, M + 12, y + 22, 9, heading, colors.onSolid, CW - 170);
