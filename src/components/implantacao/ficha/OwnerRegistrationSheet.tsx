@@ -183,7 +183,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
     </Section>
     <Section key={editingAddress ? "address-edit" : "address-view"} title="Endereço" icon={<MapPin />} defaultOpen={editingAddress}
       action={!editingAddress && <Button variant="ghost" size="icon" title="Editar endereço" aria-label="Editar endereço" disabled={subQ.isPending || subQ.isError} onClick={() => setEditingAddress(true)}><Pencil /></Button>}
-      empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={editingAddress ? undefined : sub ? [
+      empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={editingAddress ? [] : sub ? [
       { label: "CEP", value: sub.postalCode ? formatBrazilianPostalCode(sub.postalCode) : null },
       { label: "Logradouro", value: [sub.street, sub.number].filter(Boolean).join(", ") || null },
       { label: "Complemento", value: sub.complement },
