@@ -624,6 +624,13 @@
       "when": 1794320337305,
       "tag": "0088_payout_receipts_trusted_upload",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1794320364175,
+      "tag": "0089_payout_pending_receipt_cleanup",
+      "breakpoints": true
     }
   ]
 }
