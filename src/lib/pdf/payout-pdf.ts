@@ -181,13 +181,15 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     const sums = headers.map(() => 0);
     selected.forEach((r, i) => {
       const nameLines = wrap(r.guest_name, 11, heading, labelW).length;
-      const height = 42 + nameLines * 14;
+      const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date)}–${date(r.checkout_date)}`;
+      const cpfLines = wrap(cpfText, 9, body, labelW).length;
+      const height = 42 + nameLines * 14 + (cpfLines - 1) * 12;
       space(height);
       if (i % 2 === 0) rect(M, y, CW, height, colors.soft);
       const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
       text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 12, y + 9, 9, heading, channelColor, labelW);
       text(r.guest_name, M + 12, y + 24, 11, heading, colors.ink, labelW);
-      text(`CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date)}–${date(r.checkout_date)}`, M + 12, y + 26 + nameLines * 14, 9, body, colors.muted, labelW);
+      text(cpfText, M + 12, y + 26 + nameLines * 14, 9, body, colors.muted, labelW);
       const split = payoutPdfSplit(r, pct);
       const values = stayoFlow
         ? [money(split.base), money(split.stayo), money(split.owner)]
