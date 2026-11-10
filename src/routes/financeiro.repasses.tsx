@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight, CircleCheck, CircleDashed } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, Globe, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight, CircleCheck, CircleDashed } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -14,6 +14,7 @@ import { payoutPdfReadiness, payoutPdfSplit, payoutPdfBalance, type PayoutPdfRes
 import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
 import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
+import { payoutChannelGroups } from "@/lib/payout-channel-groups";
 
 export const Route = createFileRoute("/financeiro/repasses")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
@@ -85,7 +86,6 @@ function Page() {
     catch (e) { toast.error(e instanceof Error ? e.message : "Falha ao consultar o Guia."); } finally { setSyncing(false); }
   };
   const auto = data.data?.res.filter((r) => r.payout_flow === "platform_auto") ?? [];
-  const stayo = data.data?.res.filter((r) => r.payout_flow === "stayo") ?? [];
 
   const closing = data.data ? payoutPdfBalance({ competence: month, adminFeePercent: data.data.fee, reservations: data.data.res as PayoutPdfReservation[], expenses: data.data.exp, transfers: data.data.tr }) : null;
 
@@ -143,15 +143,9 @@ function Page() {
         <Metric tone="neutral" icon={<Coins />} label="Pago pela plataforma" value={auto.some(r => r.missing_amounts?.includes("owner_direct")) ? "Não informado" : brl(s.autoOwnerDirect)} />
         <Metric tone={s.complete && s.status === "a_compensar" ? "danger" : "balance"} icon={<Wallet />} label={!s.complete ? "Saldo do mês" : s.status === "a_compensar" ? "Saldo a compensar" : s.status === "zerado" ? "Saldo zerado" : "Saldo a repassar"} value={s.complete ? brl(Math.abs(s.balance)) : "Não calculado"} />
       </div>
-      <Section title="Reservas recebidas pela STAYO" count={stayo.length}>
-        <ResTable rows={stayo} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
-        <ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} />
-      </Section>
-      <Section title="Repasse direto pela plataforma" count={auto.length} subtitle="Pagamento direto ao proprietário; não compõe o saldo STAYO.">
-        <ResTable rows={auto} direct feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
-        {s.autoIncompleteCount > 0 && <p className="text-sm text-muted-foreground">{s.autoIncompleteCount} reserva(s) sem valor no Guia — fora do total abaixo.</p>}
-        {auto.length > 0 && <p className="text-sm">Total das reservas: <b>{brl(auto.reduce((sum, r) => sum + payoutPdfSplit(r, data.data.fee).base, 0))}</b> · Pago direto ao proprietário: <b>{auto.some(r => r.missing_amounts?.includes("owner_direct")) ? "Não informado" : brl(s.autoOwnerDirect)}</b></p>}
-        <ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} />
+      <Section title="Reservas do mês" count={data.data.res.length}>
+        <ResTable rows={data.data.res as Res[]} feePercent={data.data.fee} onDelete={(id) => remove("payout_reservations", id)} />
+        <div className="payout-reservation-actions"><ReservationForm impl={impl} flow="stayo" month={month} onSaved={refresh} /><ReservationForm impl={impl} flow="platform_auto" month={month} onSaved={refresh} /></div>
       </Section>
       <Section title="Despesas do mês">
         {data.data.exp.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma despesa neste mês.</p> :
@@ -203,17 +197,25 @@ type Res = PayoutPdfReservation & { id: string };
 const Amount = ({ r, k, v }: { r: Res; k: string; v: number }) => r.missing_amounts?.includes(k)
   ? <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive" title="O Guia STAYO ainda não informou este valor">Não informado</span>
   : <>{brl(v)}</>;
-function ResTable({ rows, direct, feePercent = 20, onDelete }: { rows: Res[]; direct?: boolean; feePercent?: number; onDelete: (id: string) => void }) {
-  if (!rows.length) return <p className="text-sm text-muted-foreground">Nenhuma reserva neste mês.</p>;
-  return <div className="overflow-x-auto"><table className="payout-table w-full text-sm"><thead className="text-left text-muted-foreground"><tr><th>Origem</th><th>Hóspede titular</th><th>Período</th><th className="text-right whitespace-nowrap">Valor total</th><th className="text-right whitespace-nowrap">STAYO · {feePercent}%</th><th className="text-right whitespace-nowrap">Proprietário · {100 - feePercent}%</th><th><span className="sr-only">Ações</span></th></tr></thead>
-    <tbody>{rows.map((r) => {
-      const Icon = r.channel === "airbnb" ? House : r.channel === "direta" ? BedDouble : r.channel === "decolar" ? Plane : Globe;
+function ResTable({ rows, feePercent = 20, onDelete }: { rows: Res[]; feePercent?: number; onDelete: (id: string) => void }) {
+  const groups = payoutChannelGroups(rows, feePercent);
+  return <div className="payout-grouped-scroll" tabIndex={0} role="region" aria-label="Reservas agrupadas por canal"><table className="payout-table payout-grouped-table w-full text-sm"><caption className="sr-only">Reservas do mês agrupadas por canal, com subtotais de Valor total, STAYO e Proprietário.</caption><thead className="text-left text-muted-foreground"><tr><th scope="col">Reserva</th><th scope="col">Hóspede titular / CPF</th><th scope="col">Período</th><th scope="col" className="text-right whitespace-nowrap">Valor total</th><th scope="col" className="text-right whitespace-nowrap">STAYO · {feePercent}%</th><th scope="col" className="text-right whitespace-nowrap">Proprietário · {100 - feePercent}%</th><th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
+    {groups.map(group => <tbody key={group.channel} data-channel={group.channel}>
+      <tr className="payout-group-heading"><th colSpan={7} scope="rowgroup"><span className="payout-group-heading-content"><span className="inline-flex items-center gap-2">{group.channel === "airbnb" ? <AirbnbMark /> : group.channel === "direta" ? <BedDouble size={18} /> : <Globe size={18} />}{group.channel === "direta" ? "Reservas diretas" : CHANNELS[group.channel as keyof typeof CHANNELS] ?? "Outro"}</span><span className="payout-group-count">{group.reservations.length} {group.reservations.length === 1 ? "reserva" : "reservas"}</span></span></th></tr>
+      {group.reservations.length === 0 && <tr><td colSpan={7} className="text-muted-foreground">Nenhuma reserva neste canal no mês.</td></tr>}
+      {group.reservations.map((r) => {
       const split = payoutPdfSplit(r, feePercent);
       const splitKey = r.missing_amounts?.find(k => ["gross", "cleaning", "platform_fee"].includes(k)) ?? "gross";
       const confirmed = !r.missing_amounts?.includes("owner_direct") && r.owner_direct_cents > 0;
-      const ReceiptIcon = confirmed ? CircleCheck : CircleDashed;
-      return <tr key={r.id} data-direct={r.channel === "direta"}><td><span className="inline-flex items-center gap-2 font-semibold"><span className={`payout-channel is-${r.channel}`} aria-hidden="true"><Icon size={17} /></span>{CHANNELS[r.channel as keyof typeof CHANNELS] ?? "Outro"}</span>{r.reservation_code && <span className="mt-1 block text-xs text-muted-foreground">{r.reservation_code}</span>}</td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.base} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.owner} />{direct && <span className="mt-2 flex items-start justify-end gap-1.5 text-xs font-normal text-muted-foreground" title="Recebimento informado pela plataforma, separado da divisão contratual"><ReceiptIcon size={15} className="shrink-0 text-primary" /><span>{confirmed ? "Pago direto ao Prop." : "Recebimento direto"}</span></span>}</td><td><Del onClick={() => onDelete(r.id)} /></td></tr>;
-    })}</tbody></table></div>;
+      const direct = r.payout_flow === "platform_auto";
+      return <tr key={r.id}><td><span className="font-semibold">{r.reservation_code || "Sem código"}</span><span className="mt-1 block text-xs text-muted-foreground">{direct ? "Pagamento pela plataforma" : "Repasse pela STAYO"}</span></td><td><span className="font-medium">{r.guest_name}</span><span className="mt-1 block text-xs text-muted-foreground" title="CPF completo no PDF do relatório">CPF {maskCpf(r.guest_cpf)}</span></td><td className="whitespace-nowrap">{br(r.checkin_date)} – {br(r.checkout_date)}</td><td className="text-right font-semibold whitespace-nowrap"><Amount r={r} k={splitKey} v={split.base} /></td><td className="text-right whitespace-nowrap"><Amount r={r} k={splitKey} v={split.stayo} /></td><td className="text-right font-semibold whitespace-nowrap"><span className="inline-flex items-center justify-end gap-1.5"><Amount r={r} k={splitKey} v={split.owner} />{direct && <span title={confirmed ? "Pagamento direto ao proprietário confirmado" : "Recebimento direto não confirmado"}>{confirmed ? <CircleCheck size={16} className="payout-receipt-confirmed" aria-label="Pagamento direto confirmado" /> : <CircleDashed size={16} className="text-muted-foreground" aria-label="Recebimento direto não confirmado" />}</span>}</span></td><td><Del onClick={() => onDelete(r.id)} /></td></tr>;
+    })}
+    <tr className="payout-group-subtotal"><th scope="row" colSpan={3}>Subtotal · {group.channel === "direta" ? "Diretas" : CHANNELS[group.channel as keyof typeof CHANNELS] ?? "Outro"}</th>{(["base", "stayo", "owner"] as const).map(key => <td key={key} className="text-right whitespace-nowrap">{group.complete ? brl(group.totals[key]) : "Não informado"}</td>)}<td /></tr>
+    </tbody>)}</table></div>;
+}
+
+function AirbnbMark() {
+  return <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M12 20c-3-3.4-5.1-6.1-4-8.7 1.4-3 6.6-3 8 0 1.1 2.6-1 5.3-4 8.7Zm0 0c-2.6 2.7-5.5 4.2-8 2.1-2.5-2.2-.7-5.4.4-7.8L9 4.2C9.8 2.5 10.5 1 12 1s2.2 1.5 3 3.2l4.6 10.1c1.1 2.4 2.9 5.6.4 7.8-2.5 2.1-5.4.6-8-2.1Z" /></svg>;
 }
 
 function useSaver(onSaved: () => void) {
@@ -226,7 +228,7 @@ function ReservationForm({ impl, flow, month, onSaved }: { impl: string; flow: P
   const blank = { channel: flow === "platform_auto" ? "airbnb" : "booking", code: "", guest: "", cpf: "", ci: `${month}-01`, co: `${month}-02`, gross: "", cleaning: "", fee: "", direct: "" };
   const [open, setOpen] = useState(false); const [f, setF] = useState(blank); const { busy, run } = useSaver(onSaved);
   const set = (k: keyof typeof blank) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  if (!open) return <Button variant="outline" onClick={() => setOpen(true)}><Plus size={16} />Adicionar reserva</Button>;
+  if (!open) return <Button variant="outline" onClick={() => setOpen(true)}><Plus size={16} />{flow === "platform_auto" ? "Adicionar repasse pela plataforma" : "Adicionar reserva STAYO"}</Button>;
   const submit = (e: FormEvent) => { e.preventDefault();
     if (f.guest.trim().split(/\s+/).length < 2) { toast.error("Informe o nome completo do hóspede titular."); return; }
     if (competenceOf(f.ci) !== month) toast.message("O check-in é de outro mês; a reserva aparecerá naquele mês.");
