@@ -8,6 +8,7 @@ import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-centra
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput, MoneyCentsInput, parseMoneyText, formatMoneyText } from "@/components/ui/money-input";
 import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
 import { computeStatement, competenceOf, previousCompetence, type PayoutFlow } from "@/lib/payout-statement";
 import { payoutPdfReadiness, payoutPdfSplit, payoutPdfBalance, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/financeiro/repasses")({
 const CHANNELS = { airbnb: "Airbnb", booking: "Booking", decolar: "Decolar", direta: "Reserva direta", outro: "Outro" } as const;
 const CATEGORIES = { manutencao: "Manutenção", lavanderia: "Lavanderia", compras: "Compras / enxoval", limpeza: "Limpeza", taxas: "Taxas", outro: "Outro" } as const;
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const toCents = (v: string) => Math.round(Number(v.replace(/\./g, "").replace(",", ".") || 0) * 100);
+const toCents = (v: string) => parseMoneyText(v) ?? 0;
 const br = (d: string) => d.split("-").reverse().join("/");
 const db = () => { const c = getSupabaseBrowserClient(); if (!c) throw new Error("Indisponível"); return c; };
 const monthRange = (m: string) => { const [y = 2026, mo = 1] = m.split("-").map(Number); const end = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10); return [`${m}-01`, end] as const; };
@@ -245,10 +246,10 @@ function ReservationForm({ impl, flow, month, onSaved }: { impl: string; flow: P
     <F label="CPF do titular"><Input inputMode="numeric" value={f.cpf} onChange={set("cpf")} /></F>
     <F label="Check-in"><Input type="date" required value={f.ci} onChange={set("ci")} /></F>
     <F label="Check-out"><Input type="date" required value={f.co} min={f.ci} onChange={set("co")} /></F>
-    <F label="Valor total da reserva (R$)"><Input inputMode="decimal" required value={f.gross} onChange={set("gross")} /></F>
-    {flow === "platform_auto" ? <F label="Pago direto ao proprietário (R$)"><Input inputMode="decimal" value={f.direct} onChange={set("direct")} /></F> : <>
+    <F label="Valor total da reserva (R$)"><MoneyInput required value={f.gross} onValueChange={(t) => setF({ ...f, gross: t })} /></F>
+    {flow === "platform_auto" ? <F label="Pago direto ao proprietário (R$)"><MoneyInput value={f.direct} onValueChange={(t) => setF({ ...f, direct: t })} /></F> : <>
       
-      <F label="Taxa do canal (R$)"><Input inputMode="decimal" value={f.fee} onChange={set("fee")} /></F></>}
+      <F label="Taxa do canal (R$)"><MoneyInput value={f.fee} onValueChange={(t) => setF({ ...f, fee: t })} /></F></>}
     <div className="flex items-end gap-2 sm:col-span-3"><Button disabled={busy}>Salvar reserva</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button></div>
   </form>;
 }
@@ -262,7 +263,7 @@ function ExpenseForm({ impl, month, onSaved }: { impl: string; month: string; on
     <F label="Data"><Input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></F>
     <F label="Tipo"><select className="h-10 rounded-md border bg-background px-2" value={f.cat} onChange={(e) => setF({ ...f, cat: e.target.value })}>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></F>
     <F label="Descrição"><Input required value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} /></F>
-    <F label="Valor (R$)"><Input inputMode="decimal" required value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} /></F>
+    <F label="Valor (R$)"><MoneyInput required value={f.value} onValueChange={(t) => setF({ ...f, value: t })} /></F>
     <label className="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" checked={f.owner} onChange={(e) => setF({ ...f, owner: e.target.checked })} />Descontar do proprietário</label>
     <div className="flex gap-2 sm:col-span-4"><Button disabled={busy}>Salvar despesa</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button></div>
   </form>;
