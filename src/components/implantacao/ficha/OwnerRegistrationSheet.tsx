@@ -181,9 +181,9 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
       {platformQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar as plataformas. <Button variant="link" size="sm" onClick={() => void platformQ.refetch()}>Tentar novamente</Button></p>}
       {channels.length > 0 && <p className="mb-2 break-words text-xs text-[var(--stayo-ink-muted)]">Canais: {channels.map(c => CHANNEL_LABELS[c]).join(" · ")}</p>}
     </Section>
-    <Section key={editingAddress ? "address-edit" : "address-view"} title="Endereço" icon={<MapPin />} defaultOpen={editingAddress}
+    <Section key={editingAddress ? "address-edit" : "address-view"} title="Endereço" icon={<MapPin />} defaultOpen={editingAddress} {...(editingAddress ? { status: null } : {})}
       action={!editingAddress && <Button variant="ghost" size="icon" title="Editar endereço" aria-label="Editar endereço" disabled={subQ.isPending || subQ.isError} onClick={() => setEditingAddress(true)}><Pencil /></Button>}
-      empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={editingAddress ? [] : sub ? [
+      empty={editingAddress ? "" : subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={editingAddress ? [] : sub ? [
       { label: "CEP", value: sub.postalCode ? formatBrazilianPostalCode(sub.postalCode) : null },
       { label: "Logradouro", value: [sub.street, sub.number].filter(Boolean).join(", ") || null },
       { label: "Complemento", value: sub.complement },
