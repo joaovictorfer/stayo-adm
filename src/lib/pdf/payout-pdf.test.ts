@@ -25,6 +25,8 @@ describe("PDF mensal de repasse", () => {
     expect(result.reservationCount).toBe(2);
     expect(result.totalReservations).toBe(681526);
     expect(result.airbnbReceived).toBe(281975);
+    expect(result.totalReceived).toBe(301975);
+    expect(result.statement.transferred).toBe(20000);
     expect(result.statement.balance).toBe(146000);
   });
   it("Airbnb recebido pela STAYO não é pagamento direto ao proprietário", () => {
@@ -35,6 +37,7 @@ describe("PDF mensal de repasse", () => {
   it("recebimento direto ausente não vira zero nem divisão estimada", () => {
     const result = payoutPdfBalance({ ...input, reservations: [{ ...reservation, channel: "airbnb", payout_flow: "platform_auto", missing_amounts: ["owner_direct"] }] });
     expect(result.airbnbReceived).toBeNull();
+    expect(result.totalReceived).toBeNull();
     expect(result.statement.balance).toBe(0);
   });
   it("balancete ignora reservas e repasses de outra competência", () => {
