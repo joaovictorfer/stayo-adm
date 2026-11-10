@@ -171,7 +171,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     section(title);
     if (!selected.length) { y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 18; return; }
     const stayoFlow = flow === "stayo";
-    const edges = stayoFlow ? [M + 282, M + 387, W - M] : [M + 282, W - M];
+    const edges = stayoFlow ? [M + 270, M + 375, W - M - 12] : [M + 270, W - M - 12];
     const headers = stayoFlow ? ["VALOR TOTAL", `STAYO · ${pct}%`, `PROPRIETÁRIO · ${100 - pct}%`] : ["VALOR TOTAL", "PAGO DIRETO AO PROPRIETÁRIO"];
     const labelW = edges[0] - 105 - M - 14;
     space(20);
