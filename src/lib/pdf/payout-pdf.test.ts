@@ -54,7 +54,23 @@ describe("PDF mensal de repasse", () => {
     const result = payoutPdfBalance({ ...input, reservations: [{ ...reservation, channel: "airbnb", payout_flow: "platform_auto", missing_amounts: ["owner_direct"] }] });
     expect(result.airbnbReceived).toBeNull();
     expect(result.totalReceived).toBeNull();
+    expect(result.totalOwner).toBeNull();
     expect(result.statement.balance).toBe(0);
+  });
+  it("total do proprietário menos Airbnb e despesas é o saldo a repassar", () => {
+    const auto = { ...reservation, channel: "airbnb", payout_flow: "platform_auto" as const, owner_direct_cents: 281976 };
+    const result = payoutPdfBalance({ ...input, reservations: [reservation, auto], expenses: [{ occurred_on: "2026-10-12", amount_cents: 10000, charged_to_owner: true, description: "Reparo", category: "manutencao" }] });
+    expect(result.totalOwner).toBe(457976);
+    expect(result.airbnbReceived).toBe(281976);
+    expect(result.statement.expenseTotal).toBe(10000);
+    expect(result.statement.balance).toBe(166000);
+    expect((result.totalOwner ?? 0) - (result.airbnbReceived ?? 0) - result.statement.expenseTotal).toBe(166000);
+  });
+  it("desconta também repasses STAYO realizados sem cobrar duas vezes", () => {
+    const result = payoutPdfBalance({ ...input, transfers: [{ competence: "2026-10", amount_cents: 20000, paid_on: "2026-10-12", method: "pix" }] });
+    expect(result.totalOwner).toBe(176000);
+    expect(result.statement.balance).toBe(156000);
+    expect((result.totalOwner ?? 0) - (result.totalReceived ?? 0) - result.statement.expenseTotal).toBe(156000);
   });
   it("balancete ignora reservas e repasses de outra competência", () => {
     const result = payoutPdfBalance({ ...input, reservations: [reservation, { ...reservation, checkin_date: "2026-11-01" }], transfers: [{ competence: "2026-11", amount_cents: 176000, paid_on: "2026-11-10", method: "pix" }] });
