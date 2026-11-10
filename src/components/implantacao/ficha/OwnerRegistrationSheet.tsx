@@ -13,6 +13,7 @@ import { formatBrazilianDocument, formatBrazilianPhone, formatBrazilianPostalCod
 import type { ImplementationProject } from "../../../types/core";
 import { AirbnbEmailEditor, PixEditor } from "./OwnerQuickEditors";
 import { AddContractPerson, ContractPersonForm } from "./ContractPersonEditor";
+import { OwnerAddressEditor } from "./OwnerAddressEditor";
 
 const roleLabel = { proprietario: "Proprietário principal", coproprietario: "Coproprietário", proponente: "Proponente" } as const;
 const accountLabel = { checking: "Conta corrente", savings: "Poupança", payment: "Conta pagamento" } as const;
@@ -99,6 +100,7 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
   const [revealed, setRevealed] = useState(false);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [editing, setEditing] = useState<number | null>(null);
+  const [editingAddress, setEditingAddress] = useState(false);
   const num = (n: number | null | undefined) => n == null ? null : String(n);
   const doc = (d: string | null | undefined) => d ? revealed ? formatBrazilianDocument(d) : maskDocument(d) : null;
   const sensitive = (v: string | null | undefined) => v ? revealed ? v : maskPixKey(v) : null;
@@ -179,13 +181,20 @@ export function OwnerRegistrationSheet({ implementation, onEditOwner, official, 
       {platformQ.isError && <p role="alert" className="mb-2 text-sm text-destructive">Não foi possível carregar as plataformas. <Button variant="link" size="sm" onClick={() => void platformQ.refetch()}>Tentar novamente</Button></p>}
       {channels.length > 0 && <p className="mb-2 break-words text-xs text-[var(--stayo-ink-muted)]">Canais: {channels.map(c => CHANNEL_LABELS[c]).join(" · ")}</p>}
     </Section>
-    <Section title="Endereço" icon={<MapPin />} empty={subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={sub ? [
+    <Section key={editingAddress ? "address-edit" : "address-view"} title="Endereço" icon={<MapPin />} defaultOpen={editingAddress} {...(editingAddress ? { status: null } : {})}
+      action={!editingAddress && <Button variant="ghost" size="icon" title="Editar endereço" aria-label="Editar endereço" disabled={subQ.isPending || subQ.isError} onClick={() => setEditingAddress(true)}><Pencil /></Button>}
+      empty={editingAddress ? "" : subQ.isPending ? "Carregando endereço…" : subQ.isError ? "Cadastro indisponível." : "Endereço não informado."} lines={editingAddress ? [] : sub ? [
       { label: "CEP", value: sub.postalCode ? formatBrazilianPostalCode(sub.postalCode) : null },
       { label: "Logradouro", value: [sub.street, sub.number].filter(Boolean).join(", ") || null },
       { label: "Complemento", value: sub.complement },
       { label: "Bairro", value: sub.district },
       { label: "Cidade/UF", value: [sub.city, sub.state].filter(Boolean).join("/") || null },
-    ] : []} />
+    ] : []}>
+      {editingAddress && <OwnerAddressEditor implementationId={implementation.id} onDone={() => setEditingAddress(false)} initial={{
+        postalCode: sub?.postalCode ? formatBrazilianPostalCode(sub.postalCode) : "", street: sub?.street ?? "", number: sub?.number ?? "",
+        complement: sub?.complement ?? "", district: sub?.district ?? "", city: sub?.city ?? "", state: sub?.state ?? "",
+      }} />}
+    </Section>
     <Section icon={<Landmark />} title="Dados bancários" meta="Recebimento dos repasses" empty={subQ.isPending ? "Carregando dados bancários…" : subQ.isError ? "Cadastro indisponível." : "Dados bancários não informados."} lines={sub ? [
       { label: "Banco", value: sub.bankName }, { label: "Tipo de conta", value: sub.accountNumber ? accountLabel[sub.accountType] : null },
       { label: "Agência", value: sensitive(sub.bankBranch), concealed: !revealed }, { label: "Conta", value: sensitive(sub.accountNumber), concealed: !revealed },
