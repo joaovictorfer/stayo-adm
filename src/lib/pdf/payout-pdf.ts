@@ -156,7 +156,6 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     y += height;
   };
   header(true);
-  const statusLabel = s.status === "a_compensar" ? "SALDO A COMPENSAR PELO PROPRIETÁRIO" : s.status === "zerado" ? "SALDO DO MÊS ZERADO" : "FALTA REPASSAR AO PROPRIETÁRIO";
   const pct = input.adminFeePercent;
   const rightAt = (value: string, edge: number, top: number, size: number, font: PDFFont, color: ReturnType<typeof rgb>) =>
     text(value, edge - font.widthOfTextAtSize(value, size), top, size, font, color);
@@ -268,7 +267,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   if (s.transferred > 0) {
     const paymentLabel = s.balance === 0 ? `Pago ${money(s.transferred)} conforme acordado.` : `Pagamento realizado: ${money(s.transferred)}.`;
     y += text(paymentLabel, M + 12, y, 11, heading, colors.success ?? colors.cobalt, CW - 24) + 3;
-    y += text(`Saldo pendente: ${money(Math.max(0, s.balance))}. Confira o comprovante de pagamento em anexo.`, M + 12, y, 9, body, colors.muted, CW - 24) + 6;
+    y += text(`Saldo pendente: ${money(Math.max(0, s.balance))}.`, M + 12, y, 9, body, colors.muted, CW - 24) + 6;
   }
   const pages = doc.getPages();
   pages.forEach((p, i) => {
