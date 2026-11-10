@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildPayoutPix, receiptMime, receiptLimit } from "./payout-pix";
 import type { PayoutPaymentRequest } from "@/types/core";
+import { validateReceiptDocument } from "./pdf/payout-receipt-pdf";
 
 const selection = z.object({ implementationId: z.string().uuid(), competence: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) });
 export const preparePayoutPayment = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(input => selection.parse(input)).handler(async ({ data, context }) => {
@@ -28,6 +29,7 @@ export const finalizePayoutPayment = createServerFn({ method: "POST" }).middlewa
   if (request.transfer_id) return { transferId: request.transfer_id };
   const bytes = new Uint8Array(await data.file.arrayBuffer());
   const mime = receiptMime(bytes);
+  try { await validateReceiptDocument(bytes, mime); } catch { throw new Error("Comprovante corrompido ou protegido. Envie PDF, JPG ou PNG legível."); }
   const path = `${request.implementation_id}/${request.id}/receipt`;
   const bucket = context.supabase.storage.from("payout-receipts");
   const { error: uploadError } = await bucket.upload(path, bytes, { contentType: mime, upsert: false });

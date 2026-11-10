@@ -1,6 +1,15 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 /** Private receipt bytes are appended locally and never published. */
+export async function validateReceiptDocument(bytes: Uint8Array, mime: string) {
+  if (mime === "application/pdf") {
+    const doc = await PDFDocument.load(bytes);
+    if (!doc.getPageCount()) throw new Error("Comprovante sem páginas.");
+  } else {
+    const doc = await PDFDocument.create();
+    if (mime === "image/png") await doc.embedPng(bytes); else await doc.embedJpg(bytes);
+  }
+}
 export async function appendPayoutReceipts(report: Uint8Array, receipts: { name: string; mime: string; bytes: Uint8Array }[], ink: [number,number,number]) {
   const doc = await PDFDocument.load(report);
   const font = await doc.embedFont(StandardFonts.Helvetica);
