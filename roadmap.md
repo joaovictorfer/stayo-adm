@@ -67,7 +67,7 @@
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
-- [ ] Reservas recebidas pela STAYO: substituir Taxa canal por Valor total / STAYO / Proprietário, reutilizando a divisão contratual do PDF; conferir C203 e celular sem alterar pagamentos.
+- [x] Reservas recebidas pela STAYO: Valor total / STAYO / Proprietário substituem Taxa canal; C203 real conferido com R$ 2.200,00 / R$ 440,00 / R$ 1.760,00, celular com rolagem na tabela, 23 testes passaram e pagamentos preservados.
 - [x] Refinar o PDF com cantos discretamente arredondados nas reservas e destaques elevados nos totais e saldo; duas páginas de validação inspecionadas sem cortes, valores preservados e 22 testes passando. Download real continua com o bloqueio financeiro já registrado.
 - [x] PDF com total já repassado e saldo restante em destaque, sem referências a limpeza; 22 testes passaram e documento de validação conferido com fechamento inteiro na segunda página. Download real do C203 permanece bloqueado por valores financeiros ausentes.
 - [x] Balancete profissional no PDF: total mensal em reservas, recebimento direto Airbnb e saldo STAYO, com despesas e repasses conciliados; 22 testes e PDF real C203 em uma página conferidos. Dados locais do recebimento Airbnb ainda zerados, sem nova importação nesta etapa.
