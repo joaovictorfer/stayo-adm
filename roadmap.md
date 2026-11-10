@@ -67,7 +67,7 @@
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
-- [ ] Simplificar balancete do PDF: Airbnb à esquerda, saldo à direita; total do proprietário menos recebimentos confirmados e despesas, sem alterar obrigações STAYO.
+- [x] Simplificar balancete do PDF: Airbnb à esquerda, saldo à direita; total do proprietário menos recebimentos confirmados e despesas. PDF real C203 conferido nas duas páginas sem cortes ou sobreposições; 26 testes passaram, obrigações STAYO preservadas.
 - [x] Refinar balancete do PDF: recebimentos separados do acerto STAYO, saldo objetivo e símbolo Airbnb; download real C203 conferido nas duas páginas sem cortes ou sobreposição, 24 testes passando e cálculos preservados.
 - [x] Ambas as listas e PDF padronizados em Total / STAYO / Proprietário; símbolo de pagamento direto confirmado e recebimentos no balancete. C203 real conferido, 24 testes passaram; duas páginas do PDF sem cortes/sobreposição e celular sem transbordamento. Recebimento comprovado preservado separado do arredondamento contratual.
 - [x] Reservas recebidas pela STAYO: Valor total / STAYO / Proprietário substituem Taxa canal; C203 real conferido com R$ 2.200,00 / R$ 440,00 / R$ 1.760,00, celular com rolagem na tabela, 23 testes passaram e pagamentos preservados.
