@@ -45,6 +45,8 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const body = await doc.embedFont(input.assets?.bodyFont ?? StandardFonts.Helvetica, { subset: true });
   const heading = await doc.embedFont(input.assets?.headingFont ?? StandardFonts.HelveticaBold, { subset: true });
   const logo = input.assets ? await doc.embedPng(input.assets.logo) : undefined;
+  const coverBytes = input.assets?.cover;
+  const cover = coverBytes ? (coverBytes[0] === 0x89 ? await doc.embedPng(coverBytes) : await doc.embedJpg(coverBytes)) : undefined;
   const colors = Object.fromEntries(Object.entries(input.palette).map(([k, v]) => [k, rgb(...v)])) as Record<keyof PayoutPdfPalette, ReturnType<typeof rgb>>;
   const issued = input.issuedAt ?? new Date();
   const monthLabel = new Date(`${input.competence}-01T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -90,6 +92,14 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     text(context, M + 88, 23, 12, heading, colors.onSolid, CW - 100);
     y = headerHeight + 14;
     if (first) {
+      if (cover) {
+        // Preserve the real photo's proportions; never crop away the room.
+        const dimensions = cover.scaleToFit(112, 84);
+        page.drawImage(cover, { x: W - M - dimensions.width, y: H - y - dimensions.height, width: dimensions.width, height: dimensions.height });
+        text(input.property, M, y + 10, 17, heading, colors.navy, CW - 130);
+        text(monthLabel, M, y + 36, 10, body, colors.muted, CW - 130);
+        y += Math.max(74, dimensions.height) + 14;
+      }
       text("Relatório de repasse", M, y, 15, heading, colors.navy);
       rect(M, y + 21, 30, 2, colors.cobalt);
       y += 34;
