@@ -9,6 +9,24 @@ const input: ContractCopyInput = {
 };
 
 describe("contract clipboard data", () => {
+  it("qualifies two proponents separately with their shared address only at the end", () => {
+    const copy = buildContractCopy({ ...input, people: [
+      { name: "Primeiro Proponente", document: "12345678901", profession: "Aposentado" },
+      { name: "Segundo Proponente", document: "98765432100", profession: "Empresária" },
+    ] }, true);
+    expect(copy.contractorsText.split("Rua Exemplo").length - 1).toBe(1);
+    expect(copy.contractorsText).toContain("PRIMEIRO PROPONENTE");
+    expect(copy.contractorsText).toContain("SEGUNDO PROPONENTE");
+    expect(copy.contractorsText).toMatch(/SEGUNDO PROPONENTE[\s\S]*ambos residentes e domiciliados no endereço Rua Exemplo, 91, Montenegro\/RS\.$/);
+    expect(copy.qualifications[0]).not.toContain("Rua Exemplo");
+    expect(copy.qualifications[1]).not.toContain("Rua Exemplo");
+    expect(copy.contractorsHtml.split("Rua Exemplo").length - 1).toBe(1);
+  });
+  it("retains individual residence wording for a single proponent", () => {
+    const copy = buildContractCopy(input, true);
+    expect(copy.contractorsText).toContain("residente e domiciliado(a) em Rua Exemplo, 91, Montenegro/RS");
+    expect(copy.contractorsText).not.toContain("ambos");
+  });
   it("uses the saved 15/85 division instead of substituting the standard 20/80", () => {
     const copy = buildContractCopy(input, true);
     expect(copy.rows[3]?.body).toContain("85%");

@@ -27,8 +27,11 @@ export function buildContractCopy(input: ContractCopyInput, includeSensitive = f
   const qualifications = input.people.map(person => {
     const docLabel = person.document.replace(/\D/g, "").length === 14 ? "CNPJ" : "CPF";
     const document = person.document ? includeSensitive ? formatBrazilianDocument(person.document) : maskDocument(person.document) : missing;
-    return `${person.name.toLocaleUpperCase("pt-BR") || missing}, ${person.maritalStatus ? marital[person.maritalStatus] ?? person.maritalStatus : missing}, ${person.profession || missing}, inscrito(a) no ${docLabel} nº ${document}, residente e domiciliado(a) em ${addressText(input.ownerAddress)}${person.email ? `, e-mail ${person.email}` : ""}${person.phone ? `, telefone ${person.phone}` : ""}.`;
+    return `${person.name.toLocaleUpperCase("pt-BR") || missing}, ${person.maritalStatus ? marital[person.maritalStatus] ?? person.maritalStatus : missing}, ${person.profession || missing}, inscrito(a) no ${docLabel} nº ${document}${input.people.length === 1 ? `, residente e domiciliado(a) em ${addressText(input.ownerAddress)}` : ""}${person.email ? `, e-mail ${person.email}` : ""}${person.phone ? `, telefone ${person.phone}` : ""}${input.people.length === 1 ? "." : ";"}`;
   });
+  if (qualifications.length > 1) {
+    qualifications.push(`${qualifications.length === 2 ? "ambos" : "todos"} residentes e domiciliados no endereço ${addressText(input.ownerAddress)}.`);
+  }
   const contractors = qualifications.length ? qualifications.join("\n\n") : missing;
   const percentage = formatPercent(c.administrationFee);
   const split = c.administrationFee != null && Number.isFinite(c.administrationFee) && c.administrationFee >= 0 && c.administrationFee <= 100
