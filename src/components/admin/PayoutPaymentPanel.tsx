@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { toast } from "sonner";
-import { Check, Copy, FileCheck, QrCode, Upload } from "lucide-react";
+import { Check, Copy, FileCheck, QrCode, Upload, Wallet, CalendarDays, ArrowUpRight } from "lucide-react";
 import { preparePayoutPayment, finalizePayoutPayment, listPayoutReceipts } from "@/lib/api/core-client";
 import type { PayoutPaymentRequest } from "@/types/core";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ export function PayoutPaymentPanel({ implementationId, competence, balance, comp
   const [qr,setQr] = useState("");
   const [busy,setBusy] = useState(false);
   const [file,setFile] = useState<File | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [amount,setAmount] = useState("");
   const [paidOn,setPaidOn] = useState(new Date().toISOString().slice(0,10));
   const [confirmed,setConfirmed] = useState(false);
@@ -41,13 +42,14 @@ export function PayoutPaymentPanel({ implementationId, competence, balance, comp
     <Button className="payout-primary" disabled={!complete || balance<=0 || busy || receipts.isError} onClick={open}><QrCode size={17}/>{busy?"Preparando…":"Pagar com Pix"}</Button>
     {receipts.isError && <p role="alert" className="mt-2 text-sm text-destructive">Acesso financeiro restrito ou comprovantes indisponíveis.</p>}
     {receipts.data && receipts.data.length>0 && <div className="mt-3 grid gap-2">{receipts.data.map(receipt=><a key={receipt.id} href={receipt.url} target="_blank" rel="noreferrer" className="admin-inline-link"><FileCheck size={16}/>{receipt.name}</a>)}</div>}
-    <Dialog open={!!payment} onOpenChange={open=>{if(!open&&!busy)setPayment(null);}}><DialogContent className="max-w-xl max-h-[calc(100dvh-32px)] overflow-y-auto"><DialogHeader><DialogTitle>Repasse por Pix</DialogTitle><DialogDescription>{payment?.request.snapshot.recipient.name} · {competence}</DialogDescription></DialogHeader>
-      {payment && <div className="grid gap-4">
-        <div className="payout-pix-summary"><div>{qr?<img src={qr} width={200} height={200} alt="QR Code Pix do repasse"/>:<div className="size-48 animate-pulse bg-muted"/>}</div><div className="min-w-0"><p className="text-sm text-muted-foreground">Saldo a repassar</p><p className="text-2xl font-semibold">{money(Number(payment.request.amount_cents))}</p><p className="mt-3 break-all text-sm">{payment.request.snapshot.recipient.pixKey}</p><Button variant="outline" className="mt-3" onClick={async()=>{try{await navigator.clipboard.writeText(payment.code);toast.success("Código Pix copiado.");}catch{toast.error("Não foi possível copiar.");}}}><Copy size={16}/>Copiar código Pix</Button></div></div>
-        <div className="border-t pt-4"><h3 className="flex items-center gap-2 font-semibold"><Check size={17}/>Finalizar repasse</h3><div className="mt-3 grid grid-cols-2 gap-3"><label className="grid gap-1 text-sm">Valor pago (R$)<Input type="number" min="0.01" max={Number(payment.request.amount_cents)/100} step="0.01" value={amount} onChange={e=>setAmount(e.target.value)}/></label><label className="grid gap-1 text-sm">Data do pagamento<Input type="date" max={new Date().toISOString().slice(0,10)} value={paidOn} onChange={e=>setPaidOn(e.target.value)}/></label></div>
-          <label className="mt-3 grid gap-2 text-sm"><span className="flex items-center gap-2"><Upload size={16}/>Comprovante · PDF, JPG ou PNG · até 10 MB</span><Input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e=>setFile(e.target.files?.[0]??null)}/></label>
-          <label className="mt-3 flex items-start gap-2 text-sm"><Checkbox checked={confirmed} onCheckedChange={value=>setConfirmed(value===true)}/><span>Confirmo que o pagamento foi realizado ao titular acima.</span></label>
-          <Button className="mt-4 w-full payout-primary" disabled={busy||!confirmed||!file||file.size>10*1024*1024||Number(amount)<=0||Number(amount)>Number(payment.request.amount_cents)/100||!paidOn} onClick={save}><FileCheck size={17}/>{busy?"Salvando…":"Finalizar e salvar comprovante"}</Button>
+    <Dialog open={!!payment} onOpenChange={open=>{if(!open&&!busy)setPayment(null);}}><DialogContent className="payout-pix-dialog"><DialogHeader className="payout-pix-header"><span className="payout-pix-heading-icon"><QrCode size={23}/></span><div className="min-w-0"><DialogTitle className="payout-pix-title">Repasse por Pix</DialogTitle><DialogDescription className="payout-pix-recipient">{payment?.request.snapshot.recipient.name}</DialogDescription></div></DialogHeader>
+      {payment && <div className="payout-pix-body">
+        <div className="payout-pix-summary"><div className="payout-pix-qr">{qr?<img src={qr} width={200} height={200} alt="QR Code Pix do repasse"/>:<div className="size-48 animate-pulse bg-muted"/>}</div><div className="payout-pix-details"><span className="payout-pix-period"><CalendarDays size={13}/>{new Date(`${competence}-01T12:00:00`).toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</span><p className="payout-pix-amount-label">Saldo a repassar <ArrowUpRight size={16}/></p><p className="payout-pix-amount">{money(Number(payment.request.amount_cents))}</p><div className="payout-pix-key"><span>Chave Pix</span><p>{payment.request.snapshot.recipient.pixKey}</p></div><Button variant="outline" className="payout-pix-copy" onClick={async()=>{try{await navigator.clipboard.writeText(payment.code);toast.success("Código Pix copiado.");}catch{toast.error("Não foi possível copiar.");}}}><Copy size={16}/>Copiar código Pix</Button></div></div>
+        <div className="payout-pix-finalize"><h3 className="payout-pix-section-title"><span><Wallet size={18}/></span>Finalizar repasse</h3><div className="payout-pix-fields"><label className="grid gap-2 text-sm">Valor pago (R$)<Input type="number" min="0.01" max={Number(payment.request.amount_cents)/100} step="0.01" value={amount} onChange={e=>setAmount(e.target.value)}/></label><label className="grid gap-2 text-sm">Data do pagamento<Input type="date" max={new Date().toISOString().slice(0,10)} value={paidOn} onChange={e=>setPaidOn(e.target.value)}/></label></div>
+          <Input ref={fileInput} className="sr-only" tabIndex={-1} aria-label="Arquivo do comprovante" type="file" accept="application/pdf,image/jpeg,image/png" onChange={e=>setFile(e.target.files?.[0]??null)}/>
+          <Button variant="outline" className="payout-pix-upload" data-attached={!!file} onClick={()=>fileInput.current?.click()}><span className="payout-pix-upload-icon">{file?<FileCheck size={22}/>:<Upload size={22}/>}</span><span className="min-w-0"><strong>{file?file.name:"Anexar comprovante"}</strong><span>{file?`${(file.size/1024/1024).toFixed(2)} MB · Alterar arquivo`:"PDF, JPG ou PNG · até 10 MB"}</span></span>{file&&<Check size={18} className="shrink-0"/>}</Button>
+          <label className="payout-pix-confirmation"><Checkbox checked={confirmed} onCheckedChange={value=>setConfirmed(value===true)}/><span>Confirmo que o pagamento foi realizado ao titular acima.</span></label>
+          <Button className="payout-pix-submit" disabled={busy||!confirmed||!file||file.size>10*1024*1024||Number(amount)<=0||Number(amount)>Number(payment.request.amount_cents)/100||!paidOn} onClick={save}><FileCheck size={18}/>{busy?"Salvando…":"Finalizar e salvar comprovante"}</Button>
         </div>
       </div>}
     </DialogContent></Dialog>
