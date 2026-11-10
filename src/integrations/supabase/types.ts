@@ -2682,6 +2682,72 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_payment_requests: {
+        Row: {
+          amount_cents: number
+          competence: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          fingerprint: string
+          id: string
+          implementation_id: string
+          receipt_mime: string | null
+          receipt_name: string | null
+          receipt_path: string | null
+          receipt_size: number | null
+          snapshot: Json
+          transfer_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          competence: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          fingerprint: string
+          id?: string
+          implementation_id: string
+          receipt_mime?: string | null
+          receipt_name?: string | null
+          receipt_path?: string | null
+          receipt_size?: number | null
+          snapshot: Json
+          transfer_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          competence?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          fingerprint?: string
+          id?: string
+          implementation_id?: string
+          receipt_mime?: string | null
+          receipt_name?: string | null
+          receipt_path?: string | null
+          receipt_size?: number | null
+          snapshot?: Json
+          transfer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_payment_requests_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_payment_requests_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: true
+            referencedRelation: "payout_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payout_reservations: {
         Row: {
           central_reservation_id: string | null
@@ -3857,6 +3923,18 @@ export type Database = {
         Args: { _confirm_code: string; _id: string }
         Returns: undefined
       }
+      admin_finalize_payout: {
+        Args: {
+          p_amount: number
+          p_mime: string
+          p_name: string
+          p_paid_on: string
+          p_path: string
+          p_request_id: string
+          p_size: number
+        }
+        Returns: string
+      }
       admin_find_owner_phone_duplicates: {
         Args: { p_phone: string }
         Returns: {
@@ -3904,6 +3982,14 @@ export type Database = {
         Returns: Json
       }
       admin_list_stayo_charges: { Args: never; Returns: Json }
+      admin_payout_context: {
+        Args: { p_competence: string; p_implementation_id: string }
+        Returns: Json
+      }
+      admin_prepare_payout: {
+        Args: { p_competence: string; p_implementation_id: string }
+        Returns: Json
+      }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       admin_publish_conditions: { Args: { p_data: Json }; Returns: Json }
       admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
