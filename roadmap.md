@@ -67,7 +67,7 @@
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
-- [ ] Aplicar a referência Faixas compactas da imagem 200 ao PDF, trocar Dono por Proprietário e conferir o download real.
+- [x] Aplicar a referência Faixas compactas da imagem 200 ao PDF: faixas azul-claro, filete por canal, colunas alinhadas e Proprietário; download real do C203 conferido em uma página, CPF completo, saldo preservado e 18 testes passando. Revisão corrigiu alinhamento dos rótulos e tom das faixas; dados ilustrativos não copiados.
 - [x] Linhas de repasse compactas no PDF no modelo Tabela executiva aprovado (linhas zebradas, colunas Valor total / STAYO · % / Proprietário · %, barra de totais navy), divisão por reserva respeitando o % da ficha de contrato (20/80 padrão; Delle Alpi 506B será 15/85 quando a ficha for criada); CPF e período sem corte, PDF real do C203 reconferido nas 3 páginas, 18 testes passaram.
 - [x] Revisar o PDF frente à referência e ao modelo Cobalto: quatro indicadores, títulos sublinhados, canais com contraste, totais destacados e blocos medidos por fonte; três páginas reais do C203 e seis páginas fictícias com nomes/despesas extensos conferidas sem cortes; 15 testes passaram, saldo R$ 1.760,00 e CPF completo preservados. Nome do proprietário do C203 ainda não cadastrado.
 - [x] Aplicar modelo Contraste Cobalto aprovado: reservas reais do Ravena em outubro conferidas em 1280/838/390, sem transbordamento ou erros; 8 testes passaram. Cálculos preservados e PDF fora desta etapa.
