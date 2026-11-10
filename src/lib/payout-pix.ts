@@ -20,7 +20,7 @@ export function buildPayoutPix(recipient: z.infer<typeof recipientSchema>, cents
   else key = z.string().uuid().parse(key);
   const clean = (v: string, length: number) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toUpperCase().slice(0, length);
   const identification = reference ? payoutPixReference(id, reference) : null;
-  const pix = createStaticPix({ merchantName: clean(r.name, 25), merchantCity: clean(r.city, 15), pixKey: key, transactionAmount: cents / 100, txid: identification?.txid ?? id.replace(/-/g, "").slice(0, 25), infoAdicional: identification?.description.slice(0, 73 - key.length) });
+  const pix = createStaticPix({ merchantName: clean(r.name, 25), merchantCity: clean(r.city, 15), pixKey: key, transactionAmount: cents / 100, txid: identification?.txid ?? id.replace(/-/g, "").slice(0, 25), ...(identification ? { infoAdicional: identification.description.slice(0, Math.max(0, 73 - key.length)) } : {}) });
   if (hasError(pix)) throw new Error("Não foi possível gerar Pix. Confira os dados do titular.");
   return pix.toBRCode();
 }
