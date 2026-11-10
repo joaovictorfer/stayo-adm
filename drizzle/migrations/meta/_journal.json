@@ -617,6 +617,13 @@
       "when": 1794319947528,
       "tag": "0087_payout_pix_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1794320337305,
+      "tag": "0088_payout_receipts_trusted_upload",
+      "breakpoints": true
     }
   ]
 }
