@@ -47,6 +47,10 @@ describe("Central reservation CPF import", () => {
     expect(await sync({ status: "resolved", name: "Titular sintético", cpf: syntheticCpf })).toMatchObject({ guest_cpf: "52998224725", gross_cents: 250000, cleaning_cents: 30000 });
   });
 
+  it("marks missing individual payment instead of retaining a real-looking zero", async () => {
+    expect(await sync({ status: "resolved" })).toMatchObject({ owner_direct_cents: 0, missing_amounts: ["owner_direct"] });
+  });
+
   it("imports the titular CPF on new reservations without changing payout routing", async () => {
     expect(await sync({ status: "resolved", cpf: syntheticCpf }, false)).toMatchObject({ guest_cpf: "52998224725", payout_flow: "platform_auto" });
   });
