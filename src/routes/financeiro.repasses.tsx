@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight } from "lucide-react";
+import { Plus, Trash2, RefreshCw, CalendarDays, CreditCard, Coins, Wallet, BedDouble, House, Globe, Plane, FileDown, Users, ArrowUpRight, Search, X, Building2, ArrowRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncCentralReservations, importCentralOwners } from "@/lib/stayo-central/sync.functions";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
@@ -13,8 +13,10 @@ import { computeStatement, competenceOf, previousCompetence, type PayoutFlow } f
 import { payoutPdfReadiness, type PayoutPdfReservation } from "@/lib/pdf/payout-pdf";
 import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
 import { PayoutPropertyPicker, PayoutPropertyPhoto, payoutPropertyName } from "@/components/admin/PayoutPropertyPicker";
+import { isPayoutPropertyEligible, matchesPayoutPropertySearch } from "@/lib/payout-properties";
 
 export const Route = createFileRoute("/financeiro/repasses")({
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
   head: () => ({ meta: [
     { title: "Relatório de repasse — STAYO Admin" },
     { name: "description", content: "Reservas, despesas e balancete mensal de repasse por imóvel." },
@@ -35,11 +37,15 @@ const monthRange = (m: string) => { const [y = 2026, mo = 1] = m.split("-").map(
 
 function Page() {
   const qc = useQueryClient();
+  const { q: searchText } = Route.useSearch();
+  const q = searchText ?? "";
+  const navigate = Route.useNavigate();
+  const setSearch = (q: string) => navigate({ search: { q }, replace: true });
   const [impl, setImpl] = useState("");
   const [month, setMonth] = useState(previousCompetence());
   const props = useQuery({ queryKey: ["payout", "props"], queryFn: async () => {
-    const { data, error } = await db().from("implementation_projects").select("id, code, nickname, condominium_name, unit, owner_id").order("code");
-    if (error) throw error; return data;
+    const { data, error } = await db().from("implementation_projects").select("id, code, nickname, condominium_name, unit, owner_id, status, core_property_id").order("code");
+    if (error) throw error; return data.filter(isPayoutPropertyEligible);
   } });
   const propertyIds = props.data?.map(p => p.id) ?? [];
   const covers = useQuery({ queryKey: ["payout", "covers", propertyIds], enabled: propertyIds.length > 0, queryFn: () => listImplementationCoverUrls(propertyIds), staleTime: 30 * 60 * 1000 });
@@ -103,15 +109,15 @@ function Page() {
 
   return <div className="payout-workspace space-y-7">
     <AdminPageHeader title="Relatório de repasse" description={propertyTitle ? `${propertyTitle} · ${monthTitle}` : "Reservas, despesas e repasses por imóvel"} actions={<Link to="/financeiro" className="admin-inline-link">Financeiro</Link>} />
-    <div className="payout-filters">
-      <PayoutPropertyPicker properties={props.data ?? []} covers={covers.data ?? {}} value={impl} onChange={setImpl} loading={props.isPending} error={props.isError} />
+    <div className={`payout-filters${!impl ? " is-browsing" : ""}`}>
+      {impl ? <PayoutPropertyPicker properties={props.data ?? []} covers={covers.data ?? {}} value={impl} onChange={setImpl} loading={props.isPending} error={props.isError} /> : <div className="payout-catalog-search"><Search aria-hidden="true" /><Input aria-label="Pesquisar imóveis" placeholder="Buscar imóvel, unidade ou código" value={q} onChange={e => setSearch(e.target.value)} />{q && <Button variant="ghost" size="icon" aria-label="Limpar pesquisa" onClick={() => setSearch("")}><X /></Button>}</div>}
       <label className="payout-month-field grid gap-2 text-xs font-semibold text-muted-foreground">Mês de referência
         <Input type="month" aria-label="Mês de referência" className="h-14 text-foreground" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
-      <div className="payout-filter-actions">
+      {impl && <div className="payout-filter-actions">
         <Button variant="outline" size="icon" className="h-11 w-11" disabled={syncing} onClick={runOwners} title="Importar proprietários vinculados" aria-label="Importar proprietários vinculados"><Users /></Button>
         <Button className="payout-primary h-11" disabled={!impl || syncing} onClick={runSync}><RefreshCw className={syncing ? "animate-spin" : ""} /> Atualizar reservas</Button>
         <Button variant="outline" className="h-11" disabled={!impl || !pdfReady || data.isFetching || generating || syncing} onClick={runPdf} title={!pdfReady && impl ? "Complete os valores ausentes antes de gerar o PDF" : "Baixar relatório mensal com CPF completo"}><FileDown />{generating ? "Gerando PDF…" : "Gerar PDF"}</Button>
-      </div>
+      </div>}
     </div>
 
     {selectedProperty && <div className="payout-selected-property">
@@ -121,10 +127,10 @@ function Page() {
     </div>}
 
     {!impl ? <section className="payout-property-browser">
-      <div className="mb-5 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Imóveis</h2><span className="text-xs text-muted-foreground">{props.data?.length ?? 0} cadastrados</span></div>
-      {props.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar os imóveis.</p> : props.isPending ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{[1, 2, 3, 4, 5, 6].map(n => <div key={n} className="h-24 animate-pulse rounded-md bg-muted" />)}</div> : <div className="payout-property-grid">{props.data?.map(p => <Button key={p.id} variant="outline" className="payout-property-tile" onClick={() => setImpl(p.id)}>
-        <PayoutPropertyPhoto url={covers.data?.[p.id]} name={payoutPropertyName(p)} large />
-        <span className="min-w-0 flex-1 text-left"><span className="block text-xs text-muted-foreground">{p.code}</span><span className="mt-1 block whitespace-normal font-semibold">{payoutPropertyName(p)}</span></span><ArrowUpRight className="shrink-0 text-muted-foreground" />
+      <div className="payout-catalog-heading"><div><span className="payout-catalog-eyebrow">FECHAMENTO MENSAL</span><h2>Imóveis em operação</h2></div><span className="payout-catalog-count">{props.data?.filter(p => matchesPayoutPropertySearch(p, q)).length ?? 0} imóveis</span></div>
+      {props.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar os imóveis.</p> : props.isPending ? <div className="payout-property-grid">{[1, 2, 3, 4, 5, 6].map(n => <div key={n} className="h-72 animate-pulse rounded-md bg-muted" />)}</div> : !props.data?.some(p => matchesPayoutPropertySearch(p, q)) ? <div className="payout-catalog-empty"><Building2 /><h3>{q ? "Nenhum imóvel encontrado" : "Nenhum imóvel em operação"}</h3>{q && <Button variant="outline" onClick={() => setSearch("")}>Limpar pesquisa</Button>}</div> : <div className="payout-property-grid">{props.data?.filter(p => matchesPayoutPropertySearch(p, q)).map(p => <Button key={p.id} variant="outline" className="payout-property-tile" onClick={() => setImpl(p.id)} aria-label={`Abrir relatório de ${payoutPropertyName(p)}`}>
+        <span className="payout-tile-cover"><PayoutPropertyPhoto url={covers.data?.[p.id]} name={payoutPropertyName(p)} large /><span className="payout-tile-status"><span />Em operação</span></span>
+        <span className="payout-tile-body"><span className="payout-tile-code">{p.code}</span><span className="payout-tile-name">{payoutPropertyName(p)}</span><span className="payout-tile-footer"><span>{monthTitle}</span><span className="payout-tile-arrow"><ArrowRight size={18} /></span></span></span>
       </Button>)}</div>}
     </section>
     : data.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar. Verifique se você tem acesso ao financeiro.</p>
