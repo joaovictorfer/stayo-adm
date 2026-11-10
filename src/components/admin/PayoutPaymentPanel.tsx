@@ -26,6 +26,19 @@ export function PayoutPaymentPanel({ implementationId, competence, balance, comp
   const [confirmed,setConfirmed] = useState(false);
   useEffect(()=> { if (!payment) { setQr(""); return; } let active=true; QRCode.toDataURL(payment.code,{width:256,margin:2,errorCorrectionLevel:"M"}).then(url=>{if(active)setQr(url);}).catch(()=>toast.error("Não foi possível desenhar o QR Code.")); return ()=>{active=false;}; },[payment]);
   useEffect(()=>{setPayment(null);},[implementationId,competence]);
+  // Colar (Ctrl+V) um print ou arquivo copiado anexa o comprovante, como no WhatsApp.
+  useEffect(()=>{
+    if (!payment) return;
+    const onPaste=(e:ClipboardEvent)=>{
+      const f=Array.from(e.clipboardData?.files??[]).find(x=>["application/pdf","image/jpeg","image/png"].includes(x.type));
+      if (!f) { if (e.clipboardData?.files?.length) toast.error("Cole um PDF, JPG ou PNG."); return; }
+      e.preventDefault();
+      const named=f.name&&f.name!=="image.png"?f:new File([f],`comprovante-${new Date().toISOString().slice(0,10)}.${f.type==="application/pdf"?"pdf":f.type==="image/png"?"png":"jpg"}`,{type:f.type});
+      setFile(named); toast.success("Comprovante colado.");
+    };
+    window.addEventListener("paste",onPaste);
+    return ()=>window.removeEventListener("paste",onPaste);
+  },[payment]);
   const open = async () => {
     setBusy(true);
     try { const result=await prepare({data:{implementationId,competence}}); setPayment(result); setAmount((Number(result.request.amount_cents)/100).toFixed(2)); setFile(null); setConfirmed(false); }
