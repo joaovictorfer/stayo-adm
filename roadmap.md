@@ -64,6 +64,7 @@
 - [ ] Consulta real bloqueada: VF publicado respondeu 401 à credencial salva; alinhar STAYO_WEBHOOK_SECRET nos dois serviços. Nenhuma despesa real enviada; ativação depende de autorização explícita.
 
 ## Endereço do proprietário
+- [ ] Liberar edição do endereço na ficha e atualizar a proprietária do A201 com os dados enviados; conferir salvamento e recarga.
 - [x] Endereço voltou a ser pedido no cadastro público (CEP com preenchimento automático, obrigatório) e a ficha administrativa ganhou a seção Endereço; testes e tipos OK.
 
 ## Relatório de repasse
