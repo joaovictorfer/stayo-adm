@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { adjustPayoutAmounts, PAYOUT_FIELD_LABEL, type PayoutAmountField } from "@/lib/api/core-client";
 
 const toCents = (v: string) => { const t = v.replace(/\s|R\$/g, "").replace(/\./g, "").replace(",", "."); if (!/^\d+(\.\d{1,2})?$/.test(t)) return null; return Math.round(Number(t) * 100); };
-const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 type Row = { id: string; reservation_code?: string | null; guest_name: string; payout_flow: string; missing_amounts?: string[] | null; manual_amounts?: string[] | null;
   gross_cents: number; cleaning_cents: number; platform_fee_cents: number; owner_direct_cents: number };
@@ -15,8 +14,10 @@ type Row = { id: string; reservation_code?: string | null; guest_name: string; p
 export function PayoutAmountEditor({ row, onSaved }: { row: Row; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
-  const fields: PayoutAmountField[] = ["gross", "cleaning", "platform_fee", ...(row.payout_flow === "platform_auto" ? ["owner_direct" as const] : [])];
   const missing = new Set(row.missing_amounts ?? []);
+  // Só os campos que vieram sem valor (ou já lançados manualmente) são editáveis aqui.
+  const editable = new Set([...(row.missing_amounts ?? []), ...(row.manual_amounts ?? [])]);
+  const fields = (["gross", "cleaning", "platform_fee", ...(row.payout_flow === "platform_auto" ? ["owner_direct"] : [])] as PayoutAmountField[]).filter(f => editable.has(f));
   const initial = () => Object.fromEntries(fields.map(f => [f, missing.has(f) ? "" : ((row as any)[`${f}_cents`] / 100).toFixed(2).replace(".", ",")])) as Record<PayoutAmountField, string>;
   const [vals, setVals] = useState(initial);
   const [confirm, setConfirm] = useState<Record<PayoutAmountField, string>>({} as any);
@@ -65,7 +66,7 @@ export function PayoutAmountEditor({ row, onSaved }: { row: Row; onSaved: () => 
         <DialogFooter className="gap-2">
           {step === 2 && <Button variant="outline" type="button" disabled={busy} onClick={() => setStep(1)}>Voltar</Button>}
           {step === 1 ? <Button type="button" disabled={!step1Ok} onClick={() => setStep(2)}>Continuar</Button>
-            : <Button type="button" disabled={!step2Ok || busy} onClick={save}>{busy ? "Salvando…" : `Confirmar ${fields.length > 0 && parsed.gross !== null ? brl(parsed.gross) : ""}`}</Button>}
+            : <Button type="button" disabled={!step2Ok || busy} onClick={save}>{busy ? "Salvando…" : "Confirmar e salvar"}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
