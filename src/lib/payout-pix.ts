@@ -3,7 +3,14 @@ import { z } from "zod";
 
 export const receiptLimit = 10 * 1024 * 1024;
 export const recipientSchema = z.object({ name: z.string().min(2), city: z.string().min(2), pixType: z.enum(["email", "cpf", "cnpj", "phone", "random"]), pixKey: z.string().min(1) });
-export function buildPayoutPix(recipient: z.infer<typeof recipientSchema>, cents: number, id: string) {
+export function payoutPixReference(id: string, reference: { property: string; unit: string; competence: string }) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(reference.competence)) throw new Error("Mês do repasse inválido.");
+  const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toUpperCase();
+  const unit = normalize(reference.unit).replace(/ /g, "").slice(0, 6) || "IMOVEL";
+  const suffix = id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 10).toUpperCase();
+  return { txid: `REP${unit}${reference.competence.replace("-", "")}${suffix}`, description: `REPASSE ${normalize(reference.property).slice(0, 35)} ${reference.competence} REF ${suffix}` };
+}
+export function buildPayoutPix(recipient: z.infer<typeof recipientSchema>, cents: number, id: string, reference?: { property: string; unit: string; competence: string }) {
   const r = recipientSchema.parse(recipient);
   if (!Number.isSafeInteger(cents) || cents <= 0) throw new Error("Não há saldo válido para Pix.");
   let key = r.pixKey.trim();
@@ -12,7 +19,8 @@ export function buildPayoutPix(recipient: z.infer<typeof recipientSchema>, cents
   else if (r.pixType === "phone") { key = key.replace(/\D/g, ""); if (key.length === 10 || key.length === 11) key = `55${key}`; if (!/^55\d{10,11}$/.test(key)) throw new Error("Telefone Pix inválido."); key = `+${key}`; }
   else key = z.string().uuid().parse(key);
   const clean = (v: string, length: number) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toUpperCase().slice(0, length);
-  const pix = createStaticPix({ merchantName: clean(r.name, 25), merchantCity: clean(r.city, 15), pixKey: key, transactionAmount: cents / 100, txid: id.replace(/-/g, "").slice(0, 25) });
+  const identification = reference ? payoutPixReference(id, reference) : null;
+  const pix = createStaticPix({ merchantName: clean(r.name, 25), merchantCity: clean(r.city, 15), pixKey: key, transactionAmount: cents / 100, txid: identification?.txid ?? id.replace(/-/g, "").slice(0, 25), infoAdicional: identification?.description.slice(0, 73 - key.length) });
   if (hasError(pix)) throw new Error("Não foi possível gerar Pix. Confira os dados do titular.");
   return pix.toBRCode();
 }

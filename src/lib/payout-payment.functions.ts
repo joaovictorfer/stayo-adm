@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildPayoutPix, receiptMime, receiptLimit } from "./payout-pix";
+import { buildPayoutPix, payoutPixReference, receiptMime, receiptLimit } from "./payout-pix";
 import type { PayoutPaymentRequest } from "@/types/core";
 import { validateReceiptDocument } from "./pdf/payout-receipt-pdf";
 
@@ -12,8 +12,11 @@ export const preparePayoutPayment = createServerFn({ method: "POST" }).middlewar
   const { data: row, error } = await context.supabase.rpc("admin_prepare_payout", { p_implementation_id: data.implementationId, p_competence: data.competence });
   if (error) throw new Error(error.message);
   const request = row as unknown as PayoutPaymentRequest;
-  const code = buildPayoutPix(request.snapshot.recipient, Number(request.amount_cents), request.id);
-  return { request, code };
+  const { data: property, error: propertyError } = await context.supabase.from("implementation_projects").select("code,condominium_name,unit,nickname").eq("id", request.implementation_id).single();
+  if (propertyError || !property) throw new Error("Não foi possível identificar o imóvel do repasse.");
+  const reference = { property: [property.condominium_name, property.unit].filter(Boolean).join(" ") || property.nickname || property.code, unit: property.unit || property.code, competence: request.competence };
+  const code = buildPayoutPix(request.snapshot.recipient, Number(request.amount_cents), request.id, reference);
+  return { request, code, identification: payoutPixReference(request.id, reference) };
 });
 export const finalizePayoutPayment = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: FormData) => {
   if (!(input instanceof FormData)) throw new Error("Comprovante obrigatório.");
