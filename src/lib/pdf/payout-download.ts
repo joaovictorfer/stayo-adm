@@ -13,7 +13,7 @@ function printPalette(): PayoutPdfPalette {
   const ctx = canvas.getContext("2d");
   if (!ctx) { probe.remove(); throw new Error("Não foi possível preparar as cores do PDF."); }
   const result = {} as PayoutPdfPalette;
-  for (const key of ["navy", "cobalt", "coral", "gold", "paper", "ink", "muted", "border", "soft", "onSolid"] as const) {
+  for (const key of ["navy", "cobalt", "coral", "gold", "paper", "ink", "muted", "border", "soft", "onSolid", "success"] as const) {
     ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = css.getPropertyValue(`--pdf-${key}`).trim(); ctx.fillRect(0, 0, 1, 1);
     const pixel = ctx.getImageData(0, 0, 1, 1).data;
     result[key] = [(pixel[0] ?? 0) / 255, (pixel[1] ?? 0) / 255, (pixel[2] ?? 0) / 255];

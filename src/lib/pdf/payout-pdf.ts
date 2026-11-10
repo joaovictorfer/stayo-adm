@@ -7,7 +7,7 @@ export interface PayoutPdfReservation extends StatementReservation {
 }
 export interface PayoutPdfExpense extends StatementExpense { description: string; category: string }
 export interface PayoutPdfTransfer extends StatementTransfer { paid_on: string; method: string }
-export type PayoutPdfPalette = Record<"navy" | "cobalt" | "coral" | "gold" | "paper" | "ink" | "muted" | "border" | "soft" | "onSolid", [number, number, number]>;
+export type PayoutPdfPalette = Record<"navy" | "cobalt" | "coral" | "gold" | "paper" | "ink" | "muted" | "border" | "soft" | "onSolid", [number, number, number]> & { success?: [number, number, number] };
 export interface PayoutPdfInput {
   property: string; propertyCode: string; ownerName?: string | null; competence: string; adminFeePercent: number;
   reservations: PayoutPdfReservation[]; expenses: PayoutPdfExpense[]; transfers: PayoutPdfTransfer[];
@@ -178,7 +178,7 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       const codeText = `${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`;
       const codeHeight = wrap(codeText, 8, heading, labelW - (r.channel === "airbnb" ? 16 : 0)).length * 12;
       const cpfLines = wrap(cpfText, 9, body, labelW).length;
-      const height = Math.max(directFlow ? 88 : 56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
+      const height = Math.max(56, 18 + codeHeight + nameLines * 15 + cpfLines * 13);
       space(height + (i === selected.length - 1 ? 48 : 7));
       rounded(M, y, CW, height, colors.soft, 5);
       const channelColor = r.channel === "airbnb" ? colors.coral : r.channel === "direta" ? colors.gold : colors.cobalt;
@@ -193,13 +193,14 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       cells.forEach(c => text(c.v, c.edge - 72, y + 28, 11.5, heading, c.last ? colors.cobalt : colors.navy));
       if (directFlow) {
         const confirmed = !r.missing_amounts?.includes("owner_direct") && r.owner_direct_cents > 0;
-        const markerX = M + 225, markerTop = y + height - 18;
-        page.drawCircle({ x: markerX, y: H - markerTop - 4, size: 4.5, borderWidth: 0.8, borderColor: colors.cobalt, ...(confirmed ? { color: colors.cobalt } : {}) });
         if (confirmed) {
+          const amountWidth = heading.widthOfTextAtSize(money(split.owner), 11.5);
+          const markerX = lastEdge - 72 + amountWidth + 10, markerTop = y + 31;
+          const paidColor = colors.success ?? colors.cobalt;
+          page.drawCircle({ x: markerX, y: H - markerTop - 4, size: 4.5, color: paidColor });
           page.drawLine({ start: { x: markerX - 2, y: H - markerTop - 4 }, end: { x: markerX - 0.5, y: H - markerTop - 5.5 }, thickness: 0.8, color: colors.onSolid });
           page.drawLine({ start: { x: markerX - 0.5, y: H - markerTop - 5.5 }, end: { x: markerX + 2.5, y: H - markerTop - 2.5 }, thickness: 0.8, color: colors.onSolid });
         }
-        text(confirmed ? "Pago direto ao Prop." : "Recebimento direto", markerX + 10, markerTop, 7.5, body, colors.muted, 175);
       }
       sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner;
       y += height + 7;
