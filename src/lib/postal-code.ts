@@ -8,7 +8,7 @@ export function formatPostalCode(value: string) {
 export async function lookupPostalCode(value: string, signal?: AbortSignal): Promise<PostalAddress> {
   const digits = value.replace(/\D/g, "");
   if (digits.length !== 8) throw new Error("Digite um CEP com 8 números.");
-  const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`, { signal, credentials: "omit" });
+  const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`, { signal: signal ?? null, credentials: "omit" });
   if (!response.ok) throw new Error("Busca indisponível. Tente novamente ou preencha o endereço manualmente.");
   const data: unknown = await response.json();
   if (!data || typeof data !== "object" || !("localidade" in data) || !("uf" in data) || ("erro" in data && data.erro)) {

@@ -11,7 +11,7 @@ describe("postal code lookup", () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ logradouro: "Giuseppe Garibaldi", bairro: "Centro", localidade: "Montenegro", uf: "RS" })));
     vi.stubGlobal("fetch", fetcher);
     expect(await lookupPostalCode("92518-592")).toEqual({ street: "Giuseppe Garibaldi", district: "Centro", city: "Montenegro", state: "RS" });
-    expect(fetcher).toHaveBeenCalledWith("https://viacep.com.br/ws/92518592/json/", { signal: undefined, credentials: "omit" });
+    expect(fetcher).toHaveBeenCalledWith("https://viacep.com.br/ws/92518592/json/", { signal: null, credentials: "omit" });
   });
   it("does not request incomplete postal codes", async () => {
     const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);

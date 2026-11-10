@@ -11,7 +11,7 @@ type Props = {
   onBlur?: () => void;
   disabled?: boolean;
   className?: string;
-  error?: string;
+  error?: string | undefined;
 };
 
 export function PostalCodeInput({ value, onChange, onAddress, onBlur, disabled, className, error }: Props) {
