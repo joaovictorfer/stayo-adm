@@ -162,8 +162,6 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
 
   newPage();
   const pct = input.adminFeePercent;
-  const baseOf = (r: PayoutPdfReservation) => Math.max(0, r.gross_cents - r.cleaning_cents - r.platform_fee_cents);
-  const stayoShareOf = (r: PayoutPdfReservation) => Math.round((baseOf(r) * pct) / 100);
   const rightAt = (value: string, edge: number, top: number, size: number, font: PDFFont, color: ReturnType<typeof rgb>) =>
     text(value, edge - font.widthOfTextAtSize(value, size), top, size, font, color);
   /** Tabela executiva compacta: valor total e divisão contratual por reserva, sem detalhar limpeza. */
@@ -190,11 +188,12 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       text(`${r.reservation_code || "Sem código"} · ${channels[r.channel] || "Outro"}`, M + 12, y + 9, 9, heading, channelColor, labelW);
       text(r.guest_name, M + 12, y + 24, 11, heading, colors.ink, labelW);
       text(`CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date)}–${date(r.checkout_date)}`, M + 12, y + 26 + nameLines * 14, 9, body, colors.muted, labelW);
+      const split = payoutPdfSplit(r, pct);
       const values = stayoFlow
-        ? [money(baseOf(r)), money(stayoShareOf(r)), money(baseOf(r) - stayoShareOf(r))]
+        ? [money(split.base), money(split.stayo), money(split.owner)]
         : [money(r.gross_cents), payoutPdfAmount(r, "owner_direct", r.owner_direct_cents)];
       values.forEach((v, vi) => rightAt(v, edges[vi], y + 21, 11.5, heading, vi === values.length - 1 ? colors.cobalt : colors.ink));
-      if (stayoFlow) { sums[0] += baseOf(r); sums[1] += stayoShareOf(r); sums[2] += baseOf(r) - stayoShareOf(r); }
+      if (stayoFlow) { sums[0] += split.base; sums[1] += split.stayo; sums[2] += split.owner; }
       else { sums[0] += r.gross_cents; sums[1] += r.owner_direct_cents; }
       y += height;
     });

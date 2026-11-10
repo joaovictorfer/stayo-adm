@@ -16,4 +16,7 @@ describe("PDF mensal de repasse", () => {
   it("RSV-00461 mantém bruto 2500, limpeza 300 e saldo 1760", () => { expect(computeStatement(input.competence, 20, [reservation], [], []).balance).toBe(176000); });
   it("canal Airbnb no Ravena não torna o fluxo automático", () => { const airbnb: PayoutPdfReservation = { ...reservation, channel: "airbnb" }; expect(computeStatement(input.competence, 20, [airbnb], [], []).balance).toBe(176000); });
   it("reservas automáticas têm saldo STAYO zero", () => { expect(computeStatement(input.competence, 20, [{ ...reservation, payout_flow: "platform_auto", owner_direct_cents: 176000 }], [], []).balance).toBe(0); });
+  it("divisão padrão 20/80 sobre as diárias líquidas", () => { expect(payoutPdfSplit(reservation, 20)).toEqual({ base: 220000, stayo: 44000, owner: 176000 }); });
+  it("exceção contratual 15/85 (Delle Alpi 506B)", () => { expect(payoutPdfSplit(reservation, 15)).toEqual({ base: 220000, stayo: 33000, owner: 187000 }); });
+  it("arredondamento da parte STAYO nunca reduz a do proprietário além do centavo", () => { const s = payoutPdfSplit({ ...reservation, gross_cents: 9999, cleaning_cents: 0 }, 20); expect(s.stayo).toBe(2000); expect(s.owner).toBe(7999); });
 });
