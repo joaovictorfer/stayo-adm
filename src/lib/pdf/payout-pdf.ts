@@ -171,14 +171,16 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
     section(title);
     if (!selected.length) { y += text("Nenhuma reserva neste mês.", M, y, 10, body, colors.muted) + 18; return; }
     const stayoFlow = flow === "stayo";
-    const edges = stayoFlow ? [M + 270, M + 375, W - M - 12] : [M + 270, W - M - 12];
-    const headers = stayoFlow ? ["VALOR TOTAL", `STAYO · ${pct}%`, `PROPRIETÁRIO · ${100 - pct}%`] : ["VALOR TOTAL", "PAGO DIRETO AO PROPRIETÁRIO"];
-    const labelW = edges[0] - 105 - M - 14;
+    const firstEdge = M + 270, midEdge = M + 375, lastEdge = W - M - 12;
+    const columns = stayoFlow
+      ? [{ label: "VALOR TOTAL", edge: firstEdge }, { label: `STAYO · ${pct}%`, edge: midEdge }, { label: `PROPRIETÁRIO · ${100 - pct}%`, edge: lastEdge }]
+      : [{ label: "VALOR TOTAL", edge: firstEdge }, { label: "PAGO DIRETO AO PROPRIETÁRIO", edge: lastEdge }];
+    const labelW = firstEdge - 105 - M - 14;
     space(20);
     text("RESERVA / HÓSPEDE", M + 12, y, 8, heading, colors.muted);
-    headers.forEach((l, i) => rightAt(l, edges[i], y, 8, heading, colors.muted));
+    columns.forEach((c) => rightAt(c.label, c.edge, y, 8, heading, colors.muted));
     y += 16;
-    const sums = headers.map(() => 0);
+    let sumFirst = 0, sumMid = 0, sumLast = 0;
     selected.forEach((r, i) => {
       const nameLines = wrap(r.guest_name, 11, heading, labelW).length;
       const cpfText = `CPF ${payoutPdfCpf(r.guest_cpf)} · ${date(r.checkin_date)}–${date(r.checkout_date)}`;
@@ -191,22 +193,24 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
       text(r.guest_name, M + 12, y + 24, 11, heading, colors.ink, labelW);
       text(cpfText, M + 12, y + 26 + nameLines * 14, 9, body, colors.muted, labelW);
       const split = payoutPdfSplit(r, pct);
-      const values = stayoFlow
-        ? [money(split.base), money(split.stayo), money(split.owner)]
-        : [money(r.gross_cents), payoutPdfAmount(r, "owner_direct", r.owner_direct_cents)];
-      values.forEach((v, vi) => rightAt(v, edges[vi], y + 21, 11.5, heading, vi === values.length - 1 ? colors.cobalt : colors.ink));
-      if (stayoFlow) { sums[0] += split.base; sums[1] += split.stayo; sums[2] += split.owner; }
-      else { sums[0] += r.gross_cents; sums[1] += r.owner_direct_cents; }
+      const cells = stayoFlow
+        ? [{ v: money(split.base), edge: firstEdge, last: false }, { v: money(split.stayo), edge: midEdge, last: false }, { v: money(split.owner), edge: lastEdge, last: true }]
+        : [{ v: money(r.gross_cents), edge: firstEdge, last: false }, { v: payoutPdfAmount(r, "owner_direct", r.owner_direct_cents), edge: lastEdge, last: true }];
+      cells.forEach((c) => rightAt(c.v, c.edge, y + 21, 11.5, heading, c.last ? colors.cobalt : colors.ink));
+      if (stayoFlow) { sumFirst += split.base; sumMid += split.stayo; sumLast += split.owner; }
+      else { sumFirst += r.gross_cents; sumLast += r.owner_direct_cents; }
       y += height;
     });
     space(52);
     rect(M, y, CW, 50, colors.navy);
     text("TOTAL DO MÊS", M + 12, y + 9, 9, heading, colors.onSolid);
     text(`${selected.length} ${selected.length === 1 ? "reserva" : "reservas"}`, M + 12, y + 27, 10, body, colors.onSolid);
-    const totalLabels = stayoFlow ? ["Valor total", `STAYO · ${pct}%`, `Proprietário · ${100 - pct}%`] : ["Valor total", "Pago direto"];
-    totalLabels.forEach((l, i) => {
-      rightAt(l, edges[i], y + 8, 8, body, colors.onSolid);
-      rightAt(money(sums[i]), edges[i], y + 24, 12, heading, colors.onSolid);
+    const totals = stayoFlow
+      ? [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: `STAYO · ${pct}%`, v: sumMid, edge: midEdge }, { l: `Proprietário · ${100 - pct}%`, v: sumLast, edge: lastEdge }]
+      : [{ l: "Valor total", v: sumFirst, edge: firstEdge }, { l: "Pago direto", v: sumLast, edge: lastEdge }];
+    totals.forEach((t) => {
+      rightAt(t.l, t.edge, y + 8, 8, body, colors.onSolid);
+      rightAt(money(t.v), t.edge, y + 24, 12, heading, colors.onSolid);
     });
     y += 66;
   };
