@@ -158,9 +158,8 @@ function Page() {
       </Section>
       <Section title="Balancete" subtitle={`Administração de ${data.data.fee}% sobre a diária, conforme o contrato.`}>
         <dl className="grid gap-1 text-sm">
-          <Line l="Recebido pela STAYO" v={s.stayoGross} />
+          <Line l="Valor total" v={s.stayoGross - s.cleaning} />
           <Line l="(−) Taxas das plataformas" v={-s.platformFees} />
-          <Line l="(−) Limpezas" v={-s.cleaning} />
           <Line l={`(−) Administração STAYO (${data.data.fee}%)`} v={-s.adminFee} />
           <Line l="= Parte do proprietário" v={s.ownerShare} strong />
           <Line l="(−) Despesas do mês" v={-s.expenseTotal} />
