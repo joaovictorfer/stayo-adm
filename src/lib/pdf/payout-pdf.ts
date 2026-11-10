@@ -84,12 +84,12 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
   const right = (value: string, top: number, size = 10, font = body, color = colors.ink) => text(value, W - M - font.widthOfTextAtSize(value, size), top, size, font, color);
   const rect = (x: number, top: number, width: number, height: number, color: ReturnType<typeof rgb>) => page.drawRectangle({ x, y: H - top - height, width, height, color });
   const header = (first: boolean) => {
-    const context = `${input.property} · ${monthLabel}`;
-    const headerHeight = Math.max(50, 24 + wrap(context, 12, heading, CW - 100).length * 16);
+    // Title is the document's identity; property and month already appear below.
+    const headerHeight = 58;
     rect(0, 0, W, headerHeight, colors.navy);
-    if (logo) { const d = logo.scaleToFit(48, 34); page.drawImage(logo, { x: M, y: H - headerHeight / 2 - d.height / 2, width: d.width, height: d.height }); }
-    text("RELATÓRIO DE REPASSE", M + 88, 11, 7.5, body, colors.onSolid, CW - 100);
-    text(context, M + 88, 23, 12, heading, colors.onSolid, CW - 100);
+    if (logo) { const d = logo.scaleToFit(52, 38); page.drawImage(logo, { x: M, y: H - headerHeight / 2 - d.height / 2, width: d.width, height: d.height }); }
+    text("RELATÓRIO DE REPASSE", M + 88, 17, 15, heading, colors.onSolid, CW - 100);
+    rect(M + 88, 38, 44, 2, colors.gold);
     y = headerHeight + 14;
     if (first) {
       if (cover) {
@@ -100,9 +100,6 @@ export async function generatePayoutPdf(input: PayoutPdfInput): Promise<Uint8Arr
         text(monthLabel, M, y + 36, 10, body, colors.muted, CW - 130);
         y += Math.max(74, dimensions.height) + 14;
       }
-      text("Relatório de repasse", M, y, 15, heading, colors.navy);
-      rect(M, y + 21, 30, 2, colors.cobalt);
-      y += 34;
     }
   };
   const newPage = () => { page = doc.addPage([W, H]); header(false); };
