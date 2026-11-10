@@ -4,7 +4,7 @@ export type PayoutAmountField = "gross" | "cleaning" | "platform_fee" | "owner_d
 export const PAYOUT_FIELD_LABEL: Record<PayoutAmountField, string> = {
   gross: "Valor bruto da reserva",
   cleaning: "Taxa de limpeza",
-  platform_fee: "Taxa da plataforma",
+  platform_fee: "Taxa do canal (opcional)",
   owner_direct: "Recebido direto pelo proprietário",
 };
 
