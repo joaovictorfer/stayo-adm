@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.17"
-  }
   public: {
     Tables: {
       admin_condominiums: {
@@ -3207,6 +3202,128 @@ export type Database = {
           },
         ]
       }
+      property_history_cases: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          implementation_id: string
+          phase: string
+          supply_id: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id: string
+          phase: string
+          supply_id?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          implementation_id?: string
+          phase?: string
+          supply_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_history_cases_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_history_cases_supply_id_fkey"
+            columns: ["supply_id"]
+            isOneToOne: true
+            referencedRelation: "implementation_supply_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_history_events: {
+        Row: {
+          amount_cents: number | null
+          case_id: string
+          checked_qty: number | null
+          correction_reason: string
+          created_at: string
+          created_by: string | null
+          date_only: boolean
+          description: string
+          expected_date: string | null
+          expected_qty: number | null
+          id: string
+          occurred_at: string
+          received_qty: number | null
+          request_id: string
+          responsible: string
+          revision: number
+          room: string
+          status: string
+          supplier: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          case_id: string
+          checked_qty?: number | null
+          correction_reason?: string
+          created_at?: string
+          created_by?: string | null
+          date_only?: boolean
+          description?: string
+          expected_date?: string | null
+          expected_qty?: number | null
+          id?: string
+          occurred_at: string
+          received_qty?: number | null
+          request_id: string
+          responsible?: string
+          revision: number
+          room?: string
+          status: string
+          supplier?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          case_id?: string
+          checked_qty?: number | null
+          correction_reason?: string
+          created_at?: string
+          created_by?: string | null
+          date_only?: boolean
+          description?: string
+          expected_date?: string | null
+          expected_qty?: number | null
+          id?: string
+          occurred_at?: string
+          received_qty?: number | null
+          request_id?: string
+          responsible?: string
+          revision?: number
+          room?: string
+          status?: string
+          supplier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_history_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "property_history_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_supplier_categories: {
         Row: {
           created_at: string
@@ -4221,6 +4338,10 @@ export type Database = {
       admin_quick_mark_guide_item: {
         Args: { p_have: boolean; p_item_id: string }
         Returns: Json
+      }
+      admin_record_property_history: {
+        Args: { p_input: Json }
+        Returns: string
       }
       admin_release_portal_block: { Args: { p_data: Json }; Returns: Json }
       admin_reschedule_commercial_meeting: {

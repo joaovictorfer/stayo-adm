@@ -60,3 +60,7 @@
 - Contract editing and review remain local to the dialog; review uses the shared validated snapshot, and closing edited fields requires explicit discard so no unreviewed data is silently lost or persisted.
 
 - Financial month selectors reuse MonthPicker with explicit pt-BR labels and unchanged YYYY-MM values, so browser language never changes competence presentation or filtering.
+
+- Property history uses admin-only immutable case events through core-client, revision-locked idempotent RPC writes and supply-change triggers; adapters preserve source identity, date precision and partial-source warnings without exposing history to portal capabilities.
+- Property-history pending and checking views derive quantities from the latest case revision before pagination and share the active period/type filters, preventing superseded deliveries from reopening completed work.
+- Owner history PDFs are local downloads with a reviewed allowlisted projection of purchase/inspection events; fetch all period pages, omit internal free text/identities and never publish or upload the report.
