@@ -10,10 +10,10 @@ const snap = (cc: Record<string, unknown>, extra: Partial<VersionSnap> = {}): Ve
 const base = { administrationFee: 20, durationMonths: 6, turnoverCleaningFee: 250, payoutRule: "Até o dia 10" };
 
 describe("padrão comercial STAYO", () => {
-  it("inicia com 20%, 180 dias, R$ 250 pago pelo hóspede e limpeza de implantação", () => {
+  it("inicia com 20%, 12 meses, R$ 250 pago pelo hóspede e limpeza de implantação", () => {
     const p = initialStandardPatch({})!;
     expect(p["administration_fee"]).toBe(20);
-    expect(p["duration_months"]).toBe(6);
+    expect(p["duration_months"]).toBe(12);
     expect(p["turnover_cleaning_fee"]).toBe(250);
     expect(p["turnover_cleaning_payer"]).toBe("guest");
     expect(p["initial_cleaning_option"]).toBe("stayo_initial");
@@ -22,6 +22,13 @@ describe("padrão comercial STAYO", () => {
   it("não sobrescreve valor já definido e não reaplica em ficha que já tem cópia", () => {
     expect(initialStandardPatch({ administration_fee: 18 })!["administration_fee"]).toBeUndefined();
     expect(initialStandardPatch({ standard_copy: STAYO_STANDARD })).toBeNull();
+  });
+  it("preserva a vigência e o padrão anterior de fichas existentes", () => {
+    expect(initialStandardPatch({ duration_months: 6 })?.["duration_months"]).toBeUndefined();
+    const previous = { ...STAYO_STANDARD, duration_months: 6 };
+    const row = { duration_months: 6, standard_copy: previous };
+    expect(initialStandardPatch(row)).toBeNull();
+    expect(resetToStandardPatch(row, "duration_months")).toEqual({ duration_months: 6 });
   });
   it("valor alterado vira exceção do imóvel e volta ao padrão da cópia da ficha", () => {
     const row = { ...STAYO_STANDARD, administration_fee: 18, standard_copy: STAYO_STANDARD };
