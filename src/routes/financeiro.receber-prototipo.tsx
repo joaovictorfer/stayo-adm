@@ -1,3 +1,4 @@
+import { MonthPicker } from "@/components/ui/month-picker";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Hourglass, PlugZap, Search, SearchCheck, SlidersHorizontal, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -108,7 +109,7 @@ function ReceberPrototype() {
   const sel = "admin-input h-11 w-full px-3 text-sm";
   const filters = (
     <>
-      <input type="month" aria-label="Período" value={period} onChange={(e) => setPeriod(e.target.value)} className={sel} />
+      <MonthPicker aria-label="Período" value={period} onValueChange={setPeriod} className={sel} required />
       <select aria-label="Imóvel" value={property} onChange={(e) => setProperty(e.target.value)} className={sel}>
         <option value="todos">Todos os imóveis</option>
         {PROPERTIES.map((p) => <option key={p}>{p}</option>)}

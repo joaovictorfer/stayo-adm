@@ -58,3 +58,5 @@
 - Contract exports use the original source-controlled DOCX through a role-protected server function; edit only allowlisted text ranges and preserve all other ZIP parts and OOXML properties, so fixed clauses and branding are never reconstructed.
 - Contract preparation validates structured parties through a shared browser-safe schema and rebuilds qualification/signatures server-side; never copy the principal's contact or address into another party, preventing incomplete or mismatched exports.
 - Contract editing and review remain local to the dialog; review uses the shared validated snapshot, and closing edited fields requires explicit discard so no unreviewed data is silently lost or persisted.
+
+- Financial month selectors reuse MonthPicker with explicit pt-BR labels and unchanged YYYY-MM values, so browser language never changes competence presentation or filtering.
