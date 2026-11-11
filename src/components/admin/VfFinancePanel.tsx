@@ -1,3 +1,4 @@
+import { MonthPicker } from "@/components/ui/month-picker";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Search } from "lucide-react";
@@ -23,7 +24,7 @@ export function VfFinancePanel() {
   const statement = result?.ok ? result.statement : null;
   return <AdminSection title="VF - Financeiro" action={<AdminStatusBadge tone="warning">Envio de despesas desativado</AdminStatusBadge>}>
     <form className="flex flex-wrap items-end gap-3 py-4" onSubmit={(event) => { event.preventDefault(); void consult(); }}>
-      <label className="grid gap-1 text-sm">Competência<Input aria-label="Competência" type="month" required value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+      <label className="grid gap-1 text-sm">Competência<MonthPicker aria-label="Competência" required value={month} onValueChange={setMonth} /></label>
       <label className="grid min-w-0 flex-1 gap-1 text-sm">Identificador do imóvel<Input aria-label="Identificador do imóvel" placeholder="Todos os imóveis" maxLength={120} value={property} onChange={(event) => setProperty(event.target.value)} /></label>
       <Button type="submit" disabled={busy}><Search size={16} />{busy ? "Consultando…" : "Consultar demonstrativos"}</Button>
     </form>

@@ -1,3 +1,4 @@
+import { MonthPicker } from "@/components/ui/month-picker";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -123,7 +124,7 @@ function FinanceiroPrototype() {
 
   const filters = (
     <>
-      <input type="month" aria-label="Período" value={period} onChange={(e) => setPeriod(e.target.value)} className="admin-input h-11 w-full px-3 text-sm sm:w-auto" />
+      <MonthPicker aria-label="Período" value={period} onValueChange={setPeriod} className="admin-input h-11 w-full px-3 text-sm sm:w-auto" />
       <select aria-label="Filtrar por imóvel" value={property} onChange={(e) => setProperty(e.target.value)} className="admin-input h-11 w-full px-3 text-sm sm:w-auto">
         <option value="todos">Todos os imóveis</option>
         {PROPERTIES.map((p) => <option key={p} value={p}>{p}</option>)}

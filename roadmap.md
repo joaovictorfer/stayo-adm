@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Meses em português nos seletores de Repasses, Cobranças e Financeiro (incluindo protótipos): seleção, troca de ano e limpeza de filtro conferidas em navegador en-US no computador/celular; competências preservadas, 20 testes financeiros passaram.
 - [x] Enxoval: camas existentes por quarto, mínimo duplicado, documentos privados com leitura e revisão, pedido imutável com correção auditada, preços históricos e conferência parcial. Orçamento e pedido 05580 do B502 lidos e confirmados neste draft; fluxo real e telas 1280/390 conferidos, 9 testes passaram. Recebimento de teste removido.
 - [x] Enxoval B502: Quarto 01 (1 queen), Quarto 02 (2 solteiro), união opcional com pillow e 2 quartos canônicos salvos; cálculo e recarga conferidos: estimativa parcial R$ 5.390,39, pedido R$ 5.685,67. Cinco testes passaram; nenhuma entrega alterada.
 - [ ] Enxoval B502 completo: falta informar quantidade de travesseiros e confirmar lençol compatível com união de 1,76 m (queen do pedido: 1,58 m).
