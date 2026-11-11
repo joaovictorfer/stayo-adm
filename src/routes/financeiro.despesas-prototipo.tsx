@@ -108,7 +108,7 @@ function DespesasPrototype() {
   const cls = "admin-input h-11 w-full px-3 text-sm";
   const filters = (
     <>
-      <MonthPicker aria-label="Período" value={period} onValueChange={setPeriod} className={cls} required />
+      <MonthPicker aria-label="Período" value={period} onValueChange={setPeriod} className={cls} />
       <select aria-label="Imóvel" value={property} onChange={(e) => setProperty(e.target.value)} className={cls}>
         <option value="todos">Todos os imóveis</option>{PROPERTIES.map((p) => <option key={p}>{p}</option>)}
       </select>

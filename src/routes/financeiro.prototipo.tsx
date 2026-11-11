@@ -124,7 +124,7 @@ function FinanceiroPrototype() {
 
   const filters = (
     <>
-      <MonthPicker aria-label="Período" value={period} onValueChange={setPeriod} className="admin-input h-11 w-full px-3 text-sm sm:w-auto" required />
+      <MonthPicker aria-label="Período" value={period} onValueChange={setPeriod} className="admin-input h-11 w-full px-3 text-sm sm:w-auto" />
       <select aria-label="Filtrar por imóvel" value={property} onChange={(e) => setProperty(e.target.value)} className="admin-input h-11 w-full px-3 text-sm sm:w-auto">
         <option value="todos">Todos os imóveis</option>
         {PROPERTIES.map((p) => <option key={p} value={p}>{p}</option>)}
