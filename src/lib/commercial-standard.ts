@@ -4,7 +4,7 @@ import { INITIAL_CLEANING_LABELS, type InitialCleaningOption, type TurnoverPayer
 /** Padrão comercial STAYO copiado para cada ficha (nunca lido ao vivo por outros imóveis). */
 export const STAYO_STANDARD = {
   administration_fee: 20,
-  duration_months: 6, // 180 dias
+  duration_months: 12,
   turnover_cleaning_fee: 250,
   turnover_cleaning_payer: "guest" as TurnoverPayer,
   initial_cleaning_option: "stayo_initial" as InitialCleaningOption,

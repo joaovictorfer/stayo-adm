@@ -1,0 +1,1 @@
+INSERT INTO public.owner_onboarding_submissions (implementation_id, full_name, document, email, phone, pix_key) VALUES ('04000000-0000-4000-8000-000000000001', 'Helena Duarte Pires', '529.982.247-25', 'helena@example.com', '54991001234', 'helena@example.com') ON CONFLICT DO NOTHING;
