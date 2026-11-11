@@ -14,6 +14,10 @@
 
 export type EntityId = string;
 
+/** Private administrative procurement, integer BRL cents; confirmation is not receipt. */
+export interface LinenOrderItem { code: string; name: string; category: string; size: string; color: string; quantity: number; unitCents: number }
+export interface LinenOrderPayload { supplier: string; number: string; date: string; delivery: string | null; discountCents: number; freightCents: number; totalCents: number; notes: string; items: LinenOrderItem[] }
+
 export interface PayoutPaymentRequest {
   id: string; implementation_id: string; competence: string; amount_cents: number; expires_at: string;
   snapshot: { recipient: { name: string; city: string; pixType: "email" | "cpf" | "cnpj" | "phone" | "random"; pixKey: string } };
