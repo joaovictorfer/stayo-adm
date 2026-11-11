@@ -5,7 +5,7 @@ import { generatePayoutPdf, type PayoutPdfInput, type PayoutPdfPalette } from ".
 import { appendPayoutReceipts } from "./payout-receipt-pdf";
 
 /** Uses the light, print palette even when the administrative UI is in dark mode. */
-function printPalette(): PayoutPdfPalette {
+export function printPalette(): PayoutPdfPalette {
   const probe = document.createElement("div");
   probe.className = "payout-pdf-palette";
   document.body.appendChild(probe);

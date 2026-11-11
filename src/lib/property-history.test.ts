@@ -1,0 +1,19 @@
+import {describe,it,expect} from 'vitest';
+import {filterPropertyHistory,historyDay,historyOutstanding,validateHistoryQuantities,type HistoryFilters} from './property-history';
+import type {PropertyHistoryEntry} from '@/types/core';
+const filters:HistoryFilters={search:'',phase:'',category:'',status:'',from:'',to:'',ascending:false};
+const entry=(id:string,category:PropertyHistoryEntry['category'],phase:PropertyHistoryEntry['phase'],occurredAt:string):PropertyHistoryEntry=>({id,category,phase,occurredAt,caseId:null,revision:0,title:'Enxoval',description:'',status:'aguardando_entrega',dateOnly:false,createdAt:occurredAt,actor:'Equipe',responsible:'',room:'',supplier:'',expectedQty:4,receivedQty:2,checkedQty:2,expectedDate:null,amountCents:null,correctionReason:''});
+describe('histórico do imóvel',()=>{
+ it('entregas parciais aparecem no filtro de falta entregar',()=>{expect(filterPropertyHistory([{...entry('a','compra','implantacao','2026-11-01T12:00:00Z'),status:'parcial'}],{...filters,status:'to_deliver'}).map(e=>e.id)).toEqual(['a']);});
+ it('mostra duas unidades recebidas ainda sem conferência',()=>{expect(historyOutstanding({...entry('a','compra','implantacao','2026-11-01T12:00:00Z'),expectedQty:6,receivedQty:4,checkedQty:2})).toEqual({delivery:2,checking:2,needsCheck:true});});
+ it('não reabre pendência de uma compra já concluída',()=>{const old={...entry('a','compra','implantacao','2026-11-01T12:00:00Z'),caseId:'case',revision:1,receivedQty:4,checkedQty:0};const done={...old,id:'b',revision:2,status:'concluido',checkedQty:4};expect(filterPropertyHistory([old,done],{...filters,status:'to_check'})).toEqual([]);expect(filterPropertyHistory([old,done],{...filters,status:'pending'})).toEqual([]);});
+ it('filtra conferências pelo período e tipo selecionados',()=>{const purchase={...entry('a','compra','operacao','2026-11-01T12:00:00Z'),receivedQty:4,checkedQty:2};expect(filterPropertyHistory([purchase,entry('b','vistoria','implantacao','2026-10-01T12:00:00Z')],{...filters,status:'to_check',category:'compra',from:'2026-11-01',to:'2026-11-01'}).map(e=>e.id)).toEqual(['a']);});
+ it('preserva implantação ao começar operação',()=>{expect(filterPropertyHistory([entry('a','implantacao','implantacao','2026-10-01T12:00:00Z'),entry('b','reserva','operacao','2026-11-01T12:00:00Z')],filters).map(e=>e.id)).toEqual(['b','a']);});
+ it('combina categoria, fase e período',()=>{expect(filterPropertyHistory([entry('a','compra','operacao','2026-11-01T12:00:00Z'),entry('b','reserva','operacao','2026-11-01T12:00:00Z')],{...filters,category:'compra',phase:'operacao',from:'2026-11-01',to:'2026-11-01'}).map(e=>e.id)).toEqual(['a']);});
+ it('pendência permanece fora do mês de compra',()=>{expect(filterPropertyHistory([entry('a','compra','implantacao','2026-09-01T12:00:00Z')],{...filters,status:'pending'})).toHaveLength(1);});
+ it('entrega parcial não permite concluir compra',()=>{expect(validateHistoryQuantities('compra','concluido',4,2,2)).not.toBeNull();});
+ it('conclusão exige recebimento e conferência completos',()=>{expect(validateHistoryQuantities('compra','concluido',4,4,4)).toBeNull();expect(validateHistoryQuantities('compra','concluido',4,4,3)).not.toBeNull();});
+ it('conferência não excede recebimento',()=>{expect(validateHistoryQuantities('compra','recebido',4,2,3)).not.toBeNull();});
+ it('data desconhecida não muda de dia pelo fuso',()=>{expect(historyDay({...entry('a','reserva','operacao','2026-11-01T00:00:00Z'),dateOnly:true})).toBe('2026-11-01');});
+ it('horário conhecido usa dia de São Paulo',()=>{expect(historyDay(entry('a','compra','operacao','2026-11-01T01:00:00Z'))).toBe('2026-10-31');});
+});
