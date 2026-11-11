@@ -659,6 +659,20 @@
       "when": 1794397475644,
       "tag": "0093_linen_validated_actions_and_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1794421799197,
+      "tag": "0094_property_history_occurrences",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1794421799198,
+      "tag": "0095_property_history_validation_guards",
+      "breakpoints": true
     }
   ]
 }

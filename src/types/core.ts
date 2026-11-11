@@ -18,6 +18,16 @@ export type EntityId = string;
 export interface LinenOrderItem { code: string; name: string; category: string; size: string; color: string; quantity: number; unitCents: number }
 export interface LinenOrderPayload { supplier: string; number: string; date: string; delivery: string | null; discountCents: number; freightCents: number; totalCents: number; notes: string; items: LinenOrderItem[] }
 
+export type PropertyHistoryCategory = 'implantacao' | 'reserva' | 'compra' | 'manutencao' | 'higienizacao' | 'vistoria' | 'ocorrencia';
+export interface PropertyHistoryEntry {
+  id: string; caseId: string | null; revision: number; title: string; description: string;
+  category: PropertyHistoryCategory; phase: 'implantacao' | 'operacao'; status: string;
+  occurredAt: string; dateOnly: boolean; createdAt: string; actor: string;
+  responsible: string; room: string; supplier: string; expectedQty: number | null;
+  receivedQty: number | null; checkedQty: number | null; expectedDate: string | null;
+  amountCents: number | null; correctionReason: string; reservationMonth?: string;
+}
+
 export interface PayoutPaymentRequest {
   id: string; implementation_id: string; competence: string; amount_cents: number; expires_at: string;
   snapshot: { recipient: { name: string; city: string; pixType: "email" | "cpf" | "cnpj" | "phone" | "random"; pixKey: string } };

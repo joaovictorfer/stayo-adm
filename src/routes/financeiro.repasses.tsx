@@ -21,8 +21,10 @@ import { PayoutAmountEditor } from "@/components/admin/PayoutAmountEditor";
 import { PayoutPaymentPanel } from "@/components/admin/PayoutPaymentPanel";
 import { listPayoutReceipts } from "@/lib/api/core-client";
 
+import { PayoutClosingReminder } from "@/components/financeiro/PayoutClosingReminder";
+
 export const Route = createFileRoute("/financeiro/repasses")({
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
+  validateSearch: (search: Record<string, unknown>): { q?: string; imovel?: string | undefined; mes?: string | undefined } => ({ q: typeof search['q'] === "string" ? search['q'] : "", imovel: typeof search['imovel'] === 'string' && /^[0-9a-f-]{36}$/i.test(search['imovel']) ? search['imovel'] : undefined, mes: typeof search['mes'] === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(search['mes']) ? search['mes'] : undefined }),
   head: () => ({ meta: [
     { title: "Relatório de repasse — STAYO Admin" },
     { name: "description", content: "Reservas, despesas e balancete mensal de repasse por imóvel." },
@@ -43,16 +45,17 @@ const monthRange = (m: string) => { const [y = 2026, mo = 1] = m.split("-").map(
 
 function Page() {
   const qc = useQueryClient();
-  const { q: searchText } = Route.useSearch();
+  const { q: searchText, imovel: historyProperty, mes: historyMonth } = Route.useSearch();
   const q = searchText ?? "";
   const navigate = Route.useNavigate();
   const setSearch = (q: string) => navigate({ search: { q }, replace: true });
-  const [impl, setImpl] = useState("");
-  const [month, setMonth] = useState(previousCompetence());
+  const [chosenImpl, setImpl] = useState(historyProperty ?? "");
+  const [month, setMonth] = useState(historyMonth ?? previousCompetence());
   const props = useQuery({ queryKey: ["payout", "props"], queryFn: async () => {
     const { data, error } = await db().from("implementation_projects").select("id, code, nickname, condominium_name, unit, owner_id, status, core_property_id").order("code");
     if (error) throw error; return data.filter(isPayoutPropertyEligible);
   } });
+  const impl = props.data?.some(p => p.id === chosenImpl) ? chosenImpl : '';
   const propertyIds = props.data?.map(p => p.id) ?? [];
   const covers = useQuery({ queryKey: ["payout", "covers", propertyIds], enabled: propertyIds.length > 0, queryFn: () => listImplementationCoverUrls(propertyIds), staleTime: 30 * 60 * 1000 });
   const [from, to] = monthRange(month);
@@ -135,6 +138,7 @@ function Page() {
       <Link to="/implantacao/$id" params={{ id: impl }} className="admin-inline-link shrink-0" aria-label={`Abrir ficha de ${propertyTitle}`}>Ficha do imóvel <ArrowUpRight size={15} /></Link>
     </div>}
 
+    {!impl && <PayoutClosingReminder properties={props.data ?? []} month={month} onOpen={setImpl} />}
     {!impl ? <section className="payout-property-browser">
       <div className="payout-catalog-heading"><div><span className="payout-catalog-eyebrow">FECHAMENTO MENSAL</span><h2>Imóveis em operação</h2></div><span className="payout-catalog-count">{props.data?.filter(p => matchesPayoutPropertySearch(p, q)).length ?? 0} imóveis</span></div>
       {props.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar os imóveis.</p> : props.isPending ? <div className="payout-property-grid">{[1, 2, 3, 4, 5, 6].map(n => <div key={n} className="h-72 animate-pulse rounded-md bg-muted" />)}</div> : !props.data?.some(p => matchesPayoutPropertySearch(p, q)) ? <div className="payout-catalog-empty"><Building2 /><h3>{q ? "Nenhum imóvel encontrado" : "Nenhum imóvel em operação"}</h3>{q && <Button variant="outline" onClick={() => setSearch("")}>Limpar pesquisa</Button>}</div> : <div className="payout-property-grid">{props.data?.filter(p => matchesPayoutPropertySearch(p, q)).map(p => <Button key={p.id} variant="outline" className="payout-property-tile" onClick={() => setImpl(p.id)} aria-label={`Abrir relatório de ${payoutPropertyName(p)}`}>

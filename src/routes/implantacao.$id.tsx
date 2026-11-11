@@ -1,6 +1,6 @@
 import { PayoutAdjustmentsHistory } from "../components/implantacao/ficha/PayoutAdjustmentsHistory";
 import { AppPropertyLinkCard } from "../components/implantacao/ficha/AppPropertyLinkCard";
-import { ImplementationHistory } from "../components/implantacao/ficha/ImplementationHistory";
+import { PropertyHistory } from "../components/implantacao/ficha/PropertyHistory";
 import { inventorySubmissionsQuery } from "@/lib/api/owner-inventory";
 import type { CommercialProposalStatus } from "../types/commercial-proposal";
 import { journeyLabel, proposalStage, contractStageLabel, currentContractStage } from "../lib/journey-states";
@@ -720,12 +720,10 @@ function ImplementationDetailPage() {
                 </SectionBoundary>
               ) : (
                 <div className="flex flex-col gap-4">
-                  <ImplementationTimeline implementationId={implementation.id} />
-                  <ImplementationHistory
-                    implementationId={implementation.id}
-                    proposalIds={(proposalsQuery.data ?? []).map((p) => p.id)}
-                    base={history}
-                  />
+                  <PropertyHistory implementationId={implementation.id} property={propertyName} code={implementation.code} defaultPhase={implementation.status === 'ativo' ? 'operacao' : 'implantacao'} />
+                  <Collapsible title="Etapas da implantação" summary="Preparação e conclusão das etapas">
+                    <ImplementationTimeline implementationId={implementation.id} />
+                  </Collapsible>
                   <Collapsible
                     title="Avançado"
                     summary="Identificadores técnicos e integração com o Core"

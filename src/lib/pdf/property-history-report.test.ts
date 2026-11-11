@@ -1,0 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { ownerHistoryRows, ownerHistorySummary } from './property-history-report';
+import type { PropertyHistoryEntry } from '@/types/core';
+const entry: PropertyHistoryEntry = { id: '1', caseId: 'c', revision: 1, title: 'Compra de enxoval', description: 'Nota privada', category: 'compra', phase: 'implantacao', status: 'parcial', occurredAt: '2026-11-11T12:00:00Z', dateOnly: false, createdAt: '', actor: 'Conta administrativa', responsible: 'Contato interno', room: 'Quarto', supplier: 'Contato privado', expectedQty: 6, receivedQty: 4, checkedQty: 2, expectedDate: null, amountCents: 120000, correctionReason: 'Motivo privado' };
+describe('Histórico para o proprietário', () => {
+  it('exporta compra com entrega e conferência sem campos internos', () => { const row = ownerHistoryRows([entry])[0]; expect(row).toMatchObject({ expected: 6, received: 4, checked: 2, delivery: 2, checking: 2 }); expect(row).not.toHaveProperty('description'); expect(row).not.toHaveProperty('actor'); expect(row).not.toHaveProperty('supplier'); expect(row).not.toHaveProperty('correctionReason'); });
+  it('não inclui reservas nem auditoria de implantação', () => { expect(ownerHistoryRows([{ ...entry, category: 'reserva' }, { ...entry, category: 'implantacao' }])).toEqual([]); });
+  it('preserva todas as entregas mas calcula pendências apenas pela revisão atual', () => { const rows = ownerHistoryRows([entry, { ...entry, id: '2', revision: 2, status: 'concluido', receivedQty: 6, checkedQty: 6 }]); expect(rows).toHaveLength(2); expect(ownerHistorySummary(rows)).toEqual({ purchases: 1, delivery: 0, checking: 0 }); });
+  it('valor ausente é preservado, não inventado como zero', () => { expect(ownerHistoryRows([{ ...entry, amountCents: null }])[0]?.amount).toBeNull(); });
+});
