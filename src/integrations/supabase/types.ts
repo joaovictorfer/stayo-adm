@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.17"
-  }
   public: {
     Tables: {
       admin_condominiums: {
@@ -2002,6 +1997,154 @@ export type Database = {
           created_at?: string
           id?: string
           text?: string
+        }
+        Relationships: []
+      }
+      linen_documents: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          created_by: string | null
+          filename: string
+          fingerprint: string
+          id: string
+          implementation_id: string
+          kind: string
+          payload: Json
+          revision: number
+          status: string
+          storage_path: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          filename: string
+          fingerprint: string
+          id?: string
+          implementation_id: string
+          kind: string
+          payload: Json
+          revision?: number
+          status?: string
+          storage_path: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          filename?: string
+          fingerprint?: string
+          id?: string
+          implementation_id?: string
+          kind?: string
+          payload?: Json
+          revision?: number
+          status?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linen_documents_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      linen_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          document_id: string | null
+          id: string
+          implementation_id: string
+          kind: string
+          payload: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          implementation_id: string
+          kind: string
+          payload: Json
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          implementation_id?: string
+          kind?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linen_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "linen_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "linen_events_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      linen_existing: {
+        Row: {
+          implementation_id: string
+          item_key: string
+          notes: string
+          quantity: number
+          revision: number
+        }
+        Insert: {
+          implementation_id: string
+          item_key: string
+          notes?: string
+          quantity: number
+          revision?: number
+        }
+        Update: {
+          implementation_id?: string
+          item_key?: string
+          notes?: string
+          quantity?: number
+          revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linen_existing_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      linen_rule_versions: {
+        Row: {
+          created_at: string
+          id: number
+          multiplier: number
+        }
+        Insert: {
+          created_at?: string
+          id: number
+          multiplier: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          multiplier?: number
         }
         Relationships: []
       }
@@ -4027,6 +4170,8 @@ export type Database = {
         Args: { p_block: string; p_implementation_id: string }
         Returns: undefined
       }
+      admin_linen_action: { Args: { p_data: Json }; Returns: Json }
+      admin_linen_apply: { Args: { p_data: Json }; Returns: Json }
       admin_list_commercial_assignees: {
         Args: never
         Returns: {
@@ -4728,3 +4873,4 @@ export const Constants = {
     },
   },
 } as const
+

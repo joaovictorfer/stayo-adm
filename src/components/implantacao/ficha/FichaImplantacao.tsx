@@ -35,6 +35,7 @@ import { InventoryDetailLayout } from "../guide/InventoryDetailLayout";
 import { InventoryItemDetails } from "../guide/InventoryItemDetails";
 import { InventorySubmissionsReview } from "../guide/InventorySubmissionsReview";
 import { GuidePanel, GuideSummary } from "../guide/GuidePanel";
+import { LinenWorkspace } from "../linen/LinenWorkspace";
 import { MissingItemsTab, type SupplyPresetFilter } from "../MissingItemsTab";
 import {
   addInventoryItem,
@@ -273,7 +274,7 @@ export function FichaImplantacao({
       )}
 
       {tab === "enxoval" ? (
-        <Surface><EnxovalSlot implementationId={implementationId} /></Surface>
+        <EnxovalSlot implementationId={implementationId} />
       ) : supplyFilter ? (
         <Surface><MissingItemsTab implementationId={implementationId} preset={supplyFilter} /></Surface>
       ) : (
@@ -306,7 +307,7 @@ function Surface({ children }: { children: ReactNode }) {
 }
 
 function EnxovalSlot({ implementationId }: { implementationId: string }) {
-  return <GuidePanel implementationId={implementationId} guideType="enxoval" />;
+  return <LinenWorkspace implementationId={implementationId} />;
 }
 
 export function InventoryWorkspace({
