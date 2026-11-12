@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildQualification, contractFieldsSchema, contractPartySchema, initialContractParties, type ContractParty } from "./contract-preparation";
 import type { OwnerOnboardingSubmission } from "@/types/owner-onboarding";
-import { sampleFields } from './contract-document.test';
+const sampleFields = { qualification: 'Qualificação', propertyDescription: 'Apartamento nº 106', pixKey: 'helena@example.com', signatureNames: 'HELENA DUARTE PIRES', signatureDate: '2026-11-12', signatureCity: 'Gramado/RS', administrationFee: 20, durationMonths: 12, maintenanceLimit: 300, noticePeriodDays: 30, exclusivity: true, payoutMode: 'platform_auto', ownerUseNoticeDays: 3, implementationFee: 600, witness1Name: 'Luana Lima de Oliveira', witness1Cpf: '114.011.974-50', witness2Name: '', witness2Cpf: '' };
 
 const party: ContractParty = { personType: "pf", fullName: "Helena Duarte Pires", document: "529.982.247-25", email: "helena@example.com", phone: "54991001234", maritalStatus: "uniao_estavel", profession: "Arquiteta", address: "Rua de Teste, 10, Centro, Gramado/RS, CEP 95670-000", representative: "" };
 describe("conferência estruturada do contrato", () => {
