@@ -433,11 +433,11 @@ function ImplementationDetailPage() {
                   if (!implementation.ownerName || !implementation.ownerPhone)
                     pend.push({ id: "owner", section: "proprietario", icon: "owner", title: "Proprietário", detail: "Completar dados de contato", chip: "Pendente" });
                   else if (latestProposal?.status === "accepted" && !intakeSubmitted)
-                    pend.push({ id: "owner", section: "portal", icon: "owner", title: "Proprietário", detail: "Cadastro ainda não enviado", chip: "Aguardando" });
+                    pend.push({ id: "owner", section: "proprietario", icon: "owner", title: "Proprietário", detail: "Cadastro ainda não enviado", chip: "Aguardando" });
                   if (!latestProposal || latestProposal.status === "draft")
                     pend.push({ id: "prop", section: "proposta", icon: "doc", title: "Comercial", detail: latestProposal ? "Publicar proposta" : "Montar a proposta", chip: "Pendente" });
                   else if (latestProposal.status === "published")
-                    pend.push({ id: "prop", section: "portal", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
+                    pend.push({ id: "prop", section: "proposta", icon: "doc", title: "Comercial", detail: "Aguardando aceite da proposta", chip: "Aguardando" });
                   if (propertyPendencyCount)
                     pend.push({ id: "imovel", section: "imovel", icon: "home", title: "Imóvel", detail: `${propertyPendencyCount} ${propertyPendencyCount === 1 ? "pendência" : "pendências"} em aberto`, chip: "Pendente" });
                   if (pendingItems.length)
@@ -597,7 +597,6 @@ function ImplementationDetailPage() {
                     { section: "imovel", label: "Imóvel", status: propertyPendencyCount ? `${propertyPendencyCount} ${propertyPendencyCount === 1 ? "pendência" : "pendências"} em aberto` : "Dados principais completos", tone: propertyPendencyCount ? "warn" : "ok" },
                     { section: "implantacao", label: "Implantação", status: itemsQuery.isPending || inventoryQ.isPending ? "—" : items.length ? `${done} de ${items.length} ${items.length === 1 ? "item concluído" : "itens concluídos"}` : inventoryTotal ? `Inventário: ${inventoryAnswered} de ${inventoryTotal} respondidos` : "Sem itens", tone: items.length ? (readiness.pendingBlockers ? "danger" : done === items.length ? "ok" : "progress") : inventoryTotal ? (inventoryAnswered === inventoryTotal ? "ok" : "progress") : "muted" },
                     { section: "proprietario", label: "Proprietário", status: !implementation.ownerName ? "Não informado" : intakeSubmitted ? "Cadastro recebido" : "Cadastro aguardando", tone: !implementation.ownerName ? "warn" : intakeSubmitted ? "ok" : "warn" },
-                    { section: "portal", label: "Portal", status: releasesQuery.isPending ? "Verificando liberação…" : releasesQuery.isError ? "Liberação não verificada" : releasesQuery.data?.length ? "Conteúdo liberado" : "Não liberado", tone: releasesQuery.data?.length ? "ok" : "muted" },
                   ];
                   return (
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
@@ -692,7 +691,7 @@ function ImplementationDetailPage() {
                 )
               ) : section === "imovel" ? (
                 <div className="flex flex-col gap-4">
-                  <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("portal")} />
+                  <FichaImovel implementation={implementation} onGoOwner={() => goSection("proprietario")} onGoPortal={() => goSection("proprietario")} />
                   <AppPropertyLinkCard implementation={implementation} />
                   <PayoutAdjustmentsHistory implementationId={implementation.id} />
                 </div>
@@ -714,10 +713,6 @@ function ImplementationDetailPage() {
                   journey={isPropertyOperating(implementation) ? 'Em operação' : journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
                   onGo={goSection}
                 />
-                </SectionBoundary>
-              ) : section === "portal" ? (
-                <SectionBoundary label="a aba Portal">
-                <OwnerTab implementation={implementation} part="portal" versions={proposalsQuery.data ?? []} />
                 </SectionBoundary>
               ) : (
                 <div className="flex flex-col gap-4">

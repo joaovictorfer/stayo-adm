@@ -6,13 +6,13 @@ export const FICHA_SECTIONS = [
   { id: "proprietario", label: "Proprietários" },
   { id: "imovel", label: "Imóvel" },
   { id: "implantacao", label: "Implantação" },
-  { id: "portal", label: "Portal" },
   { id: "historico", label: "Histórico" },
 ] as const;
 export type FichaSection = (typeof FICHA_SECTIONS)[number]["id"];
 
 export function toFichaSection(value: unknown): FichaSection | undefined {
   if (value === "contrato") return "proposta"; // Contrato foi unificado em Comercial
+  if (value === "portal") return "proprietario"; // Preserva links antigos após remoção da aba
   return FICHA_SECTIONS.some((s) => s.id === value) ? (value as FichaSection) : undefined;
 }
 
