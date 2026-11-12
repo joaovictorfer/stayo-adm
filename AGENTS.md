@@ -63,5 +63,6 @@
 
 - Property history uses admin-only immutable case events through core-client, revision-locked idempotent RPC writes and supply-change triggers; adapters preserve source identity, date precision and partial-source warnings without exposing history to portal capabilities.
 - Property-history pending and checking views derive quantities from the latest case revision before pagination and share the active period/type filters, preventing superseded deliveries from reopening completed work.
+- History's simplified checklist reuses existing timeline steps through core-client, without seeding on page load; status changes are scoped to the property and compare the prior status, while occurrence completion keeps the existing revision-locked RPC and quantity guards.
 - Owner history PDFs are local downloads with a reviewed allowlisted projection of purchase/inspection events; fetch all period pages, omit internal free text/identities and never publish or upload the report.
 - Administrative operational classification uses implementation_projects.operational_status independently of registration status; shared property-operation predicates drive portfolio counts and filters without changing Core-link or portal authorization guards.

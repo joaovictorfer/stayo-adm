@@ -49,6 +49,7 @@ export { listCharges, chargeOptions, saveCharge, actionCharge, readPublicCharge 
 export { adjustPayoutAmounts, listPayoutAdjustments, PAYOUT_FIELD_LABEL, type PayoutAmountField, type PayoutAdjustment } from "./payout-adjustments";
 export { preparePayoutPayment, finalizePayoutPayment, listPayoutReceipts } from "../payout-payment.functions";
 export { readPropertyHistory, recordPropertyHistory } from '../property-history.functions';
+export { readPropertyTimeline, updatePropertyTimeline } from './property-timeline';
 export { saveOwnerAddress, type OwnerAddress } from "./owner-address";
 export { getLinenWorkspace, importLinenDocument, saveLinenAction, openLinenDocument, uploadLinenEvidence, openLinenEvidence } from "../linen.functions";
 
