@@ -20,6 +20,7 @@ function projectFromRow(row: Record<string, unknown>): ImplementationProject {
     id: String(row["id"]),
     code: String(row["code"]),
     status: row["status"] as ImplementationStatus,
+    operationalStatus: row["operational_status"] === 'operacao' ? 'operacao' : 'implantacao',
     ownerId: (row["owner_id"] as string | null) ?? null,
     ownerName: owner?.name ?? null,
     ownerPhone: owner?.phone ?? null,
@@ -112,6 +113,7 @@ export function createCloudImplementationApi(): ImplementationApi {
     update: async (id, patch) => {
       const row = {
         status: patch.status,
+        operational_status: patch.operationalStatus,
         owner_id: patch.ownerId,
         nickname: patch.nickname,
         cover_image: patch.coverImage,

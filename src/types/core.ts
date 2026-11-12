@@ -141,6 +141,7 @@ export interface ImplementationProject {
   id: EntityId;
   code: string; // ex: IMP-00127
   status: ImplementationStatus;
+  operationalStatus?: 'operacao' | 'implantacao';
   /** FK para `OwnerRecord` (src/types/admin.ts) — nunca objeto embutido. */
   ownerId: EntityId | null;
   ownerName: string | null;

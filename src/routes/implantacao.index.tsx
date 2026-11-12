@@ -58,6 +58,8 @@ import { commercialUrgency, formatCommercialDateTime } from "../lib/commercial-m
 import { opportunityNextAction, opportunityTitle } from "../lib/opportunity-state";
 import { formatBrazilianPhone } from "../lib/owner-form-validation";
 import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implementation-status";
+import { isPropertyOperating, propertyOperationalStatus } from '@/lib/property-operation';
+import { ModuleTabs } from '@/components/admin/PhaseOnePatterns';
 import type { CommercialAssignee, CommercialOverviewRow } from "../types/commercial-journey";
 import type { ImplementationProject } from "../types/core";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +92,7 @@ function useJourneyLabels() {
     staleTime: 30_000,
   });
   return (item: ImplementationProject) => {
+    if (isPropertyOperating(item)) return 'Em operação';
     const p = q.data?.projects.find((r) => r.id === item.id);
     if (!q.data || !p) return statusLabels[item.status];
     const versions = q.data.proposals
@@ -106,15 +109,15 @@ function useJourneyLabels() {
 export const Route = createFileRoute("/implantacao/")({
   head: () => ({
     meta: [
-      { title: "Implantações — Stayo Admin" },
+      { title: "Operação e implantação — Stayo Admin" },
       {
         name: "description",
-        content: "Oportunidades comerciais e implantações de novos imóveis.",
+        content: "Apartamentos em operação e em implantação, com acompanhamento cadastral separado.",
       },
-      { property: "og:title", content: "Implantações — Stayo Admin" },
+      { property: "og:title", content: "Operação e implantação — Stayo Admin" },
       {
         property: "og:description",
-        content: "Oportunidades comerciais e implantações de novos imóveis.",
+        content: "Apartamentos em operação e em implantação, com acompanhamento cadastral separado.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -145,6 +148,7 @@ function ImplementationsPage() {
   });
   const data = query.data?.data ?? [];
   const [status, setStatus] = useState("all");
+  const [operation, setOperation] = useState<'operacao' | 'implantacao'>('operacao');
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"cards" | "lista" | "funil">("cards");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -168,6 +172,7 @@ function ImplementationsPage() {
   const rows = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
     return data.filter((item) => {
+      if (propertyOperationalStatus(item) !== operation) return false;
       if (status !== "all" && item.status !== status) return false;
       if (!term) return true;
       const haystack = [
@@ -183,7 +188,7 @@ function ImplementationsPage() {
         .toLocaleLowerCase("pt-BR");
       return haystack.includes(term);
     });
-  }, [data, search, status]);
+  }, [data, search, status, operation]);
 
   const statusOptions = [
     { value: "all", label: "Todas as etapas" },
@@ -195,7 +200,7 @@ function ImplementationsPage() {
 
   return (
     <>
-      <PageHeader title="Implantações" count={query.isSuccess ? rows.length : undefined}>
+      <PageHeader title="Apartamentos" count={query.isSuccess ? rows.length : undefined}>
         <FieldLinkDialog />
         <AdminActionButton type="button" onClick={() => setDrawerOpen(true)}>
           <Plus className="size-4" />
@@ -204,6 +209,12 @@ function ImplementationsPage() {
       </PageHeader>
 
       {query.isSuccess && data.length > 0 && <StageSummary data={data} />}
+      <div className="mb-4">
+        <ModuleTabs value={operation} onChange={(value) => { setOperation(value); setStatus('all'); }} options={[
+          { value: 'operacao', label: `Em operação (${data.filter(isPropertyOperating).length})` },
+          { value: 'implantacao', label: `Em implantação (${data.filter((item) => !isPropertyOperating(item)).length})` },
+        ]} />
+      </div>
 
       <AdminFilterBar className="mb-4">
         <SearchInput
@@ -301,10 +312,10 @@ function ImplementationsPage() {
   );
 }
 
-const KPIS: { label: string; statuses: ImplementationProject["status"][]; tone: string; Icon: typeof Settings2 }[] = [
-  { label: "Em andamento", statuses: ["prospect", "proposta", "aguardando_aprovacao", "aprovado", "planejamento", "em_implantacao", "validacao", "pronto_para_operacao"], tone: "var(--admin-primary)", Icon: Settings2 },
-  { label: "Aguardando proprietário", statuses: ["proposta", "aguardando_aprovacao"], tone: "var(--stayo-sand, oklch(0.62 0.08 75))", Icon: Clock },
-  { label: "Anúncios ativos", statuses: ["ativo"], tone: "var(--success, oklch(0.6 0.12 155))", Icon: Megaphone },
+const KPIS: { label: string; matches: (item: ImplementationProject) => boolean; tone: string; Icon: typeof Settings2 }[] = [
+  { label: "Em operação", matches: isPropertyOperating, tone: "var(--stayo-success)", Icon: Megaphone },
+  { label: "Em implantação", matches: (item) => !isPropertyOperating(item), tone: "var(--admin-primary)", Icon: Settings2 },
+  { label: "Aguardando proprietário", matches: (item) => !isPropertyOperating(item) && ['proposta','aguardando_aprovacao'].includes(item.status), tone: "var(--stayo-warning)", Icon: Clock },
 ];
 
 function journeyProgress(status: ImplementationProject["status"]) {
@@ -315,7 +326,7 @@ function journeyProgress(status: ImplementationProject["status"]) {
 function StageSummary({ data }: { data: ImplementationProject[] }) {
   return (
     <section className="mb-4 grid gap-3 sm:grid-cols-3">
-      {KPIS.map(({ label, statuses, tone, Icon }) => (
+      {KPIS.map(({ label, matches, tone, Icon }) => (
         <div
           key={label}
           className="flex items-center gap-4 rounded-[var(--radius-card)] border p-4"
@@ -330,7 +341,7 @@ function StageSummary({ data }: { data: ImplementationProject[] }) {
           <div>
             <p className="text-sm" style={{ color: "var(--stayo-ink-muted)" }}>{label}</p>
             <p className="text-3xl font-semibold leading-tight" style={{ color: "var(--stayo-ink)" }}>
-              {data.filter((d) => statuses.includes(d.status)).length}
+              {data.filter(matches).length}
             </p>
           </div>
         </div>
@@ -409,7 +420,7 @@ function OpportunityCards({ rows }: { rows: ImplementationProject[] }) {
                     </div>
                   </div>
                 </div>
-                <ProgressRing value={({ Rascunho: 10, "Proposta publicada": 30, "Proposta aceita": 45 } as Record<string, number>)[label] ?? journeyProgress(item.status)} />
+                {!isPropertyOperating(item) && <ProgressRing value={({ Rascunho: 10, "Proposta publicada": 30, "Proposta aceita": 45 } as Record<string, number>)[label] ?? journeyProgress(item.status)} />}
               </div>
               <div className="mt-auto flex items-center gap-2">
                 <CardPrimaryAction item={item} isDraft={label === "Rascunho"} label={next} />
@@ -480,7 +491,7 @@ function OpportunityList({
         {rows.map((item, index) => {
           const commercial = commercialByImplementation.get(item.id);
           const tone =
-            item.status === "ativo"
+            isPropertyOperating(item)
               ? "success"
               : item.status === "cancelado" || item.status === "nao_convertido"
                 ? "danger"
@@ -806,6 +817,7 @@ function CommercialPriority({
   loadState: CommercialLoadState;
 }) {
   const labelFor = useJourneyLabels();
+  if (isPropertyOperating(item)) return <span className="text-sm text-[var(--stayo-ink-muted)]">Ver ficha</span>;
   if (loadState === "loading") {
     return <span className="text-xs text-[var(--stayo-ink-muted)]">Carregando agenda…</span>;
   }
