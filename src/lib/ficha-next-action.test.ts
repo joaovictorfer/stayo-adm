@@ -27,7 +27,7 @@ describe("próxima ação da ficha", () => {
     expect(nextAction({ ...base, proposalStatus: null, commercialAction: "Ligar" }).title).toBe("Ligar");
   });
   it("valida a seção", () => {
-    expect(toFichaSection("portal")).toBe("portal");
+    expect(toFichaSection("portal")).toBe("proprietario");
     expect(toFichaSection("x")).toBeUndefined();
   });
   it("publicação direciona ao convite sem afirmar que o Portal está liberado", () => {

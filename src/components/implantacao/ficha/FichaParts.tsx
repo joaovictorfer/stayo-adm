@@ -1,4 +1,4 @@
-import { Building2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Globe, History, LayoutDashboard, UserRound } from "lucide-react";
+import { Building2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, FileText, History, LayoutDashboard, UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { FICHA_SECTIONS, type FichaSection } from "../../../lib/ficha-next-action";
@@ -12,7 +12,6 @@ const SECTION_ICONS: Record<FichaSection, typeof LayoutDashboard> = {
   proprietario: UserRound,
   imovel: Building2,
   implantacao: ClipboardCheck,
-  portal: Globe,
   historico: History,
 };
 

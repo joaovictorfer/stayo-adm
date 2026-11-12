@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Remover aba Portal da ficha, mantendo acessos em Proprietários e compatibilidade dos links antigos; seis abas, Histórico, celular sem transbordamento e quatro testes conferidos.
 - [x] Simplificar Histórico: etapas existentes com conclusão em um clique, concluídas recolhidas, pendências sem duplicação e filtros/atividades anteriores sob demanda. Conclusão persistiu após recarga; etapa reaberta ao estado anterior, busca e celular sem transbordamento conferidos; 15 testes passaram.
 - [x] Separar 19 apartamentos em operação e seis em implantação conforme lista de 12/11 (Zagonel 306 confirmado); dez fichas faltantes criadas e antigas preservadas em Todas as fichas. Quatro testes, troca de abas, ficha B104 e celular conferidos; nenhum acesso ao portal ou vínculo externo alterado.
 - [x] PDF do histórico por imóvel: compras, entregas e conferências; revisão dos registros, identidade STAYO e dados internos excluídos; download autenticado, três páginas inspecionadas sem cortes/sobreposições, celular sem transbordamento e 16 testes aprovados.
