@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Separar apartamentos em operação e em implantação conforme lista de 12/11, preservando cadastro, vínculos e acesso do proprietário.
 - [x] PDF do histórico por imóvel: compras, entregas e conferências; revisão dos registros, identidade STAYO e dados internos excluídos; download autenticado, três páginas inspecionadas sem cortes/sobreposições, celular sem transbordamento e 16 testes aprovados.
 - [x] Histórico por imóvel: filtros visíveis de data/tipo/status, entregas e conferências pelo estado mais recente; 17 testes e fluxo autenticado de recebimento parcial, recarga, filtros combinados e conclusão conferidos; celular sem transbordamento.
 - [x] Meses em português nos seletores de Repasses, Cobranças e Financeiro (incluindo protótipos): seleção, troca de ano e limpeza de filtro conferidas em navegador en-US no computador/celular; competências preservadas, 20 testes financeiros passaram.
