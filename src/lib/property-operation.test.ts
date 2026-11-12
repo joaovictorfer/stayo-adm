@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isPropertyOperating, propertyOperationalStatus } from './property-operation';
+import { isPropertyOperating, isPropertyImplementing, propertyOperationalStatus } from './property-operation';
 
 describe('situação operacional independente do cadastro', () => {
+  it('não mistura fichas antigas não classificadas com implantação', () => {
+    expect(isPropertyImplementing({ status: 'prospect', operationalStatus: 'nao_classificado' })).toBe(false);
+  });
   it('B104 permanece em operação com cadastro prospect incompleto', () => {
     expect(isPropertyOperating({ status: 'prospect', operationalStatus: 'operacao' })).toBe(true);
   });

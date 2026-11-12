@@ -58,7 +58,7 @@ import { commercialUrgency, formatCommercialDateTime } from "../lib/commercial-m
 import { opportunityNextAction, opportunityTitle } from "../lib/opportunity-state";
 import { formatBrazilianPhone } from "../lib/owner-form-validation";
 import { alternateStatuses, mainStatusFlow, statusLabels } from "../lib/implementation-status";
-import { isPropertyOperating, propertyOperationalStatus } from '@/lib/property-operation';
+import { isPropertyOperating, isPropertyImplementing, propertyOperationalStatus } from '@/lib/property-operation';
 import { ModuleTabs } from '@/components/admin/PhaseOnePatterns';
 import type { CommercialAssignee, CommercialOverviewRow } from "../types/commercial-journey";
 import type { ImplementationProject } from "../types/core";
@@ -148,7 +148,7 @@ function ImplementationsPage() {
   });
   const data = query.data?.data ?? [];
   const [status, setStatus] = useState("all");
-  const [operation, setOperation] = useState<'operacao' | 'implantacao'>('operacao');
+  const [operation, setOperation] = useState<'operacao' | 'implantacao' | 'todos'>('operacao');
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"cards" | "lista" | "funil">("cards");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -172,7 +172,7 @@ function ImplementationsPage() {
   const rows = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
     return data.filter((item) => {
-      if (propertyOperationalStatus(item) !== operation) return false;
+      if (operation !== 'todos' && propertyOperationalStatus(item) !== operation) return false;
       if (status !== "all" && item.status !== status) return false;
       if (!term) return true;
       const haystack = [
@@ -212,7 +212,8 @@ function ImplementationsPage() {
       <div className="mb-4">
         <ModuleTabs value={operation} onChange={(value) => { setOperation(value); setStatus('all'); }} options={[
           { value: 'operacao', label: `Em operação (${data.filter(isPropertyOperating).length})` },
-          { value: 'implantacao', label: `Em implantação (${data.filter((item) => !isPropertyOperating(item)).length})` },
+          { value: 'implantacao', label: `Em implantação (${data.filter(isPropertyImplementing).length})` },
+          { value: 'todos', label: 'Todas as fichas' },
         ]} />
       </div>
 
@@ -314,7 +315,7 @@ function ImplementationsPage() {
 
 const KPIS: { label: string; matches: (item: ImplementationProject) => boolean; tone: string; Icon: typeof Settings2 }[] = [
   { label: "Em operação", matches: isPropertyOperating, tone: "var(--stayo-success)", Icon: Megaphone },
-  { label: "Em implantação", matches: (item) => !isPropertyOperating(item), tone: "var(--admin-primary)", Icon: Settings2 },
+  { label: "Em implantação", matches: isPropertyImplementing, tone: "var(--admin-primary)", Icon: Settings2 },
   { label: "Aguardando proprietário", matches: (item) => !isPropertyOperating(item) && ['proposta','aguardando_aprovacao'].includes(item.status), tone: "var(--stayo-warning)", Icon: Clock },
 ];
 

@@ -20,7 +20,7 @@ function projectFromRow(row: Record<string, unknown>): ImplementationProject {
     id: String(row["id"]),
     code: String(row["code"]),
     status: row["status"] as ImplementationStatus,
-    operationalStatus: row["operational_status"] === 'operacao' ? 'operacao' : 'implantacao',
+    operationalStatus: row["operational_status"] === 'operacao' ? 'operacao' : row["operational_status"] === 'implantacao' ? 'implantacao' : 'nao_classificado',
     ownerId: (row["owner_id"] as string | null) ?? null,
     ownerName: owner?.name ?? null,
     ownerPhone: owner?.phone ?? null,
