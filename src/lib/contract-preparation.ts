@@ -44,6 +44,11 @@ export const contractFieldsSchema = z.object({
   administrationFee: z.number().min(0).max(100), durationMonths: z.number().int().min(1).max(99),
   maintenanceLimit: z.number().min(0).max(1000000), noticePeriodDays: z.number().int().min(0).max(99),
   exclusivity: z.boolean(), payoutMode: z.enum(["day10_report", "platform_auto"]), ownerUseNoticeDays: z.number().int().min(0).max(99), implementationFee: z.number().min(0).max(999999),
-  witness1Name: text.max(150), witness1Cpf: text.max(20).refine(isValidCpf, "CPF inválido"), witness2Name: text.max(150), witness2Cpf: text.max(20).refine(isValidCpf, "CPF inválido"),
+  witness1Name: text.max(150), witness1Cpf: text.max(20).refine(isValidCpf, "CPF inválido"),
+  witness2Name: z.string().trim().max(150).default(""), witness2Cpf: z.string().trim().max(20).default(""),
+}).superRefine((f, ctx) => {
+  if (!f.witness2Name && !f.witness2Cpf) return;
+  if (!f.witness2Name) ctx.addIssue({ code: "custom", path: ["witness2Name"], message: "Informe o nome da segunda testemunha" });
+  if (!isValidCpf(f.witness2Cpf)) ctx.addIssue({ code: "custom", path: ["witness2Cpf"], message: f.witness2Cpf ? "CPF inválido" : "Informe o CPF da segunda testemunha" });
 }).transform(f => ({ ...f, qualification: buildQualification(f.parties), signatureNames: f.parties.map(p => p.fullName.trim().toUpperCase()).join(" / ") }));
 export type PreparedContractFields = ContractDocumentFields & { parties: ContractParty[] };

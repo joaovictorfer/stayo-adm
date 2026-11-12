@@ -15,6 +15,6 @@ export function ContractReview({ fields }: { fields: PreparedContractFields }) {
     <section className="space-y-2"><h3 className="font-semibold">Contratantes</h3><p className="text-sm leading-relaxed">{fields.qualification}</p></section>
     <section className="space-y-2 border-t border-border pt-5"><h3 className="font-semibold">Imóvel</h3><p className="text-sm leading-relaxed">{fields.propertyDescription}</p></section>
     <section className="space-y-3 border-t border-border pt-5"><h3 className="font-semibold">Condições comerciais</h3><dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">{entries.map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 text-sm font-medium">{value}</dd></div>)}</dl></section>
-    <section className="space-y-3 border-t border-border pt-5"><h3 className="font-semibold">Assinaturas e testemunhas</h3><p className="text-sm">{fields.signatureNames}</p><p className="text-sm">{fields.witness1Name} · CPF {fields.witness1Cpf}</p><p className="text-sm">{fields.witness2Name} · CPF {fields.witness2Cpf}</p></section>
+    <section className="space-y-3 border-t border-border pt-5"><h3 className="font-semibold text-primary">Assinaturas e testemunhas</h3><p className="text-sm font-medium">{fields.signatureNames}</p><p className="text-sm">{fields.witness1Name} · CPF {fields.witness1Cpf}</p>{fields.witness2Name && <p className="text-sm">{fields.witness2Name} · CPF {fields.witness2Cpf}</p>}</section>
   </div>;
 }

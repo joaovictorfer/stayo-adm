@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Refinar janela e revisão do contrato; segunda testemunha opcional, campos parciais/CPF inválido bloqueados e primeira obrigatória; 40 testes aprovados, Word sem segunda testemunha baixado e computador/celular conferidos sem alterar cadastro.
 - [x] Acrescentar Limpeza de estofado e Blindagem de estofado à linha do tempo; registros existentes preservados, cinco testes aprovados e conclusão/recarga/reabertura das duas etapas conferidas na ficha A201.
 - [x] Remover aba Portal da ficha, mantendo acessos em Proprietários e compatibilidade dos links antigos; seis abas, Histórico, celular sem transbordamento e quatro testes conferidos.
 - [x] Simplificar Histórico: etapas existentes com conclusão em um clique, concluídas recolhidas, pendências sem duplicação e filtros/atividades anteriores sob demanda. Conclusão persistiu após recarga; etapa reaberta ao estado anterior, busca e celular sem transbordamento conferidos; 15 testes passaram.

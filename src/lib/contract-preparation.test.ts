@@ -1,9 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { buildQualification, contractFieldsSchema, contractPartySchema, initialContractParties, type ContractParty } from "./contract-preparation";
 import type { OwnerOnboardingSubmission } from "@/types/owner-onboarding";
+const sampleFields = { qualification: 'Qualificação', propertyDescription: 'Apartamento nº 106', pixKey: 'helena@example.com', signatureNames: 'HELENA DUARTE PIRES', signatureDate: '2026-11-12', signatureCity: 'Gramado/RS', administrationFee: 20, durationMonths: 12, maintenanceLimit: 300, noticePeriodDays: 30, exclusivity: true, payoutMode: 'platform_auto', ownerUseNoticeDays: 3, implementationFee: 600, witness1Name: 'Luana Lima de Oliveira', witness1Cpf: '114.011.974-50', witness2Name: '', witness2Cpf: '' };
 
 const party: ContractParty = { personType: "pf", fullName: "Helena Duarte Pires", document: "529.982.247-25", email: "helena@example.com", phone: "54991001234", maritalStatus: "uniao_estavel", profession: "Arquiteta", address: "Rua de Teste, 10, Centro, Gramado/RS, CEP 95670-000", representative: "" };
 describe("conferência estruturada do contrato", () => {
+  it('permite gerar contrato sem segunda testemunha', () => {
+    expect(contractFieldsSchema.safeParse({ ...sampleFields, parties: [party], witness2Name: '', witness2Cpf: '' }).success).toBe(true);
+  });
+  it('exige nome e CPF válido somente quando a segunda testemunha é preenchida', () => {
+    const base = { ...sampleFields, parties: [party] };
+    expect(contractFieldsSchema.safeParse({ ...base, witness2Name: 'Ana Exemplo', witness2Cpf: '' }).success).toBe(false);
+    expect(contractFieldsSchema.safeParse({ ...base, witness2Name: '', witness2Cpf: '390.533.447-05' }).success).toBe(false);
+    expect(contractFieldsSchema.safeParse({ ...base, witness2Name: 'Ana Exemplo', witness2Cpf: '111.111.111-11' }).success).toBe(false);
+    expect(contractFieldsSchema.safeParse({ ...base, witness2Name: 'Ana Exemplo', witness2Cpf: '390.533.447-05' }).success).toBe(true);
+  });
+  it('mantém a primeira testemunha obrigatória', () => {
+    expect(contractFieldsSchema.safeParse({ ...sampleFields, parties: [party], witness1Name: '', witness1Cpf: '' }).success).toBe(false);
+  });
   it("recusa CPF inválido do proprietário", () => {
     expect(contractPartySchema.safeParse({ ...party, document: "111.111.111-11" }).success).toBe(false);
     expect(contractPartySchema.safeParse(party).success).toBe(true);
