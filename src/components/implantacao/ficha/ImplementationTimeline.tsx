@@ -7,21 +7,8 @@ import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 
-export const DEFAULT_TIMELINE_STEPS = [
-  "Captação do imóvel",
-  "Criação de proposta",
-  "Reunião comercial",
-  "Visita ao imóvel",
-  "Limpeza inicial",
-  "Vistoria de implantação",
-  "Proposta aceita",
-  "Assinatura de contrato",
-  "Autorização síndico",
-  "Autorização no condomínio",
-  "Fotos do imóvel",
-  "Criação do anúncio",
-  "Anúncio ativo",
-];
+import { DEFAULT_TIMELINE_STEPS } from '@/lib/property-timeline';
+export { DEFAULT_TIMELINE_STEPS } from '@/lib/property-timeline';
 
 type Status = "pendente" | "parcial" | "concluido";
 type Step = { id: string; title: string; position: number; done_at: string | null; status: Status; notes: string | null };

@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { timelineStatusPatch } from './property-timeline';
+import { DEFAULT_TIMELINE_STEPS, timelineStatusPatch } from './property-timeline';
+
+describe('etapas de cuidado dos estofados', () => {
+  it('inclui limpeza como etapa independente após a limpeza inicial', () => {
+    const index = DEFAULT_TIMELINE_STEPS.indexOf('Limpeza inicial');
+    expect(DEFAULT_TIMELINE_STEPS[index + 1]).toBe('Limpeza de estofado');
+    expect(DEFAULT_TIMELINE_STEPS.filter(title => title === 'Limpeza de estofado')).toHaveLength(1);
+  });
+  it('inclui blindagem como etapa independente após a limpeza de estofado', () => {
+    const index = DEFAULT_TIMELINE_STEPS.indexOf('Limpeza de estofado');
+    expect(DEFAULT_TIMELINE_STEPS[index + 1]).toBe('Blindagem de estofado');
+    expect(DEFAULT_TIMELINE_STEPS.filter(title => title === 'Blindagem de estofado')).toHaveLength(1);
+  });
+});
 
 describe('conclusão da linha do tempo', () => {
   it('marca concluído com a data do clique', () => {

@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Acrescentar Limpeza de estofado e Blindagem de estofado à linha do tempo, preservando etapas e conclusões existentes; conferir marcação e recarga.
 - [x] Remover aba Portal da ficha, mantendo acessos em Proprietários e compatibilidade dos links antigos; seis abas, Histórico, celular sem transbordamento e quatro testes conferidos.
 - [x] Simplificar Histórico: etapas existentes com conclusão em um clique, concluídas recolhidas, pendências sem duplicação e filtros/atividades anteriores sob demanda. Conclusão persistiu após recarga; etapa reaberta ao estado anterior, busca e celular sem transbordamento conferidos; 15 testes passaram.
 - [x] Separar 19 apartamentos em operação e seis em implantação conforme lista de 12/11 (Zagonel 306 confirmado); dez fichas faltantes criadas e antigas preservadas em Todas as fichas. Quatro testes, troca de abas, ficha B104 e celular conferidos; nenhum acesso ao portal ou vínculo externo alterado.
