@@ -1,0 +1,3 @@
+ALTER TABLE public.implementation_projects ADD COLUMN operational_status text NOT NULL DEFAULT 'implantacao' CHECK (operational_status IN ('operacao','implantacao'));
+UPDATE public.implementation_projects SET operational_status = 'operacao' WHERE status = 'ativo';
+COMMENT ON COLUMN public.implementation_projects.operational_status IS 'Administrative operational classification independent of registration completeness and portal access; status and Core-link guards remain unchanged.';

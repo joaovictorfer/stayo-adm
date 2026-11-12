@@ -1388,6 +1388,7 @@ export type Database = {
           id: string
           nickname: string | null
           notes: string | null
+          operational_status: string
           origin: string | null
           owner_facing_notes: string | null
           owner_id: string | null
@@ -1426,6 +1427,7 @@ export type Database = {
           id?: string
           nickname?: string | null
           notes?: string | null
+          operational_status?: string
           origin?: string | null
           owner_facing_notes?: string | null
           owner_id?: string | null
@@ -1464,6 +1466,7 @@ export type Database = {
           id?: string
           nickname?: string | null
           notes?: string | null
+          operational_status?: string
           origin?: string | null
           owner_facing_notes?: string | null
           owner_id?: string | null
@@ -4100,6 +4103,7 @@ export type Database = {
           id: string
           nickname: string | null
           notes: string | null
+          operational_status: string
           origin: string | null
           owner_facing_notes: string | null
           owner_id: string | null
@@ -4147,6 +4151,7 @@ export type Database = {
           id: string
           nickname: string | null
           notes: string | null
+          operational_status: string
           origin: string | null
           owner_facing_notes: string | null
           owner_id: string | null
@@ -4198,6 +4203,7 @@ export type Database = {
           id: string
           nickname: string | null
           notes: string | null
+          operational_status: string
           origin: string | null
           owner_facing_notes: string | null
           owner_id: string | null
@@ -4245,6 +4251,7 @@ export type Database = {
           id: string
           nickname: string | null
           notes: string | null
+          operational_status: string
           origin: string | null
           owner_facing_notes: string | null
           owner_id: string | null
@@ -4387,6 +4394,7 @@ export type Database = {
           id: string
           nickname: string | null
           notes: string | null
+          operational_status: string
           origin: string | null
           owner_facing_notes: string | null
           owner_id: string | null
