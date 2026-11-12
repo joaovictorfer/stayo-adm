@@ -35,6 +35,7 @@ import {
 } from "@/lib/api/queries";
 import { contractsExpiringWithin } from "@/lib/contract-status";
 import { computeProgress, computeReadiness, statusLabels } from "@/lib/implementation-status";
+import { isPropertyOperating, isPropertyImplementing } from '@/lib/property-operation';
 import type { ImplementationItem, ImplementationProject, OperationTask } from "@/types/core";
 
 export const Route = createFileRoute("/")({
@@ -68,7 +69,7 @@ const isOpen = (status: string) =>
 const isLate = (task: OperationTask) =>
   Boolean(task.dueDate && task.dueDate < today && isOpen(task.status));
 const implementationPriority = (implementation: ImplementationProject) =>
-  !["ativo", "cancelado", "nao_convertido"].includes(implementation.status);
+  isPropertyImplementing(implementation) && !["cancelado", "nao_convertido"].includes(implementation.status);
 
 function DashboardPage() {
   const auth = useAuthSession();
@@ -406,13 +407,11 @@ function DashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AdminStatCard
             icon={Building}
-            label="Imóveis ativos"
+            label="Em operação"
             value={
-              properties.isPending
+              implementations.isPending
                 ? "—"
-                : (properties.data?.data ?? []).filter(
-                    (item) => item.status.toLowerCase() === "ativo",
-                  ).length
+                : implementationRows.filter(isPropertyOperating).length
             }
             detail="na operação atual"
           />
@@ -425,7 +424,7 @@ function DashboardPage() {
           <AdminStatCard
             icon={Wrench}
             label="Implantações"
-            value={implementations.isPending ? "—" : relevantImplementations.length}
+            value={implementations.isPending ? "—" : implementationRows.filter(implementationPriority).length}
             detail="em acompanhamento"
           />
           <AdminStatCard

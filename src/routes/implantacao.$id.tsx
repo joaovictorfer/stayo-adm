@@ -1,4 +1,5 @@
 import { PayoutAdjustmentsHistory } from "../components/implantacao/ficha/PayoutAdjustmentsHistory";
+import { isPropertyOperating } from '@/lib/property-operation';
 import { AppPropertyLinkCard } from "../components/implantacao/ficha/AppPropertyLinkCard";
 import { PropertyHistory } from "../components/implantacao/ficha/PropertyHistory";
 import { inventorySubmissionsQuery } from "@/lib/api/owner-inventory";
@@ -484,7 +485,7 @@ function ImplementationDetailPage() {
                 <Link to="/implantacao" aria-label="Voltar para implantações" className="inline-flex size-7 items-center justify-center rounded-lg border bg-white/80 transition-colors hover:bg-white" style={{ borderColor: "var(--stayo-border)", color: "var(--stayo-navy)" }}>
                   <ArrowLeft className="size-4" aria-hidden="true" />
                 </Link>
-                <Link to="/implantacao" className="font-medium hover:underline" style={{ color: "var(--stayo-ink-muted)" }}>Implantações</Link>
+                <Link to="/implantacao" className="font-medium hover:underline" style={{ color: "var(--stayo-ink-muted)" }}>Apartamentos</Link>
                 <span style={{ color: "var(--stayo-ink-muted)" }}>/</span>
                 <span className="rounded-md px-1.5 py-0.5 font-semibold tracking-wide" style={{ color: "var(--stayo-navy)", backgroundColor: "color-mix(in oklab, var(--stayo-navy) 10%, transparent)" }}>{implementation.code}</span>
               </div>
@@ -495,7 +496,7 @@ function ImplementationDetailPage() {
                 {propertyName}
               </h1>
               <p className="truncate text-sm" style={{ color: "var(--stayo-ink-muted)" }}>
-                {implementation.ownerName || "Proprietário não informado"} · {journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
+                {implementation.ownerName || "Proprietário não informado"} · {isPropertyOperating(implementation) ? 'Em operação' : journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
               </p>
               {(implementation.city || implementation.condominiumName) && (
                 <div className="mt-2 hidden flex-wrap gap-2 sm:flex">
@@ -710,7 +711,7 @@ function ImplementationDetailPage() {
                   review={<OwnerIntakeReview implementationId={implementation.id} ownerName={implementation.ownerName} />}
                   pending={buildPending().filter((p) => p.id === "owner")}
                   proposal={latestProposal ?? null}
-                  journey={journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
+                  journey={isPropertyOperating(implementation) ? 'Em operação' : journeyLabel({ status: implementation.status, isDraft: Boolean(draftQuery.data?.isDraft), proposal: proposalStage(proposalsQuery.data ?? []) })}
                   onGo={goSection}
                 />
                 </SectionBoundary>

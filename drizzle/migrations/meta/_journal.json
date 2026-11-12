@@ -680,6 +680,13 @@
       "when": 1794517549315,
       "tag": "0096_property_operational_classification",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1794518447755,
+      "tag": "0097_preserve_unclassified_property_records",
+      "breakpoints": true
     }
   ]
 }

@@ -62,14 +62,14 @@ export const navigation: NavItem[] = [
   },
   {
     id: "implementation",
-    label: "Implantação",
+    label: "Apartamentos",
     path: "/implantacao",
     icon: "clipboard-list",
     roles: ["super_admin", "admin", "operations", "commercial"],
     children: [
       {
         id: "implementation-list",
-        label: "Implantações",
+        label: "Operação e implantação",
         path: "/implantacao",
         icon: "list",
         roles: ["super_admin", "admin", "operations", "commercial"],
