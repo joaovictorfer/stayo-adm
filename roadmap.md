@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Simplificar Histórico: etapas em linha do tempo com conclusão direta, pendências sem duplicação e atividades anteriores recolhidas; conferir salvamento/recarga e celular.
+- [x] Simplificar Histórico: etapas existentes com conclusão em um clique, concluídas recolhidas, pendências sem duplicação e filtros/atividades anteriores sob demanda. Conclusão persistiu após recarga; etapa reaberta ao estado anterior, busca e celular sem transbordamento conferidos; 15 testes passaram.
 - [x] Separar 19 apartamentos em operação e seis em implantação conforme lista de 12/11 (Zagonel 306 confirmado); dez fichas faltantes criadas e antigas preservadas em Todas as fichas. Quatro testes, troca de abas, ficha B104 e celular conferidos; nenhum acesso ao portal ou vínculo externo alterado.
 - [x] PDF do histórico por imóvel: compras, entregas e conferências; revisão dos registros, identidade STAYO e dados internos excluídos; download autenticado, três páginas inspecionadas sem cortes/sobreposições, celular sem transbordamento e 16 testes aprovados.
 - [x] Histórico por imóvel: filtros visíveis de data/tipo/status, entregas e conferências pelo estado mais recente; 17 testes e fluxo autenticado de recebimento parcial, recarga, filtros combinados e conclusão conferidos; celular sem transbordamento.
