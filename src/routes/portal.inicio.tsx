@@ -109,6 +109,8 @@ import type { OwnerTaskStatus } from "../types/admin";
 import type { CommercialTerm } from "../types/admin";
 import type { ImplementationProject, ImplementationStatus, Proposal } from "../types/core";
 import { OwnerDashboard } from "../components/portal/OwnerDashboard";
+import { OwnerWorkspace } from '@/components/portal/OwnerWorkspace';
+import { readAccountOwnerWorkspace } from '@/lib/api/core-client';
 
 export const Route = createFileRoute("/portal/inicio")({
   head: () => ({
@@ -1501,6 +1503,9 @@ export function OwnerHomeContent({
     ownerImplementations.find((item) => item.id === selectedImplementationId) ??
     ownerImplementations[0];
 
+  const publishedWorkspace=useQuery({queryKey:['owner-published-workspace',ownerId,implementation?.id],enabled:Boolean(implementation?.id)&&!preview,
+    queryFn:()=>readAccountOwnerWorkspace({data:{implementationId:implementation?.id??''}}),retry:false});
+
   const portalPhase = getOwnerPortalPhase(implementation);
   const permissions = ownerPortalPermissions(account?.role ?? "titular");
   const portalModules = getOwnerPortalModules(portalPhase).filter(
@@ -1723,6 +1728,7 @@ export function OwnerHomeContent({
         </div>
 
         <TabsContent value="visao-geral" className="tab-content-anim space-y-6">
+          {publishedWorkspace.data && permissions.canViewFinance && <OwnerWorkspace snapshot={publishedWorkspace.data}/>}
           <OwnerDashboard
             phase={portalPhase}
             permissions={permissions}

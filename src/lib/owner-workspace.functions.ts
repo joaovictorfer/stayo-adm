@@ -24,14 +24,19 @@ export const prepareOwnerWorkspace = createServerFn({ method: 'POST' }).middlewa
     for (let a = 0; ; a += 500) { const r = await query(a, a + 499); if (r.error) throw new Error('Não foi possível preparar todos os registros'); result.push(...(r.data ?? [])); if ((r.data?.length ?? 0) < 500) break; }
     return result;
   }
-  const [rows, expenses, transfers, conditions, updates, inspections] = await Promise.all([
+  const [rows, expenses, transfers, conditions, updates, inspections, steps, cases] = await Promise.all([
     pages((a,b) => s.from('payout_reservations').select('id,reservation_code,channel,guest_name,guest_cpf,checkin_date,checkout_date,payout_flow,gross_cents,cleaning_cents,platform_fee_cents,owner_direct_cents,missing_amounts').eq('implementation_id', data.implementationId).order('id').range(a,b)),
     pages((a,b) => s.from('property_expenses').select('occurred_on,amount_cents,charged_to_owner').eq('implementation_id', data.implementationId).order('id').range(a,b)),
     pages((a,b) => s.from('payout_transfers').select('competence,amount_cents').eq('implementation_id', data.implementationId).order('id').range(a,b)),
     s.from('implementation_contract_conditions').select('administration_fee').eq('implementation_id', data.implementationId).maybeSingle(),
     pages((a,b) => s.from('implementation_timeline_updates').select('id,title,event_date,kind').eq('implementation_id', data.implementationId).eq('owner_visible', true).order('id').range(a,b)),
     pages((a,b) => s.from('implementation_inspections').select('id,type,status,scheduled_for,completed_at').eq('implementation_id', data.implementationId).eq('owner_visible', true).order('id').range(a,b)),
+    pages((a,b) => s.from('implementation_timeline_steps').select('id,title,status,done_at').eq('implementation_id', data.implementationId).not('done_at','is',null).order('id').range(a,b)),
+    pages((a,b) => s.from('property_history_cases').select('id,title,category').eq('implementation_id', data.implementationId).in('category',['compra','vistoria','manutencao','higienizacao']).order('id').range(a,b)),
   ]);
+  const caseEvents=cases.length ? await pages((a,b)=>s.from('property_history_events').select('id,case_id,status,occurred_at,revision').in('case_id',cases.map(c=>c.id)).order('id').range(a,b)) : [];
+  const currentEvents=new Map<string,typeof caseEvents[number]>();
+  for(const e of caseEvents) if(e.revision>(currentEvents.get(e.case_id)?.revision??-1)) currentEvents.set(e.case_id,e);
   if (conditions.error) throw new Error('Não foi possível conferir as condições');
   const fee = Number(conditions.data?.administration_fee ?? 20);
   const months = [...new Set([...rows.map(r => r.checkin_date.slice(0,7)), ...expenses.map(e => e.occurred_on.slice(0,7)), ...transfers.map(t => t.competence)])].sort().reverse();
@@ -39,7 +44,10 @@ export const prepareOwnerWorkspace = createServerFn({ method: 'POST' }).middlewa
   return { implementationId: p.id, propertyName: p.nickname || [p.condominium_name,p.unit].filter(Boolean).join(' ') || p.code, code: p.code, situation: p.operational_status, publishedAt: new Date().toISOString(), fee,
     months: months.map(m => ownerMonthProjection(m, fee, rows as (PayoutPdfReservation & { id: string })[], expenses, transfers)),
     history: [...updates.map(u => ({ id: u.id, title: u.title, date: u.event_date, category: 'Atualização', status: 'registrado' })),
-      ...inspections.map(i => ({ id: i.id, title: `Vistoria · ${i.type}`, date: i.completed_at ?? i.scheduled_for ?? '', category: 'Vistoria', status: i.status }))].filter(e => e.date).sort((a,b) => b.date.localeCompare(a.date)),
+      ...inspections.map(i => ({ id: i.id, title: `Vistoria · ${i.type}`, date: i.completed_at ?? i.scheduled_for ?? '', category: 'Vistoria', status: i.status })),
+      ...steps.map(t=>({id:t.id,title:t.title,date:t.done_at??'',category:'Implantação',status:t.status})),
+      ...cases.flatMap(c=>{const e=currentEvents.get(c.id);return e?[{id:e.id,title:c.title,date:e.occurred_at,category:({compra:'Compra',vistoria:'Vistoria',manutencao:'Manutenção',higienizacao:'Higienização'} as Record<string,string>)[c.category]??c.category,status:e.status}]:[]})
+    ].filter(e => e.date).sort((a,b) => b.date.localeCompare(a.date)),
   };
 });
 
@@ -82,4 +90,12 @@ export const revealOwnerGuestCpf = createServerFn({ method:'POST' }).middleware(
   const r=await context.supabase.rpc('owner_workspace_guest_document',{p_hash:await hash(data.token),p_reservation_id:data.reservationId});
   if(r.error) throw new Error('Entre com a conta autorizada deste imóvel para consultar o CPF');
   return typeof r.data==='string' ? r.data.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4') : null;
+});
+
+export const readAccountOwnerWorkspace = createServerFn({ method:'POST' }).middleware([requireSupabaseAuth]).inputValidator(idInput).handler(async ({data,context}):Promise<OwnerWorkspaceSnapshot|null>=>{
+  const account=await context.supabase.from('owner_portal_accounts').select('role').eq('id',context.userId).maybeSingle();
+  if(account.error || !account.data || account.data.role==='representante_legal') return null;
+  const r=await context.supabase.rpc('owner_workspace_for_account',{p_implementation_id:data.implementationId});
+  if(r.error) throw new Error('Não foi possível consultar o portal publicado');
+  return r.data?snapshotSchema.parse(r.data):null;
 });
