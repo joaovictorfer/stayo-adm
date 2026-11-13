@@ -8,8 +8,9 @@ import { Button } from "../components/ui/button";
 import { isSupabaseConfigured, ownerSignInWithPassword } from "../lib/auth/owner-session";
 
 export const Route = createFileRoute("/portal/login")({
+  validateSearch: (s: Record<string, unknown>): { returnTo?: string } => ({ returnTo: typeof s['returnTo'] === 'string' && /^\/portal\/imovel\/[a-f0-9]{64}$/.test(s['returnTo']) ? s['returnTo'] : undefined }),
   head: () => ({
-    meta: [{ title: "Entrar — Portal do Proprietário Stayo" }],
+    meta: [{ title: "Entrar — Portal do Proprietário Stayo" }, { name: 'description', content: 'Acesse sua conta vinculada para acompanhar seu imóvel e consultar informações protegidas.' }, { property: 'og:title', content: 'Entrar — Portal do Proprietário Stayo' }, { property: 'og:description', content: 'Acesso protegido à conta do proprietário STAYO.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }],
   }),
   component: OwnerLoginPage,
 });
@@ -24,12 +25,17 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function OwnerLoginPage() {
   const navigate = useNavigate();
+  const { returnTo } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const login = useMutation({
     mutationFn: () => ownerSignInWithPassword(email, password),
-    onSuccess: () => void navigate({ to: "/portal/inicio" }),
+    onSuccess: () => {
+      const token = returnTo?.split('/').pop();
+      if (token) void navigate({ to: '/portal/imovel/$token', params: { token } });
+      else void navigate({ to: '/portal/inicio' });
+    },
   });
 
   if (!isSupabaseConfigured()) {
