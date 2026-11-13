@@ -687,6 +687,20 @@
       "when": 1794518447755,
       "tag": "0097_preserve_unclassified_property_records",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1794576660781,
+      "tag": "0098_owner_workspace_readonly_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1794577040113,
+      "tag": "0099_owner_workspace_account_finance_scope",
+      "breakpoints": true
     }
   ]
 }

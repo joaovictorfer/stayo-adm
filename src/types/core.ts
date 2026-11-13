@@ -14,6 +14,25 @@
 
 export type EntityId = string;
 
+/** Reviewed, read-only owner publication; no administrative notes or raw guest documents. */
+export interface OwnerWorkspaceReservation {
+  id: string; code: string; channel: string; guestName: string; cpfMasked: string | null;
+  checkin: string; checkout: string; total: number | null; stayo: number | null; owner: number | null;
+  directReceipt: number | null; directConfirmed: boolean;
+}
+export interface OwnerWorkspaceMonth {
+  competence: string; reservations: OwnerWorkspaceReservation[]; total: number | null;
+  ownerTotal: number | null; airbnbReceived: number | null; expenses: number;
+  transferred: number; closingAmount: number | null; balance: number | null;
+}
+export interface OwnerWorkspaceHistory {
+  id: string; title: string; date: string; category: string; status: string;
+}
+export interface OwnerWorkspaceSnapshot {
+  implementationId: string; propertyName: string; code: string; situation: string;
+  publishedAt: string; fee: number; months: OwnerWorkspaceMonth[]; history: OwnerWorkspaceHistory[];
+}
+
 /** Private administrative procurement, integer BRL cents; confirmation is not receipt. */
 export interface LinenOrderItem { code: string; name: string; category: string; size: string; color: string; quantity: number; unitCents: number }
 export interface LinenOrderPayload { supplier: string; number: string; date: string; delivery: string | null; discountCents: number; freightCents: number; totalCents: number; notes: string; items: LinenOrderItem[] }

@@ -92,6 +92,7 @@ import { Route as ImplantacaoIdCompletaRouteImport } from './routes/implantacao.
 import { Route as PortalApresentacaoTokenRouteImport } from './routes/portal.apresentacao.$token'
 import { Route as PortalCadastroVistoriaTokenRouteImport } from './routes/portal.cadastro-vistoria.$token'
 import { Route as PortalCadastroTokenRouteImport } from './routes/portal.cadastro.$token'
+import { Route as PortalImovelTokenRouteImport } from './routes/portal.imovel.$token'
 import { Route as PortalImplantacaoTokenRouteImport } from './routes/portal.implantacao.$token'
 import { Route as PortalInventarioIdRouteImport } from './routes/portal.inventario.$id'
 import { Route as PortalPreviaIdRouteImport } from './routes/portal.previa.$id'
@@ -532,6 +533,11 @@ const PortalCadastroTokenRoute = PortalCadastroTokenRouteImport.update({
   path: '/portal/cadastro/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalImovelTokenRoute = PortalImovelTokenRouteImport.update({
+  id: '/portal/imovel/$token',
+  path: '/portal/imovel/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalImplantacaoTokenRoute = PortalImplantacaoTokenRouteImport.update({
   id: '/portal/implantacao/$token',
   path: '/portal/implantacao/$token',
@@ -647,6 +653,7 @@ export interface FileRoutesByFullPath {
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
+  '/portal/imovel/$token': typeof PortalImovelTokenRoute
   '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
   '/portal/inventario/$id': typeof PortalInventarioIdRoute
   '/portal/previa/$id': typeof PortalPreviaIdRoute
@@ -737,6 +744,7 @@ export interface FileRoutesByTo {
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
+  '/portal/imovel/$token': typeof PortalImovelTokenRoute
   '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
   '/portal/inventario/$id': typeof PortalInventarioIdRoute
   '/portal/previa/$id': typeof PortalPreviaIdRoute
@@ -829,6 +837,7 @@ export interface FileRoutesById {
   '/portal/apresentacao/$token': typeof PortalApresentacaoTokenRoute
   '/portal/cadastro-vistoria/$token': typeof PortalCadastroVistoriaTokenRoute
   '/portal/cadastro/$token': typeof PortalCadastroTokenRoute
+  '/portal/imovel/$token': typeof PortalImovelTokenRoute
   '/portal/implantacao/$token': typeof PortalImplantacaoTokenRoute
   '/portal/inventario/$id': typeof PortalInventarioIdRoute
   '/portal/previa/$id': typeof PortalPreviaIdRoute
@@ -922,6 +931,7 @@ export interface FileRouteTypes {
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
+    | '/portal/imovel/$token'
     | '/portal/implantacao/$token'
     | '/portal/inventario/$id'
     | '/portal/previa/$id'
@@ -1012,6 +1022,7 @@ export interface FileRouteTypes {
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
+    | '/portal/imovel/$token'
     | '/portal/implantacao/$token'
     | '/portal/inventario/$id'
     | '/portal/previa/$id'
@@ -1103,6 +1114,7 @@ export interface FileRouteTypes {
     | '/portal/apresentacao/$token'
     | '/portal/cadastro-vistoria/$token'
     | '/portal/cadastro/$token'
+    | '/portal/imovel/$token'
     | '/portal/implantacao/$token'
     | '/portal/inventario/$id'
     | '/portal/previa/$id'
@@ -1193,6 +1205,7 @@ export interface RootRouteChildren {
   PortalApresentacaoTokenRoute: typeof PortalApresentacaoTokenRoute
   PortalCadastroVistoriaTokenRoute: typeof PortalCadastroVistoriaTokenRoute
   PortalCadastroTokenRoute: typeof PortalCadastroTokenRoute
+  PortalImovelTokenRoute: typeof PortalImovelTokenRoute
   PortalImplantacaoTokenRoute: typeof PortalImplantacaoTokenRoute
   PortalInventarioIdRoute: typeof PortalInventarioIdRoute
   PortalPreviaIdRoute: typeof PortalPreviaIdRoute
@@ -1784,6 +1797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalCadastroTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/imovel/$token': {
+      id: '/portal/imovel/$token'
+      path: '/portal/imovel/$token'
+      fullPath: '/portal/imovel/$token'
+      preLoaderRoute: typeof PortalImovelTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/implantacao/$token': {
       id: '/portal/implantacao/$token'
       path: '/portal/implantacao/$token'
@@ -1925,6 +1945,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalApresentacaoTokenRoute: PortalApresentacaoTokenRoute,
   PortalCadastroVistoriaTokenRoute: PortalCadastroVistoriaTokenRoute,
   PortalCadastroTokenRoute: PortalCadastroTokenRoute,
+  PortalImovelTokenRoute: PortalImovelTokenRoute,
   PortalImplantacaoTokenRoute: PortalImplantacaoTokenRoute,
   PortalInventarioIdRoute: PortalInventarioIdRoute,
   PortalPreviaIdRoute: PortalPreviaIdRoute,

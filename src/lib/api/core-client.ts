@@ -51,6 +51,7 @@ export { preparePayoutPayment, finalizePayoutPayment, listPayoutReceipts } from 
 export { readPropertyHistory, recordPropertyHistory } from '../property-history.functions';
 export { readPropertyTimeline, updatePropertyTimeline } from './property-timeline';
 export { saveOwnerAddress, type OwnerAddress } from "./owner-address";
+export { prepareOwnerWorkspace, publishOwnerWorkspace, listOwnerWorkspaceLinks, revokeOwnerWorkspace, readOwnerWorkspace, revealOwnerGuestCpf, readAccountOwnerWorkspace } from '../owner-workspace.functions';
 export { getLinenWorkspace, importLinenDocument, saveLinenAction, openLinenDocument, uploadLinenEvidence, openLinenEvidence } from "../linen.functions";
 
 export interface Page<T> {

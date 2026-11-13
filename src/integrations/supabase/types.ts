@@ -2809,6 +2809,57 @@ export type Database = {
           },
         ]
       }
+      owner_workspace_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          implementation_id: string
+          owner_id: string
+          revoked_at: string | null
+          snapshot: Json
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          implementation_id: string
+          owner_id: string
+          revoked_at?: string | null
+          snapshot: Json
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          implementation_id?: string
+          owner_id?: string
+          revoked_at?: string | null
+          snapshot?: Json
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_workspace_links_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_workspace_links_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owner_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagarme_settings_vault: {
         Row: {
           encrypted_key: string
@@ -4346,6 +4397,10 @@ export type Database = {
       }
       admin_profiles_is_empty: { Args: never; Returns: boolean }
       admin_publish_conditions: { Args: { p_data: Json }; Returns: Json }
+      admin_publish_owner_workspace: {
+        Args: { p_hash: string; p_implementation_id: string; p_snapshot: Json }
+        Returns: string
+      }
       admin_publish_proposal: { Args: { p_data: Json }; Returns: Json }
       admin_quick_mark_guide_item: {
         Args: { p_have: boolean; p_item_id: string }
@@ -4366,6 +4421,10 @@ export type Database = {
         Returns: Json
       }
       admin_review_owner_intake: { Args: { p_data: Json }; Returns: Json }
+      admin_revoke_owner_workspace: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       admin_save_opportunity_contact: {
         Args: { p_data: Json; p_implementation_id: string }
         Returns: {
@@ -4681,6 +4740,15 @@ export type Database = {
         Args: { p_entries: Json; p_token: string }
         Returns: Json
       }
+      owner_workspace_for_account: {
+        Args: { p_implementation_id: string }
+        Returns: Json
+      }
+      owner_workspace_guest_document: {
+        Args: { p_hash: string; p_reservation_id: string }
+        Returns: string
+      }
+      owner_workspace_resolve: { Args: { p_hash: string }; Returns: Json }
       portal_attachment_released: {
         Args: { p_attachment_id: string; p_implementation_id: string }
         Returns: boolean
