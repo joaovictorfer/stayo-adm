@@ -27,7 +27,7 @@ export function OwnerLinksHub({ implementation, versions }: { implementation: Im
       </div>
     </section>
     <Dialog open={open !== null} onOpenChange={value => { if (!value) setOpen(null); }}>
-      <DialogContent className="flex max-h-[90dvh] w-[calc(100%-1rem)] min-w-0 flex-col overflow-hidden rounded-lg sm:max-w-2xl">
+      <DialogContent className={`flex max-h-[90dvh] w-[calc(100%-1rem)] min-w-0 flex-col overflow-hidden rounded-lg ${open==='workspace'?'sm:max-w-5xl':'sm:max-w-2xl'}`}>
         <DialogHeader><DialogTitle>{open === 'workspace' ? 'Portal do imóvel e repasses' : open === "access" ? "Cadastro e acesso" : "Apresentação da proposta"}</DialogTitle><DialogDescription>{open === 'workspace' ? 'Confira as informações antes de liberar o link ao proprietário.' : open === "access" ? "Convite exclusivo deste imóvel. Compartilhe somente com o proprietário." : "Link separado, sem permissão para confirmar ou editar o cadastro."}</DialogDescription></DialogHeader>
         <div className="min-h-0 min-w-0 overflow-y-auto">
           <SectionBoundary key={open} label="os links do proprietário">
