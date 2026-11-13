@@ -19,7 +19,9 @@ export function ownerReservationProjection(row: PayoutPdfReservation & { id: str
 }
 
 export function ownerMonthProjection(competence: string, fee: number, rows: (PayoutPdfReservation & { id: string })[], expenses: StatementExpense[], transfers: StatementTransfer[]): OwnerWorkspaceMonth {
-  const input = { competence, adminFeePercent: fee, reservations: rows, expenses, transfers };
+  const input = { competence, adminFeePercent: fee, reservations: rows,
+    expenses: expenses.map(e => ({ ...e, description: '', category: '' })),
+    transfers: transfers.map(t => ({ ...t, paid_on: '', method: '' })) };
   const b = payoutPdfBalance(input);
   const reservations = rows.filter(r => r.checkin_date.slice(0, 7) === competence).map(r => ownerReservationProjection(r, fee));
   const complete = reservations.every(r => r.total !== null);

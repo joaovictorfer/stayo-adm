@@ -8,7 +8,7 @@ import { Button } from "../components/ui/button";
 import { isSupabaseConfigured, ownerSignInWithPassword } from "../lib/auth/owner-session";
 
 export const Route = createFileRoute("/portal/login")({
-  validateSearch: (s: Record<string, unknown>): { returnTo?: string } => ({ returnTo: typeof s['returnTo'] === 'string' && /^\/portal\/imovel\/[a-f0-9]{64}$/.test(s['returnTo']) ? s['returnTo'] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { returnTo?: string | undefined } => ({ returnTo: typeof s['returnTo'] === 'string' && /^\/portal\/imovel\/[a-f0-9]{64}$/.test(s['returnTo']) ? s['returnTo'] : undefined }),
   head: () => ({
     meta: [{ title: "Entrar — Portal do Proprietário Stayo" }, { name: 'description', content: 'Acesse sua conta vinculada para acompanhar seu imóvel e consultar informações protegidas.' }, { property: 'og:title', content: 'Entrar — Portal do Proprietário Stayo' }, { property: 'og:description', content: 'Acesso protegido à conta do proprietário STAYO.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }],
   }),
