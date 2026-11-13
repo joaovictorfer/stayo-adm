@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Ampliar Portal do Proprietário no visual aprovado: link dedicado, histórico seguro do imóvel, reservas por canal e ficha com nome/CPF/período/Total/STAYO/Proprietário; definir proteção do link e visibilidade do CPF antes de ampliar acesso financeiro, preservando cálculos e dados internos.
 - [x] Refinar edição do contrato: uma seção por vez, seleção destacada, pendências por seção e campos organizados; 40 testes aprovados, navegação/revisão/retorno/descarte conferidos em ficha real, computador/tablet/celular sem transbordamento e sem alterar cadastro.
 - [x] Refinar janela e revisão do contrato; segunda testemunha opcional, campos parciais/CPF inválido bloqueados e primeira obrigatória; 40 testes aprovados, Word sem segunda testemunha baixado e computador/celular conferidos sem alterar cadastro.
 - [x] Acrescentar Limpeza de estofado e Blindagem de estofado à linha do tempo; registros existentes preservados, cinco testes aprovados e conclusão/recarga/reabertura das duas etapas conferidas na ficha A201.
