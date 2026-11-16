@@ -2,12 +2,14 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
+  CalendarDays,
   CalendarCheck,
   Building2,
   ChevronRight,
   DoorOpen,
   LogOut as DepartureIcon,
   Sparkles,
+  Plus,
   Wrench,
 } from "lucide-react";
 
@@ -123,10 +125,10 @@ function DashboardPage() {
         actions={
           <>
             <Button asChild variant="outline">
-              <Link to="/operacao">Ver operação</Link>
+              <Link to="/operacao"><CalendarDays /> Ver operação</Link>
             </Button>
             <Button asChild className="admin-action-button">
-              <Link to="/implantacao">Nova implantação</Link>
+              <Link to="/implantacao"><Plus /> Nova implantação</Link>
             </Button>
           </>
         }
@@ -234,6 +236,7 @@ function DashboardPage() {
 
         <AdminSection
           title="Agenda de hoje"
+          description={`${agenda.length} movimentações programadas`}
           className="dashboard-agenda min-w-0 max-lg:order-1"
           action={
             <Button asChild variant="ghost" size="sm">

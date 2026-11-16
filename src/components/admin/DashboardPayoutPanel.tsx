@@ -65,7 +65,8 @@ export function DashboardPayoutPanel({ properties, covers }: { properties: Dashb
           <p className="mt-2 text-2xl font-bold tabular-nums text-[var(--admin-text)]">
             {q.isPending ? "—" : `R$ ${formatMoneyText(totalPending)}`}
           </p>
-          <p className="text-xs text-[var(--admin-muted)]">Saldo pendente · repasse até {due}</p>
+          <p className="dashboard-balance-caption">Saldo pendente</p>
+          <p className="dashboard-payout-deadline">Repasse até {due}</p>
         </div>
         <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--admin-info-soft)] text-[var(--admin-primary)]">
           <Wallet className="size-5" />
