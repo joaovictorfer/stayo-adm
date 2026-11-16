@@ -6,12 +6,12 @@ import { createHash } from "node:crypto";
 import templateMap from "./contract-template-map.json";
 
 const original = new Uint8Array(readFileSync("src/assets/contracts/contrato-stayo-original.docx"));
-/** Exatamente os dados do modelo Ravena 106 enviado pela STAYO. */
+/** Exatamente os dados da nova referência Vêneto A201 enviada pela STAYO. */
 export const sampleFields: ContractDocumentFields = {
-  qualification: "MARIA IGNEZ ROCHA DA ROSA, união estável, Aposentada, inscrito(a) no CPF nº 067.809.030-00, residente e domiciliado(a) em Rua Coronel Corte Real, 928, Apartamento 401, Bairro Petrópolis, Porto Alegre/RS, CEP 90630-080, e-mail mignez.r@gmail.com, telefone 51991023571.",
-  propertyDescription: "Apartamento nº 106, Torre A, localizado no Residencial Ravena, situado na Rua Visconde de Mauá, 1233 – Bairro Centro – Canela/RS – CEP 95680-232.",
-  pixKey: "067.809.030-00", signatureNames: "MARIA IGNEZ ROCHA DA ROSA", signatureDate: "2026-11-10", signatureCity: "Gramado/RS",
-  administrationFee: 20, durationMonths: 12, maintenanceLimit: 300, noticePeriodDays: 30, ownerUseNoticeDays: 3, implementationFee: 600,
+  qualification: templateMap.paragraphs["2"].slice("CONTRATANTE(S): ".length),
+  propertyDescription: templateMap.paragraphs["6"],
+  pixKey: "51996262235", signatureNames: "BRUNA ANDIARA RASCHE HAUPENTHAL / JONATHAN HAUPENTHAL", signatureDate: "2026-11-12", signatureCity: "Canela/RS",
+  administrationFee: 20, durationMonths: 12, maintenanceLimit: 300, noticePeriodDays: 30, ownerUseNoticeDays: 3, implementationFee: 500,
   exclusivity: true, payoutMode: "platform_auto", witness1Name: "Luana Lima de Oliveira", witness1Cpf: "114.011.974-50", witness2Name: "", witness2Cpf: "",
 };
 const paragraphs = (b?: Uint8Array) => [...strFromU8(b ?? new Uint8Array()).matchAll(/<w:p(?=[\s>])[^>]*>[\s\S]*?<\/w:p>/g)].map(m => m[0]);
@@ -23,9 +23,19 @@ const other: ContractDocumentFields = {
   witness2Name: "Ana Exemplo", witness2Cpf: "390.533.447-05",
 };
 
-describe("contrato padrão (modelo Ravena 106)", () => {
+describe("contrato padrão (referência Vêneto A201 de 16/11)", () => {
   it("mantém a identidade do arquivo oficial fixada no mapa da minuta", () => {
     expect(createHash("sha256").update(original).digest("hex")).toBe(templateMap.sha256);
+  });
+  it("usa no servidor exatamente o mesmo Word aprovado", async () => {
+    const { originalContractBase64 } = await import("./contract-template.server");
+    expect(new Uint8Array(Buffer.from(originalContractBase64, "base64"))).toEqual(original);
+  });
+  it("substitui separadamente as duas assinaturas sem nomes da referência", () => {
+    const f = { ...other, parties: [{ fullName: "Helena Duarte Pires" }, { fullName: "Carlos Alberto Teste" }], signatureNames: "HELENA DUARTE PIRES / CARLOS ALBERTO TESTE" };
+    const p = paragraphs(unzipSync(generateContractDocx(original, f))["word/document.xml"]);
+    expect(text(new TextEncoder().encode((p[156] ?? "") + (p[157] ?? "")))).toBe("HELENA DUARTE PIRES");
+    expect(text(new TextEncoder().encode((p[158] ?? "") + (p[159] ?? "")))).toBe("CARLOS ALBERTO TESTE");
   });
   it("preserva propriedades de todas as páginas, tabelas e trechos com dados diferentes", () => {
     const source = unzipSync(original);
@@ -40,9 +50,9 @@ describe("contrato padrão (modelo Ravena 106)", () => {
     const after = paragraphs(unzipSync(generateContractDocx(original, filled))["word/document.xml"]);
     const runs = (p: string) => [...p.matchAll(/<w:r(?=[\s>])[^>]*>[\s\S]*?<\/w:r>/g)].map(m => m[0]);
     const style = (run: string | undefined) => run?.match(/<w:rPr(?=[\s>])[^>]*>[\s\S]*?<\/w:rPr>/)?.[0] ?? "";
-    for (const [index, oldText, newText] of [[2, "MARIA IGNEZ ROCHA DA ROSA, ", "HELENA DUARTE PIRES, "], [6, "Rua Visconde de Mauá, 1233", "Rua dos Testes, 456"]] as const) {
+    for (const [index, oldText, newText] of [[2, "BRUNA ANDIARA RASCHE HAUPENTHAL", "HELENA DUARTE PIRES"], [6, ">Rua<", "Rua dos Testes, 456"]] as const) {
       const oldRun = runs(before[index] ?? "").find(r => r.includes(oldText));
-      const newRun = runs(after[index] ?? "").find(r => r.includes(newText));
+      const newRun = index === 6 ? runs(after[index] ?? "").find(r => r.includes("Rua dos Testes, 456")) : runs(after[index] ?? "").find(r => r.includes(newText));
       expect(oldRun).toBeDefined();
       expect(newRun).toBeDefined();
       expect(style(newRun)).toBe(style(oldRun));
@@ -50,7 +60,7 @@ describe("contrato padrão (modelo Ravena 106)", () => {
   });
   it("bloqueia uma minuta alterada em vez de preencher o campo errado", () => {
     const xml = strFromU8(unzipSync(original)["word/document.xml"] ?? new Uint8Array());
-    expect(() => fillContractXml(xml.replace("MARIA IGNEZ", "MINUTA ALTERADA"), other)).toThrow("A minuta mudou");
+    expect(() => fillContractXml(xml.replace("BRUNA ANDIARA", "MINUTA ALTERADA"), other)).toThrow("A minuta mudou");
   });
   it("gera um arquivo idêntico ao modelo quando preenchido com os mesmos dados", () => {
     const result = unzipSync(generateContractDocx(original, sampleFields));
@@ -65,17 +75,16 @@ describe("contrato padrão (modelo Ravena 106)", () => {
     const before = paragraphs(source["word/document.xml"]), after = paragraphs(result["word/document.xml"]);
     expect(after.length).toBe(before.length);
     expect(after.slice(43, 149)).toEqual(before.slice(43, 149));
-    const variable = new Set([2, 6, 8, 12, 13, 16, 17, 18, 20, 24, 29, 36, 38, 42, 149, 157, 167, 168, 169, 170]);
+    const variable = new Set(Object.keys(templateMap.paragraphs).map(Number));
     before.forEach((p, i) => { if (!variable.has(i)) expect(after[i]).toBe(p); });
   });
   it("preenche quadro-resumo, data e assinatura com os dados do cadastro", () => {
     const t = text(unzipSync(generateContractDocx(original, other))["word/document.xml"]);
     for (const s of ["CONTRATANTE(S): JOÃO TESTE &amp; FILHOS", "Apartamento nº 203, Torre C", "25% (vinte e cinco por cento)", "75% ao CONTRATANTE", "25% ao CONTRATADO",
       "até o dia 10 do mês subsequente ao check-out;", "Chave pix: joao@example.com", "48h antes do check-in", "R$ 500,00 sem necessidade", "NÃO — para fins",
-      "24 (vinte e quatro) meses", "60 (sessenta) dias", "R$ 1.500,00 (mil e quinhentos reais) à título de implantação", "Gramado/RS, 5 de janeiro de 2027.",
+      "24 (vinte e quatro) meses", "60 (sessenta) dias", "R$ 1.500,00 (mil e quinhentos reais) à título de implantação", "Canela/RS, 5 de janeiro de 2027.",
       "JOÃO TESTE", "Nome: Ana Exemplo", "CPF: 390.533.447-05"]) expect(t).toContain(s);
-    expect(t).not.toContain("MARIA IGNEZ");
-    expect(t).not.toContain("067.809.030-00");
+    for (const stale of ["BRUNA ANDIARA", "JONATHAN", "HAUPENTHAL", "016.912.240-90", "827.768.140-20", "51996262235", "Giuseppe Garibaldi", "Artur Reinheimer", "12 de novembro de 2026"]) expect(t).not.toContain(stale);
   });
   it("escreve o valor da implantação por extenso", () => {
     expect(reais(600)).toBe("seiscentos reais");
