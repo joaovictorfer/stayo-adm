@@ -39,8 +39,9 @@ describe("certificação da minuta com cadastros variados", () => {
     for (const key of Object.keys(source).filter(k => k !== "word/document.xml")) expect(result[key]).toEqual(source[key]);
     const xml = strFromU8(result["word/document.xml"] ?? new Uint8Array());
     expect(paragraphs(xml).slice(43, 149)).toEqual(paragraphs(sourceXml).slice(43, 149));
-    expect(xml).not.toContain("MARIA IGNEZ");
-    expect(xml).not.toContain("067.809.030-00");
+    expect(xml).not.toContain("BRUNA ANDIARA");
+    expect(xml).not.toContain("JONATHAN");
+    expect(xml).not.toContain("016.912.240-90");
     const structure = (s: string) => s.replace(/<w:t(?:\s[^>]*)?>[\s\S]*?<\/w:t>/g, "<w:t></w:t>");
     expect(structure(xml)).toBe(structure(sourceXml));
   });
