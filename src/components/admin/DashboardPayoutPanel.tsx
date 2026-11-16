@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, CheckCircle2, Wallet } from "lucide-react";
 
+import { PayoutPropertyPhoto } from "@/components/admin/PayoutPropertyPicker";
 import { Button } from "@/components/ui/button";
 import { formatMoneyText } from "@/components/ui/money-input";
 import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
@@ -20,7 +21,7 @@ const propertyName = (p: DashboardPayoutProperty) =>
   [p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || p.code;
 
 /** Painel da tela inicial: saldos de repasse do mês anterior, derivados (nunca gravados). */
-export function DashboardPayoutPanel({ properties }: { properties: DashboardPayoutProperty[] }) {
+export function DashboardPayoutPanel({ properties, covers }: { properties: DashboardPayoutProperty[]; covers: Record<string, string> }) {
   const month = previousCompetence();
   const ids = properties.map((p) => p.id);
   const y = Number(month.slice(0, 4));
@@ -60,7 +61,7 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
     <section aria-label="Repasses do mês" className="dashboard-payout flex flex-col gap-4">
       <div className="dashboard-payout-summary flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="admin-eyebrow">Repasses · {monthLabel}</p>
+          <h2>Repasses <span>· {monthLabel}</span></h2>
           <p className="mt-2 text-2xl font-bold tabular-nums text-[var(--admin-text)]">
             {q.isPending ? "—" : `R$ ${formatMoneyText(totalPending)}`}
           </p>
@@ -106,15 +107,15 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
                   search={{ imovel: r.implementationId, mes: month }}
                   className="dashboard-payout-row flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm"
                 >
-                  <span className="min-w-0 truncate font-medium text-[var(--admin-text)]">{propertyName(p)}</span>
+                  <span className="dashboard-payout-property"><PayoutPropertyPhoto url={covers[p.id]} name={propertyName(p)} /><span className="min-w-0"><strong>{p.condominium_name || p.nickname || p.code}</strong><small>{p.unit || p.code}</small></span></span>
                   {r.state === "incompleto" ? (
-                    <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive">
+                    <span className="dashboard-payment-state is-incomplete">
                       <AlertTriangle className="size-3.5" /> {r.missing} sem valor
                     </span>
                   ) : r.state === "a_repassar" ? (
-                    <span className="shrink-0 tabular-nums font-semibold text-[var(--admin-text)]">R$ {formatMoneyText(r.balance)}</span>
+                    <span className="dashboard-payment-amount">R$ {formatMoneyText(r.balance)}<small className="dashboard-payment-state is-pending">Pendente</small></span>
                   ) : (
-                    <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--admin-success)]">
+                    <span className="dashboard-payment-state is-paid">
                       <CheckCircle2 className="size-3.5" /> Em dia
                     </span>
                   )}
@@ -125,7 +126,7 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
         </ul>
       )}
 
-      <Button asChild className="admin-action-button mt-auto w-full">
+      <Button asChild className="dashboard-payout-action mt-auto w-full">
         <Link to="/financeiro/repasses" search={{ imovel: undefined, mes: month }}>
           Ver demonstrativos <ArrowRight />
         </Link>
