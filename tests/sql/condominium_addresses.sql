@@ -16,6 +16,6 @@ SELECT e.label, 1 / CASE WHEN count(p.id)>0 AND bool_and(
  AND d.state IS NOT DISTINCT FROM 'RS' AND d.postal_code IS NOT DISTINCT FROM e.cep
 ) THEN 1 ELSE 0 END AS passed
 FROM expected e LEFT JOIN public.implementation_projects p
- ON lower(coalesce(p.condominium_name,'')||' '||coalesce(p.nickname,'')) LIKE e.pattern
+ ON lower(coalesce(p.condominium_name,'')||' | '||coalesce(p.nickname,'')) LIKE e.pattern
 LEFT JOIN public.implementation_property_details d ON d.implementation_id=p.id
 GROUP BY e.label ORDER BY e.label;
