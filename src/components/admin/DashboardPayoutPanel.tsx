@@ -57,8 +57,8 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
   const listed = [...incompleteRows, ...pendingRows, ...rows.filter((r) => r.state === "ok")].slice(0, 6);
 
   return (
-    <section aria-label="Repasses do mês" className="admin-panel flex flex-col gap-4 p-5">
-      <div className="flex items-start justify-between gap-3">
+    <section aria-label="Repasses do mês" className="dashboard-payout flex flex-col gap-4">
+      <div className="dashboard-payout-summary flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="admin-eyebrow">Repasses · {monthLabel}</p>
           <p className="mt-2 text-2xl font-bold tabular-nums text-[var(--admin-text)]">
@@ -71,7 +71,7 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className="dashboard-payout-counts grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl bg-[var(--admin-surface-subtle)] px-2 py-2.5">
           <p className="text-lg font-bold tabular-nums text-[var(--admin-text)]">{q.isPending ? "—" : pendingRows.length}</p>
           <p className="text-[11px] text-[var(--admin-muted)]">a repassar</p>
@@ -104,7 +104,7 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
                 <Link
                   to="/financeiro/repasses"
                   search={{ imovel: r.implementationId, mes: month }}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-surface-subtle)]"
+                  className="dashboard-payout-row flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm"
                 >
                   <span className="min-w-0 truncate font-medium text-[var(--admin-text)]">{propertyName(p)}</span>
                   {r.state === "incompleto" ? (

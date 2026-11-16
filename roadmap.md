@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Refinar página inicial e microinterações compartilhadas de navegação, botões, abas, menus e campos; preservar dados e conferir computador, tablet, celular e movimento reduzido.
 - [x] Portal ampliado no visual aprovado: link dedicado sem senha, publicação revisada e revogável, histórico selecionado, reservas por canal, ficha e balancete com cálculos do PDF; publicação/leitura/reserva/login/celular/revogação reais no C203 conferidos; 39 testes passaram. Links de teste revogados, nenhum valor alterado.
 - [ ] Conferir CPF completo no portal com titular real vinculado ao C203: bloqueado pela ausência dessa conta vinculada; anonimato e conta de outro proprietário negados no fluxo real, regra de titular/coproprietário coberta por teste.
 - [x] Refinar edição do contrato: uma seção por vez, seleção destacada, pendências por seção e campos organizados; 40 testes aprovados, navegação/revisão/retorno/descarte conferidos em ficha real, computador/tablet/celular sem transbordamento e sem alterar cadastro.

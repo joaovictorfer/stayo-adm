@@ -69,6 +69,7 @@ const icons: Record<string, ComponentType<{ size?: number; className?: string }>
 const NavLink = Link as unknown as ComponentType<{
   to: string;
   className?: string;
+  "aria-current"?: "page";
   onClick?: (() => void) | undefined;
   children?: ReactNode;
 }>;
@@ -123,6 +124,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
                     key={item.id}
                     to={item.path}
                     onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-2 text-[13px] text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
                       active &&
@@ -163,6 +165,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
                           key={child.id}
                           to={child.path}
                           onClick={onNavigate}
+                          aria-current={pathname === child.path ? "page" : undefined}
                           className={cn(
                             "flex items-center gap-2.5 rounded-[var(--admin-radius)] px-3 py-1.5 text-xs text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-text)]",
                             pathname === child.path &&
