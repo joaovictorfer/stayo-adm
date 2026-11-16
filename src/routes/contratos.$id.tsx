@@ -15,6 +15,8 @@ export const Route = createFileRoute("/contratos/$id")({
   head: () => ({
     meta: [
       { title: "Detalhe do contrato — Stayo Admin" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "description", content: "Dados de um contrato da operação Stayo." },
       { property: "og:title", content: "Detalhe do contrato — Stayo Admin" },
       { property: "og:description", content: "Dados de um contrato da operação Stayo." },

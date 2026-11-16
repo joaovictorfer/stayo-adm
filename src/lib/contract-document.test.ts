@@ -27,6 +27,16 @@ describe("contrato padrão (referência Vêneto A201 de 16/11)", () => {
   it("mantém a identidade do arquivo oficial fixada no mapa da minuta", () => {
     expect(createHash("sha256").update(original).digest("hex")).toBe(templateMap.sha256);
   });
+  it("usa no servidor exatamente o mesmo Word aprovado", async () => {
+    const { originalContractBase64 } = await import("./contract-template.server");
+    expect(new Uint8Array(Buffer.from(originalContractBase64, "base64"))).toEqual(original);
+  });
+  it("substitui separadamente as duas assinaturas sem nomes da referência", () => {
+    const f = { ...other, parties: [{ fullName: "Helena Duarte Pires" }, { fullName: "Carlos Alberto Teste" }], signatureNames: "HELENA DUARTE PIRES / CARLOS ALBERTO TESTE" };
+    const p = paragraphs(unzipSync(generateContractDocx(original, f))["word/document.xml"]);
+    expect(text(new TextEncoder().encode((p[156] ?? "") + (p[157] ?? "")))).toBe("HELENA DUARTE PIRES");
+    expect(text(new TextEncoder().encode((p[158] ?? "") + (p[159] ?? "")))).toBe("CARLOS ALBERTO TESTE");
+  });
   it("preserva propriedades de todas as páginas, tabelas e trechos com dados diferentes", () => {
     const source = unzipSync(original);
     const result = unzipSync(generateContractDocx(original, other));

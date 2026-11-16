@@ -19,6 +19,8 @@ export const Route = createFileRoute("/contratos/")({
   head: () => ({
     meta: [
       { title: "Contratos — Stayo Admin" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "description", content: "Contratos vinculados a proprietários e imóveis Stayo." },
       { property: "og:title", content: "Contratos — Stayo Admin" },
       {
