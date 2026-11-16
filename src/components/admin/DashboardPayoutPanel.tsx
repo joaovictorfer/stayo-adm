@@ -66,7 +66,7 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
           </p>
           <p className="text-xs text-[var(--admin-muted)]">Saldo pendente · repasse até {due}</p>
         </div>
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--admin-primary-soft)] text-[var(--admin-primary)]">
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[var(--admin-info-soft)] text-[var(--admin-primary)]">
           <Wallet className="size-5" />
         </span>
       </div>
@@ -114,7 +114,7 @@ export function DashboardPayoutPanel({ properties }: { properties: DashboardPayo
                   ) : r.state === "a_repassar" ? (
                     <span className="shrink-0 tabular-nums font-semibold text-[var(--admin-text)]">R$ {formatMoneyText(r.balance)}</span>
                   ) : (
-                    <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-emerald-600">
+                    <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--admin-success)]">
                       <CheckCircle2 className="size-3.5" /> Em dia
                     </span>
                   )}
