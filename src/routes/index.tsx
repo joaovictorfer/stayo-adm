@@ -112,11 +112,10 @@ function DashboardPage() {
   ].sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
 
   return (
-    <div className="space-y-7">
+    <div className="admin-dashboard space-y-6">
       <AdminPageHeader
         eyebrow={todayLabel}
         title={`${greeting()}, ${firstName}`}
-        description="Agenda do dia, repasses do mês e implantações em acompanhamento."
         actions={
           <>
             <Button asChild variant="outline">
@@ -129,24 +128,27 @@ function DashboardPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="dashboard-metrics grid grid-cols-2 gap-3 xl:grid-cols-4">
         <AdminStatCard
           icon={DoorOpen}
           label="Chegadas"
           value={reservations.isPending ? "—" : arrivals.length}
           detail={arrivals.length ? "reservas com entrada hoje" : "Nenhuma chegada prevista"}
+          tone="info"
         />
         <AdminStatCard
           icon={DepartureIcon}
           label="Saídas"
           value={reservations.isPending ? "—" : departures.length}
           detail={departures.length ? "reservas com saída hoje" : "Nenhuma saída prevista"}
+          tone="warning"
         />
         <AdminStatCard
           icon={Sparkles}
           label="Limpezas"
           value={operationTasks.isPending ? "—" : cleanings.length}
           detail={cleanings.length ? "rotinas programadas" : "Nenhuma limpeza programada"}
+          tone="success"
         />
         <AdminStatCard
           icon={ClipboardCheck}
@@ -159,7 +161,7 @@ function DashboardPage() {
         />
       </div>
 
-      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.35fr)]">
+      <div className="dashboard-columns grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.35fr)]">
         <aside className="grid min-w-0 content-start gap-6 max-lg:order-2">
           <DashboardPayoutPanel properties={payoutProperties} />
 
@@ -191,7 +193,7 @@ function DashboardPage() {
                       key={item.id}
                       to="/implantacao/$id"
                       params={{ id: item.id }}
-                      className="admin-panel block p-4 transition hover:-translate-y-0.5 hover:shadow-[var(--admin-shadow-md)]"
+                      className="dashboard-implementation admin-panel block p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -238,8 +240,7 @@ function DashboardPage() {
 
         <AdminSection
           title="Agenda de hoje"
-          description="Chegadas, saídas e rotinas organizadas por horário."
-          className="min-w-0 max-lg:order-1"
+          className="dashboard-agenda min-w-0 max-lg:order-1"
           action={
             <Button asChild variant="ghost" size="sm">
               <Link to="/operacao/agenda">

@@ -518,3 +518,87 @@
 .admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: color-mix(in oklab, var(--admin-sidebar-text) 40%, transparent);
 }
+
+/* Shared interaction language: short feedback, stable geometry, no looping decoration. */
+:root {
+  --stayo-motion-fast: 140ms;
+  --stayo-motion-normal: 220ms;
+  --stayo-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --stayo-menu-shadow: 0 12px 36px color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+.stayo-button, [role="tab"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"] {
+  transition: background-color var(--stayo-motion-fast), color var(--stayo-motion-fast), border-color var(--stayo-motion-fast), box-shadow var(--stayo-motion-fast), transform var(--stayo-motion-fast) var(--stayo-motion-ease);
+}
+.stayo-button:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(1px) scale(0.985); }
+.stayo-button > svg:not(.animate-spin) { transition: translate var(--stayo-motion-fast) var(--stayo-motion-ease); }
+[role="tab"][data-state="active"] { transition-duration: var(--stayo-motion-normal); }
+[role="tabpanel"][data-state="active"] { animation: admin-page-in var(--stayo-motion-normal) var(--stayo-motion-ease) both; }
+.stayo-floating-menu { border-radius: 8px; box-shadow: var(--stayo-menu-shadow); animation-duration: var(--stayo-motion-fast); }
+.stayo-floating-menu :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) { border-radius: 5px; }
+.stayo-admin-theme :is(input, textarea, [role="combobox"]) { transition: border-color var(--stayo-motion-fast), box-shadow var(--stayo-motion-fast), background-color var(--stayo-motion-fast); }
+.admin-sidebar-nav :is(a, button) { position: relative; min-height: 36px; }
+.admin-sidebar-nav a::before {
+  content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px;
+  border-radius: 3px; background: var(--admin-accent); opacity: 0; transform: scaleY(0.4);
+  transition: opacity var(--stayo-motion-normal), transform var(--stayo-motion-normal) var(--stayo-motion-ease);
+}
+.admin-sidebar-nav a[aria-current="page"]::before { opacity: 1; transform: scaleY(1); }
+.admin-sidebar-nav a[aria-current="page"] { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--admin-sidebar-text) 10%, transparent); }
+.admin-sidebar-nav a > span { transition: translate var(--stayo-motion-fast) var(--stayo-motion-ease); }
+.admin-submenu { transition-duration: var(--stayo-motion-normal); }
+.stayo-admin-theme a.admin-panel { transition: border-color var(--stayo-motion-fast), box-shadow var(--stayo-motion-normal), translate var(--stayo-motion-normal) var(--stayo-motion-ease); }
+@media (hover: hover) and (pointer: fine) {
+  .stayo-button:hover > svg:last-child:not(:first-child):not(.animate-spin) { translate: 2px 0; }
+  .admin-sidebar-nav a:hover > span { translate: 2px 0; }
+  .stayo-floating-menu [role="menuitem"][data-highlighted] { transform: translateX(2px); }
+  .stayo-admin-theme a.admin-panel:hover { translate: 0 -2px; border-color: color-mix(in oklab, var(--admin-primary) 28%, var(--admin-border)); box-shadow: var(--admin-shadow-md); }
+}
+
+/* Executive dashboard: navy financial summary, airy agenda, compact status rows. */
+.stayo-admin-theme:has(.admin-dashboard) { --admin-bg: oklch(0.975 0.005 248); --admin-surface-subtle: oklch(0.965 0.006 248); }
+.admin-dashboard .admin-page-header { padding-bottom: 18px; border-bottom: 1px solid var(--admin-border); margin-bottom: 0; }
+.admin-dashboard .admin-eyebrow { letter-spacing: 0; font-size: 11px; }
+.admin-dashboard .admin-page-header h1 { font-size: 28px; line-height: 1.25; }
+.dashboard-metrics .admin-stat-card { padding: 16px 18px; border-radius: 8px; box-shadow: var(--admin-shadow-sm); }
+.dashboard-metrics .admin-stat-card > strong { font-size: 30px; line-height: 1.2; margin-top: 6px; }
+.dashboard-metrics .admin-stat-card > p { font-size: 11px; }
+.dashboard-metrics .admin-stat-icon { border-radius: 8px; }
+.dashboard-payout { padding: 0 0 20px; border-bottom: 1px solid var(--admin-border); }
+.dashboard-payout-summary { padding: 20px; border-radius: 8px; background: var(--admin-primary); color: var(--admin-sidebar-text); box-shadow: var(--admin-shadow-md); }
+.dashboard-payout-summary .admin-eyebrow { color: var(--admin-sidebar-muted); }
+.dashboard-payout-summary p:nth-child(2) { color: var(--admin-sidebar-text); font-family: var(--stayo-font-display); font-size: 30px; font-weight: 600; }
+.dashboard-payout-summary p:nth-child(3) { color: var(--admin-sidebar-muted); margin-top: 4px; }
+.dashboard-payout-summary > span { border-radius: 8px; background: var(--admin-sidebar-hover); color: var(--admin-accent); }
+.dashboard-payout-counts > div { padding: 6px 8px; border-radius: 0; background: transparent; }
+.dashboard-payout-counts > div + div { border-left: 1px solid var(--admin-border); }
+.dashboard-payout-counts > div:nth-child(2) p:first-child { color: var(--admin-warning); }
+.dashboard-payout-counts > div:nth-child(3) p:first-child { color: var(--admin-success); }
+.dashboard-payout-row { background: var(--admin-surface); border-color: var(--admin-border); transition: background-color var(--stayo-motion-fast), border-color var(--stayo-motion-fast); }
+.dashboard-payout-row:hover { background: var(--admin-info-soft); border-color: color-mix(in oklab, var(--admin-primary) 25%, var(--admin-border)); }
+.admin-dashboard .admin-section-heading { align-items: center; gap: 10px; margin-bottom: 12px; }
+.admin-dashboard .admin-section-heading h2 { font-size: 17px; }
+.dashboard-implementation { box-shadow: none; }
+.dashboard-implementation .admin-status-badge { font-size: 10px; }
+.dashboard-implementation [style*="width"] { transition: width 360ms var(--stayo-motion-ease); }
+.dashboard-agenda > .admin-panel { border-radius: 8px; min-height: 340px; box-shadow: var(--admin-shadow-sm); }
+.dashboard-agenda .admin-empty-state { min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px; }
+.dashboard-agenda .admin-empty-state p { max-width: 310px; margin-inline: auto; line-height: 1.6; }
+.dashboard-agenda .admin-empty-icon { border-radius: 8px; background: var(--admin-info-soft); color: var(--admin-info); }
+.dashboard-agenda .admin-data-row { min-height: 76px; }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-columns { grid-template-columns: minmax(270px, 0.8fr) minmax(0, 1.2fr); gap: 20px; }
+  .dashboard-columns > aside, .dashboard-columns > .dashboard-agenda { order: initial; }
+  .dashboard-agenda .admin-section-heading { flex-wrap: wrap; }
+}
+@media (max-width: 639px) {
+  .admin-dashboard .admin-page-header h1 { font-size: 24px; }
+  .dashboard-agenda .admin-section-heading { flex-wrap: wrap; }
+  .dashboard-metrics .admin-stat-card { padding: 14px; }
+  .dashboard-agenda > .admin-panel, .dashboard-agenda .admin-empty-state { min-height: 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stayo-button, .stayo-button > svg, [role="tab"], [role="tabpanel"], [role^="menuitem"], [role="option"], .stayo-floating-menu, .stayo-floating-menu *,
+  .admin-dashboard *, .admin-sidebar-nav a::before { animation: none !important; transition: none !important; }
+  .stayo-button:active, .stayo-button:hover > svg, .stayo-floating-menu [data-highlighted], .stayo-admin-theme a.admin-panel:hover,
+  .admin-sidebar-nav a:hover > span { transform: none !important; translate: none !important; }
+}
