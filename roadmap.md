@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Nova rodada visual da tela inicial: composição mais coesa, contraste, títulos e alinhamentos; verificar navegação e tamanhos de tela sem alterar dados.
 - [x] Aproximar tela inicial da referência: indicadores horizontais, repasses claros com fotos privadas/status, implantação em linhas e agenda à direita. Conta real, demonstrativos, telas 1280/838/390 sem transbordamento e 11 testes conferidos; sem dados ilustrativos nem alteração financeira.
 - [x] Refinar página inicial com resumo navy, indicadores coloridos e agenda à direita; microinterações compartilhadas em navegação, botões, abas, menus e campos. Conta real, navegação para repasses, seletor Ravena, tablet/celular sem transbordamento, movimento reduzido e 11 testes conferidos; nenhum dado alterado.
 - [x] Portal ampliado no visual aprovado: link dedicado sem senha, publicação revisada e revogável, histórico selecionado, reservas por canal, ficha e balancete com cálculos do PDF; publicação/leitura/reserva/login/celular/revogação reais no C203 conferidos; 39 testes passaram. Links de teste revogados, nenhum valor alterado.
