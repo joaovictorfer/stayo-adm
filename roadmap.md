@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Aproximar a tela inicial da referência: indicadores horizontais, repasses claros com fotos/status, implantação em linhas e agenda estruturada à direita; preservar dados e conferir computador/tablet/celular.
 - [x] Refinar página inicial com resumo navy, indicadores coloridos e agenda à direita; microinterações compartilhadas em navegação, botões, abas, menus e campos. Conta real, navegação para repasses, seletor Ravena, tablet/celular sem transbordamento, movimento reduzido e 11 testes conferidos; nenhum dado alterado.
 - [x] Portal ampliado no visual aprovado: link dedicado sem senha, publicação revisada e revogável, histórico selecionado, reservas por canal, ficha e balancete com cálculos do PDF; publicação/leitura/reserva/login/celular/revogação reais no C203 conferidos; 39 testes passaram. Links de teste revogados, nenhum valor alterado.
 - [ ] Conferir CPF completo no portal com titular real vinculado ao C203: bloqueado pela ausência dessa conta vinculada; anonimato e conta de outro proprietário negados no fluxo real, regra de titular/coproprietário coberta por teste.
