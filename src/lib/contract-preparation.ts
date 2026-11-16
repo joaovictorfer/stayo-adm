@@ -26,6 +26,11 @@ export const contractPartySchema = z.object({
 export type ContractParty = z.infer<typeof contractPartySchema>;
 const maritalLabels: Record<string, string> = { solteiro: "solteiro(a)", casado: "casado(a)", uniao_estavel: "união estável", divorciado: "divorciado(a)", separado: "separado(a)", viuvo: "viúvo(a)" };
 export function buildQualification(parties: ContractParty[]): string {
+  const sharedAddress = parties.length === 2 && parties.every(p => p.personType === "pf") && parties[0]?.address.trim() === parties[1]?.address.trim();
+  if (sharedAddress) {
+    const qualification = parties.map(p => [p.fullName.trim().toUpperCase(), maritalLabels[p.maritalStatus] ?? p.maritalStatus, p.profession, `inscrito(a) no CPF nº ${p.document}`, `e-mail ${p.email}`, `telefone ${p.phone}`].join(", ")).join(" e ");
+    return `${qualification}; ambos residentes e domiciliados no endereço ${parties[0]?.address.trim()}.`;
+  }
   return parties.map(p => [p.fullName.trim().toUpperCase(),
     ...(p.personType === "pf" ? [maritalLabels[p.maritalStatus] ?? p.maritalStatus, p.profession, `inscrito(a) no CPF nº ${p.document}`, `residente e domiciliado(a) em ${p.address}`] : [`inscrita no CNPJ nº ${p.document}`, `com sede em ${p.address}`, `representada por ${p.representative}`]),
     `e-mail ${p.email}`, `telefone ${p.phone}`].join(", ")).join("; ") + ".";

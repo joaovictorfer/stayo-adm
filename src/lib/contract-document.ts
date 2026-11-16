@@ -20,6 +20,7 @@ export interface ContractDocumentFields {
   witness1Cpf: string;
   witness2Name: string;
   witness2Cpf: string;
+  parties?: Array<{ fullName: string }>;
 }
 
 const stripControl = (s: string) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, "");
@@ -106,7 +107,14 @@ const number = (n: number) => new Intl.NumberFormat("pt-BR", { maximumFractionDi
 const percent = (n: number) => `${number(n)}% (${Number.isInteger(n) ? words(n) : number(n)} por cento)`;
 
 export function fillContractXml(xml: string, f: ContractDocumentFields): string {
-  const P = templateMap.paragraphs as unknown as Record<"2" | "6" | "16" | "17" | "18" | "149" | "157", string>;
+  const P = templateMap.paragraphs as Record<string, string>;
+  const names = f.parties?.map(p => p.fullName.trim().toUpperCase()) ?? f.signatureNames.split(" / ");
+  const signatureLines = (name: string): [string, string] => {
+    const cut = name.lastIndexOf(" ");
+    return cut < 0 ? [name, ""] : [name.slice(0, cut + 1), name.slice(cut + 1)];
+  };
+  const firstSignature = signatureLines(names[0] ?? "");
+  const secondSignature = signatureLines(names.slice(1).join(" / "));
   const brl = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n).replace(/\u00a0/g, " ");
   const updates = new Map<number, Array<[string, string]>>([
     [8, [["20% (vinte por cento)", percent(f.administrationFee)]]],
@@ -118,13 +126,17 @@ export function fillContractXml(xml: string, f: ContractDocumentFields): string 
     [29, [["SIM", f.exclusivity ? "SIM" : "NÃO"]]],
     [36, [["12 (doze)", `${f.durationMonths} (${words(f.durationMonths)})`]]],
     [38, [["30 (trinta)", `${f.noticePeriodDays} (${words(f.noticePeriodDays)})`]]],
-    [42, [["R$ 600,00 (seiscentos reais)", `${brl(f.implementationFee)} (${reais(f.implementationFee)})`]]],
+    [42, [["R$ 500,00 (quinhentos reais)", `${brl(f.implementationFee)} (${reais(f.implementationFee)})`]]],
     [149, [[P["149"], `${f.signatureCity}, ${new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${f.signatureDate}T12:00:00Z`))}.`]]],
-    [157, [[P["157"], f.signatureNames]]],
-    [167, [["Luana Lima de Oliveira", f.witness1Name]]],
-    [168, [["Nome: ", `Nome: ${f.witness2Name}`]]],
-    [169, [["114.011.974-50", f.witness1Cpf]]],
-    [170, [["CPF: ", `CPF: ${f.witness2Cpf}`]]],
+    [156, [[P["156"], firstSignature[0]]]],
+    [157, [[P["157"], firstSignature[1]]]],
+    [158, [[P["158"], secondSignature[0]]]],
+    [159, [[P["159"], secondSignature[1]]]],
+    [161, [[P["161"], names.length > 1 ? "CONTRATANTE" : ""]]],
+    [175, [["Luana Lima de Oliveira", f.witness1Name]]],
+    [176, [["Nome: ", `Nome: ${f.witness2Name}`]]],
+    [177, [["114.011.974-50", f.witness1Cpf]]],
+    [178, [["CPF: ", `CPF: ${f.witness2Cpf}`]]],
   ]);
   if (f.payoutMode === "day10_report") {
     updates.set(16, [[P["16"], "Repasses efetuados pelo CONTRATADO até o dia 10 do mês subsequente ao check-out;"]]);
@@ -134,21 +146,29 @@ export function fillContractXml(xml: string, f: ContractDocumentFields): string 
   updates.set(6, []);
   const pieces = (i: number, p: string) => {
     if (i === 2) {
-      const q = f.qualification; const cut = q.indexOf(", ");
-      const [name, rest] = cut < 0 ? [q, ""] : [q.slice(0, cut + 2), q.slice(cut + 2)];
-      const orig = P["2"].slice("CONTRATANTE(S): ".length); const oc = orig.indexOf(", ") + 2;
-      return substitutePieces(p, [[orig.slice(0, oc), name], [orig.slice(oc), rest]]);
+      const q = f.qualification;
+      const firstNameEnd = q.indexOf(", ");
+      const firstName = firstNameEnd < 0 ? q : q.slice(0, firstNameEnd);
+      const secondName = names[1] ?? "";
+      const secondStart = secondName ? q.indexOf(secondName, firstName.length) : -1;
+      const rest = q.slice(firstName.length);
+      const source = P["2"].slice("CONTRATANTE(S): ".length);
+      const sourceFirst = "BRUNA ANDIARA RASCHE HAUPENTHAL";
+      const sourceSecond = "JONATHAN HAUPENTHAL";
+      const sourceSecondStart = source.indexOf(sourceSecond);
+      return substitutePieces(p, [
+        [sourceFirst, firstName],
+        [source.slice(sourceFirst.length, sourceSecondStart), secondStart < 0 ? rest : q.slice(firstName.length, secondStart)],
+        [sourceSecond, secondStart < 0 ? "" : secondName],
+        [source.slice(sourceSecondStart + sourceSecond.length), secondStart < 0 ? "" : q.slice(secondStart + secondName.length)],
+      ]);
     }
     const m = f.propertyDescription.match(/^Apartamento nº (.*?), Torre (.*?), localizado no (.*?), situado na (.*?)\.?$/);
     if (!m) return substitutePieces(p, [[P["6"], f.propertyDescription]]);
     const [unit = "", tower = "", cond = "", addr = ""] = m.slice(1);
-    const condName = cond.replace(/^Residencial\s+/i, "");
-    const prefix = cond.length !== condName.length ? cond.slice(0, cond.length - condName.length) : "";
-    const ac = addr.indexOf(" – ");
-    const [head = "", tail = ""] = ac < 0 ? [addr, ""] : [addr.slice(0, ac + 1), addr.slice(ac + 1)];
     return substitutePieces(p, [
-      ["106", unit], ["A", tower], ["Residencial ", prefix], ["Ravena", condName],
-      ["Rua Visconde de Mauá, 1233 ", head], ["– Bairro Centro – Canela/RS – CEP 95680-232.", `${tail.trim()}.`.replace(/^\./, "")],
+      ["201", unit], ["VERONA", tower], ["Residencial Vêneto", cond],
+      ["Rua Artur Reinheimer, 550 – Bairro Carniel – Gramado/RS – CEP 95670-720.", `${addr.replace(/\.$/, "")}.`],
     ]);
   };
   let index = -1;

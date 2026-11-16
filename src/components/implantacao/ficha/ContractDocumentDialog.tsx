@@ -48,10 +48,10 @@ export function ContractDocumentDialog({ implementationId, conditions }: { imple
       parties: people, qualification: buildQualification(people),
       propertyDescription: [`Apartamento nº ${p.unit ?? ""}`, p.tower && `Torre ${p.tower}`, p.condominiumName && `localizado no ${p.condominiumName}`, propertyAddress && `situado na ${propertyAddress}`].filter(Boolean).join(", ") + ".",
       pixKey: o.pixKey, signatureNames: people.map(person => person.fullName.toUpperCase()).join(" / "),
-      signatureCity: "Gramado/RS", signatureDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
+      signatureCity: "Canela/RS", signatureDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       administrationFee: Number(conditions?.["administration_fee"] ?? 20), durationMonths: Number(conditions?.["duration_months"] ?? 12),
       maintenanceLimit: Number(conditions?.["maintenance_limit"] ?? 300), noticePeriodDays: Number(conditions?.["notice_period_days"] ?? 30),
-      ownerUseNoticeDays: Number(conditions?.["owner_use_notice_days"] ?? 3), exclusivity: conditions?.["exclusivity"] !== false, implementationFee: Number(conditions?.["implementation_fee"] ?? 600),
+      ownerUseNoticeDays: Number(conditions?.["owner_use_notice_days"] ?? 3), exclusivity: conditions?.["exclusivity"] !== false, implementationFee: Number(conditions?.["implementation_fee"] ?? 500),
       payoutMode: conditions?.["payout_mode"] === "platform_auto" ? "platform_auto" : "day10_report",
       witness1Name: "Luana Lima de Oliveira", witness1Cpf: "114.011.974-50", witness2Name: "", witness2Cpf: "",
     });
