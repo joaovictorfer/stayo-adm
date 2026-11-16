@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Substituir minuta pelo Word enviado em 16/11, preservar cláusulas e formatação, preencher partes/imóvel/Pix/condições/data/assinaturas e conferir download real.
 - [x] Nova rodada visual: faixa unificada com contraste suave à esquerda, títulos e alinhamentos refinados, status mais legíveis, fotos e barras consistentes, ações com ícones. Conta real, demonstrativos, 1280/838/390 sem transbordamento e 11 testes conferidos; valores preservados.
 - [x] Aproximar tela inicial da referência: indicadores horizontais, repasses claros com fotos privadas/status, implantação em linhas e agenda à direita. Conta real, demonstrativos, telas 1280/838/390 sem transbordamento e 11 testes conferidos; sem dados ilustrativos nem alteração financeira.
 - [x] Refinar página inicial com resumo navy, indicadores coloridos e agenda à direita; microinterações compartilhadas em navegação, botões, abas, menus e campos. Conta real, navegação para repasses, seletor Ravena, tablet/celular sem transbordamento, movimento reduzido e 11 testes conferidos; nenhum dado alterado.
