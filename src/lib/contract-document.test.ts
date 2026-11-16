@@ -40,7 +40,7 @@ describe("contrato padrão (referência Vêneto A201 de 16/11)", () => {
     const after = paragraphs(unzipSync(generateContractDocx(original, filled))["word/document.xml"]);
     const runs = (p: string) => [...p.matchAll(/<w:r(?=[\s>])[^>]*>[\s\S]*?<\/w:r>/g)].map(m => m[0]);
     const style = (run: string | undefined) => run?.match(/<w:rPr(?=[\s>])[^>]*>[\s\S]*?<\/w:rPr>/)?.[0] ?? "";
-    for (const [index, oldText, newText] of [[2, "BRUNA ANDIARA RASCHE HAUPENTHAL", "HELENA DUARTE PIRES"], [6, "Artur Reinheimer, 550", ""]] as const) {
+    for (const [index, oldText, newText] of [[2, "BRUNA ANDIARA RASCHE HAUPENTHAL", "HELENA DUARTE PIRES"], [6, ">Rua<", "Rua dos Testes, 456"]] as const) {
       const oldRun = runs(before[index] ?? "").find(r => r.includes(oldText));
       const newRun = index === 6 ? runs(after[index] ?? "").find(r => r.includes("Rua dos Testes, 456")) : runs(after[index] ?? "").find(r => r.includes(newText));
       expect(oldRun).toBeDefined();
@@ -72,7 +72,7 @@ describe("contrato padrão (referência Vêneto A201 de 16/11)", () => {
     const t = text(unzipSync(generateContractDocx(original, other))["word/document.xml"]);
     for (const s of ["CONTRATANTE(S): JOÃO TESTE &amp; FILHOS", "Apartamento nº 203, Torre C", "25% (vinte e cinco por cento)", "75% ao CONTRATANTE", "25% ao CONTRATADO",
       "até o dia 10 do mês subsequente ao check-out;", "Chave pix: joao@example.com", "48h antes do check-in", "R$ 500,00 sem necessidade", "NÃO — para fins",
-      "24 (vinte e quatro) meses", "60 (sessenta) dias", "R$ 1.500,00 (mil e quinhentos reais) à título de implantação", "Gramado/RS, 5 de janeiro de 2027.",
+      "24 (vinte e quatro) meses", "60 (sessenta) dias", "R$ 1.500,00 (mil e quinhentos reais) à título de implantação", "Canela/RS, 5 de janeiro de 2027.",
       "JOÃO TESTE", "Nome: Ana Exemplo", "CPF: 390.533.447-05"]) expect(t).toContain(s);
     for (const stale of ["BRUNA ANDIARA", "JONATHAN", "HAUPENTHAL", "016.912.240-90", "827.768.140-20", "51996262235", "Giuseppe Garibaldi", "Artur Reinheimer", "12 de novembro de 2026"]) expect(t).not.toContain(stale);
   });

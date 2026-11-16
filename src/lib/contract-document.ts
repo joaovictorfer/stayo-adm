@@ -107,7 +107,7 @@ const number = (n: number) => new Intl.NumberFormat("pt-BR", { maximumFractionDi
 const percent = (n: number) => `${number(n)}% (${Number.isInteger(n) ? words(n) : number(n)} por cento)`;
 
 export function fillContractXml(xml: string, f: ContractDocumentFields): string {
-  const P = templateMap.paragraphs as Record<string, string>;
+  const P = templateMap.paragraphs;
   const names = f.parties?.map(p => p.fullName.trim().toUpperCase()) ?? f.signatureNames.split(" / ");
   const signatureLines = (name: string): [string, string] => {
     const cut = name.lastIndexOf(" ");
