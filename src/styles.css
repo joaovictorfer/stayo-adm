@@ -563,7 +563,9 @@
   --dashboard-coral: oklch(0.63 0.19 28);
   --dashboard-coral-soft: oklch(0.96 0.03 28);
 }
-.admin-dashboard { max-width: 1600px; margin-inline: auto; }
+.admin-dashboard { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin-inline: auto; }
+.admin-dashboard > * { margin-block: 0; }
+@media (min-width: 768px) { .dashboard-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); } }
 .admin-dashboard .admin-page-header { padding: 0; border: 0; margin-bottom: 0; align-items: center; }
 .admin-dashboard .admin-page-header h1 { font-size: 28px; line-height: 1.25; color: var(--admin-primary); }
 .admin-dashboard .admin-page-description { margin-top: 4px; font-size: 13px; text-transform: none; }

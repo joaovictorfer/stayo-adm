@@ -1,0 +1,1 @@
+- Dashboard presentation reuses signed implementation covers and canonical property adapters; balances remain derived and empty agendas never receive illustrative records.
