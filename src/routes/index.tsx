@@ -3,7 +3,8 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
   CalendarCheck,
-  ClipboardCheck,
+  Building2,
+  ChevronRight,
   DoorOpen,
   LogOut as DepartureIcon,
   Sparkles,
@@ -17,6 +18,8 @@ import {
   AdminStatCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPrimitives";
+import { listImplementationCoverUrls } from "@/lib/api/implementation-covers";
+import { PayoutPropertyPhoto } from "@/components/admin/PayoutPropertyPicker";
 import { DashboardPayoutPanel } from "@/components/admin/DashboardPayoutPanel";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/lib/auth/session";
@@ -26,7 +29,7 @@ import {
   operationTasksListQuery,
   reservationsListQuery,
 } from "@/lib/api/queries";
-import { computeProgress, computeReadiness, statusLabels } from "@/lib/implementation-status";
+import { computeProgress, statusLabels } from "@/lib/implementation-status";
 import { isPropertyImplementing, isPropertyOperating } from "@/lib/property-operation";
 import { isPayoutPropertyEligible } from "@/lib/payout-properties";
 import type { ImplementationItem, ImplementationProject, OperationTask, Reservation } from "@/types/core";
@@ -92,12 +95,13 @@ function DashboardPage() {
     .filter((item) => item.dueDate === today && isOpen(item.status))
     .sort((a, b) => (a.scheduledTime ?? "99:99").localeCompare(b.scheduledTime ?? "99:99"));
   const cleanings = todayTasks.filter((item) => item.kind.toLowerCase().includes("limpeza"));
-  const pendingCheckins = arrivals.filter((item) => item.webCheckin === "pendente");
   const operatingCount = implementationRows.filter(isPropertyOperating).length;
   const relevantImplementations = implementationRows.filter(implementationPriority).slice(0, 5);
   const payoutProperties = implementationRows.filter((item) =>
     isPayoutPropertyEligible({ status: item.status, core_property_id: item.corePropertyId ?? null }),
   );
+  const coverIds = implementationRows.map((item) => item.id);
+  const covers = useQuery({ queryKey: ["payout", "covers", coverIds], enabled: coverIds.length > 0, queryFn: () => listImplementationCoverUrls(coverIds), staleTime: 30 * 60 * 1000 });
   const firstName =
     auth.status === "authenticated" ? (auth.profile?.fullName.split(" ")[0] ?? "Victor") : "Victor";
 
@@ -114,7 +118,7 @@ function DashboardPage() {
   return (
     <div className="admin-dashboard space-y-6">
       <AdminPageHeader
-        eyebrow={todayLabel}
+        description={todayLabel}
         title={`${greeting()}, ${firstName}`}
         actions={
           <>
@@ -141,32 +145,31 @@ function DashboardPage() {
           label="Saídas"
           value={reservations.isPending ? "—" : departures.length}
           detail={departures.length ? "reservas com saída hoje" : "Nenhuma saída prevista"}
-          tone="warning"
+          tone="danger"
         />
         <AdminStatCard
           icon={Sparkles}
           label="Limpezas"
           value={operationTasks.isPending ? "—" : cleanings.length}
           detail={cleanings.length ? "rotinas programadas" : "Nenhuma limpeza programada"}
-          tone="success"
+          tone="warning"
         />
         <AdminStatCard
-          icon={ClipboardCheck}
-          label="Check-ins pendentes"
-          value={reservations.isPending ? "—" : pendingCheckins.length}
-          detail={
-            pendingCheckins.length ? "aguardando conclusão" : "Nenhuma pendência de check-in"
-          }
-          tone={pendingCheckins.length ? "warning" : "success"}
+          icon={Building2}
+          label="Em operação"
+          value={implementations.isPending ? "—" : operatingCount}
+          detail="Imóveis em operação"
+          tone="success"
         />
       </div>
 
-      <div className="dashboard-columns grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.35fr)]">
+      <div className="dashboard-columns grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(330px,0.85fr)_minmax(0,1.35fr)]">
         <aside className="grid min-w-0 content-start gap-6 max-lg:order-2">
-          <DashboardPayoutPanel properties={payoutProperties} />
+          <DashboardPayoutPanel covers={covers.data ?? {}} properties={payoutProperties.map((item) => ({ id: item.id, code: item.code, nickname: item.nickname, condominium_name: item.condominiumName, unit: item.unit }))} />
 
           <AdminSection
             title="Implantação em andamento"
+            className="dashboard-implementations"
             action={
               <Button asChild variant="ghost" size="sm">
                 <Link to="/implantacao">
@@ -184,18 +187,19 @@ function DashboardPage() {
                 />
               </div>
             ) : (
-              <div className="grid gap-2.5">
+              <div className="dashboard-implementation-list">
                 {relevantImplementations.map((item) => {
                   const progress = computeProgress(itemsByImplementation.get(item.id) ?? []);
-                  const readiness = computeReadiness(itemsByImplementation.get(item.id) ?? []);
+                  
                   return (
                     <Link
                       key={item.id}
                       to="/implantacao/$id"
                       params={{ id: item.id }}
-                      className="dashboard-implementation admin-panel block p-4"
+                      className="dashboard-implementation block"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="dashboard-implementation-identity">
+                        <PayoutPropertyPhoto url={covers.data?.[item.id]} name={[item.condominiumName, item.unit].filter(Boolean).join(" ")} />
                         <div className="min-w-0">
                           <h3 className="truncate text-sm font-semibold text-[var(--admin-text)]">
                             {[item.condominiumName, item.unit].filter(Boolean).join(" · ") ||
@@ -204,22 +208,12 @@ function DashboardPage() {
                               "Implantação"}
                           </h3>
                           <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">
-                            {item.ownerName ?? "Proprietário a confirmar"}
+                            {statusLabels[item.status]}
                           </p>
                         </div>
-                        <AdminStatusBadge
-                          tone={
-                            readiness.state === "bloqueada"
-                              ? "danger"
-                              : readiness.state === "com_pendencias"
-                                ? "warning"
-                                : "info"
-                          }
-                        >
-                          {statusLabels[item.status]}
-                        </AdminStatusBadge>
+                        <ChevronRight className="dashboard-row-arrow size-4 shrink-0" />
                       </div>
-                      <div className="mt-3 flex items-center gap-3">
+                      <div className="dashboard-implementation-progress">
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--admin-surface-subtle)]">
                           <span
                             className="block h-full rounded-full bg-[var(--admin-primary)]"
@@ -249,12 +243,14 @@ function DashboardPage() {
             </Button>
           }
         >
-          <div className="admin-panel">
+          <div className="dashboard-agenda-body">
+            <div className="dashboard-agenda-columns" aria-hidden="true"><span>Horário</span><span>Imóvel / hóspede</span><span>Movimentação</span><span /></div>
             {agenda.length === 0 ? (
               <AdminEmptyState
                 icon={CalendarCheck}
-                title="Sem movimentações hoje"
-                description="Chegadas, saídas e rotinas aparecerão aqui quando houver atividades para a data."
+                title="Tudo tranquilo por hoje"
+                description="Nenhuma chegada, saída ou rotina programada para hoje."
+                action={<Button asChild variant="outline" size="sm"><Link to="/operacao/agenda">Abrir agenda <ArrowRight /></Link></Button>}
               />
             ) : (
               <div>
@@ -266,20 +262,22 @@ function DashboardPage() {
                         key={`task-${task.id}`}
                         to="/operacao/$id"
                         params={{ id: task.id }}
-                        className="admin-data-row"
+                        className="dashboard-agenda-row"
                       >
-                        <span className="w-12 shrink-0 font-semibold tabular-nums text-[var(--admin-primary)]">
+                        <span className="dashboard-agenda-time">
                           {task.scheduledTime ?? "—"}
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <strong className="block truncate text-sm">{task.title}</strong>
+                        <span className="dashboard-agenda-property">
+                          <span className="dashboard-task-icon"><Sparkles className="size-4" /></span>
+                          <span className="min-w-0"><strong className="block truncate text-sm">{task.title}</strong>
                           <small className="block truncate text-[var(--admin-muted)]">
                             {task.propertyName ?? "Imóvel não informado"}
-                          </small>
+                          </small></span>
                         </span>
                         <AdminStatusBadge tone={task.priority === "alta" ? "danger" : "neutral"}>
                           {task.status}
                         </AdminStatusBadge>
+                        <ChevronRight className="dashboard-row-arrow size-4" />
                       </Link>
                     );
                   }
@@ -290,23 +288,25 @@ function DashboardPage() {
                       key={`${entry.kind}-${reservation.id}`}
                       to="/reservas/$id"
                       params={{ id: reservation.id }}
-                      className="admin-data-row"
+                      className="dashboard-agenda-row"
                     >
-                      <span className="w-12 shrink-0 font-semibold tabular-nums text-[var(--admin-primary)]">
+                      <span className="dashboard-agenda-time">
                         {entry.time || "—"}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <strong className="block truncate text-sm">
+                      <span className="dashboard-agenda-property">
+                        <PayoutPropertyPhoto url={covers.data?.[implementationRows.find((p) => p.corePropertyId === reservation.propertyId)?.id ?? ""]} name={reservation.propertyName ?? "Imóvel"} />
+                        <span className="min-w-0"><strong className="block truncate text-sm">
                           {reservation.propertyName ?? "Imóvel não informado"}
                         </strong>
                         <small className="block truncate text-[var(--admin-muted)]">
                           {reservation.guestName ?? "Hóspede a confirmar"}
                           {reservation.channel ? ` · ${reservation.channel}` : ""}
-                        </small>
+                        </small></span>
                       </span>
                       <AdminStatusBadge tone={isArrival ? "info" : "warning"}>
-                        {isArrival ? "Chegada" : "Saída"}
+                        {isArrival ? <DoorOpen className="size-3.5" /> : <DepartureIcon className="size-3.5" />}{isArrival ? "Chegada" : "Saída"}
                       </AdminStatusBadge>
+                      <ChevronRight className="dashboard-row-arrow size-4" />
                     </Link>
                   );
                 })}
