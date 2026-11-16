@@ -69,7 +69,7 @@ const icons: Record<string, ComponentType<{ size?: number; className?: string }>
 const NavLink = Link as unknown as ComponentType<{
   to: string;
   className?: string;
-  "aria-current"?: "page";
+  "aria-current"?: "page" | undefined;
   onClick?: (() => void) | undefined;
   children?: ReactNode;
 }>;
