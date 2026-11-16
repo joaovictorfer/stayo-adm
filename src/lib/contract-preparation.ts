@@ -56,4 +56,4 @@ export const contractFieldsSchema = z.object({
   if (!f.witness2Name) ctx.addIssue({ code: "custom", path: ["witness2Name"], message: "Informe o nome da segunda testemunha" });
   if (!isValidCpf(f.witness2Cpf)) ctx.addIssue({ code: "custom", path: ["witness2Cpf"], message: f.witness2Cpf ? "CPF inválido" : "Informe o CPF da segunda testemunha" });
 }).transform(f => ({ ...f, qualification: buildQualification(f.parties), signatureNames: f.parties.map(p => p.fullName.trim().toUpperCase()).join(" / ") }));
-export type PreparedContractFields = ContractDocumentFields & { parties: ContractParty[] };
+export type PreparedContractFields = Omit<ContractDocumentFields, "parties"> & { parties: ContractParty[] };
