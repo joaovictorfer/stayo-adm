@@ -21,9 +21,12 @@ const projectId = "11111111-1111-4111-8111-111111111111";
 const propertyId = "22222222-2222-4222-8222-222222222222";
 const reservationId = "33333333-3333-4333-8333-333333333333";
 const syntheticCpf = "529.982.247-25";
+let localRows: Record<string, unknown>[] = [];
+let lastDelete: ReturnType<typeof vi.fn> | null = null;
 
 async function sync(titular: Record<string, unknown>, existing = true, statementOk = true) {
   const deleteRow = vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) }));
+  lastDelete = deleteRow;
   const writes = { update: vi.fn((_row: Record<string, unknown>) => ({ eq: vi.fn(async () => ({ error: null })) })), insert: vi.fn(async (_row: Record<string, unknown>) => ({ error: null })) };
   const supabase = {
     rpc: vi.fn(async () => ({ data: true, error: null })),
@@ -42,7 +45,7 @@ async function sync(titular: Record<string, unknown>, existing = true, statement
 }
 
 describe("Central reservation CPF import", () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.stubEnv("STAYO_API_TOKEN", "synthetic-test-token"); });
+  beforeEach(() => { localRows = []; vi.clearAllMocks(); vi.stubEnv("STAYO_API_TOKEN", "synthetic-test-token"); });
 
   it("updates an existing reservation with the resolved titular CPF", async () => {
     expect(await sync({ status: "resolved", name: "Titular sintético", cpf: syntheticCpf })).toMatchObject({ guest_cpf: "52998224725", gross_cents: 250000, cleaning_cents: 30000 });
@@ -62,5 +65,16 @@ describe("Central reservation CPF import", () => {
 
   it("preserves a saved CPF when the provider statement request fails", async () => {
     expect(await sync({ status: "resolved", cpf: syntheticCpf }, true, false)).not.toHaveProperty("guest_cpf");
+  });
+  it("removes imported reservations no longer valid in the Guide, keeping manually adjusted ones", async () => {
+    localRows = [
+      { id: "r-valid", central_reservation_id: reservationId, manual_amounts: [] },
+      { id: "r-cancelled", central_reservation_id: "cancelled-id", manual_amounts: [] },
+      { id: "r-manual", central_reservation_id: "moved-id", manual_amounts: ["gross"] },
+    ];
+    await sync({});
+    expect(lastDelete).toHaveBeenCalledTimes(1);
+    const eq = lastDelete!.mock.results[0].value.eq;
+    expect(eq).toHaveBeenCalledWith("id", "r-cancelled");
   });
 });
