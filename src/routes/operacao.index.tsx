@@ -105,7 +105,7 @@ function OperationPage() {
         </section>
 
         <nav aria-label="Atalhos da operação" className="grid grid-cols-2 gap-2">
-          {[{ to: "/operacao/equipe", label: "Equipe e Meu Dia", icon: Users }, { to: "/operacao/custos", label: "Custos do mês", icon: DollarSign }].map((l) =>
+          {[{ to: "/operacao/equipe", label: "Equipe e Meu Dia", icon: Users }, { to: "/operacao/custos", label: "Custos do mês", icon: DollarSign }] as const.map((l) =>
             <Link key={l.to} to={l.to} className="admin-panel flex items-center gap-2 px-3 py-3 text-sm font-medium hover:bg-[var(--admin-surface-subtle)]"><l.icon className="size-4 text-[var(--admin-primary)]" />{l.label}</Link>)}
         </nav>
       </div>
