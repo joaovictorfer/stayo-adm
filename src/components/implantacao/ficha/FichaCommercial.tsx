@@ -35,6 +35,7 @@ import type { CommercialProposalSnapshot } from "../../../types/commercial-propo
 import { STANDARD_KEYS, STANDARD_LABELS, conditionsComplete, formatStandardValue, initialStandardPatch, resetToStandardPatch, standardExceptions, type StandardKey } from "../../../lib/commercial-standard";
 import { INITIAL_CLEANING_CHOICES } from "../../../lib/contract-conditions";
 import { ContractDocumentDialog } from "./ContractDocumentDialog";
+import { AuthorizationLetterDialog } from "./AuthorizationLetterDialog";
 
 const muted = { color: "var(--stayo-ink-muted)" };
 const navy = { color: "var(--stayo-navy)" };
@@ -382,6 +383,7 @@ export function FichaCommercial({
           </div>
           <div className="flex gap-2">
             <ContractDocumentDialog implementationId={implementationId} conditions={q.data as Record<string, unknown> | null} />
+            <AuthorizationLetterDialog implementationId={implementationId} />
             <button type="button" onClick={onHistory} className="flex h-10 flex-1 items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm sm:flex-none" style={{ ...border, ...navy }}>
               Histórico <ChevronDown className="ml-3 size-4" />
             </button>
