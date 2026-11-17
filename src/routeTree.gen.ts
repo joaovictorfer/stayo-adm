@@ -62,6 +62,7 @@ import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
 import { Route as OperacaoAgendaRouteImport } from './routes/operacao.agenda'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
+import { Route as OperacaoCustosRouteImport } from './routes/operacao.custos'
 import { Route as OperacaoEquipeRouteImport } from './routes/operacao.equipe'
 import { Route as OperacaoManutencaoRouteImport } from './routes/operacao.manutencao'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
@@ -379,6 +380,11 @@ const OperacaoAgendaPrototipoRoute = OperacaoAgendaPrototipoRouteImport.update({
   path: '/operacao/agenda-prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoCustosRoute = OperacaoCustosRouteImport.update({
+  id: '/operacao/custos',
+  path: '/operacao/custos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperacaoEquipeRoute = OperacaoEquipeRouteImport.update({
   id: '/operacao/equipe',
   path: '/operacao/equipe',
@@ -632,6 +638,7 @@ export interface FileRoutesByFullPath {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/custos': typeof OperacaoCustosRoute
   '/operacao/equipe': typeof OperacaoEquipeRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
@@ -726,6 +733,7 @@ export interface FileRoutesByTo {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/custos': typeof OperacaoCustosRoute
   '/operacao/equipe': typeof OperacaoEquipeRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
@@ -822,6 +830,7 @@ export interface FileRoutesById {
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/custos': typeof OperacaoCustosRoute
   '/operacao/equipe': typeof OperacaoEquipeRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
@@ -919,6 +928,7 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/custos'
     | '/operacao/equipe'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
@@ -1013,6 +1023,7 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/custos'
     | '/operacao/equipe'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
@@ -1108,6 +1119,7 @@ export interface FileRouteTypes {
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/custos'
     | '/operacao/equipe'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
@@ -1204,6 +1216,7 @@ export interface RootRouteChildren {
   OperacaoIdRoute: typeof OperacaoIdRoute
   OperacaoAgendaRoute: typeof OperacaoAgendaRoute
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
+  OperacaoCustosRoute: typeof OperacaoCustosRoute
   OperacaoEquipeRoute: typeof OperacaoEquipeRoute
   OperacaoManutencaoRoute: typeof OperacaoManutencaoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
@@ -1626,6 +1639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoAgendaPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/custos': {
+      id: '/operacao/custos'
+      path: '/operacao/custos'
+      fullPath: '/operacao/custos'
+      preLoaderRoute: typeof OperacaoCustosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operacao/equipe': {
       id: '/operacao/equipe'
       path: '/operacao/equipe'
@@ -1968,6 +1988,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoIdRoute: OperacaoIdRoute,
   OperacaoAgendaRoute: OperacaoAgendaRoute,
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
+  OperacaoCustosRoute: OperacaoCustosRoute,
   OperacaoEquipeRoute: OperacaoEquipeRoute,
   OperacaoManutencaoRoute: OperacaoManutencaoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
