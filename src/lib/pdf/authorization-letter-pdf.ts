@@ -77,7 +77,14 @@ export async function generateAuthorizationLetterPdf(fields: AuthorizationLetter
         const cells=row.map(text=>({runs:[{text,bold:header}],align:'left' as const,after:0}));
         const h=Math.max(...cells.map((p,i)=>wrap(p,(widths[i]??0)-pad*2).length*lineHeight))+10;
         ensure(h); let x=left;
-        cells.forEach((p,i)=>{const w=widths[i]??0;page.drawRectangle({x,y:y-h+8,width:w,height:h,color:color(header?letterPalette.panel:letterPalette.paper),borderColor:color(letterPalette.rule),borderWidth:.4});drawPara(p,x+pad,y,w-pad*2);x+=w;}); y-=h;
+        cells.forEach((p,i)=>{
+          const w=widths[i]??0;
+          const lines=wrap(p,w-pad*2).length;
+          const textHeight=normalFont.heightAtSize(size,{descender:false})+Math.max(0,lines-1)*lineHeight;
+          const baseline=y+8-(h-textHeight)/2-normalFont.heightAtSize(size,{descender:false});
+          page.drawRectangle({x,y:y-h+8,width:w,height:h,color:color(header?letterPalette.panel:letterPalette.paper),borderColor:color(letterPalette.rule),borderWidth:.4});
+          drawPara(p,x+pad,baseline,w-pad*2);x+=w;
+        }); y-=h;
       };
       block.rows.forEach((row,i)=>{ if(y-35<65 && i>0){ensure(50);const header=block.rows[0];if(header)drawRow(header,true);} drawRow(row,i===0); }); y-=10;
     } else {
