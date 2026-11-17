@@ -35,7 +35,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StayoLogo } from "@/components/brand/StayoLogo";
 import { cn } from "@/lib/utils";
-import { navigation, navigationGroups, type NavItem } from "../../config/navigation";
+import { navigation, navigationGroups, canSeeNav, blockedSectionFor, type NavItem } from "../../config/navigation";
 import { isSupabaseConfigured } from "../../lib/api/supabase-client";
 import { signOut, useAuthSession } from "../../lib/auth/session";
 
@@ -99,6 +99,7 @@ function currentSection(pathname: string): NavItem | null {
 }
 
 function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const role = useAuthSession().profile?.role;
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(
       navigation.filter((i) => i.children).map((i) => [i.id, isActive(pathname, i.path)] as const),
@@ -110,7 +111,9 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
       {navigationGroups.map((group) => {
         const groupItems = group.itemIds
           .map((id) => navigation.find((item) => item.id === id))
-          .filter((item): item is NavItem => Boolean(item));
+          .filter((item): item is NavItem => Boolean(item) && canSeeNav(item as NavItem, role))
+          .map((item) => item.children ? { ...item, children: item.children.filter((c) => canSeeNav(c, role)) } : item);
+        if (groupItems.length === 0) return null;
         return (
           <div key={group.id} className="space-y-1">
             <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-sidebar-muted)]/70">
@@ -283,7 +286,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <AccountMenu />
           </div>
         </header>
-        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-5 xl:p-6"><div key={pathname} className="admin-page-enter min-w-0">{children}</div></main>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-5 xl:p-6"><div key={pathname} className="admin-page-enter min-w-0">{blocked ? (
+          <div role="alert" className="mx-auto mt-10 max-w-md rounded-[var(--admin-radius)] border bg-card p-6 text-center">
+            <p className="font-semibold">Sem acesso a {blocked.label}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Seu perfil não permite abrir esta área. Fale com um administrador se precisar.</p>
+          </div>
+        ) : children}</div></main>
       </div>
     </div>
   );
