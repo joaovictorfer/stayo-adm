@@ -68,7 +68,7 @@ function AgendaPage() {
             : <Link key={task.id} to="/operacao/$id" params={{ id: task.id }} className="grid w-full grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left hover:bg-[var(--admin-surface-subtle)]">
               <strong className="text-sm text-[var(--admin-primary)]">{task.scheduledTime ?? "—"}</strong>
               <span className="min-w-0"><b className="block truncate text-sm">{task.title}</b><small className="block truncate text-[var(--admin-muted)]">{task.propertyName ?? "Imóvel não informado"}</small></span>
-              <span className="flex items-center gap-2"><AdminStatusBadge tone={task.priority === "alta" ? "danger" : "neutral"}>{task.source === "admin" ? "Admin · " : ""}{taskDone(task) ? "Concluída" : task.status === "em_andamento" ? "Em andamento" : "Pendente"}</AdminStatusBadge><ChevronRight className="hidden size-4 text-[var(--admin-muted)] sm:block" /></span>
+              <span className="flex items-center gap-2"><AdminStatusBadge tone={task.priority === "alta" ? "danger" : "neutral"}>{taskDone(task) ? "Concluída" : task.status === "em_andamento" ? "Em andamento" : "Pendente"}</AdminStatusBadge><ChevronRight className="hidden size-4 text-[var(--admin-muted)] sm:block" /></span>
             </Link>)}</div>
         </section>)}</div>}
     <p className="text-xs text-[var(--admin-muted)]">Tarefas criadas no Admin podem ser editadas aqui. As do STAYO APP continuam em leitura até o corte.</p>
