@@ -5,6 +5,10 @@ const sampleFields = { qualification: 'Qualificação', propertyDescription: 'Ap
 
 const party: ContractParty = { personType: "pf", fullName: "Helena Duarte Pires", document: "529.982.247-25", email: "helena@example.com", phone: "54991001234", maritalStatus: "uniao_estavel", profession: "Arquiteta", address: "Rua de Teste, 10, Centro, Gramado/RS, CEP 95670-000", representative: "" };
 describe("conferência estruturada do contrato", () => {
+  it("formata CPF e CNPJ mesmo quando o cadastro contém apenas dígitos", () => {
+    expect(buildQualification([{ ...party, document: '52998224725' }])).toContain('529.982.247-25');
+    expect(buildQualification([{ ...party, personType: 'pj', document: '11222333000181' }])).toContain('11.222.333/0001-81');
+  });
   it("qualifica duas pessoas com endereço confirmado igual apenas ao final", () => {
     const result = buildQualification([party, { ...party, fullName: "Carlos Teste", email: "carlos@example.com", phone: "54999887766" }]);
     expect(result).toContain(`ambos residentes e domiciliados no endereço ${party.address}.`);

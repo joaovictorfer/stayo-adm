@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, FileText, Loader2, Pencil, ArrowLeft } from "lucide-react";
+import { Copy, FileText, Loader2, Pencil, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { contractRowToSnapshot } from "@/lib/contract-conditions";
@@ -17,6 +17,8 @@ import { ContractPersonForm } from './ContractPersonEditor';
 import { OwnerAddressEditor } from './OwnerAddressEditor';
 import { PixEditor } from './OwnerQuickEditors';
 import { ContractPropertyEditor } from './ContractPropertyEditor';
+import { ContractDocumentDialog } from './ContractDocumentDialog';
+import { commercialProposalsApi } from '@/lib/api/commercial-proposals';
 
 export function ContractCopyDialog({ implementation, submission, official, details, loading }: {
   implementation: ImplementationProject; submission: OwnerOnboardingSubmission | null | undefined;
@@ -24,6 +26,7 @@ export function ContractCopyDialog({ implementation, submission, official, detai
   details: PropertyDetails | null | undefined; loading: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [sensitive, setSensitive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<'people' | 'conditions' | 'property' | null>(null);
@@ -35,10 +38,14 @@ export function ContractCopyDialog({ implementation, submission, official, detai
     queryFn: async () => {
       const { data, error } = await supabase.from("implementation_contract_conditions").select("*").eq("implementation_id", implementation.id).maybeSingle();
       if (error) throw error;
-      return contractRowToSnapshot(data);
+      return data;
     },
   });
   const condos = useQuery({ ...adminCondominiumsListQuery(), enabled: open });
+  const proposals = useQuery({ queryKey: ['contract-generation-proposals', implementation.id], enabled: open,
+    queryFn: () => commercialProposalsApi.list(implementation.id) });
+  const latestProposal = proposals.data?.[0];
+  const fee = latestProposal?.snapshot?.total ?? latestProposal?.total;
   const condo = condos.data?.find(item => item.id === implementation.condominiumId);
   const sub = submission;
   const people: ContractCopyInput["people"] = sub?.people.length ? sub.people.map((person, index) => ({
@@ -53,7 +60,7 @@ export function ContractCopyDialog({ implementation, submission, official, detai
       street: details?.street || condo?.address || implementation.address, number: details?.number, complement: details?.complement,
       district: details?.district || condo?.neighborhood, city: details?.city || condo?.city || implementation.city,
       state: details?.state || condo?.state, postalCode: details?.postalCode || condo?.postalCode || implementation.postalCode },
-    conditions: conditions.data ?? {}, pixKey: sub?.pixKey,
+    conditions: contractRowToSnapshot(conditions.data), pixKey: sub?.pixKey,
   }, sensitive);
   const unavailable = conditions.isPending || conditions.isFetching || condos.isPending || condos.isError || conditions.isError || loading;
   async function copy(part: "all" | "people" | "summary") {
@@ -66,16 +73,16 @@ export function ContractCopyDialog({ implementation, submission, official, detai
     finally { setBusy(false); }
   }
   return <>
-    <Button variant="outline" size="sm" disabled={loading} onClick={() => setOpen(true)}><FileText />Dados para contrato</Button>
+    <Button size="sm" disabled={loading} onClick={() => setOpen(true)}><FileText />Gerar contrato</Button>
     <Dialog open={open} onOpenChange={value => { setOpen(value); if (!value) { setSensitive(false); setEditing(null); } }}>
       <DialogContent ref={contentRef} className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader><DialogTitle>Dados para contrato</DialogTitle><DialogDescription>{implementation.nickname || implementation.condominiumName} · {implementation.unit} · {implementation.code}</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Revisar Quadro Resumo</DialogTitle><DialogDescription>{implementation.nickname || implementation.condominiumName} · {implementation.unit} · {implementation.code}</DialogDescription></DialogHeader>
         {!editing && <label className="flex items-center gap-2 text-sm"><Checkbox checked={sensitive} onCheckedChange={value => setSensitive(value === true)} />Incluir CPF/CNPJ e chave Pix completos</label>}
         {document.hasMissing && !unavailable && <p role="status" className="text-sm text-muted-foreground">Campos sem informação e cláusulas não cadastradas estão marcados como [A DEFINIR].</p>}
         {unavailable ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">{conditions.isError || condos.isError ? <>Não foi possível carregar os dados.<Button variant="link" onClick={() => { void conditions.refetch(); void condos.refetch(); }}>Tentar novamente</Button></> : <><Loader2 className="size-4 animate-spin" />Carregando dados do contrato…</>}</p> : <>
           {editing ? <div className="space-y-5">
             <Button variant="ghost" size="sm" onClick={() => setEditing(null)}><ArrowLeft />Voltar ao resumo</Button>
-            {editing === 'property' ? <ContractPropertyEditor project={implementation} address={{ street: details?.street || condo?.address || implementation.address, number: details?.number, complement: details?.complement, district: details?.district || condo?.neighborhood, city: details?.city || condo?.city || implementation.city, state: details?.state || condo?.state, postalCode: details?.postalCode || condo?.postalCode || implementation.postalCode }} onDone={() => setEditing(null)} /> : editing === 'conditions' ? <ContractSummaryEditor implementationId={implementation.id} initial={conditions.data ?? {}} focusField={conditionFocus} onDone={() => setEditing(null)} /> : <>
+            {editing === 'property' ? <ContractPropertyEditor project={implementation} address={{ street: details?.street || condo?.address || implementation.address, number: details?.number, complement: details?.complement, district: details?.district || condo?.neighborhood, city: details?.city || condo?.city || implementation.city, state: details?.state || condo?.state, postalCode: details?.postalCode || condo?.postalCode || implementation.postalCode }} onDone={() => setEditing(null)} /> : editing === 'conditions' ? <ContractSummaryEditor implementationId={implementation.id} initial={contractRowToSnapshot(conditions.data)} focusField={conditionFocus} onDone={() => setEditing(null)} /> : <>
               {people.map((person, index) => <section key={index} className="space-y-3 border-b border-border pb-4"><h3 className="font-semibold">{index === 0 ? 'Titular' : `Contratante ${index + 1}`}</h3><ContractPersonForm implementationId={implementation.id} position={index} initial={{ fullName: person.name, document: person.document, email: person.email ?? null, phone: person.phone ?? null, maritalStatus: person.maritalStatus ?? null, profession: person.profession ?? null, role: sub?.people[index]?.role ?? null }} onDone={() => setEditing(null)} /></section>)}
               <section className="space-y-3"><h3 className="font-semibold">Endereço do proprietário</h3><OwnerAddressEditor implementationId={implementation.id} initial={{ postalCode: sub?.postalCode ?? '', street: sub?.street ?? '', number: sub?.number ?? '', complement: sub?.complement ?? '', district: sub?.district ?? '', city: sub?.city ?? '', state: sub?.state ?? '' }} onDone={() => setEditing(null)} /></section>
               <section className="space-y-3"><h3 className="font-semibold">Chave Pix</h3><PixEditor implementationId={implementation.id} initialType={sub?.pixType} initialKey={sub?.pixKey} /></section>
@@ -89,8 +96,9 @@ export function ContractCopyDialog({ implementation, submission, official, detai
             <div className="overflow-hidden rounded-lg border border-border">{document.rows.map((row, index) => <div key={row.title} className="border-b border-border px-3 py-2 last:border-b-0"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"><h4 className="min-w-0 text-sm font-semibold">{row.title}</h4>{[9, 10, 13, 14].includes(index) ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">Padrão do contrato</span> : <Button variant="ghost" size="sm" className="shrink-0" aria-label={`Editar ${row.title}`} onClick={() => index === 0 ? setEditing('property') : editConditions(['', 'administration_fee', 'cleaning_responsibility', 'administration_fee', 'payout_rule', 'owner_use_notes', 'marketing_rule', 'maintenance_limit', 'periodic_shutdown_rule', '', '', 'duration_months', 'notice_period_days', '', ''][index])}><Pencil className="size-4" /><span className="hidden sm:inline">Editar</span></Button>}</div><p className="whitespace-pre-line text-sm leading-relaxed">{row.body}</p></div>)}</div>
           </section></>}
         </>}
-        {!editing && <div className="flex justify-end"><Button disabled={busy || unavailable} onClick={() => void copy("all")}><Copy />Copiar tudo para Word</Button></div>}
+        {!editing && <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-border bg-background py-3"><Button variant="ghost" disabled={busy || unavailable} onClick={() => void copy("all")}><Copy />Copiar texto</Button><Button disabled={busy || unavailable} onClick={() => { setOpen(false); setSensitive(false); setGenerating(true); }}>Continuar para gerar contrato<ArrowRight /></Button></div>}
       </DialogContent>
     </Dialog>
+    <ContractDocumentDialog implementationId={implementation.id} conditions={conditions.data ?? null} implementationFee={fee != null && fee > 0 ? fee : null} controlledOpen={generating} onControlledOpenChange={setGenerating} />
   </>;
 }

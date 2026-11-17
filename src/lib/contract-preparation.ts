@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isValidCivilDate, type ContractDocumentFields } from "./contract-document";
-import { isValidCpf, isValidCnpj, normalizePhone } from "./owner-form-validation";
+import { isValidCpf, isValidCnpj, normalizePhone, formatBrazilianDocument } from "./owner-form-validation";
 import type { OwnerOnboardingSubmission } from "@/types/owner-onboarding";
 
 const text = z.string().trim().min(1, "Informe este dado").max(4000);
@@ -28,17 +28,17 @@ const maritalLabels: Record<string, string> = { solteiro: "solteiro(a)", casado:
 export function buildQualification(parties: ContractParty[]): string {
   const sharedAddress = parties.length === 2 && parties.every(p => p.personType === "pf") && parties[0]?.address.trim() === parties[1]?.address.trim();
   if (sharedAddress) {
-    const qualification = parties.map(p => [p.fullName.trim().toUpperCase(), maritalLabels[p.maritalStatus] ?? p.maritalStatus, p.profession, `inscrito(a) no CPF nº ${p.document}`, `e-mail ${p.email}`, `telefone ${p.phone}`].join(", ")).join(" e ");
+    const qualification = parties.map(p => [p.fullName.trim().toUpperCase(), maritalLabels[p.maritalStatus] ?? p.maritalStatus, p.profession, `inscrito(a) no CPF nº ${formatBrazilianDocument(p.document)}`, `e-mail ${p.email}`, `telefone ${p.phone}`].join(", ")).join(" e ");
     return `${qualification}; ambos residentes e domiciliados no endereço ${parties[0]?.address.trim()}.`;
   }
   return parties.map(p => [p.fullName.trim().toUpperCase(),
-    ...(p.personType === "pf" ? [maritalLabels[p.maritalStatus] ?? p.maritalStatus, p.profession, `inscrito(a) no CPF nº ${p.document}`, `residente e domiciliado(a) em ${p.address}`] : [`inscrita no CNPJ nº ${p.document}`, `com sede em ${p.address}`, `representada por ${p.representative}`]),
+    ...(p.personType === "pf" ? [maritalLabels[p.maritalStatus] ?? p.maritalStatus, p.profession, `inscrito(a) no CPF nº ${formatBrazilianDocument(p.document)}`, `residente e domiciliado(a) em ${p.address}`] : [`inscrita no CNPJ nº ${formatBrazilianDocument(p.document)}`, `com sede em ${p.address}`, `representada por ${p.representative}`]),
     `e-mail ${p.email}`, `telefone ${p.phone}`].join(", ")).join("; ") + ".";
 }
 export function initialContractParties(o: OwnerOnboardingSubmission): ContractParty[] {
   const address = [o.street, o.number, o.complement, o.district, [o.city, o.state].filter(Boolean).join("/"), o.postalCode && `CEP ${o.postalCode}`].filter(Boolean).join(", ");
   const people = o.people.length ? o.people : [{ personType: o.personType, fullName: o.fullName, document: o.document, email: o.email, phone: o.phone, maritalStatus: "", profession: "" }];
-  return people.map((p, i) => ({ personType: p.personType ?? "pf", fullName: p.fullName, document: p.document,
+  return people.map((p, i) => ({ personType: p.personType ?? "pf", fullName: p.fullName, document: formatBrazilianDocument(p.document),
     email: p.email || (i === 0 ? o.email : ""), phone: p.phone || (i === 0 ? o.phone : ""),
     maritalStatus: p.maritalStatus ?? "", profession: p.profession ?? "", address: i === 0 ? address : "", representative: "" }));
 }

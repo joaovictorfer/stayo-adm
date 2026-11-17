@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Download, FileText, Loader2, Users, Building2, SlidersHorizontal, PenLine, CheckCircle2, ChevronDown } from "lucide-react";
@@ -15,6 +15,8 @@ import { ContractReview } from "./ContractReview";
 import { implementationQuery, ownerOnboardingSubmissionQuery } from "@/lib/api/queries";
 import { exportStandardContract } from "@/lib/contract-document.functions";
 import { buildQualification, contractFieldsSchema, initialContractParties, type ContractParty, type PreparedContractFields } from "@/lib/contract-preparation";
+import { prepareContractPrint } from '@/lib/contract-print';
+import { formatBrazilianDocument } from '@/lib/owner-form-validation';
 
 const contractSections = [
   { id: 'parties', label: 'Contratantes', icon: Users },
@@ -24,8 +26,10 @@ const contractSections = [
 ] as const;
 type ContractSection = typeof contractSections[number]['id'];
 
-export function ContractDocumentDialog({ implementationId, conditions, implementationFee }: { implementationId: string; conditions: Record<string, unknown> | null; implementationFee?: number | null }) {
-  const [open, setOpen] = useState(false);
+export function ContractDocumentDialog({ implementationId, conditions, implementationFee, controlledOpen, onControlledOpenChange }: { implementationId: string; conditions: Record<string, unknown> | null; implementationFee?: number | null; controlledOpen?: boolean; onControlledOpenChange?: (open: boolean) => void }) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = (value: boolean) => { setLocalOpen(value); onControlledOpenChange?.(value); };
   const [activeSection, setActiveSection] = useState<ContractSection>("parties");
   const project = useQuery({ ...implementationQuery(implementationId), enabled: open });
   const owner = useQuery({ ...ownerOnboardingSubmissionQuery(implementationId), enabled: open, refetchInterval: false });
@@ -37,6 +41,9 @@ export function ContractDocumentDialog({ implementationId, conditions, implement
   const [reviewing, setReviewing] = useState(false);
   const [file, setFile] = useState<{ blob: Blob; filename: string } | null>(null);
   const revision = useRef(0);
+  const printDocument = useRef<Awaited<ReturnType<typeof prepareContractPrint>> | null>(null);
+  useEffect(() => () => { printDocument.current?.dispose(); }, []);
+  useEffect(() => { if (!open) { printDocument.current?.dispose(); printDocument.current = null; setFields(null); setFile(null); setReviewing(false); setDirty(false); } }, [open]);
   const generate = useServerFn(exportStandardContract);
   const initialize = () => {
     const p = project.data;
@@ -60,12 +67,14 @@ export function ContractDocumentDialog({ implementationId, conditions, implement
     setDirty(false);
     setReviewing(false);
   };
-  const change = <K extends keyof PreparedContractFields>(key: K, value: PreparedContractFields[K]) => { if (busy) return; revision.current++; setDirty(true); setFields(f => f ? { ...f, [key]: value } : f); setFile(null); };
+  const change = <K extends keyof PreparedContractFields>(key: K, value: PreparedContractFields[K]) => { if (busy) return; printDocument.current?.dispose(); printDocument.current = null; revision.current++; setDirty(true); setFields(f => f ? { ...f, [key]: value } : f); setFile(null); };
   const validation = fields ? contractFieldsSchema.safeParse(fields) : null;
   const issues = validation && !validation.success ? validation.error.issues : [];
   const fieldError = (path: string) => issues.find(issue => issue.path.join(".") === path)?.message;
   const changeParty = (index: number, key: keyof ContractParty, value: string) => {
     if (!fields || busy) return;
+    printDocument.current?.dispose(); printDocument.current = null;
+    if (key === 'document') value = formatBrazilianDocument(value);
     const parties = fields.parties.map((p, i) => i === index ? { ...p, [key]: value } : p);
     revision.current++; setDirty(true); setFields({ ...fields, parties, qualification: buildQualification(parties), signatureNames: parties.map(p => p.fullName.trim().toUpperCase()).join(" / ") }); setFile(null);
   };
@@ -86,7 +95,11 @@ export function ContractDocumentDialog({ implementationId, conditions, implement
       const result = await generate({ data: { implementationId, fields: snapshot } });
       if (rev !== revision.current) return;
       const bytes = Uint8Array.from(atob(result.base64), c => c.charCodeAt(0));
-      setFile({ blob: new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }), filename: result.filename });
+      const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const printable = await prepareContractPrint(blob);
+      if (rev !== revision.current) { printable.dispose(); return; }
+      printDocument.current?.dispose(); printDocument.current = printable;
+      setFile({ blob, filename: result.filename });
     } catch (e) {
       if (rev === revision.current) {
         const message = e instanceof Error ? e.message : "";
@@ -102,10 +115,10 @@ export function ContractDocumentDialog({ implementationId, conditions, implement
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   };
   return <>
-    <Button variant="outline" onClick={() => { revision.current++; setOpen(true); setFields(null); setFile(null); setDirty(false); setReviewing(false); setActiveSection("parties"); setPrepareError(null); }}><FileText className="size-4" />Gerar contrato</Button>
+    {controlledOpen === undefined && <Button variant="outline" onClick={() => { revision.current++; setOpen(true); setFields(null); setFile(null); setDirty(false); setReviewing(false); setActiveSection("parties"); setPrepareError(null); }}><FileText className="size-4" />Gerar contrato</Button>}
     <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent className="flex w-[calc(100%-1rem)] max-w-4xl h-[min(760px,92dvh)] max-h-[92dvh] flex-col overflow-hidden rounded-lg p-0">
-        <DialogHeader className="shrink-0 border-b border-border bg-primary/5 px-4 py-5 pr-12 sm:px-6"><div className="flex items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><FileText className="size-5" /></span><div className="min-w-0 text-left"><DialogTitle className="text-xl text-primary">Contrato de gestão</DialogTitle><DialogDescription className="mt-1">{project.data?.unit ? `${project.data.condominiumName ?? 'Apartamento'} · ${project.data.unit} · ` : ''}{file ? "Word pronto para baixar" : reviewing ? "Conferência final" : "Minuta padrão STAYO"}</DialogDescription></div></div></DialogHeader>
+        <DialogHeader className="shrink-0 border-b border-border bg-primary/5 px-4 py-5 pr-12 sm:px-6"><div className="flex items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><FileText className="size-5" /></span><div className="min-w-0 text-left"><DialogTitle className="text-xl text-primary">Contrato de gestão</DialogTitle><DialogDescription className="mt-1">{project.data?.unit ? `${project.data.condominiumName ?? 'Apartamento'} · ${project.data.unit} · ` : ''}{file ? "Word e PDF" : reviewing ? "Conferência final" : "Minuta padrão STAYO"}</DialogDescription></div></div></DialogHeader>
         {fields && !reviewing && <nav aria-label="Seções do contrato" className="grid shrink-0 grid-cols-2 gap-1.5 border-b border-border bg-muted/30 px-3 py-3 sm:grid-cols-4 sm:px-6">{contractSections.map(({ id, label, icon: Icon }, index) => {
           const pending = issues.filter(issue => id === 'parties' ? issue.path[0] === 'parties' || issue.path[0] === 'qualification' : id === 'property' ? issue.path[0] === 'propertyDescription' : id === 'signatures' ? /^(signature|witness)/.test(String(issue.path[0])) : !['parties', 'qualification', 'propertyDescription'].includes(String(issue.path[0])) && !/^(signature|witness)/.test(String(issue.path[0]))).length;
           return <Button key={id} variant={activeSection === id ? 'default' : 'ghost'} aria-current={activeSection === id ? 'step' : undefined} className="h-11 min-w-0 justify-start gap-2 rounded-lg px-3 text-xs shadow-none sm:text-sm" onClick={() => setActiveSection(id)}><Icon className="size-4 shrink-0" /><span className="truncate">{index + 1}. {label}</span>{pending > 0 && <span className={`ml-auto grid size-5 shrink-0 place-items-center rounded-full text-[10px] ${activeSection === id ? 'bg-primary-foreground/15 text-primary-foreground' : 'bg-destructive/10 text-destructive'}`}>{pending}</span>}</Button>;
@@ -147,9 +160,10 @@ export function ContractDocumentDialog({ implementationId, conditions, implement
           <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">{([['witness1Name','Primeira testemunha'],['witness1Cpf','CPF'],['witness2Name','Segunda testemunha'],['witness2Cpf','CPF da segunda testemunha']] as const).map(([key,label]) => <div key={key} className="space-y-2"><Label htmlFor={`contract-${key}`} className="flex flex-wrap items-center gap-2">{label}{key.startsWith('witness2') && <span className="text-xs font-normal text-muted-foreground">Opcional</span>}</Label><Input className="h-11 rounded-lg bg-muted/20 shadow-none focus-visible:bg-background" id={`contract-${key}`} aria-invalid={!!fieldError(key)} value={fields[key]} onChange={e => change(key,e.target.value)} />{fieldError(key) && <p className="text-xs text-destructive">{fieldError(key)}</p>}</div>)}</div>
           </div>
         </fieldset>}
+        {file && <p className="mt-5 text-sm text-muted-foreground">Para o PDF, escolha “Salvar como PDF” na janela de impressão.</p>}
         </div>
         {prepareError && <p role="alert" className="shrink-0 border-t border-border px-6 py-3 text-sm text-destructive">{prepareError}</p>}
-        <DialogFooter className="shrink-0 flex-wrap items-center gap-2 border-t border-border bg-muted/30 px-4 py-4 sm:px-6">{fields && <p role={issues.length ? 'alert' : 'status'} className={`mr-auto flex items-center gap-2 text-xs ${issues.length ? 'text-destructive' : 'text-primary'}`}>{issues.length ? `${issues.length} ${issues.length === 1 ? 'dado pendente' : 'dados pendentes'}` : <><CheckCircle2 className="size-4" />{file ? 'Documento preparado' : 'Dados completos'}</>}</p>}<Button variant="outline" disabled={busy} onClick={() => closeDialog(false)}>Fechar</Button>{reviewing && <Button variant="outline" disabled={busy} onClick={() => { setReviewing(false); setPrepareError(null); }}><ArrowLeft className="size-4" />Editar dados</Button>}{file ? <Button onClick={download}><Download className="size-4" />Baixar Word</Button> : fields && (reviewing ? <Button disabled={!validation?.success || busy} onClick={() => void prepare()}>{busy && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />}{busy ? "Preparando…" : "Preparar contrato"}</Button> : <Button disabled={!validation?.success || busy} onClick={() => setReviewing(true)}>Revisar contrato<ArrowRight className="size-4" /></Button>)}</DialogFooter>
+        <DialogFooter className="shrink-0 flex-wrap items-center gap-2 border-t border-border bg-muted/30 px-4 py-4 sm:px-6">{fields && <p role={issues.length ? 'alert' : 'status'} className={`mr-auto flex items-center gap-2 text-xs ${issues.length ? 'text-destructive' : 'text-primary'}`}>{issues.length ? `${issues.length} ${issues.length === 1 ? 'dado pendente' : 'dados pendentes'}` : <><CheckCircle2 className="size-4" />{file ? 'Documento preparado' : 'Dados completos'}</>}</p>}<Button variant="outline" disabled={busy} onClick={() => closeDialog(false)}>Fechar</Button>{reviewing && <Button variant="outline" disabled={busy} onClick={() => { setReviewing(false); setPrepareError(null); }}><ArrowLeft className="size-4" />Editar dados</Button>}{file ? <><Button variant="outline" onClick={() => printDocument.current?.print()}><Download className="size-4" />Salvar em PDF</Button><Button onClick={download}><Download className="size-4" />Baixar Word</Button></> : fields && (reviewing ? <Button disabled={!validation?.success || busy} onClick={() => void prepare()}>{busy && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />}{busy ? "Preparando…" : "Gerar Word e PDF"}</Button> : <Button disabled={!validation?.success || busy} onClick={() => setReviewing(true)}>Revisar contrato<ArrowRight className="size-4" /></Button>)}</DialogFooter>
       </DialogContent>
     </Dialog>
     <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}><AlertDialogContent className="w-[calc(100%-2rem)] max-w-lg rounded-lg"><AlertDialogHeader><AlertDialogTitle>Descartar alterações do contrato?</AlertDialogTitle><AlertDialogDescription>Os dados ajustados nesta conferência não foram salvos. Ao sair, essas alterações serão descartadas.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Continuar conferência</AlertDialogCancel><AlertDialogAction onClick={discard}>Descartar e sair</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
