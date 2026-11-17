@@ -2558,6 +2558,7 @@ export type Database = {
           id: string
           implementation_id: string | null
           kind: string
+          payout_reservation_id: string | null
           priority: string
           responsible_name: string | null
           scheduled_time: string | null
@@ -2577,6 +2578,7 @@ export type Database = {
           id?: string
           implementation_id?: string | null
           kind?: string
+          payout_reservation_id?: string | null
           priority?: string
           responsible_name?: string | null
           scheduled_time?: string | null
@@ -2596,6 +2598,7 @@ export type Database = {
           id?: string
           implementation_id?: string | null
           kind?: string
+          payout_reservation_id?: string | null
           priority?: string
           responsible_name?: string | null
           scheduled_time?: string | null
@@ -2617,6 +2620,13 @@ export type Database = {
             columns: ["implementation_id"]
             isOneToOne: false
             referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_tasks_payout_reservation_id_fkey"
+            columns: ["payout_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "payout_reservations"
             referencedColumns: ["id"]
           },
         ]
