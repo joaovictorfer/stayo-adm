@@ -41,7 +41,7 @@ const channelOf = (c: string) => {
 const cents = (m: any): number | null => (typeof m?.cents === "number" && m.cents >= 0 ? m.cents : null);
 
 /** Importa (sem duplicar, por central_reservation_id) as reservas de um imóvel num mês; preserva valores ajustados manualmente. */
-async function syncProjectMonth(context: any, http: any, proj: { id: string; core_property_id: string }, month: string, cache?: any[]) {
+async function syncProjectMonth(context: any, http: any, proj: { id: string; core_property_id: string | null }, month: string, cache?: any[]) {
   const data = { month };
     const { data: cond } = await context.supabase.from("implementation_contract_conditions").select("payout_mode").eq("implementation_id", proj.id).limit(1).maybeSingle();
     const auto = (cond as any)?.payout_mode === "platform_auto";
