@@ -38,9 +38,16 @@ describe("carta de autorização à portaria", () => {
   });
   it("preserva cabeçalho e margens do contrato", () => {
     const out = unzipSync(generateAuthorizationLetterDocx(new Uint8Array(readFileSync("src/assets/contracts/contrato-stayo-original.docx")), base));
-    const xml = strFromU8(out["word/document.xml"]!);
+    const document = out["word/document.xml"];
+    if (!document) throw new Error("Documento ausente");
+    const xml = strFromU8(document);
     expect(xml).toContain('w:headerReference w:type="default"');
     expect(xml).not.toContain("CONTRATO DE PRESTAÇÃO");
     expect(out["word/styles.xml"]).toBeDefined();
+    const original = unzipSync(new Uint8Array(readFileSync("src/assets/contracts/contrato-stayo-original.docx")));
+    for (const [path, bytes] of Object.entries(original)) {
+      if (["word/document.xml", "word/_rels/document.xml.rels", "[Content_Types].xml"].includes(path)) continue;
+      expect(out[path], path).toEqual(bytes);
+    }
   });
 });

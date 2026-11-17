@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Aplicar formato aprovado à carta: partes lado a lado, representantes em tabela, placas destacadas e ícones compartilhados no Word/PDF. Downloads autenticados em 1280/695/390, seis testes e documentos renderizados conferidos; corrigido CPF isolado na segunda página do PDF. Timbrado preservado, sem alterar cadastros.
 - [x] Reorganizar a carta sem “Nós”: partes identificadas, autorização separada e representantes/veículos com títulos e divisórias. Downloads em 1280/695/390 e seis testes conferidos; corrigido CPF da segunda assinatura isolado no Word com espaçamento menor; Word convertido e PDF reconferidos em uma página.
 - [x] Refinar visual da carta à portaria; CPF/CNPJ formatados em campos e documentos. 22 testes, digitação e downloads reais Word/PDF em ficha autenticada, telas 1280/695/390 sem transbordamento nem erros; PDF de uma página inspecionado sem cortes ou sobreposições e Word validado.
 - [x] Carta à portaria: proprietários visíveis e seções recolhidas/editáveis; downloads Word/PDF reais em desktop/celular, quatro testes e PDF de uma página inspecionado; corrigidos espaçamento da pontuação e alinhamento da remoção no celular.
