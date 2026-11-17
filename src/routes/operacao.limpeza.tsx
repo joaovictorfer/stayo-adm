@@ -8,6 +8,7 @@ import { AdminEmptyState, AdminPageHeader, AdminStatusBadge } from "@/components
 import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SyncUpcomingButton } from "@/components/admin/SyncUpcomingButton";
 import { MoneyCentsInput } from "@/components/ui/money-input";
 import { assignRoutine, cleaningBoardQuery, markClean, markDirty, type CleaningRow } from "@/lib/api/op-cleaning-api";
 import { opStaffQuery } from "@/lib/api/op-execution";
@@ -53,7 +54,7 @@ function CleaningPage() {
   const activeStaff = (staff.data ?? []).filter((s) => s.active);
 
   return <div className="space-y-5">
-    <AdminPageHeader eyebrow="Operação" title="Limpeza dos imóveis" description="Marque o que está limpo ou sujo. Cada saída de hóspede gera uma limpeza; sem nova reserva, o imóvel segue pronto." />
+    <AdminPageHeader eyebrow="Operação" title="Limpeza dos imóveis" description="Marque o que está limpo ou sujo. Cada saída de hóspede gera uma limpeza; sem nova reserva, o imóvel segue pronto." actions={<SyncUpcomingButton />} />
     <div className="portfolio-metrics">
       <PortfolioMetric icon={Sparkles} value={count("pronto")} label="Prontos" tone="success" />
       <PortfolioMetric icon={Brush} value={count("sujo")} label="Sujos" tone={count("sujo") ? "warning" : "success"} />
@@ -104,7 +105,7 @@ function CleaningPage() {
             </select>
           </div>)}</div>}
     </section>
-    <p className="text-xs text-[var(--admin-muted)]">A situação considera as reservas já importadas e as limpezas registradas no Admin. Limpezas marcadas entram na Agenda e em Custos.</p>
+    <p className="text-xs text-[var(--admin-muted)]">A situação considera as reservas importadas do Guia (mês atual e próximos 2 meses ao puxar) e as limpezas registradas no Admin. Limpezas marcadas entram na Agenda e em Custos.</p>
     <CleanDialog row={cleaning} staff={activeStaff} today={today} onClose={() => setCleaning(null)} onDone={refresh} />
   </div>;
 }

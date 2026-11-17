@@ -40,19 +40,13 @@ const channelOf = (c: string) => {
 };
 const cents = (m: any): number | null => (typeof m?.cents === "number" && m.cents >= 0 ? m.cents : null);
 
-export const syncCentralReservations = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ implementationId: z.string().uuid(), month: z.string().regex(/^\d{4}-\d{2}$/) }).parse(i))
-  .handler(async ({ context, data }) => {
-    setResponseHeader("Cache-Control", "private, no-store");
-    const http = await gate(context);
-    const { data: proj, error } = await context.supabase.from("implementation_projects")
-      .select("id, core_property_id").eq("id", data.implementationId).maybeSingle();
-    if (error || !proj) throw new Error("Ficha não encontrada.");
-    if (!proj.core_property_id) return { ok: false as const, reason: "not_linked" as const, imported: 0, updated: 0, found: 0 };
+/** Importa (sem duplicar, por central_reservation_id) as reservas de um imóvel num mês; preserva valores ajustados manualmente. */
+async function syncProjectMonth(context: any, http: any, proj: { id: string; core_property_id: string | null }, month: string, cache?: any[]) {
+  const data = { month };
     const { data: cond } = await context.supabase.from("implementation_contract_conditions").select("payout_mode").eq("implementation_id", proj.id).limit(1).maybeSingle();
     const auto = (cond as any)?.payout_mode === "platform_auto";
 
-    const all = await listAll(http, "reservations", { property_id: proj.core_property_id });
+    const all = cache ?? await listAll(http, "reservations", { property_id: proj.core_property_id ?? "" });
     const rows = all.filter((r) => r.property_id === proj.core_property_id && !r.is_block && r.status !== "cancelled" && String(r.checkin_date).startsWith(data.month));
 
     const { data: existing } = await context.supabase.from("payout_reservations").select("central_reservation_id,payout_flow,manual_amounts")
@@ -116,7 +110,48 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
       const { error: e } = await context.supabase.from("payout_reservations").delete().eq("id", row.id);
       if (!e) removed++;
     }
-    return { ok: true as const, reason: null, imported, updated, found: rows.length, removed, kept };
+    return { imported, updated, found: rows.length, removed, kept };
+}
+
+export const monthsFrom = (today: string, n: number) => Array.from({ length: n }, (_, i) => {
+  const [y, m] = today.split("-").map(Number) as [number, number];
+  const d = new Date(Date.UTC(y, m - 1 + i, 1));
+  return d.toISOString().slice(0, 7);
+});
+
+/** Próximas reservas de todos os imóveis em operação vinculados ao Guia: mês atual + próximos meses. Rotinas de limpeza nascem pelo gatilho do banco. */
+export const syncUpcomingReservations = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), months: z.number().int().min(1).max(4) }).parse(i))
+  .handler(async ({ context, data }) => {
+    setResponseHeader("Cache-Control", "private, no-store");
+    const http = await gate(context);
+    const { data: projects, error } = await context.supabase.from("implementation_projects")
+      .select("id, core_property_id").eq("operational_status", "operacao").not("core_property_id", "is", null);
+    if (error) throw new Error("Não foi possível ler os imóveis.");
+    const total = { properties: 0, imported: 0, updated: 0, removed: 0, kept: 0, failed: 0 };
+    for (const proj of projects ?? []) {
+      try {
+        const all = await listAll(http, "reservations", { property_id: proj.core_property_id });
+        for (const month of monthsFrom(data.today, data.months)) {
+          const r = await syncProjectMonth(context, http, proj, month, all);
+          total.imported += r.imported; total.updated += r.updated; total.removed += r.removed; total.kept += r.kept;
+        }
+        total.properties++;
+      } catch { total.failed++; }
+    }
+    return total;
+  });
+
+export const syncCentralReservations = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ implementationId: z.string().uuid(), month: z.string().regex(/^\d{4}-\d{2}$/) }).parse(i))
+  .handler(async ({ context, data }) => {
+    setResponseHeader("Cache-Control", "private, no-store");
+    const http = await gate(context);
+    const { data: proj, error } = await context.supabase.from("implementation_projects")
+      .select("id, core_property_id").eq("id", data.implementationId).maybeSingle();
+    if (error || !proj) throw new Error("Ficha não encontrada.");
+    if (!proj.core_property_id) return { ok: false as const, reason: "not_linked" as const, imported: 0, updated: 0, found: 0 };
+    return { ok: true as const, reason: null, ...(await syncProjectMonth(context, http, proj, data.month)) };
   });
 
 /** Importa apenas proprietários dos imóveis já vinculados; nunca sobrescreve dados do Admin. */

@@ -78,3 +78,10 @@ describe("Central reservation CPF import", () => {
     expect(eq).toHaveBeenCalledWith("id", "r-cancelled");
   });
 });
+
+describe("monthsFrom", () => {
+  it("covers the current month and the next ones across the year", async () => {
+    const { monthsFrom } = await import("./sync.functions");
+    expect(monthsFrom("2026-11-17", 3)).toEqual(["2026-11", "2026-12", "2027-01"]);
+  });
+});
