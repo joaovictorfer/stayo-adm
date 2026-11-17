@@ -13,7 +13,7 @@ describe("custos operacionais", () => {
   });
   it("a pagar = serviços + reembolsos aprovados; pendente e recusado não entram", () => {
     const r = computeOpCosts([task({})], [exp({}), exp({ status: "pendente", amount: 25 }), exp({ status: "recusado", amount: 99 })], "2026-11");
-    expect(r.people[0].toPay).toBe(200); expect(r.pendingApproval).toBe(25); expect(r.expenses).toBe(65);
+    expect(r.people[0]!.toPay).toBe(200); expect(r.pendingApproval).toBe(25); expect(r.expenses).toBe(65);
   });
   it("tarefa sem valor é sinalizada, não vira zero", () => {
     const r = computeOpCosts([task({ amount: null })], [], "2026-11");
@@ -21,6 +21,6 @@ describe("custos operacionais", () => {
   });
   it("custo por imóvel soma serviços e gastos", () => {
     const r = computeOpCosts([task({})], [exp({})], "2026-11");
-    expect(r.properties[0].total).toBe(200);
+    expect(r.properties[0]!.total).toBe(200);
   });
 });

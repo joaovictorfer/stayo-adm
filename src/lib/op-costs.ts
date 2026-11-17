@@ -34,7 +34,7 @@ export function computeOpCosts(tasks: CostTask[], expenses: CostExpense[], month
     if (t.amount == null) { unpriced += 1; continue; }
     p.services = cents(p.services + t.amount);
     if (!t.team.length) { const n = person("none", "Sem equipe"); n.services = cents(n.services + t.amount); n.tasks += 1; continue; }
-    splitAmount(t.amount, t.team.map((m) => m.share)).forEach((v, i) => { const n = person(t.team[i].staffId, t.team[i].name); n.services = cents(n.services + v); n.tasks += 1; });
+    splitAmount(t.amount, t.team.map((m) => m.share)).forEach((v, i) => { const m = t.team[i]!; const n = person(m.staffId, m.name); n.services = cents(n.services + v); n.tasks += 1; });
   }
   for (const e of exps) {
     const p = prop(e.propertyId, e.propertyName); p.expenses = cents(p.expenses + e.amount);
