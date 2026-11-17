@@ -53,13 +53,13 @@
 - Payout selection filters through the shared eligibility predicate (active and Core-linked); URL search filters the same eligible catalogue, never hiding properties solely for an empty month.
 - On-demand payout imports copy valid resolved titular CPF for inserts and updates only; absent or invalid provider documents never erase saved CPF, keeping report identities complete without widening portal access.
 - Monthly payout PDFs render locally from the selected admin statement using payout-statement calculations, print CSS palette, official assets and embedded fonts; incomplete financial rows block export and no document is uploaded or exposed through public/portal capabilities.
-- PDF layout measures wrapped text with the embedded font before page breaks; keep financial rows and reservation blocks intact to prevent overlap with subsequent content and footers.
+- PDF layout measures wrapped text with the embedded font before page breaks, keeping rows and reservation blocks intact so nothing overlaps footers.
 - Payout screen and PDF share payoutPdfSplit for both flows and payoutPdfBalance for monthly presentation; contractual shares never substitute confirmed direct receipts, keeping platform payments outside the STAYO payable balance.
 - Contract exports use the approved source-controlled DOCX with shared summary defaults in contract-standard-clauses.ts; through a role-protected server function; edit only allowlisted ranges, preserving other ZIP parts/OOXML so fixed clauses and branding are never rebuilt.
 - Contract preparation validates structured parties through a shared browser-safe schema and rebuilds qualification/signatures server-side; never copy the principal's contact or address into another party, preventing incomplete or mismatched exports.
 - Contract editing and review remain local to the dialog; review uses the shared validated snapshot, and closing edited fields requires explicit discard so no unreviewed data is silently lost or persisted.
 
-- Financial month selectors reuse MonthPicker with explicit pt-BR labels and unchanged YYYY-MM values, so browser language never changes competence presentation or filtering.
+- Month selectors reuse MonthPicker (pt-BR labels, YYYY-MM values) so browser language never changes competence.
 
 - Property history uses admin-only immutable case events through core-client, revision-locked idempotent RPC writes and supply-change triggers; adapters preserve source identity, date precision and partial-source warnings without exposing history to portal capabilities.
 - Property-history pending and checking views derive quantities from the latest case revision before pagination and share the active period/type filters, preventing superseded deliveries from reopening completed work.
