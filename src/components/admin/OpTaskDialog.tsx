@@ -56,7 +56,7 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
           <label className={label}>Responsável<input className={input} value={form.responsibleName ?? ""} onChange={(e) => set("responsibleName", e.target.value)} placeholder="Nome" /></label>
           <label className={label}>Valor (R$)<input inputMode="decimal" className={input} value={amountText} onChange={(e) => setAmountText(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="0,00" /></label>
         </div>
-        <label className={label}>Situação<select className={input} value={form.status} onChange={(e) => set("status", e.target.value as OpTaskInput["status"])}>{Object.entries(opStatusLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        {!task && <label className={label}>Situação<select className={input} value={form.status} onChange={(e) => set("status", e.target.value as OpTaskInput["status"])}>{Object.entries(opStatusLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>}
         <label className={label}>Orientação<Textarea rows={3} value={form.guidance ?? ""} onChange={(e) => set("guidance", e.target.value)} placeholder="Instruções para a equipe" /></label>
       </form>
       {task && <OpTaskExecution taskId={task.id} />}
