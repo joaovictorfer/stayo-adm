@@ -38,7 +38,7 @@ type Para = { runs: Run[]; align?: "center" | "both" | "right" | "left"; after?:
 export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
   const plural = f.owners.length > 1;
   const date = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${f.date}T12:00:00Z`));
-  const heading = (text: string): Para => ({ runs: [{ text, bold: true }], align: "left", after: 100, divider: true });
+  const heading = (text: string): Para => ({ runs: [{ text, bold: true }], align: "left", after: 180, divider: true });
   const list = (items: string[]): Para[] => items.map((t, i) => ({ runs: [{ text: t }], align: "left", after: i === items.length - 1 ? 160 : 40 }));
   const paras: Para[] = [
     { runs: [{ text: `CARTA DE AUTORIZAÇÃO À PORTARIA DO ${f.condominium.toUpperCase()}`, bold: true }], align: "center", after: 240 },
