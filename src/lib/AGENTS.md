@@ -6,3 +6,4 @@
 - Payout closing reminder derives pending balances from computeStatement for all eligible properties (due day 10 of next month); read-only, never stores balances.
 - Calendar "today" uses local-date.ts (America/Sao_Paulo), never toISOString UTC slicing; property names use property-label.ts (nickname first) so towers like H403/I403 stay distinct.
 - Operational agenda movements derive from payout_reservations via op-movements.ts (checkout = cleaning event, same-day/next-day turnover); read-only, no CPF.
+- Cleaning state is derived (src/lib/op-cleaning.ts) from imported reservations and Admin limpeza op_tasks, never stored; a DB trigger on payout_reservations creates one checkout cleaning routine per reservation (op_tasks.payout_reservation_id unique), so new reservations always reach the calendar.
