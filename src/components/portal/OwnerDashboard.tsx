@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 /**
  * Painel principal do proprietário (Fase 2) — visão geral com receita,
  * ações prioritárias e próximas movimentações. Renderizado na aba
@@ -74,7 +75,7 @@ function monthRevenue(reservations: Reservation[]): number {
 }
 
 function upcomingReservations(reservations: Reservation[]): Reservation[] {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localISODate();
   return reservations
     .filter((r) => r.checkin >= today && r.status !== "cancelled")
     .sort((a, b) => a.checkin.localeCompare(b.checkin))

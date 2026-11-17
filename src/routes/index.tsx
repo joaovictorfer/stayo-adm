@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/")({
   component: DashboardPage,
 });
 
-const today = new Date().toISOString().slice(0, 10);
+const today = localISODate();
 const todayLabel = new Intl.DateTimeFormat("pt-BR", {
   weekday: "long",
   day: "2-digit",

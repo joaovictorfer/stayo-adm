@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 import { propertyLabel } from "@/lib/property-label";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -261,7 +262,7 @@ function ReservationForm({ impl, flow, month, onSaved }: { impl: string; flow: P
 }
 
 function ExpenseForm({ impl, month, onSaved }: { impl: string; month: string; onSaved: () => void }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localISODate();
   const blank = { date: competenceOf(today) === month ? today : `${month}-01`, cat: "manutencao", desc: "", value: "", owner: true };
   const [open, setOpen] = useState(false); const [f, setF] = useState(blank); const { busy, run } = useSaver(onSaved);
   if (!open) return <Button variant="outline" onClick={() => setOpen(true)}><Plus size={16} />Lançar despesa</Button>;

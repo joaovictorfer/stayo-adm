@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +24,7 @@ export function PayoutPaymentPanel({ implementationId, competence, balance, comp
   const [file,setFile] = useState<File | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [amount,setAmount] = useState("");
-  const [paidOn,setPaidOn] = useState(new Date().toISOString().slice(0,10));
+  const [paidOn,setPaidOn] = useState(localISODate());
   const [confirmed,setConfirmed] = useState(false);
   useEffect(()=> { if (!payment) { setQr(""); return; } let active=true; QRCode.toDataURL(payment.code,{width:256,margin:2,errorCorrectionLevel:"M"}).then(url=>{if(active)setQr(url);}).catch(()=>toast.error("Não foi possível desenhar o QR Code.")); return ()=>{active=false;}; },[payment]);
   useEffect(()=>{setPayment(null);},[implementationId,competence]);
@@ -34,7 +35,7 @@ export function PayoutPaymentPanel({ implementationId, competence, balance, comp
       const f=Array.from(e.clipboardData?.files??[]).find(x=>["application/pdf","image/jpeg","image/png"].includes(x.type));
       if (!f) { if (e.clipboardData?.files?.length) toast.error("Cole um PDF, JPG ou PNG."); return; }
       e.preventDefault();
-      const named=f.name&&f.name!=="image.png"?f:new File([f],`comprovante-${new Date().toISOString().slice(0,10)}.${f.type==="application/pdf"?"pdf":f.type==="image/png"?"png":"jpg"}`,{type:f.type});
+      const named=f.name&&f.name!=="image.png"?f:new File([f],`comprovante-${localISODate()}.${f.type==="application/pdf"?"pdf":f.type==="image/png"?"png":"jpg"}`,{type:f.type});
       setFile(named); toast.success("Comprovante colado.");
     };
     window.addEventListener("paste",onPaste);
@@ -60,7 +61,7 @@ export function PayoutPaymentPanel({ implementationId, competence, balance, comp
       {payment && <div className="payout-pix-body">
         <div className="payout-pix-summary"><div className="payout-pix-qr">{qr?<img src={qr} width={200} height={200} alt="QR Code Pix do repasse"/>:<div className="size-48 animate-pulse bg-muted"/>}</div><div className="payout-pix-details"><span className="payout-pix-period"><CalendarDays size={13}/>{new Date(`${competence}-01T12:00:00`).toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</span><p className="payout-pix-amount-label">Saldo a repassar <ArrowUpRight size={16}/></p><p className="payout-pix-amount">{money(Number(payment.request.amount_cents))}</p><div className="payout-pix-key"><span>Chave Pix</span><p>{payment.request.snapshot.recipient.pixKey}</p></div><Button variant="outline" className="payout-pix-copy" onClick={async()=>{try{await navigator.clipboard.writeText(payment.code);toast.success("Código Pix copiado.");}catch{toast.error("Não foi possível copiar.");}}}><Copy size={16}/>Copiar código Pix</Button></div></div>
         <div className="px-6 py-3 text-xs text-muted-foreground"><p className="break-all"><span className="font-semibold text-foreground">Identificador Pix: </span>{payment.identification.txid}</p><p className="mt-1 break-words">{payment.identification.description}</p></div>
-        <div className="payout-pix-finalize"><h3 className="payout-pix-section-title"><span><Wallet size={18}/></span>Finalizar repasse</h3><div className="payout-pix-fields"><label className="grid gap-2 text-sm">Valor pago (R$)<MoneyInput value={amount} onValueChange={setAmount}/></label><label className="grid gap-2 text-sm">Data do pagamento<Input type="date" max={new Date().toISOString().slice(0,10)} value={paidOn} onChange={e=>setPaidOn(e.target.value)}/></label></div>
+        <div className="payout-pix-finalize"><h3 className="payout-pix-section-title"><span><Wallet size={18}/></span>Finalizar repasse</h3><div className="payout-pix-fields"><label className="grid gap-2 text-sm">Valor pago (R$)<MoneyInput value={amount} onValueChange={setAmount}/></label><label className="grid gap-2 text-sm">Data do pagamento<Input type="date" max={localISODate()} value={paidOn} onChange={e=>setPaidOn(e.target.value)}/></label></div>
           <Input ref={fileInput} className="sr-only" tabIndex={-1} aria-label="Arquivo do comprovante" type="file" accept="application/pdf,image/jpeg,image/png" onChange={e=>setFile(e.target.files?.[0]??null)}/>
           <Button variant="outline" className="payout-pix-upload" data-attached={!!file} onClick={()=>fileInput.current?.click()}><span className="payout-pix-upload-icon">{file?<FileCheck size={22}/>:<Upload size={22}/>}</span><span className="min-w-0"><strong>{file?file.name:"Anexar comprovante"}</strong><span>{file?`${(file.size/1024/1024).toFixed(2)} MB · Alterar arquivo`:"PDF, JPG ou PNG · até 10 MB"}</span></span>{file&&<Check size={18} className="shrink-0"/>}</Button>
           <label className="payout-pix-confirmation"><Checkbox checked={confirmed} onCheckedChange={value=>setConfirmed(value===true)}/><span>Confirmo que o pagamento foi realizado ao titular acima.</span></label>
