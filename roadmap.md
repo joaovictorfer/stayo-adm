@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Carta à portaria: proprietários visíveis e seções recolhidas/editáveis; downloads Word/PDF reais em desktop/celular, quatro testes e PDF de uma página inspecionado; corrigidos espaçamento da pontuação e alinhamento da remoção no celular.
 - [x] Dados para contrato: edição do cadastro, endereço, Pix, imóvel e condições na própria janela; salvamento/releitura de condições no MV-205 em computador/celular e nove testes conferidos; texto temporário removido, sem publicação automática.
 - [x] Importar planilha de imóveis 16/11/2026: 19 fichas atualizadas e Ravena A301 criado separadamente; G304 excluído desconsiderado. Endereços confirmados, contratos, proprietários, classificações e vínculos externos preservados; códigos/andar/Maps como referências administrativas.
 - [x] Minuta substituída pelo Word enviado em 16/11 byte a byte; cláusulas gerais, imagens, estilos e partes fixas preservados. Partes/imóvel/Pix/condições/data/duas assinaturas preenchidos; download autenticado na A201, validação OOXML e dez páginas convertidas conferidos. Paginação exata no Microsoft Word permanece sujeita à conferência nesse programa.

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Loader2, Mail, Plus, X } from "lucide-react";
+import { Download, Loader2, Mail, Plus, X, ChevronDown, Building2, Users, ShieldCheck, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { authorizationLetterSchema, defaultLetterExtras, type AuthorizationLette
 
 function ListEditor({ label, items, onChange, placeholder }: { label: string; items: string[]; onChange: (v: string[]) => void; placeholder: string }) {
   return <div className="space-y-2"><Label>{label}</Label>
-    {items.map((item, i) => <div key={i} className="flex gap-2"><Input value={item} placeholder={placeholder} onChange={e => onChange(items.map((v, j) => j === i ? e.target.value : v))} /><Button type="button" size="icon" variant="ghost" aria-label="Remover" onClick={() => onChange(items.filter((_, j) => j !== i))}><X className="size-4" /></Button></div>)}
+    {items.map((item, i) => <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><Input aria-label={`${label} ${i + 1}`} value={item} placeholder={placeholder} onChange={e => onChange(items.map((v, j) => j === i ? e.target.value : v))} /><Button type="button" size="icon" variant="ghost" aria-label={`Remover ${label} ${i + 1}`} onClick={() => onChange(items.filter((_, j) => j !== i))}><X className="size-4" /></Button></div>)}
     <Button type="button" variant="outline" size="sm" onClick={() => onChange([...items, ""])}><Plus className="size-4" />Incluir</Button></div>;
 }
 
@@ -24,10 +24,11 @@ export function AuthorizationLetterDialog({ implementationId }: { implementation
   const [f, setF] = useState<AuthorizationLetterFields | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<{ word: Blob; pdf: Blob; filename: string } | null>(null);
   const generate = useServerFn(exportAuthorizationLetter);
-  const set = (patch: Partial<AuthorizationLetterFields>) => setF(cur => cur && { ...cur, ...patch });
+  const set = (patch: Partial<AuthorizationLetterFields>) => { setFiles(null); setF(cur => cur && { ...cur, ...patch }); };
 
-  if (open && !f && project.data) {
+  if (open && !f && project.data && !owner.isPending && !owner.isError) {
     const p = project.data, o = owner.data;
     const people = o?.people?.length ? o.people : o ? [{ fullName: o.fullName, document: o.document }] : [];
     const city = (p.city ?? "").toLowerCase().includes("canela") ? "Canela/RS" : "Gramado/RS";
@@ -44,44 +45,53 @@ export function AuthorizationLetterDialog({ implementationId }: { implementation
   const issues = valid && !valid.success ? [...new Set(valid.error.issues.map(i => String(i.path[0])))] : [];
   const labels: Record<string, string> = { owners: "nome/CPF do proprietário", unit: "apartamento", tower: "torre", condominium: "condomínio", address: "endereço", city: "cidade", date: "data", contact: "contato" };
 
-  const download = async () => {
+  const prepare = async () => {
     if (!valid?.success) return;
     setBusy(true); setError(null);
     try {
       const r = await generate({ data: { implementationId, fields: valid.data } });
-      const blob = new Blob([Uint8Array.from(atob(r.base64), c => c.charCodeAt(0))], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-      const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = r.filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const { generateAuthorizationLetterPdf } = await import('@/lib/pdf/authorization-letter-pdf');
+      const pdf = await generateAuthorizationLetterPdf(valid.data);
+      setFiles({ word: new Blob([Uint8Array.from(atob(r.base64), c => c.charCodeAt(0))], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), pdf: new Blob([new Uint8Array(pdf)], { type: 'application/pdf' }), filename: r.filename });
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível gerar a carta."); } finally { setBusy(false); }
+  };
+  const download = (format: 'word' | 'pdf') => {
+    if (!files) return;
+    const url = URL.createObjectURL(files[format]); const a = document.createElement('a'); a.href = url; a.download = format === 'word' ? files.filename : files.filename.replace(/\.docx$/i, '.pdf'); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
   };
 
   return <>
-    <Button variant="outline" onClick={() => { setF(null); setError(null); setOpen(true); }}><Mail className="size-4" />Carta à portaria</Button>
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader><DialogTitle>Carta de autorização à portaria</DialogTitle><DialogDescription>Confira os dados. O Word sai com o mesmo visual do contrato.</DialogDescription></DialogHeader>
-        {!f ? <p className="text-sm text-muted-foreground">{project.isError ? "Não foi possível carregar a ficha." : "Carregando…"}</p> : <div className="space-y-5">
-          <section className="space-y-2"><Label>Proprietário(s)</Label>
-            {f.owners.map((o, i) => <div key={i} className="grid gap-2 sm:grid-cols-[1fr_11rem_auto]"><Input aria-label="Nome" placeholder="Nome completo" value={o.name} onChange={e => set({ owners: f.owners.map((x, j) => j === i ? { ...x, name: e.target.value } : x) })} /><Input aria-label="CPF" placeholder="CPF" value={o.cpf} onChange={e => set({ owners: f.owners.map((x, j) => j === i ? { ...x, cpf: e.target.value } : x) })} /><Button size="icon" variant="ghost" aria-label="Remover" disabled={f.owners.length < 2} onClick={() => set({ owners: f.owners.filter((_, j) => j !== i) })}><X className="size-4" /></Button></div>)}
+    <Button variant="outline" onClick={() => { setF(null); setFiles(null); setError(null); setOpen(true); }}><Mail className="size-4" />Carta à portaria</Button>
+    <Dialog open={open} onOpenChange={value => { if (!busy) setOpen(value); }}>
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-2xl flex-col overflow-hidden rounded-lg p-0">
+        <DialogHeader className="shrink-0 border-b border-border bg-muted/40 px-5 py-5 pr-12 text-left"><div className="flex min-w-0 items-center gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Mail className="size-5" /></span><div className="min-w-0"><DialogTitle className="text-lg text-primary">Carta de autorização à portaria</DialogTitle><DialogDescription className="mt-1">{project.data?.condominiumName} · Apartamento {project.data?.unit}</DialogDescription></div></div></DialogHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        {!f ? <p className="text-sm text-muted-foreground">{project.isError || owner.isError ? "Não foi possível carregar a ficha." : "Carregando…"}</p> : <fieldset disabled={busy} className="min-w-0 space-y-5">
+          <section className="space-y-3"><h3 className="flex items-center gap-2 font-semibold text-primary"><Users className="size-4" />Proprietário(s)</h3>
+            {f.owners.map((o, i) => <div key={i} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_auto]"><Input className="col-start-1 min-w-0" aria-label="Nome" placeholder="Nome completo" value={o.name} onChange={e => set({ owners: f.owners.map((x, j) => j === i ? { ...x, name: e.target.value } : x) })} /><Input className="col-start-1 min-w-0 sm:col-start-2" aria-label="CPF" placeholder="CPF" value={o.cpf} onChange={e => set({ owners: f.owners.map((x, j) => j === i ? { ...x, cpf: e.target.value } : x) })} /><Button className="col-start-2 row-start-1 sm:col-start-3" size="icon" variant="ghost" aria-label="Remover" disabled={f.owners.length < 2} onClick={() => set({ owners: f.owners.filter((_, j) => j !== i) })}><X className="size-4" /></Button></div>)}
             <div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="sm" onClick={() => set({ owners: [...f.owners, { name: "", cpf: "" }] })}><Plus className="size-4" />Incluir proprietário</Button>
               {f.owners.length === 1 && <Select value={f.gender} onValueChange={v => set({ gender: v as "m" | "f" })}><SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="m">Proprietário</SelectItem><SelectItem value="f">Proprietária</SelectItem></SelectContent></Select>}</div>
           </section>
-          <section className="grid gap-3 sm:grid-cols-2">
+          <details className="group border-t border-border pt-4"><summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-primary"><span className="flex min-w-0 items-center gap-2"><Building2 className="size-4 shrink-0" />Imóvel e assinatura</span><ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" /></summary><p className="mt-1 text-xs text-muted-foreground">{f.condominium} · {f.unit}{f.tower && ` · ${f.tower}`}</p><section className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="space-y-1"><Label>Apartamento</Label><Input value={f.unit} onChange={e => set({ unit: e.target.value })} /></div>
             <div className="space-y-1"><Label>Torre</Label><Input value={f.tower} onChange={e => set({ tower: e.target.value })} /></div>
             <div className="space-y-1 sm:col-span-2"><Label>Condomínio</Label><Input value={f.condominium} onChange={e => set({ condominium: e.target.value })} /></div>
             <div className="space-y-1 sm:col-span-2"><Label>Endereço</Label><Input value={f.address} onChange={e => set({ address: e.target.value })} /></div>
             <div className="space-y-1"><Label>Cidade da assinatura</Label><Input value={f.city} onChange={e => set({ city: e.target.value })} /></div>
             <div className="space-y-1"><Label>Data</Label><Input type="date" value={f.date} onChange={e => set({ date: e.target.value })} /></div>
-          </section>
+          </section></details>
+          <details className="group border-t border-border pt-4"><summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-primary"><span className="flex min-w-0 items-center gap-2"><ShieldCheck className="size-4 shrink-0" />Dados padrão STAYO</span><ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" /></summary><p className="mt-1 text-xs text-muted-foreground">{f.representatives.length} autorizados · {f.vehicles.length} veículos · contato STAYO</p><div className="mt-4 space-y-4">
           <ListEditor label="Autorizados a representar" items={f.representatives} placeholder="Nome – CPF" onChange={v => set({ representatives: v })} />
           <ListEditor label="Veículos (placas)" items={f.vehicles} placeholder="ABC-1D23" onChange={v => set({ vehicles: v })} />
           <div className="space-y-1"><Label>Contato</Label><Input value={f.contact} onChange={e => set({ contact: e.target.value })} /></div>
-        </div>}
-        <DialogFooter className="flex-wrap items-center gap-2">
+          </div></details>
+        </fieldset>}
+        </div>
+        <DialogFooter className="shrink-0 gap-2 border-t border-border bg-muted/30 px-5 py-4 sm:flex-wrap">
           {issues.length > 0 && <p role="alert" className="mr-auto text-xs text-destructive">Falta: {issues.map(i => labels[i] ?? i).join(", ")}</p>}
           {error && <p role="alert" className="mr-auto text-xs text-destructive">{error}</p>}
-          <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
-          <Button disabled={!valid?.success || busy} onClick={() => void download()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}Baixar Word</Button>
+          <Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>Fechar</Button>
+          {files ? <><Button variant="outline" onClick={() => download('word')}><Download className="size-4" />Baixar Word</Button><Button onClick={() => download('pdf')}><Download className="size-4" />Baixar PDF</Button></> : <Button disabled={!valid?.success || busy} onClick={() => void prepare()}>{busy ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <FileText className="size-4" />}{busy ? 'Preparando…' : 'Preparar documentos'}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
