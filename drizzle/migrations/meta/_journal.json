@@ -743,6 +743,13 @@
       "when": 1794894612894,
       "tag": "0105_cleaning_routines_from_reservations",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1794895098929,
+      "tag": "0106_routine_only_for_upcoming_checkouts",
+      "breakpoints": true
     }
   ]
 }
