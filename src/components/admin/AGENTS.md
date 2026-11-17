@@ -1,1 +1,1 @@
-- Dashboard presentation reuses signed implementation covers and canonical property adapters; balances remain derived and empty agendas never receive illustrative records.
+- Dashboard presentation reuses signed implementation covers and canonical property adapters; balances remain derived and empty agendas never receive illustrative records.- Operational config lives in op_* tables keyed by source UUIDs; history isn't imported, so the old writer stays authoritative until cutover.

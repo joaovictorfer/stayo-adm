@@ -2156,6 +2156,178 @@ export type Database = {
         }
         Relationships: []
       }
+      op_checklist_template_items: {
+        Row: {
+          area: string | null
+          created_at: string
+          id: string
+          label: string
+          requires_photo: boolean
+          sort_order: number
+          template_id: string
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          requires_photo?: boolean
+          sort_order?: number
+          template_id: string
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          requires_photo?: boolean
+          sort_order?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_checklist_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "op_checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_checklist_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      op_routine_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_deadline_offset: number | null
+          default_orientation: string | null
+          default_priority: string
+          default_requires_checklist: boolean
+          default_requires_inspection: boolean
+          default_requires_photo: boolean
+          default_start_offset: number | null
+          default_total_amount: number | null
+          id: string
+          name: string
+          routine_type: string
+          scope_id: string | null
+          scope_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_deadline_offset?: number | null
+          default_orientation?: string | null
+          default_priority?: string
+          default_requires_checklist?: boolean
+          default_requires_inspection?: boolean
+          default_requires_photo?: boolean
+          default_start_offset?: number | null
+          default_total_amount?: number | null
+          id?: string
+          name: string
+          routine_type: string
+          scope_id?: string | null
+          scope_type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_deadline_offset?: number | null
+          default_orientation?: string | null
+          default_priority?: string
+          default_requires_checklist?: boolean
+          default_requires_inspection?: boolean
+          default_requires_photo?: boolean
+          default_start_offset?: number | null
+          default_total_amount?: number | null
+          id?: string
+          name?: string
+          routine_type?: string
+          scope_id?: string | null
+          scope_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      op_rule_team: {
+        Row: {
+          created_at: string
+          fixed_amount: number | null
+          id: string
+          is_lead: boolean
+          percentage: number | null
+          provider_label: string
+          role_in_routine: string
+          rule_id: string
+          source_provider_id: string
+        }
+        Insert: {
+          created_at?: string
+          fixed_amount?: number | null
+          id?: string
+          is_lead?: boolean
+          percentage?: number | null
+          provider_label: string
+          role_in_routine: string
+          rule_id: string
+          source_provider_id: string
+        }
+        Update: {
+          created_at?: string
+          fixed_amount?: number | null
+          id?: string
+          is_lead?: boolean
+          percentage?: number | null
+          provider_label?: string
+          role_in_routine?: string
+          rule_id?: string
+          source_provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_rule_team_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "op_routine_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_messages: {
         Row: {
           body: string
