@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { OpTaskExecution } from "@/components/admin/OpTaskExecution";
 import {
   type BoardTask, type OpTaskInput, opKindLabel, opPropertiesQuery, opStatusLabel, deleteOpTask, saveOpTask,
 } from "@/lib/api/op-tasks";
@@ -58,9 +59,10 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
         <label className={label}>Situação<select className={input} value={form.status} onChange={(e) => set("status", e.target.value as OpTaskInput["status"])}>{Object.entries(opStatusLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
         <label className={label}>Orientação<Textarea rows={3} value={form.guidance ?? ""} onChange={(e) => set("guidance", e.target.value)} placeholder="Instruções para a equipe" /></label>
       </form>
+      {task && <OpTaskExecution taskId={task.id} />}
       <DialogFooter className="gap-2 sm:justify-between">
         {task ? <Button type="button" variant="ghost" className="text-destructive" disabled={remove.isPending} onClick={() => { if (confirm("Excluir esta tarefa?")) remove.mutate(); }}>Excluir</Button> : <span />}
-        <Button type="submit" form="op-task-form" disabled={save.isPending}>{save.isPending ? "Salvando…" : "Salvar"}</Button>
+        <Button type="submit" form="op-task-form" disabled={save.isPending}>{save.isPending ? "Salvando…" : task ? "Salvar dados" : "Salvar"}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>;
