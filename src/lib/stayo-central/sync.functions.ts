@@ -102,7 +102,21 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
         if (!e) imported++;
       }
     }
-    return { ok: true as const, reason: null, imported, updated, found: rows.length };
+    // Reservas importadas antes e que deixaram de valer no Guia (canceladas, bloqueio, outra data/imóvel)
+    // saem do relatório; as que têm ajuste manual com histórico ficam e são sinalizadas para revisão.
+    const [y, m] = data.month.split("-").map(Number);
+    const next = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`;
+    const valid = new Set(rows.map((r) => r.id));
+    const { data: local } = await context.supabase.from("payout_reservations").select("id,central_reservation_id,manual_amounts")
+      .eq("implementation_id", proj.id).not("central_reservation_id", "is", null).gte("checkin_date", `${data.month}-01`).lt("checkin_date", next);
+    let removed = 0, kept = 0;
+    for (const row of (local ?? []) as any[]) {
+      if (valid.has(row.central_reservation_id)) continue;
+      if ((row.manual_amounts?.length ?? 0) > 0) { kept++; continue; }
+      const { error: e } = await context.supabase.from("payout_reservations").delete().eq("id", row.id);
+      if (!e) removed++;
+    }
+    return { ok: true as const, reason: null, imported, updated, found: rows.length, removed, kept };
   });
 
 /** Importa apenas proprietários dos imóveis já vinculados; nunca sobrescreve dados do Admin. */

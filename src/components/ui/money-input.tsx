@@ -45,6 +45,8 @@ MoneyInput.displayName = "MoneyInput";
 /** Variante controlada por centavos (para campos numéricos já existentes). */
 export function MoneyCentsInput({ cents, onCentsChange, ...rest }: Omit<Props, "value" | "onValueChange"> & { cents: number; onCentsChange: (c: number) => void }) {
   const [text, setText] = React.useState(formatMoneyText(cents));
-  React.useEffect(() => { if (parseMoneyText(text) !== cents) setText(formatMoneyText(cents)); }, [cents]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <MoneyInput {...rest} value={text} onValueChange={(t) => { setText(t); onCentsChange(parseMoneyText(t) ?? 0); }} />;
+  // Texto em digitação ("150," ou vazio) vale o último número completo; nunca é substituído por 0,00.
+  const typed = (t: string) => (t.trim() === "" ? 0 : parseMoneyText(t.replace(/[.,]$/, "")));
+  React.useEffect(() => { if (typed(text) !== cents) setText(formatMoneyText(cents)); }, [cents]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <MoneyInput {...rest} value={text} onValueChange={(t) => { setText(t); const c = typed(t); if (c !== null) onCentsChange(c); }} />;
 }
