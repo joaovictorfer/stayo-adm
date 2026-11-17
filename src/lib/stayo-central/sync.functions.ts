@@ -113,7 +113,7 @@ async function syncProjectMonth(context: any, http: any, proj: { id: string; cor
     return { imported, updated, found: rows.length, removed, kept };
 }
 
-const monthsFrom = (today: string, n: number) => Array.from({ length: n }, (_, i) => {
+export const monthsFrom = (today: string, n: number) => Array.from({ length: n }, (_, i) => {
   const [y, m] = today.split("-").map(Number) as [number, number];
   const d = new Date(Date.UTC(y, m - 1 + i, 1));
   return d.toISOString().slice(0, 7);

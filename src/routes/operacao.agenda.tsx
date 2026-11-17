@@ -6,6 +6,7 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { AdminEmptyState, AdminPageHeader, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
 import { Button } from "@/components/ui/button";
+import { SyncUpcomingButton } from "@/components/admin/SyncUpcomingButton";
 import { OpTaskDialog } from "@/components/admin/OpTaskDialog";
 import { kindLabel, taskDone, useBoardTasks } from "@/components/admin/TaskBoard";
 import type { BoardTask } from "@/lib/api/op-tasks";
@@ -66,7 +67,7 @@ function AgendaPage() {
 
   return <div className="space-y-5">
     <AdminPageHeader eyebrow="Operação" title="Agenda operacional" description="Serviços, entradas e saídas de hóspedes organizados por dia e imóvel."
-      actions={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4" />Nova tarefa</Button>} />
+      actions={<div className="flex flex-wrap gap-2"><SyncUpcomingButton /><Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4" />Nova tarefa</Button></div>} />
 
     {view !== "imovel" && <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)]">
