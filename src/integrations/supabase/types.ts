@@ -599,6 +599,7 @@ export type Database = {
           linen_mode: string | null
           linen_notes: string | null
           maintenance_limit: number | null
+          marketing_rule: string | null
           notice_period_days: number | null
           owner_use_limit_days: number | null
           owner_use_limit_mode: string | null
@@ -608,6 +609,7 @@ export type Database = {
           paid_items: Json
           payout_mode: string
           payout_rule: string | null
+          periodic_shutdown_rule: string | null
           standard_copy: Json | null
           turnover_cleaning_fee: number | null
           turnover_cleaning_payer: string | null
@@ -636,6 +638,7 @@ export type Database = {
           linen_mode?: string | null
           linen_notes?: string | null
           maintenance_limit?: number | null
+          marketing_rule?: string | null
           notice_period_days?: number | null
           owner_use_limit_days?: number | null
           owner_use_limit_mode?: string | null
@@ -645,6 +648,7 @@ export type Database = {
           paid_items?: Json
           payout_mode?: string
           payout_rule?: string | null
+          periodic_shutdown_rule?: string | null
           standard_copy?: Json | null
           turnover_cleaning_fee?: number | null
           turnover_cleaning_payer?: string | null
@@ -673,6 +677,7 @@ export type Database = {
           linen_mode?: string | null
           linen_notes?: string | null
           maintenance_limit?: number | null
+          marketing_rule?: string | null
           notice_period_days?: number | null
           owner_use_limit_days?: number | null
           owner_use_limit_mode?: string | null
@@ -682,6 +687,7 @@ export type Database = {
           paid_items?: Json
           payout_mode?: string
           payout_rule?: string | null
+          periodic_shutdown_rule?: string | null
           standard_copy?: Json | null
           turnover_cleaning_fee?: number | null
           turnover_cleaning_payer?: string | null

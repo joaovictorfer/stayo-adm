@@ -15,6 +15,8 @@ export interface ProposalSnapshotContractConditions {
   administrationFee?: number | null;
   cleaningResponsibility?: string | null;
   payoutRule?: string | null;
+  marketingRule?: string | null;
+  periodicShutdownRule?: string | null;
   maintenanceLimit?: number | null;
   exclusivity?: boolean | null;
   durationMonths?: number | null;

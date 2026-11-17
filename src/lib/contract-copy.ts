@@ -38,7 +38,7 @@ export function buildContractCopy(input: ContractCopyInput, includeSensitive = f
     ? `a) ${formatPercent(100 - c.administrationFee)} ao CONTRATANTE;\nb) ${percentage} ao CONTRATADO;\n(Após dedução da taxa de limpeza.)` : missing;
   const sections = conditionSections(c);
   const ownerUse = sections.find(section => section.key === "owner_use");
-  const use = ownerUse ? [ownerUse.items.map(item => `${item.label}: ${item.value}.`).join("\n"), ownerUse.note].filter(Boolean).join("\n") : missing;
+  const use = ownerUse ? [ownerUse.items.map(item => `${item.label}: ${item.value}.`).join("\n"), ownerUse.note].filter(Boolean).join("\n") : c.ownerUseNotes?.trim() || missing;
   const rows = [
     { title: "1 – IMÓVEL OBJETO:", body: `Apartamento nº ${input.property.unit || missing}${input.property.tower ? `, Torre ${input.property.tower}` : ""}, localizado no ${input.property.condominium || missing}, situado em ${addressText(input.property)}.` },
     { title: "2 – DA TAXA ADMINISTRATIVA:", body: percentage ? `${percentage} sobre o valor líquido da hospedagem.` : missing },
@@ -46,9 +46,9 @@ export function buildContractCopy(input: ContractCopyInput, includeSensitive = f
     { title: "4 – DA DIVISÃO DOS VALORES:", body: split },
     { title: "5 – DOS REPASSES:", body: `${c.payoutRule?.trim() || missing}\nChave Pix: ${input.pixKey ? includeSensitive ? input.pixKey : maskPixKey(input.pixKey) : missing}` },
     { title: "6 – DO USO PELO CONTRATANTE:", body: use },
-    { title: "7 – DO USO PARA MARKETING:", body: missing },
+    { title: "7 – DO USO PARA MARKETING:", body: c.marketingRule?.trim() || missing },
     { title: "8 – DA MANUTENÇÃO EMERGENCIAL:", body: c.maintenanceLimit != null ? `Autorização ao CONTRATADO para intervenções até ${formatBRL(c.maintenanceLimit)} sem autorização prévia. Acima deste valor, exige autorização do CONTRATANTE.` : missing },
-    { title: "9 – DA PARALISAÇÃO PERIÓDICA:", body: missing },
+    { title: "9 – DA PARALISAÇÃO PERIÓDICA:", body: c.periodicShutdownRule?.trim() || missing },
   ];
   // Additional saved conditions are not dropped just because the reference ends at item 9.
   if (c.durationMonths != null || c.noticePeriodDays != null || c.exclusivity != null) rows.push({ title: "10 – DEMAIS CONDIÇÕES:", body: [

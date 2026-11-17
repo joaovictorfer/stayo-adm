@@ -757,6 +757,13 @@
       "when": 1794895460022,
       "tag": "0107_link_operating_properties_to_guide",
       "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1794928886308,
+      "tag": "0108_contract_summary_editable_clauses",
+      "breakpoints": true
     }
   ]
 }
