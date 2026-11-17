@@ -67,4 +67,3 @@
 - Owner history PDFs are local downloads with a reviewed allowlisted projection of purchase/inspection events; fetch all period pages, omit internal free text/identities and never publish or upload the report.
 - Administrative operational classification uses implementation_projects.operational_status independently of registration status; shared property-operation predicates drive portfolio counts and filters without changing Core-link or portal authorization guards.
 
-- Admin menu and page access filter by `navigation.ts` roles via `canSeeNav`/`blockedSectionFor` in AdminShell; this is presentation only — RLS remains the real authorization.
