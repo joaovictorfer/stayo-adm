@@ -35,7 +35,7 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
   });
   const remove = useMutation({ mutationFn: () => deleteOpTask(task!.id), onSuccess: () => { toast.success("Tarefa excluída"); done(); }, onError: (e: Error) => toast.error(e.message) });
   const label = "grid gap-1 text-xs font-medium text-[var(--admin-muted)]";
-  const input = "admin-input h-10 px-3 text-sm text-[var(--admin-ink,inherit)]";
+  const input = "admin-input h-10 w-full rounded-md border border-[var(--admin-border)] bg-background px-3 text-sm";
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
