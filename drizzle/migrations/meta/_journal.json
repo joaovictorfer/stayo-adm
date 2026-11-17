@@ -750,6 +750,13 @@
       "when": 1794895098929,
       "tag": "0106_routine_only_for_upcoming_checkouts",
       "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1794895460022,
+      "tag": "0107_link_operating_properties_to_guide",
+      "breakpoints": true
     }
   ]
 }
