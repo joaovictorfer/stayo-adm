@@ -56,8 +56,9 @@ export const setMyTaskStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { admin, staffId } = await ctx(data.token);
     await assertTask(admin, staffId, data.taskId);
-    const { error } = await admin.from("op_tasks").update({ status: data.status }).eq("id", data.taskId).not("status", "in", "(cancelada,concluida)");
+    const { data: updated, error } = await admin.from("op_tasks").update({ status: data.status }).eq("id", data.taskId).not("status", "in", "(cancelada,concluida)").select("id");
     if (error) throw new Error(error.message.includes("checklist_incompleto") ? "Conclua o checklist e as fotos obrigatórias." : "Não foi possível atualizar a tarefa.");
+    if (!updated?.length) throw new Error("Esta tarefa já foi finalizada e não pode ser reaberta pelo Meu Dia.");
     return { ok: true };
   });
 

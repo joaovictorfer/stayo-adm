@@ -207,3 +207,20 @@ export const navigationGroups: NavGroup[] = [
   { id: "management", label: "Gestão", itemIds: ["financial"] },
   { id: "system", label: "Sistema", itemIds: ["settings"] },
 ];
+
+/** Item visível para o perfil? Sem perfil carregado, nada é filtrado (o banco segue protegendo). */
+export function canSeeNav(item: NavItem, role: string | null | undefined): boolean {
+  if (!role) return true;
+  return item.roles.includes(role as StayoRole) || (item.children ?? []).some((c) => canSeeNav(c, role));
+}
+
+/** Seção mais específica do caminho que o perfil não pode abrir, ou null. */
+export function blockedSectionFor(pathname: string, role: string | null | undefined): NavItem | null {
+  if (!role) return null;
+  let best: NavItem | null = null;
+  const match = (path: string) => path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(path + "/");
+  const visit = (items: NavItem[]) => { for (const i of items) { if (match(i.path) && (!best || i.path.length > best.path.length)) best = i; if (i.children) visit(i.children); } };
+  visit(navigation);
+  const found = best as NavItem | null;
+  return found && !canSeeNav(found, role) ? found : null;
+}

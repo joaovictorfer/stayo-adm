@@ -30,6 +30,6 @@ Nada é desligado sem aprovação do Victor.
 |---|---|---|
 | Super admin / Admin | ver e editar | ver e editar |
 | Operação | ver e editar | ver e editar |
-| Financeiro | — | ver, lançar e aprovar reembolsos |
-| Comercial / Consulta | sem menu; leitura bloqueada para escrita | — |
+| Financeiro | sem acesso (tela mostra "Sem acesso") | ver, lançar e aprovar reembolsos |
+| Comercial / Consulta | sem menu; tela mostra "Sem acesso"; não altera nada | sem acesso |
 | Link Meu Dia | só as tarefas da própria pessoa; não reabre tarefa concluída | — |

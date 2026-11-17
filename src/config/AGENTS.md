@@ -1,0 +1,1 @@
+- Menu and page access filter by these roles via canSeeNav/blockedSectionFor in AdminShell; presentation only, RLS stays the real authorization.
