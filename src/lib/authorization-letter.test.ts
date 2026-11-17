@@ -21,16 +21,16 @@ describe("carta de autorização à portaria", () => {
   it("usa proprietário, CPF, imóvel e condomínio", () => {
     const t = text();
     expect(t).toContain("CARTA DE AUTORIZAÇÃO À PORTARIA DO RESIDENCIAL VÊNETO");
-    expect(t).toContain("Eu, MARIA SOUZA, inscrita no CPF nº 016.912.240-90, proprietária do Apartamento nº 201, Torre Verona");
+    expect(t).toContain("MARIA SOUZA – CPF nº 016.912.240-90");
+    expect(t).toContain("Apartamento nº 201, Torre Verona");
     expect(t).toContain("Gramado/RS, 11 de outubro de 2026.");
-    expect(t).toContain("– RXZ-6C47");
-    expect(t).toContain("– Luana Lima de Oliveira – CPF 114.011.974-50");
+    expect(t).toContain("RXZ-6C47");
+    expect(t).toContain("Luana Lima de Oliveira – CPF 114.011.974-50");
   });
   it("usa plural com dois proprietários", () => {
     const t = text({ ...base, owners: [...base.owners, { name: "João Souza", cpf: "094.860.164-70" }] });
-    expect(t).toContain("Nós, MARIA SOUZA");
-    expect(t).toContain(", e JOÃO SOUZA");
-    expect(t).toContain("proprietários do Apartamento");
+    expect(t).toContain("MARIA SOUZA – CPF nº 016.912.240-90");
+    expect(t).toContain("JOÃO SOUZA – CPF nº 094.860.164-70");
     expect(t).toContain("AUTORIZAMOS");
   });
   it("bloqueia sem CPF", () => {

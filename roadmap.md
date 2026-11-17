@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Reorganizar a carta sem “Nós”: partes identificadas, autorização separada e representantes/veículos com títulos e divisórias. Downloads em 1280/695/390 e seis testes conferidos; corrigido CPF da segunda assinatura isolado no Word com espaçamento menor; Word convertido e PDF reconferidos em uma página.
 - [x] Refinar visual da carta à portaria; CPF/CNPJ formatados em campos e documentos. 22 testes, digitação e downloads reais Word/PDF em ficha autenticada, telas 1280/695/390 sem transbordamento nem erros; PDF de uma página inspecionado sem cortes ou sobreposições e Word validado.
 - [x] Carta à portaria: proprietários visíveis e seções recolhidas/editáveis; downloads Word/PDF reais em desktop/celular, quatro testes e PDF de uma página inspecionado; corrigidos espaçamento da pontuação e alinhamento da remoção no celular.
 - [x] Dados para contrato: edição do cadastro, endereço, Pix, imóvel e condições na própria janela; salvamento/releitura de condições no MV-205 em computador/celular e nove testes conferidos; texto temporário removido, sem publicação automática.

@@ -32,7 +32,7 @@ export async function generateAuthorizationLetterPdf(fields: AuthorizationLetter
     }
     if (line.length) lines.push(line);
     const after = (paragraph.after ?? 240) / 20;
-    if (y - lines.length * lineHeight < 70) { page = pdf.addPage([width, height]); addBackground(); y = height - 135; }
+    if (y - lines.length * lineHeight - (paragraph.divider ? 30 : 0) < 70) { page = pdf.addPage([width, height]); addBackground(); y = height - 135; }
     lines.forEach((row, index) => {
       if (y < 70) { page = pdf.addPage([width, height]); addBackground(); y = height - 135; }
       const baseGap = normalFont.widthOfTextAtSize(' ', size);
@@ -44,6 +44,7 @@ export async function generateAuthorizationLetterPdf(fields: AuthorizationLetter
       row.forEach(word => { page.drawText(word.text, { x, y, size, font: word.font, color: rgb(0, 0, 0) }); x += word.font.widthOfTextAtSize(word.text, size) + gap; });
       y -= lineHeight;
     });
+    if (paragraph.divider) page.drawLine({ start: { x: left, y: y + 4 }, end: { x: left + contentWidth, y: y + 4 }, thickness: 0.5, color: rgb(0.66, 0.66, 0.66) });
     y -= after;
   }
   pdf.setTitle(`Carta de autorização à portaria – ${fields.condominium} ${fields.unit}`);
