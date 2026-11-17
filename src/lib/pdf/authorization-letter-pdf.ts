@@ -71,6 +71,17 @@ export async function generateAuthorizationLetterPdf(fields: AuthorizationLetter
       ensure(h); page.drawRectangle({x:left,y:y-h+10,width:contentWidth,height:h,color:color(letterPalette.panel)});
       page.drawLine({start:{x:left+cw,y:y},end:{x:left+cw,y:y-h+20},thickness:.5,color:color(letterPalette.rule)});
       block.columns.forEach((col,i)=> { let yy=y; col.forEach(p=>{drawPara({...p,divider:false},left+i*cw+pad,yy,cw-pad*2); yy-=paragraphHeight({...p,divider:false},cw-pad*2);}); }); y-=h+5;
+    } else if(block.kind==='signatures') {
+      const cellWidth=contentWidth/block.columns.length, pad=8;
+      const columns=block.columns.map(col=>col.slice(1));
+      const h=Math.max(...columns.map(col=>col.reduce((sum,p)=>sum+paragraphHeight(p,cellWidth-pad*2),0)))+18;
+      ensure(h);
+      columns.forEach((col,i)=>{
+        const x=left+i*cellWidth+pad;
+        page.drawLine({start:{x,y:y-4},end:{x:x+cellWidth-pad*2,y:y-4},thickness:.5,color:color(letterPalette.text)});
+        let yy=y-18;
+        col.forEach(p=>{drawPara(p,x,yy,cellWidth-pad*2);yy-=paragraphHeight(p,cellWidth-pad*2);});
+      });y-=h+10;
     } else if(block.kind==='table') {
       const widths=[contentWidth*.56,contentWidth*.44], pad=7;
       const drawRow=(row:string[],header:boolean)=>{

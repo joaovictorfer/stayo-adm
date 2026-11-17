@@ -74,7 +74,7 @@ const esc = (s: string) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g
 const font = '<w:rFonts w:ascii="Arial" w:eastAsia="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/>';
 const paraXml = (p: Para) => `<w:p><w:pPr>${p.divider ? '<w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="4" w:color="A8A8A8"/></w:pBdr>' : ''}<w:spacing w:after="${p.after ?? 240}" w:line="276" w:lineRule="auto"/><w:jc w:val="${p.align ?? "both"}"/><w:rPr>${font}</w:rPr></w:pPr>${p.runs.map(r => `<w:r><w:rPr>${font}${r.bold ? "<w:b/><w:bCs/>" : ""}</w:rPr><w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`).join("")}</w:p>`;
 
-export type LetterBlock = { kind: "paragraph"; paragraph: Para } | { kind: "parties"; columns: Para[][] } | { kind: "table"; rows: string[][] } | { kind: "vehicles"; plates: string[] };
+export type LetterBlock = { kind: "paragraph"; paragraph: Para } | { kind: "parties"; columns: Para[][] } | { kind: "signatures"; columns: Para[][] } | { kind: "table"; rows: string[][] } | { kind: "vehicles"; plates: string[] };
 /** One layout model shared by both exporters; free-form representative lines remain intact. */
 export function letterLayout(fields: AuthorizationLetterFields): LetterBlock[] {
   const paragraphs = letterParagraphs(fields);
@@ -97,6 +97,10 @@ export function letterLayout(fields: AuthorizationLetterFields): LetterBlock[] {
     } else if (p.icon === "vehicles") {
       result.push({ kind: "paragraph", paragraph: p }, { kind: "vehicles", plates: fields.vehicles.map(v => v.toUpperCase()) });
       i++;
+    } else if (p.runs[0]?.text.startsWith('___')) {
+      const columns = fields.owners.map((_, ownerIndex) => paragraphs.slice(i + ownerIndex * 3, i + ownerIndex * 3 + 3));
+      for (let start = 0; start < columns.length; start += 2) result.push({ kind: "signatures", columns: columns.slice(start, start + 2) });
+      break;
     } else result.push({ kind: "paragraph", paragraph: p });
   }
   return result;
@@ -127,6 +131,10 @@ export function generateAuthorizationLetterDocx(original: Uint8Array, fields: Au
   const body = letterLayout(fields).map(block => {
     if (block.kind === "paragraph") return styledPara(block.paragraph);
     if (block.kind === "parties") return tableXml([block.columns.map(col => col.map(p => ({ ...p, divider: false })))], [4252, 4252], true);
+    if (block.kind === "signatures") {
+      const cellWidth = Math.floor(8504 / block.columns.length);
+      return `<w:tbl><w:tblPr><w:tblW w:w="8504" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${['top','left','bottom','right','insideH','insideV'].map(side => `<w:${side} w:val="nil"/>`).join('')}</w:tblBorders><w:tblCellMar><w:left w:w="180" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${block.columns.map(() => `<w:gridCol w:w="${cellWidth}"/>`).join('')}</w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr>${block.columns.map(col => `<w:tc><w:tcPr><w:tcW w:w="${cellWidth}" w:type="dxa"/><w:vAlign w:val="top"/></w:tcPr>${col.map((p, index) => styledPara(index === 0 ? { ...p, runs: [{ text: block.columns.length > 1 ? '________________________' : '_______________________________________' }] } : p)).join('')}</w:tc>`).join('')}</w:tr></w:tbl><w:p/>`;
+    }
     if (block.kind === "table") return tableXml(block.rows.map((row, i) => row.map(text => [{ runs: [{ text, bold: i === 0 }], align: "left", after: 0 }])), [4752, 3752]);
     return `<w:p><w:pPr><w:spacing w:after="180" w:line="300" w:lineRule="auto"/></w:pPr>${block.plates.map(plate => `<w:r><w:rPr>${font}<w:b/><w:sz w:val="19"/><w:shd w:val="clear" w:fill="${letterPalette.panel}"/></w:rPr><w:t xml:space="preserve">  ${esc(plate)}  </w:t></w:r><w:r><w:t xml:space="preserve">   </w:t></w:r>`).join('')}</w:p>`;
   }).join("");
