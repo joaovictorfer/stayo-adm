@@ -46,7 +46,7 @@ async function syncProjectMonth(context: any, http: any, proj: { id: string; cor
     const { data: cond } = await context.supabase.from("implementation_contract_conditions").select("payout_mode").eq("implementation_id", proj.id).limit(1).maybeSingle();
     const auto = (cond as any)?.payout_mode === "platform_auto";
 
-    const all = cache ?? await listAll(http, "reservations", { property_id: proj.core_property_id });
+    const all = cache ?? await listAll(http, "reservations", { property_id: proj.core_property_id ?? "" });
     const rows = all.filter((r) => r.property_id === proj.core_property_id && !r.is_block && r.status !== "cancelled" && String(r.checkin_date).startsWith(data.month));
 
     const { data: existing } = await context.supabase.from("payout_reservations").select("central_reservation_id,payout_flow,manual_amounts")
