@@ -63,6 +63,7 @@ import { Route as OperacaoAgendaRouteImport } from './routes/operacao.agenda'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
 import { Route as OperacaoManutencaoRouteImport } from './routes/operacao.manutencao'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
+import { Route as OperacaoRegrasRouteImport } from './routes/operacao.regras'
 import { Route as OperacaoTarefasRouteImport } from './routes/operacao.tarefas'
 import { Route as OperacaoTarefasPrototipoRouteImport } from './routes/operacao.tarefas-prototipo'
 import { Route as OperacaoVistoriasLinksPrototipoRouteImport } from './routes/operacao.vistorias-links-prototipo'
@@ -381,6 +382,11 @@ const OperacaoPrototipoRoute = OperacaoPrototipoRouteImport.update({
   path: '/operacao/prototipo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoRegrasRoute = OperacaoRegrasRouteImport.update({
+  id: '/operacao/regras',
+  path: '/operacao/regras',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperacaoTarefasRoute = OperacaoTarefasRouteImport.update({
   id: '/operacao/tarefas',
   path: '/operacao/tarefas',
@@ -615,6 +621,7 @@ export interface FileRoutesByFullPath {
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/regras': typeof OperacaoRegrasRoute
   '/operacao/tarefas': typeof OperacaoTarefasRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
@@ -706,6 +713,7 @@ export interface FileRoutesByTo {
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/regras': typeof OperacaoRegrasRoute
   '/operacao/tarefas': typeof OperacaoTarefasRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
@@ -799,6 +807,7 @@ export interface FileRoutesById {
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
+  '/operacao/regras': typeof OperacaoRegrasRoute
   '/operacao/tarefas': typeof OperacaoTarefasRoute
   '/operacao/tarefas-prototipo': typeof OperacaoTarefasPrototipoRoute
   '/operacao/vistorias-links-prototipo': typeof OperacaoVistoriasLinksPrototipoRoute
@@ -893,6 +902,7 @@ export interface FileRouteTypes {
     | '/operacao/agenda-prototipo'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
+    | '/operacao/regras'
     | '/operacao/tarefas'
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
@@ -984,6 +994,7 @@ export interface FileRouteTypes {
     | '/operacao/agenda-prototipo'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
+    | '/operacao/regras'
     | '/operacao/tarefas'
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
@@ -1076,6 +1087,7 @@ export interface FileRouteTypes {
     | '/operacao/agenda-prototipo'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
+    | '/operacao/regras'
     | '/operacao/tarefas'
     | '/operacao/tarefas-prototipo'
     | '/operacao/vistorias-links-prototipo'
@@ -1169,6 +1181,7 @@ export interface RootRouteChildren {
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
   OperacaoManutencaoRoute: typeof OperacaoManutencaoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
+  OperacaoRegrasRoute: typeof OperacaoRegrasRoute
   OperacaoTarefasRoute: typeof OperacaoTarefasRoute
   OperacaoTarefasPrototipoRoute: typeof OperacaoTarefasPrototipoRoute
   OperacaoVistoriasLinksPrototipoRoute: typeof OperacaoVistoriasLinksPrototipoRoute
@@ -1594,6 +1607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacaoPrototipoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao/regras': {
+      id: '/operacao/regras'
+      path: '/operacao/regras'
+      fullPath: '/operacao/regras'
+      preLoaderRoute: typeof OperacaoRegrasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operacao/tarefas': {
       id: '/operacao/tarefas'
       path: '/operacao/tarefas'
@@ -1909,6 +1929,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
   OperacaoManutencaoRoute: OperacaoManutencaoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
+  OperacaoRegrasRoute: OperacaoRegrasRoute,
   OperacaoTarefasRoute: OperacaoTarefasRoute,
   OperacaoTarefasPrototipoRoute: OperacaoTarefasPrototipoRoute,
   OperacaoVistoriasLinksPrototipoRoute: OperacaoVistoriasLinksPrototipoRoute,

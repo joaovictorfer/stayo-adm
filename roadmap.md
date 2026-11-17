@@ -118,3 +118,11 @@
 - [x] Arquitetura: reservas (Airbnb automático × recebidas pela STAYO), despesas lançadas no dia, repasses feitos e balancete por mês (/financeiro/repasses); 6 testes.
 - [x] PDF mensal baseado na referência: download no painel, resumo, reservas por fluxo, CPF completo, despesas, repasses e balancete; C203 real conferido nas três páginas sem cortes/sobreposições, saldo R$ 1.760,00, 15 testes e build OK. Ravena outubro bloqueado pela taxa de canal ausente da RSV-00429; nome dos proprietários depende do cadastro existente.
 - [ ] Puxar proprietários e reservas do Guia STAYO: bloqueado até a homologação da conexão com o Guia.
+
+## Transferência operacional (17/11)
+- [x] Fase 0 análise do pacote
+- [x] Fase 1 regras e checklists (tabelas + tela /operacao/regras)
+- [ ] Fase 2 Agenda e Tarefas gravadas no Admin
+- [ ] Fase 3 execução de limpeza/vistoria, escalas e Meu Dia
+- [ ] Fase 4 custos operacionais
+- [ ] Fase 5 homologação e corte
