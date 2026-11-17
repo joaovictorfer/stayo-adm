@@ -7,7 +7,7 @@ import type { CostExpense, CostTask } from "../op-costs";
 const label = (p: { code: string; nickname: string | null; condominium_name: string | null; unit: string | null } | null) =>
   p ? (p.nickname || [p.condominium_name, p.unit].filter(Boolean).join(" ") || p.code) : null;
 const PROJ = "implementation_projects(code, nickname, condominium_name, unit)";
-const range = (month: string) => { const [y, m] = month.split("-").map(Number); const last = new Date(y, m, 0).getDate(); return [`${month}-01`, `${month}-${String(last).padStart(2, "0")}`] as const; };
+const range = (month: string) => { const [y = 2026, m = 1] = month.split("-").map(Number); const last = new Date(y, m, 0).getDate(); return [`${month}-01`, `${month}-${String(last).padStart(2, "0")}`] as const; };
 
 export type ExpenseRow = CostExpense & { description: string; category: string; taskId: string | null; receiptUrl: string | null };
 
