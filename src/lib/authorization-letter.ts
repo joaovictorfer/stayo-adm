@@ -35,7 +35,7 @@ export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
   });
   const role = plural ? "proprietários" : fem ? "proprietária" : "proprietário";
   const date = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${f.date}T12:00:00Z`));
-  const list = (items: string[]): Para[] => items.map(t => ({ runs: [{ text: `– ${t}` }], align: "left", after: 60 }));
+  const list = (items: string[]): Para[] => items.map((t, i) => ({ runs: [{ text: `– ${t}` }], align: "left", after: i === items.length - 1 ? 240 : 60 }));
   const paras: Para[] = [
     { runs: [{ text: `CARTA DE AUTORIZAÇÃO À PORTARIA DO ${f.condominium.toUpperCase()}`, bold: true }], align: "center", after: 360 },
     { runs: [{ text: plural ? "Nós, " : "Eu, " }, ...owners, { text: `, ${role} do Apartamento nº ${f.unit}, Torre ${f.tower}, ${f.condominium}, situado na ${f.address.replace(/\.$/, "")}, ` }, { text: plural ? "AUTORIZAMOS" : "AUTORIZO", bold: true }, { text: ", por prazo indeterminado, a empresa STAYO – Gestão de Imóveis, inscrita no CNPJ 67.217.149/0001-06, a exercer a administração integral do referido imóvel, inclusive para fins de hospedagem por temporada." }] },
