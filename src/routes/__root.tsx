@@ -139,7 +139,7 @@ function RootContent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   /** Rotas /portal/* são páginas públicas (link do proprietário) — sem o shell administrativo. */
-  const isPublicPortal = pathname.startsWith("/portal/") || pathname.startsWith("/cobranca/") || pathname.startsWith("/vistoria/prototipo") || pathname.startsWith("/proprietario-prototipo") || pathname.startsWith("/vistoria-implantacao/");
+  const isPublicPortal = pathname.startsWith("/portal/") || pathname.startsWith("/cobranca/") || pathname.startsWith("/vistoria/prototipo") || pathname.startsWith("/proprietario-prototipo") || pathname.startsWith("/vistoria-implantacao/") || pathname.startsWith("/meu-dia/");
   const isLoginRoute = pathname === "/login";
   const isPublicRoute = isPublicPortal || isLoginRoute;
 

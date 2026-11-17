@@ -57,10 +57,12 @@ import { Route as ImplantacaoPropostasRouteImport } from './routes/implantacao.p
 import { Route as ImplantacaoTemplatesRouteImport } from './routes/implantacao.templates'
 import { Route as MensagensIndexRouteImport } from './routes/mensagens.index'
 import { Route as MensagensIdRouteImport } from './routes/mensagens.$id'
+import { Route as MeuDiaTokenRouteImport } from './routes/meu-dia.$token'
 import { Route as OperacaoIndexRouteImport } from './routes/operacao.index'
 import { Route as OperacaoIdRouteImport } from './routes/operacao.$id'
 import { Route as OperacaoAgendaRouteImport } from './routes/operacao.agenda'
 import { Route as OperacaoAgendaPrototipoRouteImport } from './routes/operacao.agenda-prototipo'
+import { Route as OperacaoEquipeRouteImport } from './routes/operacao.equipe'
 import { Route as OperacaoManutencaoRouteImport } from './routes/operacao.manutencao'
 import { Route as OperacaoPrototipoRouteImport } from './routes/operacao.prototipo'
 import { Route as OperacaoRegrasRouteImport } from './routes/operacao.regras'
@@ -352,6 +354,11 @@ const MensagensIdRoute = MensagensIdRouteImport.update({
   path: '/mensagens/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MeuDiaTokenRoute = MeuDiaTokenRouteImport.update({
+  id: '/meu-dia/$token',
+  path: '/meu-dia/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperacaoIndexRoute = OperacaoIndexRouteImport.update({
   id: '/operacao/',
   path: '/operacao/',
@@ -370,6 +377,11 @@ const OperacaoAgendaRoute = OperacaoAgendaRouteImport.update({
 const OperacaoAgendaPrototipoRoute = OperacaoAgendaPrototipoRouteImport.update({
   id: '/operacao/agenda-prototipo',
   path: '/operacao/agenda-prototipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacaoEquipeRoute = OperacaoEquipeRouteImport.update({
+  id: '/operacao/equipe',
+  path: '/operacao/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperacaoManutencaoRoute = OperacaoManutencaoRouteImport.update({
@@ -616,9 +628,11 @@ export interface FileRoutesByFullPath {
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
+  '/meu-dia/$token': typeof MeuDiaTokenRoute
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/equipe': typeof OperacaoEquipeRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/regras': typeof OperacaoRegrasRoute
@@ -708,9 +722,11 @@ export interface FileRoutesByTo {
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
+  '/meu-dia/$token': typeof MeuDiaTokenRoute
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/equipe': typeof OperacaoEquipeRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/regras': typeof OperacaoRegrasRoute
@@ -802,9 +818,11 @@ export interface FileRoutesById {
   '/implantacao/propostas': typeof ImplantacaoPropostasRoute
   '/implantacao/templates': typeof ImplantacaoTemplatesRoute
   '/mensagens/$id': typeof MensagensIdRoute
+  '/meu-dia/$token': typeof MeuDiaTokenRoute
   '/operacao/$id': typeof OperacaoIdRoute
   '/operacao/agenda': typeof OperacaoAgendaRoute
   '/operacao/agenda-prototipo': typeof OperacaoAgendaPrototipoRoute
+  '/operacao/equipe': typeof OperacaoEquipeRoute
   '/operacao/manutencao': typeof OperacaoManutencaoRoute
   '/operacao/prototipo': typeof OperacaoPrototipoRoute
   '/operacao/regras': typeof OperacaoRegrasRoute
@@ -897,9 +915,11 @@ export interface FileRouteTypes {
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/mensagens/$id'
+    | '/meu-dia/$token'
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/equipe'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
     | '/operacao/regras'
@@ -989,9 +1009,11 @@ export interface FileRouteTypes {
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/mensagens/$id'
+    | '/meu-dia/$token'
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/equipe'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
     | '/operacao/regras'
@@ -1082,9 +1104,11 @@ export interface FileRouteTypes {
     | '/implantacao/propostas'
     | '/implantacao/templates'
     | '/mensagens/$id'
+    | '/meu-dia/$token'
     | '/operacao/$id'
     | '/operacao/agenda'
     | '/operacao/agenda-prototipo'
+    | '/operacao/equipe'
     | '/operacao/manutencao'
     | '/operacao/prototipo'
     | '/operacao/regras'
@@ -1176,9 +1200,11 @@ export interface RootRouteChildren {
   ImplantacaoPropostasRoute: typeof ImplantacaoPropostasRoute
   ImplantacaoTemplatesRoute: typeof ImplantacaoTemplatesRoute
   MensagensIdRoute: typeof MensagensIdRoute
+  MeuDiaTokenRoute: typeof MeuDiaTokenRoute
   OperacaoIdRoute: typeof OperacaoIdRoute
   OperacaoAgendaRoute: typeof OperacaoAgendaRoute
   OperacaoAgendaPrototipoRoute: typeof OperacaoAgendaPrototipoRoute
+  OperacaoEquipeRoute: typeof OperacaoEquipeRoute
   OperacaoManutencaoRoute: typeof OperacaoManutencaoRoute
   OperacaoPrototipoRoute: typeof OperacaoPrototipoRoute
   OperacaoRegrasRoute: typeof OperacaoRegrasRoute
@@ -1565,6 +1591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MensagensIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/meu-dia/$token': {
+      id: '/meu-dia/$token'
+      path: '/meu-dia/$token'
+      fullPath: '/meu-dia/$token'
+      preLoaderRoute: typeof MeuDiaTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operacao/': {
       id: '/operacao/'
       path: '/operacao'
@@ -1591,6 +1624,13 @@ declare module '@tanstack/react-router' {
       path: '/operacao/agenda-prototipo'
       fullPath: '/operacao/agenda-prototipo'
       preLoaderRoute: typeof OperacaoAgendaPrototipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacao/equipe': {
+      id: '/operacao/equipe'
+      path: '/operacao/equipe'
+      fullPath: '/operacao/equipe'
+      preLoaderRoute: typeof OperacaoEquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operacao/manutencao': {
@@ -1924,9 +1964,11 @@ const rootRouteChildren: RootRouteChildren = {
   ImplantacaoPropostasRoute: ImplantacaoPropostasRoute,
   ImplantacaoTemplatesRoute: ImplantacaoTemplatesRoute,
   MensagensIdRoute: MensagensIdRoute,
+  MeuDiaTokenRoute: MeuDiaTokenRoute,
   OperacaoIdRoute: OperacaoIdRoute,
   OperacaoAgendaRoute: OperacaoAgendaRoute,
   OperacaoAgendaPrototipoRoute: OperacaoAgendaPrototipoRoute,
+  OperacaoEquipeRoute: OperacaoEquipeRoute,
   OperacaoManutencaoRoute: OperacaoManutencaoRoute,
   OperacaoPrototipoRoute: OperacaoPrototipoRoute,
   OperacaoRegrasRoute: OperacaoRegrasRoute,

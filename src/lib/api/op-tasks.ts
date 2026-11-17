@@ -75,7 +75,9 @@ export async function saveOpTask(input: OpTaskInput, id?: string) {
     status: input.status, amount: input.amount, responsible_name: input.responsibleName?.trim() || null,
     guidance: input.guidance?.trim() || null,
   };
-  const q = id ? supabase.from("op_tasks").update(row).eq("id", id) : supabase.from("op_tasks").insert(row);
+  // Na edição, a situação muda só pela execução (Iniciar/Concluir), evitando sobrescrever o andamento.
+  const { status: _status, ...editRow } = row;
+  const q = id ? supabase.from("op_tasks").update(editRow).eq("id", id) : supabase.from("op_tasks").insert(row);
   const { error } = await q;
   if (error) throw new Error(error.code === "42501" ? "Seu perfil não pode alterar tarefas." : "Não foi possível salvar a tarefa.");
 }
