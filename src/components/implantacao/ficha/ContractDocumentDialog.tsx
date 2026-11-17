@@ -24,7 +24,7 @@ const contractSections = [
 ] as const;
 type ContractSection = typeof contractSections[number]['id'];
 
-export function ContractDocumentDialog({ implementationId, conditions }: { implementationId: string; conditions: Record<string, unknown> | null }) {
+export function ContractDocumentDialog({ implementationId, conditions, implementationFee }: { implementationId: string; conditions: Record<string, unknown> | null; implementationFee?: number | null }) {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ContractSection>("parties");
   const project = useQuery({ ...implementationQuery(implementationId), enabled: open });
@@ -51,7 +51,7 @@ export function ContractDocumentDialog({ implementationId, conditions }: { imple
       signatureCity: "Canela/RS", signatureDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       administrationFee: Number(conditions?.["administration_fee"] ?? 20), durationMonths: Number(conditions?.["duration_months"] ?? 12),
       maintenanceLimit: Number(conditions?.["maintenance_limit"] ?? 300), noticePeriodDays: Number(conditions?.["notice_period_days"] ?? 30),
-      ownerUseNoticeDays: Number(conditions?.["owner_use_notice_days"] ?? 3), exclusivity: conditions?.["exclusivity"] !== false, implementationFee: Number(conditions?.["implementation_fee"] ?? 500),
+      ownerUseNoticeDays: Number(conditions?.["owner_use_notice_days"] ?? 3), exclusivity: conditions?.["exclusivity"] !== false, implementationFee: implementationFee ?? Number(conditions?.["implementation_fee"] ?? 500),
       payoutMode: conditions?.["payout_mode"] === "day10_report" ? "day10_report" : "platform_auto",
       summaryTexts: { payout: String(conditions?.["payout_rule"] ?? "").trim() || undefined, ownerUse: String(conditions?.["owner_use_notes"] ?? "").trim() || undefined, marketing: String(conditions?.["marketing_rule"] ?? "").trim() || undefined, periodicShutdown: String(conditions?.["periodic_shutdown_rule"] ?? "").trim() || undefined },
       witness1Name: "Luana Lima de Oliveira", witness1Cpf: "114.011.974-50", witness2Name: "", witness2Cpf: "",

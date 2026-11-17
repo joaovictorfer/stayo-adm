@@ -382,7 +382,7 @@ export function FichaCommercial({
             <p className="hidden text-sm sm:block sm:text-base" style={muted}>O que foi acordado com o proprietário.</p>
           </div>
           <div className="flex gap-2">
-            <ContractDocumentDialog implementationId={implementationId} conditions={q.data as Record<string, unknown> | null} />
+            <ContractDocumentDialog implementationId={implementationId} conditions={q.data as Record<string, unknown> | null} implementationFee={implTotal != null && Number(implTotal) > 0 ? Number(implTotal) : null} />
             <AuthorizationLetterDialog implementationId={implementationId} />
             <button type="button" onClick={onHistory} className="flex h-10 flex-1 items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm sm:flex-none" style={{ ...border, ...navy }}>
               Histórico <ChevronDown className="ml-3 size-4" />
