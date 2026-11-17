@@ -108,6 +108,7 @@ export const navigation: NavItem[] = [
     children: [
       { id: "operations-overview", label: "Central operacional", path: "/operacao", icon: "list", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-agenda", label: "Agenda", path: "/operacao/agenda", icon: "calendar", roles: ["super_admin", "admin", "operations"] },
+      { id: "operations-cleaning", label: "Limpeza dos imóveis", path: "/operacao/limpeza", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-tasks", label: "Tarefas", path: "/operacao/tarefas", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-rules", label: "Regras e checklists", path: "/operacao/regras", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-team", label: "Equipe e Meu Dia", path: "/operacao/equipe", icon: "users", roles: ["super_admin", "admin", "operations"] },
