@@ -18,6 +18,10 @@ describe("acesso por perfil", () => {
   it("Meu Dia não é bloqueado pelo menu", () => {
     expect(blockedSectionFor("/meu-dia/x", "viewer")).toBeNull();
   });
+  it("financeiro vê o grupo Operação só para chegar em Custos", () => {
+    expect(canSeeNav(find("operations"), "finance")).toBe(true);
+    expect(canSeeNav(find("operations-agenda"), "finance")).toBe(false);
+  });
   it("menu esconde Custos para comercial", () => {
     expect(canSeeNav(find("operations-costs"), "commercial")).toBe(false);
   });

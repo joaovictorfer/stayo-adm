@@ -211,7 +211,7 @@ export const navigationGroups: NavGroup[] = [
 /** Item visível para o perfil? Sem perfil carregado, nada é filtrado (o banco segue protegendo). */
 export function canSeeNav(item: NavItem, role: string | null | undefined): boolean {
   if (!role) return true;
-  return item.roles.includes(role as StayoRole);
+  return item.roles.includes(role as StayoRole) || (item.children ?? []).some((c) => canSeeNav(c, role));
 }
 
 /** Seção mais específica do caminho que o perfil não pode abrir, ou null. */
