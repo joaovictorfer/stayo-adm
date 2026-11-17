@@ -26,7 +26,7 @@ const contractSections = [
 ] as const;
 type ContractSection = typeof contractSections[number]['id'];
 
-export function ContractDocumentDialog({ implementationId, conditions, implementationFee, controlledOpen, onControlledOpenChange }: { implementationId: string; conditions: Record<string, unknown> | null; implementationFee?: number | null; controlledOpen?: boolean; onControlledOpenChange?: (open: boolean) => void }) {
+export function ContractDocumentDialog({ implementationId, conditions, implementationFee, controlledOpen, onControlledOpenChange, autoGenerate }: { autoGenerate?: boolean; implementationId: string; conditions: Record<string, unknown> | null; implementationFee?: number | null; controlledOpen?: boolean; onControlledOpenChange?: (open: boolean) => void }) {
   const [localOpen, setLocalOpen] = useState(false);
   const open = controlledOpen ?? localOpen;
   const setOpen = (value: boolean) => { setLocalOpen(value); onControlledOpenChange?.(value); };
@@ -108,6 +108,10 @@ export function ContractDocumentDialog({ implementationId, conditions, implement
     }
     finally { setBusy(false); }
   };
+  const autoTried = useRef(false);
+  useEffect(() => { if (!open) autoTried.current = false; }, [open]);
+  useEffect(() => { if (autoGenerate && open && !fields && project.data && owner.data) { initialize(); setReviewing(true); } }, [autoGenerate, open, fields, project.data, owner.data]);
+  useEffect(() => { if (autoGenerate && open && fields && validation?.success && !file && !busy && !autoTried.current) { autoTried.current = true; void prepare(); } else if (autoGenerate && open && fields && validation && !validation.success && !autoTried.current) { autoTried.current = true; setReviewing(false); } }, [autoGenerate, open, fields, validation?.success, file, busy]);
   const download = () => {
     if (!file) return;
     const url = URL.createObjectURL(file.blob);

@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, FileText, Loader2, Pencil, ArrowLeft, ArrowRight } from "lucide-react";
+import { Copy, FileText, Loader2, Pencil, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { contractRowToSnapshot } from "@/lib/contract-conditions";
 import { buildContractCopy, copyContractToClipboard, type ContractCopyInput } from "@/lib/contract-copy";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { adminCondominiumsListQuery } from "@/lib/api/queries";
 import type { ImplementationProject } from "@/types/core";
@@ -27,7 +26,6 @@ export function ContractCopyDialog({ implementation, submission, official, detai
 }) {
   const [open, setOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [sensitive, setSensitive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<'people' | 'conditions' | 'property' | null>(null);
   const [conditionFocus, setConditionFocus] = useState<string | undefined>();
@@ -61,7 +59,7 @@ export function ContractCopyDialog({ implementation, submission, official, detai
       district: details?.district || condo?.neighborhood, city: details?.city || condo?.city || implementation.city,
       state: details?.state || condo?.state, postalCode: details?.postalCode || condo?.postalCode || implementation.postalCode },
     conditions: contractRowToSnapshot(conditions.data), pixKey: sub?.pixKey, implementationFee: fee != null && fee > 0 ? fee : null,
-  }, sensitive);
+  }, true);
   const unavailable = conditions.isPending || conditions.isFetching || proposals.isPending || proposals.isError || condos.isPending || condos.isError || conditions.isError || loading;
   async function copy(part: "all" | "people" | "summary") {
     setBusy(true);
@@ -74,10 +72,9 @@ export function ContractCopyDialog({ implementation, submission, official, detai
   }
   return <>
     <Button size="sm" disabled={loading} onClick={() => setOpen(true)}><FileText />Gerar contrato</Button>
-    <Dialog open={open} onOpenChange={value => { setOpen(value); if (!value) { setSensitive(false); setEditing(null); } }}>
+    <Dialog open={open} onOpenChange={value => { setOpen(value); if (!value) { setEditing(null); } }}>
       <DialogContent ref={contentRef} className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader><DialogTitle>Revisar Quadro Resumo</DialogTitle><DialogDescription>{implementation.nickname || implementation.condominiumName} · {implementation.unit} · {implementation.code}</DialogDescription></DialogHeader>
-        {!editing && <label className="flex items-center gap-2 text-sm"><Checkbox checked={sensitive} onCheckedChange={value => setSensitive(value === true)} />Incluir CPF/CNPJ e chave Pix completos</label>}
         {document.hasMissing && !unavailable && <p role="status" className="text-sm text-muted-foreground">Campos sem informação e cláusulas não cadastradas estão marcados como [A DEFINIR].</p>}
         {unavailable ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">{conditions.isError || condos.isError || proposals.isError ? <>Não foi possível carregar os dados.<Button variant="link" onClick={() => { void conditions.refetch(); void condos.refetch(); void proposals.refetch(); }}>Tentar novamente</Button></> : <><Loader2 className="size-4 animate-spin" />Carregando dados do contrato…</>}</p> : <>
           {editing ? <div className="space-y-5">
@@ -96,9 +93,9 @@ export function ContractCopyDialog({ implementation, submission, official, detai
             <div className="overflow-hidden rounded-lg border border-border">{document.rows.map((row, index) => <div key={row.title} className="border-b border-border px-3 py-2 last:border-b-0"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"><h4 className="min-w-0 text-sm font-semibold">{row.title}</h4>{[9, 10, 13, 14].includes(index) ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">Padrão do contrato</span> : <Button variant="ghost" size="sm" className="shrink-0" aria-label={`Editar ${row.title}`} onClick={() => index === 0 ? setEditing('property') : editConditions(['', 'administration_fee', 'cleaning_responsibility', 'administration_fee', 'payout_rule', 'owner_use_notes', 'marketing_rule', 'maintenance_limit', 'periodic_shutdown_rule', '', '', 'duration_months', 'notice_period_days', '', ''][index])}><Pencil className="size-4" /><span className="hidden sm:inline">Editar</span></Button>}</div><p className="whitespace-pre-line text-sm leading-relaxed">{row.body}</p></div>)}</div>
           </section></>}
         </>}
-        {!editing && <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-border bg-background py-3"><Button variant="ghost" disabled={busy || unavailable} onClick={() => void copy("all")}><Copy />Copiar texto</Button><Button disabled={busy || unavailable} onClick={() => { setOpen(false); setSensitive(false); setGenerating(true); }}>Continuar para gerar contrato<ArrowRight /></Button></div>}
+        {!editing && <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-border bg-background py-3"><Button variant="ghost" disabled={busy || unavailable} onClick={() => void copy("all")}><Copy />Copiar texto</Button><Button disabled={busy || unavailable} onClick={() => { setOpen(false); setGenerating(true); }}><FileText />Gerar contrato</Button></div>}
       </DialogContent>
     </Dialog>
-    <ContractDocumentDialog implementationId={implementation.id} conditions={conditions.data ?? null} implementationFee={fee != null && fee > 0 ? fee : null} controlledOpen={generating} onControlledOpenChange={setGenerating} />
+    <ContractDocumentDialog implementationId={implementation.id} conditions={conditions.data ?? null} implementationFee={fee != null && fee > 0 ? fee : null} autoGenerate controlledOpen={generating} onControlledOpenChange={setGenerating} />
   </>;
 }
