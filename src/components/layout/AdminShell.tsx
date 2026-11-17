@@ -196,6 +196,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [drawer, setDrawer] = useState(false);
   const section = currentSection(pathname);
+  const blocked = blockedSectionFor(pathname, useAuthSession().profile?.role);
 
   useEffect(() => {
     setDrawer(false);
