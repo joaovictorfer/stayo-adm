@@ -2328,6 +2328,68 @@ export type Database = {
           },
         ]
       }
+      op_tasks: {
+        Row: {
+          amount: number | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string
+          guidance: string | null
+          id: string
+          implementation_id: string | null
+          kind: string
+          priority: string
+          responsible_name: string | null
+          scheduled_time: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          guidance?: string | null
+          id?: string
+          implementation_id?: string | null
+          kind?: string
+          priority?: string
+          responsible_name?: string | null
+          scheduled_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          guidance?: string | null
+          id?: string
+          implementation_id?: string | null
+          kind?: string
+          priority?: string
+          responsible_name?: string | null
+          scheduled_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_tasks_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_messages: {
         Row: {
           body: string
