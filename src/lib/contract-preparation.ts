@@ -51,6 +51,7 @@ export const contractFieldsSchema = z.object({
   exclusivity: z.boolean(), payoutMode: z.enum(["day10_report", "platform_auto"]), ownerUseNoticeDays: z.number().int().min(0).max(99), implementationFee: z.number().min(0).max(999999),
   witness1Name: text.max(150), witness1Cpf: text.max(20).refine(isValidCpf, "CPF inválido"),
   witness2Name: z.string().trim().max(150).default(""), witness2Cpf: z.string().trim().max(20).default(""),
+  summaryTexts: z.object({ payout: z.string().trim().max(2000).optional(), ownerUse: z.string().trim().max(2000).optional(), marketing: z.string().trim().max(2000).optional(), periodicShutdown: z.string().trim().max(2000).optional() }).optional(),
 }).superRefine((f, ctx) => {
   if (!f.witness2Name && !f.witness2Cpf) return;
   if (!f.witness2Name) ctx.addIssue({ code: "custom", path: ["witness2Name"], message: "Informe o nome da segunda testemunha" });

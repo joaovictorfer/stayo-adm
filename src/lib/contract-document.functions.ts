@@ -18,8 +18,8 @@ export const exportStandardContract = createServerFn({ method: "POST" })
     if (error || allowed !== true) throw new Error("Geração de contrato restrita à equipe autorizada.");
     const { data: project, error: projectError } = await context.supabase.from("implementation_projects").select("id,code").eq("id", data.implementationId).maybeSingle();
     if (projectError || !project) throw new Error("Ficha indisponível para geração.");
-    const { originalContractBase64 } = await import("./contract-template.server");
-    const bytes = Uint8Array.from(atob(originalContractBase64), c => c.charCodeAt(0));
+    const { standardContractBase64 } = await import("./contract-standard-template.server");
+    const bytes = Uint8Array.from(atob(standardContractBase64), c => c.charCodeAt(0));
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), b => b.toString(16).padStart(2, "0")).join("");
     if (hash !== templateMap.sha256) throw new Error("Integridade da minuta inválida.");
     const document = generateContractDocx(bytes, data.fields);
@@ -39,7 +39,7 @@ export const exportAuthorizationLetter = createServerFn({ method: "POST" })
     const { originalContractBase64 } = await import("./contract-template.server");
     const bytes = Uint8Array.from(atob(originalContractBase64), c => c.charCodeAt(0));
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), b => b.toString(16).padStart(2, "0")).join("");
-    if (hash !== templateMap.sha256) throw new Error("Integridade do modelo inválida.");
+    if (hash !== templateMap.letterTemplateSha256) throw new Error("Integridade do modelo inválida.");
     const document = generateAuthorizationLetterDocx(bytes, data.fields);
     let binary = "";
     for (let i = 0; i < document.length; i += 8192) binary += String.fromCharCode(...document.subarray(i, i + 8192));

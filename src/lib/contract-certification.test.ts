@@ -4,7 +4,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { contractFieldsSchema, type ContractParty } from "./contract-preparation";
 import { generateContractDocx } from "./contract-document";
 
-const original = new Uint8Array(readFileSync("src/assets/contracts/contrato-stayo-original.docx"));
+const original = new Uint8Array(readFileSync("src/assets/contracts/contrato-stayo-02.docx"));
 const source = unzipSync(original);
 const party: ContractParty = {
   personType: "pf", fullName: "Helena Duarte Pires", document: "529.982.247-25",
@@ -38,10 +38,10 @@ describe("certificação da minuta com cadastros variados", () => {
     expect(Object.keys(result).sort()).toEqual(Object.keys(source).sort());
     for (const key of Object.keys(source).filter(k => k !== "word/document.xml")) expect(result[key]).toEqual(source[key]);
     const xml = strFromU8(result["word/document.xml"] ?? new Uint8Array());
-    expect(paragraphs(xml).slice(43, 149)).toEqual(paragraphs(sourceXml).slice(43, 149));
-    expect(xml).not.toContain("BRUNA ANDIARA");
-    expect(xml).not.toContain("JONATHAN");
-    expect(xml).not.toContain("016.912.240-90");
+    expect(paragraphs(xml).slice(39, 144)).toEqual(paragraphs(sourceXml).slice(39, 144));
+    expect(xml).not.toContain("GEÓRGIA KARLA");
+    expect(xml).not.toContain("DANIEL MARSOL");
+    expect(xml).not.toContain("036.780.794-74");
     const structure = (s: string) => s.replace(/<w:t(?:\s[^>]*)?>[\s\S]*?<\/w:t>/g, "<w:t></w:t>");
     expect(structure(xml)).toBe(structure(sourceXml));
   });
@@ -56,7 +56,9 @@ describe("certificação da minuta com cadastros variados", () => {
   });
   it("mantém centavos coerentes no documento final", () => {
     const xml = strFromU8(unzipSync(generateContractDocx(original, contractFieldsSchema.parse(fields)))["word/document.xml"] ?? new Uint8Array());
-    expect(xml).toContain("R$ 600,50 (seiscentos reais e cinquenta centavos)");
-    expect(xml).not.toContain("seiscentos e um reais");
+    const xml2 = strFromU8(unzipSync(generateContractDocx(original, contractFieldsSchema.parse({ ...fields, maintenanceLimit: 300.5 })))["word/document.xml"] ?? new Uint8Array());
+    const flat = (x: string) => x.replace(/<[^>]+>/g, "");
+    expect(flat(xml2)).toContain("R$ 300,50 sem necessidade");
+    expect(flat(xml)).toContain("R$ 300,00 sem necessidade");
   });
 });

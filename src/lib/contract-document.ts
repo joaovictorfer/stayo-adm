@@ -21,6 +21,8 @@ export interface ContractDocumentFields {
   witness2Name: string;
   witness2Cpf: string;
   parties?: Array<{ fullName: string }>;
+  /** Textos editados na ficha para os itens 5, 6, 7 e 9; vazio mantém o texto padrão do contrato. */
+  summaryTexts?: { payout?: string | undefined; ownerUse?: string | undefined; marketing?: string | undefined; periodicShutdown?: string | undefined } | undefined;
 }
 
 const stripControl = (s: string) => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, "");
@@ -116,32 +118,34 @@ export function fillContractXml(xml: string, f: ContractDocumentFields): string 
   const firstSignature = signatureLines(names[0] ?? "");
   const secondSignature = signatureLines(names.slice(1).join(" / "));
   const brl = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n).replace(/\u00a0/g, " ");
+  const T = f.summaryTexts ?? {};
+  const whole = (i: number, value: string | undefined): Array<[string, string]> => [[(P as Record<string, string>)[String(i)] ?? "", value?.trim() || ((P as Record<string, string>)[String(i)] ?? "")]];
+  const payoutText = T.payout?.trim() || (f.payoutMode === "day10_report"
+    ? `Os repasses serão efetuados pelo CONTRATADO até o dia 10 do mês subsequente ao check-out, acompanhados de relatório de reservas, despesas e valores repassados${f.pixKey.trim() ? `, mediante Pix para a chave ${f.pixKey.trim()}` : ""}.`
+    : undefined);
   const updates = new Map<number, Array<[string, string]>>([
     [8, [["20% (vinte por cento)", percent(f.administrationFee)]]],
     [12, [["80%", `${number(100 - f.administrationFee)}%`]]],
     [13, [["20%", `${number(f.administrationFee)}%`]]],
-    [18, [[P["18"].slice("Chave pix: ".length), f.pixKey]]],
-    [20, [["72h", `${f.ownerUseNoticeDays * 24}h`]]],
-    [24, [["R$ 300,00", brl(f.maintenanceLimit)]]],
-    [29, [["SIM", f.exclusivity ? "SIM" : "NÃO"]]],
-    [36, [["12 (doze)", `${f.durationMonths} (${words(f.durationMonths)})`]]],
-    [38, [["30 (trinta)", `${f.noticePeriodDays} (${words(f.noticePeriodDays)})`]]],
-    [42, [["R$ 500,00 (quinhentos reais)", `${brl(f.implementationFee)} (${reais(f.implementationFee)})`]]],
-    [149, [[P["149"], `${f.signatureCity}, ${new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${f.signatureDate}T12:00:00Z`))}.`]]],
-    [156, [[P["156"], firstSignature[0]]]],
-    [157, [[P["157"], firstSignature[1]]]],
-    [158, [[P["158"], secondSignature[0]]]],
-    [159, [[P["159"], secondSignature[1]]]],
-    [161, [[P["161"], names.length > 1 ? "CONTRATANTE" : ""]]],
-    [175, [["Luana Lima de Oliveira", f.witness1Name]]],
-    [176, [["Nome: ", `Nome: ${f.witness2Name}`]]],
-    [177, [["114.011.974-50", f.witness1Cpf]]],
-    [178, [["CPF: ", `CPF: ${f.witness2Cpf}`]]],
+    [16, whole(16, payoutText)],
+    [18, whole(18, T.ownerUse)],
+    [20, whole(20, T.marketing)],
+    [22, [["R$ 300,00", brl(f.maintenanceLimit)]]],
+    [25, whole(25, T.periodicShutdown)],
+    [27, [["SIM", f.exclusivity ? "SIM" : "NÃO"]]],
+    [34, [["12 (doze)", `${f.durationMonths} (${words(f.durationMonths)})`]]],
+    [36, [["30 (trinta)", `${f.noticePeriodDays} (${words(f.noticePeriodDays)})`]]],
+    [144, [[P["144"], `${f.signatureCity}, ${new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${f.signatureDate}T12:00:00Z`))}.`]]],
+    [150, [[P["150"], firstSignature[0]]]],
+    [151, [[P["151"], firstSignature[1]]]],
+    [152, [[P["152"], secondSignature[0]]]],
+    [153, [[P["153"], secondSignature[1]]]],
+    [155, [[P["155"], names.length > 1 ? "CONTRATANTE" : ""]]],
+    [169, [["Luana Lima de Oliveira", f.witness1Name]]],
+    [170, [["Nome: ", `Nome: ${f.witness2Name}`]]],
+    [171, [["114.011.974-50", f.witness1Cpf]]],
+    [172, [["CPF: ", `CPF: ${f.witness2Cpf}`]]],
   ]);
-  if (f.payoutMode === "day10_report") {
-    updates.set(16, [[P["16"], "Repasses efetuados pelo CONTRATADO até o dia 10 do mês subsequente ao check-out;"]]);
-    updates.set(17, [[P["17"], "Acompanhados de relatório de reservas, despesas e valores repassados."]]);
-  }
   updates.set(2, []);
   updates.set(6, []);
   const pieces = (i: number, p: string) => {
@@ -153,8 +157,8 @@ export function fillContractXml(xml: string, f: ContractDocumentFields): string 
       const secondStart = secondName ? q.indexOf(secondName, firstName.length) : -1;
       const rest = q.slice(firstName.length);
       const source = P["2"].slice("CONTRATANTE(S): ".length);
-      const sourceFirst = "BRUNA ANDIARA RASCHE HAUPENTHAL";
-      const sourceSecond = "JONATHAN HAUPENTHAL";
+      const sourceFirst = "GEÓRGIA KARLA DE ALMEIDA CIDRIM";
+      const sourceSecond = "DANIEL MARSOL MÚRCIA DE ALBUQUERQUE";
       const sourceSecondStart = source.indexOf(sourceSecond);
       return substitutePieces(p, [
         [sourceFirst, firstName],
@@ -167,8 +171,8 @@ export function fillContractXml(xml: string, f: ContractDocumentFields): string 
     if (!m) return substitutePieces(p, [[P["6"], f.propertyDescription]]);
     const [unit = "", tower = "", cond = "", addr = ""] = m.slice(1);
     return substitutePieces(p, [
-      ["201", unit], ["VERONA", tower], ["Residencial Vêneto", cond],
-      ["Rua Artur Reinheimer, 550 – Bairro Carniel – Gramado/RS – CEP 95670-720.", `${addr.replace(/\.$/, "")}.`],
+      ["105", unit], ["A-Verona", tower], ["Residencial Vêneto", cond],
+      ["R. Artur Reinheimer, 550 – Bairro Carniel – Gramado/RS – CEP 95670-720.", `${addr.replace(/\.$/, "")}.`],
     ]);
   };
   let index = -1;
