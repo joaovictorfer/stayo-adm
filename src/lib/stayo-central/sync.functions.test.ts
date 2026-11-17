@@ -23,13 +23,14 @@ const reservationId = "33333333-3333-4333-8333-333333333333";
 const syntheticCpf = "529.982.247-25";
 
 async function sync(titular: Record<string, unknown>, existing = true, statementOk = true) {
+  const deleteRow = vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) }));
   const writes = { update: vi.fn((_row: Record<string, unknown>) => ({ eq: vi.fn(async () => ({ error: null })) })), insert: vi.fn(async (_row: Record<string, unknown>) => ({ error: null })) };
   const supabase = {
     rpc: vi.fn(async () => ({ data: true, error: null })),
     from: (table: string) => {
       if (table === "implementation_projects") return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: projectId, core_property_id: propertyId }, error: null }) }) }) };
       if (table === "implementation_contract_conditions") return { select: () => ({ eq: () => ({ limit: () => ({ maybeSingle: async () => ({ data: { payout_mode: "platform_auto" } }) }) }) }) };
-      return { ...writes, select: () => ({ in: async () => ({ data: existing ? [{ central_reservation_id: reservationId }] : [] }) }) };
+      return { ...writes, delete: deleteRow, select: () => ({ in: async () => ({ data: existing ? [{ central_reservation_id: reservationId }] : [] }), eq: () => ({ not: () => ({ gte: () => ({ lt: async () => ({ data: localRows }) }) }) }) }) };
     },
   };
   mocks.get.mockImplementation(async (path: string) => path.endsWith("/statement")
