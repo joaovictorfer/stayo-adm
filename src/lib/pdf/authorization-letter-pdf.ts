@@ -3,7 +3,7 @@ import fontkit from '@pdf-lib/fontkit';
 import backgroundUrl from '@/assets/letters/contract-letterhead.pdf?url';
 import regularAsset from '@/assets/letters/regular.ttf.asset.json';
 import boldAsset from '@/assets/letters/bold.ttf.asset.json';
-import { letterLayout, type Para, type AuthorizationLetterFields } from '../authorization-letter';
+import { letterLayout, letterSignatureSpace, type Para, type AuthorizationLetterFields } from '../authorization-letter';
 import { letterIcons, letterPalette, type LetterIcon } from '../authorization-letter-icons';
 
 export async function generateAuthorizationLetterPdf(fields: AuthorizationLetterFields): Promise<Uint8Array> {
@@ -75,7 +75,8 @@ export async function generateAuthorizationLetterPdf(fields: AuthorizationLetter
       const cellWidth=contentWidth/block.columns.length, pad=8;
       const columns=block.columns.map(col=>col.slice(1));
       const h=Math.max(...columns.map(col=>col.reduce((sum,p)=>sum+paragraphHeight(p,cellWidth-pad*2),0)))+18;
-      ensure(h);
+      ensure(h + letterSignatureSpace);
+      y -= letterSignatureSpace;
       columns.forEach((col,i)=>{
         const x=left+i*cellWidth+pad;
         page.drawLine({start:{x,y:y-4},end:{x:x+cellWidth-pad*2,y:y-4},thickness:.5,color:color(letterPalette.text)});
