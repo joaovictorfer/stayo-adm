@@ -1,4 +1,4 @@
-import { addDaysISO } from "@/lib/local-date";
+import { addDaysISO } from "./local-date";
 
 export type MovementReservation = { id: string; implementationId: string; property: string; guest: string | null; checkin: string; checkout: string; channel: string | null };
 export type Turnover = "mesmo_dia" | "dia_seguinte" | null;
