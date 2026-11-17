@@ -1,0 +1,1 @@
+revoke execute on function public.op_staff_link_ctx(text) from authenticated, anon, public;
