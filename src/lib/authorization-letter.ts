@@ -58,8 +58,8 @@ export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
   if (f.representatives.length) paras.push(heading("REPRESENTANTES AUTORIZADOS", "representatives"), ...list(f.representatives.map(formatLetterDocuments)));
   if (f.vehicles.length) paras.push(heading("VEÍCULOS AUTORIZADOS", "vehicles"), { runs: [{ text: f.vehicles.map(v => v.toUpperCase()).join("     |     "), bold: true }], align: "left", after: 200 });
   paras.push(
-    { runs: [{ text: "Fica estabelecido que todas as comunicações referentes ao imóvel deverão ser centralizadas junto à STAYO, por meio dos contatos:" }] },
     heading("CONTATO", "contact"),
+    { runs: [{ text: "Fica estabelecido que todas as comunicações referentes ao imóvel deverão ser centralizadas junto à STAYO, por meio dos contatos:" }] },
     { runs: [{ text: formatLetterDocuments(f.contact), bold: true }], align: "left" },
     { runs: [{ text: `A presente autorização permanecerá válida até comunicação expressa de cancelamento à portaria/administração do ${f.condominium}.` }] },
     { runs: [{ text: `${f.city}, ${date}.` }], align: "right", after: 300 },
