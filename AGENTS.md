@@ -66,3 +66,5 @@
 - History's simplified checklist reuses existing timeline steps through core-client, without seeding on page load; status changes are scoped to the property and compare the prior status, while occurrence completion keeps the existing revision-locked RPC and quantity guards.
 - Owner history PDFs are local downloads with a reviewed allowlisted projection of purchase/inspection events; fetch all period pages, omit internal free text/identities and never publish or upload the report.
 - Administrative operational classification uses implementation_projects.operational_status independently of registration status; shared property-operation predicates drive portfolio counts and filters without changing Core-link or portal authorization guards.
+
+- Admin menu and page access filter by `navigation.ts` roles via `canSeeNav`/`blockedSectionFor` in AdminShell; this is presentation only — RLS remains the real authorization.
