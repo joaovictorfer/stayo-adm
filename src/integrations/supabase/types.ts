@@ -2328,9 +2328,158 @@ export type Database = {
           },
         ]
       }
+      op_staff: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          source_provider_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          source_provider_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          source_provider_id?: string | null
+        }
+        Relationships: []
+      }
+      op_staff_links: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          staff_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          staff_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          staff_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_staff_links_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "op_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_task_checklist: {
+        Row: {
+          area: string | null
+          checked_at: string | null
+          checked_by: string | null
+          id: string
+          label: string
+          note: string | null
+          photo_path: string | null
+          requires_photo: boolean
+          sort_order: number
+          task_id: string
+        }
+        Insert: {
+          area?: string | null
+          checked_at?: string | null
+          checked_by?: string | null
+          id?: string
+          label: string
+          note?: string | null
+          photo_path?: string | null
+          requires_photo?: boolean
+          sort_order?: number
+          task_id: string
+        }
+        Update: {
+          area?: string | null
+          checked_at?: string | null
+          checked_by?: string | null
+          id?: string
+          label?: string
+          note?: string | null
+          photo_path?: string | null
+          requires_photo?: boolean
+          sort_order?: number
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_task_checklist_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "op_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_task_team: {
+        Row: {
+          id: string
+          is_lead: boolean
+          share: number
+          staff_id: string
+          task_id: string
+        }
+        Insert: {
+          id?: string
+          is_lead?: boolean
+          share?: number
+          staff_id: string
+          task_id: string
+        }
+        Update: {
+          id?: string
+          is_lead?: boolean
+          share?: number
+          staff_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_task_team_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "op_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_task_team_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "op_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       op_tasks: {
         Row: {
           amount: number | null
+          checklist_template_id: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -2342,12 +2491,14 @@ export type Database = {
           priority: string
           responsible_name: string | null
           scheduled_time: string | null
+          started_at: string | null
           status: string
           title: string
           updated_at: string
         }
         Insert: {
           amount?: number | null
+          checklist_template_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -2359,12 +2510,14 @@ export type Database = {
           priority?: string
           responsible_name?: string | null
           scheduled_time?: string | null
+          started_at?: string | null
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
           amount?: number | null
+          checklist_template_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -2376,11 +2529,19 @@ export type Database = {
           priority?: string
           responsible_name?: string | null
           scheduled_time?: string | null
+          started_at?: string | null
           status?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "op_tasks_checklist_template_id_fkey"
+            columns: ["checklist_template_id"]
+            isOneToOne: false
+            referencedRelation: "op_checklist_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "op_tasks_implementation_id_fkey"
             columns: ["implementation_id"]
@@ -4556,6 +4717,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_create_staff_link: { Args: { p_staff_id: string }; Returns: string }
       admin_delete_implementation: {
         Args: { _confirm_code: string; _id: string }
         Returns: undefined
@@ -4657,6 +4819,10 @@ export type Database = {
       admin_review_owner_intake: { Args: { p_data: Json }; Returns: Json }
       admin_revoke_owner_workspace: {
         Args: { p_id: string }
+        Returns: undefined
+      }
+      admin_revoke_staff_links: {
+        Args: { p_staff_id: string }
         Returns: undefined
       }
       admin_save_opportunity_contact: {
@@ -4773,6 +4939,7 @@ export type Database = {
         Args: { p_value: string }
         Returns: boolean
       }
+      op_staff_link_ctx: { Args: { p_token: string }; Returns: string }
       owner_account_link: {
         Args: { p_token: string }
         Returns: {
