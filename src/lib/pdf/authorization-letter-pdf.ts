@@ -3,7 +3,7 @@ import fontkit from '@pdf-lib/fontkit';
 import backgroundUrl from '@/assets/letters/contract-letterhead.pdf?url';
 import regularAsset from '@/assets/letters/regular.ttf.asset.json';
 import boldAsset from '@/assets/letters/bold.ttf.asset.json';
-import { letterLayout, letterSignatureSpace, type Para, type AuthorizationLetterFields } from '../authorization-letter';
+import { letterLayout, letterSignatureSpace, letterVehicleSpace, type Para, type AuthorizationLetterFields } from '../authorization-letter';
 import { letterIcons, letterPalette, type LetterIcon } from '../authorization-letter-icons';
 
 export async function generateAuthorizationLetterPdf(fields: AuthorizationLetterFields): Promise<Uint8Array> {
@@ -100,7 +100,7 @@ export async function generateAuthorizationLetterPdf(fields: AuthorizationLetter
       };
       block.rows.forEach((row,i)=>{ if(y-35<65 && i>0){ensure(50);const header=block.rows[0];if(header)drawRow(header,true);} drawRow(row,i===0); }); y-=10;
     } else {
-      let x=left; ensure(30);
+      let x=left; ensure(30 + letterVehicleSpace); y -= letterVehicleSpace;
       for(const plate of block.plates){const w=boldFont.widthOfTextAtSize(plate,size)+20;if(x+w>left+contentWidth){x=left;y-=27;ensure(30);}page.drawRectangle({x,y:y-9,width:w,height:23,color:color(letterPalette.panel)});page.drawText(plate,{x:x+10,y:y-1,size,font:boldFont,color:color(letterPalette.text)});x+=w+8;}y-=33;
     }
   }

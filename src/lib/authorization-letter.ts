@@ -36,6 +36,7 @@ export type Run = { text: string; bold?: boolean };
 export type Para = { runs: Run[]; align?: "center" | "both" | "right" | "left"; after?: number; divider?: boolean; icon?: LetterIcon };
 /** Blank handwriting area above each signature line, shared by Word and PDF (points). */
 export const letterSignatureSpace = 48;
+export const letterVehicleSpace = 10;
 
 /** Texto da carta em parágrafos, sem formatação Word (testável). */
 export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
@@ -138,7 +139,7 @@ export function generateAuthorizationLetterDocx(original: Uint8Array, fields: Au
       return `<w:tbl><w:tblPr><w:tblW w:w="8504" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${['top','left','bottom','right','insideH','insideV'].map(side => `<w:${side} w:val="nil"/>`).join('')}</w:tblBorders><w:tblCellMar><w:top w:w="${letterSignatureSpace * 20}" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${block.columns.map(() => `<w:gridCol w:w="${cellWidth}"/>`).join('')}</w:tblGrid><w:tr><w:trPr><w:cantSplit/></w:trPr>${block.columns.map(col => `<w:tc><w:tcPr><w:tcW w:w="${cellWidth}" w:type="dxa"/><w:vAlign w:val="top"/></w:tcPr>${col.map((p, index) => styledPara(index === 0 ? { ...p, runs: [{ text: block.columns.length > 1 ? '________________________' : '_______________________________________' }] } : p)).join('')}</w:tc>`).join('')}</w:tr></w:tbl><w:p/>`;
     }
     if (block.kind === "table") return tableXml(block.rows.map((row, i) => row.map(text => [{ runs: [{ text, bold: i === 0 }], align: "left", after: 0 }])), [4752, 3752]);
-    return `<w:p><w:pPr><w:spacing w:after="180" w:line="300" w:lineRule="auto"/></w:pPr>${block.plates.map(plate => `<w:r><w:rPr>${font}<w:b/><w:sz w:val="19"/><w:shd w:val="clear" w:fill="${letterPalette.panel}"/></w:rPr><w:t xml:space="preserve">  ${esc(plate)}  </w:t></w:r><w:r><w:t xml:space="preserve">   </w:t></w:r>`).join('')}</w:p>`;
+    return `<w:p><w:pPr><w:spacing w:before="${letterVehicleSpace * 20}" w:after="180" w:line="300" w:lineRule="auto"/></w:pPr>${block.plates.map(plate => `<w:r><w:rPr>${font}<w:b/><w:sz w:val="19"/><w:shd w:val="clear" w:fill="${letterPalette.panel}"/></w:rPr><w:t xml:space="preserve">  ${esc(plate)}  </w:t></w:r><w:r><w:t xml:space="preserve">   </w:t></w:r>`).join('')}</w:p>`;
   }).join("");
   let document = xml.slice(0, open + "<w:body>".length) + body + xml.slice(sect);
   for (const [prefix, uri] of Object.entries({ wp: "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing", a: "http://schemas.openxmlformats.org/drawingml/2006/main", pic: "http://schemas.openxmlformats.org/drawingml/2006/picture" })) {
