@@ -25,7 +25,7 @@ export const Route = createFileRoute("/operacao/agenda")({
   component: AgendaPage,
 });
 
-type View = "dia" | "semana" | "imovel";
+type View = "dia" | "semana" | "mes" | "imovel";
 type Item = { kind: "task"; task: BoardTask } | { kind: "move"; move: Movement };
 const statusText = (t: BoardTask) => taskDone(t) ? "Concluída" : t.status === "em_andamento" ? "Em andamento" : "Pendente";
 const rowCls = "grid w-full grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left";
@@ -38,11 +38,14 @@ function AgendaPage() {
   const [editing, setEditing] = useState<BoardTask | null>(null);
   const [open, setOpen] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
-  const end = view === "semana" ? addDaysISO(date, 6) : date;
-  const moves = useQuery({ ...opMovementsQuery(date, end), enabled: view !== "imovel" });
+  const monthStart = date.slice(0, 8) + "01";
+  const monthEnd = addDaysISO(addDaysISO(monthStart, 32).slice(0, 8) + "01", -1);
+  const start = view === "mes" ? monthStart : date;
+  const end = view === "semana" ? addDaysISO(date, 6) : view === "mes" ? monthEnd : date;
+  const moves = useQuery({ ...opMovementsQuery(start, end), enabled: view !== "imovel" });
 
   const tasks = useMemo(() => view === "imovel" ? rows.filter((r) => !taskDone(r))
-    : rows.filter((r) => !!r.dueDate && r.dueDate.slice(0, 10) >= date && r.dueDate.slice(0, 10) <= end), [rows, view, date, end]);
+    : rows.filter((r) => !!r.dueDate && r.dueDate.slice(0, 10) >= start && r.dueDate.slice(0, 10) <= end), [rows, view, start, end]);
   const movements = view === "imovel" ? [] : moves.data ?? [];
 
   const groups = useMemo(() => {
@@ -59,7 +62,7 @@ function AgendaPage() {
   const pendingCount = tasks.filter((t) => !taskDone(t)).length;
   const checkouts = movements.filter((m) => m.type === "checkout");
   const critical = checkouts.filter((m) => m.turnover === "mesmo_dia").length;
-  const shift = (n: number) => setDate((d) => addDaysISO(d, n));
+  const shift = (n: number) => setDate((d) => view === "mes" ? addDaysISO(d.slice(0, 8) + "01", n > 0 ? 32 : -1).slice(0, 8) + "01" : addDaysISO(d, n));
 
   return <div className="space-y-5">
     <AdminPageHeader eyebrow="Operação" title="Agenda operacional" description="Serviços, entradas e saídas de hóspedes organizados por dia e imóvel."
@@ -69,7 +72,7 @@ function AgendaPage() {
       <div className="flex items-center rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)]">
         <Button variant="ghost" size="icon" aria-label="Período anterior" onClick={() => shift(view === "semana" ? -7 : -1)}><ChevronLeft className="size-4" /></Button>
         <button type="button" className="relative min-w-[13rem] px-2 py-2 text-sm font-medium" onClick={() => picker.current?.showPicker?.()}>
-          {view === "semana" ? `${longDayLabel(date).split(",")[1]?.trim()} a ${longDayLabel(end).split(",")[1]?.trim()}` : longDayLabel(date)}
+          {view === "mes" ? monthLabel(date) : view === "semana" ? `${longDayLabel(date).split(",")[1]?.trim()} a ${longDayLabel(end).split(",")[1]?.trim()}` : longDayLabel(date)}
           <input ref={picker} type="date" aria-label="Escolher data" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="pointer-events-none absolute inset-0 opacity-0" tabIndex={-1} />
         </button>
         <Button variant="ghost" size="icon" aria-label="Próximo período" onClick={() => shift(view === "semana" ? 7 : 1)}><ChevronRight className="size-4" /></Button>
@@ -86,10 +89,11 @@ function AgendaPage() {
       </>}
     </div>
 
-    <ModuleTabs value={view} onChange={setView} options={[{ value: "dia", label: "Dia" }, { value: "semana", label: "Semana" }, { value: "imovel", label: "Pendentes por imóvel" }]} />
+    <ModuleTabs value={view} onChange={setView} options={[{ value: "dia", label: "Dia" }, { value: "semana", label: "Semana" }, { value: "mes", label: "Mês" }, { value: "imovel", label: "Pendentes por imóvel" }]} />
     {coreError && <p className="text-xs text-[var(--admin-muted)]">STAYO APP indisponível agora; mostrando tarefas do Admin e reservas já importadas.</p>}
 
     {loading || (view !== "imovel" && moves.isPending) ? <div className="admin-panel p-5 text-sm text-[var(--admin-muted)]">Carregando agenda…</div>
+      : view === "mes" ? <MonthGrid start={monthStart} end={monthEnd} today={today} tasks={tasks} moves={movements} onPick={(d) => { setDate(d); setView("dia"); }} />
       : groups.length === 0 ? <div className="admin-panel"><AdminEmptyState icon={CalendarDays} title="Nada previsto para este período" description={view === "dia" ? "Sem tarefas, entradas ou saídas neste dia." : "Nenhuma tarefa em aberto."} /></div>
       : <div className="space-y-4">{groups.map(([group, items]) => <section key={group} className="admin-panel overflow-hidden">
           <header className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
@@ -130,4 +134,33 @@ function TaskRow({ task, showDate, onEdit }: { task: BoardTask; showDate: boolea
   return task.source === "admin"
     ? <button type="button" onClick={onEdit} className={`${rowCls} hover:bg-[var(--admin-surface-subtle)]`}>{body}</button>
     : <Link to="/operacao/$id" params={{ id: task.id }} className={`${rowCls} hover:bg-[var(--admin-surface-subtle)]`}>{body}</Link>;
+}
+
+const monthLabel = (iso: string) => new Date(`${iso.slice(0, 7)}-15T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }).replace(/^./, (c) => c.toUpperCase());
+const weekDays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+function MonthGrid({ start, end, today, tasks, moves, onPick }: { start: string; end: string; today: string; tasks: BoardTask[]; moves: Movement[]; onPick: (d: string) => void }) {
+  const lead = (new Date(`${start}T12:00:00Z`).getUTCDay() + 6) % 7;
+  const days: (string | null)[] = Array.from({ length: lead }, () => null);
+  for (let d = start; d <= end; d = addDaysISO(d, 1)) days.push(d);
+  return <div className="admin-panel overflow-hidden">
+    <div className="grid grid-cols-7 border-b border-[var(--admin-border)] text-center text-[11px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">{weekDays.map((w) => <span key={w} className="py-2">{w}</span>)}</div>
+    <div className="grid grid-cols-7">{days.map((d, i) => {
+      if (!d) return <span key={`x${i}`} className="min-h-[5.5rem] border-b border-r border-[var(--admin-border)] bg-[var(--admin-surface-subtle)]" />;
+      const dayTasks = tasks.filter((t) => t.dueDate?.slice(0, 10) === d);
+      const outs = moves.filter((m) => m.date === d && m.type === "checkout");
+      const ins = moves.filter((m) => m.date === d && m.type === "checkin");
+      const open = dayTasks.filter((t) => !taskDone(t));
+      const unassigned = open.filter((t) => !t.responsibleName).length;
+      return <button key={d} type="button" onClick={() => onPick(d)} aria-label={`${longDayLabel(d)}: ${dayTasks.length} rotina(s), ${outs.length} saída(s), ${ins.length} entrada(s)`}
+        className={`flex min-h-[5.5rem] flex-col gap-1 border-b border-r border-[var(--admin-border)] p-1.5 text-left align-top hover:bg-[var(--admin-surface-subtle)] ${d === today ? "bg-[var(--admin-info-soft)]" : ""}`}>
+        <span className={`text-xs font-semibold tabular-nums ${d === today ? "text-[var(--admin-primary)]" : ""}`}>{Number(d.slice(8))}</span>
+        {dayTasks.slice(0, 2).map((t) => <span key={t.id} className={`truncate rounded px-1 text-[10px] leading-4 ${taskDone(t) ? "bg-[var(--admin-success-soft)] text-[var(--admin-success)]" : !t.responsibleName ? "bg-[var(--admin-warning-soft)] text-[var(--admin-warning)]" : "bg-[var(--admin-info-soft)] text-[var(--admin-primary)]"}`}>{t.propertyName ?? kindLabel(t.kind)}</span>)}
+        {dayTasks.length > 2 && <span className="text-[10px] text-[var(--admin-muted)]">+{dayTasks.length - 2} rotina(s)</span>}
+        {(outs.length > 0 || ins.length > 0) && <span className="mt-auto flex gap-1.5 text-[10px] text-[var(--admin-muted)]">{outs.length > 0 && <span className="inline-flex items-center gap-0.5"><LogOut className="size-3" aria-hidden />{outs.length}</span>}{ins.length > 0 && <span className="inline-flex items-center gap-0.5"><LogIn className="size-3" aria-hidden />{ins.length}</span>}</span>}
+        {unassigned > 0 && <span className="sr-only">{unassigned} sem profissional</span>}
+      </button>;
+    })}</div>
+    <p className="flex flex-wrap gap-3 border-t border-[var(--admin-border)] px-3 py-2 text-[11px] text-[var(--admin-muted)]"><span>Azul: com profissional</span><span>Amarelo: sem profissional</span><span>Verde: concluída</span><span className="inline-flex items-center gap-1"><LogOut className="size-3" />saídas</span><span className="inline-flex items-center gap-1"><LogIn className="size-3" />entradas</span></p>
+  </div>;
 }
