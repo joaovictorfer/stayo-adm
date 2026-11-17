@@ -1,3 +1,4 @@
+import { propertyLabel } from "@/lib/property-label";
 import { useQuery } from "@tanstack/react-query";
 import { AlarmClock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/api/supabase-client";
@@ -26,7 +27,7 @@ export function PayoutClosingReminder({ properties, month, onOpen }: { propertie
   if (q.isError) return <p role="alert" className="text-sm text-destructive">Não foi possível montar o lembrete do fechamento.</p>;
   const pending = q.data.filter((r) => r.state !== "ok");
   const due = new Date(`${payoutDueDate(month)}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", timeZone: "UTC" });
-  const name = (id: string) => { const p = properties.find((x) => x.id === id); return p ? [p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || p.code : ""; };
+  const name = (id: string) => { const p = properties.find((x) => x.id === id); return p ? propertyLabel(p) : ""; };
   return <section aria-label="Lembrete do repasse" className="rounded-2xl border bg-card p-4 shadow-sm">
     <div className="flex items-center gap-2 text-sm font-semibold"><AlarmClock className="size-4 text-primary" /> Repasse até {due}</div>
     {pending.length === 0 ? <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="size-4 text-primary" /> Todos os imóveis estão com o repasse em dia neste mês.</p> :
