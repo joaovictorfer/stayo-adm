@@ -2,6 +2,7 @@ import { formatBrazilianDocument, formatBrazilianPostalCode, maskDocument, maskP
 import { conditionSections, formatPercent } from "./contract-conditions";
 import { formatBRL } from "./money";
 import { STANDARD_CLAUSES, durationText, implementationText, maintenanceText, noticeText, pixLine } from "./contract-standard-clauses";
+import { reais } from './contract-document';
 import type { ProposalSnapshotContractConditions } from "@/types/commercial-proposal";
 
 type Person = { name: string; document: string; maritalStatus?: string | null | undefined; profession?: string | null | undefined; email?: string | undefined; phone?: string | undefined };
@@ -12,6 +13,7 @@ export type ContractCopyInput = {
   property: Address & { unit?: string | null | undefined; tower?: string | null | undefined; condominium?: string | null | undefined };
   conditions: ProposalSnapshotContractConditions;
   pixKey?: string | null | undefined;
+  implementationFee?: number | null | undefined;
 };
 const missing = "[A DEFINIR]";
 const marital: Record<string, string> = { solteiro: "solteiro(a)", casado: "casado(a)", divorciado: "divorciado(a)", viuvo: "viúvo(a)", uniao_estavel: "em união estável", separado: "separado(a)" };
@@ -58,7 +60,7 @@ export function buildContractCopy(input: ContractCopyInput, includeSensitive = f
     { title: "12 – VIGÊNCIA:", body: durationText(c.durationMonths ?? STANDARD_CLAUSES.durationMonths) },
     { title: "13 – DA RESCISÃO:", body: noticeText(c.noticePeriodDays ?? STANDARD_CLAUSES.noticePeriodDays) },
     { title: "14 – DA VENDA DO IMÓVEL:", body: STANDARD_CLAUSES.sale },
-    { title: "15 – DA IMPLANTAÇÃO:", body: implementationText(formatBRL(STANDARD_CLAUSES.implementationFee).replace(/\u00a0/g, " "), "quinhentos reais") },
+    { title: "15 – DA IMPLANTAÇÃO:", body: implementationText(formatBRL(input.implementationFee ?? STANDARD_CLAUSES.implementationFee).replace(/\u00a0/g, " "), reais(input.implementationFee ?? STANDARD_CLAUSES.implementationFee)) },
   ];
   const wrap = (content: string) => `<html><body><!--StartFragment--><div style="font-family:Arial,sans-serif;font-size:11pt;color:#000000;line-height:1.15">${content}</div><!--EndFragment--></body></html>`;
   const contractorsHtml = `<p style="text-align:justify;margin:0 0 12pt"><strong>CONTRATANTE(S):</strong> ${escape(contractors).replace(/\n\n/g, "</p><p style=\"text-align:justify;margin:0 0 12pt\">")}</p>`;

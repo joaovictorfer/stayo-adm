@@ -60,9 +60,9 @@ export function ContractCopyDialog({ implementation, submission, official, detai
       street: details?.street || condo?.address || implementation.address, number: details?.number, complement: details?.complement,
       district: details?.district || condo?.neighborhood, city: details?.city || condo?.city || implementation.city,
       state: details?.state || condo?.state, postalCode: details?.postalCode || condo?.postalCode || implementation.postalCode },
-    conditions: contractRowToSnapshot(conditions.data), pixKey: sub?.pixKey,
+    conditions: contractRowToSnapshot(conditions.data), pixKey: sub?.pixKey, implementationFee: fee != null && fee > 0 ? fee : null,
   }, sensitive);
-  const unavailable = conditions.isPending || conditions.isFetching || condos.isPending || condos.isError || conditions.isError || loading;
+  const unavailable = conditions.isPending || conditions.isFetching || proposals.isPending || proposals.isError || condos.isPending || condos.isError || conditions.isError || loading;
   async function copy(part: "all" | "people" | "summary") {
     setBusy(true);
     try {
@@ -79,7 +79,7 @@ export function ContractCopyDialog({ implementation, submission, official, detai
         <DialogHeader><DialogTitle>Revisar Quadro Resumo</DialogTitle><DialogDescription>{implementation.nickname || implementation.condominiumName} · {implementation.unit} · {implementation.code}</DialogDescription></DialogHeader>
         {!editing && <label className="flex items-center gap-2 text-sm"><Checkbox checked={sensitive} onCheckedChange={value => setSensitive(value === true)} />Incluir CPF/CNPJ e chave Pix completos</label>}
         {document.hasMissing && !unavailable && <p role="status" className="text-sm text-muted-foreground">Campos sem informação e cláusulas não cadastradas estão marcados como [A DEFINIR].</p>}
-        {unavailable ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">{conditions.isError || condos.isError ? <>Não foi possível carregar os dados.<Button variant="link" onClick={() => { void conditions.refetch(); void condos.refetch(); }}>Tentar novamente</Button></> : <><Loader2 className="size-4 animate-spin" />Carregando dados do contrato…</>}</p> : <>
+        {unavailable ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">{conditions.isError || condos.isError || proposals.isError ? <>Não foi possível carregar os dados.<Button variant="link" onClick={() => { void conditions.refetch(); void condos.refetch(); void proposals.refetch(); }}>Tentar novamente</Button></> : <><Loader2 className="size-4 animate-spin" />Carregando dados do contrato…</>}</p> : <>
           {editing ? <div className="space-y-5">
             <Button variant="ghost" size="sm" onClick={() => setEditing(null)}><ArrowLeft />Voltar ao resumo</Button>
             {editing === 'property' ? <ContractPropertyEditor project={implementation} address={{ street: details?.street || condo?.address || implementation.address, number: details?.number, complement: details?.complement, district: details?.district || condo?.neighborhood, city: details?.city || condo?.city || implementation.city, state: details?.state || condo?.state, postalCode: details?.postalCode || condo?.postalCode || implementation.postalCode }} onDone={() => setEditing(null)} /> : editing === 'conditions' ? <ContractSummaryEditor implementationId={implementation.id} initial={contractRowToSnapshot(conditions.data)} focusField={conditionFocus} onDone={() => setEditing(null)} /> : <>

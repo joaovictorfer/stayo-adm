@@ -10,6 +10,11 @@ const input: ContractCopyInput = {
 };
 
 describe("contract clipboard data", () => {
+  it('preserva o valor de implantação da ficha no quadro revisado', () => {
+    const copy = buildContractCopy({ ...input, implementationFee: 750 });
+    expect(copy.rows[14]?.body).toContain('R$ 750,00');
+    expect(copy.rows[14]?.body).toContain('setecentos e cinquenta reais');
+  });
   it("qualifies two proponents separately with their shared address only at the end", () => {
     const copy = buildContractCopy({ ...input, people: [
       { name: "Primeiro Proponente", document: "12345678901", profession: "Aposentado" },
