@@ -103,6 +103,7 @@ import { Route as PortalInventarioIdRouteImport } from './routes/portal.inventar
 import { Route as PortalPreviaIdRouteImport } from './routes/portal.previa.$id'
 import { Route as PortalPropostaTokenRouteImport } from './routes/portal.proposta.$token'
 import { Route as VistoriaPrototipoLinkRouteImport } from './routes/vistoria.prototipo.link'
+import { Route as ApiPublicJobsSyncReservationsRouteImport } from './routes/api/public/jobs/sync-reservations'
 import { Route as ApiPublicOwnerCoverTokenRouteImport } from './routes/api/public/owner-cover.$token'
 
 const IndexRoute = IndexRouteImport.update({
@@ -593,6 +594,12 @@ const VistoriaPrototipoLinkRoute = VistoriaPrototipoLinkRouteImport.update({
   path: '/vistoria/prototipo/link',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsSyncReservationsRoute =
+  ApiPublicJobsSyncReservationsRouteImport.update({
+    id: '/api/public/jobs/sync-reservations',
+    path: '/api/public/jobs/sync-reservations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOwnerCoverTokenRoute =
   ApiPublicOwnerCoverTokenRouteImport.update({
     id: '/api/public/owner-cover/$token',
@@ -695,6 +702,7 @@ export interface FileRoutesByFullPath {
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
   '/financeiro/cobrancas/': typeof FinanceiroCobrancasIndexRoute
+  '/api/public/jobs/sync-reservations': typeof ApiPublicJobsSyncReservationsRoute
   '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRoutesByTo {
@@ -791,6 +799,7 @@ export interface FileRoutesByTo {
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
   '/financeiro/cobrancas': typeof FinanceiroCobrancasIndexRoute
+  '/api/public/jobs/sync-reservations': typeof ApiPublicJobsSyncReservationsRoute
   '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRoutesById {
@@ -889,6 +898,7 @@ export interface FileRoutesById {
   '/portal/proposta/$token': typeof PortalPropostaTokenRoute
   '/vistoria/prototipo/link': typeof VistoriaPrototipoLinkRoute
   '/financeiro/cobrancas/': typeof FinanceiroCobrancasIndexRoute
+  '/api/public/jobs/sync-reservations': typeof ApiPublicJobsSyncReservationsRoute
   '/api/public/owner-cover/$token': typeof ApiPublicOwnerCoverTokenRoute
 }
 export interface FileRouteTypes {
@@ -988,6 +998,7 @@ export interface FileRouteTypes {
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
     | '/financeiro/cobrancas/'
+    | '/api/public/jobs/sync-reservations'
     | '/api/public/owner-cover/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1084,6 +1095,7 @@ export interface FileRouteTypes {
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
     | '/financeiro/cobrancas'
+    | '/api/public/jobs/sync-reservations'
     | '/api/public/owner-cover/$token'
   id:
     | '__root__'
@@ -1181,6 +1193,7 @@ export interface FileRouteTypes {
     | '/portal/proposta/$token'
     | '/vistoria/prototipo/link'
     | '/financeiro/cobrancas/'
+    | '/api/public/jobs/sync-reservations'
     | '/api/public/owner-cover/$token'
   fileRoutesById: FileRoutesById
 }
@@ -1276,6 +1289,7 @@ export interface RootRouteChildren {
   PortalPreviaIdRoute: typeof PortalPreviaIdRoute
   PortalPropostaTokenRoute: typeof PortalPropostaTokenRoute
   VistoriaPrototipoLinkRoute: typeof VistoriaPrototipoLinkRoute
+  ApiPublicJobsSyncReservationsRoute: typeof ApiPublicJobsSyncReservationsRoute
   ApiPublicOwnerCoverTokenRoute: typeof ApiPublicOwnerCoverTokenRoute
 }
 
@@ -1939,6 +1953,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VistoriaPrototipoLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/sync-reservations': {
+      id: '/api/public/jobs/sync-reservations'
+      path: '/api/public/jobs/sync-reservations'
+      fullPath: '/api/public/jobs/sync-reservations'
+      preLoaderRoute: typeof ApiPublicJobsSyncReservationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/owner-cover/$token': {
       id: '/api/public/owner-cover/$token'
       path: '/api/public/owner-cover/$token'
@@ -2056,6 +2077,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalPreviaIdRoute: PortalPreviaIdRoute,
   PortalPropostaTokenRoute: PortalPropostaTokenRoute,
   VistoriaPrototipoLinkRoute: VistoriaPrototipoLinkRoute,
+  ApiPublicJobsSyncReservationsRoute: ApiPublicJobsSyncReservationsRoute,
   ApiPublicOwnerCoverTokenRoute: ApiPublicOwnerCoverTokenRoute,
 }
 export const routeTree = rootRouteImport
