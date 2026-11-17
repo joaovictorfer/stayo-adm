@@ -125,6 +125,11 @@ export const syncUpcomingReservations = createServerFn({ method: "POST" }).middl
   .handler(async ({ context, data }) => {
     setResponseHeader("Cache-Control", "private, no-store");
     const http = await gate(context);
+    return runUpcomingSync(context, http, data.today, data.months);
+  });
+
+/** Núcleo compartilhado pela busca manual, pela busca ao abrir a tela e pela recorrência de 15 min. */
+export async function runUpcomingSync(context: { supabase: any }, http: any, today: string, months: number) {
     const { data: projects, error } = await context.supabase.from("implementation_projects")
       .select("id, core_property_id").eq("operational_status", "operacao").not("core_property_id", "is", null);
     if (error) throw new Error("Não foi possível ler os imóveis.");
@@ -132,7 +137,7 @@ export const syncUpcomingReservations = createServerFn({ method: "POST" }).middl
     for (const proj of projects ?? []) {
       try {
         const all = await listAll(http, "reservations", { property_id: proj.core_property_id });
-        for (const month of monthsFrom(data.today, data.months)) {
+        for (const month of monthsFrom(today, months)) {
           const r = await syncProjectMonth(context, http, proj, month, all);
           total.imported += r.imported; total.updated += r.updated; total.removed += r.removed; total.kept += r.kept;
         }
@@ -140,7 +145,7 @@ export const syncUpcomingReservations = createServerFn({ method: "POST" }).middl
       } catch { total.failed++; }
     }
     return total;
-  });
+}
 
 export const syncCentralReservations = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ implementationId: z.string().uuid(), month: z.string().regex(/^\d{4}-\d{2}$/) }).parse(i))
