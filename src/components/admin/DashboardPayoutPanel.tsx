@@ -1,3 +1,4 @@
+import { propertyLabel } from "@/lib/property-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, CheckCircle2, Wallet } from "lucide-react";
@@ -18,7 +19,7 @@ export interface DashboardPayoutProperty {
 }
 
 const propertyName = (p: DashboardPayoutProperty) =>
-  [p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || p.code;
+  propertyLabel(p);
 
 /** Painel da tela inicial: saldos de repasse do mês anterior, derivados (nunca gravados). */
 export function DashboardPayoutPanel({ properties, covers }: { properties: DashboardPayoutProperty[]; covers: Record<string, string> }) {
@@ -108,7 +109,7 @@ export function DashboardPayoutPanel({ properties, covers }: { properties: Dashb
                   search={{ imovel: r.implementationId, mes: month }}
                   className="dashboard-payout-row flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm"
                 >
-                  <span className="dashboard-payout-property"><PayoutPropertyPhoto url={covers[p.id]} name={propertyName(p)} /><span className="min-w-0"><strong>{p.condominium_name || p.nickname || p.code}</strong><small>{p.unit || p.code}</small></span></span>
+                  <span className="dashboard-payout-property"><PayoutPropertyPhoto url={covers[p.id]} name={propertyName(p)} /><span className="min-w-0"><strong>{propertyLabel(p)}</strong><small>{p.code}</small></span></span>
                   {r.state === "incompleto" ? (
                     <span className="dashboard-payment-state is-incomplete">
                       <AlertTriangle className="size-3.5" /> {r.missing} sem valor

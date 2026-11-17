@@ -1,3 +1,4 @@
+import { propertyLabel } from "@/lib/property-label";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -99,7 +100,7 @@ function Page() {
   const closing = data.data ? payoutPdfBalance({ competence: month, adminFeePercent: data.data.fee, reservations: data.data.res as PayoutPdfReservation[], expenses: data.data.exp, transfers: data.data.tr }) : null;
 
   const selectedProperty = props.data?.find((p) => p.id === impl);
-  const propertyTitle = selectedProperty ? [selectedProperty.condominium_name, selectedProperty.unit].filter(Boolean).join(" ") || selectedProperty.nickname || selectedProperty.code : "";
+  const propertyTitle = selectedProperty ? propertyLabel(selectedProperty) : "";
   const monthTitle = new Date(`${month}-01T12:00:00Z`).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
   const [generating, setGenerating] = useState(false);
   const pdfReady = !!data.data && payoutPdfReadiness({ competence: month, reservations: data.data.res as PayoutPdfReservation[] });

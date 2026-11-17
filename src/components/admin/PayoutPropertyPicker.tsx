@@ -1,3 +1,4 @@
+import { propertyLabel } from "@/lib/property-label";
 import { useState } from "react";
 import { Check, ChevronsUpDown, Building2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 export type PayoutProperty = { id: string; code: string; nickname: string | null; condominium_name: string | null; unit: string | null };
-export const payoutPropertyName = (p: PayoutProperty) => [p.condominium_name, p.unit].filter(Boolean).join(" ") || p.nickname || p.code;
+export const payoutPropertyName = (p: PayoutProperty) => propertyLabel(p);
 
 export function PayoutPropertyPhoto({ url, name, large = false }: { url?: string | undefined; name: string; large?: boolean }) {
   const [failedUrl, setFailedUrl] = useState<string>();

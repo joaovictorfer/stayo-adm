@@ -1,3 +1,4 @@
+import { propertyLabel } from "@/lib/property-label";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
@@ -14,7 +15,7 @@ export const preparePayoutPayment = createServerFn({ method: "POST" }).middlewar
   const request = row as unknown as PayoutPaymentRequest;
   const { data: property, error: propertyError } = await context.supabase.from("implementation_projects").select("code,condominium_name,unit,nickname").eq("id", request.implementation_id).single();
   if (propertyError || !property) throw new Error("Não foi possível identificar o imóvel do repasse.");
-  const reference = { property: [property.condominium_name, property.unit].filter(Boolean).join(" ") || property.nickname || property.code, unit: property.unit || property.code, competence: request.competence };
+  const reference = { property: propertyLabel(property), unit: property.unit || property.code, competence: request.competence };
   const code = buildPayoutPix(request.snapshot.recipient, Number(request.amount_cents), request.id, reference);
   return { request, code, identification: payoutPixReference(request.id, reference) };
 });
