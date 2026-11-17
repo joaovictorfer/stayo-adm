@@ -68,7 +68,7 @@ function AgendaPage() {
     {view !== "imovel" && <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)]">
         <Button variant="ghost" size="icon" aria-label="Período anterior" onClick={() => shift(view === "semana" ? -7 : -1)}><ChevronLeft className="size-4" /></Button>
-        <button type="button" className="relative min-w-[13rem] px-2 py-2 text-sm font-medium capitalize" onClick={() => picker.current?.showPicker?.()}>
+        <button type="button" className="relative min-w-[13rem] px-2 py-2 text-sm font-medium" onClick={() => picker.current?.showPicker?.()}>
           {view === "semana" ? `${longDayLabel(date).split(",")[1]?.trim()} a ${longDayLabel(end).split(",")[1]?.trim()}` : longDayLabel(date)}
           <input ref={picker} type="date" aria-label="Escolher data" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="pointer-events-none absolute inset-0 opacity-0" tabIndex={-1} />
         </button>
@@ -93,7 +93,7 @@ function AgendaPage() {
       : groups.length === 0 ? <div className="admin-panel"><AdminEmptyState icon={CalendarDays} title="Nada previsto para este período" description={view === "dia" ? "Sem tarefas, entradas ou saídas neste dia." : "Nenhuma tarefa em aberto."} /></div>
       : <div className="space-y-4">{groups.map(([group, items]) => <section key={group} className="admin-panel overflow-hidden">
           <header className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
-            <h2 className="font-[var(--stayo-font-display)] text-base capitalize">{view === "imovel" ? group : longDayLabel(group)}</h2>
+            <h2 className="font-[var(--stayo-font-display)] text-base">{view === "imovel" ? group : longDayLabel(group)}</h2>
             <small className="text-xs text-[var(--admin-muted)]">{items.length} {items.length === 1 ? "item" : "itens"}</small>
           </header>
           <div className="divide-y divide-[var(--admin-border)]">{sortItems(items).map((it) => it.kind === "move"
@@ -114,7 +114,7 @@ function MoveRow({ m }: { m: Movement }) {
   const Icon = out ? LogOut : LogIn;
   return <div className={rowCls}>
     <span className={`grid size-9 place-items-center rounded-full ${out ? "bg-[var(--admin-warning-soft)] text-[var(--admin-warning)]" : "bg-[var(--admin-info-soft)] text-[var(--admin-primary)]"}`}><Icon className="size-4" aria-hidden /></span>
-    <span className="min-w-0"><b className="block truncate text-sm">{out ? "Saída" : "Entrada"} · {m.property}</b><small className="block truncate text-[var(--admin-muted)]">{m.guest ?? "Hóspede não informado"}{m.channel ? ` · ${m.channel}` : ""}</small></span>
+    <span className="min-w-0"><b className="block truncate text-sm">{out ? "Saída" : "Entrada"} · {m.property}</b><small className="block truncate text-[var(--admin-muted)]">{m.guest ?? "Hóspede não informado"}{m.channel ? ` · ${m.channel.charAt(0).toUpperCase()}${m.channel.slice(1)}` : ""}</small></span>
     <span>{m.turnover === "mesmo_dia" ? <AdminStatusBadge tone="danger">Virada no mesmo dia</AdminStatusBadge>
       : m.turnover === "dia_seguinte" ? <AdminStatusBadge tone="warning">Entrada amanhã</AdminStatusBadge>
       : <AdminStatusBadge tone="neutral">{out ? "Limpar" : "Receber"}</AdminStatusBadge>}</span>

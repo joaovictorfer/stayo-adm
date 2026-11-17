@@ -9,6 +9,6 @@ describe("datas no fuso de Gramado", () => {
     expect(addDaysISO("2026-11-28", 6)).toBe("2026-12-04");
   });
   it("rótulo em português", () => {
-    expect(longDayLabel("2026-11-17")).toBe("terça-feira, 17 de novembro");
+    expect(longDayLabel("2026-11-17")).toBe("Terça-feira, 17 de novembro");
   });
 });

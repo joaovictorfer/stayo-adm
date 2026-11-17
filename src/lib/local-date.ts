@@ -14,5 +14,6 @@ export function addDaysISO(iso: string, days: number): string {
 
 /** "terça-feira, 17 de novembro" para uma data YYYY-MM-DD. */
 export function longDayLabel(iso: string): string {
-  return new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${iso}T12:00:00Z`));
+  const t = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${iso}T12:00:00Z`));
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }

@@ -53,7 +53,7 @@ function OperationPage() {
   const edit = (t: BoardTask) => { setEditing(t); setOpen(true); };
 
   return <div className="space-y-5">
-    <AdminPageHeader eyebrow="Operação" title="Central operacional" description={`${longDayLabel(today)} · o que precisa acontecer hoje e nos próximos dias.`}
+    <AdminPageHeader eyebrow="Operação" title="Central operacional" description={`${longDayLabel(today)} · O que precisa acontecer hoje e nos próximos dias.`}
       actions={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4" />Nova tarefa</Button>} />
 
     <div className="portfolio-metrics">
