@@ -88,7 +88,7 @@ function Page() {
     try {
       const r = await syncFn({ data: { implementationId: impl, month } });
       if (!r.ok) toast.error("Esta ficha ainda não está vinculada a um imóvel do Guia STAYO (aba Imóvel).");
-      else { toast.success(`${r.found} reserva(s) no mês · ${r.imported} nova(s), ${r.updated} atualizada(s).`); refresh(); }
+      else { toast.success(`${r.found} reserva(s) no mês · ${r.imported} nova(s), ${r.updated} atualizada(s)${r.removed ? `, ${r.removed} removida(s) por cancelamento ou mudança` : ""}${r.kept ? ` · ${r.kept} com ajuste manual não está mais no Guia, revise` : ""}.`); refresh(); }
     } catch (e) { toast.error(e instanceof Error ? e.message : "Falha ao consultar o Guia."); } finally { setSyncing(false); }
   };
   const runOwners = async () => {
