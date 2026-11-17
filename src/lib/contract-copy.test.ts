@@ -42,13 +42,13 @@ describe("contract clipboard data", () => {
   it("includes full CPF and Pix only with explicit disclosure", () => {
     const copy = buildContractCopy(input, true);
     expect(copy.contractorsText).toContain("123.456.789-01");
-    expect(copy.summaryText).toContain("Chave Pix: 12345678901");
+    expect(copy.summaryText).toContain("c) Chave pix: 12345678901");
   });
-  it("fills empty items 5–14 with the CONTRATO_STAYO_02 standard and keeps 14 items", () => {
+  it("fills empty items 5–15 with the VENETO_A201-2 standard and keeps 15 items", () => {
     const copy = buildContractCopy({ ...input, conditions: { ...input.conditions, payoutRule: null, marketingRule: null, periodicShutdownRule: null } }, true);
-    expect(copy.rows).toHaveLength(14);
-    expect(copy.rows.map(r => r.title)).toEqual(["1 – IMÓVEL OBJETO:", "2 – DA TAXA ADMINISTRATIVA:", "3 – DA TAXA DE LIMPEZA:", "4 – DA DIVISÃO DOS VALORES:", "5 – DOS REPASSES:", "6 – DO USO PELO CONTRATANTE:", "7 – DO USO PARA MARKETING:", "8 – DA MANUTENÇÃO EMERGENCIAL:", "9 – DA PARALISAÇÃO PERIÓDICA:", "10 – DA EXCLUSIVIDADE:", "11 – DAS MULTAS:", "12 – VIGÊNCIA:", "13 – DA RESCISÃO:", "14 – DA VENDA DO IMÓVEL:"]);
-    expect(copy.rows[4]?.body).toBe(STANDARD_CLAUSES.payout);
+    expect(copy.rows).toHaveLength(15);
+    expect(copy.rows.map(r => r.title)).toEqual(["1 – IMÓVEL OBJETO:", "2 – DA TAXA ADMINISTRATIVA:", "3 – DA TAXA DE LIMPEZA:", "4 – DA DIVISÃO DOS VALORES:", "5 – DOS REPASSES:", "6 – DO USO PELO CONTRATANTE:", "7 – DO USO PARA MARKETING:", "8 – DA MANUTENÇÃO EMERGENCIAL:", "9 – DA PARALISAÇÃO PERIÓDICA:", "10 – DA EXCLUSIVIDADE:", "11 – DAS MULTAS:", "12 – VIGÊNCIA:", "13 – DA RESCISÃO:", "14 – DA VENDA DO IMÓVEL:", "15 – DA IMPLANTAÇÃO:"]);
+    expect(copy.rows[4]?.body).toContain(STANDARD_CLAUSES.payout);
     expect(copy.rows[6]?.body).toBe(STANDARD_CLAUSES.marketing);
     expect(copy.rows[8]?.body).toBe(STANDARD_CLAUSES.periodicShutdown);
     expect(copy.rows.slice(4).some(r => r.body.includes("[A DEFINIR]"))).toBe(false);

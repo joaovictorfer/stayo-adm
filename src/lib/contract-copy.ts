@@ -1,7 +1,7 @@
 import { formatBrazilianDocument, formatBrazilianPostalCode, maskDocument, maskPixKey } from "./owner-form-validation";
 import { conditionSections, formatPercent } from "./contract-conditions";
 import { formatBRL } from "./money";
-import { STANDARD_CLAUSES, durationText, maintenanceText, noticeText } from "./contract-standard-clauses";
+import { STANDARD_CLAUSES, durationText, implementationText, maintenanceText, noticeText, pixLine } from "./contract-standard-clauses";
 import type { ProposalSnapshotContractConditions } from "@/types/commercial-proposal";
 
 type Person = { name: string; document: string; maritalStatus?: string | null | undefined; profession?: string | null | undefined; email?: string | undefined; phone?: string | undefined };
@@ -42,13 +42,13 @@ export function buildContractCopy(input: ContractCopyInput, includeSensitive = f
   const use = ownerUse ? [ownerUse.items.map(item => `${item.label}: ${item.value}.`).join("\n"), ownerUse.note].filter(Boolean).join("\n") : c.ownerUseNotes?.trim() || STANDARD_CLAUSES.ownerUse;
   const customPayout = c.payoutRule?.trim();
   const pix = input.pixKey ? includeSensitive ? input.pixKey : maskPixKey(input.pixKey) : null;
-  // Itens e textos padrão seguem literalmente o CONTRATO_STAYO_02; o que foi editado na ficha prevalece.
+  // Itens e textos padrão seguem literalmente o minuta oficial VENETO_A201-2; o que foi editado na ficha prevalece.
   const rows = [
     { title: "1 – IMÓVEL OBJETO:", body: `Apartamento nº ${input.property.unit || missing}${input.property.tower ? `, Torre ${input.property.tower}` : ""}, localizado no ${input.property.condominium || missing}, situado em ${addressText(input.property)}.` },
     { title: "2 – DA TAXA ADMINISTRATIVA:", body: percentage ? `${percentage} sobre o valor líquido da hospedagem.` : missing },
     { title: "3 – DA TAXA DE LIMPEZA:", body: c.cleaningResponsibility?.trim() || STANDARD_CLAUSES.cleaning },
     { title: "4 – DA DIVISÃO DOS VALORES:", body: split },
-    { title: "5 – DOS REPASSES:", body: customPayout ? `${customPayout}${pix ? `\nChave Pix: ${pix}` : ""}` : STANDARD_CLAUSES.payout },
+    { title: "5 – DOS REPASSES:", body: `${customPayout || STANDARD_CLAUSES.payout}\nc) ${pixLine(pix ?? "")}` },
     { title: "6 – DO USO PELO CONTRATANTE:", body: use },
     { title: "7 – DO USO PARA MARKETING:", body: c.marketingRule?.trim() || STANDARD_CLAUSES.marketing },
     { title: "8 – DA MANUTENÇÃO EMERGENCIAL:", body: maintenanceText(formatBRL(c.maintenanceLimit ?? STANDARD_CLAUSES.maintenanceLimit).replace(/\u00a0/g, " ")) },
@@ -58,6 +58,7 @@ export function buildContractCopy(input: ContractCopyInput, includeSensitive = f
     { title: "12 – VIGÊNCIA:", body: durationText(c.durationMonths ?? STANDARD_CLAUSES.durationMonths) },
     { title: "13 – DA RESCISÃO:", body: noticeText(c.noticePeriodDays ?? STANDARD_CLAUSES.noticePeriodDays) },
     { title: "14 – DA VENDA DO IMÓVEL:", body: STANDARD_CLAUSES.sale },
+    { title: "15 – DA IMPLANTAÇÃO:", body: implementationText(formatBRL(STANDARD_CLAUSES.implementationFee).replace(/\u00a0/g, " "), "quinhentos reais") },
   ];
   const wrap = (content: string) => `<html><body><!--StartFragment--><div style="font-family:Arial,sans-serif;font-size:11pt;color:#000000;line-height:1.15">${content}</div><!--EndFragment--></body></html>`;
   const contractorsHtml = `<p style="text-align:justify;margin:0 0 12pt"><strong>CONTRATANTE(S):</strong> ${escape(contractors).replace(/\n\n/g, "</p><p style=\"text-align:justify;margin:0 0 12pt\">")}</p>`;

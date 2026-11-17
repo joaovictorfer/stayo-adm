@@ -6,9 +6,9 @@ export function ContractReview({ fields }: { fields: PreparedContractFields }) {
   const entries: [string, string][] = [
     ["Administração", `${fields.administrationFee}%`], ["Vigência", `${fields.durationMonths} meses`],
     ["Manutenção emergencial", money(fields.maintenanceLimit)], ["Implantação", money(fields.implementationFee)],
-    ["Rescisão", `${fields.noticePeriodDays} dias`], ["Antecedência de uso", `${fields.ownerUseNoticeDays} dias`],
+    ["Rescisão", `${fields.noticePeriodDays} dias`],
     ["Exclusividade", fields.exclusivity ? "Sim" : "Não"],
-    ["Repasse", fields.payoutMode === "platform_auto" ? "Automático, com alternativa até dia 10" : "STAYO até dia 10, com relatório"],
+    ["Repasse", "Automático pela plataforma; se indisponível, até dia 10"],
     ["Chave Pix", fields.pixKey], ["Local e data", `${fields.signatureCity} · ${fields.signatureDate.split("-").reverse().join("/")}`],
   ];
   return <div className="space-y-6 break-words">
