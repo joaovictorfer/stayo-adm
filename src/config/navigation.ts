@@ -111,6 +111,7 @@ export const navigation: NavItem[] = [
       { id: "operations-tasks", label: "Tarefas", path: "/operacao/tarefas", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-rules", label: "Regras e checklists", path: "/operacao/regras", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-team", label: "Equipe e Meu Dia", path: "/operacao/equipe", icon: "users", roles: ["super_admin", "admin", "operations"] },
+      { id: "operations-costs", label: "Custos", path: "/operacao/custos", icon: "currency-dollar", roles: ["super_admin", "admin", "operations", "finance"] },
       { id: "operations-maintenance", label: "Manutenção", path: "/operacao/manutencao", icon: "tool", roles: ["super_admin", "admin", "operations"] },
       { id: "operations-inspections", label: "Vistorias", path: "/vistorias", icon: "checklist", roles: ["super_admin", "admin", "operations"] },
     ],
