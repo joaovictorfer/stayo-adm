@@ -51,7 +51,7 @@ export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
     heading("CONTRATADO", "company"),
     { runs: [{ text: "STAYO – Gestão de Imóveis", bold: true }, { text: " – CNPJ 67.217.149/0001-06" }], align: "left", after: 120 },
     heading("IMÓVEL", "property"),
-    { runs: [{ text: `Apartamento nº ${f.unit}, Torre ${f.tower}, ${f.condominium}, situado na ${f.address.replace(/\.$/, "")}.` }], after: 200 },
+    { runs: [{ text: `Apartamento nº ${f.unit}`, bold: true }, { text: ", " }, { text: `Torre ${f.tower}`, bold: true }, { text: `, ${f.condominium}, situado na ${f.address.replace(/\.$/, "")}.` }], after: 200 },
     heading(plural ? "AUTORIZAMOS" : "AUTORIZO", "authorization"),
     { runs: [{ text: "Por prazo indeterminado, a empresa STAYO – Gestão de Imóveis, inscrita no CNPJ 67.217.149/0001-06, a exercer a administração integral do referido imóvel, inclusive para fins de hospedagem por temporada." }], after: 180 },
     { runs: [{ text: `${plural ? "Autorizamos" : "Autorizo"}, ainda, de forma expressa, o ingresso, circulação e permanência no condomínio de representantes da administradora, seus sócios, colaboradores, prestadores de serviços, terceiros necessários à operação, bem como de hóspedes devidamente cadastrados.` }] },
