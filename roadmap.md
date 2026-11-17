@@ -136,3 +136,4 @@
 - [x] Refinamento Operação/Financeiro (17/11): Central e Agenda com entradas/saídas/viradas, datas em pt-BR no fuso de Gramado, nomes com torre nos repasses, indicadores sem corte.
 
 - [x] Painel de limpeza dos imóveis (limpo/sujo/pronto), rotina por reserva com profissional e Agenda em mês
+- [x] Próximas reservas do Guia na Agenda e na Limpeza (botão Puxar próximas reservas)
