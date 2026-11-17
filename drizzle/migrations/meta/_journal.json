@@ -701,6 +701,13 @@
       "when": 1794577040113,
       "tag": "0099_owner_workspace_account_finance_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1794889400076,
+      "tag": "0100_op_rules_checklists",
+      "breakpoints": true
     }
   ]
 }
