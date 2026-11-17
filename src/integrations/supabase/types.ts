@@ -2227,6 +2227,76 @@ export type Database = {
         }
         Relationships: []
       }
+      op_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_date: string
+          id: string
+          implementation_id: string | null
+          receipt_path: string | null
+          staff_id: string | null
+          status: string
+          task_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          implementation_id?: string | null
+          receipt_path?: string | null
+          staff_id?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          implementation_id?: string | null
+          receipt_path?: string | null
+          staff_id?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_expenses_implementation_id_fkey"
+            columns: ["implementation_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_expenses_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "op_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "op_expenses_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "op_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       op_routine_rules: {
         Row: {
           active: boolean
