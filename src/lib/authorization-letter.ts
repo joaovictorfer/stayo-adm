@@ -1,6 +1,16 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { z } from "zod";
 import { isValidCivilDate } from "./contract-document";
+import { formatBrazilianDocument } from "./owner-form-validation";
+
+/** Format only complete, explicitly labelled documents; never touch masked values or unrelated numbers. */
+export function formatLetterDocuments(value: string): string {
+  return value.replace(/\b(CPF|CNPJ)(\s*(?:n[º°.]\s*)?)([\d.\/-]+)/gi, (original, label: string, separator: string, document: string) => {
+    const digits = document.replace(/\D/g, "");
+    if (digits.length !== (label.toUpperCase() === "CPF" ? 11 : 14)) return original;
+    return `${label}${separator}${formatBrazilianDocument(digits)}`;
+  });
+}
 
 const cpfDigits = (v: string) => v.replace(/\D/g, "");
 const line = z.string().trim().min(1).max(200);
@@ -31,7 +41,7 @@ export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
   const owners: Run[] = [];
   f.owners.forEach((o, i) => {
     if (i > 0) owners.push({ text: i === f.owners.length - 1 ? ", e " : ", " });
-    owners.push({ text: o.name.toUpperCase(), bold: true }, { text: `, inscrit${plural ? "o(a)" : fem ? "a" : "o"} no CPF nº ${o.cpf}` });
+    owners.push({ text: o.name.toUpperCase(), bold: true }, { text: `, inscrit${plural ? "o(a)" : fem ? "a" : "o"} no CPF nº ${formatBrazilianDocument(o.cpf)}` });
   });
   const role = plural ? "proprietários" : fem ? "proprietária" : "proprietário";
   const date = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${f.date}T12:00:00Z`));
@@ -41,7 +51,7 @@ export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
     { runs: [{ text: plural ? "Nós, " : "Eu, " }, ...owners, { text: `, ${role} do Apartamento nº ${f.unit}, Torre ${f.tower}, ${f.condominium}, situado na ${f.address.replace(/\.$/, "")}, ` }, { text: plural ? "AUTORIZAMOS" : "AUTORIZO", bold: true }, { text: ", por prazo indeterminado, a empresa STAYO – Gestão de Imóveis, inscrita no CNPJ 67.217.149/0001-06, a exercer a administração integral do referido imóvel, inclusive para fins de hospedagem por temporada." }] },
     { runs: [{ text: `${plural ? "Autorizamos" : "Autorizo"}, ainda, de forma expressa, o ingresso, circulação e permanência no condomínio de representantes da administradora, seus sócios, colaboradores, prestadores de serviços, terceiros necessários à operação, bem como de hóspedes devidamente cadastrados.` }] },
   ];
-  if (f.representatives.length) paras.push({ runs: [{ text: "Ficam autorizados a representar a administração do imóvel os seguintes:" }] }, ...list(f.representatives));
+  if (f.representatives.length) paras.push({ runs: [{ text: "Ficam autorizados a representar a administração do imóvel os seguintes:" }] }, ...list(f.representatives.map(formatLetterDocuments)));
   if (f.vehicles.length) paras.push({ runs: [{ text: "Fica autorizado o acesso com os seguintes veículos:" }] }, ...list(f.vehicles.map(v => v.toUpperCase())));
   paras.push(
     { runs: [{ text: "Fica estabelecido que todas as comunicações referentes ao imóvel deverão ser centralizadas junto à STAYO, por meio dos contatos:" }] },
@@ -52,7 +62,7 @@ export function letterParagraphs(f: AuthorizationLetterFields): Para[] {
   f.owners.forEach(o => paras.push(
     { runs: [{ text: "_______________________________________" }], align: "center", after: 0 },
     { runs: [{ text: o.name.toUpperCase(), bold: true }], align: "center", after: 0 },
-    { runs: [{ text: `CPF ${o.cpf}` }], align: "center", after: 600 },
+    { runs: [{ text: `CPF ${formatBrazilianDocument(o.cpf)}` }], align: "center", after: 600 },
   ));
   return paras;
 }
