@@ -1,4 +1,4 @@
 - Central API transport is server-only and read-only; configuration is read inside protected handlers, never via VITE variables.
 - Full provider OpenAPI is required before enabling business queries; minimal handoff schemas are test projections, not homologated contracts.
-- Manual mapping is pure UUID comparison. Only on-demand admin imports exist (`sync.functions.ts`): reservations upsert by central_reservation_id; owners bring name/contact only for linked properties and never overwrite Admin data (contract data lives in Admin). No cron, event feed or ACK.
+- Manual mapping is pure UUID comparison. Only on-demand admin imports exist (`sync.functions.ts`): reservations upsert by central_reservation_id and delete imported rows of that month no longer valid in the Guide (cancelled, block, moved) unless they carry manual_amounts, so stale stays never count in balances; owners bring name/contact only for linked properties and never overwrite Admin data (contract data lives in Admin). No cron, event feed or ACK.
 - Persist only diagnostic metadata/checkpoints; never provider payloads, identities, personal fields or secrets in logs.

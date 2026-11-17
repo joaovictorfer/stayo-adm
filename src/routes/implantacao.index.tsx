@@ -148,7 +148,7 @@ function ImplementationsPage() {
   });
   const data = query.data?.data ?? [];
   const [status, setStatus] = useState("all");
-  const [operation, setOperation] = useState<'operacao' | 'implantacao' | 'todos'>('operacao');
+  const [operation, setOperation] = useState<'operacao' | 'implantacao' | 'nao_classificado' | 'todos'>('operacao');
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"cards" | "lista" | "funil">("cards");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -213,6 +213,7 @@ function ImplementationsPage() {
         <ModuleTabs value={operation} onChange={(value) => { setOperation(value); setStatus('all'); }} options={[
           { value: 'operacao', label: `Em operação (${data.filter(isPropertyOperating).length})` },
           { value: 'implantacao', label: `Em implantação (${data.filter(isPropertyImplementing).length})` },
+          ...(data.some((item) => propertyOperationalStatus(item) === 'nao_classificado') ? [{ value: 'nao_classificado' as const, label: `Sem classificação (${data.filter((item) => propertyOperationalStatus(item) === 'nao_classificado').length})` }] : []),
           { value: 'todos', label: 'Todas as fichas' },
         ]} />
       </div>

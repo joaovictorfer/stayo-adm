@@ -205,10 +205,7 @@ function DashboardPage() {
                         <PayoutPropertyPhoto url={covers.data?.[item.id]} name={[item.condominiumName, item.unit].filter(Boolean).join(" ")} />
                         <div className="min-w-0">
                           <h3 className="truncate text-sm font-semibold text-[var(--admin-text)]">
-                            {[item.condominiumName, item.unit].filter(Boolean).join(" · ") ||
-                              item.nickname ||
-                              item.ownerName ||
-                              "Implantação"}
+                            {item.nickname?.trim() || [item.condominiumName, item.unit].filter(Boolean).join(" ") || item.ownerName || "Implantação"}
                           </h3>
                           <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">
                             {statusLabels[item.status]}
