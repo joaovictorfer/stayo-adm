@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { supabase } from "@/integrations/supabase/client";
-import type { OperationTask } from "@/types/core";
+import { supabase } from "../../integrations/supabase/client";
+import type { OperationTask } from "../../types/core";
 
 /** Tarefas operacionais guardadas no próprio Admin (Fase 2). O STAYO APP segue lido em paralelo, sem importação. */
 export type OpTaskKind = "limpeza" | "vistoria" | "manutencao" | "checkin" | "checkout" | "outro";
