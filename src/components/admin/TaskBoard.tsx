@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Clock3, ListChecks, Plus } from "lucide-react";
@@ -11,7 +12,7 @@ import { type BoardTask, opKindLabel, opTasksQuery } from "@/lib/api/op-tasks";
 import { operationTasksListQuery } from "@/lib/api/queries";
 
 type Status = "abertas" | "atrasadas" | "concluidas" | "todas";
-const today = new Date().toISOString().slice(0, 10);
+const today = localISODate();
 export const taskDone = (t: { status: string }) => /conclu|feito|done|cancel/i.test(t.status);
 const late = (t: BoardTask) => !taskDone(t) && !!t.dueDate && t.dueDate < today;
 const isMaintenance = (t: BoardTask) => /manut|reparo|conserto/i.test(`${t.kind} ${t.title}`);

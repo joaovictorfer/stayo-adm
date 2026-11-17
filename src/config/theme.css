@@ -184,7 +184,7 @@
 .portfolio-metric-icon { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border-radius: var(--admin-radius); background: var(--admin-info-soft); color: var(--admin-primary); }
 .portfolio-metric-icon svg { width: 1rem; }
 .portfolio-metric strong { display: block; font-family: var(--stayo-font-display); font-size: 1.35rem; line-height: 1; }
-.portfolio-metric p { margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; color: var(--admin-muted); font-size: 0.7rem; white-space: nowrap; }
+.portfolio-metric p { margin-top: 0.2rem; color: var(--admin-muted); font-size: 0.7rem; line-height: 1.25; overflow-wrap: anywhere; }
 .portfolio-metric.is-success .portfolio-metric-icon { background: var(--admin-success-soft); color: var(--admin-success); }
 .portfolio-metric.is-warning .portfolio-metric-icon { background: var(--admin-warning-soft); color: var(--admin-warning); }
 .portfolio-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill,minmax(min(100%,16rem),1fr)); }

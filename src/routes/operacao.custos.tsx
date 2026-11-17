@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Plus, Receipt, Users, Wallet, Wrench } from "lucide-react";
@@ -81,7 +82,7 @@ function CustosPage() {
             </div>)}</div>)}
       </>}
     <p className="text-xs text-[var(--admin-muted)]">Serviços contam tarefas concluídas no mês com valor, divididas pelos percentuais da equipe. A pagar = serviços + reembolsos aprovados.</p>
-    <ExpenseDialog open={open} onOpenChange={setOpen} defaultDate={month === currentMonth ? now.toISOString().slice(0, 10) : `${month}-01`} />
+    <ExpenseDialog open={open} onOpenChange={setOpen} defaultDate={month === currentMonth ? localISODate(now) : `${month}-01`} />
   </div>;
 }
 

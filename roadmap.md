@@ -132,3 +132,5 @@
 - [x] Operacional Fase 4: custos por pessoa e por imóvel derivados das tarefas concluídas + reembolsos com aprovação e comprovante; sem escrita em repasses/VF.
 - [x] Operacional Fase 5: permissões revisadas, link Meu Dia endurecido e plano de transição em docs/transicao-operacional.md.
 - [ ] Desligar o sistema operacional antigo: aguarda aprovação do Victor.
+
+- [x] Refinamento Operação/Financeiro (17/11): Central e Agenda com entradas/saídas/viradas, datas em pt-BR no fuso de Gramado, nomes com torre nos repasses, indicadores sem corte.

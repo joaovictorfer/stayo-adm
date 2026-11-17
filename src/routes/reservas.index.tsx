@@ -1,3 +1,4 @@
+import { localISODate } from "@/lib/local-date";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, CalendarRange, Clock3 } from "lucide-react";
@@ -20,8 +21,8 @@ export const Route = createFileRoute("/reservas/")({
 
 type Period = "futuras" | "30dias" | "inhouse" | "arquivadas";
 type State = "todos" | "chegada" | "revisao" | "pendencia";
-const now = new Date().toISOString().slice(0, 10);
-const plus30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+const now = localISODate();
+const plus30 = localISODate(new Date(Date.now() + 30 * 86400000));
 const dateLabel = (iso: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(`${iso}T12:00:00`));
 
 function ReservationsPage() {
