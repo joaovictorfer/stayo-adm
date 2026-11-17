@@ -126,3 +126,6 @@
 - [ ] Fase 3 execução de limpeza/vistoria, escalas e Meu Dia
 - [ ] Fase 4 custos operacionais
 - [ ] Fase 5 homologação e corte
+
+- [x] Operacional Fase 2: agenda (dia/semana/por imóvel) e tarefas gravadas no Admin com criação/edição/exclusão; STAYO APP segue em leitura, sem importar histórico.
+- [ ] Operacional Fases 3-5: execução, custos, homologação.
