@@ -109,7 +109,7 @@ function ExpenseDialog({ open, onOpenChange, defaultDate }: { open: boolean; onO
       <label className={lbl}>Categoria<select className={field} value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>{Object.entries(catLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
       <label className={lbl}>Pessoa da equipe<select className={field} value={f.staffId} onChange={(e) => setF({ ...f, staffId: e.target.value })}><option value="">Sem pessoa (gasto da STAYO)</option>{(staff.data ?? []).filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
       <label className={lbl}>Imóvel<select className={field} value={f.implementationId} onChange={(e) => setF({ ...f, implementationId: e.target.value })}><option value="">Sem imóvel</option>{(props.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label>
-      <label className={lbl}>Comprovante (opcional)<input type="file" accept="image/*" className="text-sm" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+      <div className={lbl}>Comprovante (opcional)<label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-input px-3 text-sm text-foreground hover:bg-muted"><Receipt className="size-4 text-muted-foreground" /><span className="truncate">{file ? file.name : "Escolher foto do comprovante"}</span><input type="file" accept="image/*" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label></div>
     </form>
     <DialogFooter><Button type="submit" form="exp-form" disabled={save.isPending}>{save.isPending ? "Salvando…" : "Lançar"}</Button></DialogFooter>
   </DialogContent></Dialog>;
