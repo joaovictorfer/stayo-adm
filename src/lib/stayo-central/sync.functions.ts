@@ -104,7 +104,7 @@ export const syncCentralReservations = createServerFn({ method: "POST" }).middle
     }
     // Reservas importadas antes e que deixaram de valer no Guia (canceladas, bloqueio, outra data/imóvel)
     // saem do relatório; as que têm ajuste manual com histórico ficam e são sinalizadas para revisão.
-    const [y, m] = data.month.split("-").map(Number);
+    const [y = 0, m = 1] = data.month.split("-").map(Number);
     const next = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`;
     const valid = new Set(rows.map((r) => r.id));
     const { data: local } = await context.supabase.from("payout_reservations").select("id,central_reservation_id,manual_amounts")

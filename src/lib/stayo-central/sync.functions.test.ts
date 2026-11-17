@@ -74,7 +74,7 @@ describe("Central reservation CPF import", () => {
     ];
     await sync({});
     expect(lastDelete).toHaveBeenCalledTimes(1);
-    const eq = lastDelete!.mock.results[0].value.eq;
+    const eq = lastDelete!.mock.results[0]!.value.eq;
     expect(eq).toHaveBeenCalledWith("id", "r-cancelled");
   });
 });
