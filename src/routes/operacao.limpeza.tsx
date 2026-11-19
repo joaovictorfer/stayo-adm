@@ -7,10 +7,9 @@ import { toast } from "sonner";
 import { AdminEmptyState, AdminPageHeader, AdminStatusBadge } from "@/components/admin/AdminPrimitives";
 import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CleanPropertyDialog } from "@/components/admin/CleanPropertyDialog";
 import { SyncUpcomingButton } from "@/components/admin/SyncUpcomingButton";
-import { MoneyCentsInput } from "@/components/ui/money-input";
-import { assignRoutine, cleaningBoardQuery, markClean, markDirty, type CleaningRow } from "@/lib/api/op-cleaning-api";
+import { assignRoutine, cleaningBoardQuery, markDirty, type CleaningRow } from "@/lib/api/op-cleaning-api";
 import { opStaffQuery } from "@/lib/api/op-execution";
 import { localISODate } from "@/lib/local-date";
 import type { CleaningState } from "@/lib/op-cleaning";
@@ -106,39 +105,8 @@ function CleaningPage() {
           </div>)}</div>}
     </section>
     <p className="text-xs text-[var(--admin-muted)]">A situação considera as reservas importadas do Guia (mês atual e próximos 2 meses ao puxar) e as limpezas registradas no Admin. Limpezas marcadas entram na Agenda e em Custos.</p>
-    <CleanDialog row={cleaning} staff={activeStaff} today={today} onClose={() => setCleaning(null)} onDone={refresh} />
+    <CleanPropertyDialog row={cleaning} staff={activeStaff} today={today} onClose={() => setCleaning(null)} onDone={refresh} />
   </div>;
 }
 
 const order: Record<CleaningState, number> = { sujo: 0, ocupado: 1, sem_registro: 2, pronto: 3 };
-
-function CleanDialog({ row, staff, today, onClose, onDone }: { row: CleaningRow | null; staff: { id: string; name: string }[]; today: string; onClose: () => void; onDone: () => void }) {
-  const [staffId, setStaffId] = useState("");
-  const [date, setDate] = useState(today);
-  const [cents, setCents] = useState(16000);
-  const [key, setKey] = useState<string | null>(null);
-  if (row && key !== row.id) { setKey(row.id); setStaffId(row.next?.staffId ?? ""); setDate(today); setCents(Math.round((row.next?.amount ?? 160) * 100)); }
-  const save = useMutation({
-    mutationFn: () => markClean({ implementationId: row!.id, staffId, staffName: staff.find((s) => s.id === staffId)?.name ?? "", date, amount: cents / 100 }),
-    onSuccess: () => { toast.success(`${row!.property} marcado como limpo.`); onDone(); setKey(null); onClose(); },
-    onError: (e) => toast.error((e as Error).message),
-  });
-  return <Dialog open={!!row} onOpenChange={(v) => { if (!v) { setKey(null); onClose(); } }}>
-    <DialogContent className="max-w-md">
-      <DialogHeader><DialogTitle>Marcar {row?.property} como limpo</DialogTitle></DialogHeader>
-      <div className="space-y-4">
-        <label className="block space-y-1.5 text-sm font-medium">Quem limpou
-          <select aria-label="Quem limpou" className="admin-input h-11 w-full px-3" value={staffId} onChange={(e) => setStaffId(e.target.value)}>
-            <option value="">Selecione</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block space-y-1.5 text-sm font-medium">Quando<input aria-label="Data da limpeza" type="date" max={today} className="admin-input h-11 w-full px-3" value={date} onChange={(e) => setDate(e.target.value)} /></label>
-          <label className="block space-y-1.5 text-sm font-medium">Valor<MoneyCentsInput aria-label="Valor da limpeza" cents={cents} onCentsChange={setCents} /></label>
-        </div>
-        {staff.length === 0 && <p className="text-xs text-[var(--admin-muted)]">Cadastre a equipe em Equipe e Meu Dia para escolher quem limpou.</p>}
-      </div>
-      <DialogFooter><Button variant="outline" onClick={onClose}>Cancelar</Button><Button disabled={!staffId || save.isPending} onClick={() => save.mutate()}>{save.isPending ? "Salvando…" : "Confirmar limpeza"}</Button></DialogFooter>
-    </DialogContent>
-  </Dialog>;
-}
