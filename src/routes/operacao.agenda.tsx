@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SyncUpcomingButton } from "@/components/admin/SyncUpcomingButton";
 import { OpTaskDialog } from "@/components/admin/OpTaskDialog";
 import { RoutineIndicators } from "@/components/admin/RoutineIndicators";
+import { ReservationArrivalSheet } from "@/components/admin/ReservationArrivalSheet";
 import { kindLabel, taskDone, useBoardTasks } from "@/components/admin/TaskBoard";
 import type { BoardTask } from "@/lib/api/op-tasks";
 import { opMovementsQuery } from "@/lib/api/op-movements-api";
@@ -38,6 +39,7 @@ function AgendaPage() {
   const [date, setDate] = useState(today);
   const [editing, setEditing] = useState<BoardTask | null>(null);
   const [open, setOpen] = useState(false);
+  const [arrival, setArrival] = useState<Movement | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const monthStart = date.slice(0, 8) + "01";
   const monthEnd = addDaysISO(addDaysISO(monthStart, 32).slice(0, 8) + "01", -1);
@@ -103,28 +105,29 @@ function AgendaPage() {
             <small className="text-xs text-[var(--admin-muted)]">{items.length} {items.length === 1 ? "item" : "itens"}</small>
           </header>
           <div className="max-h-[460px] overflow-y-auto divide-y divide-[var(--admin-border)]">{!items.length && <p className="p-5 text-xs text-muted-foreground">Nada previsto</p>}{sortItems(items).map((it) => it.kind === "move"
-            ? <MoveRow key={it.move.id} m={it.move} />
+            ? <MoveRow key={it.move.id} m={it.move} onOpen={() => setArrival(it.move)} />
             : <TaskRow key={it.task.id} task={it.task} showDate={view === "imovel"} onEdit={() => { setEditing(it.task); setOpen(true); }} />)}</div>
         </section>)}</div>}
 
     <p className="text-xs text-[var(--admin-muted)]">Entradas e saídas vêm das reservas já importadas. Tarefas do Admin são editáveis; as do STAYO APP seguem em leitura até o corte.</p>
     <OpTaskDialog open={open} onOpenChange={setOpen} task={editing} defaultDate={date} />
+    <ReservationArrivalSheet movement={arrival} onClose={() => setArrival(null)} tasks={rows} onRoutine={(task) => { setArrival(null); setEditing(task); setOpen(true); }} />
   </div>;
 }
 
 const sortKey = (it: Item) => it.kind === "move" ? (it.move.type === "checkout" ? "00" : "99") : (it.task.scheduledTime ?? "98");
 const sortItems = (items: Item[]) => [...items].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
 
-function MoveRow({ m }: { m: Movement }) {
+function MoveRow({ m, onOpen }: { m: Movement; onOpen: () => void }) {
   const out = m.type === "checkout";
   const Icon = out ? LogOut : LogIn;
-  return <div className={rowCls}>
+  return <Button variant="ghost" onClick={onOpen} className={`${rowCls} h-auto whitespace-normal rounded-none`}>
     <span className={`grid size-9 place-items-center rounded-full ${out ? "bg-[var(--admin-warning-soft)] text-[var(--admin-warning)]" : "bg-[var(--admin-info-soft)] text-[var(--admin-primary)]"}`}><Icon className="size-4" aria-hidden /></span>
     <span className="min-w-0"><b className="block break-words text-sm">{out ? "Check-out" : "Check-in"} · {m.property}</b><small className="block break-words text-[var(--admin-muted)]">{m.guest ?? "Hóspede não informado"}</small></span>
     <span>{m.turnover === "mesmo_dia" ? <AdminStatusBadge tone="danger">Virada no mesmo dia</AdminStatusBadge>
       : m.turnover === "dia_seguinte" ? <AdminStatusBadge tone="warning">Entrada amanhã</AdminStatusBadge>
       : <AdminStatusBadge tone="neutral">{out ? "Limpar" : "Receber"}</AdminStatusBadge>}</span>
-  </div>;
+  </Button>;
 }
 
 function TaskRow({ task, showDate, onEdit }: { task: BoardTask; showDate: boolean; onEdit: () => void }) {

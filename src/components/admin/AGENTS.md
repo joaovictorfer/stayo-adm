@@ -6,3 +6,4 @@
 - Reservation preparation is a separate per-reservation five-item checklist through a compare-and-set role-checked RPC; it never implies task completion, cleaning payment or actual check-in authorization, preserving execution and financial guards.
 - Routine sheets display imported reservation UUID linkage, next-stay windows and actual completed_at separately from due_date; team names come from op_task_team with legacy-name fallback to avoid confusing planning with completed work.
 - RoutineIndicators shares presentation of persisted priority, execution state, assignment and overdue date; assignment is a display state, never a replacement database status.
+- ReservationArrivalSheet opens imported stays from agenda movements; operational details use a role-checked server read with strict Central UUID/property matching, and previous-stay cleaning is separate from this stay's checkout routine.
