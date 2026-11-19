@@ -2,3 +2,4 @@
 - Op task execution: completion is guarded by a DB trigger (checklist + required photos) so Admin and Meu Dia share one rule; Meu Dia uses hashed expiring staff links resolved server-side and scoped to op_task_team membership.
 - Operational costs are derived on read by src/lib/op-costs.ts (completed op_tasks × op_task_team shares, competence = due-date month, plus non-refused op_expenses); never stored and never written to payouts or VF finances.
 - The operational overview composes existing movement/cleaning/task queries and reuses CleanPropertyDialog and OpTaskDialog; it never creates a second reservation or task store.
+- OperationalCalendar projects existing reservations without monetary/CPF fields and schedules existing routines through the role-checked core-client RPC; cleaning windows derive from checkout/next check-in and sync preserves explicit date overrides to avoid losing team planning.

@@ -16,6 +16,7 @@ import type { BoardTask } from "@/lib/api/op-tasks";
 import { opMovementsQuery } from "@/lib/api/op-movements-api";
 import { addDaysISO, localISODate, longDayLabel } from "@/lib/local-date";
 import type { CleaningState } from "@/lib/op-cleaning";
+import { OperationalCalendar } from "@/components/admin/OperationalCalendar";
 
 export const Route = createFileRoute("/operacao/")({
   head: () => ({ meta: [
@@ -36,6 +37,11 @@ const stateInfo: Record<CleaningState, { label: string; tone: "success" | "dange
 type PropertyFilter = "todos" | "sujo" | "pronto" | "ocupado" | "sem_profissional";
 
 function OperationPage() {
+  const [view, setView] = useState<"calendario" | "painel">("calendario");
+  return <div className="space-y-5"><ModuleTabs value={view} onChange={setView} options={[{ value: "calendario", label: "Calendário" }, { value: "painel", label: "Painel de imóveis" }]} />{view === "calendario" ? <OperationalCalendar /> : <OperationOverview />}</div>;
+}
+
+function OperationOverview() {
   const today = localISODate();
   const qc = useQueryClient();
   const { rows, pending, adminError, coreError } = useBoardTasks();

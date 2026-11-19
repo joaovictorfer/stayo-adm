@@ -764,6 +764,13 @@
       "when": 1794928886308,
       "tag": "0108_contract_summary_editable_clauses",
       "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1795102172145,
+      "tag": "0109_operational_cleaning_schedule",
+      "breakpoints": true
     }
   ]
 }

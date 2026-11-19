@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -2556,6 +2556,7 @@ export type Database = {
         Row: {
           amount: number | null
           checklist_template_id: string | null
+          cleaning_date_override: boolean
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -2576,6 +2577,7 @@ export type Database = {
         Insert: {
           amount?: number | null
           checklist_template_id?: string | null
+          cleaning_date_override?: boolean
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -2596,6 +2598,7 @@ export type Database = {
         Update: {
           amount?: number | null
           checklist_template_id?: string | null
+          cleaning_date_override?: boolean
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -4961,6 +4964,10 @@ export type Database = {
       }
       admin_save_proposal_draft: { Args: { p_data: Json }; Returns: Json }
       admin_save_stayo_charge: { Args: { p_data: Json }; Returns: Json }
+      admin_schedule_cleaning: {
+        Args: { p_date: string; p_task_id: string }
+        Returns: undefined
+      }
       admin_schedule_commercial_meeting: {
         Args: { p_data: Json }
         Returns: Json

@@ -54,6 +54,7 @@ export { saveOwnerAddress, type OwnerAddress } from "./owner-address";
 export { saveContractSummary, saveContractProperty, type ContractSummaryPatch } from './contract-summary';
 export { prepareOwnerWorkspace, publishOwnerWorkspace, listOwnerWorkspaceLinks, revokeOwnerWorkspace, readOwnerWorkspace, revealOwnerGuestCpf, readAccountOwnerWorkspace } from '../owner-workspace.functions';
 export { getLinenWorkspace, importLinenDocument, saveLinenAction, openLinenDocument, uploadLinenEvidence, openLinenEvidence } from "../linen.functions";
+export { scheduleCleaning } from "./op-calendar-api";
 
 export interface Page<T> {
   data: T[];

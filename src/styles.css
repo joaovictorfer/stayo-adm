@@ -5,6 +5,7 @@
 @import "./config/implementation-premium.css";
 @import "./config/commercial-meeting.css";
 @import "./config/charges.css";
+@import "./config/operational-calendar.css";
 
 @custom-variant dark (&:is(.dark *));
 

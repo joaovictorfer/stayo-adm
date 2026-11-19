@@ -19,7 +19,7 @@ export function OpTaskExecution({ taskId }: { taskId: string }) {
   const templates = useQuery(opTemplatesQuery());
   const [team, setTeam] = useState<Member[]>([]);
   useEffect(() => { if (exec.data) setTeam(exec.data.team.map(({ staff_id, share, is_lead }) => ({ staff_id, share, is_lead }))); }, [exec.data]);
-  const refresh = () => { void qc.invalidateQueries({ queryKey: ["op-tasks"] }); };
+  const refresh = () => { for (const key of ["op-tasks", "op-movements", "op-cleaning"]) void qc.invalidateQueries({ queryKey: [key] }); };
   const onErr = (e: Error) => toast.error(e.message);
   const teamMut = useMutation({ mutationFn: () => saveTeam(taskId, team), onSuccess: () => { toast.success("Equipe salva"); refresh(); }, onError: onErr });
   const items = exec.data?.items ?? [];
