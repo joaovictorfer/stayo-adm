@@ -8,6 +8,7 @@ import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns
 import { Button } from "@/components/ui/button";
 import { SyncUpcomingButton } from "@/components/admin/SyncUpcomingButton";
 import { OpTaskDialog } from "@/components/admin/OpTaskDialog";
+import { RoutineIndicators } from "@/components/admin/RoutineIndicators";
 import { kindLabel, taskDone, useBoardTasks } from "@/components/admin/TaskBoard";
 import type { BoardTask } from "@/lib/api/op-tasks";
 import { opMovementsQuery } from "@/lib/api/op-movements-api";
@@ -28,7 +29,6 @@ export const Route = createFileRoute("/operacao/agenda")({
 
 type View = "dia" | "semana" | "mes" | "imovel";
 type Item = { kind: "task"; task: BoardTask } | { kind: "move"; move: Movement };
-const statusText = (t: BoardTask) => taskDone(t) ? "Concluída" : t.status === "em_andamento" ? "Em andamento" : "Pendente";
 const rowCls = "grid w-full grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 px-3 py-3 text-left [&>span:last-child]:col-start-2 [&>span:last-child]:justify-self-start";
 
 function AgendaPage() {
@@ -128,11 +128,10 @@ function MoveRow({ m }: { m: Movement }) {
 }
 
 function TaskRow({ task, showDate, onEdit }: { task: BoardTask; showDate: boolean; onEdit: () => void }) {
-  const late = !taskDone(task) && !!task.dueDate && task.dueDate < localISODate();
   const body: ReactNode = <>
     <strong className="text-sm tabular-nums text-[var(--admin-primary)]">{showDate ? (task.dueDate ? task.dueDate.slice(8, 10) + "/" + task.dueDate.slice(5, 7) : "—") : (task.scheduledTime?.slice(0, 5) ?? "—")}</strong>
     <span className="min-w-0"><b className="block break-words text-sm">{task.title}</b><small className="block break-words text-[var(--admin-muted)]">{task.propertyName ?? "Imóvel não informado"}{task.responsibleName ? ` · ${task.responsibleName}` : " · Sem profissional"}</small></span>
-    <span className="flex items-center gap-2"><AdminStatusBadge tone={taskDone(task) ? "success" : late ? "danger" : task.priority === "alta" ? "danger" : task.status === "em_andamento" ? "info" : "neutral"}>{late ? "Atrasada" : statusText(task)}</AdminStatusBadge><ChevronRight className="hidden size-4 text-[var(--admin-muted)] sm:block" /></span>
+    <span className="flex flex-wrap items-center gap-2"><RoutineIndicators task={task} /><ChevronRight className="hidden size-4 text-[var(--admin-muted)] sm:block" /></span>
   </>;
   return task.source === "admin"
     ? <Button variant="ghost" onClick={onEdit} className={`${rowCls} h-auto whitespace-normal rounded-none hover:bg-[var(--admin-surface-subtle)]`}>{body}</Button>

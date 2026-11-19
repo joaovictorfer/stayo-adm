@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CleaningStayContext } from "./CleaningStayContext";
-import { AdminStatusBadge } from "./AdminPrimitives";
+import { RoutineSheetIndicators } from "./RoutineIndicators";
 import { saveOpTask, deleteOpTask, scheduleCleaning } from "@/lib/api/core-client";
 import { Textarea } from "@/components/ui/textarea";
 import { OpTaskExecution } from "@/components/admin/OpTaskExecution";
@@ -44,14 +44,14 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
 
   return <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent className="flex w-full flex-col gap-0 p-0 sm:w-[600px] sm:max-w-[600px]">
-      <SheetHeader className="shrink-0 border-b border-border bg-primary px-5 py-6 text-left text-primary-foreground [&_h2]:text-primary-foreground"><p className="text-xs font-semibold uppercase">Rotina operacional</p><SheetTitle>{task ? task.title : "Nova rotina"}</SheetTitle><p className="text-sm">{task?.propertyName || "Selecione o imóvel"}</p>{task && <div className="flex flex-wrap gap-2 pt-2"><AdminStatusBadge tone="info">{opStatusLabel[task.status as keyof typeof opStatusLabel] ?? task.status}</AdminStatusBadge><AdminStatusBadge>{task.dueDate ? `${task.dueDate.slice(8,10)}/${task.dueDate.slice(5,7)}/${task.dueDate.slice(0,4)}` : "Sem data"} {task.scheduledTime || ""}</AdminStatusBadge></div>}</SheetHeader>
+      <SheetHeader className="shrink-0 border-b border-border bg-primary px-5 py-6 text-left text-primary-foreground [&_h2]:text-primary-foreground"><p className="text-xs font-semibold uppercase">Rotina operacional</p><SheetTitle>{task ? task.title : "Nova rotina"}</SheetTitle><p className="text-sm">{task?.propertyName || "Selecione o imóvel"}</p>{task && <div className="space-y-2 pt-2"><RoutineSheetIndicators task={task} priority={form.priority} /><p className="text-xs">{form.dueDate ? `${form.dueDate.slice(8,10)}/${form.dueDate.slice(5,7)}/${form.dueDate.slice(0,4)}` : "Sem data"} {form.scheduledTime || ""}</p></div>}</SheetHeader>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
       {task?.kind === "limpeza" && <CleaningStayContext task={task} />}
       <form id="op-task-form" className="grid gap-3" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
         <label className={label}>Título<input required className={input} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Ex.: Limpeza pré check-in" /></label>
         <div className="grid grid-cols-2 gap-3">
           <label className={label}>Tipo<select disabled={!!task?.reservationId} className={input} value={form.kind} onChange={(e) => set("kind", e.target.value as OpTaskInput["kind"])}>{Object.entries(opKindLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-          <label className={label}>Prioridade<select className={input} value={form.priority} onChange={(e) => set("priority", e.target.value as OpTaskInput["priority"])}><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></label>
+          <label className={label}>Prioridade<select aria-label="Prioridade" className={input} value={form.priority} onChange={(e) => set("priority", e.target.value as OpTaskInput["priority"])}><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></label>
         </div>
         <label className={label}>Imóvel<select disabled={!!task?.reservationId} className={input} value={form.implementationId ?? ""} onChange={(e) => set("implementationId", e.target.value || null)}><option value="">Sem imóvel</option>{(props.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label>
         <div className="grid grid-cols-2 gap-3">
