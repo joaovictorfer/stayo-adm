@@ -29,12 +29,12 @@ export const Route = createFileRoute("/operacao/agenda")({
 type View = "dia" | "semana" | "mes" | "imovel";
 type Item = { kind: "task"; task: BoardTask } | { kind: "move"; move: Movement };
 const statusText = (t: BoardTask) => taskDone(t) ? "Concluída" : t.status === "em_andamento" ? "Em andamento" : "Pendente";
-const rowCls = "grid w-full grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left";
+const rowCls = "grid w-full grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 px-3 py-3 text-left [&>span:last-child]:col-start-2 [&>span:last-child]:justify-self-start";
 
 function AgendaPage() {
   const today = localISODate();
   const { rows, pending: loading, coreError } = useBoardTasks();
-  const [view, setView] = useState<View>("dia");
+  const [view, setView] = useState<View>("semana");
   const [date, setDate] = useState(today);
   const [editing, setEditing] = useState<BoardTask | null>(null);
   const [open, setOpen] = useState(false);
@@ -57,8 +57,9 @@ function AgendaPage() {
       for (const m of movements) add(m.date, { kind: "move", move: m });
       for (const t of tasks) add(t.dueDate!.slice(0, 10), { kind: "task", task: t });
     }
+    if (view === "semana") for (let d = start; d <= end; d = addDaysISO(d, 1)) if (!map.has(d)) map.set(d, []);
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [tasks, movements, view]);
+  }, [tasks, movements, view, start, end]);
 
   const pendingCount = tasks.filter((t) => !taskDone(t)).length;
   const checkouts = movements.filter((m) => m.type === "checkout");
@@ -96,12 +97,12 @@ function AgendaPage() {
     {loading || (view !== "imovel" && moves.isPending) ? <div className="admin-panel p-5 text-sm text-[var(--admin-muted)]">Carregando agenda…</div>
       : view === "mes" ? <MonthGrid start={monthStart} end={monthEnd} today={today} tasks={tasks} moves={movements} onPick={(d) => { setDate(d); setView("dia"); }} />
       : groups.length === 0 ? <div className="admin-panel"><AdminEmptyState icon={CalendarDays} title="Nada previsto para este período" description={view === "dia" ? "Sem tarefas, entradas ou saídas neste dia." : "Nenhuma tarefa em aberto."} /></div>
-      : <div className="space-y-4">{groups.map(([group, items]) => <section key={group} className="admin-panel overflow-hidden">
+      : <div className={view === "semana" ? "grid gap-3 md:grid-cols-2 xl:grid-cols-3" : "space-y-4"}>{groups.map(([group, items]) => <section key={group} className={`overflow-hidden rounded-md border bg-background ${group === today ? "border-primary" : "border-border"}`}>
           <header className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
             <h2 className="font-[var(--stayo-font-display)] text-base">{view === "imovel" ? group : longDayLabel(group)}</h2>
             <small className="text-xs text-[var(--admin-muted)]">{items.length} {items.length === 1 ? "item" : "itens"}</small>
           </header>
-          <div className="divide-y divide-[var(--admin-border)]">{sortItems(items).map((it) => it.kind === "move"
+          <div className="max-h-[460px] overflow-y-auto divide-y divide-[var(--admin-border)]">{!items.length && <p className="p-5 text-xs text-muted-foreground">Nada previsto</p>}{sortItems(items).map((it) => it.kind === "move"
             ? <MoveRow key={it.move.id} m={it.move} />
             : <TaskRow key={it.task.id} task={it.task} showDate={view === "imovel"} onEdit={() => { setEditing(it.task); setOpen(true); }} />)}</div>
         </section>)}</div>}
@@ -119,7 +120,7 @@ function MoveRow({ m }: { m: Movement }) {
   const Icon = out ? LogOut : LogIn;
   return <div className={rowCls}>
     <span className={`grid size-9 place-items-center rounded-full ${out ? "bg-[var(--admin-warning-soft)] text-[var(--admin-warning)]" : "bg-[var(--admin-info-soft)] text-[var(--admin-primary)]"}`}><Icon className="size-4" aria-hidden /></span>
-    <span className="min-w-0"><b className="block truncate text-sm">{out ? "Saída" : "Entrada"} · {m.property}</b><small className="block truncate text-[var(--admin-muted)]">{m.guest ?? "Hóspede não informado"}{m.channel ? ` · ${m.channel.charAt(0).toUpperCase()}${m.channel.slice(1)}` : ""}</small></span>
+    <span className="min-w-0"><b className="block break-words text-sm">{out ? "Check-out" : "Check-in"} · {m.property}</b><small className="block break-words text-[var(--admin-muted)]">{m.guest ?? "Hóspede não informado"}</small></span>
     <span>{m.turnover === "mesmo_dia" ? <AdminStatusBadge tone="danger">Virada no mesmo dia</AdminStatusBadge>
       : m.turnover === "dia_seguinte" ? <AdminStatusBadge tone="warning">Entrada amanhã</AdminStatusBadge>
       : <AdminStatusBadge tone="neutral">{out ? "Limpar" : "Receber"}</AdminStatusBadge>}</span>
@@ -127,13 +128,14 @@ function MoveRow({ m }: { m: Movement }) {
 }
 
 function TaskRow({ task, showDate, onEdit }: { task: BoardTask; showDate: boolean; onEdit: () => void }) {
+  const late = !taskDone(task) && !!task.dueDate && task.dueDate < localISODate();
   const body: ReactNode = <>
     <strong className="text-sm tabular-nums text-[var(--admin-primary)]">{showDate ? (task.dueDate ? task.dueDate.slice(8, 10) + "/" + task.dueDate.slice(5, 7) : "—") : (task.scheduledTime?.slice(0, 5) ?? "—")}</strong>
-    <span className="min-w-0"><b className="block truncate text-sm">{task.title}</b><small className="block truncate text-[var(--admin-muted)]">{kindLabel(task.kind)} · {task.propertyName ?? "Imóvel não informado"}{task.responsibleName ? ` · ${task.responsibleName}` : ""}</small></span>
-    <span className="flex items-center gap-2"><AdminStatusBadge tone={taskDone(task) ? "success" : task.priority === "alta" ? "danger" : task.status === "em_andamento" ? "info" : "neutral"}>{statusText(task)}</AdminStatusBadge><ChevronRight className="hidden size-4 text-[var(--admin-muted)] sm:block" /></span>
+    <span className="min-w-0"><b className="block break-words text-sm">{task.title}</b><small className="block break-words text-[var(--admin-muted)]">{task.propertyName ?? "Imóvel não informado"}{task.responsibleName ? ` · ${task.responsibleName}` : " · Sem profissional"}</small></span>
+    <span className="flex items-center gap-2"><AdminStatusBadge tone={taskDone(task) ? "success" : late ? "danger" : task.priority === "alta" ? "danger" : task.status === "em_andamento" ? "info" : "neutral"}>{late ? "Atrasada" : statusText(task)}</AdminStatusBadge><ChevronRight className="hidden size-4 text-[var(--admin-muted)] sm:block" /></span>
   </>;
   return task.source === "admin"
-    ? <button type="button" onClick={onEdit} className={`${rowCls} hover:bg-[var(--admin-surface-subtle)]`}>{body}</button>
+    ? <Button variant="ghost" onClick={onEdit} className={`${rowCls} h-auto whitespace-normal rounded-none hover:bg-[var(--admin-surface-subtle)]`}>{body}</Button>
     : <Link to="/operacao/$id" params={{ id: task.id }} className={`${rowCls} hover:bg-[var(--admin-surface-subtle)]`}>{body}</Link>;
 }
 

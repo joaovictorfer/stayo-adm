@@ -56,6 +56,7 @@ export { prepareOwnerWorkspace, publishOwnerWorkspace, listOwnerWorkspaceLinks, 
 export { getLinenWorkspace, importLinenDocument, saveLinenAction, openLinenDocument, uploadLinenEvidence, openLinenEvidence } from "../linen.functions";
 export { scheduleCleaning } from "./op-calendar-api";
 export { toggleReservationPreparation } from "./reservation-preparation-api";
+export { saveOpTask, deleteOpTask } from "./op-tasks";
 
 export interface Page<T> {
   data: T[];

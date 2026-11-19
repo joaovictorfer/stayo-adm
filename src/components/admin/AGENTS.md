@@ -4,3 +4,4 @@
 - The operational overview composes existing movement/cleaning/task queries and reuses CleanPropertyDialog and OpTaskDialog; it never creates a second reservation or task store.
 - OperationalCalendar projects existing reservations without monetary/CPF fields and schedules existing routines through the role-checked core-client RPC; cleaning windows derive from checkout/next check-in and sync preserves explicit date overrides to avoid losing team planning.
 - Reservation preparation is a separate per-reservation five-item checklist through a compare-and-set role-checked RPC; it never implies task completion, cleaning payment or actual check-in authorization, preserving execution and financial guards.
+- Routine sheets display imported reservation UUID linkage, next-stay windows and actual completed_at separately from due_date; team names come from op_task_team with legacy-name fallback to avoid confusing planning with completed work.

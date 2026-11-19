@@ -21,7 +21,7 @@ export interface OpTaskInput {
   guidance: string | null;
 }
 
-export type BoardTask = OperationTask & { source: "admin" | "core"; guidance?: string | null; responsibleName?: string | null; implementationId?: string | null };
+export type BoardTask = OperationTask & { source: "admin" | "core"; guidance?: string | null; responsibleName?: string | null; implementationId?: string | null; completedAt?: string | null };
 
 export const opKindLabel: Record<OpTaskKind, string> = { limpeza: "Limpeza", vistoria: "Vistoria", manutencao: "Manutenção", checkin: "Check-in", checkout: "Check-out", outro: "Outro" };
 export const opStatusLabel: Record<OpTaskStatus, string> = { pendente: "Pendente", em_andamento: "Em andamento", concluida: "Concluída", cancelada: "Cancelada" };
@@ -40,18 +40,18 @@ const propertyLabel = (p: { code: string; nickname: string | null; condominium_n
 
 async function listOpTasks(): Promise<BoardTask[]> {
   const { data, error } = await supabase.from("op_tasks")
-    .select("*, implementation_projects(code, nickname, condominium_name, unit)")
+    .select("*, implementation_projects(code, nickname, condominium_name, unit), op_task_team(op_staff(name))")
     .order("due_date").order("scheduled_time");
   if (error) throw error;
   return (data ?? []).map((r) => ({
     id: r.id, source: "admin", title: r.title, kind: r.kind,
     propertyId: r.implementation_id, implementationId: r.implementation_id,
     propertyName: propertyLabel(r.implementation_projects as never),
-    reservationId: null, reservationCode: null, dueDate: r.due_date,
+    reservationId: r.payout_reservation_id, reservationCode: null, dueDate: r.due_date,
     scheduledTime: r.scheduled_time ? r.scheduled_time.slice(0, 5) : null,
-    responsibleUserId: r.responsible_name ? "admin" : null, responsibleName: r.responsible_name,
+    responsibleUserId: r.responsible_name ? "admin" : null, responsibleName: (r.op_task_team ?? []).flatMap((m) => m.op_staff?.name ? [m.op_staff.name] : []).join(", ") || r.responsible_name,
     status: r.status, priority: r.priority, totalAmount: r.amount == null ? null : Number(r.amount),
-    assignments: [], guidance: r.guidance, createdAt: r.created_at, updatedAt: r.updated_at,
+    assignments: [], guidance: r.guidance, completedAt: r.completed_at, createdAt: r.created_at, updatedAt: r.updated_at,
   }));
 }
 
