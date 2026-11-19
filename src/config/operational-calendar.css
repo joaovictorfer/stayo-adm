@@ -10,7 +10,8 @@
 .op-calendar-cell.is-weekend { background: var(--admin-surface-subtle); }
 .op-calendar-cell.is-today, .op-calendar-heading.is-today { background: var(--op-today); }
 .op-calendar-event { grid-row: var(--op-row); z-index: 2; align-self: start; min-width: 0; margin: 13px 3px 0; height: 30px; }
-.op-calendar-event > button { display: flex; width: 100%; min-width: 0; height: 30px; justify-content: flex-start; border-radius: 5px; padding: 0 9px; font-size: 12px; overflow: hidden; background: var(--op-reservation); color: var(--op-reservation-text); }
+.op-calendar-event > button { display: flex; width: 100%; min-width: 0; height: 30px; justify-content: flex-start; border-radius: 5px; padding: 0 9px; font-size: 12px; background: var(--op-reservation); color: var(--op-reservation-text); }
+.op-calendar-event:not(.op-calendar-routine) > button > span { position: sticky; left: 200px; max-width: 100%; }
 .op-calendar-event > button:hover { background: var(--admin-primary-hover); }
 .op-calendar-routine { margin-top: 59px; }
 .op-calendar-routine > button { background: var(--op-routine-bg); color: var(--op-routine); border: 1px solid var(--admin-border); }
@@ -18,3 +19,4 @@
 .op-calendar-routine.is-critical > button { color: var(--admin-danger); background: var(--admin-danger-soft); }
 .op-calendar-routine.is-done > button { color: var(--admin-success); background: var(--admin-success-soft); }
 @media (max-width: 639px) { .op-calendar-grid { grid-template-columns: 126px repeat(var(--op-days), 104px); } .op-calendar-property { padding: 12px 8px; font-size: 12px; } .op-calendar-scroll { max-height: 68vh; } }
+@media (max-width: 639px) { .op-calendar-event:not(.op-calendar-routine) > button > span { left: 136px; } }
