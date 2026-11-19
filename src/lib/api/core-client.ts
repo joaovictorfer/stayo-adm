@@ -55,6 +55,7 @@ export { saveContractSummary, saveContractProperty, type ContractSummaryPatch } 
 export { prepareOwnerWorkspace, publishOwnerWorkspace, listOwnerWorkspaceLinks, revokeOwnerWorkspace, readOwnerWorkspace, revealOwnerGuestCpf, readAccountOwnerWorkspace } from '../owner-workspace.functions';
 export { getLinenWorkspace, importLinenDocument, saveLinenAction, openLinenDocument, uploadLinenEvidence, openLinenEvidence } from "../linen.functions";
 export { scheduleCleaning } from "./op-calendar-api";
+export { toggleReservationPreparation } from "./reservation-preparation-api";
 
 export interface Page<T> {
   data: T[];

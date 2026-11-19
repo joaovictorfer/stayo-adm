@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -2299,6 +2299,38 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "op_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      op_reservation_preparation: {
+        Row: {
+          checked: boolean
+          item: string
+          reservation_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          checked?: boolean
+          item: string
+          reservation_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          checked?: boolean
+          item?: string
+          reservation_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "op_reservation_preparation_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "payout_reservations"
             referencedColumns: ["id"]
           },
         ]
@@ -4975,6 +5007,15 @@ export type Database = {
       admin_set_implementation_next_action: {
         Args: { p_data: Json }
         Returns: Json
+      }
+      admin_toggle_reservation_preparation: {
+        Args: {
+          p_checked: boolean
+          p_item: string
+          p_previous: boolean
+          p_reservation: string
+        }
+        Returns: undefined
       }
       admin_update_commercial_meeting_status: {
         Args: { p_data: Json }
