@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Brush, CalendarDays, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Brush, CalendarDays, Check, ChevronLeft, ChevronRight, Users, Building2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { ReservationPreparation } from "./ReservationPreparation";
 import { preparationQuery } from "@/lib/api/reservation-preparation-api";
 import { preparationState } from "@/lib/reservation-preparation";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -59,8 +60,8 @@ export function OperationalCalendar() {
   const month = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(dateValue(start));
   return <div className="space-y-5">
     <AdminPageHeader eyebrow="Operação" title="Calendário operacional" actions={<SyncUpcomingButton />} />
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-1">
+    <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="flex min-w-0 flex-wrap items-center gap-1">
         <Button variant="outline" size="icon" aria-label="Período anterior" onClick={() => setStart(addDaysISO(start, -14))}><ChevronLeft className="size-4" /></Button>
         <Popover open={periodPicker} onOpenChange={setPeriodPicker}><PopoverTrigger asChild><Button variant="outline" className="capitalize"><CalendarDays className="size-4" />{month}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar locale={ptBR} mode="single" selected={dateValue(start)} onSelect={(d) => { if (d) { setStart(toISO(d)); setPeriodPicker(false); } }} className="pointer-events-auto" /></PopoverContent></Popover>
         <Button variant="outline" size="icon" aria-label="Próximo período" onClick={() => setStart(addDaysISO(start, 14))}><ChevronRight className="size-4" /></Button>
@@ -70,7 +71,7 @@ export function OperationalCalendar() {
     </div>
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground"><span className="font-medium text-foreground">{props.length} imóveis</span><span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary" />Reserva</span><span className="inline-flex items-center gap-1.5"><Brush className="size-3 text-[var(--admin-warning)]" />Limpeza</span><span className="text-[var(--admin-danger)]">Out-in · saída e entrada no mesmo dia</span><span>Flexível · intervalo livre entre reservas</span></div>
     {(data.isError || board.isError) && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o calendário.<Button variant="link" onClick={() => { void data.refetch(); void board.refetch(); }}>Tentar novamente</Button></p>}
-    {data.isPending || board.isPending ? <p className="py-10 text-sm text-muted-foreground">Carregando calendário…</p> : <div className="op-calendar"><div className="op-calendar-scroll" tabIndex={0} aria-label="Calendário de reservas por imóvel"><div className="op-calendar-grid" style={{ "--op-days": days.length } as React.CSSProperties}>
+    {data.isPending || board.isPending ? <p className="py-10 text-sm text-muted-foreground">Carregando calendário…</p> : <TooltipProvider delayDuration={150}><div className="op-calendar"><div className="op-calendar-scroll" tabIndex={0} aria-label="Calendário de reservas por imóvel"><div className="op-calendar-grid" style={{ "--op-days": days.length } as React.CSSProperties}>
       <div className="op-calendar-heading op-calendar-corner">Imóveis · {dm(start)} a {dm(days[days.length - 1] ?? start)}</div>
       {days.map((d) => <div key={d} className={`op-calendar-heading ${d === today ? "is-today" : ""}`}><span>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(dateValue(d))}</span><strong>{d.slice(8, 10)}</strong></div>)}
       {props.map((p, idx) => {
@@ -84,18 +85,21 @@ export function OperationalCalendar() {
             const from = Math.max(0, days.findIndex((d) => d >= s.checkin));
             const last = s.checkout >= end ? 21 : Math.max(from + 1, days.findIndex((d) => d >= s.checkout));
             const ready = preparationState(preparation.data ?? [], s.id);
-            return <div key={s.id} className="op-calendar-event" style={{ "--op-row": row, gridColumn: `${from + 2} / ${last + 2}` } as React.CSSProperties}><Button variant="ghost" title={`${s.guest} · ${dm(s.checkin)} a ${dm(s.checkout)} · Preparação ${preparation.isSuccess ? `${ready.count}/5` : "indisponível"}`} aria-label={`Reserva ${s.guest}, ${p.property}, ${dm(s.checkin)} a ${dm(s.checkout)}`} onClick={() => setSelected(s)}><span className="truncate">{s.guest}{preparation.isSuccess ? ` · ${ready.count}/5` : ""}</span></Button></div>;
+            const channel = s.channel?.toLowerCase() ?? "";
+            const channelName = channel.includes("airbnb") ? "Airbnb" : channel.includes("booking") ? "Booking" : s.channel || "Reserva";
+            const nights = Math.round((dateValue(s.checkout).getTime() - dateValue(s.checkin).getTime()) / 86400000);
+            return <div key={s.id} className="op-calendar-event" style={{ "--op-row": row, gridColumn: `${from + 2} / ${last + 2}` } as React.CSSProperties}><Button variant="ghost" title={`${s.guest} · ${channelName} · ${dm(s.checkin)} a ${dm(s.checkout)} · Preparação ${preparation.isSuccess ? `${ready.count}/5` : "indisponível"}`} aria-label={`Reserva ${s.guest}, ${p.property}, ${dm(s.checkin)} a ${dm(s.checkout)}`} onClick={() => setSelected(s)}><span className="op-calendar-stay-content"><span className={`op-calendar-channel ${channel.includes("airbnb") ? "is-airbnb" : channel.includes("booking") ? "is-booking" : ""}`} aria-label={channelName}>{channel.includes("airbnb") ? "A" : channel.includes("booking") ? "B." : <Building2 className="size-4" />}</span><span className="op-calendar-stay-copy"><strong className="truncate">{s.guest}</strong><small className="truncate">{nights} {nights === 1 ? "noite" : "noites"} · {channelName}</small></span></span></Button></div>;
           })}
           {tasks.filter((t) => t.propertyId === p.id && t.status !== "cancelada" && t.date >= start && t.date < end).map((t) => {
             const stay = mine.find((s) => s.id === t.reservationId);
             const w = stay ? cleaningWindow(stay, stays) : null;
             const conflict = w && !validCleaningDate(w, t.date);
             const label = conflict ? "Rever" : w?.kind === "out_in" ? "Out-in" : w?.kind === "flexivel" ? "Flexível" : "Limpeza";
-            return <div key={t.id} className={`op-calendar-event op-calendar-routine ${conflict || w?.kind === "out_in" ? "is-critical" : ""} ${t.status === "concluida" ? "is-done" : ""}`} style={{ "--op-row": row, gridColumn: days.indexOf(t.date) + 2 } as React.CSSProperties}><Button variant="ghost" aria-label={`${label}, ${p.property}, ${dm(t.date)}`} title={`${label} · ${t.staff.join(", ") || "Sem profissional"}`} onClick={() => { if (stay) setSelected(stay); }} disabled={!stay}><Brush className="size-3 shrink-0" /><span className="truncate">{t.status === "concluida" ? "Feita" : label}</span></Button></div>;
+            return <div key={t.id} className={`op-calendar-event op-calendar-routine ${conflict || w?.kind === "out_in" ? "is-critical" : ""} ${t.status === "concluida" ? "is-done" : ""}`} style={{ "--op-row": row, gridColumn: days.indexOf(t.date) + 2 } as React.CSSProperties}><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={`${label}, ${p.property}, ${dm(t.date)}`} onClick={() => { if (stay) setSelected(stay); }} disabled={!stay}>{t.status === "concluida" ? <Check className="size-5" /> : <Brush className="size-5" />}</Button></TooltipTrigger><TooltipContent><p>{t.status === "concluida" ? "Limpeza concluída" : label} · {dm(t.date)}</p><p>{t.staff.join(", ") || "Sem profissional"}</p>{w?.next && <p>Antes de {w.next.guest} · {dm(w.next.checkin)}</p>}</TooltipContent></Tooltip><small>{t.status === "concluida" ? "Feita" : label}</small></div>;
           })}
         </div>;
       })}
-    </div></div>{!props.length && <p className="p-6 text-sm text-muted-foreground">Nenhum imóvel encontrado.</p>}</div>}
+    </div></div>{!props.length && <p className="p-6 text-sm text-muted-foreground">Nenhum imóvel encontrado.</p>}</div></TooltipProvider>}
     <Dialog open={!!selected} onOpenChange={(v) => { if (!v) { setSelected(null); setPicker(false); } }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>{selected?.guest}</DialogTitle></DialogHeader>{selected && window && <div className="space-y-4">
       <p className="text-sm font-medium">{board.data?.rows.find((p) => p.id === selected.implementationId)?.property}</p>
       <dl className="grid grid-cols-2 gap-3 border-y border-border py-3 text-sm"><div><dt className="text-xs text-muted-foreground">Check-in</dt><dd className="mt-1 font-semibold">{dm(selected.checkin)}</dd></div><div><dt className="text-xs text-muted-foreground">Check-out</dt><dd className="mt-1 font-semibold">{dm(selected.checkout)}</dd></div></dl>

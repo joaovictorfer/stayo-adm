@@ -1,6 +1,6 @@
 import { addDaysISO } from "./local-date";
 
-export type CalendarStay = { id: string; implementationId: string; guest: string; checkin: string; checkout: string };
+export type CalendarStay = { id: string; implementationId: string; guest: string; checkin: string; checkout: string; channel?: string };
 export type CleaningWindow = { start: string; end: string | null; kind: "out_in" | "flexivel" | "sem_entrada"; next: CalendarStay | null };
 
 export function cleaningWindow(stay: CalendarStay, stays: CalendarStay[]): CleaningWindow {
