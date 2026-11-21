@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiRouteImport } from './routes/bi'
 import { Route as GuiasImplantacaoPrototipoRouteImport } from './routes/guias-implantacao-prototipo'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PainelMigracaoRouteImport } from './routes/painel-migracao'
 import { Route as ProprietarioPrototipoRouteImport } from './routes/proprietario-prototipo'
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as CondominiosIndexRouteImport } from './routes/condominios.index'
@@ -125,6 +126,11 @@ const GuiasImplantacaoPrototipoRoute =
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PainelMigracaoRoute = PainelMigracaoRouteImport.update({
+  id: '/painel-migracao',
+  path: '/painel-migracao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProprietarioPrototipoRoute = ProprietarioPrototipoRouteImport.update({
@@ -612,6 +618,7 @@ export interface FileRoutesByFullPath {
   '/bi': typeof BiRoute
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
+  '/painel-migracao': typeof PainelMigracaoRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
@@ -710,6 +717,7 @@ export interface FileRoutesByTo {
   '/bi': typeof BiRoute
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
+  '/painel-migracao': typeof PainelMigracaoRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
@@ -808,6 +816,7 @@ export interface FileRoutesById {
   '/bi': typeof BiRoute
   '/guias-implantacao-prototipo': typeof GuiasImplantacaoPrototipoRoute
   '/login': typeof LoginRoute
+  '/painel-migracao': typeof PainelMigracaoRoute
   '/proprietario-prototipo': typeof ProprietarioPrototipoRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/condominios/$id': typeof CondominiosIdRoute
@@ -908,6 +917,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/guias-implantacao-prototipo'
     | '/login'
+    | '/painel-migracao'
     | '/proprietario-prototipo'
     | '/cobranca/$token'
     | '/condominios/$id'
@@ -1006,6 +1016,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/guias-implantacao-prototipo'
     | '/login'
+    | '/painel-migracao'
     | '/proprietario-prototipo'
     | '/cobranca/$token'
     | '/condominios/$id'
@@ -1103,6 +1114,7 @@ export interface FileRouteTypes {
     | '/bi'
     | '/guias-implantacao-prototipo'
     | '/login'
+    | '/painel-migracao'
     | '/proprietario-prototipo'
     | '/cobranca/$token'
     | '/condominios/$id'
@@ -1202,6 +1214,7 @@ export interface RootRouteChildren {
   BiRoute: typeof BiRoute
   GuiasImplantacaoPrototipoRoute: typeof GuiasImplantacaoPrototipoRoute
   LoginRoute: typeof LoginRoute
+  PainelMigracaoRoute: typeof PainelMigracaoRoute
   ProprietarioPrototipoRoute: typeof ProprietarioPrototipoRoute
   CobrancaTokenRoute: typeof CobrancaTokenRoute
   CondominiosIdRoute: typeof CondominiosIdRoute
@@ -1321,6 +1334,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/painel-migracao': {
+      id: '/painel-migracao'
+      path: '/painel-migracao'
+      fullPath: '/painel-migracao'
+      preLoaderRoute: typeof PainelMigracaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/proprietario-prototipo': {
@@ -1990,6 +2010,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiRoute: BiRoute,
   GuiasImplantacaoPrototipoRoute: GuiasImplantacaoPrototipoRoute,
   LoginRoute: LoginRoute,
+  PainelMigracaoRoute: PainelMigracaoRoute,
   ProprietarioPrototipoRoute: ProprietarioPrototipoRoute,
   CobrancaTokenRoute: CobrancaTokenRoute,
   CondominiosIdRoute: CondominiosIdRoute,
