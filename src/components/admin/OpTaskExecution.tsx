@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Play, RotateCcw, Trash2, Users, ClipboardList } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { OpChecklistList } from "@/components/admin/OpChecklistList";
@@ -8,21 +8,31 @@ import { Button } from "@/components/ui/button";
 import { applyTemplate, opExecutionQuery, opStaffQuery, opTemplatesQuery, saveTeam, setTaskStatus, toggleItem, uploadItemPhoto } from "@/lib/api/op-execution";
 import { formatBrasiliaDateTime } from "@/lib/local-date";
 import { blockerMessage } from "@/lib/op-execution-rules";
+import { teamDraftKey } from "@/lib/op-save-state";
 
 type Member = { staff_id: string; share: number; is_lead: boolean };
 const field = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
 
 /** Equipe, checklist e execução de uma tarefa do Admin. */
-export function OpTaskExecution({ taskId }: { taskId: string }) {
+export function OpTaskExecution({ taskId, onSaveStateChange }: { taskId: string; onSaveStateChange?: (dirty: boolean, saving: boolean) => void }) {
   const qc = useQueryClient();
   const exec = useQuery(opExecutionQuery(taskId));
   const staff = useQuery(opStaffQuery());
   const templates = useQuery(opTemplatesQuery());
   const [team, setTeam] = useState<Member[]>([]);
-  useEffect(() => { if (exec.data) setTeam(exec.data.team.map(({ staff_id, share, is_lead }) => ({ staff_id, share, is_lead }))); }, [exec.data]);
+  const [savedTeamKey, setSavedTeamKey] = useState<string | null>(null);
+  const dirty = savedTeamKey !== null && teamDraftKey(team) !== savedTeamKey;
+  const dirtyRef = useRef(false);
+  dirtyRef.current = dirty;
+  useEffect(() => {
+    if (!exec.data || dirtyRef.current) return;
+    const next = exec.data.team.map(({ staff_id, share, is_lead }) => ({ staff_id, share, is_lead }));
+    setTeam(next); setSavedTeamKey(teamDraftKey(next));
+  }, [exec.data]);
   const refresh = () => { for (const key of ["op-tasks", "op-movements", "op-cleaning"]) void qc.invalidateQueries({ queryKey: [key] }); };
   const onErr = (e: Error) => toast.error(e.message);
-  const teamMut = useMutation({ mutationFn: () => saveTeam(taskId, team), onSuccess: () => { toast.success("Equipe salva"); refresh(); }, onError: onErr });
+  const teamMut = useMutation({ mutationFn: (submitted: Member[]) => saveTeam(taskId, submitted), onSuccess: (_, submitted) => { setSavedTeamKey(teamDraftKey(submitted)); dirtyRef.current = false; toast.success("Equipe salva"); refresh(); }, onError: onErr });
+  useEffect(() => { onSaveStateChange?.(dirty, teamMut.isPending); }, [dirty, teamMut.isPending, onSaveStateChange]);
   const items = exec.data?.items ?? [];
   const progress = items.some((i) => i.checked_at || i.photo_path);
   const tplMut = useMutation({ mutationFn: (id: string | null) => applyTemplate(taskId, id, progress), onSuccess: refresh, onError: onErr });
@@ -38,8 +48,9 @@ export function OpTaskExecution({ taskId }: { taskId: string }) {
   const fmt = formatBrasiliaDateTime;
 
   return <div className="grid gap-5 border-t border-border pt-4">
-    <section className="grid gap-2">
+    <fieldset disabled={teamMut.isPending} className="grid min-w-0 gap-2">
       <div className="flex items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-sm font-semibold"><Users className="size-4 text-primary" />Profissionais</h3><span className="text-xs text-muted-foreground">{team.length} na equipe · {team.reduce((sum, m) => sum + m.share, 0)}%</span></div>
+      <p role="status" aria-live="polite" className={dirty ? "text-xs font-medium text-destructive" : "text-xs text-muted-foreground"}>{teamMut.isPending ? "Salvando equipe…" : dirty ? "Equipe com alterações não salvas" : "Equipe salva"}</p>
       {team.length === 0 && <p className="text-xs text-muted-foreground">Ninguém escalado. A tarefa aparece no Meu Dia de quem estiver na equipe.</p>}
       {team.map((m, idx) => <div key={m.staff_id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-muted/20 p-3">
         <span className="min-w-0 break-words text-sm font-semibold">{nameOf(m.staff_id)}</span>
@@ -51,9 +62,9 @@ export function OpTaskExecution({ taskId }: { taskId: string }) {
         <select aria-label="Adicionar à equipe" className={field} value="" onChange={(e) => { const id = e.target.value; if (!id) return; setTeam((t) => { const next = [...t, { staff_id: id, share: 0, is_lead: t.length === 0 }]; const each = Math.round((100 / next.length) * 100) / 100; return next.map((x, i) => ({ ...x, share: i === next.length - 1 ? Math.round((100 - each * (next.length - 1)) * 100) / 100 : each })); }); }}>
           <option value="">Adicionar pessoa…</option>{available.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <Button type="button" variant="outline" disabled={teamMut.isPending} onClick={() => teamMut.mutate()}><Users className="size-4" />Salvar equipe</Button>
+        <Button type="button" variant="outline" disabled={teamMut.isPending || !dirty} onClick={() => teamMut.mutate(team)}><Users className="size-4" />{teamMut.isPending ? "Salvando equipe…" : "Salvar equipe"}</Button>
       </div>
-    </section>
+    </fieldset>
 
     <section className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
