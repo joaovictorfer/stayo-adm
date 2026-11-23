@@ -106,16 +106,16 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
             <label className={label}>Título<input required className={input} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Ex.: Limpeza pré check-in" /></label>
             <label className={label}>Prioridade<select aria-label="Prioridade" className={input} value={form.priority} onChange={(e) => set("priority", e.target.value as OpTaskInput["priority"])}><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></label>
             <label className={label}>Responsável de referência<input className={input} value={form.responsibleName ?? ""} onChange={(e) => set("responsibleName", e.target.value)} placeholder="Nome" /></label>
+            {task && <div className="border-t border-border pt-3"><Button type="button" variant="ghost" className="text-destructive" disabled={busy} onClick={() => { if (confirm("Excluir esta tarefa?")) remove.mutate(); }}><Trash2 className="size-4" />Excluir rotina</Button></div>}
           </div>
         </details>
         </fieldset>
       </form>
       {task && <OpTaskExecution key={task.id} taskId={task.id} onSaveStateChange={updateTeamState} />}
       </div>
-      <SheetFooter className="grid shrink-0 grid-cols-2 gap-2 border-t border-border bg-background p-4 sm:flex sm:flex-wrap sm:justify-end sm:space-x-0">
-        <div role="status" aria-live="polite" className="col-span-2 w-full text-xs text-muted-foreground">{scopes.length ? `Alterações não salvas: ${scopes.join(" e ")}.` : task ? "Rotina e equipe sem alterações pendentes." : "Nova rotina ainda não salva."}</div>
-        {task ? <Button type="button" variant="ghost" className="text-destructive sm:mr-auto" disabled={busy} onClick={() => { if (confirm("Excluir esta tarefa?")) remove.mutate(); }}><Trash2 className="size-4" />Excluir</Button> : <span />}
-        <Button variant="outline" disabled={busy} onClick={() => requestClose(false)}>Fechar</Button><Button type="submit" form="op-task-form" disabled={busy || (!!task && !routineDirty)}>{save.isPending ? "Salvando rotina…" : "Salvar rotina"}</Button>
+      <SheetFooter className="flex shrink-0 flex-col gap-2 border-t border-border bg-background p-4 sm:flex-row sm:flex-wrap sm:justify-end sm:space-x-0">
+        <div role="status" aria-live="polite" className="w-full text-xs text-muted-foreground">{scopes.length ? `Alterações não salvas: ${scopes.join(" e ")}.` : task ? "Rotina e equipe sem alterações pendentes." : "Nova rotina ainda não salva."}</div>
+        <Button variant="outline" className="min-h-11 w-full sm:min-h-10 sm:w-auto" disabled={busy} onClick={() => requestClose(false)}>Fechar</Button><Button type="submit" form="op-task-form" className="min-h-11 w-full sm:min-h-10 sm:w-auto" disabled={busy || (!!task && !routineDirty)}>{save.isPending ? "Salvando rotina…" : "Salvar rotina"}</Button>
       </SheetFooter>
     <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Descartar alterações não salvas?</AlertDialogTitle><AlertDialogDescription>Há alterações pendentes na {scopes.join(" e na ")}. Apenas o que ainda não foi salvo será descartado.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Continuar editando</AlertDialogCancel><AlertDialogAction onClick={() => { setDiscardOpen(false); onOpenChange(false); }}>Descartar e fechar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </SheetContent>
