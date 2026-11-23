@@ -8,7 +8,7 @@ import { formatBRL } from "@/lib/money";
 export function OperationalServicesSheet({ person, tasks, onClose }: { person: PersonCost | null; tasks: CostTask[]; onClose: () => void }) {
   const services = person ? tasks.filter((task) => task.status === "concluida" && task.amount !== null && (person.key === "none" ? task.team.length === 0 : task.team.some((member) => member.staffId === person.key))) : [];
   return <Sheet open={person !== null} onOpenChange={(open) => { if (!open) onClose(); }}><SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[650px] [&>button]:text-primary-foreground">{person && <>
-    <SheetHeader className="shrink-0 border-b border-border bg-primary px-5 py-6 pr-12 text-left"><p className="text-xs font-semibold uppercase text-primary-foreground">Operação · Serviços</p><SheetTitle className="text-primary-foreground">{person.name}</SheetTitle><SheetDescription className="text-primary-foreground">{services.length} serviços concluídos no mês</SheetDescription></SheetHeader>
+    <SheetHeader className="shrink-0 space-y-1 border-b border-border bg-primary px-5 py-4 pr-12 text-left"><p className="text-xs font-semibold uppercase text-primary-foreground">Operação · Serviços</p><SheetTitle className="break-words text-primary-foreground">{person.name}</SheetTitle><SheetDescription className="text-primary-foreground">{services.length} {services.length === 1 ? "serviço concluído" : "serviços concluídos"} no mês</SheetDescription></SheetHeader>
     <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
       <h3 className="flex items-center gap-2 text-sm font-semibold"><ClipboardList className="size-4 text-primary" />Serviços por imóvel</h3>
       <div className="space-y-3">{services.map((task) => {

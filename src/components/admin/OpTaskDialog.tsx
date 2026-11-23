@@ -81,7 +81,7 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
 
   return <Sheet open={open} onOpenChange={requestClose}>
     <SheetContent onInteractOutside={(e) => { if (discardOpen) e.preventDefault(); }} onEscapeKeyDown={(e) => { if (discardOpen) e.preventDefault(); }} className="flex w-full flex-col gap-0 p-0 sm:w-[600px] sm:max-w-[600px] [&>button]:text-primary-foreground">
-      <SheetHeader className="shrink-0 border-b border-border bg-primary px-5 py-6 text-left text-primary-foreground [&_h2]:text-primary-foreground"><p className="text-xs font-semibold uppercase">Rotina operacional</p><SheetTitle>{task ? task.title : "Nova rotina"}</SheetTitle><p className="text-sm">{task?.propertyName || "Selecione o imóvel"}</p>{task && <div className="space-y-2 pt-2"><RoutineSheetIndicators task={task} priority={form.priority} /><p className="text-xs">{form.dueDate ? formatCalendarDate(form.dueDate) : "Sem data"} {form.scheduledTime || ""}</p></div>}</SheetHeader>
+      <SheetHeader className="shrink-0 space-y-1 border-b border-border bg-primary px-5 py-4 pr-12 text-left text-primary-foreground [&_h2]:text-primary-foreground"><p className="text-xs font-semibold uppercase">Rotina operacional</p><SheetTitle className="break-words">{task ? task.title : "Nova rotina"}</SheetTitle><p className="break-words text-sm">{task?.propertyName || "Selecione o imóvel"}</p>{task && <div className="space-y-1 pt-1"><RoutineSheetIndicators task={task} priority={form.priority} /><p className="text-xs">{form.dueDate ? formatCalendarDate(form.dueDate) : "Sem data"} {form.scheduledTime || ""}</p></div>}</SheetHeader>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
       <form id="op-task-form" className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (!busy) save.mutate(); }}>
         <fieldset disabled={save.isPending} className="grid min-w-0 gap-3">
@@ -92,12 +92,13 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
           <label className={label}>Tipo<select disabled={!!task?.reservationId} className={input} value={form.kind} onChange={(e) => set("kind", e.target.value as OpTaskInput["kind"])}>{Object.entries(opKindLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
           <label className={label}>Horário previsto<BrazilianTimeInput aria-label="Horário previsto" className={input} value={form.scheduledTime ?? ""} onValueChange={(value) => set("scheduledTime", value || null)} /></label>
         </div>
-        <label className={label}>Data da execução prevista<BrazilianDateInput required aria-label="Data da execução prevista" className={input} value={form.dueDate} onValueChange={(value) => set("dueDate", value)} /></label>
+        <label className={label}>Execução prevista<BrazilianDateInput required aria-label="Execução prevista" className={input} value={form.dueDate} onValueChange={(value) => set("dueDate", value)} /></label>
         {task?.kind === "limpeza" && <div className="my-2"><CleaningStayContext task={task} /></div>}
         <div className="mt-2 grid gap-3 border-t border-border pt-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold"><Wallet className="size-4 text-primary" />Planejamento da rotina</h3>
           <label className={label}>Valor total da rotina (R$)<input inputMode="decimal" className={`${input} h-12 text-lg font-semibold tabular-nums`} value={amountText} onChange={(e) => setAmountText(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="Não informado" /></label>
         </div>
+        {task && <OpTaskExecution key={task.id} taskId={task.id} totalAmount={task.totalAmount} onSaveStateChange={updateTeamState} />}
         {!task && <label className={label}>Situação<select className={input} value={form.status} onChange={(e) => set("status", e.target.value as OpTaskInput["status"])}>{Object.entries(opStatusLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>}
         <label className={`${label} mt-2`}>Observação ao profissional<Textarea aria-label="Observação ao profissional" rows={3} value={form.guidance ?? ""} onChange={(e) => set("guidance", e.target.value)} placeholder="Instruções para a equipe" /></label>
         <details open={!task ? true : undefined} className="mt-2 border-y border-border py-3">
@@ -111,7 +112,6 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
         </details>
         </fieldset>
       </form>
-      {task && <OpTaskExecution key={task.id} taskId={task.id} onSaveStateChange={updateTeamState} />}
       </div>
       <SheetFooter className="flex shrink-0 flex-col gap-2 border-t border-border bg-background p-4 sm:flex-row sm:flex-wrap sm:justify-end sm:space-x-0">
         <div role="status" aria-live="polite" className="w-full text-xs text-muted-foreground">{scopes.length ? `Alterações não salvas: ${scopes.join(" e ")}.` : task ? "Rotina e equipe sem alterações pendentes." : "Nova rotina ainda não salva."}</div>

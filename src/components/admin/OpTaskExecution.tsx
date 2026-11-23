@@ -7,14 +7,16 @@ import { OpChecklistList } from "@/components/admin/OpChecklistList";
 import { Button } from "@/components/ui/button";
 import { applyTemplate, opExecutionQuery, opStaffQuery, opTemplatesQuery, saveTeam, setTaskStatus, toggleItem, uploadItemPhoto } from "@/lib/api/op-execution";
 import { formatBrasiliaDateTime } from "@/lib/local-date";
-import { blockerMessage } from "@/lib/op-execution-rules";
+import { blockerMessage, validateTeam } from "@/lib/op-execution-rules";
 import { teamDraftKey } from "@/lib/op-save-state";
+import { splitAmount } from "@/lib/op-costs";
+import { formatBRL } from "@/lib/money";
 
 type Member = { staff_id: string; share: number; is_lead: boolean };
 const field = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
 
 /** Equipe, checklist e execução de uma tarefa do Admin. */
-export function OpTaskExecution({ taskId, onSaveStateChange }: { taskId: string; onSaveStateChange?: (dirty: boolean, saving: boolean) => void }) {
+export function OpTaskExecution({ taskId, totalAmount, onSaveStateChange }: { taskId: string; totalAmount?: number | null; onSaveStateChange?: (dirty: boolean, saving: boolean) => void }) {
   const qc = useQueryClient();
   const exec = useQuery(opExecutionQuery(taskId));
   const staff = useQuery(opStaffQuery());
@@ -46,17 +48,19 @@ export function OpTaskExecution({ taskId, onSaveStateChange }: { taskId: string;
   const nameOf = (id: string) => staff.data?.find((s) => s.id === id)?.name ?? exec.data.team.find((m) => m.staff_id === id)?.name ?? "—";
   const blockers = blockerMessage(items);
   const fmt = formatBrasiliaDateTime;
+  const amounts = totalAmount != null && !validateTeam(team) ? splitAmount(totalAmount, team.map((m) => m.share)) : [];
 
   return <div className="grid gap-5 border-t border-border pt-4">
     <fieldset disabled={teamMut.isPending} className="grid min-w-0 gap-2">
-      <div className="flex items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-sm font-semibold"><Users className="size-4 text-primary" />Profissionais</h3><span className="text-xs text-muted-foreground">{team.length} na equipe · {team.reduce((sum, m) => sum + m.share, 0)}%</span></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-sm font-semibold"><Users className="size-4 text-primary" />Equipe e divisão</h3><span className="text-xs text-muted-foreground">{team.length} {team.length === 1 ? "profissional" : "profissionais"} · {team.reduce((sum, m) => sum + m.share, 0)}%</span></div>
       <p role="status" aria-live="polite" className={dirty ? "text-xs font-medium text-destructive" : "text-xs text-muted-foreground"}>{teamMut.isPending ? "Salvando equipe…" : dirty ? "Equipe com alterações não salvas" : "Equipe salva"}</p>
       {team.length === 0 && <p className="text-xs text-muted-foreground">Ninguém escalado. A tarefa aparece no Meu Dia de quem estiver na equipe.</p>}
       {team.map((m, idx) => <div key={m.staff_id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-muted/20 p-3">
         <span className="min-w-0 break-words text-sm font-semibold">{nameOf(m.staff_id)}</span>
         <Button type="button" size="icon" variant="ghost" aria-label={`Remover ${nameOf(m.staff_id)}`} onClick={() => setTeam((t) => t.filter((_, i) => i !== idx))}><Trash2 className="size-4" /></Button>
         <label className="flex max-w-[12rem] items-center gap-2 text-xs text-muted-foreground">Participação<input aria-label={`Percentual de ${nameOf(m.staff_id)}`} inputMode="decimal" className={`${field} w-16 text-right tabular-nums`} value={m.share} onChange={(e) => { const v = Number(e.target.value.replace(",", ".")) || 0; setTeam((t) => t.map((x, i) => i === idx ? { ...x, share: v } : x)); }} />%</label>
-        <label className="flex items-center gap-1 text-xs"><input type="radio" name={`lead-${taskId}`} checked={m.is_lead} onChange={() => setTeam((t) => t.map((x, i) => ({ ...x, is_lead: i === idx })))} />Líder</label>
+        <label className="flex items-center justify-end gap-1 text-xs"><input type="radio" name={`lead-${taskId}`} checked={m.is_lead} onChange={() => setTeam((t) => t.map((x, i) => ({ ...x, is_lead: i === idx })))} />Líder</label>
+        <dl className="col-span-2 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2"><dt className="text-xs text-muted-foreground">{dirty ? "Divisão em edição" : "Valor por profissional"}</dt><dd className="text-sm font-semibold tabular-nums">{amounts[idx] != null ? formatBRL(amounts[idx]) : totalAmount == null ? "Valor não informado" : "Divisão pendente"}</dd></dl>
       </div>)}
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <select aria-label="Adicionar à equipe" className={field} value="" onChange={(e) => { const id = e.target.value; if (!id) return; setTeam((t) => { const next = [...t, { staff_id: id, share: 0, is_lead: t.length === 0 }]; const each = Math.round((100 / next.length) * 100) / 100; return next.map((x, i) => ({ ...x, share: i === next.length - 1 ? Math.round((100 - each * (next.length - 1)) * 100) / 100 : each })); }); }}>
@@ -67,7 +71,7 @@ export function OpTaskExecution({ taskId, onSaveStateChange }: { taskId: string;
     </fieldset>
 
     <section className="grid gap-2">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-sm font-semibold"><ClipboardList className="size-4 text-primary" />Checklist</h3>
         <select aria-label="Modelo de checklist" className={`${field} max-w-[14rem]`} disabled={progress || finished || tplMut.isPending} value={task.checklist_template_id ?? ""} onChange={(e) => tplMut.mutate(e.target.value || null)}>
           <option value="">Sem checklist</option>{(templates.data ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -79,7 +83,7 @@ export function OpTaskExecution({ taskId, onSaveStateChange }: { taskId: string;
     </section>
 
     <section className="grid gap-2">
-      <p className="text-xs text-muted-foreground">{task.started_at ? `Iniciada em ${fmt(task.started_at)}` : "Ainda não iniciada"}{task.completed_at ? ` · concluída em ${fmt(task.completed_at)}` : ""}</p>
+      <dl className="grid gap-2 text-xs text-muted-foreground"><div><dt>Início</dt><dd className="mt-1 text-foreground">{task.started_at ? fmt(task.started_at) : "Ainda não iniciada"}</dd></div>{task.completed_at && <div><dt>Conclusão</dt><dd className="mt-1 text-foreground">{fmt(task.completed_at)}</dd></div>}</dl>
       {!finished && blockers && task.status === "em_andamento" && <p className="text-xs text-destructive">{blockers}</p>}
       <div className="flex flex-wrap gap-2">
         {task.status === "pendente" && <Button type="button" variant="outline" onClick={() => statusMut.mutate("em_andamento")} disabled={statusMut.isPending}><Play className="size-4" />Iniciar</Button>}
