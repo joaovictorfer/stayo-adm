@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPrimitives";
 import { ModuleTabs, PortfolioMetric } from "@/components/admin/PhaseOnePatterns";
 import { VfFinancePanel } from "@/components/admin/VfFinancePanel";
+import { SettlementWorkspace } from "@/components/admin/SettlementWorkspace";
 
 import {
   EmptyRows,
@@ -24,7 +25,7 @@ import {
   settlementsListQuery,
 } from "../lib/api/queries";
 import { formatMoney as formatMoneyOrNull } from "../lib/format";
-import type { Expense, Settlement, ServiceInvoice, ServiceInvoiceStage } from "../types/core";
+import type { Expense, ServiceInvoice, ServiceInvoiceStage } from "../types/core";
 
 /**
  * Financeiro — repasses por imóvel/proprietário e faturas de serviço.
@@ -130,7 +131,7 @@ function FinancePage() {
       ) : tab === "faturas" ? (
         <ServiceInvoicesTab />
       ) : tab === "fechamentos" ? (
-        <SettlementsTab />
+        <SettlementWorkspace />
       ) : tab === "vf" ? (
         <VfFinancePanel />
       ) : (
@@ -380,143 +381,6 @@ function ServiceInvoiceDetail({ invoice }: { invoice: ServiceInvoice }) {
         <DisabledAction label="Visualizar PDF" />
         <DisabledAction label="Baixar PDF" />
         <DisabledAction label="Enviar por WhatsApp" />
-      </div>
-    </div>
-  );
-}
-
-const settlementStatusLabels: Record<Settlement["status"], string> = {
-  aberto: "Aberto",
-  pago: "Pago",
-};
-
-function SettlementsTab() {
-  const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<Settlement | null>(null);
-  const query = useQuery(settlementsListQuery());
-
-  const rows = useMemo(() => {
-    const data = query.data?.data ?? [];
-    const term = q.trim().toLowerCase();
-    if (!term) return data;
-    return data.filter(
-      (s) =>
-        s.code.toLowerCase().includes(term) || (s.providerName ?? "").toLowerCase().includes(term),
-    );
-  }, [query.data, q]);
-
-  return (
-    <>
-      <div className="mb-4 flex justify-end">
-        <SearchInput value={q} onChange={setQ} placeholder="Buscar por referência ou prestador" />
-      </div>
-      <Panel>
-        {query.isPending ? (
-          <ListSkeleton />
-        ) : query.isError ? (
-          <ErrorRows onRetry={() => void query.refetch()} />
-        ) : rows.length === 0 ? (
-          <EmptyRows
-            message={
-              q ? "Nenhum fechamento encontrado para esta busca" : "Nenhum fechamento gerado ainda"
-            }
-          />
-        ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--stayo-border)" }}>
-            {rows.map((s) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelected(s)}
-                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left text-sm"
-                  style={{ color: "var(--stayo-ink)" }}
-                >
-                  <span className="font-medium">{s.code}</span>
-                  <span>{s.providerName ?? s.providerId}</span>
-                  <span style={{ color: "var(--stayo-ink-muted)" }}>
-                    {s.periodStart} – {s.periodEnd}
-                  </span>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px]"
-                    style={{
-                      backgroundColor:
-                        s.status === "pago" ? "var(--stayo-forest-soft)" : "var(--stayo-gold-soft)",
-                      color: s.status === "pago" ? "var(--stayo-forest)" : "var(--stayo-warning)",
-                    }}
-                  >
-                    {settlementStatusLabels[s.status]}
-                  </span>
-                  <span className="ml-auto" style={{ color: "var(--stayo-ink)" }}>
-                    {formatMoney(s.total)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
-
-      <Drawer
-        open={selected !== null}
-        onClose={() => setSelected(null)}
-        eyebrow="Fechamento"
-        title={selected?.code ?? ""}
-      >
-        {selected && <SettlementDetail settlement={selected} />}
-      </Drawer>
-    </>
-  );
-}
-
-function SettlementDetail({ settlement }: { settlement: Settlement }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field
-          label="Prestador"
-          value={
-            <LinkedField
-              to="/prestadores/$id"
-              id={settlement.providerId}
-              label={settlement.providerName}
-            />
-          }
-        />
-        <Field label="Status" value={settlementStatusLabels[settlement.status]} />
-        <Field label="Período" value={`${settlement.periodStart} – ${settlement.periodEnd}`} />
-        <Field label="Pago em" value={settlement.paidAt} />
-      </div>
-
-      <div>
-        <p
-          className="mb-2 text-xs uppercase tracking-wide"
-          style={{ color: "var(--stayo-ink-muted)" }}
-        >
-          Serviços incluídos no fechamento
-        </p>
-        <ul
-          className="divide-y rounded-[var(--radius-card)] border"
-          style={{ borderColor: "var(--stayo-border)" }}
-        >
-          {settlement.items.map((item, i) => (
-            <li key={i} className="flex items-center justify-between px-3 py-2 text-sm">
-              <span>
-                <span style={{ color: "var(--stayo-ink-muted)" }}>{item.date}</span>{" "}
-                {item.propertyName ?? item.propertyId} · {item.description}
-              </span>
-              <span>{formatMoney(item.amount)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2 flex justify-between text-sm font-medium">
-          <span>Total pago</span>
-          <span>{formatMoney(settlement.total)}</span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <DisabledAction label="Visualizar recibo" />
-        <DisabledAction label="Baixar recibo" />
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import { createExpense, deleteExpense, opCostsQuery, setExpenseStatus } from "@/
 import { opPropertiesQuery } from "@/lib/api/op-tasks";
 import { compressImageToBase64 } from "@/lib/image-compress";
 import { computeOpCosts } from "@/lib/op-costs";
+import { OperationalServicesSheet } from "@/components/admin/OperationalServicesSheet";
 
 export const Route = createFileRoute("/operacao/custos")({
   head: () => ({ meta: [
@@ -38,6 +39,7 @@ function CustosPage() {
   const [month, setMonth] = useState(currentMonth);
   const [tab, setTab] = useState<"pessoas" | "imoveis" | "reembolsos">("pessoas");
   const [open, setOpen] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
   const q = useQuery(opCostsQuery(month));
   const qc = useQueryClient();
   const r = useMemo(() => q.data ? computeOpCosts(q.data.tasks, q.data.expenses, month) : null, [q.data, month]);
@@ -64,9 +66,9 @@ function CustosPage() {
         {tab === "pessoas" && (r.people.length === 0 ? <div className="admin-panel"><AdminEmptyState icon={Users} title="Sem custos neste mês" description="Os valores aparecem quando tarefas com valor são concluídas ou reembolsos são lançados." /></div>
           : <><div className="grid gap-2 sm:hidden">{r.people.map((p) => <div key={p.key} className="admin-panel grid gap-1 p-4 text-sm"><div className="flex items-start justify-between gap-2"><b>{p.name}</b><strong>{brl(p.toPay)}</strong></div>
               <small className="text-[var(--admin-muted)]">{p.tasks} {p.tasks === 1 ? "tarefa" : "tarefas"} · serviços {brl(p.services)} · reembolso aprovado {brl(p.reimbApproved)}</small>
-              {(p.reimbPending > 0 || p.reimbPaid > 0) && <small className="text-[var(--admin-muted)]">Pendente {brl(p.reimbPending)} · já pago {brl(p.reimbPaid)}</small>}</div>)}</div>
+              {(p.reimbPending > 0 || p.reimbPaid > 0) && <small className="text-[var(--admin-muted)]">Pendente {brl(p.reimbPending)} · já pago {brl(p.reimbPaid)}</small>}<Button variant="outline" size="sm" className="mt-2" onClick={() => setSelectedPerson(p.key)}>Conferir serviços</Button></div>)}</div>
             <div className="admin-panel hidden overflow-x-auto sm:block"><table className="w-full min-w-[40rem]"><thead className="border-b border-[var(--admin-border)]"><tr><th className={th}>Pessoa</th><th className={th}>Serviços</th><th className={th}>Reembolso aprovado</th><th className={th}>Pendente</th><th className={th}>Já pago</th><th className={th}>A pagar</th></tr></thead>
-            <tbody className="divide-y divide-[var(--admin-border)]">{r.people.map((p) => <tr key={p.key}><td className={td}><b>{p.name}</b><small className="block text-[var(--admin-muted)]">{p.tasks} {p.tasks === 1 ? "tarefa" : "tarefas"}</small></td><td className={td}>{brl(p.services)}</td><td className={td}>{brl(p.reimbApproved)}</td><td className={td}>{brl(p.reimbPending)}</td><td className={td}>{brl(p.reimbPaid)}</td><td className={`${td} font-semibold`}>{brl(p.toPay)}</td></tr>)}</tbody></table></div></>)}
+            <tbody className="divide-y divide-[var(--admin-border)]">{r.people.map((p) => <tr key={p.key} className="transition-colors hover:bg-muted/30"><td className={td}><Button variant="link" className="h-auto p-0 font-semibold" onClick={() => setSelectedPerson(p.key)}>{p.name}</Button><small className="block text-[var(--admin-muted)]">{p.tasks} {p.tasks === 1 ? "tarefa" : "tarefas"}</small></td><td className={td}>{brl(p.services)}</td><td className={td}>{brl(p.reimbApproved)}</td><td className={td}>{brl(p.reimbPending)}</td><td className={td}>{brl(p.reimbPaid)}</td><td className={`${td} font-semibold`}>{brl(p.toPay)}</td></tr>)}</tbody></table></div></>)}
         {tab === "imoveis" && (r.properties.length === 0 ? <div className="admin-panel"><AdminEmptyState title="Sem custos neste mês" description="Nenhum imóvel teve custo operacional no período." /></div>
           : <div className="admin-panel overflow-x-auto"><table className="w-full min-w-[32rem]"><thead className="border-b border-[var(--admin-border)]"><tr><th className={th}>Imóvel</th><th className={th}>Serviços</th><th className={th}>Gastos</th><th className={th}>Total</th></tr></thead>
             <tbody className="divide-y divide-[var(--admin-border)]">{r.properties.map((p) => <tr key={p.key}><td className={td}><b>{p.name}</b><small className="block text-[var(--admin-muted)]">{p.tasks} {p.tasks === 1 ? "tarefa concluída" : "tarefas concluídas"}</small></td><td className={td}>{brl(p.services)}</td><td className={td}>{brl(p.expenses)}</td><td className={`${td} font-semibold`}>{brl(p.total)}</td></tr>)}</tbody></table></div>)}
@@ -83,6 +85,7 @@ function CustosPage() {
       </>}
     <p className="text-xs text-[var(--admin-muted)]">Serviços contam tarefas concluídas no mês com valor, divididas pelos percentuais da equipe. A pagar = serviços + reembolsos aprovados.</p>
     <ExpenseDialog open={open} onOpenChange={setOpen} defaultDate={month === currentMonth ? localISODate(now) : `${month}-01`} />
+    <OperationalServicesSheet person={r?.people.find((person) => person.key === selectedPerson) ?? null} tasks={q.data?.tasks ?? []} onClose={() => setSelectedPerson(null)} />
   </div>;
 }
 

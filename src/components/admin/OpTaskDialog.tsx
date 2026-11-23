@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { CalendarDays, SlidersHorizontal, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -43,32 +44,37 @@ export function OpTaskDialog({ open, onOpenChange, task, defaultDate }: { open: 
   const input = "h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent className="flex w-full flex-col gap-0 p-0 sm:w-[600px] sm:max-w-[600px]">
+    <SheetContent className="flex w-full flex-col gap-0 p-0 sm:w-[600px] sm:max-w-[600px] [&>button]:text-primary-foreground">
       <SheetHeader className="shrink-0 border-b border-border bg-primary px-5 py-6 text-left text-primary-foreground [&_h2]:text-primary-foreground"><p className="text-xs font-semibold uppercase">Rotina operacional</p><SheetTitle>{task ? task.title : "Nova rotina"}</SheetTitle><p className="text-sm">{task?.propertyName || "Selecione o imóvel"}</p>{task && <div className="space-y-2 pt-2"><RoutineSheetIndicators task={task} priority={form.priority} /><p className="text-xs">{form.dueDate ? `${form.dueDate.slice(8,10)}/${form.dueDate.slice(5,7)}/${form.dueDate.slice(0,4)}` : "Sem data"} {form.scheduledTime || ""}</p></div>}</SheetHeader>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-      {task?.kind === "limpeza" && <CleaningStayContext task={task} />}
       <form id="op-task-form" className="grid gap-3" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
-        <label className={label}>Título<input required className={input} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Ex.: Limpeza pré check-in" /></label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className={label}>Tipo<select disabled={!!task?.reservationId} className={input} value={form.kind} onChange={(e) => set("kind", e.target.value as OpTaskInput["kind"])}>{Object.entries(opKindLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-          <label className={label}>Prioridade<select aria-label="Prioridade" className={input} value={form.priority} onChange={(e) => set("priority", e.target.value as OpTaskInput["priority"])}><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></label>
-        </div>
+        <h3 className="flex items-center gap-2 text-sm font-semibold"><CalendarDays className="size-4 text-primary" />Agendamento</h3>
         <label className={label}>Imóvel<select disabled={!!task?.reservationId} className={input} value={form.implementationId ?? ""} onChange={(e) => set("implementationId", e.target.value || null)}><option value="">Sem imóvel</option>{(props.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label>
         <div className="grid grid-cols-2 gap-3">
-          <label className={label}>Data<input required type="date" className={input} value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} /></label>
-          <label className={label}>Horário<input type="time" className={input} value={form.scheduledTime ?? ""} onChange={(e) => set("scheduledTime", e.target.value || null)} /></label>
+          <label className={label}>Tipo<select disabled={!!task?.reservationId} className={input} value={form.kind} onChange={(e) => set("kind", e.target.value as OpTaskInput["kind"])}>{Object.entries(opKindLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+          <label className={label}>Horário previsto<input type="time" className={input} value={form.scheduledTime ?? ""} onChange={(e) => set("scheduledTime", e.target.value || null)} /></label>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <label className={label}>Responsável<input className={input} value={form.responsibleName ?? ""} onChange={(e) => set("responsibleName", e.target.value)} placeholder="Nome" /></label>
-          <label className={label}>Valor (R$)<input inputMode="decimal" className={input} value={amountText} onChange={(e) => setAmountText(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="0,00" /></label>
+        <label className={label}>Data da execução prevista<input required type="date" className={input} value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} /></label>
+        {task?.kind === "limpeza" && <div className="my-2"><CleaningStayContext task={task} /></div>}
+        <div className="mt-2 grid gap-3 border-t border-border pt-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold"><Wallet className="size-4 text-primary" />Planejamento da rotina</h3>
+          <label className={label}>Valor total da rotina (R$)<input inputMode="decimal" className={`${input} h-12 text-lg font-semibold tabular-nums`} value={amountText} onChange={(e) => setAmountText(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="Não informado" /></label>
         </div>
         {!task && <label className={label}>Situação<select className={input} value={form.status} onChange={(e) => set("status", e.target.value as OpTaskInput["status"])}>{Object.entries(opStatusLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>}
-        <label className={label}>Orientação<Textarea rows={3} value={form.guidance ?? ""} onChange={(e) => set("guidance", e.target.value)} placeholder="Instruções para a equipe" /></label>
+        <label className={`${label} mt-2`}>Observação ao profissional<Textarea rows={3} value={form.guidance ?? ""} onChange={(e) => set("guidance", e.target.value)} placeholder="Instruções para a equipe" /></label>
+        <details open={!task ? true : undefined} className="mt-2 border-y border-border py-3">
+          <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium"><SlidersHorizontal className="size-4 text-muted-foreground" />Mais detalhes</summary>
+          <div className="mt-4 grid gap-3">
+            <label className={label}>Título<input required className={input} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Ex.: Limpeza pré check-in" /></label>
+            <label className={label}>Prioridade<select aria-label="Prioridade" className={input} value={form.priority} onChange={(e) => set("priority", e.target.value as OpTaskInput["priority"])}><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></label>
+            <label className={label}>Responsável de referência<input className={input} value={form.responsibleName ?? ""} onChange={(e) => set("responsibleName", e.target.value)} placeholder="Nome" /></label>
+          </div>
+        </details>
       </form>
       {task && <OpTaskExecution taskId={task.id} />}
       </div>
-      <SheetFooter className="shrink-0 gap-2 border-t border-border bg-background p-4 sm:justify-between">
-        {task ? <Button type="button" variant="ghost" className="text-destructive" disabled={remove.isPending} onClick={() => { if (confirm("Excluir esta tarefa?")) remove.mutate(); }}>Excluir</Button> : <span />}
+      <SheetFooter className="grid shrink-0 grid-cols-2 gap-2 border-t border-border bg-background p-4 sm:flex sm:flex-wrap sm:justify-end sm:space-x-0">
+        {task ? <Button type="button" variant="ghost" className="text-destructive sm:mr-auto" disabled={remove.isPending} onClick={() => { if (confirm("Excluir esta tarefa?")) remove.mutate(); }}><Trash2 className="size-4" />Excluir</Button> : <span />}
         <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" form="op-task-form" disabled={save.isPending}>{save.isPending ? "Salvando…" : task ? "Salvar alterações" : "Salvar"}</Button>
       </SheetFooter>
     </SheetContent>

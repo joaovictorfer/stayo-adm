@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Play, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, Play, RotateCcw, Trash2, Users, ClipboardList } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -38,25 +38,25 @@ export function OpTaskExecution({ taskId }: { taskId: string }) {
 
   return <div className="grid gap-5 border-t border-border pt-4">
     <section className="grid gap-2">
-      <h3 className="text-sm font-semibold">Equipe</h3>
+      <div className="flex items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-sm font-semibold"><Users className="size-4 text-primary" />Profissionais</h3><span className="text-xs text-muted-foreground">{team.length} na equipe · {team.reduce((sum, m) => sum + m.share, 0)}%</span></div>
       {team.length === 0 && <p className="text-xs text-muted-foreground">Ninguém escalado. A tarefa aparece no Meu Dia de quem estiver na equipe.</p>}
-      {team.map((m, idx) => <div key={m.staff_id} className="grid grid-cols-[minmax(0,1fr)_5rem_auto_auto] items-center gap-2">
-        <span className="truncate text-sm">{nameOf(m.staff_id)}</span>
-        <label className="flex items-center gap-1 text-xs text-muted-foreground"><input aria-label={`Percentual de ${nameOf(m.staff_id)}`} inputMode="decimal" className={field} value={m.share} onChange={(e) => { const v = Number(e.target.value.replace(",", ".")) || 0; setTeam((t) => t.map((x, i) => i === idx ? { ...x, share: v } : x)); }} />%</label>
-        <label className="flex items-center gap-1 text-xs"><input type="radio" name={`lead-${taskId}`} checked={m.is_lead} onChange={() => setTeam((t) => t.map((x, i) => ({ ...x, is_lead: i === idx })))} />Principal</label>
+      {team.map((m, idx) => <div key={m.staff_id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-muted/20 p-3">
+        <span className="min-w-0 break-words text-sm font-semibold">{nameOf(m.staff_id)}</span>
         <Button type="button" size="icon" variant="ghost" aria-label={`Remover ${nameOf(m.staff_id)}`} onClick={() => setTeam((t) => t.filter((_, i) => i !== idx))}><Trash2 className="size-4" /></Button>
+        <label className="flex max-w-[12rem] items-center gap-2 text-xs text-muted-foreground">Participação<input aria-label={`Percentual de ${nameOf(m.staff_id)}`} inputMode="decimal" className={`${field} w-16 text-right tabular-nums`} value={m.share} onChange={(e) => { const v = Number(e.target.value.replace(",", ".")) || 0; setTeam((t) => t.map((x, i) => i === idx ? { ...x, share: v } : x)); }} />%</label>
+        <label className="flex items-center gap-1 text-xs"><input type="radio" name={`lead-${taskId}`} checked={m.is_lead} onChange={() => setTeam((t) => t.map((x, i) => ({ ...x, is_lead: i === idx })))} />Líder</label>
       </div>)}
-      <div className="flex gap-2">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <select aria-label="Adicionar à equipe" className={field} value="" onChange={(e) => { const id = e.target.value; if (!id) return; setTeam((t) => { const next = [...t, { staff_id: id, share: 0, is_lead: t.length === 0 }]; const each = Math.round((100 / next.length) * 100) / 100; return next.map((x, i) => ({ ...x, share: i === next.length - 1 ? Math.round((100 - each * (next.length - 1)) * 100) / 100 : each })); }); }}>
           <option value="">Adicionar pessoa…</option>{available.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <Button type="button" variant="outline" disabled={teamMut.isPending} onClick={() => teamMut.mutate()}>Salvar equipe</Button>
+        <Button type="button" variant="outline" disabled={teamMut.isPending} onClick={() => teamMut.mutate()}><Users className="size-4" />Salvar equipe</Button>
       </div>
     </section>
 
     <section className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">Checklist</h3>
+        <h3 className="flex items-center gap-2 text-sm font-semibold"><ClipboardList className="size-4 text-primary" />Checklist</h3>
         <select aria-label="Modelo de checklist" className={`${field} max-w-[14rem]`} disabled={progress || finished || tplMut.isPending} value={task.checklist_template_id ?? ""} onChange={(e) => tplMut.mutate(e.target.value || null)}>
           <option value="">Sem checklist</option>{(templates.data ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>

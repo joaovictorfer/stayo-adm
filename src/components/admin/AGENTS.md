@@ -8,3 +8,4 @@
 - RoutineIndicators shares presentation of persisted priority, execution state, assignment and overdue date; assignment is a display state, never a replacement database status.
 - ReservationArrivalSheet opens imported stays from agenda movements; operational details use a role-checked server read with strict Central UUID/property matching, and previous-stay cleaning is separate from this stay's checkout routine.
 - Calendar reservation strips and cleaning markers occupy separate lanes on the same property row; markers keep persisted scheduling and show the next stay in tooltips, preventing same-day turnover overlap without changing routine linkage.
+- SettlementWorkspace reads existing Core settlement DTOs; OperationalServicesSheet projects existing monthly costs with splitAmount, without synthesizing payment status or financial writes.
