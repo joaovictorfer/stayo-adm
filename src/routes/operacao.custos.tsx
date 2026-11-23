@@ -1,4 +1,5 @@
-import { localISODate } from "@/lib/local-date";
+import { BrazilianDateInput } from "@/components/ui/brazilian-date-input";
+import { formatCalendarDate, localISODate } from "@/lib/local-date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Plus, Receipt, Users, Wallet, Wrench } from "lucide-react";
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/operacao/custos")({
 });
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const now = new Date(); const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+const now = new Date(); const currentMonth = localISODate(now).slice(0, 7);
 const statusTone = { pendente: "warning", aprovado: "info", pago: "success", recusado: "neutral" } as const;
 const statusLabel = { pendente: "Pendente", aprovado: "Aprovado", pago: "Pago", recusado: "Recusado" } as const;
 const catLabel: Record<string, string> = { material: "Material", transporte: "Transporte", servico_extra: "Serviço extra", outro: "Outro" };
@@ -75,7 +76,7 @@ function CustosPage() {
         {tab === "reembolsos" && (q.data.expenses.length === 0 ? <div className="admin-panel"><AdminEmptyState icon={Receipt} title="Nenhum reembolso neste mês" description="Use o botão Reembolso para lançar materiais, transporte ou serviços extras." /></div>
           : <div className="admin-panel divide-y divide-[var(--admin-border)]">{q.data.expenses.map((e) => <div key={e.id} className="grid gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><b className="text-sm">{e.description}</b><AdminStatusBadge tone={statusTone[e.status]}>{statusLabel[e.status]}</AdminStatusBadge></div>
-                <small className="block text-[var(--admin-muted)]">{new Date(`${e.date}T12:00:00`).toLocaleDateString("pt-BR")} · {catLabel[e.category] ?? e.category} · {e.staffName ?? "Sem pessoa"} · {e.propertyName ?? "Sem imóvel"}{e.receiptUrl && <> · <a className="underline" href={e.receiptUrl} target="_blank" rel="noreferrer">comprovante</a></>}</small></div>
+                <small className="block text-[var(--admin-muted)]">{formatCalendarDate(e.date)} · {catLabel[e.category] ?? e.category} · {e.staffName ?? "Sem pessoa"} · {e.propertyName ?? "Sem imóvel"}{e.receiptUrl && <> · <a className="underline" href={e.receiptUrl} target="_blank" rel="noreferrer">comprovante</a></>}</small></div>
               <div className="flex flex-wrap items-center gap-2"><strong className="mr-2 text-sm">{brl(e.amount)}</strong>
                 {e.status === "pendente" && <><Button size="sm" variant="outline" onClick={() => statusMut.mutate({ id: e.id, s: "aprovado" })}>Aprovar</Button><Button size="sm" variant="ghost" onClick={() => statusMut.mutate({ id: e.id, s: "recusado" })}>Recusar</Button></>}
                 {e.status === "aprovado" && <Button size="sm" variant="outline" onClick={() => statusMut.mutate({ id: e.id, s: "pago" })}>Marcar pago</Button>}
@@ -108,7 +109,7 @@ function ExpenseDialog({ open, onOpenChange, defaultDate }: { open: boolean; onO
       <label className={lbl}>Descrição<input required className={field} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} placeholder="Ex.: Produtos de limpeza" /></label>
       <div className="grid grid-cols-2 gap-3">
         <label className={lbl}>Valor (R$)<input required inputMode="decimal" className={field} value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value.replace(/[^\d.,]/g, "") })} placeholder="0,00" /></label>
-        <label className={lbl}>Data<input required type="date" className={field} value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
+        <label className={lbl}>Data<BrazilianDateInput required aria-label="Data do reembolso" className={field} value={f.date} onValueChange={(date) => setF({ ...f, date })} /></label>
       </div>
       <label className={lbl}>Categoria<select className={field} value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>{Object.entries(catLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
       <label className={lbl}>Pessoa da equipe<select className={field} value={f.staffId} onChange={(e) => setF({ ...f, staffId: e.target.value })}><option value="">Sem pessoa (gasto da STAYO)</option>{(staff.data ?? []).filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>

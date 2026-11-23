@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { OpChecklistList } from "@/components/admin/OpChecklistList";
 import { Button } from "@/components/ui/button";
 import { applyTemplate, opExecutionQuery, opStaffQuery, opTemplatesQuery, saveTeam, setTaskStatus, toggleItem, uploadItemPhoto } from "@/lib/api/op-execution";
+import { formatBrasiliaDateTime } from "@/lib/local-date";
 import { blockerMessage } from "@/lib/op-execution-rules";
 
 type Member = { staff_id: string; share: number; is_lead: boolean };
@@ -34,7 +35,7 @@ export function OpTaskExecution({ taskId }: { taskId: string }) {
   const available = (staff.data ?? []).filter((s) => s.active && !team.some((m) => m.staff_id === s.id));
   const nameOf = (id: string) => staff.data?.find((s) => s.id === id)?.name ?? exec.data.team.find((m) => m.staff_id === id)?.name ?? "—";
   const blockers = blockerMessage(items);
-  const fmt = (iso: string | null) => iso ? new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
+  const fmt = formatBrasiliaDateTime;
 
   return <div className="grid gap-5 border-t border-border pt-4">
     <section className="grid gap-2">

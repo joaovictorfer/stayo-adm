@@ -2,6 +2,7 @@ import { ClipboardList, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { splitAmount, type CostTask, type PersonCost } from "@/lib/op-costs";
+import { formatCalendarDate } from "@/lib/local-date";
 import { formatBRL } from "@/lib/money";
 
 export function OperationalServicesSheet({ person, tasks, onClose }: { person: PersonCost | null; tasks: CostTask[]; onClose: () => void }) {
@@ -13,7 +14,7 @@ export function OperationalServicesSheet({ person, tasks, onClose }: { person: P
       <div className="space-y-3">{services.map((task) => {
         const index = task.team.findIndex((member) => member.staffId === person.key);
         const amount = task.amount === null ? null : task.team.length === 0 ? task.amount : splitAmount(task.amount, task.team.map((member) => member.share))[index] ?? null;
-        return <div key={task.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-lg border border-border border-l-2 border-l-primary p-4"><div className="min-w-0"><p className="text-xs text-muted-foreground">{new Date(`${task.dueDate}T12:00:00`).toLocaleDateString("pt-BR")}</p><p className="mt-1 break-words text-sm font-semibold">{task.propertyName ?? "Sem imóvel"}</p><p className="mt-1 break-words text-sm text-muted-foreground">{task.title}</p></div><strong className="text-sm tabular-nums">{amount === null ? "Não informado" : formatBRL(amount)}</strong></div>;
+        return <div key={task.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-lg border border-border border-l-2 border-l-primary p-4"><div className="min-w-0"><p className="text-xs text-muted-foreground">{formatCalendarDate(task.dueDate)}</p><p className="mt-1 break-words text-sm font-semibold">{task.propertyName ?? "Sem imóvel"}</p><p className="mt-1 break-words text-sm text-muted-foreground">{task.title}</p></div><strong className="text-sm tabular-nums">{amount === null ? "Não informado" : formatBRL(amount)}</strong></div>;
       })}{services.length === 0 && <p className="text-sm text-muted-foreground">Nenhum serviço com valor neste mês.</p>}</div>
       <section className="space-y-3 border-t border-border pt-4"><h3 className="flex items-center gap-2 text-sm font-semibold"><Wallet className="size-4 text-primary" />Reembolsos</h3><dl className="space-y-2 text-sm">{[["Aguardando aprovação", person.reimbPending], ["Aprovados", person.reimbApproved], ["Já pagos", person.reimbPaid]].map(([label, amount]) => <div key={String(label)} className="flex justify-between gap-3"><dt className="text-muted-foreground">{label}</dt><dd className="font-medium tabular-nums">{formatBRL(Number(amount))}</dd></div>)}</dl></section>
     </div>

@@ -7,6 +7,7 @@ import { SyncUpcomingButton } from "./SyncUpcomingButton";
 import { operationalCalendarQuery } from "@/lib/api/op-calendar-api";
 import { cleaningBoardQuery } from "@/lib/api/op-cleaning-api";
 import { localISODate } from "@/lib/local-date";
+import { BrazilianDateInput } from "@/components/ui/brazilian-date-input";
 import { Button } from "@/components/ui/button";
 const dm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 export function CheckinPreparationPanel() {
@@ -22,7 +23,7 @@ export function CheckinPreparationPanel() {
   const shown = stays.filter((s) => inTab(s, tab) && `${properties.get(s.implementationId)?.property} ${s.guest}`.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR")));
   return <div className="space-y-5">
     <AdminPageHeader eyebrow="Operação" title="Preparação de check-in" actions={<SyncUpcomingButton />} />
-    <div className="flex flex-wrap items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm font-medium">Dia<input type="date" aria-label="Dia da preparação" className="admin-input h-10 px-3" value={date} onChange={(e) => { if (e.target.value) setDate(e.target.value); }} /></label><div className="w-full sm:w-72"><CompactSearch value={search} onChange={setSearch} placeholder="Buscar imóvel ou hóspede" /></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm font-medium">Dia<BrazilianDateInput aria-label="Dia da preparação" className="admin-input h-10 px-3" value={date} onValueChange={(value) => { if (value) setDate(value); }} /></label><div className="w-full sm:w-72"><CompactSearch value={search} onChange={setSearch} placeholder="Buscar imóvel ou hóspede" /></div></div>
     <ModuleTabs value={tab} onChange={setTab} options={[{ value: "chegadas", label: `Chegadas ${stays.filter((s) => inTab(s, "chegadas")).length}` }, { value: "saidas", label: `Saídas ${stays.filter((s) => inTab(s, "saidas")).length}` }, { value: "em_casa", label: `Em casa ${stays.filter((s) => inTab(s, "em_casa")).length}` }]} />
     {data.isPending || board.isPending ? <p className="text-sm text-muted-foreground">Carregando reservas…</p> : data.isError || board.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar as reservas.<Button variant="link" onClick={() => { void data.refetch(); void board.refetch(); }}>Tentar novamente</Button></p> : !shown.length ? <p className="py-10 text-sm text-muted-foreground">Nenhuma reserva neste filtro.</p> : <div className="space-y-3">{shown.map((s) => {
       const property = properties.get(s.implementationId);

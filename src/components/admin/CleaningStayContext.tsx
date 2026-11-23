@@ -4,7 +4,8 @@ import { AdminStatusBadge } from "./AdminPrimitives";
 import { operationalCalendarQuery } from "@/lib/api/op-calendar-api";
 import { cleaningWindow } from "@/lib/op-calendar";
 import { opTasksQuery, type BoardTask } from "@/lib/api/op-tasks";
-const dateLabel = (iso: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${iso}T12:00:00`));
+import { formatCalendarDate, formatBrasiliaDateTime } from "@/lib/local-date";
+const dateLabel = formatCalendarDate;
 export function CleaningStayContext({ task: initialTask }: { task: BoardTask }) {
   const current = useQuery(opTasksQuery());
   const task = current.data?.find((t) => t.id === initialTask.id) ?? initialTask;
@@ -21,6 +22,6 @@ export function CleaningStayContext({ task: initialTask }: { task: BoardTask }) 
       <p className="text-xs text-muted-foreground">Limpeza após esta hospedagem{window?.next ? ", para preparar a próxima entrada." : ", para deixar o apartamento pronto."}</p>
     </section> : <p className="text-sm text-muted-foreground">Rotina avulsa · sem hospedagem vinculada.</p>}
     {window && <section className="space-y-2 border-l-2 border-primary bg-muted/40 p-3"><AdminStatusBadge tone={window.kind === "out_in" ? "danger" : "info"}>{window.kind === "out_in" ? "Out-in · virada crítica" : window.kind === "flexivel" ? "Limpeza flexível" : "Sem próxima hospedagem"}</AdminStatusBadge>{window.next ? <><p className="text-sm font-medium">Próxima hospedagem · {window.next.guest}</p><p className="text-xs text-muted-foreground">Entrada {dateLabel(window.next.checkin)} · limpeza entre {dateLabel(window.start)} e {dateLabel(window.next.checkin)}.</p></> : <p className="text-xs text-muted-foreground">Não há outra entrada nas reservas importadas.</p>}</section>}
-    <dl className="grid grid-cols-2 gap-3 border-b border-border pb-4 text-sm"><div><dt className="text-xs text-muted-foreground">Quem fez / equipe</dt><dd className="mt-1 font-medium">{task.responsibleName || "Sem profissional vinculado"}</dd></div><div><dt className="text-xs text-muted-foreground">Quando foi concluída</dt><dd className="mt-1 font-medium">{task.completedAt ? new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(task.completedAt)) : "Ainda não concluída"}</dd></div></dl>
+    <dl className="grid grid-cols-2 gap-3 border-b border-border pb-4 text-sm"><div><dt className="text-xs text-muted-foreground">Quem fez / equipe</dt><dd className="mt-1 font-medium">{task.responsibleName || "Sem profissional vinculado"}</dd></div><div><dt className="text-xs text-muted-foreground">Quando foi concluída</dt><dd className="mt-1 font-medium">{task.completedAt ? formatBrasiliaDateTime(task.completedAt) : "Ainda não concluída"}</dd></div></dl>
   </div>;
 }

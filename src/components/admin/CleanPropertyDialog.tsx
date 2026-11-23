@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoneyCentsInput } from "@/components/ui/money-input";
+import { BrazilianDateInput } from "@/components/ui/brazilian-date-input";
 import { markClean, type CleaningRow } from "@/lib/api/op-cleaning-api";
 
 export function CleanPropertyDialog({ row, staff, today, onClose, onDone }: { row: CleaningRow | null; staff: { id: string; name: string }[]; today: string; onClose: () => void; onDone: () => void }) {
@@ -25,19 +26,19 @@ export function CleanPropertyDialog({ row, staff, today, onClose, onDone }: { ro
   return <Dialog open={!!row} onOpenChange={(v) => { if (!v && !save.isPending) onClose(); }}>
     <DialogContent className="max-w-md">
       <DialogHeader><DialogTitle>Marcar {row?.property} como limpo</DialogTitle></DialogHeader>
-      <div className="space-y-4">
+      <form id="mark-property-clean" className="space-y-4" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
         <label className="block space-y-1.5 text-sm font-medium">Quem limpou
           <select aria-label="Quem limpou" className="admin-input h-11 w-full px-3" value={staffId} onChange={(e) => setStaffId(e.target.value)}>
             <option value="">Selecione</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </label>
         <div className="grid grid-cols-2 gap-3">
-          <label className="block space-y-1.5 text-sm font-medium">Quando<input aria-label="Data da limpeza" type="date" max={today} className="admin-input h-11 w-full px-3" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <label className="block space-y-1.5 text-sm font-medium">Quando<BrazilianDateInput required aria-label="Data da limpeza" max={today} className="admin-input h-11 w-full px-3" value={date} onValueChange={setDate} /></label>
           <label className="block space-y-1.5 text-sm font-medium">Valor<MoneyCentsInput aria-label="Valor da limpeza" cents={cents} onCentsChange={setCents} /></label>
         </div>
         {staff.length === 0 && <p className="text-xs text-muted-foreground">Cadastre a equipe em Equipe e Meu Dia para escolher quem limpou.</p>}
-      </div>
-      <DialogFooter><Button variant="outline" disabled={save.isPending} onClick={onClose}>Cancelar</Button><Button disabled={!staffId || save.isPending} onClick={() => save.mutate()}>{save.isPending ? "Salvando…" : "Confirmar limpeza"}</Button></DialogFooter>
+      </form>
+      <DialogFooter><Button variant="outline" disabled={save.isPending} onClick={onClose}>Cancelar</Button><Button type="submit" form="mark-property-clean" disabled={!staffId || save.isPending}>{save.isPending ? "Salvando…" : "Confirmar limpeza"}</Button></DialogFooter>
     </DialogContent>
   </Dialog>;
 }
