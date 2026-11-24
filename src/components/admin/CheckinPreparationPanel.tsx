@@ -20,6 +20,8 @@ import { staysForDay, type StayDayTab } from "@/lib/op-day-summary";
 import type { Movement } from "@/lib/op-movements";
 import { BrazilianDateInput } from "@/components/ui/brazilian-date-input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { OperationalPropertyFacts } from "./OperationalPropertyFacts";
 
 type Tab = StayDayTab | "pronto" | "sujo" | "todos";
 const stateInfo = {
@@ -35,7 +37,7 @@ export function CheckinPreparationPanel() {
   const tomorrow = addDaysISO(today, 1);
   const qc = useQueryClient();
   const [date, setDate] = useState(today);
-  const [tab, setTab] = useState<Tab>("em_casa");
+  const [tab, setTab] = useState<Tab>("todos");
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const [movement, setMovement] = useState<Movement | null>(null);
@@ -47,6 +49,11 @@ export function CheckinPreparationPanel() {
   const tasks = useBoardTasks();
   const properties = new Map((board.data?.rows ?? []).map((p) => [p.id, p]));
   const ids = [...properties.keys()].sort();
+  const parking = useQuery({ queryKey: ["operational-parking", ids], enabled: ids.length > 0, queryFn: async () => {
+    const result = await supabase.from("implementation_property_details").select("implementation_id, parking_box, parking_spots").in("implementation_id", ids);
+    if (result.error) throw result.error;
+    return result.data;
+  } });
   const covers = useQuery({ queryKey: ["implementation-covers", "operational-summary", ids], queryFn: () => listImplementationCoverUrls(ids), enabled: ids.length > 0, staleTime: 3_000_000 });
   const stays = (data.data?.stays ?? []).filter((s) => properties.has(s.implementationId));
   const counts = { chegadas: staysForDay(stays, date, "chegadas").length, saidas: staysForDay(stays, date, "saidas").length, em_casa: staysForDay(stays, date, "em_casa").length,
@@ -65,6 +72,10 @@ export function CheckinPreparationPanel() {
       type, implementationId: stay.implementationId, property: properties.get(stay.implementationId)?.property ?? "Imóvel", guest: stay.guest, channel: stay.channel ?? null, turnover: null });
   };
   const photo = (id: string, name: string) => <div className="h-20 w-24 shrink-0 overflow-hidden rounded-md bg-muted text-muted-foreground sm:h-24 sm:w-28">{covers.data?.[id] ? <img src={covers.data[id]} alt={name} loading="lazy" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center"><Building2 className="size-7" /></div>}</div>;
+  const facts = (id: string) => {
+    const row = parking.data?.find(p => p.implementation_id === id);
+    return parking.isError ? <p role="alert" className="text-xs text-destructive">Vaga indisponível<Button variant="link" size="sm" onClick={() => void parking.refetch()}>Tentar novamente</Button></p> : parking.isPending ? <p className="text-xs text-muted-foreground">Consultando vaga…</p> : <OperationalPropertyFacts box={row?.parking_box ?? null} spots={row?.parking_spots ?? null} stays={staysForDay(stays, date, "em_casa").filter(s => s.implementationId === id)} />;
+  };
   return <div className="space-y-5">
     <AdminPageHeader eyebrow="Operação · STAYO" title="Resumo operacional" description={longDayLabel(date)} actions={<SyncUpcomingButton />} />
     <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border py-3">
@@ -81,11 +92,20 @@ export function CheckinPreparationPanel() {
     <ModuleTabs value={tab} onChange={setTab} options={[{ value: "chegadas", label: "Chegadas", count: counts.chegadas }, { value: "saidas", label: "Saídas", count: counts.saidas }, { value: "em_casa", label: "Em casa", count: counts.em_casa }, { value: "pronto", label: "Limpos", count: counts.pronto }, { value: "sujo", label: "Sujos", count: counts.sujo }, { value: "todos", label: "Todos os imóveis", count: counts.todos }]} />
     <p className="text-xs text-muted-foreground">{propertyTab ? `Situação de limpeza em ${dm(today)} · ${shownProperties.length} imóveis` : `Hospedagens previstas · ${shownStays.length} reservas · chegadas e saídas incluídas em “Em casa”`}</p>
     {loading ? <p role="status" className="py-10 text-sm text-muted-foreground">Carregando operação…</p> : failed ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar a operação.<Button variant="link" onClick={() => { void data.refetch(); void board.refetch(); }}>Tentar novamente</Button></p> : (propertyTab ? !shownProperties.length : !shownStays.length) ? <AdminEmptyState icon={propertyTab ? Brush : BedDouble} title={propertyTab ? "Nenhum imóvel neste filtro" : "Nenhuma reserva neste dia"} description="" /> : <div className={layout === "grid" ? "grid items-start gap-4 xl:grid-cols-2" : "grid gap-3"}>
-      {propertyTab ? shownProperties.map(p => <article key={p.id} className="rounded-md border border-border bg-background p-4 transition-colors hover:border-primary/40 sm:p-5">
+      {layout === "list" ? (propertyTab ? shownProperties.map(p => ({ p, stay: null as CalendarStay | null })) : shownStays.flatMap(stay => { const p = properties.get(stay.implementationId); return p ? [{ p, stay }] : []; })).map(({ p, stay }) => {
+        const current = stay ?? staysForDay(stays, date, "em_casa").find(s => s.implementationId === p.id);
+        return <article key={stay?.id ?? p.id} data-reservation-id={stay?.id} className="grid items-center gap-3 border-b border-border py-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <div className="min-w-0"><h2 className="break-words font-[var(--stayo-font-display)] text-base font-semibold">{p.property}</h2><div className="mt-2">{facts(p.id)}</div></div>
+          <div className="space-y-2"><AdminStatusBadge tone={stateInfo[p.status.state].tone}>{stateInfo[p.status.state].label} · hoje</AdminStatusBadge><p className="text-xs text-muted-foreground">{current ? `${dm(current.checkin)} → ${dm(current.checkout)}` : `Próxima chegada: ${dm(p.status.nextCheckin)}`}</p></div>
+          <div className="min-w-0 text-xs"><p className="font-medium">{p.next ? p.next.staffName ?? "Sem profissional" : "Sem limpeza em aberto"}</p><p className="mt-1 text-muted-foreground">{p.next ? `Limpeza prevista: ${dm(p.next.dueDate)}` : `Última limpeza: ${dm(p.status.lastCleaning)}`}</p></div>
+          <div className="flex flex-wrap gap-1">{current && <Button size="sm" variant="outline" onClick={() => openReservation(current)}>Reserva<ChevronRight className="size-4" /></Button>}<Button size="sm" variant="ghost" onClick={() => setCleaning(p)}><Sparkles className="size-4" />Marcar limpo</Button>{p.next && <Button size="sm" variant="ghost" disabled={!tasks.rows.some(t => t.id === p.next?.id)} onClick={() => setRoutine(tasks.rows.find(t => t.id === p.next?.id) ?? null)}>Rotina</Button>}</div>
+        </article>;
+      }) : propertyTab ? shownProperties.map(p => <article key={p.id} className="rounded-md border border-border bg-background p-4 transition-colors hover:border-primary/40 sm:p-5">
         <header className="flex items-start gap-3">{photo(p.id, p.property)}<div className="min-w-0 flex-1"><h2 className="break-words font-[var(--stayo-font-display)] text-lg font-semibold">{p.property}</h2><p className="mb-2 text-xs text-muted-foreground">{p.code}</p><AdminStatusBadge tone={stateInfo[p.status.state].tone}>{stateInfo[p.status.state].label}</AdminStatusBadge></div></header>
+        <div className="mt-3">{facts(p.id)}</div>
         <dl className="my-4 grid grid-cols-2 gap-3 border-y border-border py-3 text-sm"><div><dt className="text-xs text-muted-foreground">Última limpeza</dt><dd className="mt-1 font-medium">{dm(p.status.lastCleaning)}</dd></div><div><dt className="text-xs text-muted-foreground">Próxima chegada</dt><dd className="mt-1 font-medium">{dm(p.status.nextCheckin)}</dd></div></dl>
         <p className="flex items-center gap-2 text-sm"><Users className="size-4 shrink-0 text-muted-foreground" /><span>{p.next ? p.next.staffName ?? "Limpeza sem profissional" : "Sem limpeza em aberto"}</span></p>
-        <div className="mt-4 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => setCleaning(p)}><Sparkles className="size-4" />Marcar limpo</Button>{p.next && <Button size="sm" variant="ghost" disabled={!tasks.rows.some(t => t.id === p.next?.id)} onClick={() => setRoutine(tasks.rows.find(t => t.id === p.next?.id) ?? null)}>Abrir rotina<ChevronRight className="size-4" /></Button>}</div>
+        <div className="mt-4 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => setCleaning(p)}><Sparkles className="size-4" />Marcar limpo</Button>{staysForDay(stays, date, "em_casa").filter(s => s.implementationId === p.id).map(s => <Button key={s.id} size="sm" variant="ghost" onClick={() => openReservation(s)}>Reserva<ChevronRight className="size-4" /></Button>)}{p.next && <Button size="sm" variant="ghost" disabled={!tasks.rows.some(t => t.id === p.next?.id)} onClick={() => setRoutine(tasks.rows.find(t => t.id === p.next?.id) ?? null)}>Abrir rotina<ChevronRight className="size-4" /></Button>}</div>
       </article>) : shownStays.map(s => {
         const p = properties.get(s.implementationId);
         if (!p) return null;
@@ -95,6 +115,7 @@ export function CheckinPreparationPanel() {
         const status = stateInfo[p.status.state];
         return <article key={s.id} data-reservation-id={s.id} className="rounded-md border border-border bg-background p-4 transition-colors hover:border-primary/40 sm:p-5">
           <header className="flex items-start gap-3">{photo(p.id, p.property)}<div className="min-w-0 flex-1"><h2 className="break-words font-[var(--stayo-font-display)] text-lg font-semibold">{p.property}</h2><p className="mt-1 break-words text-sm font-medium">{s.guest}</p><div className="mt-2 flex flex-wrap gap-2"><AdminStatusBadge tone="neutral">{s.channel || "Canal não informado"}</AdminStatusBadge><AdminStatusBadge tone={status.tone}>{status.label} · hoje</AdminStatusBadge></div></div></header>
+          <div className="mt-3">{facts(p.id)}</div>
           <div className="my-4 grid grid-cols-2 gap-3"><div className="rounded-md bg-[var(--admin-success-soft)] p-3 text-[var(--admin-success)]"><p className="flex items-center gap-1.5 text-xs"><LogIn className="size-4" />Check-in</p><p className="mt-1 font-semibold">{dm(s.checkin)}</p></div><div className="rounded-md bg-[var(--admin-warning-soft)] p-3 text-[var(--admin-warning)]"><p className="flex items-center gap-1.5 text-xs"><LogOut className="size-4" />Check-out</p><p className="mt-1 font-semibold">{dm(s.checkout)}</p></div></div>
           <div className="space-y-2 border-y border-border py-3 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><p className="flex items-center gap-2 font-medium"><Brush className="size-4 text-primary" />{tab === "chegadas" ? "Limpeza de preparação" : "Limpeza após esta hospedagem"}</p>{tab !== "chegadas" && <AdminStatusBadge tone={window.kind === "out_in" ? "danger" : "neutral"}>{window.kind === "out_in" ? "Out-in · mesmo dia" : window.kind === "flexivel" ? "Janela flexível" : "Sem próxima chegada"}</AdminStatusBadge>}</div><p className="text-xs text-muted-foreground">{linked ? `${linked.responsibleName || "Sem profissional"} · ${linked.completedAt ? `Concluída · ${formatBrasiliaDateTime(linked.completedAt)}` : `Prevista · ${dm(linked.dueDate?.slice(0,10) ?? null)}`}` : "Nenhuma rotina vinculada encontrada"}</p>{tab !== "chegadas" && window.next && <p className="text-xs text-muted-foreground"><CalendarDays className="mr-1 inline size-3" />Próxima chegada: {dm(window.next.checkin)} · {window.next.guest}</p>}</div>
           {tab === "chegadas" && <div className="pt-4"><ReservationPreparation reservationId={s.id} /></div>}
