@@ -39,8 +39,8 @@ const stateInfo: Record<CleaningState, { label: string; tone: "success" | "dange
 type PropertyFilter = "todos" | "sujo" | "pronto" | "ocupado" | "sem_profissional";
 
 function OperationPage() {
-  const [view, setView] = useState<"calendario" | "painel" | "preparacao">("calendario");
-  return <div className="space-y-5"><ModuleTabs value={view} onChange={setView} options={[{ value: "calendario", label: "Calendário" }, { value: "preparacao", label: "Preparação de check-in" }, { value: "painel", label: "Painel de imóveis" }]} />{view === "calendario" ? <OperationalCalendar /> : view === "preparacao" ? <CheckinPreparationPanel /> : <OperationOverview />}</div>;
+  const [view, setView] = useState<"calendario" | "painel" | "preparacao">("preparacao");
+  return <div className="space-y-5"><ModuleTabs value={view} onChange={setView} options={[{ value: "preparacao", label: "Resumo operacional" }, { value: "calendario", label: "Calendário" }, { value: "painel", label: "Painel de imóveis" }]} />{view === "calendario" ? <OperationalCalendar /> : view === "preparacao" ? <CheckinPreparationPanel /> : <OperationOverview />}</div>;
 }
 
 function OperationOverview() {
