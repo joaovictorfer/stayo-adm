@@ -1,5 +1,5 @@
 export const PROPERTY_REQUIRED = ["propertyCondominiumName", "propertyUnit", "propertyBedrooms", "propertyBathrooms", "propertySuites", "propertyLavatories"] as const;
-export const PROPERTY_EDITABLE = [...PROPERTY_REQUIRED, "propertyParkingBox"] as const;
+export const PROPERTY_EDITABLE = [...PROPERTY_REQUIRED, "propertyParkingBox", "propertyWifiNetwork", "propertyWifiPassword", "propertyAccessCode", "propertyInstallerFurniture", "propertyInstallerHeater", "propertyInstallerAc"] as const;
 export type PropertyKey = typeof PROPERTY_EDITABLE[number];
 export type PropertyRegistration = Partial<Record<PropertyKey, string | number | null>> & { propertyCondominiumLinked?: boolean };
 const normalized = (value: unknown) => typeof value === "string" ? value.trim() || null : value ?? null;

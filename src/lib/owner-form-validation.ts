@@ -201,6 +201,9 @@ export const ownerOnboardingFormSchema = z.object({
   propertyAccessCode: z.string().max(120).default(""),
   propertyWifiNetwork: z.string().max(120).default(""),
   propertyWifiPassword: z.string().max(120).default(""),
+  propertyInstallerFurniture: z.string().max(160).default(""),
+  propertyInstallerHeater: z.string().max(160).default(""),
+  propertyInstallerAc: z.string().max(160).default(""),
 });
 
 export const ownerAdminEditSchema = z.object({

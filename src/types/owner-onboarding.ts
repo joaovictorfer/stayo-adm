@@ -90,6 +90,9 @@ export interface OwnerOnboardingSubmission {
   propertyAccessCode: string;
   propertyWifiNetwork: string;
   propertyWifiPassword: string;
+  propertyInstallerFurniture?: string;
+  propertyInstallerHeater?: string;
+  propertyInstallerAc?: string;
 }
 
 export type OwnerOnboardingSubmissionInput = Omit<

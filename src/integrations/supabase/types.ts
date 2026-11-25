@@ -1513,6 +1513,9 @@ export type Database = {
           complement: string | null
           district: string | null
           implementation_id: string
+          installer_ac: string | null
+          installer_furniture: string | null
+          installer_heater: string | null
           lavatories: number | null
           notes: string | null
           number: string | null
@@ -1537,6 +1540,9 @@ export type Database = {
           complement?: string | null
           district?: string | null
           implementation_id: string
+          installer_ac?: string | null
+          installer_furniture?: string | null
+          installer_heater?: string | null
           lavatories?: number | null
           notes?: string | null
           number?: string | null
@@ -1561,6 +1567,9 @@ export type Database = {
           complement?: string | null
           district?: string | null
           implementation_id?: string
+          installer_ac?: string | null
+          installer_furniture?: string | null
+          installer_heater?: string | null
           lavatories?: number | null
           notes?: string | null
           number?: string | null

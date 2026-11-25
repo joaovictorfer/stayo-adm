@@ -96,6 +96,7 @@ export function PlatformsStep({
 
       <div className="pf-others">
         <h3 className="pf-others-title">{anyOpen ? "Quer ampliar sua distribuição?" : "Outros canais"}</h3>
+        <p className="pd-note">Anunciar em outros canais além do Airbnb exige a contratação do seguro obrigatório Easy Cover.</p>
         {OPTIONAL_CHANNELS.map((c) => {
           const on = channels.includes(c.key);
           const locked = !isChannelAllowed(c.key, allowedChannels);

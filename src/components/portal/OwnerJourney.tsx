@@ -150,6 +150,9 @@ const emptyForm: OwnerOnboardingSubmissionInput = {
   propertyAccessCode: "",
   propertyWifiNetwork: "",
   propertyWifiPassword: "",
+  propertyInstallerFurniture: "",
+  propertyInstallerHeater: "",
+  propertyInstallerAc: "",
 };
 
 // Requisitos obrigatórios de "Seus dados" na jornada pública (Correção 02B):
@@ -1142,6 +1145,12 @@ function ReviewStep({
     ["Banheiros", form.propertyBathrooms],
     ["Suítes", form.propertySuites],
     ["Lavabos", form.propertyLavatories],
+    ["Rede Wi-Fi", form.propertyWifiNetwork],
+    ["Senha do Wi-Fi", form.propertyWifiPassword ? "Informada" : null],
+    ["Senha da fechadura", form.propertyAccessCode ? "Informada" : null],
+    ["Instalador de móveis", form.propertyInstallerFurniture],
+    ["Instalador do aquecedor", form.propertyInstallerHeater],
+    ["Instalador do ar-condicionado", form.propertyInstallerAc],
   ]);
   const block = (title: string, list: typeof owner, onEdit: () => void) => (
     <div className="rounded-2xl border border-[var(--portal-border)] bg-white p-4">
@@ -2003,7 +2012,7 @@ function OwnerStep({
       {sub === 3 && (
         <div className="pd-fields">
           <p className="pd-lead">
-            Usados para os repasses. Ficam restritos à equipe autorizada e são confirmados antes do primeiro repasse.
+            Usados para os repasses, realizados todo dia 10 de cada mês (salvo condição especial já combinada com a STAYO). Ficam restritos à equipe autorizada e são confirmados antes do primeiro repasse.
           </p>
           <p className="pd-group">Pix</p>
           <div className="grid gap-4 sm:grid-cols-2">

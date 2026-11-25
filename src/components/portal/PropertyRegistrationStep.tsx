@@ -12,31 +12,32 @@ export function PropertyRegistrationStep({ token, form, finishing, onSet, onBack
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const [step, setStep] = useState<1 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [touched, setTouched] = useState(false);
   const storageKey = `stayo:property-substep:${token.slice(0, 12)}`;
   const top = useRef<HTMLElement>(null);
-  useEffect(() => { if (window.localStorage.getItem(storageKey) === "3") setStep(3); }, [storageKey]);
-  const go = (next: 1 | 3) => {
+  useEffect(() => { const saved = window.localStorage.getItem(storageKey); if (saved === "2" || saved === "3") setStep(Number(saved) as 2 | 3); }, [storageKey]);
+  const go = (next: 1 | 2 | 3) => {
     setStep(next);
     setTouched(false);
     window.localStorage.setItem(storageKey, String(next));
     top.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const errors = propertyRegistrationErrors(form);
-  const field = (key: "propertyCondominiumName" | "propertyUnit" | "propertyParkingBox", label: string) => (
+  const field = (key: "propertyCondominiumName" | "propertyUnit" | "propertyParkingBox" | "propertyWifiNetwork" | "propertyWifiPassword" | "propertyAccessCode" | "propertyInstallerFurniture" | "propertyInstallerHeater" | "propertyInstallerAc", label: string) => (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
       <input className="portal-input w-full" aria-label={label} value={form[key] ?? ""} maxLength={160}
         onChange={(event) => onSet(key, event.target.value)} />
-      {touched && key !== "propertyParkingBox" && errors[key] && <span className="block text-sm text-destructive">{errors[key]}</span>}
+      {touched && (key === "propertyCondominiumName" || key === "propertyUnit") && errors[key] && <span className="block text-sm text-destructive">{errors[key]}</span>}
     </label>
   );
   const next = () => {
     setTouched(true);
     if (step === 1) {
-      if (!errors.propertyCondominiumName && !errors.propertyUnit) go(3);
-    } else onContinue();
+      if (!errors.propertyCondominiumName && !errors.propertyUnit) go(2);
+    } else if (step === 2) go(3);
+    else onContinue();
   };
   const counters: Array<{ key: PropertyKey; label: string }> = [
     { key: "propertyBedrooms", label: "Quartos" }, { key: "propertyBathrooms", label: "Banheiros" },
@@ -46,7 +47,7 @@ export function PropertyRegistrationStep({ token, form, finishing, onSet, onBack
     <section className="pd-step" ref={top}>
       <div className="pd-head"><h2 className="pd-title">Agora, vamos confirmar seu imóvel</h2>
         <p className="pd-lead">Confira os dados que a STAYO já preencheu.</p></div>
-      <p className="pd-sub">PASSO {step}/3 · {step === 1 ? "Unidade" : "Ambientes"}</p>
+      <p className="pd-sub">PASSO {step}/3 · {step === 1 ? "Unidade" : step === 2 ? "Acesso, Wi-Fi e instaladores" : "Ambientes"}</p>
       {step === 1 ? <div className="pd-fields">
         {form.propertyCondominiumLinked ? <div>
           <span className="mb-1.5 block text-sm font-medium">Condomínio</span>
@@ -56,6 +57,18 @@ export function PropertyRegistrationStep({ token, form, finishing, onSet, onBack
         {field("propertyUnit", "Apartamento")}
         {field("propertyParkingBox", "Box (opcional)")}
         <p className="pd-note">O endereço do condomínio já está conosco.</p>
+      </div> : step === 2 ? <div className="pd-fields">
+        <p className="pd-lead">Dados usados pela equipe e pelos hóspedes. Se ainda não tiver, pode deixar em branco.</p>
+        <p className="pd-group">Wi-Fi</p>
+        {field("propertyWifiNetwork", "Nome da rede Wi-Fi")}
+        {field("propertyWifiPassword", "Senha do Wi-Fi")}
+        <p className="pd-group">Fechadura</p>
+        {field("propertyAccessCode", "Senha da fechadura")}
+        <p className="pd-group">Instaladores</p>
+        <p className="pd-hint">Empresa ou pessoa e telefone, para manutenção e garantia.</p>
+        {field("propertyInstallerFurniture", "Móveis")}
+        {field("propertyInstallerHeater", "Aquecedor")}
+        {field("propertyInstallerAc", "Ar-condicionado")}
       </div> : <div className="pd-fields">
         <p className="pd-lead">Informe as quantidades. Se não houver, marque zero.</p>
         <div className="pd-steppers">{counters.map(({ key, label }) => {
@@ -74,10 +87,9 @@ export function PropertyRegistrationStep({ token, form, finishing, onSet, onBack
           </div>;
         })}</div>
       </div>}
-      <p className="pd-hint">Passo 2/3 · Acesso e Wi-Fi — disponível em breve.</p>
       <div className="pd-actions">
         <Button type="button" className="portal-cta pd-cta" disabled={finishing} onClick={next}>Continuar <ArrowRight className="size-4" /></Button>
-        <Button variant="ghost" type="button" className="pd-back" onClick={() => step === 3 ? go(1) : onBack()}>Voltar</Button>
+        <Button variant="ghost" type="button" className="pd-back" onClick={() => step === 3 ? go(2) : step === 2 ? go(1) : onBack()}>Voltar</Button>
       </div>
     </section>
   );
