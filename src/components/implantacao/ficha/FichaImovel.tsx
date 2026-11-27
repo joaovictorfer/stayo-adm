@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Minus, Plus, AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, Loader2, MapPin, Pencil, RefreshCw, Trash2, Upload, UserRound, Wifi } from "lucide-react";
+import { Minus, Plus, AlertCircle, Building, Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff, FileText, Home, ImageIcon, Loader2, MapPin, Pencil, RefreshCw, Trash2, Upload, UserRound, Wifi, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -285,6 +285,10 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
   const [wifiNetwork, setWifiNetwork] = useState("");
   const [wifiPassword, setWifiPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [showLock, setShowLock] = useState(false);
+  const [instFurniture, setInstFurniture] = useState("");
+  const [instHeater, setInstHeater] = useState("");
+  const [instAc, setInstAc] = useState("");
 
   const [notesDraft, setNotesDraft] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
@@ -312,6 +316,9 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
     setAccessCode(d?.accessCode ?? "");
     setWifiNetwork(d?.wifiNetwork ?? "");
     setWifiPassword(d?.wifiPassword ?? "");
+    setInstFurniture(d?.installerFurniture ?? "");
+    setInstHeater(d?.installerHeater ?? "");
+    setInstAc(d?.installerAc ?? "");
     setEditing(true);
   }
 
@@ -346,6 +353,9 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
         accessCode: accessCode || null,
         wifiNetwork: wifiNetwork || null,
         wifiPassword: wifiPassword || null,
+        installerFurniture: instFurniture.trim() || null,
+        installerHeater: instHeater.trim() || null,
+        installerAc: instAc.trim() || null,
         notes: d?.notes ?? null,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["implementation-property-details", implementation.id] }),
@@ -565,10 +575,39 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                     row={{
                       label: "Acesso ao imóvel",
                       value: d?.accessType ? ACCESS_LABELS[d.accessType] : null,
-                      detail: [d?.accessNotes, d?.accessCode ? "Senha da fechadura cadastrada (edite para ver)" : null].filter(Boolean).join(" · ") || null,
+                      detail: d?.accessNotes || null,
                     }}
                     onEdit={() => startEdit("acesso")}
                   />
+                  <Line
+                    row={{
+                      label: "Senha da fechadura",
+                      value: d?.accessCode ? (
+                        <span className="flex items-center gap-3">
+                          <span className={showLock ? "" : "tracking-[0.2em]"}>{showLock ? d.accessCode : "••••••"}</span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); setShowLock((v) => !v); }}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); setShowLock((v) => !v); } }}
+                            aria-label={showLock ? "Ocultar senha da fechadura" : "Mostrar senha da fechadura"}
+                            style={navy}
+                          >
+                            {showLock ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                          </span>
+                        </span>
+                      ) : null,
+                    }}
+                    onEdit={() => startEdit("acesso")}
+                  />
+                </ul>
+              </Card>
+
+              <Card icon={<Wrench className="size-4" />} title="Instaladores">
+                <ul>
+                  <Line row={{ label: "Móveis", value: d?.installerFurniture }} onEdit={() => startEdit("acesso")} />
+                  <Line row={{ label: "Aquecedor", value: d?.installerHeater }} onEdit={() => startEdit("acesso")} />
+                  <Line row={{ label: "Ar-condicionado", value: d?.installerAc }} onEdit={() => startEdit("acesso")} />
                 </ul>
               </Card>
 
@@ -641,7 +680,7 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                   style={{ ...border, ...navy }}
                   aria-expanded={showOptional}
                 >
-                  Detalhes opcionais (acesso, Wi-Fi)
+                  Detalhes opcionais (acesso, Wi-Fi, instaladores)
                   <ChevronDown className={`size-4 transition ${showOptional ? "rotate-180" : ""}`} />
                 </button>
               )}
@@ -673,6 +712,11 @@ export function FichaImovel({ implementation, onGoOwner, onGoPortal }: { impleme
                     </button>
                   </span>
                 </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="text-xs font-medium" style={muted}>Instalador de móveis<input value={instFurniture} maxLength={160} onChange={(e) => setInstFurniture(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Instalador do aquecedor<input value={instHeater} maxLength={160} onChange={(e) => setInstHeater(e.target.value)} className={input} style={border} /></label>
+                <label className="text-xs font-medium" style={muted}>Instalador do ar-condicionado<input value={instAc} maxLength={160} onChange={(e) => setInstAc(e.target.value)} className={input} style={border} /></label>
               </div>
                 </div>
               )}

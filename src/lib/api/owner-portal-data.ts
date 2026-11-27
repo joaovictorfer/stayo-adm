@@ -23,6 +23,9 @@ export interface PropertyDetails {
   accessCode: string | null;
   wifiNetwork: string | null;
   wifiPassword: string | null;
+  installerFurniture?: string | null;
+  installerHeater?: string | null;
+  installerAc?: string | null;
   notes: string | null;
   updatedAt: string;
 }
@@ -111,6 +114,9 @@ function detailsFromRow(row: Record<string, unknown>): PropertyDetails {
     accessCode: (row["access_code"] as string | null) ?? null,
     wifiNetwork: (row["wifi_network"] as string | null) ?? null,
     wifiPassword: (row["wifi_password"] as string | null) ?? null,
+    installerFurniture: (row["installer_furniture"] as string | null) ?? null,
+    installerHeater: (row["installer_heater"] as string | null) ?? null,
+    installerAc: (row["installer_ac"] as string | null) ?? null,
     notes: (row["notes"] as string | null) ?? null,
     updatedAt: String(row["updated_at"]),
   };
@@ -165,6 +171,9 @@ export async function savePropertyDetails(
       access_code: input.accessCode,
       wifi_network: input.wifiNetwork,
       wifi_password: input.wifiPassword,
+      ...(input.installerFurniture !== undefined ? { installer_furniture: input.installerFurniture } : {}),
+      ...(input.installerHeater !== undefined ? { installer_heater: input.installerHeater } : {}),
+      ...(input.installerAc !== undefined ? { installer_ac: input.installerAc } : {}),
       notes: input.notes,
       updated_at: new Date().toISOString(),
     })
